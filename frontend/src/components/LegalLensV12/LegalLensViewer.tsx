@@ -2914,7 +2914,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               onSaveAnnotation={handleSaveAnnotation}
             />
           ) : (
-          <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className={styles.contractPanel} style={{ display: 'flex', flexDirection: 'column', position: 'relative' }}>
             {/* PDF Controls */}
             <div className={styles.contractHeader}>
               <h3 className={styles.contractTitle}>Dokument</h3>
@@ -3117,35 +3117,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                   </button>
                 </div>
 
-                {/* Sub-Phase 6: Sidebar-Toggle — data-sub-phase-6-toggle */}
-                <button
-                  onClick={() => setShowMarkerSidebar(prev => !prev)}
-                  disabled={pdfMarkers.length === 0}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    background: showMarkerSidebar ? '#3b82f6' : 'white',
-                    color: showMarkerSidebar ? 'white' : (pdfMarkers.length === 0 ? '#cbd5e1' : '#64748b'),
-                    cursor: pdfMarkers.length === 0 ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.375rem',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    opacity: pdfMarkers.length === 0 ? 0.5 : 1
-                  }}
-                  title={pdfMarkers.length === 0
-                    ? 'Noch keine Markierungen — setze Marker, um die Liste zu öffnen'
-                    : showMarkerSidebar
-                      ? 'Markierungs-Liste schließen'
-                      : `Markierungs-Liste öffnen (${pdfMarkers.length})`
-                  }
-                >
-                  <List size={14} />
-                  {pdfMarkers.length > 0 && <span>{pdfMarkers.length}</span>}
-                </button>
-
                 <div style={{ width: '1px', height: '20px', background: '#e2e8f0' }} />
 
                 {/* Zoom Controls */}
@@ -3267,6 +3238,31 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       ) : (
                         <>📥 PDF mit Markierungen</>
                       )}
+                    </button>
+
+                    {/* Sub-Phase 6: Sidebar-Toggle — data-sub-phase-6-toggle */}
+                    <button
+                      onClick={() => setShowMarkerSidebar(prev => !prev)}
+                      style={{
+                        padding: '0.375rem 0.5rem',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        background: showMarkerSidebar ? '#3b82f6' : 'white',
+                        color: showMarkerSidebar ? 'white' : '#64748b',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.375rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 500
+                      }}
+                      title={showMarkerSidebar
+                        ? 'Markierungs-Liste schließen'
+                        : `Markierungs-Liste öffnen (${pdfMarkers.length})`
+                      }
+                    >
+                      <List size={14} />
+                      <span>{pdfMarkers.length}</span>
                     </button>
                   </>
                 )}
@@ -3580,6 +3576,122 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                 </button>
               </div>
             )}
+
+            {/* Sub-Phase 6: Sidebar "Deine Markierungen" — data-sub-phase-6-sidebar */}
+            {showMarkerSidebar && viewMode === 'pdf' && pdfMarkers.length > 0 && (
+              <>
+                {isMobile && (
+                  <div
+                    onClick={() => setShowMarkerSidebar(false)}
+                    style={{
+                      position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.4)', zIndex: 998
+                    }}
+                  />
+                )}
+                <aside
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: isMobile ? '100%' : '320px',
+                    background: 'white',
+                    borderLeft: '1px solid #e2e8f0',
+                    boxShadow: '-4px 0 16px rgba(15,23,42,0.08)',
+                    zIndex: 999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    animation: 'legalLensSidebarSlideIn 0.2s ease-out'
+                  }}
+                >
+                  <div style={{
+                    padding: '0.875rem 1rem',
+                    borderBottom: '1px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: '#f8fafc'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                      <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>Deine Markierungen</strong>
+                      <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
+                        {pdfMarkerCountsForSidebar.green > 0 && <span>🟢 {pdfMarkerCountsForSidebar.green}</span>}
+                        {pdfMarkerCountsForSidebar.orange > 0 && <span>🟡 {pdfMarkerCountsForSidebar.orange}</span>}
+                        {pdfMarkerCountsForSidebar.red > 0 && <span>🔴 {pdfMarkerCountsForSidebar.red}</span>}
+                        {pdfMarkerCountsForSidebar.blue > 0 && <span>🔵 {pdfMarkerCountsForSidebar.blue}</span>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowMarkerSidebar(false)}
+                      style={{
+                        border: 'none', background: 'transparent', cursor: 'pointer',
+                        padding: '0.25rem', borderRadius: '4px', color: '#64748b',
+                        display: 'flex', alignItems: 'center'
+                      }}
+                      title="Schließen"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
+                    {[...pdfMarkers]
+                      .sort((a, b) => {
+                        if (a.page !== b.page) return a.page - b.page;
+                        return (a.spanIndices?.[0] ?? 0) - (b.spanIndices?.[0] ?? 0);
+                      })
+                      .map((marker, idx) => {
+                        const colorMap = { green: '#16a34a', orange: '#d97706', red: '#dc2626', blue: '#2563eb' };
+                        const labelMap = { green: 'Akzeptiert', orange: 'Verhandeln', red: 'Ablehnen', blue: 'Notiz' };
+                        const accent = colorMap[marker.color] || '#64748b';
+                        const snippet = (marker.textSnippet || '').replace(/\s+/g, ' ').trim();
+                        const snippetShort = snippet.length > 70 ? snippet.slice(0, 67) + '…' : snippet;
+                        return (
+                          <button
+                            key={marker.id}
+                            onClick={() => scrollToMarker(marker)}
+                            style={{
+                              display: 'block', width: '100%', textAlign: 'left',
+                              padding: '0.625rem 0.75rem',
+                              marginBottom: '0.375rem',
+                              border: '1px solid #e2e8f0',
+                              borderLeft: `3px solid ${accent}`,
+                              borderRadius: '6px',
+                              background: 'white',
+                              cursor: 'pointer',
+                              transition: 'background 0.15s, border-color 0.15s'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'white'; }}
+                            title={`Springe zu Seite ${marker.page}`}
+                          >
+                            <div style={{
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                              marginBottom: '0.25rem'
+                            }}>
+                              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: accent, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                                {labelMap[marker.color]}
+                              </span>
+                              <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                                S. {marker.page} · #{idx + 1}
+                              </span>
+                            </div>
+                            {snippetShort && (
+                              <div style={{ fontSize: '0.8rem', color: '#475569', fontStyle: 'italic', marginBottom: marker.note ? '0.25rem' : 0 }}>
+                                „{snippetShort}"
+                              </div>
+                            )}
+                            {marker.note && (
+                              <div style={{ fontSize: '0.78rem', color: '#0f172a', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                {marker.note.length > 100 ? marker.note.slice(0, 97) + '…' : marker.note}
+                              </div>
+                            )}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </aside>
+              </>
+            )}
           </div>
         )}
 
@@ -3697,134 +3809,6 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         contractName={contractName}
       />
 
-      {/* Sub-Phase 6: Sidebar "Deine Markierungen" — data-sub-phase-6-sidebar */}
-      {showMarkerSidebar && viewMode === 'pdf' && (
-        <>
-          {/* Backdrop nur auf Mobile (Vollbild-Overlay) */}
-          {isMobile && (
-            <div
-              onClick={() => setShowMarkerSidebar(false)}
-              style={{
-                position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.4)', zIndex: 998
-              }}
-            />
-          )}
-          <aside
-            style={{
-              position: 'fixed',
-              top: isMobile ? 0 : '120px',
-              right: 0,
-              bottom: 0,
-              width: isMobile ? '100%' : '320px',
-              background: 'white',
-              borderLeft: '1px solid #e2e8f0',
-              boxShadow: '-4px 0 16px rgba(15,23,42,0.08)',
-              zIndex: 999,
-              display: 'flex',
-              flexDirection: 'column',
-              animation: 'legalLensSidebarSlideIn 0.2s ease-out'
-            }}
-          >
-            {/* Header */}
-            <div style={{
-              padding: '0.875rem 1rem',
-              borderBottom: '1px solid #e2e8f0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: '#f8fafc'
-            }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>Deine Markierungen</strong>
-                <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem', color: '#64748b' }}>
-                  {pdfMarkerCountsForSidebar.green > 0 && <span>🟢 {pdfMarkerCountsForSidebar.green}</span>}
-                  {pdfMarkerCountsForSidebar.orange > 0 && <span>🟡 {pdfMarkerCountsForSidebar.orange}</span>}
-                  {pdfMarkerCountsForSidebar.red > 0 && <span>🔴 {pdfMarkerCountsForSidebar.red}</span>}
-                  {pdfMarkerCountsForSidebar.blue > 0 && <span>🔵 {pdfMarkerCountsForSidebar.blue}</span>}
-                </div>
-              </div>
-              <button
-                onClick={() => setShowMarkerSidebar(false)}
-                style={{
-                  border: 'none', background: 'transparent', cursor: 'pointer',
-                  padding: '0.25rem', borderRadius: '4px', color: '#64748b',
-                  display: 'flex', alignItems: 'center'
-                }}
-                title="Schließen"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Liste */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
-              {pdfMarkers.length === 0 ? (
-                <div style={{
-                  padding: '2rem 1rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.875rem'
-                }}>
-                  Noch keine Markierungen.<br />
-                  Wähle einen Modus oben und markiere Stellen im PDF.
-                </div>
-              ) : (
-                [...pdfMarkers]
-                  .sort((a, b) => {
-                    if (a.page !== b.page) return a.page - b.page;
-                    return (a.spanIndices?.[0] ?? 0) - (b.spanIndices?.[0] ?? 0);
-                  })
-                  .map((marker, idx) => {
-                    const colorMap = { green: '#16a34a', orange: '#d97706', red: '#dc2626', blue: '#2563eb' };
-                    const labelMap = { green: 'Akzeptiert', orange: 'Verhandeln', red: 'Ablehnen', blue: 'Notiz' };
-                    const accent = colorMap[marker.color] || '#64748b';
-                    const snippet = (marker.textSnippet || '').replace(/\s+/g, ' ').trim();
-                    const snippetShort = snippet.length > 70 ? snippet.slice(0, 67) + '…' : snippet;
-                    return (
-                      <button
-                        key={marker.id}
-                        onClick={() => scrollToMarker(marker)}
-                        style={{
-                          display: 'block', width: '100%', textAlign: 'left',
-                          padding: '0.625rem 0.75rem',
-                          marginBottom: '0.375rem',
-                          border: '1px solid #e2e8f0',
-                          borderLeft: `3px solid ${accent}`,
-                          borderRadius: '6px',
-                          background: 'white',
-                          cursor: 'pointer',
-                          transition: 'background 0.15s, border-color 0.15s'
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#f8fafc'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'white'; }}
-                        title={`Springe zu Seite ${marker.page}`}
-                      >
-                        <div style={{
-                          display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-                          marginBottom: '0.25rem'
-                        }}>
-                          <span style={{ fontSize: '0.7rem', fontWeight: 600, color: accent, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                            {labelMap[marker.color]}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                            S. {marker.page} · #{idx + 1}
-                          </span>
-                        </div>
-                        {snippetShort && (
-                          <div style={{ fontSize: '0.8rem', color: '#475569', fontStyle: 'italic', marginBottom: marker.note ? '0.25rem' : 0 }}>
-                            „{snippetShort}"
-                          </div>
-                        )}
-                        {marker.note && (
-                          <div style={{ fontSize: '0.78rem', color: '#0f172a', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                            {marker.note.length > 100 ? marker.note.slice(0, 97) + '…' : marker.note}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })
-              )}
-            </div>
-          </aside>
-        </>
-      )}
 
       {/* Celebration Overlay */}
       {showCelebration && (
