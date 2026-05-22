@@ -2804,7 +2804,7 @@ const checkForDuplicate = async (fileHash, userId) => {
     console.warn("⚠️ Duplicate check not available - skipping");
     return null;
   }
-  
+
   try {
     const { contractsCollection } = await getMongoCollections();
     const existingContract = await contractsCollection.findOne({
@@ -2817,6 +2817,56 @@ const checkForDuplicate = async (fileHash, userId) => {
     return null;
   }
 };
+
+// 🔒 Stufe 3 (22.05.2026): In-Flight-Lock-Helper für analysis_locks Collection.
+// Verhindert dass parallele Pipelines für die gleiche (userId, fileHash)-Kombi
+// starten — z.B. bei Doppelklick oder Frontend-Bug. TTL-Index sorgt für
+// automatischen Cleanup nach 10 Min (Safety-Net falls Backend mitten in Pipeline crasht).
+let _analysisLocksIndexEnsured = false;
+async function ensureAnalysisLocksIndex(db) {
+  if (_analysisLocksIndexEnsured) return;
+  try {
+    const col = db.collection('analysis_locks');
+    await col.createIndex(
+      { startedAt: 1 },
+      { expireAfterSeconds: 600, name: 'idx_analysis_lock_ttl' } // 10 Min auto-cleanup
+    );
+    await col.createIndex(
+      { userId: 1, fileHash: 1 },
+      { name: 'idx_analysis_lock_lookup' }
+    );
+    _analysisLocksIndexEnsured = true;
+    console.log(`✅ [analysis_locks] TTL (600s) + lookup indexes ensured`);
+  } catch (idxErr) {
+    // Non-fatal: bei Index-Error läuft Lock-Logik trotzdem, nur ohne TTL-Auto-Cleanup
+    console.warn(`⚠️ [analysis_locks] Index ensure fehlgeschlagen (non-fatal): ${idxErr.message}`);
+  }
+}
+
+async function acquireAnalysisLock(db, userId, fileHash, requestId) {
+  await ensureAnalysisLocksIndex(db);
+  const col = db.collection('analysis_locks');
+  const existing = await col.findOne({ userId, fileHash });
+  if (existing) {
+    const ageSec = Math.floor((Date.now() - new Date(existing.startedAt).getTime()) / 1000);
+    return { acquired: false, existing, ageSec };
+  }
+  await col.insertOne({ userId, fileHash, requestId, startedAt: new Date() });
+  console.log(`🔒 [${requestId}] In-Flight-Lock acquired (userId, fileHash=${fileHash.substring(0,12)})`);
+  return { acquired: true };
+}
+
+async function releaseAnalysisLock(db, userId, fileHash, requestId) {
+  try {
+    const result = await db.collection('analysis_locks').deleteOne({ userId, fileHash });
+    if (result.deletedCount > 0) {
+      console.log(`🔓 [${requestId}] In-Flight-Lock released`);
+    }
+  } catch (releaseErr) {
+    // Non-fatal: TTL-Index räumt nach 10 Min auf
+    console.warn(`⚠️ [${requestId}] Lock-Release fehlgeschlagen (TTL übernimmt): ${releaseErr.message}`);
+  }
+}
 
 /**
  * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - WITH PROVIDER DETECTION & AUTO-RENEWAL
@@ -3169,6 +3219,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   let incrementedUserId = null;
   let usersCollectionRef = null;
 
+  // 🔒 Stufe 3 (22.05.2026): In-Flight-Lock-State für Doppelklick-Schutz
+  let lockAcquired = false;
+  let lockUserId = null;
+  let lockFileHash = null;
+
   // 🛑 Stufe 2 (22.05.2026): Abort-Handler bei Client-Disconnect (Browser zu,
   // Render-Proxy-Abbruch, Netz weg). Stoppt Pipeline, setzt Counter zurück,
   // schützt Calendar. Verhindert Geld-Burn nach Stufe 1 (Retry-Disable) auch
@@ -3408,6 +3463,32 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       }
     } else {
       console.log(`⚠️ [${requestId}] Duplicate check skipped (not available)`);
+    }
+
+    // 🔒 Stufe 3 (22.05.2026): In-Flight-Lock — verhindert parallele Pipelines
+    // für gleiche (userId, fileHash). Schutz gegen Doppelklick / Frontend-Bug.
+    // Bei existierendem Lock: 409 Conflict. TTL-Index räumt Locks nach 10 Min auf.
+    try {
+      const lockResult = await acquireAnalysisLock(db, req.user.userId, fileHash, requestId);
+      if (!lockResult.acquired) {
+        console.warn(`🔒 [${requestId}] Pipeline für gleiche Datei läuft bereits (Alter: ${lockResult.ageSec}s, requestId: ${lockResult.existing.requestId})`);
+        // Listener cleanup (kein Pipeline-Start)
+        req.removeListener('close', handleClientClose);
+        return res.status(409).json({
+          success: false,
+          error: 'ANALYSIS_IN_PROGRESS',
+          message: 'Eine Analyse für diese Datei läuft bereits. Bitte warte einen Moment und versuche es erneut.',
+          runningRequestId: lockResult.existing.requestId,
+          ageSec: lockResult.ageSec,
+          requestId
+        });
+      }
+      lockAcquired = true;
+      lockUserId = req.user.userId;
+      lockFileHash = fileHash;
+    } catch (lockErr) {
+      // Lock-Failure ist non-fatal: Pipeline läuft trotzdem (kein User-Vorteil-Verlust)
+      console.warn(`⚠️ [${requestId}] In-Flight-Lock konnte nicht gesetzt werden (Pipeline läuft trotzdem): ${lockErr.message}`);
     }
 
     // Parse document content first (PDF or DOCX)
@@ -4749,6 +4830,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   } finally {
     // 🛑 Stufe 2: Listener-Cleanup (idempotent, sicher auch wenn schon entfernt)
     req.removeListener('close', handleClientClose);
+
+    // 🔒 Stufe 3: Lock-Release (immer, auch bei Error)
+    if (lockAcquired && lockUserId && lockFileHash) {
+      try {
+        const dbConn = await database.connect();
+        await releaseAnalysisLock(dbConn, lockUserId, lockFileHash, requestId);
+      } catch (releaseErr) {
+        // Non-fatal: TTL-Index räumt nach 10 Min auf
+        console.warn(`⚠️ [${requestId}] Lock-Release in finally fehlgeschlagen: ${releaseErr.message}`);
+      }
+    }
 
     // Final cleanup: Delete local file if S3 upload was successful
     if (cleanupLocalFile && req.file && req.file.path && fsSync.existsSync(req.file.path)) {
