@@ -3,9 +3,10 @@
  * Unterstützt Inline-Editing per Doppelklick
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { BlockContent, useContractBuilderStore } from '../../../stores/contractBuilderStore';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { BlockContent, useContractBuilderStore, Variable } from '../../../stores/contractBuilderStore';
 import { VariableHighlight } from '../Variables/VariableHighlight';
+import { resolveSmartVariable } from '../../../utils/smartVariables';
 import { User, Building2, Mail, Phone, FileText } from 'lucide-react';
 import styles from './PartiesBlock.module.css';
 
@@ -45,6 +46,25 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
   };
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
+  const variables = useContractBuilderStore((state) => state.document?.content.variables ?? []);
+
+  // Variablen-Werte als Map für Auflösung in hasRealValue (analog zu VariableHighlight).
+  // Variablen ohne Wert (undefined / '') werden nicht in die Map aufgenommen — damit
+  // wird ein Platzhalter mit leerer Variable korrekt als „nicht real" erkannt.
+  const variableValuesMap = useMemo(() => {
+    const map = new Map<string, string | number>();
+    variables.forEach((v: Variable) => {
+      if (v.value !== undefined && v.value !== '') {
+        const cleanName = v.name.replace(/^\{\{|\}\}$/g, '');
+        if (v.value instanceof Date) {
+          map.set(cleanName, v.value.toLocaleDateString('de-DE'));
+        } else {
+          map.set(cleanName, v.value);
+        }
+      }
+    });
+    return map;
+  }, [variables]);
 
   const [editingField, setEditingField] = useState<EditingField>(null);
   const [editValue, setEditValue] = useState('');
@@ -127,11 +147,22 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
     );
   };
 
-  // Prüft ob ein Feld einen echten Wert hat (nicht leer, kein Platzhalter, kein "-")
+  // Prüft ob ein Feld einen echten Wert hat (nicht leer, kein Platzhalter ohne Wert, kein "-").
+  // Variable-Platzhalter `{{name}}` werden über `resolveSmartVariable` aufgelöst — damit gilt
+  // ein Platzhalter als „real", wenn die referenzierte Variable im Store einen Wert hat. Dadurch
+  // bleibt die Vorschau konsistent zum Editor (der den Wert via VariableHighlight bereits anzeigt).
   const hasRealValue = (value: string | undefined): boolean => {
     if (!value || !value.trim()) return false;
-    if (value.trim() === '-' || value.trim() === '–') return false;
-    if (/^\{\{.*\}\}$/.test(value.trim())) return false; // Variable-Platzhalter
+    const trimmed = value.trim();
+    if (trimmed === '-' || trimmed === '–') return false;
+
+    const placeholderMatch = trimmed.match(/^\{\{([^}]+)\}\}$/);
+    if (placeholderMatch) {
+      const varName = placeholderMatch[1].trim();
+      const resolved = resolveSmartVariable(varName, variableValuesMap);
+      return resolved.value !== null && resolved.value !== '';
+    }
+
     return true;
   };
 
