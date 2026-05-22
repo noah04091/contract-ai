@@ -351,8 +351,18 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   });
 
   const migrationDoneRef = useRef(false);
+  // Verhindert dass spätere setProgress-Calls (markAsReviewed/addNote/etc) den lokalen
+  // Decision-State mit dem alten Server-Stand aus progress.decisions überschreiben.
+  // Initial-Sync läuft EINMAL pro contractId, danach ist clauseDecisions Source of Truth.
+  const initialDecisionsSyncedRef = useRef(false);
+  useEffect(() => {
+    initialDecisionsSyncedRef.current = false;
+    migrationDoneRef.current = false;
+  }, [contractId]);
   useEffect(() => {
     if (!contractId || !progress) return;
+    if (initialDecisionsSyncedRef.current) return;
+    initialDecisionsSyncedRef.current = true;
     const serverDecisions = progress.decisions || [];
     if (serverDecisions.length > 0) {
       const next: Record<string, ClauseDecision> = {};
