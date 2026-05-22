@@ -22,6 +22,34 @@ const MARKER_LABELS = {
 const MARKER_OPACITY = 0.25; // Highlighter-Light wie Frontend
 
 /**
+ * pdf-lib's Standard-Fonts (Helvetica) nutzen WinAnsi (CP-1252). Unicode-Zeichen
+ * außerhalb dieses Sets crashen das Encoding (z.B. U+2212 −, Pfeile, Emojis).
+ * Diese Funktion mappt häufige Troublemaker und ersetzt nicht-darstellbare Zeichen
+ * durch "?".
+ */
+function sanitizeForWinAnsi(text) {
+  if (!text) return '';
+  return String(text)
+    // Math/typography
+    .replace(/−/g, '-')   // minus sign
+    .replace(/→/g, '->')  // right arrow
+    .replace(/←/g, '<-')  // left arrow
+    .replace(/↔/g, '<->') // left-right arrow
+    .replace(/⇒/g, '=>')  // double right arrow
+    .replace(/⇐/g, '<=')  // double left arrow
+    .replace(/ /g, ' ')   // non-breaking space
+    .replace(/ /g, ' ')   // narrow no-break space
+    .replace(/ /g, ' ')   // thin space
+    .replace(/​/g, '')    // zero-width space
+    .replace(/‌/g, '')    // zero-width non-joiner
+    .replace(/‍/g, '')    // zero-width joiner
+    .replace(/﻿/g, '')    // BOM
+    // Replace anything outside WinAnsi-safe ranges with "?"
+    // Safe: 0x20-0x7E (ASCII), 0xA0-0xFF (Latin-1), plus WinAnsi-spezifische 0x80-0x9F-Mappings
+    .replace(/[^\x20-\x7E\xA0-\xFF€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ\n\r\t]/g, '?');
+}
+
+/**
  * Annotiert ein PDF mit Marker-Highlights und einer separaten Notiz-Übersichtsseite
  * am Ende. Notizen liegen NICHT mehr über dem Text — Original-Layout unverändert.
  *
@@ -201,10 +229,10 @@ function addNotesPages(pdfLibDoc, markersWithNotes, font, fontBold) {
   for (const { marker, globalIndex } of markersWithNotes) {
     const color = MARKER_COLORS[marker.color] || MARKER_COLORS.green;
     const label = MARKER_LABELS[marker.color] || '';
-    const snippet = (marker.textSnippet || '').replace(/\s+/g, ' ').trim();
+    const snippet = sanitizeForWinAnsi((marker.textSnippet || '').replace(/\s+/g, ' ').trim());
     const truncatedSnippet = snippet.length > 130 ? snippet.slice(0, 127) + '…' : snippet;
 
-    const noteText = marker.note.trim();
+    const noteText = sanitizeForWinAnsi(marker.note.trim());
     const wrappedNote = wrapText(noteText, font, NOTE_SIZE, CONTENT_WIDTH - 32);
 
     // Höhe vorberechnen für Seitenumbruch
