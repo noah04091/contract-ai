@@ -1424,7 +1424,7 @@ const PlaybookReview: React.FC = () => {
             const currentData = isExpanded && editingRule ? editingRule : rule;
 
             return (
-              <div key={ruleId} className={`${styles.ruleCard} ${isExpanded ? (isEditMode ? styles.ruleCardExpanded : styles.ruleCardExpandedView) : ''}`}>
+              <div key={ruleId} data-rule-id={rule._id || ''} className={`${styles.ruleCard} ${isExpanded ? (isEditMode ? styles.ruleCardExpanded : styles.ruleCardExpandedView) : ''}`}>
                 {/* Klickbarer Header */}
                 <div
                   className={styles.ruleHeader}
@@ -1797,8 +1797,27 @@ const PlaybookReview: React.FC = () => {
                             className={styles.copyBtn}
                             style={{ padding: '0.15rem 0.5rem', fontSize: '0.75rem' }}
                             onClick={() => {
-                              navigate(`/playbook-review/${pbId}`);
-                              toast.success('Regel öffnen und Soll-Formulierung ergänzen');
+                              if (!selectedPlaybook) {
+                                toast.error('Playbook noch nicht geladen — bitte kurz warten');
+                                return;
+                              }
+                              const rule = selectedPlaybook.rules.find(
+                                r => r._id && c.ruleId && r._id.toString() === c.ruleId.toString()
+                              );
+                              if (!rule || !rule._id) {
+                                toast.error('Regel nicht im Playbook gefunden');
+                                return;
+                              }
+                              setView('detail');
+                              setIsEditMode(true);
+                              setExpandedRuleId(rule._id);
+                              setEditingRule({ ...rule });
+                              setIsRuleDirty(false);
+                              // Sanft zur Regel scrollen nach Render
+                              setTimeout(() => {
+                                const el = document.querySelector(`[data-rule-id="${rule._id}"]`);
+                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                              }, 100);
                             }}
                           >
                             <Edit3 size={12} /> Regel öffnen
