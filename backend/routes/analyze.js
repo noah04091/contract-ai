@@ -4042,14 +4042,16 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             console.warn(`⚠️ [${requestId}] findOne lieferte null nach Update — nutze existingContract als Fallback für Calendar-Sync`);
           }
           const contractForCalendar = updatedContract || existingContract;
-          // 🛡️ Calendar-Guard (20.05.2026): Nur bei echten CONTRACTs Events
-          // (re-)generieren. Bei INVOICE/RECEIPT/TABLE_DOCUMENT etc. erzeugt
-          // generateEventsForContract sonst Phantom-„Vertragsende"-Termine.
-          if (validationResult.documentType === 'CONTRACT') {
+          // 🛡️ Calendar-Guard (22.05.2026): CONTRACT + TABLE_DOCUMENT + FINANCIAL_DOCUMENT
+          // erhalten Calendar-Events. Bei TABLE/FINANCIAL sind Datums (Stichtag, Bilanz-
+          // Frist, Einspruchsfrist etc.) durchaus relevant. Bei INVOICE/RECEIPT/UNKNOWN
+          // bleibt der Guard greifen (Phantom-„Vertragsende"-Termine vermeiden).
+          const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'].includes(validationResult.documentType);
+          if (canCreateEvents) {
             const result = await cleanAndRegenerateAIEvents(db, contractForCalendar);
             console.log(`📅 [${requestId}] Calendar Events regeneriert für ${contractForCalendar.name}: ${result.deleted} alt → ${result.generated} neu${contractForCalendar.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
           } else {
-            console.log(`⏭️ [${requestId}] Calendar-Sync übersprungen — documentType=${validationResult.documentType} (kein CONTRACT)`);
+            console.log(`⏭️ [${requestId}] Calendar-Sync übersprungen — documentType=${validationResult.documentType} (nur CONTRACT/TABLE/FINANCIAL erlaubt)`);
           }
         } catch (eventError) {
           console.warn(`⚠️ [${requestId}] Calendar Events konnten nicht regeneriert werden:`, eventError.message);
@@ -4307,11 +4309,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         console.log(`✅ [${requestId}] New contract saved with FIXED deep lawyer-level analysis: ${savedContract._id} (${validationResult.documentType})`);
         
         // 🆕 CALENDAR EVENTS GENERIEREN FÜR NEUEN CONTRACT
-        // 🛡️ Calendar-Guard (20.05.2026): Nur bei echten CONTRACTs Events erzeugen.
-        // Bei INVOICE/RECEIPT/TABLE_DOCUMENT etc. macht generateEventsForContract sonst
-        // Phantom-Termine („Vertragsende für eine Rechnung").
+        // 🛡️ Calendar-Guard (22.05.2026): CONTRACT + TABLE_DOCUMENT + FINANCIAL_DOCUMENT
+        // erhalten Calendar-Events. Bei TABLE/FINANCIAL sind Datums (Stichtag, Bilanz-
+        // Frist, Einspruchsfrist etc.) durchaus relevant. Bei INVOICE/RECEIPT/UNKNOWN
+        // bleibt der Guard greifen (Phantom-„Vertragsende"-Termine vermeiden).
         try {
-          if (validationResult.documentType === 'CONTRACT') {
+          const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'].includes(validationResult.documentType);
+          if (canCreateEvents) {
             const db = await database.connect();
             const events = await generateEventsForContract(db, savedContract);
             console.log(`📅 Calendar Events generiert für ${savedContract.name}: ${events.length} Events${savedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
@@ -4321,7 +4325,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               severity: e.severity
             })));
           } else {
-            console.log(`⏭️ Calendar Events übersprungen für ${savedContract.name} — documentType=${validationResult.documentType} (kein CONTRACT)`);
+            console.log(`⏭️ Calendar Events übersprungen für ${savedContract.name} — documentType=${validationResult.documentType} (nur CONTRACT/TABLE/FINANCIAL erlaubt)`);
           }
         } catch (eventError) {
           console.warn(`⚠️ Calendar Events konnten nicht generiert werden:`, eventError.message);
