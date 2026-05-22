@@ -578,11 +578,11 @@ const ANALYSIS_LIMITS = {
   FREE_MAX_PDF_PAGES: 50,
   FREE_MAX_INPUT_TOKENS: 20000,      // ~80.000 Zeichen
   // Business-User Limits
-  BUSINESS_MAX_PDF_PAGES: 100,
-  BUSINESS_MAX_INPUT_TOKENS: 40000,  // ~160.000 Zeichen
-  // Enterprise-User Limits
-  ENTERPRISE_MAX_PDF_PAGES: 200,
-  ENTERPRISE_MAX_INPUT_TOKENS: 60000, // ~240.000 Zeichen
+  BUSINESS_MAX_PDF_PAGES: 150,
+  BUSINESS_MAX_INPUT_TOKENS: 70000,  // ~280.000 Zeichen
+  // Enterprise-User Limits — praktisch unbegrenzt für Single-Pass (gpt-4o 128k Context-Window)
+  ENTERPRISE_MAX_PDF_PAGES: 400,
+  ENTERPRISE_MAX_INPUT_TOKENS: 120000, // ~480.000 Zeichen — deckt Darlehensverträge, M&A, Wirtschaftsauskünfte ab
   // Output
   MAX_OUTPUT_TOKENS: 4000,
 };

@@ -95,7 +95,7 @@ const uploadMiddleware = multer({
       cb(null, filename);
     },
   }),
-  limits: { fileSize: 25 * 1024 * 1024 }, // ✅ 25 MB limit (matches frontend validation)
+  limits: { fileSize: 50 * 1024 * 1024 }, // ✅ 50 MB limit (angeglichen mit analyze.js für 400-Seiten-Enterprise-Verträge)
 });
 
 /**

@@ -1051,7 +1051,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Was passiert bei sehr langen Verträgen?',
-      answer: 'Kein Problem! Contract AI analysiert Verträge bis zu 200 Seiten. Bei sehr langen Dokumenten kann die Analyse 2-3 Minuten dauern. Die Qualität bleibt gleich hoch. Bei Verträgen über 200 Seiten empfehlen wir, sie in Teildokumente aufzuteilen.',
+      answer: 'Kein Problem! Contract AI analysiert Verträge bis zu 400 Seiten (Enterprise), 150 Seiten (Business) oder 50 Seiten (Free). Bei sehr langen Dokumenten kann die Analyse 2-3 Minuten dauern. Die Qualität bleibt gleich hoch. Bei Verträgen über dem Plan-Limit empfehlen wir, sie in Teildokumente aufzuteilen oder ein höheres Abo zu wählen.',
       category: 'technical'
     },
     {
