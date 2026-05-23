@@ -908,13 +908,26 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         {expandedSections.has('moreAlternatives') && (
           <>
             {alternatives.length === 0 && !isGeneratingAlternatives && (
-              <button
-                className={styles.actionButton}
-                onClick={(e) => { e.stopPropagation(); onLoadAlternatives(); }}
-                style={{ marginTop: '0.5rem' }}
-              >
-                Generieren
-              </button>
+              <>
+                <button
+                  className={styles.actionButton}
+                  onClick={(e) => { e.stopPropagation(); onLoadAlternatives(); }}
+                  style={{ marginTop: '0.5rem' }}
+                >
+                  Generieren
+                </button>
+                {originalClauseText && originalClauseText.length > 5000 && (
+                  <p style={{
+                    fontSize: '0.75rem',
+                    color: '#64748b',
+                    marginTop: '0.5rem',
+                    fontStyle: 'italic',
+                    lineHeight: 1.5
+                  }}>
+                    💡 Diese Klausel ist sehr umfangreich. Für ganzheitliche Empfehlungen eignen sich die <strong>Verhandlungstipps &amp; E-Mail-Vorlage</strong> oft besser als komplette Umformulierungen.
+                  </p>
+                )}
+              </>
             )}
             {isGeneratingAlternatives ? (
               <div className={styles.loadingOverlay}>

@@ -869,11 +869,17 @@ REGELN:
 
 ${styleInstructions[style]}
 
+WICHTIG zur Vollständigkeit:
+- Die Alternative MUSS die KOMPLETTE Klausel umfassen — nicht nur einen Teil.
+- Hat die Klausel mehrere nummerierte Punkte (1., 2., 3., ...) oder Buchstaben-Aufzählungen (a), b), c), ...), MÜSSEN ALLE in deiner Alternative vorkommen — keiner darf weggelassen werden.
+- Die Länge der Alternative soll proportional zur Original-Klausel sein (kurze Klausel → kurze Alternative, lange Klausel → entsprechend lange Alternative).
+- Verkürze nicht den Inhalt, nur die Formulierung verbessern.
+
 Antworte in diesem JSON-Format:
 {
   "alternatives": [
     {
-      "text": "Die alternative Formulierung der Klausel...",
+      "text": "Die alternative Formulierung der Klausel (vollständig, alle Punkte enthalten)...",
       "benefits": ["Vorteil 1", "Vorteil 2"],
       "difficulty": "easy|medium|hard",
       "explanation": "Warum diese Alternative besser ist"
@@ -888,16 +894,18 @@ Antworte in diesem JSON-Format:
           { role: 'system', content: systemPrompt },
           {
             role: 'user',
-            content: `Generiere ${count} bessere Alternativen für diese Klausel:\n\n"${clauseText}"`
+            content: `Generiere ${count} bessere Alternativen für diese Klausel. Achte darauf, dass jede Alternative die KOMPLETTE Klausel mit ALLEN Punkten umfasst:\n\n"${clauseText}"`
           }
         ],
         response_format: { type: 'json_object' },
         temperature: 0.5,
-        // 2026-05-13: 1000 → 2500. Bei langen Klauseln (>1500 chars) brach
-        // GPT die JSON-Antwort mitten in der 2. Alternative ab → Parse-Error.
-        // 2 Alt × ~900 Tokens + JSON-Overhead + Puffer = 2500 sicher.
-        max_tokens: 2500
-      }, { timeout: 30000 });
+        // 2026-05-23: 2500 → 6000. Bei großen Klauseln (z.B. mehrseitige
+        // Darlehensbedingungen mit 19 nummerierten Punkten) reichten 2500
+        // Tokens nicht für vollständige Alternativen — GPT lieferte nur
+        // den ersten Punkt. 6000 erlaubt 2 vollständige Alternativen
+        // bis ~10k Zeichen Original. GPT-4o-Limit: 16k, also weiter Puffer.
+        max_tokens: 6000
+      }, { timeout: 60000 });
 
       const result = safeParseJSON(response.choices[0].message.content, 'generateAlternatives');
 
