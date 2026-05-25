@@ -2006,12 +2006,11 @@ A. **documentCharacterization** (Object, PFLICHTFELD):
       Beispiele: "Mustervertrag (Vorlage, Parteien noch nicht ausgefüllt)" |
                  "Vorvertrag (Letter of Intent, kein bindender Hauptvertrag)" |
                  "Term Sheet als Verhandlungsgrundlage" |
-                 "Aktiver, beidseitig unterzeichneter Mietvertrag" |
-                 "Hybridzustand: teilweise unterzeichnet, einzelne Klauseln noch leer" |
                  "Side Letter / Anhang zu einem Hauptvertrag" |
                  "Memorandum of Understanding" |
                  "Rechnung mit AGB-Verweis (kein eigenständiger Vertrag)" |
                  "Allgemeine Geschäftsbedingungen (AGB) — keine Individualvereinbarung"
+   → Beschreibe primär den DOKUMENTTYP, nicht den Status. Status (unterzeichnet/Entwurf/aktiv) gehört in completeness, NICHT in description.
    → SEI ECHRLICH: Wenn Parteien fehlen, Unterschrift fehlt, Datum fehlt, Platzhalter im Text stehen → SAGE DAS!
    → rationale: konkrete Belege ("Felder '[NAME]' und '____' im Header", "kein Unterschriftenblock am Ende", "explizit als 'Muster' bezeichnet")
 
@@ -2023,8 +2022,22 @@ B. **completeness** (Object, PFLICHTFELD):
    }
    → Prüfe inhaltlich: Sind alle für DIESEN Dokumenttyp essenziellen Elemente ausgefüllt?
    → KEINE starre Checkliste — beurteile relativ zu dem, was das Dokument zu sein vorgibt
-   → Beispiel komplett: { "isComplete": true, "observation": "Alle Parteien benannt, Datum vorhanden, beidseitig unterzeichnet, alle Konditionen ausgefüllt", "openItems": [] }
-   → Beispiel unvollständig: { "isComplete": false, "observation": "Mustervertrag — Lieferanten-Adresse, Unterschriften und Datum fehlen", "openItems": ["Adresse Supplier", "Unterschriftenblock", "Vertragsdatum"] }
+   → Beispiel komplett: { "isComplete": true, "observation": "Alle Parteien benannt, Datum vorhanden, Unterschriftenblock am Dokumentende vorhanden, alle Konditionen ausgefüllt", "openItems": [] }
+   → Beispiel unvollständig: { "isComplete": false, "observation": "Mustervertrag — Lieferanten-Adresse, Unterschriftenblock und Datum fehlen", "openItems": ["Adresse Supplier", "Unterschriftenblock", "Vertragsdatum"] }
+
+⚠️ KONSISTENZ-PFLICHT (NICHT VERHANDELBAR):
+   - documentCharacterization.description und completeness.observation MÜSSEN sich gegenseitig stützen, niemals widersprechen.
+   - Wenn completeness sagt "Unterschrift fehlt" → description darf NICHT "unterzeichnet" / "aktiver Vertrag" enthalten.
+   - Wenn description "Mustervertrag" sagt → completeness.isComplete MUSS false sein.
+   - Prüfe vor dem Ausgeben: Stimmen beide Felder überein? Falls nein → korrigiere die schwächer belegte Aussage.
+
+⚠️ EHRLICHKEIT BEI UNSICHEREM UNTERSCHRIFTEN-STATUS:
+   - Handschriftliche Unterschriften sind BILDER, kein Text — sie können aus reiner Textextraktion NICHT zuverlässig erkannt werden.
+   - Bei gescannten PDFs / OCR-Texten / wenn der Unterschriften-Status nicht eindeutig aus dem Text hervorgeht:
+     → NIE pauschal "unterzeichnet" oder "fehlt" behaupten.
+     → Stattdessen formulieren: "Unterschriften-Status aus Textextraktion nicht eindeutig prüfbar — bitte am Originaldokument verifizieren."
+   - Bei klar maschinengeschriebenen Namen unter "Unterschrift:" / Unterschriftenblock im Text → darf als "Unterschriftenblock vorhanden" beschrieben werden (nicht als "unterzeichnet").
+   - Lieber ehrlich unsicher als falsch sicher.
 
 C. **asymmetryAssessment** (Object, PFLICHTFELD bei echten Verträgen):
    Schema: {
