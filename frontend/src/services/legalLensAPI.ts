@@ -1,5 +1,6 @@
 // 📡 legalLensAPI.ts - API Service für Legal Lens Feature
 import { fetchWithAuth, API_BASE_URL } from '../context/authUtils';
+import { handleAuthResponse } from '../utils/api';
 import type {
   ParseContractResponse,
   ParsedClause,
@@ -160,6 +161,7 @@ export function analyzeClauseStreaming(
     signal: controller.signal
   })
     .then(async response => {
+      await handleAuthResponse(response);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Streaming-Fehler');
@@ -698,6 +700,7 @@ export async function exportAnalysisReport(
         signal: controller.signal
       }
     );
+    await handleAuthResponse(response);
   } catch (err) {
     clearTimeout(timeoutId);
     if (err instanceof DOMException && err.name === 'AbortError') {
@@ -827,6 +830,7 @@ export function parseContractStreaming(
           body: JSON.stringify({ contractId }),
           signal: pollController.signal
         });
+        await handleAuthResponse(response);
 
         if (!response.ok) {
           console.warn(`[Legal Lens] Poll ${pollCount}: HTTP ${response.status}`);
@@ -912,6 +916,7 @@ export function parseContractStreaming(
         credentials: 'include',
         signal: controller.signal
       });
+      await handleAuthResponse(response);
 
       if (!response.ok) {
         throw new Error('Streaming-Verbindung fehlgeschlagen');

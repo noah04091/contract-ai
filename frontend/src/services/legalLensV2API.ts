@@ -6,6 +6,7 @@
  */
 
 import { fetchWithAuth, API_BASE_URL } from '../context/authUtils';
+import { handleAuthResponse } from '../utils/api';
 import type {
   AnalysesResponse,
   StatusResponse,
@@ -62,6 +63,7 @@ export async function parseContractStream(contractId: string): Promise<{
       'Authorization': `Bearer ${token}`
     }
   });
+  await handleAuthResponse(response);
 
   if (!response.ok) {
     throw new Error(`Streaming-Parse fehlgeschlagen: ${response.status}`);
@@ -186,6 +188,7 @@ export function startBatchAnalysis(
     signal: controller.signal
   })
     .then(async (response) => {
+      await handleAuthResponse(response);
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Batch-Analyse fehlgeschlagen' }));
         options.onError?.({ error: error.error || `Fehler: ${response.status}` });
@@ -365,6 +368,7 @@ export function analyzeClauseStreaming(
     signal: controller.signal
   })
     .then(async response => {
+      await handleAuthResponse(response);
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Analyse-Fehler' }));
         throw new Error(error.error || `Analyse fehlgeschlagen: ${response.status}`);
