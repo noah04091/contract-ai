@@ -2444,7 +2444,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                       </div>
                     </div>
                     <div className={styles.scorePopoverCurrent}>
-                      Ihr Vertrag: <strong style={{ color: riskStats.overallScore < 30 ? '#10b981' : riskStats.overallScore < 60 ? '#f59e0b' : '#ef4444' }}>{riskStats.overallScore}/100</strong>
+                      Dein Vertrag: <strong style={{ color: riskStats.overallScore < 30 ? '#10b981' : riskStats.overallScore < 60 ? '#f59e0b' : '#ef4444' }}>{riskStats.overallScore}/100</strong>
                       {riskStats.overallScore < 30 && ' — Überwiegend unbedenklich'}
                       {riskStats.overallScore >= 30 && riskStats.overallScore < 60 && ' — Einige Klauseln prüfen'}
                       {riskStats.overallScore >= 60 && ' — Mehrere kritische Klauseln'}
@@ -2480,7 +2480,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                         </span>
                       </div>
                       <p className={styles.worstPopoverDesc}>
-                        Diese Klausel hat den höchsten Risiko-Score in Ihrem Vertrag.
+                        Diese Klausel hat den höchsten Risiko-Score in deinem Vertrag.
                         {riskStats.worstScore >= 80 && ' Dringend prüfen — enthält potenziell nachteilige Bedingungen.'}
                         {riskStats.worstScore >= 60 && riskStats.worstScore < 80 && ' Sollte vor Unterzeichnung besprochen werden.'}
                       </p>
@@ -2854,7 +2854,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
                     <span className={styles.emptyIcon}>👆</span>
                     <h3 className={styles.emptyTitle}>Klausel auswählen</h3>
                     <p className={styles.emptyText}>
-                      Tippen Sie auf "Klauseln" und wählen Sie eine Klausel aus.
+                      Tippe auf "Klauseln" und wähle eine Klausel aus.
                     </p>
                   </div>
                 )}
@@ -3783,7 +3783,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               <span className={styles.emptyIcon}>👆</span>
               <h3 className={styles.emptyTitle}>Klausel auswählen</h3>
               <p className={styles.emptyText}>
-                Wählen Sie links eine Klausel aus, um die detaillierte Analyse zu sehen.
+                Wähle links eine Klausel aus, um die detaillierte Analyse zu sehen.
               </p>
             </div>
           )}
@@ -3817,7 +3817,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             <span className={styles.celebrationEmoji}>🎉</span>
             <h3 className={styles.celebrationTitle}>Alle Klauseln geprüft!</h3>
             <p className={styles.celebrationText}>
-              Sie haben {reviewStats?.total} Klauseln durchgesehen. Gut gemacht!
+              Du hast {reviewStats?.total} Klauseln durchgesehen. Gut gemacht!
             </p>
           </div>
           {/* CSS confetti particles */}

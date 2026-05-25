@@ -71,7 +71,7 @@ const INFO_CONTENT = {
     color: '#d97706',
     description: 'Diese Klauseln sind nicht optimal und sollten im Verhandlungsprozess besprochen werden.',
     details: [
-      { label: 'Empfehlung', text: 'Versuchen Sie, bessere Konditionen auszuhandeln', color: '#d97706' },
+      { label: 'Empfehlung', text: 'Versuche, bessere Konditionen auszuhandeln', color: '#d97706' },
       { label: 'Typische Punkte', text: 'Zahlungsfristen, Gewährleistungsdauer, Haftungsgrenzen', color: '#64748b' },
       { label: 'Priorität', text: 'MITTEL - Bei Gelegenheit ansprechen', color: '#d97706' }
     ]
