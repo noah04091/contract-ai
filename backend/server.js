@@ -2452,7 +2452,13 @@ const connectDB = async () => {
     app.use(errorHandler);
 
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, async () => {
+
+    // 🕐 HTTP-Server-Timeouts auf 10 Min setzen (25.05.2026).
+    // Default Node.js: requestTimeout=300s, headersTimeout=60s, keepAlive=5s.
+    // Bei gescannten PDFs braucht Pipeline (OCR + GPT + DateHunt) ~200s — Default
+    // war zu knapp → Render-Proxy schloss Verbindung mit 502 vor Backend-Antwort.
+    // Hier in Express: server gibt 10 Min. Render-Proxy Timeout via render.yaml.
+    const httpServer = app.listen(PORT, async () => {
       logger.info("Server gestartet", { port: PORT, env: process.env.NODE_ENV || 'development' });
       logger.info("Static files serviert", { path: `${API_BASE_URL}/uploads` });
       logger.debug("Server-Konfiguration", { jsonLimit: '50MB' });
@@ -2517,6 +2523,18 @@ const connectDB = async () => {
       console.log(`🚀 1-Klick-Kündigung: /api/cancellations/* (NEW!)`);
       console.log(`✅ REVOLUTIONARY CALENDAR FEATURES ACTIVE!`);
       console.log(`✅ PUPPETEER PDF READY WITH 50MB SUPPORT!`);
+    });
+
+    // 🕐 Timeouts auf 10 Min setzen (25.05.2026) — siehe Begründung oben bei app.listen.
+    // Reihenfolge wichtig: headersTimeout > keepAliveTimeout (Node.js-Anforderung).
+    httpServer.requestTimeout = 600000;    // 10 Min für eingehende Requests
+    httpServer.keepAliveTimeout = 605000;  // 10 Min 5s für Keep-Alive
+    httpServer.headersTimeout = 610000;    // 10 Min 10s für Header-Empfang
+    httpServer.timeout = 600000;           // 10 Min Legacy-Timeout (Backup)
+    logger.info("HTTP-Server-Timeouts gesetzt", {
+      requestTimeout: '10 min',
+      keepAliveTimeout: '10 min 5s',
+      headersTimeout: '10 min 10s'
     });
 
   } catch (err) {

@@ -1,0 +1,23 @@
+# Render Deployment Config — 25.05.2026
+# Notwendig damit Render-Proxy nicht nach ~125s mit 502 abbricht.
+# Gescannte PDFs brauchen mit OCR + GPT + DateHunt ca. 200-240s.
+#
+# Wichtig: Render setzt Worker-Timeout über Header oder Plan-Limits.
+# Falls 502 weiterhin auftritt: Plan-Upgrade nötig (Free hat harten Hard-Cap).
+
+services:
+  - type: web
+    name: contract-ai-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    region: frankfurt  # Nähe zu deutschen Usern
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Express-Server-Timeouts werden in server.js gesetzt:
+      # requestTimeout=600s, keepAliveTimeout=605s, headersTimeout=610s
