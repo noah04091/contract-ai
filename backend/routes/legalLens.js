@@ -31,6 +31,12 @@ const USE_GUIDED_SEGMENTER = process.env.LEGAL_LENS_GUIDED_SEGMENTER === 'true';
 const ClauseAnalysis = require('../models/ClauseAnalysis');
 const LegalLensProgress = require('../models/LegalLensProgress');
 const Contract = require('../models/Contract');
+
+// Whitelist für `perspective`-Werte aus User-Input. Schützt vor Schema-Pollution
+// beim direkten Interpolieren in Mongo-Pfade (perspectives.${perspective}.*).
+// Synchron halten mit ClauseAnalysis.js perspectives-Schema (Z.176-181) und
+// Frontend PerspectiveType (frontend/src/types/legalLens.ts:7).
+const VALID_PERSPECTIVES = ['contractor', 'client', 'neutral', 'worstCase'];
 const { findContractWithOrgAccessMongoose, hasPermission } = require('../utils/orgContractAccess'); // 👥 Org-basierter Zugriff
 const pdfExtractor = require('../services/pdfExtractor');
 const { generateAnalysisReport, getAvailableDesigns, getAvailableSections } = require('../services/legalLens/analysisReportGenerator');
@@ -282,6 +288,7 @@ function generateClauseTextHash(clauseText) {
  */
 async function findCachedAnalysisByHash(clauseTextHash, perspective) {
   if (!clauseTextHash) return null;
+  if (!VALID_PERSPECTIVES.includes(perspective)) return null; // Defense-in-Depth
 
   try {
     const cached = await ClauseAnalysis.findOne({
@@ -1343,6 +1350,10 @@ router.post(
       const { perspective = 'contractor', clauseText, stream = false, industry } = req.body;
       const userId = req.user.userId;
 
+      if (!VALID_PERSPECTIVES.includes(perspective)) {
+        return res.status(400).json({ error: 'INVALID_PERSPECTIVE', message: 'Ungültige Perspektive.' });
+      }
+
       // Ownership-Check: Gehört der Vertrag diesem User?
       const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
       if (!access) {
@@ -1961,6 +1972,10 @@ router.post('/:contractId/progress', verifyToken, async (req, res) => {
     const { clauseId, perspective, totalClauses } = req.body;
     const userId = req.user.userId;
 
+    if (perspective !== undefined && !VALID_PERSPECTIVES.includes(perspective)) {
+      return res.status(400).json({ error: 'INVALID_PERSPECTIVE', message: 'Ungültige Perspektive.' });
+    }
+
     const updateData = {
       updatedAt: new Date()
     };
@@ -2399,6 +2414,10 @@ router.post('/:contractId/negotiation-checklist', verifyToken, async (req, res) 
     const { perspective = 'contractor', forceRegenerate = false } = req.body;
     const userId = req.user.userId;
 
+    if (!VALID_PERSPECTIVES.includes(perspective)) {
+      return res.status(400).json({ error: 'INVALID_PERSPECTIVE', message: 'Ungültige Perspektive.' });
+    }
+
     console.log(`📋 [Legal Lens] Negotiation checklist request for contract: ${contractId} (force: ${forceRegenerate})`);
 
     // Progress laden (enthält Cache)
@@ -2572,6 +2591,10 @@ router.post('/:contractId/checklist-pdf', verifyToken, async (req, res) => {
     const { contractId } = req.params;
     const { perspective = 'contractor' } = req.body;
     const userId = req.user.userId;
+
+    if (!VALID_PERSPECTIVES.includes(perspective)) {
+      return res.status(400).json({ error: 'INVALID_PERSPECTIVE', message: 'Ungültige Perspektive.' });
+    }
 
     console.log(`📄 [Legal Lens] Checklist PDF export for contract: ${contractId}`);
 
@@ -2995,6 +3018,10 @@ router.get('/:contractId/analyses', verifyToken, async (req, res) => {
   const { contractId } = req.params;
   const userId = req.user.userId;
   const { perspective } = req.query;
+
+  if (perspective !== undefined && !VALID_PERSPECTIVES.includes(perspective)) {
+    return res.status(400).json({ error: 'INVALID_PERSPECTIVE', message: 'Ungültige Perspektive.' });
+  }
 
   try {
     // Zugriffsprüfung
