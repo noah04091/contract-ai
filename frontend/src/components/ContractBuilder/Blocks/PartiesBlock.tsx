@@ -172,11 +172,16 @@ export const PartiesBlock: React.FC<PartiesBlockProps> = ({
     // Eindeutige Prefix für Variablen pro Partei
     const prefix = getVariablePrefix(partyNum);
 
-    // Optionale Felder: In Preview/PDF nur anzeigen wenn ausgefüllt
-    const showTaxId = !isPreview || hasRealValue(party.taxId);
-    const showEmail = !isPreview || hasRealValue(party.email);
-    const showPhone = !isPreview || hasRealValue(party.phone);
-    const showAddress = !isPreview || hasRealValue(party.address);
+    // Optionale Felder: In Preview/PDF nur anzeigen wenn ausgefüllt.
+    // Wichtig: party.email/taxId/phone sind im Initial-Template undefined (nur
+    // name+address bekommen Default-Platzhalter). Damit eine via Variablen-Panel
+    // gesetzte Variable trotzdem die Zeile sichtbar macht, fallen wir auf den
+    // Default-Platzhalter zurück — hasRealValue resolvet ihn dann über
+    // resolveSmartVariable. Konsistent mit renderEditableField unten.
+    const showTaxId = !isPreview || hasRealValue(party.taxId || `{{${prefix}_steuer_id}}`);
+    const showEmail = !isPreview || hasRealValue(party.email || `{{${prefix}_email}}`);
+    const showPhone = !isPreview || hasRealValue(party.phone || `{{${prefix}_telefon}}`);
+    const showAddress = !isPreview || hasRealValue(party.address || `{{${prefix}_adresse}}`);
 
     return (
       <div className={styles.partyCard}>
