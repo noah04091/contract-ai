@@ -806,7 +806,9 @@ async function generateEventsForContract(db, contract) {
             contractId: contract._id,
             type: "RENT_ANNIVERSARY",
             title: `🏠 ${yearsRented} Jahre Mietverhältnis: ${contract.name}`,
-            description: `Heute vor ${yearsRented} Jahren begann das Mietverhältnis für "${contract.name}". Zeit für eine Bestandsaufnahme!`,
+            description: jubilaeumDate > now
+              ? `Am ${jubilaeumDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} feierst du das ${yearsRented}-jährige Mietverhältnis für "${contract.name}". Zeit für eine Bestandsaufnahme!`
+              : `Vor ${yearsRented} Jahren begann das Mietverhältnis für "${contract.name}". Zeit für eine Bestandsaufnahme!`,
             date: jubiDate,
             severity: "info",
             status: "scheduled",
