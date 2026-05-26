@@ -350,6 +350,54 @@ const validateImportantDate = (dateObj, contract, requestId) => {
     }
   }
 
+  // 7. Konsistenz-Checks gegen completeness/documentCategory — nur für CONTRACT-Pfade.
+  // INVOICE/RECEIPT/TABLE_DOCUMENT haben kein completeness im Recognition-Sinne,
+  // daher Skip-Guard. Phantom-Filterung greift nur dort wo sie semantisch passt.
+  const skipPlausibilityChecks = ['INVOICE', 'RECEIPT', 'TABLE_DOCUMENT']
+    .includes(contract?.documentType);
+
+  // 7a. contract_signed-Phantom: Wenn KI in completeness/openItems klar sagt
+  // "nicht signiert" ODER OCR-Vorsichts-Floskel ("nicht eindeutig erkennbar"),
+  // dann ist ein "Vertragsunterzeichnung"-Event eine Halluzination.
+  // Safe Default: bei KI-Widerspruch (Confirmation UND Denial gleichzeitig)
+  // gewinnt Denial — Phantom-Events untergraben Vertrauen mehr als ein
+  // unterdrückter echter Event-Hinweis.
+  if (!skipPlausibilityChecks && dateObj.type === 'contract_signed' && contract?.completeness) {
+    const obs = (contract.completeness.observation || '').toLowerCase();
+    const items = Array.isArray(contract.completeness.openItems)
+      ? contract.completeness.openItems.join(' ').toLowerCase()
+      : '';
+    const combined = `${obs} ${items}`;
+
+    const denialPattern = /(nicht|kein(e|er)?|ohne|fehlt|fehlen).{0,30}?(unterzeichn|unterschrift|signatur|signed)/i;
+    const openItemSignature = /(unterschrift|signatur|unterzeichn)/i.test(items);
+    const ocrUncertainty = /nicht eindeutig (erkennbar|pr[üu]fbar)|am original (verifizieren|pr[üu]fen)/i.test(combined);
+    const confirmation = /(unterschriftenblock vorhanden|beidseitig unterzeichnet|alle parteien unterzeichnet|von beiden parteien unterzeichnet)/i.test(combined);
+
+    const hasDenial = denialPattern.test(combined) || openItemSignature || ocrUncertainty;
+    if (hasDenial && !confirmation) {
+      console.log(`⚠️ [${requestId}] importantDate rejected: contract_signed widerspricht completeness (obs="${obs.slice(0, 80)}", openItems matched)`);
+      return { valid: false, reason: 'contract_signed_contradicts_completeness', confidence: 0 };
+    }
+    // Wenn Confirmation UND Denial: Safe Default = reject (KI-Widerspruch, Phantom-Verdacht)
+    if (hasDenial && confirmation) {
+      console.log(`⚠️ [${requestId}] importantDate rejected: contract_signed in KI-Widerspruch (sowohl signiert als auch fehlt)`);
+      return { valid: false, reason: 'contract_signed_ki_self_contradiction', confidence: 0 };
+    }
+  }
+
+  // 7b. end_date in Vergangenheit bei aktivem Vertrag → Phantom-Verdacht.
+  // KEIN Hard-Reject (es könnten legitim historisch dokumentierte Verträge sein),
+  // sondern Konfidenz-Drop auf 30. Das Datum bleibt in importantDates sichtbar,
+  // der Calendar-Generator filtert es (Schwelle 50/60) → kein Phantom-Event.
+  if (!skipPlausibilityChecks
+    && dateObj.type === 'end_date'
+    && date < today
+    && contract?.documentCategory === 'active_contract') {
+    console.log(`⚠️ [${requestId}] importantDate confidence-dropped: end_date ${dateObj.date} in Vergangenheit bei aktivem Vertrag → confidence=30 (kein Event)`);
+    return { valid: true, confidence: 30, parsedDate: date };
+  }
+
   // ✅ Bestimme Konfidenz basierend auf calculated Flag und Typ
   let confidence = 90; // Base für explizit extrahierte Daten
 
@@ -4127,7 +4175,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           legalPulseHooks: result.legalPulseHooks,                    // adaptiv
           detailedLegalOpinion: result.detailedLegalOpinion || '',    // PFLICHT (default ''  ok)
           // 🔒 importantDates werden validiert bevor sie gespeichert werden
-          importantDates: validateAndFilterImportantDates(result.importantDates || [], { startDate: extractedStartDate, expiryDate: extractedEndDate }, requestId)
+          // (completeness + documentCategory + documentType durchgereicht für Phantom-Filterung)
+          importantDates: validateAndFilterImportantDates(result.importantDates || [], {
+            startDate: extractedStartDate,
+            expiryDate: extractedEndDate,
+            completeness: result.completeness,
+            documentCategory: extractedDocumentCategory || 'active_contract',
+            documentType: validationResult.documentType
+          }, requestId)
         };
 
         // 🔧 FIX: Override expiryDate from AI importantDates if available
@@ -4468,7 +4523,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               legalPulseHooks: result.legalPulseHooks,
               detailedLegalOpinion: result.detailedLegalOpinion || '',
               // 🔒 importantDates werden validiert bevor sie gespeichert werden
-              importantDates: validateAndFilterImportantDates(result.importantDates || [], { startDate: extractedStartDate, expiryDate: extractedEndDate }, requestId),
+              // (completeness + documentCategory + documentType durchgereicht für Phantom-Filterung)
+              importantDates: validateAndFilterImportantDates(result.importantDates || [], {
+                startDate: extractedStartDate,
+                expiryDate: extractedEndDate,
+                completeness: result.completeness,
+                documentCategory: extractedDocumentCategory || 'active_contract',
+                documentType: validationResult.documentType
+              }, requestId),
 
               'extraRefs.analysisId': inserted.insertedId,
               'extraRefs.documentType': validationResult.documentType,
