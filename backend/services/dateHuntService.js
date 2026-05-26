@@ -568,6 +568,7 @@ function validateAndCollect(parsed, contractText, source, requestId) {
         label: e.label,
         description: e.description || e.label,
         calculated: !!e.calculated,
+        confidence: typeof e.confidence === 'number' ? e.confidence : 70, // 🆕 Problem F Schritt 1: GPT-Konfidenz durchreichen (Bugfix 26.05. — Feld wurde vorher beim Push verworfen)
         source: e.source || '',
         evidence: e.evidence
       });
