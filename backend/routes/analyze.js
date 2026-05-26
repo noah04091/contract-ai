@@ -1869,7 +1869,7 @@ function resolveAwarenessKey(documentType) {
  * KEINE Checklisten, KEINE Templates - nur individuelle, vertragsspezifische Analyse
  * Flexible Tiefe, Qualität > Quantität
  */
-function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId, maxTokens) {
+function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId, maxTokens, extractionMeta = {}) {
   // Token-Budget für Vertragstext kommt aus dem User-Plan (analyze.js übergibt das
   // plan-basierte Limit). Default 40k = BUSINESS_MAX_INPUT_TOKENS, damit Aufrufer,
   // die das Plan-Limit nicht kennen (z.B. die Edge-Route in contracts.js) trotzdem
@@ -1877,6 +1877,10 @@ function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId, 
   // gpt-4-turbo hat 128k Kontext → 60k Vertrag + ~3k Prompt + ~4k Output = passt locker.
   const tokenBudget = typeof maxTokens === 'number' && maxTokens > 0 ? maxTokens : 40000;
   const optimizedText = optimizeTextForGPT4(text, tokenBudget, requestId);
+
+  // OCR-Kontext: nur aktiv wenn der Text aus Bild-Erkennung stammt (gescannte PDF).
+  // Default greift bei Re-Analyze-Pfaden ohne OCR-Info (contracts.js) → kein Block.
+  const usedOCR = extractionMeta && extractionMeta.usedOCR === true;
 
   // Get contract-type-specific AWARENESS (nicht Checklisten!)
   const awareness = getContractTypeAwareness(documentType);
@@ -1993,7 +1997,19 @@ Alle anderen sind ADAPTIV.
 📊 ANALYSE-STRUKTUR (JSON):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔍 RECOGNITION-FELDER (PFLICHT — IMMER AUSGEBEN):
+${usedOCR ? `⚠️ OCR-KONTEXT (WICHTIG — dieser Text stammt aus Bild-Erkennung):
+─────────────────────────────────────────────
+- Der vorliegende Text wurde aus einem GESCANNTEN PDF per OCR (Texterkennung) extrahiert.
+- Handschriftliche Inhalte (handschriftliche Namen, Adressen, Unterschriften, ausgefüllte Felder) sind für OCR UNSICHTBAR — sie sind Bilder, kein Text.
+- Bei nicht im Text erkennbaren Strukturelementen (z.B. Unterschriftenblock, ausgefüllte Felder) formuliere VORSICHTIG:
+  → in completeness.observation und completeness.openItems: "in der gescannten Vorlage nicht eindeutig erkennbar — bitte am Original verifizieren"
+  → NICHT "fehlt" / "nicht enthalten" / "ist nicht vorhanden" (das wäre eine falsche Tatsachenbehauptung — du weißt nicht, ob es wirklich fehlt oder OCR es nur nicht sehen kann).
+- WICHTIG — Trennung der Felder:
+  → documentCharacterization.description bleibt rein TYP-beschreibend (z.B. "Standard-Mietvertrag", "Werkvertrag", "Rechnung") — KEINE OCR-Hinweise dort.
+  → Die OCR-Vorsichts-Sprache gehört AUSSCHLIESSLICH in completeness.observation / completeness.openItems.
+- Das JSON-Schema bleibt UNVERÄNDERT — keine neuen Felder erfinden, nur Wortwahl anpassen.
+
+` : ''}🔍 RECOGNITION-FELDER (PFLICHT — IMMER AUSGEBEN):
 ─────────────────────────────────────────────
 
 A. **documentCharacterization** (Object, PFLICHTFELD):
@@ -2377,7 +2393,9 @@ RICHTIG: "Klausel § 12 Abs. 3 streichen: 'Bei Zahlungsverzug Verzugszinsen i.H.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ${optimizedText}
-
+${usedOCR ? `
+⚠️ ERINNERUNG: Dieser Text stammt aus OCR (gescanntes PDF). Handschriftliche Inhalte sind unsichtbar. Bei nicht erkennbaren Strukturelementen formuliere "in der gescannten Vorlage nicht eindeutig erkennbar — bitte am Original verifizieren" in completeness.observation/openItems (NICHT in documentCharacterization.description, NICHT "fehlt").
+` : ''}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚡ ANTWORT-FORMAT: NUR VALIDES JSON
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3510,7 +3528,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     let pdfData;
     try {
       const extracted = await extractTextFromBuffer(buffer, fileMimetype);
-      pdfData = { text: extracted.text, numpages: extracted.pageCount || 0 };
+      pdfData = { text: extracted.text, numpages: extracted.pageCount || 0, usedOCR: false, ocrConfidence: null };
       console.log(`📄 [${requestId}] Document parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
 
       // OCR-Fallback für gescannte PDFs mit wenig/keinem Text
@@ -3531,6 +3549,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             console.log(`✅ [${requestId}] OCR-Fallback erfolgreich: ${ocrResult.text.length} Zeichen (vorher: ${pdfData.text?.length || 0}), OCR=${ocrResult.usedOCR}`);
             pdfData.text = ocrResult.text;
             pdfData.numpages = ocrResult.quality.pageCount || pdfData.numpages;
+            pdfData.usedOCR = ocrResult.usedOCR === true;
+            pdfData.ocrConfidence = typeof ocrResult.confidence === 'number' ? ocrResult.confidence : null;
           } else if (!pdfData.text || pdfData.text.trim().length === 0) {
             // OCR tried but still no text — return clear error to user
             console.warn(`⚠️ [${requestId}] OCR-Fallback lieferte keinen Text — Scan unleserlich`);
@@ -3572,7 +3592,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             console.log(`✅ [${requestId}] OCR-Last-Resort erfolgreich: ${ocrResult.text.length} Zeichen, OCR=${ocrResult.usedOCR}`);
             pdfData = {
               text: ocrResult.text,
-              numpages: ocrResult.quality?.pageCount || ocrResult.ocrPages || 0
+              numpages: ocrResult.quality?.pageCount || ocrResult.ocrPages || 0,
+              usedOCR: ocrResult.usedOCR === true,
+              ocrConfidence: typeof ocrResult.confidence === 'number' ? ocrResult.confidence : null
             };
             // weiter im normalen Flow — pdfData ist gesetzt
           } else {
@@ -3834,7 +3856,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       promptContractType,
       validationResult.strategy,
       requestId,
-      maxInputTokens
+      maxInputTokens,
+      { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence }
     );
 
     console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document (contractType passed to prompt: ${promptContractType})`);
