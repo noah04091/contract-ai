@@ -299,6 +299,9 @@ const ContractBuilder: React.FC = () => {
         setLastAutoSaved(new Date());
       } catch (error) {
         console.error('[Auto-Save] Fehler:', error);
+        // Silent data loss verhindern — Nutzer muss wissen, dass Auto-Save scheitert,
+        // damit er manuell speichern oder Tab nicht schließen kann.
+        toast.error('Auto-Speichern fehlgeschlagen. Bitte manuell speichern, bevor die Seite geschlossen wird.');
       } finally {
         setIsAutoSaving(false);
       }
@@ -606,6 +609,11 @@ const ContractBuilder: React.FC = () => {
       setSaveSuccess(true);
       // Reset nach 2 Sekunden
       setTimeout(() => setSaveSuccess(false), 2000);
+    } catch (error) {
+      // Vorher: try/finally ohne catch — Save-Fehler propagierte als Unhandled Promise
+      // Rejection, Nutzer sah keinen Hinweis. Jetzt: klare Fehler-Meldung.
+      console.error('[Save] Fehler:', error);
+      toast.error('Speichern fehlgeschlagen. Bitte erneut versuchen.');
     } finally {
       setIsSaving(false);
     }

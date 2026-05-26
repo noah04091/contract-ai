@@ -2433,6 +2433,11 @@ Antworte als JSON:
  */
 router.post('/:id/export/pdf', auth, async (req, res) => {
   try {
+    // Defense-in-Depth: Frontend-Route nutzt nur RequireAuth (kein RequirePremium),
+    // ein Ex-Premium-User mit bestehenden Dokumenten könnte sonst weiter PDFs ziehen.
+    // PDF-Export ist laut Pricing-Seite Business/Enterprise-only.
+    if (!(await checkAiAccess(req, res))) return;
+
     const document = await ContractBuilder.findOne({
       _id: req.params.id,
       userId: req.user.userId
