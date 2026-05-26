@@ -915,10 +915,13 @@ async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) 
 Antworte NUR mit JSON in diesem Format:
 {
   "category": "CONTRACT" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "UNKNOWN",
+  "contractType": "factoring" | "rental" | "employment" | "purchase" | "nda" | "loan" | "service" | "telecom" | "insurance" | "energy" | "agb" | "leasing" | "license" | "avv" | "franchise" | "other" | null,
+  "contractTypeConfidence": 0-1,
   "confidence": 0-1,
   "reason": "kurze Begründung auf Deutsch (1 Satz)"
 }
 
+CATEGORY:
 CONTRACT: alle Verträge & rechtsverbindliche Vereinbarungen — Mietvertrag,
 Arbeitsvertrag, NDA, Kaufvertrag, Factoring, AGB, Versicherungspolice,
 Datenschutzerklärung, Leasing, Kredit, Darlehen, SaaS, Dienstleistung,
@@ -928,10 +931,51 @@ RECEIPT: Quittungen, Belege, Kassenbons.
 TABLE_DOCUMENT: reine Tabellen, Listen, Konditionsblätter ohne Vertragscharakter.
 UNKNOWN: alles andere.
 
+CONTRACTTYPE — REGELN (sehr wichtig):
+- NUR die exakten lowercase-Strings aus der Liste oben verwenden.
+- KEINE Übersetzungen ("Mietvertrag" → "rental", NICHT "miete").
+- KEINE Mehrwort-Begriffe ("Factoring-Rahmenvertrag" → "factoring").
+- KEINE Bindestriche, Umlaute, Großbuchstaben.
+- Bei category != "CONTRACT" → contractType: null.
+- Bei unklarem Vertragstyp (Vertrag, aber Typ unklar) → "other".
+- Bei mehrdeutigen Verträgen: PRIMÄRE Hauptleistung zählt, nicht Anhänge.
+  Beispiel: Werkvertrag mit AGB-Anhang → "service" (AGB ist nur Anhang).
+  Beispiel: Mietvertrag mit Leasing-Klausel → "rental" (Hauptzweck zählt).
+
+DEFINITIONEN:
+- factoring: Forderungsverkauf / Forderungsabtretung (Factoringkunde, Delkredere, Forderungsankauf)
+- rental: Miete/Pacht (Wohnung, Gewerbe, kurzfristige Auto-Miete)
+- leasing: langfristige Nutzungsüberlassung (KFZ-Leasing, Equipment-Leasing)
+- employment: Arbeits-/Dienstvertrag mit Arbeitnehmer
+- purchase: Kaufvertrag (Ware, KFZ, Immobilie)
+- nda: Geheimhaltungsvereinbarung / Vertraulichkeit
+- loan: Darlehen, Kredit, Finanzierung
+- service: Dienstleistung, Werkvertrag, Beauftragung
+- telecom: Mobilfunk, Internet, Festnetz, DSL
+- insurance: Versicherungspolice, -vertrag
+- energy: Strom, Gas, Fernwärme
+- agb: reine Allgemeine Geschäftsbedingungen ohne Hauptvertrag
+- license: Software-/IP-Lizenz, Lizenzvertrag
+- avv: Auftragsverarbeitungsvertrag (Art. 28 DSGVO)
+- franchise: Franchise-Vertrag
+- other: Vertrag, aber Typ passt zu keinem oben
+
+BEISPIELE:
+- "Factoring-Rahmenvertrag zwischen X und Y über Forderungsverkauf" → contractType: "factoring"
+- "Mietvertrag über die Wohnung in der Hauptstraße 5" → contractType: "rental"
+- "Werkvertrag mit angehängten AGB" → contractType: "service" (AGB sind nur Anhang)
+- "Auftragsverarbeitungsvertrag nach Art. 28 DSGVO" → contractType: "avv"
+- "Rechnung vom 15.05.2026 über 1.250 EUR" → category: "INVOICE", contractType: null
+- "Vertrag der nicht klar zuordenbar ist" → contractType: "other"
+
+CONTRACTTYPECONFIDENCE: wie sicher du bei der contractType-Wahl bist (0-1).
+- Bei eindeutigen Hinweisen (explizit "Factoring", "Mietvertrag" im Titel/Text): 0.9-1.0
+- Bei klaren Indizien aber kein expliziter Titel: 0.7-0.9
+- Bei Hybrid-Charakter oder schwacher Evidenz: 0.4-0.6 (Backend wird auf null fallen)
+
 Du erhältst je nach Dokumentlänge bis zu drei Abschnitte: Anfang, ggf. Mitte,
-ggf. Ende. Berücksichtige alle Abschnitte für ein vollständiges Bild — bei
-Verträgen steht der eigentliche Charakter (z.B. Forderungsabtretung beim
-Factoring) oft in der Mitte oder am Ende.
+ggf. Ende. Berücksichtige alle Abschnitte — bei Verträgen steht der eigentliche
+Charakter (z.B. Forderungsabtretung beim Factoring) oft in der Mitte oder am Ende.
 
 Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
         },
@@ -952,6 +996,33 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
       return null;
     }
     const confidence = typeof parsed.confidence === 'number' ? parsed.confidence : 0.7;
+
+    // 🆕 Universal-Detection: contractType-Feld parsen + validieren.
+    // Whitelist verhindert dass GPT freie Strings einschmuggelt (z.B.
+    // "Factoring-Rahmenvertrag" statt "factoring"). Confidence-Gate <0.6 → null
+    // → Backend fällt auf Keyword-Heuristik zurück (Defense-in-Depth).
+    const VALID_CONTRACT_TYPES = new Set([
+      'factoring', 'rental', 'employment', 'purchase', 'nda', 'loan',
+      'service', 'telecom', 'insurance', 'energy', 'agb', 'leasing',
+      'license', 'avv', 'franchise', 'other'
+    ]);
+    let contractType = null;
+    let contractTypeConfidence = 0;
+    if (category === 'CONTRACT' && parsed.contractType != null) {
+      const ctRaw = String(parsed.contractType).toLowerCase().trim();
+      if (VALID_CONTRACT_TYPES.has(ctRaw)) {
+        const ctConf = typeof parsed.contractTypeConfidence === 'number'
+          ? Math.max(0, Math.min(1, parsed.contractTypeConfidence)) : 0;
+        if (ctConf >= 0.6) {
+          contractType = ctRaw;
+          contractTypeConfidence = ctConf;
+        } else {
+          console.log(`📊 [${requestId}] Türsteher 2 contractType-Confidence zu niedrig (${ctConf.toFixed(2)} < 0.6) → null, Keyword-Fallback greift`);
+        }
+      } else {
+        console.warn(`⚠️ [${requestId}] Türsteher 2: ungültiger contractType="${parsed.contractType}" — verwerfe (Whitelist)`);
+      }
+    }
     // Cost-Tracking — Visibility für gpt-4o-mini Klassifikations-Calls (zuvor blind)
     try {
       if (completion.usage) {
@@ -966,8 +1037,8 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
         }).catch(() => { /* tracking failure must never break analysis */ });
       }
     } catch { /* costTracking optional */ }
-    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)}) — ${parsed.reason || 'keine Begründung'}`);
-    return { type: category, confidence, source: 'gpt-4o-mini' };
+    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)})${contractType ? ` | contractType=${contractType} (${contractTypeConfidence.toFixed(2)})` : ''} — ${parsed.reason || 'keine Begründung'}`);
+    return { type: category, confidence, contractType, contractTypeConfidence, source: 'gpt-4o-mini' };
   } catch (err) {
     clearTimeout(timeoutHandle);
     const isAbort = err.name === 'AbortError' || controller.signal.aborted;
@@ -1863,6 +1934,35 @@ Wenn du den Typ nicht identifizieren kannst → sage das offen.`,
 • Manipulationsindizien übersehen (Logo, Briefkopf, Aktenzeichen)`
     },
 
+    // 💼 FACTORING — Erweiterung 26.05.2026 (Problem D, GPT-Detection-Universal)
+    // Forderungskauf / Forderungsmanagement nach § 433 BGB (Rechtskauf) +
+    // Abtretungsvereinbarung § 398 BGB. Spezial-Themen: Delkrederehaftung,
+    // einseitige Konditionsanpassung, Globalzession, Bonitätsprüfung.
+    factoring: {
+      title: "Fachanwalt für Bank- und Factoring-Recht",
+      expertise: `Als Fachanwalt für Bank- und Factoring-Recht mit 20+ Jahren Erfahrung weißt du:
+
+Bei Factoring-Verträgen sind typischerweise relevant: Forderungsabtretung (§ 398 BGB), Bonitätsprüfung des Debitors, Delkrederehaftung (echtes vs. unechtes Factoring), Ankauflimits, Diskontfälligkeit, Rückkauf- oder Rückübertragungsrechte, einseitige Konditionsanpassung, Globalzession-Bestimmtheitserfordernis, Geheimhaltungspflichten (stilles Factoring), Mahnwesen, Bearbeitungsgebühren.
+
+WICHTIG: Echtes Factoring → Factor übernimmt Ausfallrisiko (Delkrederehaftung). Unechtes Factoring → Risiko bleibt beim Factoringkunden. Diese Unterscheidung ist zentral für die Bewertung.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn kein Delkredere drin steht → erwähne nicht spekulativ.
+Wenn der Vertrag detaillierte Konditionen hat → analysiere alle relevanten.`,
+      commonTraps: `Häufige Fallen bei Factoring-Verträgen (falls im Vertrag vorhanden):
+• Einseitige Konditionenänderung ohne außerordentliches Kündigungsrecht (§ 308 Nr. 4 BGB, AGB-Inhaltskontrolle)
+• Versteckter Delkrederehaftungs-Ausschluss bei Inkasso-Forderungen → Risiko bleibt unbeabsichtigt beim Factoringkunden
+• Rückkaufverpflichtung bei Nichtzahlung — überträgt Ausfallrisiko zurück, untergräbt Factoring-Geschäftsmodell
+• Globalzession ohne Bestimmtheitserfordernis (§ 398 BGB) — Abtretung muss bestimmbar sein
+• Lange Kündigungsfristen kombiniert mit Mindestankaufverpflichtung — Kunde bleibt gefangen
+• Pauschale Bearbeitungsgebühren bei Streit / Mahnungen (§ 309 Nr. 5 BGB)
+• Unklare Ankaufkriterien / einseitige Ankaufentscheidung des Factors
+• Diskontfälligkeit unklar definiert oder vor Forderungseingang
+• Bonitätsprüfung als Kündigungsgrund nutzbar (Willkür-Risiko)
+• Geheimhaltungsklauseln bei stillem Factoring zu weit gefasst
+• Aufrechnungs-/Zurückbehaltungsverbote im B2C — unwirksam (§ 309 Nr. 2, 3 BGB)`
+    },
+
     other: {
       title: "Fachanwalt für allgemeines Vertragsrecht",
       expertise: `Als Fachanwalt für allgemeines Vertragsrecht mit 20+ Jahren Erfahrung weißt du:
@@ -2529,32 +2629,55 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       documentType.type === 'INVOICE' ||
       documentType.type === 'RECEIPT';
 
-    if (needsSecondOpinion) {
+    // 🆕 Universal contractType-Detection (Problem D, 26.05.2026):
+    // Türsteher 2 läuft jetzt IMMER bei wahrscheinlichen Verträgen — auch wenn
+    // Heuristik-CONTRACT-Konfidenz hoch ist. Grund: nur Türsteher 2 kann den
+    // feinen Vertragstyp (factoring/leasing/avv/license/franchise/...) semantisch
+    // erkennen. Heuristik-Keyword-Scoring kennt nur 10 fest verdrahtete Typen
+    // und scheitert bei allem darüber hinaus. Cost-Impact: ~$0.077/Monat.
+    const shouldRunForContractType =
+      documentType.type === 'CONTRACT' || documentType.type === 'UNKNOWN';
+
+    if (needsSecondOpinion || shouldRunForContractType) {
       const gptOpinion = await classifyDocumentTypeWithGPT(pdfText, getOpenAI(), requestId);
-      // Threshold 0.75 (vorher 0.7) — konservative Anpassung nach Multi-Sample-
-      // Erweiterung. Mehr Kontext führt zu höheren Confidence-Werten, also
-      // wird auch der Threshold leicht angehoben damit nur klar überzeugende
-      // GPT-Klassifikationen den Heuristik-Output überschreiben.
-      if (gptOpinion && gptOpinion.confidence >= 0.75) {
-        // GPT ist klar → Übernehmen
-        console.log(`✅ [${requestId}] Türsteher 2 übernimmt: ${documentType.type} → ${gptOpinion.type}`);
-        documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence };
-      } else if (
-        // 🎯 UNKNOWN-Erhaltung (20.05.2026 Finding 3) — wenn BEIDE Türsteher
-        // explizit UNKNOWN sagen, behalten wir UNKNOWN (User sieht blauen Banner)
-        // statt blind CONTRACT-Default zu verwenden. Nur bei wirklich beidseitig
-        // bekräftigter Unsicherheit greift dieser Pfad — sonst CONTRACT-Fallback.
-        documentType.type === 'UNKNOWN' &&
-        gptOpinion &&
-        gptOpinion.type === 'UNKNOWN' &&
-        gptOpinion.confidence >= 0.65
-      ) {
-        console.log(`❓ [${requestId}] Beide Türsteher explizit UNKNOWN (T1=${documentType.confidence.toFixed(2)}, T2=${gptOpinion.confidence.toFixed(2)}) → UNKNOWN behalten, blauer Banner im Frontend`);
-        documentType = { type: 'UNKNOWN', confidence: gptOpinion.confidence };
+      // contractType auch dann übernehmen wenn category nicht überschrieben wird.
+      // GPT-contractType wird ans documentType-Objekt gehängt, damit der spätere
+      // extractedContractType-Pfad (Z. 3795+) ihn als Primärquelle nutzen kann.
+      const gptContractType = gptOpinion?.contractType || null;
+      const gptContractTypeConfidence = gptOpinion?.contractTypeConfidence || 0;
+
+      if (needsSecondOpinion) {
+        // Threshold 0.75 (vorher 0.7) — konservative Anpassung nach Multi-Sample-
+        // Erweiterung. Mehr Kontext führt zu höheren Confidence-Werten, also
+        // wird auch der Threshold leicht angehoben damit nur klar überzeugende
+        // GPT-Klassifikationen den Heuristik-Output überschreiben.
+        if (gptOpinion && gptOpinion.confidence >= 0.75) {
+          // GPT ist klar → Übernehmen
+          console.log(`✅ [${requestId}] Türsteher 2 übernimmt: ${documentType.type} → ${gptOpinion.type}`);
+          documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence };
+        } else if (
+          // 🎯 UNKNOWN-Erhaltung (20.05.2026 Finding 3) — wenn BEIDE Türsteher
+          // explizit UNKNOWN sagen, behalten wir UNKNOWN (User sieht blauen Banner)
+          // statt blind CONTRACT-Default zu verwenden. Nur bei wirklich beidseitig
+          // bekräftigter Unsicherheit greift dieser Pfad — sonst CONTRACT-Fallback.
+          documentType.type === 'UNKNOWN' &&
+          gptOpinion &&
+          gptOpinion.type === 'UNKNOWN' &&
+          gptOpinion.confidence >= 0.65
+        ) {
+          console.log(`❓ [${requestId}] Beide Türsteher explizit UNKNOWN (T1=${documentType.confidence.toFixed(2)}, T2=${gptOpinion.confidence.toFixed(2)}) → UNKNOWN behalten, blauer Banner im Frontend`);
+          documentType = { type: 'UNKNOWN', confidence: gptOpinion.confidence, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence };
+        } else {
+          // Beide unsicher → CONTRACT-Fallback (sicherer Default, 95% sind Verträge)
+          console.log(`🛡️ [${requestId}] Beide Türsteher unsicher (Heuristik=${documentType.type}/${documentType.confidence.toFixed(2)}, GPT=${gptOpinion ? `${gptOpinion.type}/${gptOpinion.confidence.toFixed(2)}` : 'failed'}) → Sicherheitsnetz CONTRACT`);
+          documentType = { type: 'CONTRACT', confidence: 0.5, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence };
+        }
       } else {
-        // Beide unsicher → CONTRACT-Fallback (sicherer Default, 95% sind Verträge)
-        console.log(`🛡️ [${requestId}] Beide Türsteher unsicher (Heuristik=${documentType.type}/${documentType.confidence.toFixed(2)}, GPT=${gptOpinion ? `${gptOpinion.type}/${gptOpinion.confidence.toFixed(2)}` : 'failed'}) → Sicherheitsnetz CONTRACT`);
-        documentType = { type: 'CONTRACT', confidence: 0.5 };
+        // Heuristik war klar CONTRACT → category bleibt, aber GPT-contractType wird trotzdem übernommen
+        documentType = { ...documentType, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence };
+        if (gptContractType) {
+          console.log(`📊 [${requestId}] Türsteher 2 contractType erkannt: ${gptContractType} (Konfidenz ${gptContractTypeConfidence.toFixed(2)}) — Heuristik-category=${documentType.type} bleibt`);
+        }
       }
     }
 
@@ -2585,12 +2708,18 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
 
     // Success - document can be analyzed
     console.log(`✅ [${requestId}] Document validation successful - proceeding with ${strategy.method}`);
-    
+
     return {
       success: true,
       documentType: documentType.type,
       strategy: strategy.method,
       confidence: documentType.confidence,
+      // 🆕 Universal contractType (Problem D, 26.05.2026) — semantisch von
+      // Türsteher 2 erkannt (factoring/rental/employment/leasing/avv/...).
+      // null wenn GPT-Konfidenz <0.6 oder Türsteher 2 nicht lief.
+      // Wird in der Aufrufer-Pipeline gegen Keyword-Detection priorisiert.
+      contractType: documentType.contractType || null,
+      contractTypeConfidence: documentType.contractTypeConfidence || 0,
       qualityScore: contentQuality.qualityScore,
       analysisMessage: strategy.message,
       metrics: {
@@ -3813,7 +3942,26 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         extractedProvider = providerAnalysis.data.provider;
         extractedContractNumber = providerAnalysis.data.contractNumber;
         extractedCustomerNumber = providerAnalysis.data.customerNumber;
-        extractedContractType = providerAnalysis.data.contractType; // 🆕 CONTRACT TYPE
+        // 🆕 Universal contractType (Problem D, 26.05.2026):
+        // GPT-Detection (Türsteher 2) hat Priorität vor Keyword-Scoring.
+        // GPT versteht semantisch jeden Vertragstyp (auch factoring/leasing/avv/
+        // license/franchise), Keyword-Scoring kennt nur 10 fest verdrahtete Typen.
+        // Bei niedriger GPT-Konfidenz (<0.6) oder Ausfall greift Keyword-Fallback.
+        const gptContractType = validationResult?.contractType || null;
+        const keywordContractType = providerAnalysis.data.contractType || null;
+        if (gptContractType) {
+          extractedContractType = gptContractType;
+          if (keywordContractType && keywordContractType !== gptContractType) {
+            console.log(`📊 [${requestId}] contractType-Konflikt: GPT="${gptContractType}" vs Keyword="${keywordContractType}" → GPT gewinnt (semantisch zuverlässiger)`);
+          } else {
+            console.log(`📊 [${requestId}] contractType aus GPT: ${gptContractType}`);
+          }
+        } else {
+          extractedContractType = keywordContractType;
+          if (keywordContractType) {
+            console.log(`📊 [${requestId}] contractType aus Keyword-Fallback: ${keywordContractType} (GPT unsicher oder ausgefallen)`);
+          }
+        }
         extractedStartDate = providerAnalysis.data.startDate; // 🆕 START DATE
         extractedEndDate = providerAnalysis.data.endDate;
         extractedContractDuration = providerAnalysis.data.contractDuration; // 🆕 CONTRACT DURATION
