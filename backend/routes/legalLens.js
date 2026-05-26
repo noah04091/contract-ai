@@ -2050,6 +2050,12 @@ router.post('/:contractId/note', verifyToken, async (req, res) => {
       });
     }
 
+    // 👥 Ownership-Check: verhindert DB-Pollution mit fremden contractIds
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
+
     await LegalLensProgress.findOneAndUpdate(
       { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
       {
@@ -2095,6 +2101,12 @@ router.post('/:contractId/bookmark', verifyToken, async (req, res) => {
         success: false,
         error: 'clauseId ist erforderlich'
       });
+    }
+
+    // 👥 Ownership-Check: verhindert DB-Pollution mit fremden contractIds
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
     }
 
     if (action === 'add') {
@@ -2202,6 +2214,12 @@ router.post('/:contractId/pdf-marker', verifyToken, async (req, res) => {
     const { id, page, spanIndices, textSnippet, color, note } = req.body;
     const userId = req.user.userId;
 
+    // 👥 Ownership-Check: verhindert DB-Pollution mit fremden contractIds
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
+
     if (!id || typeof id !== 'string') {
       return res.status(400).json({ success: false, error: 'id fehlt' });
     }
@@ -2256,6 +2274,12 @@ router.put('/:contractId/pdf-marker/:markerId', verifyToken, async (req, res) =>
     const { color, note } = req.body;
     const userId = req.user.userId;
 
+    // 👥 Ownership-Check
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
+
     if (color !== undefined && !['green', 'orange', 'red'].includes(color)) {
       return res.status(400).json({ success: false, error: 'Ungültige color' });
     }
@@ -2296,6 +2320,12 @@ router.delete('/:contractId/pdf-marker/:markerId', verifyToken, async (req, res)
   try {
     const { contractId, markerId } = req.params;
     const userId = req.user.userId;
+
+    // 👥 Ownership-Check
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
 
     await LegalLensProgress.findOneAndUpdate(
       { userId: new ObjectId(userId), contractId: new ObjectId(contractId) },
