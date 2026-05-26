@@ -6,6 +6,8 @@ import { X, ArrowRight, TrendingDown, TrendingUp, Minus, RotateCcw, Check, Alert
 import { simulateClause, rewriteClause } from '../../services/legalLensV2API';
 import type { ClauseSimulation } from '../../types/legalLensV2';
 import SaveClauseModal from './SaveClauseModal';
+import { useToast } from '../../context/ToastContext';
+import { safeCopy } from '../../utils/clipboard';
 import styles from '../../styles/LegalLensV12.module.css';
 
 interface ClauseSimulatorModalProps {
@@ -94,6 +96,7 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
   suggestedAlternative,
   onClauseSaved
 }) => {
+  const toast = useToast();
   const [modifiedText, setModifiedText] = useState(originalText);
   const [isSimulating, setIsSimulating] = useState(false);
   const [isRewriting, setIsRewriting] = useState(false);
@@ -221,10 +224,14 @@ const ClauseSimulatorModal: React.FC<ClauseSimulatorModalProps> = ({
     setTimeout(autoResize, 0);
   };
 
-  const handleCopyModified = () => {
-    navigator.clipboard.writeText(modifiedText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyModified = async () => {
+    const ok = await safeCopy(modifiedText);
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } else {
+      toast.error('Kopieren fehlgeschlagen. Bitte manuell markieren und Strg+C drücken.');
+    }
   };
 
   // Compute diff for display

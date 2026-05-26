@@ -3,6 +3,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { X, Copy, Check, ArrowRight, AlertTriangle, Shield } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 import styles from '../../styles/LegalLensV12.module.css';
 
 interface ClauseCompareModalProps {
@@ -107,6 +108,7 @@ const ClauseCompareModal: React.FC<ClauseCompareModalProps> = ({
   onSelectOriginal,
   onSelectAlternative
 }) => {
+  const toast = useToast();
   const [copiedSide, setCopiedSide] = useState<'original' | 'alternative' | null>(null);
 
   // Berechne Unterschiede
@@ -137,6 +139,7 @@ const ClauseCompareModal: React.FC<ClauseCompareModalProps> = ({
       setTimeout(() => setCopiedSide(null), 2000);
     } catch (err) {
       console.error('Copy failed:', err);
+      toast.error('Kopieren fehlgeschlagen. Bitte manuell markieren und Strg+C drücken.');
     }
   };
 

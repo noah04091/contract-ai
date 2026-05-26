@@ -16,6 +16,8 @@ import ClauseCompareModal from './ClauseCompareModal';
 import ClauseSimulatorModal from './ClauseSimulatorModal';
 import SaveClauseModal from './SaveClauseModal';
 import { ErrorInfo, generateContentHash } from '../../hooks/useLegalLensV12';
+import { useToast } from '../../context/ToastContext';
+import { safeCopy } from '../../utils/clipboard';
 import styles from '../../styles/LegalLensV12.module.css';
 
 /**
@@ -107,6 +109,7 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
   currentDecision,
   onSetDecision
 }) => {
+  const toast = useToast();
   const [chatInput, setChatInput] = useState('');
   const [copiedTemplate, setCopiedTemplate] = useState(false);
   // ✅ Phase 2 Task 2.2: Progressive Disclosure - nur wichtigste Sektion offen
@@ -219,19 +222,27 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
     return questions.slice(0, 4);
   }, [analysis, analysisActionLevel]);
 
-  const copyEmailTemplate = () => {
+  const copyEmailTemplate = async () => {
     if (negotiation?.emailTemplate) {
-      navigator.clipboard.writeText(negotiation.emailTemplate);
-      setCopiedTemplate(true);
-      setTimeout(() => setCopiedTemplate(false), 2000);
+      const ok = await safeCopy(negotiation.emailTemplate);
+      if (ok) {
+        setCopiedTemplate(true);
+        setTimeout(() => setCopiedTemplate(false), 2000);
+      } else {
+        toast.error('Kopieren fehlgeschlagen. Bitte manuell markieren und Strg+C drücken.');
+      }
     }
   };
 
-  const copyText = (text: string, fieldId?: string) => {
-    navigator.clipboard.writeText(text);
-    if (fieldId) {
-      setCopiedField(fieldId);
-      setTimeout(() => setCopiedField(null), 2000);
+  const copyText = async (text: string, fieldId?: string) => {
+    const ok = await safeCopy(text);
+    if (ok) {
+      if (fieldId) {
+        setCopiedField(fieldId);
+        setTimeout(() => setCopiedField(null), 2000);
+      }
+    } else {
+      toast.error('Kopieren fehlgeschlagen. Bitte manuell markieren und Strg+C drücken.');
     }
   };
 

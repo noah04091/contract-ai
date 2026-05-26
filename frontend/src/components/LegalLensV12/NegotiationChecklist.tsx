@@ -22,6 +22,7 @@ import type {
   PerspectiveType
 } from '../../types/legalLens';
 import * as legalLensAPI from '../../services/legalLensAPI';
+import { useToast } from '../../context/ToastContext';
 import styles from '../../styles/NegotiationChecklist.module.css';
 
 interface NegotiationChecklistProps {
@@ -58,6 +59,7 @@ const NegotiationChecklist: React.FC<NegotiationChecklistProps> = ({
   onClose
 }) => {
   const [checklist, setChecklist] = useState<NegotiationChecklistItem[]>([]);
+  const toast = useToast();
   const [summary, setSummary] = useState<NegotiationChecklistSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +129,7 @@ const NegotiationChecklist: React.FC<NegotiationChecklistProps> = ({
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
       console.error('Copy failed:', err);
+      toast.error('Kopieren fehlgeschlagen. Bitte manuell markieren und Strg+C drücken.');
     }
   };
 
