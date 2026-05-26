@@ -1976,6 +1976,12 @@ router.post('/:contractId/progress', verifyToken, async (req, res) => {
       return res.status(400).json({ error: 'INVALID_PERSPECTIVE', message: 'Ungültige Perspektive.' });
     }
 
+    // 👥 Ownership-Check: verhindert DB-Pollution mit fremden contractIds
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
+
     const updateData = {
       updatedAt: new Date()
     };
@@ -2165,6 +2171,12 @@ router.put('/:contractId/decision', verifyToken, async (req, res) => {
     }
     if (decision !== null && !['accepted', 'negotiate', 'rejected'].includes(decision)) {
       return res.status(400).json({ success: false, error: 'Ungültige decision' });
+    }
+
+    // 👥 Ownership-Check: verhindert DB-Pollution mit fremden contractIds
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
     }
 
     if (decision === null) {
@@ -2713,6 +2725,12 @@ router.post('/:contractId/industry', verifyToken, async (req, res) => {
     const userId = req.user.userId;
 
     console.log(`🏢 [Legal Lens] Setting industry context to "${industry}" for contract: ${contractId}`);
+
+    // 👥 Ownership-Check: verhindert DB-Pollution mit fremden contractIds
+    const access = await findContractWithOrgAccessMongoose(Contract, userId, contractId);
+    if (!access) {
+      return res.status(404).json({ success: false, error: 'Vertrag nicht gefunden' });
+    }
 
     // Validierung
     const validIndustries = [
