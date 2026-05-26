@@ -260,6 +260,7 @@ const DATE_SCHEMA = `{
   "label": "<Kurzname für Kalender, max 50 Zeichen>",
   "description": "<1 Satz warum für Mandanten wichtig>",
   "calculated": true|false,
+  "confidence": <Zahl 0-100: wie sicher du dir bei diesem Datum bist. 90-100 nur wenn explizit + eindeutig im Text. 60-89 bei klaren Indizien. 30-59 bei berechneten/abgeleiteten Datums oder Mehrdeutigkeit. <30 bei großer Unsicherheit (besser dann gar nicht melden).>,
   "source": "<§ X / Klausel-Bezeichnung>",
   "evidence": "<wörtlicher Satz aus dem Vertrag, max ${EVIDENCE_MAX_LEN} Zeichen>"
 }`;
@@ -452,6 +453,14 @@ function validateDateEntry(entry, contractText) {
   }
   if (!entry.label || typeof entry.label !== 'string') {
     return { valid: false, reason: 'missing_label' };
+  }
+  // 🆕 Echte GPT-Konfidenz normalisieren (Problem F, 26.05.2026).
+  // Schema fordert confidence 0-100. Fallback: 70 wenn GPT das Feld vergisst
+  // (konservativer Default — drückt UI-Warn-Schwelle aber lässt Calendar-Event durch).
+  if (typeof entry.confidence === 'number') {
+    entry.confidence = Math.max(0, Math.min(100, Math.round(entry.confidence)));
+  } else {
+    entry.confidence = 70;
   }
   return { valid: true };
 }

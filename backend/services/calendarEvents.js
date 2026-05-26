@@ -12,10 +12,16 @@ function createLocalDate(dateString) {
 }
 
 // 🔒 KONFIDENZ-SCHWELLENWERTE für Event-Generierung
+// Abgesenkt 26.05.2026 (Problem F, Schritt 1): von 50/60 auf 30/40.
+// Begründung: andere Validatoren (Phantom-Filter, Evidence-Validator,
+// Plausibility-Check) blocken Halluzinationen schon vorher. Die Konfidenz-
+// Schwelle war hardcoded und filterte ehrliche niedrige Werte weg. Jetzt
+// liefert GPT echte Konfidenz (0-100), und der Calendar zeigt mehr Datums
+// — bei <60 mit visueller Unsicherheits-Warnung (Frontend-Badge, Schritt 2).
 const EVENT_CONFIDENCE_THRESHOLDS = {
-  CRITICAL_EVENTS: 50,    // Kündigungs-Events: Auch bei niedrigerer Konfidenz erstellen (wichtig!)
-  STANDARD_EVENTS: 60,    // Standard-Events: Mittlere Konfidenz erforderlich
-  REMINDER_EVENTS: 50     // Reminder: Auch bei niedrigerer Konfidenz
+  CRITICAL_EVENTS: 30,    // Kündigungs-Events: Auch bei niedriger Konfidenz erstellen (Sicherheits-Layer schützt vor Phantomen)
+  STANDARD_EVENTS: 40,    // Standard-Events: Niedrigere Schwelle für mehr Sichtbarkeit
+  REMINDER_EVENTS: 30     // Reminder: Auch bei niedriger Konfidenz
 };
 
 // 🛡️ Whitelist für historische Calendar-Events: Nur "echte Vertragsereignisse"

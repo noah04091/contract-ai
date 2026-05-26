@@ -388,30 +388,35 @@ const validateImportantDate = (dateObj, contract, requestId) => {
 
   // 7b. end_date in Vergangenheit bei aktivem Vertrag → Phantom-Verdacht.
   // KEIN Hard-Reject (es könnten legitim historisch dokumentierte Verträge sein),
-  // sondern Konfidenz-Drop auf 30. Das Datum bleibt in importantDates sichtbar,
-  // der Calendar-Generator filtert es (Schwelle 50/60) → kein Phantom-Event.
+  // sondern Konfidenz-Drop auf 20. Das Datum bleibt in importantDates sichtbar
+  // (UI-Tab), der Calendar-Generator filtert es aber (Schwelle 30/40) → kein
+  // Phantom-Event. Wert auf 20 (statt 30) damit Schwellen-Absenkung 30/40 nicht
+  // versehentlich Phantome durchlässt.
   if (!skipPlausibilityChecks
     && dateObj.type === 'end_date'
     && date < today
     && contract?.documentCategory === 'active_contract') {
-    console.log(`⚠️ [${requestId}] importantDate confidence-dropped: end_date ${dateObj.date} in Vergangenheit bei aktivem Vertrag → confidence=30 (kein Event)`);
-    return { valid: true, confidence: 30, parsedDate: date };
+    console.log(`⚠️ [${requestId}] importantDate confidence-dropped: end_date ${dateObj.date} in Vergangenheit bei aktivem Vertrag → confidence=20 (kein Event)`);
+    return { valid: true, confidence: 20, parsedDate: date };
   }
 
-  // ✅ Bestimme Konfidenz basierend auf calculated Flag und Typ
-  let confidence = 90; // Base für explizit extrahierte Daten
-
-  if (dateObj.calculated === true) {
-    confidence = 70; // Berechnete Daten haben niedrigere Konfidenz
+  // ✅ Konfidenz: ehrlicher Wert aus GPT (Problem F, 26.05.2026, Schritt 1).
+  // Frühere Hardcodes (90/70/65) waren Surrogate aus calculated-Boolean, nicht
+  // echte Sicherheit. Jetzt liefert die KI per Schema einen 0-100-Wert pro Datum.
+  // Fallback bei fehlendem Feld: 70 (konservativer Default — durch Calendar-
+  // Schwelle 30/40, fließt rein, wird im UI als "unsicher" markiert).
+  let confidence;
+  let confidenceSource;
+  if (typeof dateObj.confidence === 'number' && dateObj.confidence >= 0 && dateObj.confidence <= 100) {
+    confidence = Math.round(dateObj.confidence);
+    confidenceSource = 'gpt';
+  } else {
+    // Fallback wenn KI das Feld nicht liefert (alte Datensätze, Schema-Drift)
+    confidence = dateObj.calculated === true ? 60 : 70;
+    confidenceSource = 'fallback';
   }
 
-  // Kritische Typen bekommen leicht niedrigere Konfidenz wenn berechnet
-  const criticalTypes = ['cancellation_deadline', 'end_date', 'minimum_term_end'];
-  if (criticalTypes.includes(dateObj.type) && dateObj.calculated) {
-    confidence = 65;
-  }
-
-  console.log(`✅ [${requestId}] importantDate validated: ${dateObj.type} = ${dateObj.date} (Konfidenz: ${confidence}%)`);
+  console.log(`✅ [${requestId}] importantDate validated: ${dateObj.type} = ${dateObj.date} (Konfidenz: ${confidence}%, Quelle: ${confidenceSource})`);
   return { valid: true, confidence, parsedDate: date };
 };
 
