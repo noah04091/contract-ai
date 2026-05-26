@@ -6,9 +6,9 @@
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
-const rateLimit = require('express-rate-limit');
 const ContractBuilder = require('../models/ContractBuilder');
 const auth = require('../middleware/verifyToken');
+const { analyzeLimiter } = require('../middleware/rateLimiter');
 const { v4: uuidv4 } = require('uuid');
 
 // OpenAI für KI-Funktionen
@@ -109,23 +109,23 @@ async function checkAiAccess(req, res) {
     return true;
   } catch (err) {
     console.error('[ContractBuilder] AI Access Check Error:', err);
-    // Bei Fehler trotzdem durchlassen (fail-open) um UX nicht zu blockieren
-    return true;
+    // Fail-closed: bei DB-/Lookup-Fehlern blockieren statt Free-User durchlassen.
+    // Verhindert, dass ein kurzer DB-Hiccup teure KI-Calls für nicht-berechtigte
+    // User freischaltet (Memory: OpenAI-Quota wurde durch genau diesen Vektor schon einmal gesprengt).
+    res.status(503).json({
+      success: false,
+      error: 'Berechtigungsprüfung vorübergehend nicht verfügbar. Bitte gleich erneut versuchen.'
+    });
+    return false;
   }
 }
 
 // PDFKit für PDF-Export
 const PDFDocument = require('pdfkit');
 
-// Rate-Limiter für KI-Endpoints (max 10 Requests pro Minute pro User)
-const aiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
-  keyGenerator: (req) => req.user?.userId || req.ip,
-  message: { success: false, error: 'Zu viele Anfragen. Bitte warte kurz.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// KI-Endpoints nutzen den zentralen analyzeLimiter (50/h pro User), konsistent
+// mit dem Analyse-System. Vorher: lokaler aiLimiter mit 10/min (= bis zu 600/h),
+// theoretisch ~300 € OpenAI-Kosten pro Nacht pro böswilligem User möglich.
 
 // PDF Generator Utilities für Import
 const { parseContractText, extractPartiesFromText, getPartyLabels } = require('../services/pdfGeneratorV2');
@@ -1862,7 +1862,7 @@ router.put('/:id/variables', auth, async (req, res) => {
  * POST /api/contract-builder/ai/clause
  * KI-Klausel generieren
  */
-router.post('/ai/clause', auth, aiLimiter, async (req, res) => {
+router.post('/ai/clause', auth, analyzeLimiter, async (req, res) => {
   try {
     // Subscription-Check
     if (!(await checkAiAccess(req, res))) return;
@@ -1959,7 +1959,7 @@ Erstelle eine professionelle, rechtssichere Klausel.`;
  * POST /api/contract-builder/ai/optimize
  * Klausel optimieren
  */
-router.post('/ai/optimize', auth, aiLimiter, async (req, res) => {
+router.post('/ai/optimize', auth, analyzeLimiter, async (req, res) => {
   try {
     // Subscription-Check
     if (!(await checkAiAccess(req, res))) return;
@@ -2035,7 +2035,7 @@ Behalte {{variablen}} bei.`
  * POST /api/contract-builder/ai/explain
  * Klausel erklären
  */
-router.post('/ai/explain', auth, aiLimiter, async (req, res) => {
+router.post('/ai/explain', auth, analyzeLimiter, async (req, res) => {
   try {
     // Subscription-Check
     if (!(await checkAiAccess(req, res))) return;
@@ -2091,7 +2091,7 @@ router.post('/ai/explain', auth, aiLimiter, async (req, res) => {
  * POST /api/contract-builder/ai/copilot
  * Echtzeit-Copilot-Vorschläge
  */
-router.post('/ai/copilot', auth, aiLimiter, async (req, res) => {
+router.post('/ai/copilot', auth, analyzeLimiter, async (req, res) => {
   try {
     // Subscription-Check
     if (!(await checkAiAccess(req, res))) return;
@@ -2155,7 +2155,7 @@ Gib einen hilfreichen Vorschlag.`
  * POST /api/contract-builder/ai/legal-score
  * Legal Health Score berechnen
  */
-router.post('/ai/legal-score', auth, aiLimiter, async (req, res) => {
+router.post('/ai/legal-score', auth, analyzeLimiter, async (req, res) => {
   try {
     // Subscription-Check
     if (!(await checkAiAccess(req, res))) return;
@@ -2360,7 +2360,7 @@ Gib einen realistischen Legal Health Score basierend auf dem Inhalt.`
  * POST /api/contract-builder/ai/intent
  * Intent Detection - natürliche Sprache verstehen
  */
-router.post('/ai/intent', auth, aiLimiter, async (req, res) => {
+router.post('/ai/intent', auth, analyzeLimiter, async (req, res) => {
   try {
     // Subscription-Check
     if (!(await checkAiAccess(req, res))) return;

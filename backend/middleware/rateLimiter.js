@@ -38,7 +38,10 @@ const analyzeLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id || req.ip
+  // verifyToken.js setzt req.user.userId (JWT-Payload). req.user.id bleibt als
+  // Fallback erhalten, req.ip ist Last-Resort. Vorher nur req.user?.id → fiel
+  // immer auf req.ip zurück und zaehlte mehrere User hinter demselben Edge zusammen.
+  keyGenerator: (req) => req.user?.userId || req.user?.id || req.ip
 });
 
 const legalPulseLimiter = rateLimit({
