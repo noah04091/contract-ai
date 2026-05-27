@@ -7,6 +7,21 @@ const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { queueEmail, processEmailQueue } = require("./emailRetryService");
 
 /**
+ * Maskiert eine E-Mail-Adresse für Logs (DSGVO-Hygiene).
+ * Beispiel: max.mustermann@example.com → m***@example.com
+ * Verwendung NUR für console.log, nie für tatsächlichen Mail-Versand.
+ */
+function maskEmail(email) {
+  if (!email || typeof email !== "string") return "(no-email)";
+  const at = email.indexOf("@");
+  if (at <= 0) return "(invalid)";
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const masked = local.length <= 2 ? "*".repeat(local.length) : local[0] + "***";
+  return `${masked}@${domain}`;
+}
+
+/**
  * Hauptfunktion fuer den taeglichen Notification-Check
  * Fuegt E-Mails zur Queue hinzu (statt direktem Versand)
  */
@@ -150,7 +165,7 @@ async function checkAndSendNotifications(db) {
       // Skip free users - Email reminders are Business+ only
       const userPlan = event.user?.subscriptionPlan || "free";
       if (userPlan === "free") {
-        console.log(`Skipping free user ${event.user.email} - Email reminders require Business+`);
+        console.log(`Skipping free user ${maskEmail(event.user.email)} - Email reminders require Business+`);
         continue;
       }
 
@@ -164,11 +179,11 @@ async function checkAndSendNotifications(db) {
       // notificationSettings prüfen (default: alles aktiv)
       const ns = event.user?.notificationSettings;
       if (ns?.email?.enabled === false) {
-        console.log(`Skipping ${event.user.email} - E-Mail-Benachrichtigungen deaktiviert`);
+        console.log(`Skipping ${maskEmail(event.user.email)} - E-Mail-Benachrichtigungen deaktiviert`);
         continue;
       }
       if (ns?.email?.contractDeadlines === false) {
-        console.log(`Skipping ${event.user.email} - Vertragsfristen-Mails deaktiviert`);
+        console.log(`Skipping ${maskEmail(event.user.email)} - Vertragsfristen-Mails deaktiviert`);
         continue;
       }
 
@@ -182,7 +197,7 @@ async function checkAndSendNotifications(db) {
           (daysUntilEvent === 1 && dr.days1 === false) ||
           (daysUntilEvent <= 0 && dr.daysSame === false);
         if (skipTiming) {
-          console.log(`Skipping ${event.user.email} - Erinnerung ${daysUntilEvent}d deaktiviert`);
+          console.log(`Skipping ${maskEmail(event.user.email)} - Erinnerung ${daysUntilEvent}d deaktiviert`);
           continue;
         }
       }
@@ -368,7 +383,7 @@ async function queueEventNotification(event, db) {
     emailType: `calendar_${event.type.toLowerCase()}`
   });
 
-  console.log(`E-Mail zur Queue hinzugefuegt: ${subject} fuer ${event.user.email}`);
+  console.log(`E-Mail zur Queue hinzugefuegt: ${subject} fuer ${maskEmail(event.user.email)}`);
 }
 
 /**

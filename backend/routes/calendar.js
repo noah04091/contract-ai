@@ -396,6 +396,17 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
       if (req.body.contractId) {
         const validCid = safeObjectId(req.body.contractId);
         if (!validCid) return res.status(400).json({ success: false, error: "Ungültige Vertrags-ID" });
+
+        // 🔒 Ownership-Check: User darf nur eigene Verträge zuordnen.
+        // Gleiches Pattern wie POST /events (Zeile 477-487) — verhindert Cross-Contract-Binding.
+        const ownsContract = await req.db.collection("contracts").findOne({
+          _id: validCid,
+          userId
+        });
+        if (!ownsContract) {
+          return res.status(404).json({ success: false, error: "Vertrag nicht gefunden" });
+        }
+
         updateData.contractId = validCid;
         updateData.isManual = false; // Nicht mehr manuell wenn Vertrag zugeordnet
       } else {
