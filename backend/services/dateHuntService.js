@@ -543,7 +543,7 @@ function validateFristHinweis(entry, contractText) {
 
   // Anti-Pattern-Check: wenn title konditionale Trigger enthält, actionable
   // automatisch auf false setzen (Schutz vor KI-Inkonsistenz).
-  const conditionalTriggers = /(nach\s+(zugang|eingang|erhalt|mitteilung|f[äa]lligkeit)|bei\s+(verzug|verz[öo]gerung|ausfall|streit|widerspruch)|im\s+falle|sofern|soweit|ab\s+eingang)/i;
+  const conditionalTriggers = /(nach\s+(zugang|eingang|erhalt|mitteilung|f[äa]lligkeit|entstehen|kenntnis|kenntniserlangung|abschluss)|bei\s+(verzug|verz[öo]gerung|ausfall|streit|widerspruch|verletzung)|im\s+(falle|anspruchsfall|streitfall|schadensfall)|sofern|soweit|ab\s+eingang)/i;
   if (conditionalTriggers.test(entry.title || '')) {
     entry.actionable = false;
   }
