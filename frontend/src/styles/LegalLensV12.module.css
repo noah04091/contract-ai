@@ -6720,3 +6720,18 @@
     outline-offset: 2px;
   }
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   MOCKUP-V4-POLISH — Hero-Recommendation-Pill (27.05.2026)
+   Macht die Empfehlung-Pille bunter (Soft-Background + Glow-Dot)
+   analog zum legal-lens-analysis-panel-v4.html Mockup.
+   Rollback: Diesen Block + die V4Polish-Klassen in
+   AnalysisPanel.tsx (suche: MOCKUP-V4-POLISH) entfernen.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.glanceBadgeV4Polish {
+  background: color-mix(in srgb, var(--score-color) 18%, white);
+  border-color: color-mix(in srgb, var(--score-color) 25%, white);
+}
+.glanceBadgeDotV4Polish {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--score-color) 25%, transparent);
+}

@@ -437,7 +437,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                   <span className={styles.glanceRecLabel}>Empfehlung:</span>
                   <button
                     type="button"
-                    className={styles.glanceBadge}
+                    /* MOCKUP-V4-POLISH: Pill mit Soft-Background statt grau */
+                    className={`${styles.glanceBadge} ${styles.glanceBadgeV4Polish}`}
                     style={{ '--score-color': actionInfo.color } as React.CSSProperties}
                     onClick={() => setShowScoreInfo(prev => !prev)}
                     title="Warum diese Empfehlung?"
@@ -445,7 +446,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
                     aria-expanded={showScoreInfo}
                   >
                     <span
-                      className={styles.glanceBadgeDot}
+                      /* MOCKUP-V4-POLISH: Dot mit Glow-Ring */
+                      className={`${styles.glanceBadgeDot} ${styles.glanceBadgeDotV4Polish}`}
                       style={{ background: actionInfo.color }}
                       aria-hidden="true"
                     />
