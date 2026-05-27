@@ -1076,8 +1076,10 @@ async function generateEventsForContract(db, contract) {
 
       const MAX_EVENTS_PER_FRIST = 12;        // Schutz gegen Calendar-Flutung pro Frist
       const MAX_FRIST_EVENTS_TOTAL = 50;      // Globaler Cap pro Vertrag (TÜV Schritt 2)
-      const HORIZON_MONTHS = 12;              // 12 Monate Vorschau
+      const HORIZON_MONTHS = 12;              // 12 Monate Vorschau (Pfad A recurring)
+      const PFADB_HORIZON_YEARS = 5;          // Max 5 Jahre Future für Anker-Events (TÜV Schritt 4)
       const horizonEnd = new Date(now.getFullYear(), now.getMonth() + HORIZON_MONTHS, now.getDate());
+      const pfadBHorizonEnd = new Date(now.getFullYear() + PFADB_HORIZON_YEARS, now.getMonth(), now.getDate());
       let fristEventsCreated = 0;             // Counter für globalen Cap
 
       // 🆕 Hybrid Tage/Monate (Bugfix 27.05.2026): weekly/biweekly funktionieren
@@ -1193,6 +1195,14 @@ async function generateEventsForContract(db, contract) {
 
           if (eventDate <= now) {
             console.log(`  ⏭️ Frist übersprungen: Ergebnis-Datum ${eventDate.toLocaleDateString('de-DE')} liegt in Vergangenheit (${frist.type})`);
+            continue;
+          }
+
+          // Future-Cap: keine Calendar-Events >5 Jahre in der Zukunft.
+          // Aufbewahrungsfristen 10 Jahre etc. bleiben im UI als Frist-Hinweis
+          // sichtbar, aber Calendar wird nicht mit 2036er-Events vollgemuellt.
+          if (eventDate > pfadBHorizonEnd) {
+            console.log(`  ⏭️ Frist übersprungen: Ergebnis-Datum ${eventDate.toLocaleDateString('de-DE')} > ${PFADB_HORIZON_YEARS} Jahre in Zukunft (${frist.type})`);
             continue;
           }
 
