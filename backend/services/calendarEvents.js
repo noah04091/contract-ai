@@ -1078,9 +1078,16 @@ async function generateEventsForContract(db, contract) {
       const HORIZON_MONTHS = 12;              // 12 Monate Vorschau
       const horizonEnd = new Date(now.getFullYear(), now.getMonth() + HORIZON_MONTHS, now.getDate());
 
-      const intervalMonths = {
-        weekly: 0.25, biweekly: 0.5, monthly: 1,
-        quarterly: 3, semiannually: 6, yearly: 12
+      // 🆕 Hybrid Tage/Monate (Bugfix 27.05.2026): weekly/biweekly funktionieren
+      // nur mit Tage-Arithmetik korrekt. Vorher wurden 0.25/0.5 Monate via
+      // Math.ceil/Math.round zu MONATLICHEN Events gerundet.
+      const intervalConfig = {
+        weekly:       { unit: 'days', value: 7 },
+        biweekly:     { unit: 'days', value: 14 },
+        monthly:      { unit: 'months', value: 1 },
+        quarterly:    { unit: 'months', value: 3 },
+        semiannually: { unit: 'months', value: 6 },
+        yearly:       { unit: 'months', value: 12 }
       };
 
       const fristTypeMapping = {
@@ -1101,14 +1108,26 @@ async function generateEventsForContract(db, contract) {
 
         // Pfad A: WIEDERKEHRENDE Frist (recurrencePattern gesetzt)
         if (frist.recurrencePattern && frist.recurrencePattern.intervalType) {
-          const stepMonths = intervalMonths[frist.recurrencePattern.intervalType] *
-            (frist.recurrencePattern.intervalCount || 1);
-          if (!Number.isFinite(stepMonths) || stepMonths <= 0) {
+          const cfg = intervalConfig[frist.recurrencePattern.intervalType];
+          if (!cfg) {
+            console.log(`  ⚠️ Frist übersprungen: unbekannter intervalType=${frist.recurrencePattern.intervalType} (${frist.type})`);
+            continue;
+          }
+          const totalStep = cfg.value * (frist.recurrencePattern.intervalCount || 1);
+          if (!Number.isFinite(totalStep) || totalStep <= 0) {
             console.log(`  ⚠️ Frist übersprungen: ungültiges Intervall (${frist.type})`);
             continue;
           }
 
-          let eventDate = new Date(now.getFullYear(), now.getMonth() + Math.ceil(stepMonths), 1);
+          // Erstes Event berechnen (Tage- vs. Monats-Arithmetik je nach Intervall)
+          let eventDate;
+          if (cfg.unit === 'days') {
+            eventDate = new Date(now);
+            eventDate.setDate(eventDate.getDate() + totalStep);
+          } else {
+            eventDate = new Date(now.getFullYear(), now.getMonth() + totalStep, 1);
+          }
+
           let eventCount = 0;
           while (eventDate <= horizonEnd && eventCount < MAX_EVENTS_PER_FRIST) {
             const localDate = createLocalDate(eventDate);
@@ -1137,8 +1156,13 @@ async function generateEventsForContract(db, contract) {
               updatedAt: new Date()
             });
             eventCount++;
-            const stepFullMonths = Math.max(1, Math.round(stepMonths));
-            eventDate = new Date(eventDate.getFullYear(), eventDate.getMonth() + stepFullMonths, eventDate.getDate());
+            // Nächstes Event (gleiche Tage/Monate-Arithmetik wie für das erste)
+            if (cfg.unit === 'days') {
+              eventDate = new Date(eventDate);
+              eventDate.setDate(eventDate.getDate() + totalStep);
+            } else {
+              eventDate = new Date(eventDate.getFullYear(), eventDate.getMonth() + totalStep, eventDate.getDate());
+            }
           }
           console.log(`  ✅ Frist wiederkehrend → ${eventCount} Events: ${frist.type} (${frist.recurrencePattern.intervalType}/${frist.recurrencePattern.intervalCount})`);
 
