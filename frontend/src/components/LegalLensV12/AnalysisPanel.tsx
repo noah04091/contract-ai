@@ -527,7 +527,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
 
             {/* Was das für DICH bedeutet - HIGHLIGHT */}
             {perspectiveData?.explanation?.whatItMeansForYou && (
-              <div className={styles.whatItMeansBox}>
+              /* MOCKUP-V4-POLISH-3: Left-Border-Accent statt Full-Border */
+              <div className={`${styles.whatItMeansBox} ${styles.whatItMeansBoxV4Accent}`}>
                 <div className={styles.whatItMeansLabel}>
                   💡 Was das für dich bedeutet
                 </div>

@@ -6758,3 +6758,17 @@
 .sectionIconV4BadgeDanger  { background: #fee2e2 !important; }
 .sectionIconV4BadgeWarning { background: #fef3c7 !important; }
 .sectionIconV4BadgeSuccess { background: #d1fae5 !important; }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   MOCKUP-V4-POLISH-3 — "Was das für dich bedeutet"-Box (27.05.2026)
+   Left-Border-Accent statt vollständiger Border (Mockup-Style).
+   Rollback: Diesen Block + .whatItMeansBoxV4Accent in
+   AnalysisPanel.tsx (suche: MOCKUP-V4-POLISH-3) entfernen.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.whatItMeansBoxV4Accent {
+  background: #eff6ff !important;
+  border: none !important;
+  border-left: 3px solid #3b82f6 !important;
+  border-radius: 0 8px 8px 0 !important;
+  padding: 0.85rem 1rem !important;
+}
