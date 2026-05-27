@@ -509,15 +509,6 @@ const ClauseList: React.FC<ClauseListProps> = ({
     return serverNotes + (hasAnnotation ? 1 : 0);
   };
 
-  const getRiskEmoji = (level: RiskLevel): string => {
-    switch (level) {
-      case 'high': return '🔴';
-      case 'medium': return '🟡';
-      case 'low': return '🟢';
-      default: return '⚪';
-    }
-  };
-
   // Risk Minimap data
   const minimapSegments = useMemo(() => {
     const analyzable = safeClauses.filter(c => !c.nonAnalyzable);
