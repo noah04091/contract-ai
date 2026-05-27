@@ -6772,3 +6772,27 @@
   border-radius: 0 8px 8px 0 !important;
   padding: 0.85rem 1rem !important;
 }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   MOCKUP-V4-POLISH-4 — Klausel-Risk-Badge als Pill (27.05.2026)
+   Pill-Style (radius 999px) + farbiger Dot statt Emoji.
+   Rollback: Diesen Block + .clauseRiskV4Pill/Dot in
+   ClauseList.tsx (suche: MOCKUP-V4-POLISH-4) entfernen.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.clauseRiskV4Pill {
+  border-radius: 999px !important;
+  padding: 0.2rem 0.6rem 0.2rem 0.5rem !important;
+  font-size: 0.72rem !important;
+  font-weight: 600 !important;
+  gap: 0.35rem !important;
+}
+.clauseRiskV4Dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.clauseRiskV4Dot.clauseRiskV4DotHigh   { background: #dc2626; }
+.clauseRiskV4Dot.clauseRiskV4DotMedium { background: #d97706; }
+.clauseRiskV4Dot.clauseRiskV4DotLow    { background: #16a34a; }

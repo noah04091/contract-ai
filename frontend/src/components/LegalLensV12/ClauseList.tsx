@@ -866,10 +866,15 @@ const ClauseList: React.FC<ClauseListProps> = ({
                   {clause.title && ` - ${clause.title}`}
                 </span>
                 <span
-                  className={`${styles.clauseRisk} ${styles[effectiveRiskLevel]}`}
+                  /* MOCKUP-V4-POLISH-4: Pill-Style + Dot statt Emoji */
+                  className={`${styles.clauseRisk} ${styles[effectiveRiskLevel]} ${styles.clauseRiskV4Pill}`}
                   title={clause.riskReason || ''}
                 >
-                  {getRiskEmoji(effectiveRiskLevel)} {RISK_LABELS[effectiveRiskLevel]}
+                  <span
+                    className={`${styles.clauseRiskV4Dot} ${styles[`clauseRiskV4Dot${effectiveRiskLevel.charAt(0).toUpperCase() + effectiveRiskLevel.slice(1)}`]}`}
+                    aria-hidden="true"
+                  />
+                  {RISK_LABELS[effectiveRiskLevel]}
                 </span>
               </div>
 
