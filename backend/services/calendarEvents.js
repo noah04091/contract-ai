@@ -1066,6 +1066,134 @@ async function generateEventsForContract(db, contract) {
       }
     }
 
+    // 🆕 11. KI-ERKANNTE WIEDERKEHRENDE/ANKER-BASIERTE FRISTEN (Tier 2, Problem F, 27.05.2026)
+    // Übersetzt actionable=true fristHinweise zu Calendar-Events. Konditionale
+    // Fristen (actionable=false) bleiben nur im UI sichtbar. Validierung in
+    // dateHuntService.validateFristHinweis hat Anti-Patterns + Whitelists.
+    if (contract.fristHinweise && Array.isArray(contract.fristHinweise)) {
+      const actionableFristen = contract.fristHinweise.filter(f => f && f.actionable === true);
+      console.log(`🤖 ${actionableFristen.length} actionable Fristen (von ${contract.fristHinweise.length} gesamt) für "${contract.name}"`);
+
+      const MAX_EVENTS_PER_FRIST = 12;        // Schutz gegen Calendar-Flutung
+      const HORIZON_MONTHS = 12;              // 12 Monate Vorschau
+      const horizonEnd = new Date(now.getFullYear(), now.getMonth() + HORIZON_MONTHS, now.getDate());
+
+      const intervalMonths = {
+        weekly: 0.25, biweekly: 0.5, monthly: 1,
+        quarterly: 3, semiannually: 6, yearly: 12
+      };
+
+      const fristTypeMapping = {
+        anpassungsfrist: { eventType: 'CONDITION_REVIEW', emoji: '📈', severity: 'info' },
+        wartungsfrist: { eventType: 'MAINTENANCE_CHECK', emoji: '🔧', severity: 'info' },
+        kuendigungsfrist: { eventType: 'NOTICE_PERIOD', emoji: '📬', severity: 'critical' },
+        zahlungsfrist: { eventType: 'PAYMENT_DUE', emoji: '💰', severity: 'warning' },
+        probezeit: { eventType: 'PROBATION_END', emoji: '👔', severity: 'warning' },
+        gewaehrleistungsfrist: { eventType: 'WARRANTY_END', emoji: '🛡️', severity: 'warning' },
+        verjaehrungsfrist: { eventType: 'STATUTE_LIMITATION', emoji: '⏳', severity: 'info' },
+        karenzentschaedigung: { eventType: 'KARENZ_END', emoji: '🚪', severity: 'warning' },
+        optionsfrist: { eventType: 'OPTION_DEADLINE', emoji: '⏰', severity: 'critical' },
+        sonstige: { eventType: 'CUSTOM_DEADLINE', emoji: '📅', severity: 'info' }
+      };
+
+      for (const frist of actionableFristen) {
+        const mapping = fristTypeMapping[frist.type] || fristTypeMapping.sonstige;
+
+        // Pfad A: WIEDERKEHRENDE Frist (recurrencePattern gesetzt)
+        if (frist.recurrencePattern && frist.recurrencePattern.intervalType) {
+          const stepMonths = intervalMonths[frist.recurrencePattern.intervalType] *
+            (frist.recurrencePattern.intervalCount || 1);
+          if (!Number.isFinite(stepMonths) || stepMonths <= 0) {
+            console.log(`  ⚠️ Frist übersprungen: ungültiges Intervall (${frist.type})`);
+            continue;
+          }
+
+          let eventDate = new Date(now.getFullYear(), now.getMonth() + Math.ceil(stepMonths), 1);
+          let eventCount = 0;
+          while (eventDate <= horizonEnd && eventCount < MAX_EVENTS_PER_FRIST) {
+            const localDate = createLocalDate(eventDate);
+            events.push({
+              userId: contract.userId,
+              contractId: contract._id,
+              type: mapping.eventType,
+              title: `${mapping.emoji} ${frist.title}`,
+              description: frist.description || `Wiederkehrende ${frist.type}-Erinnerung für "${contract.name}".`,
+              date: localDate,
+              severity: mapping.severity,
+              status: 'scheduled',
+              confidence: 60,        // Berechnete Events: niedriger als direkte Datums
+              dataSource: 'ai_calculated',
+              isEstimated: true,
+              metadata: {
+                provider: contract.provider,
+                contractName: contract.name,
+                aiExtracted: true,           // wichtig für Cleanup-Filter
+                source: 'fristHinweis-recurring',
+                originalType: frist.type,
+                recurrencePattern: frist.recurrencePattern,
+                legalBasis: frist.legalBasis || ''
+              },
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+            eventCount++;
+            const stepFullMonths = Math.max(1, Math.round(stepMonths));
+            eventDate = new Date(eventDate.getFullYear(), eventDate.getMonth() + stepFullMonths, eventDate.getDate());
+          }
+          console.log(`  ✅ Frist wiederkehrend → ${eventCount} Events: ${frist.type} (${frist.recurrencePattern.intervalType}/${frist.recurrencePattern.intervalCount})`);
+
+        // Pfad B: EINMALIGE Frist mit Anker (anchorType + durationDays)
+        } else if (frist.anchorType && frist.durationDays) {
+          let anchorDate = null;
+          if (frist.anchorType === 'contract_start' && contract.startDate) {
+            anchorDate = new Date(contract.startDate);
+          } else if (frist.anchorType === 'contract_end' && contract.expiryDate) {
+            anchorDate = new Date(contract.expiryDate);
+          }
+          if (!anchorDate || isNaN(anchorDate.getTime())) {
+            console.log(`  ⚠️ Frist übersprungen: ${frist.anchorType}-Anker nicht verfügbar (${frist.type})`);
+            continue;
+          }
+          const eventDate = new Date(anchorDate);
+          eventDate.setDate(eventDate.getDate() + frist.durationDays);
+
+          if (eventDate <= now) {
+            console.log(`  ⏭️ Frist übersprungen: Ergebnis-Datum ${eventDate.toLocaleDateString('de-DE')} liegt in Vergangenheit (${frist.type})`);
+            continue;
+          }
+
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: mapping.eventType,
+            title: `${mapping.emoji} ${frist.title}`,
+            description: frist.description || `${frist.type}-Termin für "${contract.name}".`,
+            date: createLocalDate(eventDate),
+            severity: mapping.severity,
+            status: 'scheduled',
+            confidence: 55,        // Berechnete Anker-Events: konservativ
+            dataSource: 'ai_calculated',
+            isEstimated: true,
+            metadata: {
+              provider: contract.provider,
+              contractName: contract.name,
+              aiExtracted: true,           // wichtig für Cleanup-Filter
+              source: 'fristHinweis-anchor',
+              originalType: frist.type,
+              anchorType: frist.anchorType,
+              durationDays: frist.durationDays,
+              legalBasis: frist.legalBasis || ''
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          console.log(`  ✅ Frist anker-basiert → 1 Event: ${frist.type} (${eventDate.toLocaleDateString('de-DE')})`);
+        } else {
+          console.log(`  ⏭️ Frist übersprungen: actionable=true aber weder recurrencePattern noch anchorType+durationDays (${frist.type})`);
+        }
+      }
+    }
+
     // Speichere Events in DB (update or insert)
     if (events.length > 0) {
       // 🔍 DEBUG: Log event data BEFORE saving to DB

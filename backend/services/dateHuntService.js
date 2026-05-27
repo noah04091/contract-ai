@@ -270,14 +270,57 @@ const FRIST_SCHEMA = `{
   "title": "<Kurz-Hinweis, max 80 Zeichen, z.B. 'Kündigungsfrist 6 Monate zum Monatsende'>",
   "description": "<1-2 Sätze warum für Mandanten wichtig>",
   "legalBasis": "<§/Klausel im Vertrag>",
-  "evidence": "<wörtlicher Satz aus dem Vertrag, max ${EVIDENCE_MAX_LEN} Zeichen>"
+  "evidence": "<wörtlicher Satz aus dem Vertrag, max ${EVIDENCE_MAX_LEN} Zeichen>",
+  "actionable": true|false,
+  "recurrencePattern": null | {"intervalType": "quarterly"|"monthly"|"yearly"|"weekly"|"biweekly"|"semiannually", "intervalCount": 1},
+  "anchorType": null | "contract_start" | "contract_end" | "fixed_date",
+  "durationDays": null | <Zahl, z.B. 180 für '6 Monate'>
 }`;
+
+// Aufklärungs-Block für die neuen Felder — wird im OUTPUT_FORMAT_HINT
+// referenziert, damit Junior/ClauseAudit/Senior konsistent strukturiert antworten.
+const FRIST_CALENDAR_HINT = `
+Calendar-Felder bei fristHinweise — WICHTIG für die Termin-Generierung:
+
+- actionable=true NUR wenn die Frist OHNE externes Auslöse-Ereignis konkret
+  zu einem Datum führen kann. Beispiele für actionable=true:
+    * "Kündigungsfrist 6 Monate zum Monatsende" (mit Anker contract_end)
+    * "EURIBOR-Anpassung quartalsweise" (recurrencePattern quarterly)
+    * "Jährliche Konditionsprüfung" (recurrencePattern yearly)
+    * "Probezeit 3 Monate ab Vertragsbeginn" (mit Anker contract_start, durationDays=90)
+
+- actionable=false bei konditional/wenn-dann-Fristen (kein konkretes Datum möglich):
+    * "Annahmefrist 7 Tage nach Zugang" — Trigger: konkretes Kaufangebot
+    * "Sperrfrist >7 Tage bei Zahlungsverzug" — Trigger: Zahlungsverzug
+    * "Reaktionsfrist 5 Werktage" — Trigger: konkrete Mitteilung
+    * "Widerspruchsfrist 5 Tage nach Zugang" — Trigger: Zugang eines Schreibens
+    * Faustregel: wenn im title "nach Zugang", "bei Verzug", "nach Erhalt",
+      "im Falle von", "ab Eingang" vorkommt → actionable=false.
+
+- recurrencePattern: NUR setzen wenn klar wiederkehrend mit festem Intervall:
+    * "quartalsweise", "vierteljährlich", "alle 3 Monate" → quarterly
+    * "monatlich", "pro Monat" → monthly
+    * "jährlich", "pro Jahr", "p.a." → yearly
+    * "halbjährlich", "alle 6 Monate" → semiannually
+    * "wöchentlich" → weekly
+  Sonst null.
+
+- anchorType: nur bei einmaligen actionable-Fristen ohne recurrencePattern.
+  "contract_start" bei Bezug auf Vertragsbeginn ("ab Vertragsbeginn", "ab Unterzeichnung").
+  "contract_end" bei Bezug auf Vertragsende ("zum Vertragsende", "zum Laufzeitende").
+  "fixed_date" wenn ein konkretes Datum im Text steht.
+
+- durationDays: nur bei einmaligen actionable-Fristen mit Anker. "6 Monate" = 180, "3 Monate" = 90.
+
+Sei konservativ: lieber actionable=false setzen als ein Phantom-Event riskieren.
+`;
 
 const OUTPUT_FORMAT_HINT = `Output (beide Felder PFLICHT, mind. leeres Array):
 {
   "importantDates": [...],
   "fristHinweise": [...]
-}`;
+}
+${FRIST_CALENDAR_HINT}`;
 
 /**
  * Stage 1 — Junior-User-Prompt.
@@ -491,6 +534,49 @@ function validateFristHinweis(entry, contractText) {
   if (!evidenceMatchesText(normEvidence, normText)) {
     return { valid: false, reason: 'evidence_not_in_text' };
   }
+
+  // 🆕 Tier 2 (Problem F, 27.05.2026): Calendar-Felder normalisieren.
+  // Whitelist-Validierung verhindert dass KI freie Strings einschmuggelt
+  // (z.B. "quartalsmäßig" statt "quarterly"). Defaults: actionable=false
+  // (sicherer Fallback — wenn KI Feld nicht liefert, wird kein Event erzeugt).
+  entry.actionable = entry.actionable === true;
+
+  // Anti-Pattern-Check: wenn title konditionale Trigger enthält, actionable
+  // automatisch auf false setzen (Schutz vor KI-Inkonsistenz).
+  const conditionalTriggers = /(nach\s+(zugang|eingang|erhalt|mitteilung|f[äa]lligkeit)|bei\s+(verzug|verz[öo]gerung|ausfall|streit|widerspruch)|im\s+falle|sofern|soweit|ab\s+eingang)/i;
+  if (conditionalTriggers.test(entry.title || '')) {
+    entry.actionable = false;
+  }
+
+  // recurrencePattern Whitelist
+  const VALID_INTERVALS = new Set(['quarterly', 'monthly', 'yearly', 'weekly', 'biweekly', 'semiannually']);
+  if (entry.recurrencePattern && typeof entry.recurrencePattern === 'object') {
+    const it = String(entry.recurrencePattern.intervalType || '').toLowerCase().trim();
+    const ic = parseInt(entry.recurrencePattern.intervalCount, 10);
+    if (VALID_INTERVALS.has(it) && Number.isFinite(ic) && ic >= 1 && ic <= 12) {
+      entry.recurrencePattern = { intervalType: it, intervalCount: ic };
+    } else {
+      entry.recurrencePattern = null;
+    }
+  } else {
+    entry.recurrencePattern = null;
+  }
+
+  // anchorType Whitelist
+  const VALID_ANCHORS = new Set(['contract_start', 'contract_end', 'fixed_date']);
+  if (entry.anchorType && VALID_ANCHORS.has(String(entry.anchorType).toLowerCase())) {
+    entry.anchorType = String(entry.anchorType).toLowerCase();
+  } else {
+    entry.anchorType = null;
+  }
+
+  // durationDays normalisieren
+  if (typeof entry.durationDays === 'number' && entry.durationDays >= 1 && entry.durationDays <= 36500) {
+    entry.durationDays = Math.round(entry.durationDays);
+  } else {
+    entry.durationDays = null;
+  }
+
   return { valid: true };
 }
 
@@ -603,7 +689,12 @@ function validateAndCollect(parsed, contractText, source, requestId) {
         title: e.title,
         description: e.description || '',
         legalBasis: e.legalBasis || '',
-        evidence: e.evidence
+        evidence: e.evidence,
+        // 🆕 Tier 2 (Problem F, 27.05.2026): Calendar-Felder durchreichen
+        actionable: e.actionable === true,
+        recurrencePattern: e.recurrencePattern || null,
+        anchorType: e.anchorType || null,
+        durationDays: e.durationDays || null
       });
     } else {
       stats.rejected_fristen++;
