@@ -42,6 +42,8 @@ type AnalysisData = {
   textLength?: number | null; // 🎯 NEU 20.05.2026 Finding 2 — für Min-Text-Banner
   pageCount?: number | null;
   provider?: { name?: string } | null;
+  providerConfidence?: number | null; // 0-100 (Backend-Skala). <75 → Warn-Badge im UI
+  providerDetected?: boolean | null;
   isReanalysis?: boolean;
   lawyerLevelAnalysis?: boolean;
   requestId?: string;
@@ -423,8 +425,28 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 {d.pageCount ? ` · ${d.pageCount} Seiten` : ""}
               </span>
               {d.provider?.name && (
-                <span className={styles.fcStatusPill} style={{ background: "#eff6ff", color: "#2563eb" }}>
+                <span
+                  className={styles.fcStatusPill}
+                  style={(d.providerConfidence ?? 100) < 75
+                    ? { background: "#fef3c7", color: "#92400e" }
+                    : { background: "#eff6ff", color: "#2563eb" }}
+                  title={(d.providerConfidence ?? 100) < 75
+                    ? `Vertragspartei mit niedriger Konfidenz erkannt (${d.providerConfidence}%) — bitte prüfen`
+                    : undefined}
+                >
                   {cleanOcrSpacing(d.provider.name)}
+                  {(d.providerConfidence ?? 100) < 75 && " ?"}
+                </span>
+              )}
+              {/* 🆕 Problem H (27.05.2026): Warn-Badge wenn Vertragspartei nicht erkannt.
+                  Triggert bei provider=null, damit User die Lücke nicht übersieht. */}
+              {!d.provider?.name && d.providerDetected === false && (
+                <span
+                  className={styles.fcStatusPill}
+                  style={{ background: "#fef3c7", color: "#92400e" }}
+                  title="Vertragspartei konnte nicht eindeutig erkannt werden — bitte im Vertrag prüfen"
+                >
+                  Vertragspartei nicht erkannt
                 </span>
               )}
               {d.isReanalysis && (

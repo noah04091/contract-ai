@@ -910,7 +910,7 @@ async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) 
     const completion = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       temperature: 0.1,
-      max_tokens: 200,
+      max_tokens: 350,
       response_format: { type: 'json_object' },
       messages: [
         {
@@ -922,6 +922,12 @@ Antworte NUR mit JSON in diesem Format:
   "category": "CONTRACT" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "UNKNOWN",
   "contractType": "factoring" | "rental" | "employment" | "purchase" | "nda" | "loan" | "service" | "telecom" | "insurance" | "energy" | "agb" | "leasing" | "license" | "avv" | "franchise" | "other" | null,
   "contractTypeConfidence": 0-1,
+  "parties": {
+    "provider": "<Name der anbietenden/leistenden Partei, oder null>",
+    "customer": "<Name der empfangenden/kaufenden Partei, oder null>",
+    "providerConfidence": 0-1,
+    "customerConfidence": 0-1
+  },
   "confidence": 0-1,
   "reason": "kurze Begründung auf Deutsch (1 Satz)"
 }
@@ -978,6 +984,41 @@ CONTRACTTYPECONFIDENCE: wie sicher du bei der contractType-Wahl bist (0-1).
 - Bei klaren Indizien aber kein expliziter Titel: 0.7-0.9
 - Bei Hybrid-Charakter oder schwacher Evidenz: 0.4-0.6 (Backend wird auf null fallen)
 
+PARTIES — Vertragsparteien extrahieren (sehr wichtig):
+
+REGELN (Anti-Halluzination, NICHT VERHANDELBAR):
+- Nur Namen die WÖRTLICH im Text vorkommen. NIEMALS erfinden, NIEMALS ergänzen mit Suffixen wie "GmbH" die nicht da stehen.
+- Bei Unsicherheit oder nicht im Text auffindbar → null (nicht raten).
+- Rubrum/Präambel hat Priorität ("zwischen X und Y", "die Parteien:", "Vermieter:", "Auftraggeber:").
+- Bei category != "CONTRACT" → parties: { provider: null, customer: null, providerConfidence: 0, customerConfidence: 0 }
+
+ROLLEN-ZUORDNUNG (provider vs customer):
+- provider = die ANBIETENDE/LEISTENDE Partei (Vermieter, Verkäufer, Arbeitgeber, Factor, Versicherer, Dienstleister, Lizenzgeber)
+- customer = die EMPFANGENDE/KAUFENDE Partei (Mieter, Käufer, Arbeitnehmer, Factoringkunde, Versicherungsnehmer, Auftraggeber als Empfänger, Lizenznehmer)
+- Bei Unklarheit (z.B. Tauschvertrag, Kooperation auf Augenhöhe): die im Vertrag zuerst genannte Partei als provider.
+
+KONFIDENZ-REGELN für parties:
+- 0.9-1.0: Partei explizit mit Rolle benannt ("Vermieter: Max Mustermann")
+- 0.7-0.9: Partei aus Kontext eindeutig ("zwischen GRENKEFACTORING GmbH und EisQueen GmbH" — Reihenfolge klar)
+- 0.5-0.7: Partei erschlossen aber nicht 100% eindeutig
+- <0.5 oder unsicher: null (lieber kein Wert als falscher Wert)
+
+BEISPIELE PARTIES:
+- "Factoringvertrag zwischen der GRENKEFACTORING GmbH und der EisQueen GmbH"
+  → parties: { "provider": "GRENKEFACTORING GmbH", "customer": "EisQueen GmbH", "providerConfidence": 0.95, "customerConfidence": 0.92 }
+
+- "Mietvertrag — Vermieter: Müller GmbH, Mieter: Schmidt"
+  → parties: { "provider": "Müller GmbH", "customer": "Schmidt", "providerConfidence": 0.97, "customerConfidence": 0.90 }
+
+- "Arbeitsvertrag zwischen TechCorp AG (Arbeitgeber) und Anna Weber (Arbeitnehmerin)"
+  → parties: { "provider": "TechCorp AG", "customer": "Anna Weber", "providerConfidence": 0.98, "customerConfidence": 0.95 }
+
+- Vertrag ohne klare Parteien (z.B. unausgefüllter Mustervertrag):
+  → parties: { "provider": null, "customer": null, "providerConfidence": 0, "customerConfidence": 0 }
+
+- Gescannter Vertrag wo OCR nur halbe Namen liest:
+  → setze nur die Partei die du wörtlich findest, andere auf null. NIE ergänzen.
+
 Du erhältst je nach Dokumentlänge bis zu drei Abschnitte: Anfang, ggf. Mitte,
 ggf. Ende. Berücksichtige alle Abschnitte — bei Verträgen steht der eigentliche
 Charakter (z.B. Forderungsabtretung beim Factoring) oft in der Mitte oder am Ende.
@@ -1028,6 +1069,35 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
         console.warn(`⚠️ [${requestId}] Türsteher 2: ungültiger contractType="${parsed.contractType}" — verwerfe (Whitelist)`);
       }
     }
+    // 🆕 Problem H (27.05.2026): Parties-Extraktion mit Evidence-Check.
+    // Anti-Halluzination: KI darf nur Namen liefern die wörtlich im Text vorkommen.
+    // Whitelist via Evidence-Check, Confidence-Gate <0.6 → null → Keyword-Fallback.
+    let parties = { provider: null, customer: null, providerConfidence: 0, customerConfidence: 0 };
+    if (category === 'CONTRACT' && parsed.parties && typeof parsed.parties === 'object') {
+      const sampleLower = sample.toLowerCase();
+      if (typeof parsed.parties.provider === 'string' && parsed.parties.provider.trim().length >= 2) {
+        const providerName = parsed.parties.provider.trim();
+        const pConf = typeof parsed.parties.providerConfidence === 'number'
+          ? Math.max(0, Math.min(1, parsed.parties.providerConfidence)) : 0;
+        if (pConf >= 0.6 && sampleLower.includes(providerName.toLowerCase())) {
+          parties.provider = providerName;
+          parties.providerConfidence = pConf;
+        } else if (pConf >= 0.6) {
+          console.warn(`⚠️ [${requestId}] Türsteher 2: provider="${providerName}" nicht im Text gefunden — Evidence-Check failed`);
+        }
+      }
+      if (typeof parsed.parties.customer === 'string' && parsed.parties.customer.trim().length >= 2) {
+        const customerName = parsed.parties.customer.trim();
+        const cConf = typeof parsed.parties.customerConfidence === 'number'
+          ? Math.max(0, Math.min(1, parsed.parties.customerConfidence)) : 0;
+        if (cConf >= 0.6 && sampleLower.includes(customerName.toLowerCase())) {
+          parties.customer = customerName;
+          parties.customerConfidence = cConf;
+        } else if (cConf >= 0.6) {
+          console.warn(`⚠️ [${requestId}] Türsteher 2: customer="${customerName}" nicht im Text gefunden — Evidence-Check failed`);
+        }
+      }
+    }
     // Cost-Tracking — Visibility für gpt-4o-mini Klassifikations-Calls (zuvor blind)
     try {
       if (completion.usage) {
@@ -1042,8 +1112,11 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
         }).catch(() => { /* tracking failure must never break analysis */ });
       }
     } catch { /* costTracking optional */ }
-    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)})${contractType ? ` | contractType=${contractType} (${contractTypeConfidence.toFixed(2)})` : ''} — ${parsed.reason || 'keine Begründung'}`);
-    return { type: category, confidence, contractType, contractTypeConfidence, source: 'gpt-4o-mini' };
+    const partiesLog = (parties.provider || parties.customer)
+      ? ` | parties=${parties.provider || '∅'}↔${parties.customer || '∅'} (${parties.providerConfidence.toFixed(2)}/${parties.customerConfidence.toFixed(2)})`
+      : '';
+    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)})${contractType ? ` | contractType=${contractType} (${contractTypeConfidence.toFixed(2)})` : ''}${partiesLog} — ${parsed.reason || 'keine Begründung'}`);
+    return { type: category, confidence, contractType, contractTypeConfidence, parties, source: 'gpt-4o-mini' };
   } catch (err) {
     clearTimeout(timeoutHandle);
     const isAbort = err.name === 'AbortError' || controller.signal.aborted;
@@ -2650,6 +2723,8 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       // extractedContractType-Pfad (Z. 3795+) ihn als Primärquelle nutzen kann.
       const gptContractType = gptOpinion?.contractType || null;
       const gptContractTypeConfidence = gptOpinion?.contractTypeConfidence || 0;
+      // 🆕 Problem H (27.05.2026): Parties via Türsteher 2 mitführen.
+      const gptParties = gptOpinion?.parties || { provider: null, customer: null, providerConfidence: 0, customerConfidence: 0 };
 
       if (needsSecondOpinion) {
         // Threshold 0.75 (vorher 0.7) — konservative Anpassung nach Multi-Sample-
@@ -2659,7 +2734,7 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
         if (gptOpinion && gptOpinion.confidence >= 0.75) {
           // GPT ist klar → Übernehmen
           console.log(`✅ [${requestId}] Türsteher 2 übernimmt: ${documentType.type} → ${gptOpinion.type}`);
-          documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence };
+          documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence, parties: gptParties };
         } else if (
           // 🎯 UNKNOWN-Erhaltung (20.05.2026 Finding 3) — wenn BEIDE Türsteher
           // explizit UNKNOWN sagen, behalten wir UNKNOWN (User sieht blauen Banner)
@@ -2671,15 +2746,15 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
           gptOpinion.confidence >= 0.65
         ) {
           console.log(`❓ [${requestId}] Beide Türsteher explizit UNKNOWN (T1=${documentType.confidence.toFixed(2)}, T2=${gptOpinion.confidence.toFixed(2)}) → UNKNOWN behalten, blauer Banner im Frontend`);
-          documentType = { type: 'UNKNOWN', confidence: gptOpinion.confidence, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence };
+          documentType = { type: 'UNKNOWN', confidence: gptOpinion.confidence, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence, parties: gptParties };
         } else {
           // Beide unsicher → CONTRACT-Fallback (sicherer Default, 95% sind Verträge)
           console.log(`🛡️ [${requestId}] Beide Türsteher unsicher (Heuristik=${documentType.type}/${documentType.confidence.toFixed(2)}, GPT=${gptOpinion ? `${gptOpinion.type}/${gptOpinion.confidence.toFixed(2)}` : 'failed'}) → Sicherheitsnetz CONTRACT`);
-          documentType = { type: 'CONTRACT', confidence: 0.5, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence };
+          documentType = { type: 'CONTRACT', confidence: 0.5, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence, parties: gptParties };
         }
       } else {
         // Heuristik war klar CONTRACT → category bleibt, aber GPT-contractType wird trotzdem übernommen
-        documentType = { ...documentType, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence };
+        documentType = { ...documentType, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence, parties: gptParties };
         if (gptContractType) {
           console.log(`📊 [${requestId}] Türsteher 2 contractType erkannt: ${gptContractType} (Konfidenz ${gptContractTypeConfidence.toFixed(2)}) — Heuristik-category=${documentType.type} bleibt`);
         }
@@ -2725,6 +2800,10 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       // Wird in der Aufrufer-Pipeline gegen Keyword-Detection priorisiert.
       contractType: documentType.contractType || null,
       contractTypeConfidence: documentType.contractTypeConfidence || 0,
+      // 🆕 Problem H (27.05.2026): Parties aus Türsteher 2 mit Evidence-Check.
+      // null wenn nicht extrahierbar oder Konfidenz <0.6 — dann greift in der
+      // Aufrufer-Pipeline der Keyword-Fallback (contractAnalyzer.js).
+      parties: documentType.parties || { provider: null, customer: null, providerConfidence: 0, customerConfidence: 0 },
       qualityScore: contentQuality.qualityScore,
       analysisMessage: strategy.message,
       metrics: {
@@ -3944,7 +4023,37 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       );
 
       if (providerAnalysis.success && providerAnalysis.data) {
-        extractedProvider = providerAnalysis.data.provider;
+        // 🆕 Provider-Detection mit GPT-Priorität (Problem H, 27.05.2026):
+        // Türsteher 2 (gpt-4o-mini) erkennt Parteien semantisch — auch handschriftliche
+        // Namen, Privatpersonen, Mietvertrags-Vermieter ohne GmbH-Suffix etc.
+        // Keyword-Extractor (contractAnalyzer) bleibt als Fallback wenn GPT leer war
+        // oder Evidence-Check fehlschlug. providerConfidence wird im DB-Feld mitgeführt
+        // damit das Frontend bei niedriger Konfidenz einen Warn-Badge zeigen kann.
+        const gptProviderName = validationResult?.parties?.provider || null;
+        const gptProviderConfidence = validationResult?.parties?.providerConfidence || 0;
+        const keywordProvider = providerAnalysis.data.provider; // {name, displayName, confidence, extractedFromText} | null
+        if (gptProviderName) {
+          extractedProvider = {
+            name: gptProviderName,
+            displayName: gptProviderName,
+            // Skala vereinheitlichen: GPT 0-1 → 0-100 wie Keyword-Pfad
+            confidence: Math.round(gptProviderConfidence * 100),
+            extractedFromText: true,
+            source: 'gpt-4o-mini'
+          };
+          if (keywordProvider && keywordProvider.displayName !== gptProviderName) {
+            console.log(`📊 [${requestId}] Provider-Konflikt: GPT="${gptProviderName}" vs Keyword="${keywordProvider.displayName}" → GPT gewinnt (semantisch)`);
+          } else {
+            console.log(`📊 [${requestId}] Provider aus GPT: ${gptProviderName} (${(gptProviderConfidence * 100).toFixed(0)}%)`);
+          }
+        } else {
+          extractedProvider = keywordProvider;
+          if (keywordProvider) {
+            console.log(`📊 [${requestId}] Provider aus Keyword-Fallback: ${keywordProvider.displayName} (${keywordProvider.confidence}%) — GPT unsicher oder ausgefallen`);
+          } else {
+            console.warn(`⚠️ [${requestId}] Provider weder per GPT noch per Keyword erkennbar — Frontend zeigt Warn-Badge`);
+          }
+        }
         extractedContractNumber = providerAnalysis.data.contractNumber;
         extractedCustomerNumber = providerAnalysis.data.customerNumber;
         // 🆕 Universal contractType (Problem D, 26.05.2026):
