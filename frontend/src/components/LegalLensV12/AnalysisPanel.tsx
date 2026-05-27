@@ -303,7 +303,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
         <div className={styles.analysisSection}>
           <div className={styles.sectionHeader}>
             <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>{perspInfo.icon || '🔍'}</span>
+              {/* MOCKUP-V4-POLISH-2 */}
+              <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge}`}>{perspInfo.icon || '🔍'}</span>
               {elapsedSec >= 8 ? 'Dauert etwas länger...' : 'Analyse läuft...'}
             </h4>
             <span className={styles.elapsedTime}>{elapsedSec}s</span>
@@ -508,7 +509,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           onClick={() => toggleSection('explanation')}
         >
           <h4 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>{getCurrentPerspectiveInfo().icon}</span>
+            {/* MOCKUP-V4-POLISH-2 */}
+            <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge}`}>{getCurrentPerspectiveInfo().icon}</span>
             Was bedeutet das?
           </h4>
           <span className={styles.sectionToggle}>
@@ -623,7 +625,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             onClick={() => toggleSection('worstCase')}
           >
             <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>⚠️</span>
+              {/* MOCKUP-V4-POLISH-2 */}
+              <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge} ${styles.sectionIconV4BadgeDanger}`}>⚠️</span>
               Worst-Case Szenario
             </h4>
             <span className={styles.sectionToggle}>
@@ -687,7 +690,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             onClick={() => toggleSection('risks')}
           >
             <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>🎯</span>
+              {/* MOCKUP-V4-POLISH-2 */}
+              <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge}`}>🎯</span>
               Worauf wir bei dieser Klausel achten
             </h4>
             <span className={styles.sectionToggle}>
@@ -728,7 +732,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             onClick={() => toggleSection('proposal')}
           >
             <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>✍️</span>
+              {/* MOCKUP-V4-POLISH-2 */}
+              <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge} ${styles.sectionIconV4BadgeSuccess}`}>✍️</span>
               So sollte es heißen
             </h4>
             <span className={styles.sectionToggle}>
@@ -800,7 +805,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
             onClick={() => toggleSection('market')}
           >
             <h4 className={styles.sectionTitle}>
-              <span className={styles.sectionIcon}>📈</span>
+              {/* MOCKUP-V4-POLISH-2 */}
+              <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge} ${styles.sectionIconV4BadgeWarning}`}>📈</span>
               Marktvergleich
             </h4>
             <span className={styles.sectionToggle}>
@@ -867,7 +873,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
               onClick={() => toggleSection('perspectives')}
             >
               <h4 className={styles.sectionTitle}>
-                <span className={styles.sectionIcon}>🔄</span>
+                {/* MOCKUP-V4-POLISH-2 */}
+                <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge}`}>🔄</span>
                 Andere Perspektiven
               </h4>
               <span className={styles.sectionToggle}>
@@ -908,7 +915,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           onClick={() => toggleSection('moreAlternatives')}
         >
           <h4 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>💡</span>
+            {/* MOCKUP-V4-POLISH-2 */}
+            <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge}`}>💡</span>
             Weitere Formulierungs-Alternativen
             {alternatives.length > 0 && (
               <span className={styles.sectionCountBadge}>{alternatives.length}</span>
@@ -994,7 +1002,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           onClick={() => toggleSection('negotiationTips')}
         >
           <h4 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>🤝</span>
+            {/* MOCKUP-V4-POLISH-2 */}
+            <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge}`}>🤝</span>
             Verhandlungstipps & E-Mail-Vorlage
             {negotiation?.tips?.length ? (
               <span className={styles.sectionCountBadge}>{negotiation.tips.length}</span>
@@ -1061,7 +1070,8 @@ const AnalysisPanel: React.FC<AnalysisPanelProps> = ({
           onClick={() => toggleSection('chat')}
         >
           <h4 className={styles.sectionTitle}>
-            <span className={styles.sectionIcon}>💬</span>
+            {/* MOCKUP-V4-POLISH-2 */}
+            <span className={`${styles.sectionIcon} ${styles.sectionIconV4Badge}`}>💬</span>
             Fragen zur Klausel
             {chatHistory.length > 0 && (
               <span className={styles.sectionCountBadge}>{chatHistory.length}</span>
