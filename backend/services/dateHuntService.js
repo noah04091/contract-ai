@@ -544,7 +544,10 @@ function validateFristHinweis(entry, contractText) {
   // Anti-Pattern-Check: wenn title konditionale Trigger enthält, actionable
   // automatisch auf false setzen (Schutz vor KI-Inkonsistenz).
   const conditionalTriggers = /(nach\s+(zugang|eingang|erhalt|mitteilung|f[äa]lligkeit|entstehen|kenntnis|kenntniserlangung|abschluss)|bei\s+(verzug|verz[öo]gerung|ausfall|streit|widerspruch|verletzung)|im\s+(falle|anspruchsfall|streitfall|schadensfall)|sofern|soweit|ab\s+eingang)/i;
-  if (conditionalTriggers.test(entry.title || '')) {
+  // Tier 2 Härtung (27.05.2026): KI schreibt Trigger manchmal in description
+  // statt im title. Beide prüfen für robusten Phantom-Schutz.
+  const combinedText = `${entry.title || ''} ${entry.description || ''}`;
+  if (conditionalTriggers.test(combinedText)) {
     entry.actionable = false;
   }
 
@@ -604,9 +607,21 @@ function dedupDates(stageA, stageB) {
 function dedupFristen(stageA, stageB) {
   if (!Array.isArray(stageB) || stageB.length === 0) return stageA;
   const result = [...stageA];
+  // Richness-Score: wie viele Calendar-relevante Felder sind gesetzt?
+  // (Tier 2 Bugfix 27.05.2026 — vorher gewann Stage A immer, auch wenn arm.
+  // Folge: reichere ClauseAudit-Daten gingen verloren wenn Junior arm war.)
+  const richnessScore = (frist) => {
+    if (!frist) return 0;
+    let s = 0;
+    if (frist.recurrencePattern) s++;
+    if (frist.anchorType) s++;
+    if (frist.durationDays) s++;
+    if (frist.actionable === true) s++;
+    return s;
+  };
   for (const b of stageB) {
     const bEvNorm = normalize(b.evidence || '');
-    const isDup = stageA.some(a => {
+    const dupIdx = result.findIndex(a => {
       if (a.type !== b.type) return false;
       const aEvNorm = normalize(a.evidence || '');
       if (!aEvNorm || !bEvNorm) return false;
@@ -616,7 +631,13 @@ function dedupFristen(stageA, stageB) {
       if (bEvNorm.length >= minOverlap && aEvNorm.includes(bEvNorm.slice(0, minOverlap))) return true;
       return false;
     });
-    if (!isDup) result.push(b);
+    if (dupIdx === -1) {
+      result.push(b);
+    } else if (richnessScore(b) > richnessScore(result[dupIdx])) {
+      // Bug 5 Fix: bei Duplikat gewinnt das reichere Objekt (mehr Calendar-Felder).
+      // Bei gleichem Score bleibt Stage A (Status quo) erhalten.
+      result[dupIdx] = b;
+    }
   }
   return result;
 }
