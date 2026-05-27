@@ -1074,9 +1074,11 @@ async function generateEventsForContract(db, contract) {
       const actionableFristen = contract.fristHinweise.filter(f => f && f.actionable === true);
       console.log(`🤖 ${actionableFristen.length} actionable Fristen (von ${contract.fristHinweise.length} gesamt) für "${contract.name}"`);
 
-      const MAX_EVENTS_PER_FRIST = 12;        // Schutz gegen Calendar-Flutung
+      const MAX_EVENTS_PER_FRIST = 12;        // Schutz gegen Calendar-Flutung pro Frist
+      const MAX_FRIST_EVENTS_TOTAL = 50;      // Globaler Cap pro Vertrag (TÜV Schritt 2)
       const HORIZON_MONTHS = 12;              // 12 Monate Vorschau
       const horizonEnd = new Date(now.getFullYear(), now.getMonth() + HORIZON_MONTHS, now.getDate());
+      let fristEventsCreated = 0;             // Counter für globalen Cap
 
       // 🆕 Hybrid Tage/Monate (Bugfix 27.05.2026): weekly/biweekly funktionieren
       // nur mit Tage-Arithmetik korrekt. Vorher wurden 0.25/0.5 Monate via
@@ -1104,6 +1106,13 @@ async function generateEventsForContract(db, contract) {
       };
 
       for (const frist of actionableFristen) {
+        // Globaler Cap: Notfall-Schutz wenn KI sehr viele actionable Fristen liefert.
+        // Bricht ab bevor weitere Events erzeugt werden — bestehende bleiben unangetastet.
+        if (fristEventsCreated >= MAX_FRIST_EVENTS_TOTAL) {
+          console.log(`  ⚠️ Globaler Frist-Event-Cap erreicht (${MAX_FRIST_EVENTS_TOTAL}) — weitere Fristen übersprungen`);
+          break;
+        }
+
         const mapping = fristTypeMapping[frist.type] || fristTypeMapping.sonstige;
 
         // Pfad A: WIEDERKEHRENDE Frist (recurrencePattern gesetzt)
@@ -1129,7 +1138,7 @@ async function generateEventsForContract(db, contract) {
           }
 
           let eventCount = 0;
-          while (eventDate <= horizonEnd && eventCount < MAX_EVENTS_PER_FRIST) {
+          while (eventDate <= horizonEnd && eventCount < MAX_EVENTS_PER_FRIST && fristEventsCreated < MAX_FRIST_EVENTS_TOTAL) {
             const localDate = createLocalDate(eventDate);
             events.push({
               userId: contract.userId,
@@ -1156,6 +1165,7 @@ async function generateEventsForContract(db, contract) {
               updatedAt: new Date()
             });
             eventCount++;
+            fristEventsCreated++;        // Globaler Cap-Counter
             // Nächstes Event (gleiche Tage/Monate-Arithmetik wie für das erste)
             if (cfg.unit === 'days') {
               eventDate = new Date(eventDate);
@@ -1211,6 +1221,7 @@ async function generateEventsForContract(db, contract) {
             createdAt: new Date(),
             updatedAt: new Date()
           });
+          fristEventsCreated++;        // Globaler Cap-Counter
           console.log(`  ✅ Frist anker-basiert → 1 Event: ${frist.type} (${eventDate.toLocaleDateString('de-DE')})`);
         } else {
           console.log(`  ⏭️ Frist übersprungen: actionable=true aber weder recurrencePattern noch anchorType+durationDays (${frist.type})`);
