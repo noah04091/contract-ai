@@ -15,6 +15,12 @@ async function checkAndSendNotifications(db) {
     console.log("Starte Calendar Notification Check...");
 
     const now = new Date();
+    // Lookahead = 7 Tage (Safety-Net für Edge-Cases ohne Reminder-Coverage).
+    // 3-Klassen-Hybrid-Skip-Logik weiter unten entscheidet pro Event, ob die Mail
+    // tatsächlich vorgezogen wird oder erst am Event-Tag rausgeht:
+    //   Klasse A — Haupt-Event MIT _REMINDER_XD-Begleiter → skippen, Reminder feuert
+    //   Klasse B — Haupt-Event OHNE Reminder → Lookahead-Safety-Net aktiv (Vorab-Mail)
+    //   Klasse C — Frist-Hinweis-Event (fristHinweis-recurring/anchor) → skippen, ist selbst Reminder
     const lookaheadDays = parseInt(process.env.REMINDER_LOOKAHEAD_DAYS || "7");
     const lookaheadDate = new Date();
     lookaheadDate.setDate(lookaheadDate.getDate() + lookaheadDays);
@@ -53,6 +59,44 @@ async function checkAndSendNotifications(db) {
 
     console.log(`${upcomingEvents.length} Events zur Benachrichtigung gefunden`);
 
+    // ─── HYBRID-SKIP-LOGIK: Pre-Fetch aller existierenden _REMINDER_XD-Events ───
+    // Damit wir pro Haupt-Event in O(1) wissen, ob ein passender Reminder existiert.
+    // Performance: 1 Query statt N Queries (bei vielen Events kritisch).
+    // Fail-safe: Bei DB-Fehler im Pre-Fetch bleibt Map leer → Hybrid-Skip wirkt nicht,
+    // Lookahead-Safety-Net springt für alle Events ein (= bisheriges Verhalten).
+    const involvedContractIds = [...new Set(
+      upcomingEvents.map(e => e.contractId?.toString()).filter(Boolean)
+    )];
+    const remindersByContractAndBaseType = new Map();  // "contractId|baseType" → true
+    if (involvedContractIds.length > 0) {
+      try {
+        const { ObjectId: ObjId } = require("mongodb");
+        const reminderEvents = await db.collection("contract_events").find({
+          contractId: { $in: involvedContractIds.map(id => new ObjId(id)) },
+          type: { $regex: /_REMINDER_\d+D$/i },
+          status: { $nin: ["dismissed"] }  // dismissed Reminder zählen nicht als Coverage
+        }, { projection: { contractId: 1, type: 1 } }).toArray();
+        for (const r of reminderEvents) {
+          const cid = r.contractId.toString();
+          const baseType = r.type.replace(/_REMINDER_\d+D$/i, "");
+          remindersByContractAndBaseType.set(`${cid}|${baseType}`, true);
+        }
+        console.log(`🔍 Hybrid-Pre-Fetch: ${reminderEvents.length} Reminder-Events für ${involvedContractIds.length} Verträge geladen`);
+      } catch (preFetchErr) {
+        console.error(`⚠️ Hybrid-Pre-Fetch fehlgeschlagen — fallback auf Lookahead-only:`, preFetchErr.message);
+        // Map bleibt leer → keine Klasse-A-Skips → Lookahead-Safety-Net deckt alles ab
+      }
+    }
+
+    // Helpers für 3-Klassen-Skip-Logik
+    const isReminderType = (t) => /_REMINDER_\d+D$/i.test(t || "");
+    const isFristHinweisEvent = (e) => {
+      const src = e.metadata?.source;
+      return src === "fristHinweis-recurring" || src === "fristHinweis-anchor";
+    };
+    const todayDateOnly = new Date();
+    todayDateOnly.setHours(0, 0, 0, 0);
+
     let queuedCount = 0;
 
     for (const event of upcomingEvents) {
@@ -66,6 +110,36 @@ async function checkAndSendNotifications(db) {
           console.log(`⏳ Envelope-Event "${event.title}" noch nicht fällig (geplant: ${eventDateOnly.toISOString().split('T')[0]})`);
           continue;
         }
+      }
+
+      // ─── HYBRID-SKIP-LOGIK (3 Klassen) ───
+      // Nur skippen wenn Event >1 Tag in der Zukunft. Tag-of-Mails laufen IMMER durch.
+      // Math.floor() statt Math.round() — konservativ bei DST-Übergängen:
+      // an einem 23-Stunden-Tag (Spring-Forward) ergibt sich 0.96, nicht 1.
+      // floor(0.96)=0 → Event wird als „Tag-of" behandelt, keine Vorverlagerung. Sicher.
+      const eventDateOnly = new Date(event.date);
+      eventDateOnly.setHours(0, 0, 0, 0);
+      const daysUntilEventDay = Math.floor((eventDateOnly - todayDateOnly) / 86400000);
+
+      if (daysUntilEventDay > 1) {
+        // Klasse C: Frist-Hinweis-Events sind selbst „die Reminder" (Tier-2-Arbeit vom 27.05.2026)
+        // → niemals vorziehen, immer am Event-Tag feuern
+        if (isFristHinweisEvent(event)) {
+          console.log(`⏸️ Klasse C (Frist-Hinweis) skip: ${event.type} in ${daysUntilEventDay}d — feuert am Tag selbst`);
+          continue;
+        }
+
+        // Klasse A: Haupt-Event MIT zugehörigem _REMINDER_XD → skippen, Reminder feuert
+        if (!isReminderType(event.type) && event.contractId) {
+          const key = `${event.contractId.toString()}|${event.type}`;
+          if (remindersByContractAndBaseType.has(key)) {
+            console.log(`⏸️ Klasse A (Haupt+Reminder) skip: ${event.type} in ${daysUntilEventDay}d — Reminder übernimmt`);
+            continue;
+          }
+        }
+
+        // Klasse B (Haupt-Event OHNE Reminder) ODER Reminder-Event selbst:
+        // Fall-through zum normalen Versand → Lookahead-Safety-Net aktiv.
       }
 
       if (!event.user?.email) {
