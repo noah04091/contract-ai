@@ -1839,6 +1839,22 @@ const connectDB = async () => {
         }
       });
 
+      // 🆕 Stufe 5 (27.05.2026): Stale-Analysis-Jobs-Recovery (alle 5 Min)
+      // Erkennt hängende Async-Pipeline-Jobs nach Backend-Crash und markiert sie failed.
+      cron.schedule("*/5 * * * *", withCronLock('stale-analysis-jobs', async () => {
+        try {
+          await withCronLogging('stale-analysis-jobs', async () => {
+            const { runStaleAnalysisJobsCleanup } = require("./jobs/staleAnalysisJobs");
+            const cronDb = await database.connect();
+            const result = await runStaleAnalysisJobsCleanup(cronDb);
+            return result;
+          });
+        } catch (error) {
+          console.error("❌ Stale-Analysis-Jobs Cron Error:", error);
+          await captureError(error, { route: 'CRON:stale-analysis-jobs', method: 'SCHEDULED', severity: 'medium' });
+        }
+      }));
+
       // V1 Legal Pulse Scan — DEAKTIVIERT (22.04.2026)
       // Grund: V2 Pipeline hat V1 vollständig ersetzt. Auto-Scan erzeugte
       // unnötige OpenAI-Kosten für Daten die nirgends mehr angezeigt werden.

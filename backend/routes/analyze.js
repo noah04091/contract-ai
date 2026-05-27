@@ -3160,6 +3160,211 @@ async function releaseAnalysisLock(db, userId, fileHash, requestId) {
   }
 }
 
+// ===== 🆕 Stufe 5 (27.05.2026): Async-Job-Pattern für lange Analysen =====
+//
+// Problem: Render-Proxy schneidet HTTP-Requests nach ~125s ab. OCR-Verträge brauchen
+// 3-4 Min → 502 ans Frontend, Backend rechnet weiter ins Leere.
+//
+// Lösung: POST /api/analyze?async=true antwortet sofort mit { jobId }.
+// Pipeline läuft via setImmediate im Hintergrund. Frontend pollt GET /api/analyze/job/:jobId.
+//
+// Architektur-Entscheidung: Fake-Res-Pattern statt Pipeline-Refactor.
+// Die 1700-Zeilen-Pipeline-Funktion bleibt 100% unangetastet — Async-Wrapper ruft sie
+// mit Mock-req/res-Objekten auf und schreibt das Result ins Job-Doc. Null Regression-Risiko
+// für synchrone Aufrufe (Counter-Rollback, Lock-Release, Calendar-Backup, alle Hardenings
+// laufen wie heute innerhalb der Pipeline).
+//
+// Kill-Switch: ENV ANALYZE_ASYNC_ENABLED=false → ignoriert ?async=true, fällt zurück auf sync.
+let _analysisJobsIndexEnsured = false;
+async function ensureAnalysisJobsIndex(db) {
+  if (_analysisJobsIndexEnsured) return;
+  try {
+    const col = db.collection('analysis_jobs');
+    // TTL 24h auf completedAt — done/failed Jobs werden auto-gecleaned
+    await col.createIndex(
+      { completedAt: 1 },
+      { expireAfterSeconds: 24 * 60 * 60, name: 'idx_analysis_jobs_ttl', sparse: true }
+    );
+    // Lookup-Index für Status-Polling und Stale-Job-Cron
+    await col.createIndex({ jobId: 1 }, { name: 'idx_analysis_jobs_jobid', unique: true });
+    await col.createIndex({ userId: 1, status: 1 }, { name: 'idx_analysis_jobs_user_status' });
+    await col.createIndex({ status: 1, updatedAt: 1 }, { name: 'idx_analysis_jobs_stale_lookup' });
+    _analysisJobsIndexEnsured = true;
+    console.log(`✅ [analysis_jobs] TTL (24h) + lookup indexes ensured`);
+  } catch (idxErr) {
+    console.warn(`⚠️ [analysis_jobs] Index ensure fehlgeschlagen (non-fatal): ${idxErr.message}`);
+  }
+}
+
+function generateJobId() {
+  return `job_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+}
+
+async function insertAnalysisJob(db, jobData) {
+  await ensureAnalysisJobsIndex(db);
+  const col = db.collection('analysis_jobs');
+  await col.insertOne({
+    ...jobData,
+    status: 'queued',
+    stage: null,
+    progress: 0,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  });
+}
+
+async function updateAnalysisJob(db, jobId, updates) {
+  try {
+    await db.collection('analysis_jobs').updateOne(
+      { jobId },
+      { $set: { ...updates, updatedAt: new Date() } }
+    );
+  } catch (err) {
+    console.warn(`⚠️ [analysis_jobs] updateJob(${jobId}) failed: ${err.message}`);
+  }
+}
+
+async function getAnalysisJob(db, jobId) {
+  return db.collection('analysis_jobs').findOne({ jobId });
+}
+
+/**
+ * Async-Wrapper: prüft ?async=true + Kill-Switch, dispatched in sync- oder async-Modus.
+ * Im Async-Modus: Job in DB, sofortige Response { jobId }, Pipeline via setImmediate.
+ */
+async function dispatchAnalyzeRequest(req, res) {
+  const asyncEnabled = process.env.ANALYZE_ASYNC_ENABLED !== 'false';
+  const wantsAsync = req.query.async === 'true' || req.body?.async === 'true';
+
+  if (!asyncEnabled || !wantsAsync) {
+    return handleEnhancedDeepLawyerAnalysisRequest(req, res);
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+
+  const requestId = Date.now().toString();
+  const jobId = generateJobId();
+  const userId = req.user.userId;
+
+  console.log(`⚡ [${requestId}] Async-Modus: jobId=${jobId}, user=${userId}, file="${req.file.originalname}"`);
+
+  let db;
+  try {
+    db = await database.connect();
+    await insertAnalysisJob(db, {
+      jobId,
+      userId,
+      requestId,
+      originalFilename: req.file.originalname,
+      fileSize: req.file.size
+    });
+  } catch (insertErr) {
+    console.error(`❌ [${requestId}] Job-Insert fehlgeschlagen:`, insertErr.message);
+    return res.status(500).json({
+      success: false,
+      error: 'JOB_INSERT_FAILED',
+      message: 'Job konnte nicht angelegt werden. Bitte erneut versuchen.'
+    });
+  }
+
+  // Snapshot der request-Daten (req-Object ist nach res.json potenziell weg)
+  const reqSnapshot = {
+    file: {
+      path: req.file.path,
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      filename: req.file.filename
+    },
+    user: { userId: req.user.userId },
+    body: { ...req.body },
+    query: { ...req.query },
+    jobId
+  };
+
+  // Sofortige Response (HTTP 202 Accepted)
+  res.status(202).json({
+    success: true,
+    async: true,
+    jobId,
+    statusUrl: `/api/analyze/job/${jobId}`,
+    pollIntervalMs: 1000,
+    message: 'Analyse läuft im Hintergrund. Status über statusUrl abfragen.'
+  });
+
+  // Pipeline im Hintergrund — entkoppelt vom HTTP-Request
+  setImmediate(() => runPipelineInBackground(jobId, reqSnapshot).catch(err => {
+    console.error(`❌ [${jobId}] runPipelineInBackground uncaught:`, err.message);
+  }));
+}
+
+/**
+ * Pipeline-Wrapper: ruft die existierende handleEnhancedDeepLawyerAnalysisRequest mit
+ * Mock-req/res-Objekten und schreibt Result ins Job-Doc.
+ */
+async function runPipelineInBackground(jobId, snapshot) {
+  const db = await database.connect();
+  await updateAnalysisJob(db, jobId, { status: 'processing', startedAt: new Date() });
+
+  // Mock-req: hat alles was die Pipeline braucht. on/removeListener sind no-ops weil
+  // kein echter HTTP-Lifecycle mehr existiert (Pipeline läuft entkoppelt).
+  const fakeReq = {
+    file: snapshot.file,
+    user: snapshot.user,
+    body: snapshot.body,
+    query: snapshot.query,
+    jobId: snapshot.jobId,
+    on: () => {},
+    removeListener: () => {}
+  };
+
+  // Mock-res: capture status + body, headersSent-Flag setzen damit Pipeline-Guards funktionieren
+  const fakeRes = {
+    headersSent: false,
+    _statusCode: 200,
+    _body: null,
+    status(code) { this._statusCode = code; return this; },
+    json(body) {
+      this._body = body;
+      this.headersSent = true;
+      return this;
+    }
+  };
+
+  try {
+    await handleEnhancedDeepLawyerAnalysisRequest(fakeReq, fakeRes);
+    const isSuccess = fakeRes._statusCode >= 200 && fakeRes._statusCode < 300 && fakeRes._body?.success === true;
+    if (isSuccess) {
+      await updateAnalysisJob(db, jobId, {
+        status: 'done',
+        result: fakeRes._body,
+        completedAt: new Date()
+      });
+      console.log(`✅ [${jobId}] Async-Pipeline erfolgreich abgeschlossen`);
+    } else {
+      await updateAnalysisJob(db, jobId, {
+        status: 'failed',
+        error: {
+          code: fakeRes._body?.error || 'UNKNOWN',
+          message: fakeRes._body?.message || 'Analyse fehlgeschlagen',
+          httpStatus: fakeRes._statusCode
+        },
+        completedAt: new Date()
+      });
+      console.warn(`⚠️ [${jobId}] Async-Pipeline failed: ${fakeRes._statusCode} ${fakeRes._body?.error || 'no-error-code'}`);
+    }
+  } catch (pipelineErr) {
+    console.error(`❌ [${jobId}] Pipeline-Exception:`, pipelineErr.message);
+    await updateAnalysisJob(db, jobId, {
+      status: 'failed',
+      error: { code: 'PIPELINE_EXCEPTION', message: pipelineErr.message },
+      completedAt: new Date()
+    });
+  }
+}
+
 /**
  * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - WITH PROVIDER DETECTION & AUTO-RENEWAL
  * Saves contract with appropriate upload info based on storage type
@@ -3427,9 +3632,52 @@ router.post("/", verifyToken, analyzeRateLimiter, async (req, res, next) => {
       });
     }
     
-    // Continue with analysis logic
-    await handleEnhancedDeepLawyerAnalysisRequest(req, res);
+    // 🆕 Stufe 5 (27.05.2026): Dispatcher entscheidet ob sync (default) oder async
+    // (wenn ?async=true UND ANALYZE_ASYNC_ENABLED!=false). Existierende Pipeline-Logik
+    // bleibt unangetastet — Async läuft via Fake-Res-Wrapper.
+    await dispatchAnalyzeRequest(req, res);
   });
+});
+
+// 🆕 Stufe 5 (27.05.2026): Status-Endpoint für Async-Jobs.
+// Frontend pollt diesen Endpoint mit der jobId aus dem POST-Response.
+// Ownership-Check (Job.userId === req.user.userId) verhindert Job-ID-Enumeration.
+router.get('/job/:jobId', verifyToken, async (req, res) => {
+  const { jobId } = req.params;
+  if (!jobId || typeof jobId !== 'string' || jobId.length > 100) {
+    return res.status(400).json({ success: false, error: 'INVALID_JOB_ID' });
+  }
+  try {
+    const db = await database.connect();
+    const job = await getAnalysisJob(db, jobId);
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'JOB_NOT_FOUND' });
+    }
+    if (String(job.userId) !== String(req.user.userId)) {
+      return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+    }
+    const response = {
+      success: true,
+      jobId: job.jobId,
+      status: job.status,
+      stage: job.stage,
+      progress: job.progress,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      startedAt: job.startedAt,
+      completedAt: job.completedAt
+    };
+    if (job.status === 'done' && job.result) {
+      response.result = job.result;
+    }
+    if (job.status === 'failed' && job.error) {
+      response.error = job.error;
+    }
+    return res.json(response);
+  } catch (err) {
+    console.error(`❌ [job-status:${jobId}] Lookup-Fehler:`, err.message);
+    return res.status(500).json({ success: false, error: 'STATUS_LOOKUP_FAILED' });
+  }
 });
 
 // ===== FIXED: ENHANCED DEEP LAWYER-LEVEL ANALYSIS REQUEST HANDLER WITH AUTO-RENEWAL =====

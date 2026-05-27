@@ -16,8 +16,17 @@ services:
     plan: starter
     autoDeploy: true
     healthCheckPath: /api/health
+    # 🆕 27.05.2026 Async-Pattern (Stufe 5): SIGTERM-Schutz bei Render-Deploys.
+    # Default ist 30s — bei laufender 4-Min-Analyse-Pipeline würde Render hart abwürgen.
+    # 300s gibt der Pipeline Zeit sauber zu finishen oder Job auf 'interrupted' zu markieren.
+    maxShutdownDelaySeconds: 300
     envVars:
       - key: NODE_ENV
         value: production
       # Express-Server-Timeouts werden in server.js gesetzt:
       # requestTimeout=600s, keepAliveTimeout=605s, headersTimeout=610s
+      # 🆕 27.05.2026 Async-Pattern Kill-Switch:
+      # Wenn false → POST /api/analyze ignoriert ?async=true und nutzt alten sync-Pfad.
+      # 2-Min-Rollback ohne Code-Deploy bei Job-System-Problemen.
+      - key: ANALYZE_ASYNC_ENABLED
+        value: "true"

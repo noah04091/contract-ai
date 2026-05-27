@@ -509,17 +509,157 @@ export const apiCall = async (
   }
 };
 
+// 🆕 Stufe 5 (27.05.2026): Async-Job-Polling-Pattern
+// Backend antwortet bei ?async=true sofort mit { jobId, statusUrl }. Frontend pollt
+// diesen Helper alle 1-3s. Verhindert Render-Proxy-502 bei OCR-intensiven (>2 Min) Analysen.
+
+type AnalysisJobStatus = 'queued' | 'processing' | 'done' | 'failed';
+
+interface JobStatusResponse {
+  success: boolean;
+  jobId: string;
+  status: AnalysisJobStatus;
+  stage?: string | null;
+  progress?: number;
+  result?: unknown;
+  error?: { code: string; message: string; httpStatus?: number };
+}
+
+interface AsyncDispatchResponse {
+  success: true;
+  async: true;
+  jobId: string;
+  statusUrl: string;
+  pollIntervalMs?: number;
+  message?: string;
+}
+
+const POLL_INITIAL_INTERVAL_MS = 1000;   // erste 10s: schnell (kurze Verträge spüren nur +1s)
+const POLL_NORMAL_INTERVAL_MS = 3000;    // danach: alle 3s
+const POLL_HIDDEN_INTERVAL_MS = 15000;   // Tab im Hintergrund: alle 15s (Chrome drosselt eh)
+const POLL_MAX_DURATION_MS = 10 * 60 * 1000; // 10 Min
+const POLL_MAX_CONSECUTIVE_ERRORS = 5;
+const POLL_LOCALSTORAGE_KEY = 'pendingAnalysisJob';
+
+// Re-use existing `sleep` from line ~309
+
+function isAsyncDispatchResponse(value: unknown): value is AsyncDispatchResponse {
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    'async' in value &&
+    (value as { async: unknown }).async === true &&
+    'jobId' in value &&
+    typeof (value as { jobId: unknown }).jobId === 'string'
+  );
+}
+
+function setPendingJob(jobId: string, fileName: string): void {
+  try {
+    localStorage.setItem(POLL_LOCALSTORAGE_KEY, JSON.stringify({
+      jobId, fileName, startedAt: Date.now()
+    }));
+  } catch { /* localStorage quota / Safari private mode */ }
+}
+
+function clearPendingJob(): void {
+  try { localStorage.removeItem(POLL_LOCALSTORAGE_KEY); } catch { /* ignore */ }
+}
+
+export function getPendingAnalysisJob(): { jobId: string; fileName: string; startedAt: number } | null {
+  try {
+    const raw = localStorage.getItem(POLL_LOCALSTORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Stale-Cleanup: älter als 1h → wegwerfen (Cron hat Job sowieso als failed markiert)
+    if (Date.now() - parsed.startedAt > 60 * 60 * 1000) {
+      clearPendingJob();
+      return null;
+    }
+    return parsed;
+  } catch { return null; }
+}
+
+/**
+ * Pollt einen Analyse-Job bis Status='done' oder 'failed'.
+ * Adaptive Intervalle, Tab-Visibility-aware, navigator.onLine-aware.
+ */
+export async function pollAnalysisJob(
+  jobId: string,
+  options?: {
+    onProgress?: (status: JobStatusResponse) => void;
+    abortSignal?: AbortSignal;
+  }
+): Promise<unknown> {
+  const startedAt = Date.now();
+  let consecutiveErrors = 0;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    if (options?.abortSignal?.aborted) {
+      throw new Error('Polling abgebrochen');
+    }
+    if (Date.now() - startedAt > POLL_MAX_DURATION_MS) {
+      throw new Error('⏱️ Analyse dauert ungewöhnlich lange. Schaue in deiner Vertragsliste — sie ist eventuell trotzdem fertig geworden.');
+    }
+
+    const elapsed = Date.now() - startedAt;
+    const hidden = typeof document !== 'undefined' && document.hidden;
+    const interval = hidden
+      ? POLL_HIDDEN_INTERVAL_MS
+      : elapsed < 10000 ? POLL_INITIAL_INTERVAL_MS : POLL_NORMAL_INTERVAL_MS;
+    await sleep(interval);
+
+    // Offline → warte bis online (Browser feuert online-Event)
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      continue;
+    }
+
+    try {
+      const status = await apiCall(`/analyze/job/${jobId}`, { method: 'GET' }, 0, true) as JobStatusResponse;
+      consecutiveErrors = 0;
+      options?.onProgress?.(status);
+
+      if (status.status === 'done') {
+        clearPendingJob();
+        return status.result;
+      }
+      if (status.status === 'failed') {
+        clearPendingJob();
+        const errMsg = status.error?.message || `Analyse fehlgeschlagen (${status.error?.code || 'unknown'})`;
+        throw new Error(errMsg);
+      }
+      // 'queued' oder 'processing' → weiter pollen
+    } catch (err) {
+      // Tatsächlicher Backend-Fehler (status='failed') wird re-thrown — nicht mehr pollen
+      if (err instanceof Error && /Analyse fehlgeschlagen/.test(err.message)) {
+        throw err;
+      }
+      consecutiveErrors++;
+      console.warn(`⚠️ Polling-Fehler ${consecutiveErrors}/${POLL_MAX_CONSECUTIVE_ERRORS}:`, err);
+      if (consecutiveErrors >= POLL_MAX_CONSECUTIVE_ERRORS) {
+        clearPendingJob();
+        throw new Error(`Status-Abfrage fehlgeschlagen nach ${consecutiveErrors} Versuchen. Schaue in der Vertragsliste — Analyse läuft eventuell noch.`);
+      }
+    }
+  }
+}
+
 /**
  * ✅ FIXED: Spezielle Funktion für File-Upload mit Analyse - ROBUSTE DUPLIKAT-BEHANDLUNG + KORREKTE PDF-FEHLER
+ * 🆕 Stufe 5 (27.05.2026): opt-in Async-Pfad via formData.async=true.
+ * Backend antwortet sofort mit { jobId }, Frontend pollt via pollAnalysisJob.
+ * Backwards-Compat: wenn Response NICHT { jobId } enthält (z.B. ENV-Kill-Switch),
+ * fällt der Code automatisch auf den alten synchronen Pfad zurück — kein Crash.
  */
 export const uploadAndAnalyze = async (
-  file: File, 
+  file: File,
   onProgress?: (progress: number) => void,
   forceReanalyze: boolean = false // ✅ NEU: Parameter für Re-Analyse
 ): Promise<unknown> => {
   const formData = new FormData();
   formData.append('file', file);
-  
+
   // ✅ NEU: forceReanalyze Parameter hinzufügen
   if (forceReanalyze) {
     formData.append('forceReanalyze', 'true');
@@ -528,6 +668,9 @@ export const uploadAndAnalyze = async (
     console.log(`📤 Upload & Analyze: ${file.name} (${file.size} bytes)`);
   }
 
+  // 🆕 Opt-in Async-Pfad — Backend dispatcht je nach ANALYZE_ASYNC_ENABLED-ENV
+  formData.append('async', 'true');
+
   // ✅ Progress-Simulation (da FormData keinen echten Progress hat)
   if (onProgress) {
     onProgress(10); // Start
@@ -535,7 +678,7 @@ export const uploadAndAnalyze = async (
 
   try {
     if (onProgress) onProgress(30); // PDF wird gelesen
-    
+
     // ⚠️ disableRetry: true — siehe apiCall-Doku.
     // Auto-Retry bei /analyze würde parallele Backend-Pipelines erzeugen → Geld-Burn.
     const result = await apiCall('/analyze', {
@@ -543,9 +686,27 @@ export const uploadAndAnalyze = async (
       body: formData,
     }, 0, true);
 
+    // 🆕 Async-Pfad: Backend antwortet mit { jobId } → pollen bis fertig.
+    // Wenn Backend mit ENV ANALYZE_ASYNC_ENABLED=false antwortet direkt mit Result —
+    // der nächste Block (alter Pfad) übernimmt dann automatisch.
+    if (isAsyncDispatchResponse(result)) {
+      console.log(`⚡ Async-Modus aktiv: jobId=${result.jobId}, beginne Polling...`);
+      setPendingJob(result.jobId, file.name);
+      const finalResult = await pollAnalysisJob(result.jobId, {
+        onProgress: (status) => {
+          if (onProgress && typeof status.progress === 'number') {
+            onProgress(Math.max(30, status.progress));
+          }
+        }
+      });
+      if (onProgress) onProgress(100);
+      console.log("✅ Async-Analyse erfolgreich:", finalResult);
+      return finalResult;
+    }
+
     if (onProgress) onProgress(100); // Fertig
-    
-    console.log("✅ Analyse erfolgreich:", result);
+
+    console.log("✅ Analyse erfolgreich (sync-Fallback):", result);
     return result;
     
   } catch (error) {
