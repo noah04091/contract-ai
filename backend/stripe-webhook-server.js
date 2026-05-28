@@ -114,15 +114,20 @@ function paymentTemplate({ amount, date, plan, accountUrl, invoicesUrl, zeroText
 }
 
 const server = http.createServer((req, res) => {
-  // 🏥 Health Check Endpoint für Keep-Alive Pings (cron-job.org)
-  if (req.method === 'GET' && (req.url === '/healthz' || req.url === '/health' || req.url === '/')) {
+  // 🏥 Health Check Endpoint für Keep-Alive Pings (UptimeRobot, cron-job.org)
+  // HEAD wird unterstützt weil UptimeRobot Free-Plan nur HEAD nutzen kann.
+  if ((req.method === 'GET' || req.method === 'HEAD') && (req.url === '/healthz' || req.url === '/health' || req.url === '/')) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({
-      status: 'ok',
-      service: 'stripe-webhook-server',
-      timestamp: new Date().toISOString()
-    }));
+    if (req.method === 'HEAD') {
+      res.end();
+    } else {
+      res.end(JSON.stringify({
+        status: 'ok',
+        service: 'stripe-webhook-server',
+        timestamp: new Date().toISOString()
+      }));
+    }
     return;
   }
 
