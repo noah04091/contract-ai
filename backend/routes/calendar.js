@@ -190,7 +190,7 @@ router.get("/events", verifyToken, async (req, res) => {
     const transformedEvents = allEvents.map(event => ({
       id: event._id.toString(),
       contractId: event.contractId?.toString(),
-      contractName: event.contract?.name || (event.isManual ? event.title : "Unbekannter Vertrag"),
+      contractName: event.contract?.name || event.metadata?.envelopeTitle || (event.isManual ? event.title : "Unbekannter Vertrag"),
       title: event.title,
       description: event.description,
       date: event.date,
