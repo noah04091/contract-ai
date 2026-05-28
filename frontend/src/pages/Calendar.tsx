@@ -129,6 +129,13 @@ const getEventDisplayDate = (event: CalendarEvent): string => {
   return event.date;
 };
 
+// Diskriminiert echte Vertragskündigungen von abgeschlossenen Signatur-Events,
+// die beide status="completed" tragen können.
+const isCancelledEvent = (event: CalendarEvent): boolean =>
+  event.status === 'completed'
+  && !event.type?.startsWith("SIGNATURE_")
+  && !event.metadata?.envelopeId;
+
 // German weekday names (Monday first)
 const WEEKDAYS = ['MO', 'DI', 'MI', 'DO', 'FR', 'SA', 'SO'];
 const MONTH_NAMES = [
@@ -280,7 +287,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                   {dayInfo.events.map((event) => (
                     <div
                       key={event.id}
-                      className={`week-event-card ${event.severity} ${event.status === 'completed' ? 'completed' : ''}`}
+                      className={`week-event-card ${event.severity} ${isCancelledEvent(event) ? 'completed' : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEventClick(event);
@@ -291,7 +298,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                         <span className="week-event-title">{formatContractName(event.contractName)}</span>
                         <span className="week-event-type">
                           {event.title}
-                          {event.status === 'completed' && event.type !== 'CANCELLATION_CONFIRMATION_CHECK' && <span className="cancelled-badge">Gekündigt</span>}
+                          {isCancelledEvent(event) && <span className="cancelled-badge">Gekündigt</span>}
                           {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' && <span className="answered-badge">Beantwortet</span>}
                         </span>
                       </div>
@@ -337,7 +344,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
               {dayEvents.map((event) => (
                 <div
                   key={event.id}
-                  className={`day-event-card ${event.severity} ${event.status === 'completed' ? 'completed' : ''}`}
+                  className={`day-event-card ${event.severity} ${isCancelledEvent(event) ? 'completed' : ''}`}
                   onClick={() => onEventClick(event)}
                 >
                   <div className="day-event-time">
@@ -348,7 +355,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                     <span className="day-event-title">{formatContractName(event.contractName)}</span>
                     <span className="day-event-type">
                       {event.title}
-                      {event.status === 'completed' && event.type !== 'CANCELLATION_CONFIRMATION_CHECK' && <span className="cancelled-badge">Gekündigt</span>}
+                      {isCancelledEvent(event) && <span className="cancelled-badge">Gekündigt</span>}
                       {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' && <span className="answered-badge">Beantwortet</span>}
                     </span>
                     {event.description && (
@@ -402,7 +409,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
               {dayInfo.events.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
-                  className={`event-pill ${event.severity} ${event.status === 'completed' ? 'completed' : ''}`}
+                  className={`event-pill ${event.severity} ${isCancelledEvent(event) ? 'completed' : ''}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onEventClick(event);
@@ -410,7 +417,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                 >
                   <div className="event-indicator"></div>
                   <span className="event-text">{formatContractName(event.contractName)}</span>
-                  {event.status === 'completed' && event.type !== 'CANCELLATION_CONFIRMATION_CHECK' && <span className="cancelled-badge">Gekündigt</span>}
+                  {isCancelledEvent(event) && <span className="cancelled-badge">Gekündigt</span>}
                   {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' && <span className="answered-badge">Beantwortet</span>}
                 </div>
               ))}
@@ -967,9 +974,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             )}
 
             {/* Info-Banner wenn Event completed (= Vertrag gekündigt) */}
-            {currentEvent.status === "completed"
-              && !currentEvent.type?.startsWith("SIGNATURE_")
-              && !currentEvent.metadata?.envelopeId && (
+            {isCancelledEvent(currentEvent) && (
               <div className="cancelled-info-banner" style={{ gridColumn: '1 / -1' }}>
                 <XCircle size={16} />
                 <span>Vertrag wurde gekündigt</span>
@@ -1471,22 +1476,22 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                     style={{
                       background: '#ffffff',
                       border: '1px solid #e5e7eb',
-                      borderLeft: `4px solid ${event.status === 'completed' ? '#9ca3af' : getSeverityColor(event.severity || 'info')}`,
+                      borderLeft: `4px solid ${isCancelledEvent(event) ? '#9ca3af' : getSeverityColor(event.severity || 'info')}`,
                       borderRadius: '8px',
                       padding: '16px',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
-                      opacity: event.status === 'completed' ? 0.55 : 1
+                      opacity: isCancelledEvent(event) ? 0.55 : 1
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <span style={{
                         fontSize: '12px',
                         fontWeight: 600,
-                        color: event.status === 'completed' ? '#9ca3af' : getSeverityColor(event.severity || 'info'),
+                        color: isCancelledEvent(event) ? '#9ca3af' : getSeverityColor(event.severity || 'info'),
                         textTransform: 'uppercase'
                       }}>
-                        {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' ? 'Beantwortet' : event.status === 'completed' ? 'Gekündigt' : event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
+                        {event.status === 'completed' && event.type === 'CANCELLATION_CONFIRMATION_CHECK' ? 'Beantwortet' : isCancelledEvent(event) ? 'Gekündigt' : event.severity === 'critical' ? 'Kritisch' : event.severity === 'warning' ? 'Warnung' : 'Info'}
                       </span>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 500 }}>
@@ -1499,7 +1504,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                         )}
                       </div>
                     </div>
-                    <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 600, color: event.status === 'completed' ? '#9ca3af' : '#1f2937', textDecoration: event.status === 'completed' ? 'line-through' : 'none' }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '15px', fontWeight: 600, color: isCancelledEvent(event) ? '#9ca3af' : '#1f2937', textDecoration: isCancelledEvent(event) ? 'line-through' : 'none' }}>
                       {event.contractName ? formatContractName(event.contractName) : 'Unbekannter Vertrag'}
                     </h4>
                     <p style={{ margin: 0, fontSize: '13px', color: '#6b7280' }}>
@@ -3789,26 +3794,26 @@ export default function CalendarPage() {
                         return (
                           <div
                             key={event.id}
-                            className={`urgent-event-item ${event.status === 'completed' ? 'completed' : ''}`}
+                            className={`urgent-event-item ${isCancelledEvent(event) ? 'completed' : ''}`}
                             onClick={() => {
                               setSelectedEvent(event);
                               setShowQuickActions(true);
                             }}
                           >
-                            <div className={`urgent-event-indicator ${event.status === 'completed' ? '' : event.severity}`} style={event.status === 'completed' ? { background: '#9ca3af' } : {}}></div>
+                            <div className={`urgent-event-indicator ${isCancelledEvent(event) ? '' : event.severity}`} style={isCancelledEvent(event) ? { background: '#9ca3af' } : {}}></div>
                             <div className="urgent-event-content">
-                              <div className="urgent-event-title" style={event.status === 'completed' ? { textDecoration: 'line-through', color: '#9ca3af' } : {}}>
+                              <div className="urgent-event-title" style={isCancelledEvent(event) ? { textDecoration: 'line-through', color: '#9ca3af' } : {}}>
                                 {formatContractName(event.contractName)}
                               </div>
-                              <div className="urgent-event-desc">{event.status === 'completed' ? 'Vertrag gekündigt' : event.title}</div>
+                              <div className="urgent-event-desc">{isCancelledEvent(event) ? 'Vertrag gekündigt' : event.title}</div>
                               <div className="urgent-event-meta">
                                 <span className="urgent-event-date">
                                   {new Date(event.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
                                 </span>
                               </div>
                             </div>
-                            <div className={`urgent-event-badge ${event.status === 'completed' ? '' : event.severity}`} style={event.status === 'completed' ? { background: 'rgba(156, 163, 175, 0.15)', color: '#9ca3af' } : {}}>
-                              {event.status === 'completed' ? 'Erledigt' : daysInfo.text}
+                            <div className={`urgent-event-badge ${isCancelledEvent(event) ? '' : event.severity}`} style={isCancelledEvent(event) ? { background: 'rgba(156, 163, 175, 0.15)', color: '#9ca3af' } : {}}>
+                              {isCancelledEvent(event) ? 'Erledigt' : daysInfo.text}
                             </div>
                           </div>
                         );
