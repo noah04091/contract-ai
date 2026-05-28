@@ -32,10 +32,10 @@ const highlightMatch = (text: string, query: string): React.ReactNode => {
  * Formatiert Klausel-Text für bessere Lesbarkeit
  * - Fügt Zeilenumbrüche nach Satzenden ein
  * - Erkennt §-Paragraphen und Aufzählungen
- * - Begrenzt auf max. 3 Absätze für Vorschau
  * - Optional: Suchbegriffe gelb hervorheben
+ * Visuelle Truncation auf 3 Zeilen erfolgt via CSS line-clamp (.clauseText)
  */
-const formatClauseText = (text: string, maxParagraphs: number = 3, highlightQuery?: string): React.ReactNode => {
+const formatClauseText = (text: string, highlightQuery?: string): React.ReactNode => {
   if (!text) return null;
 
   // Normalisiere Whitespace
@@ -58,19 +58,14 @@ const formatClauseText = (text: string, maxParagraphs: number = 3, highlightQuer
   // Teile in Absätze
   const paragraphs = formatted.split('\n').filter(p => p.trim().length > 0);
 
-  // Begrenze auf maxParagraphs für Vorschau
-  const displayParagraphs = paragraphs.slice(0, maxParagraphs);
-  const hasMore = paragraphs.length > maxParagraphs;
-
   return (
     <>
-      {displayParagraphs.map((paragraph, index) => (
+      {paragraphs.map((paragraph, index) => (
         <span key={index} className={styles.clauseParagraph}>
           {highlightQuery ? highlightMatch(paragraph.trim(), highlightQuery) : paragraph.trim()}
-          {index < displayParagraphs.length - 1 && <br />}
+          {index < paragraphs.length - 1 && <br />}
         </span>
       ))}
-      {hasMore && <span className={styles.clauseMoreIndicator}>...</span>}
     </>
   );
 };
@@ -884,10 +879,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
                   }}
                   className={`${styles.clauseText} ${expandedClauses.has(clause.id) ? styles.expanded : ''}`}
                 >
-                  {expandedClauses.has(clause.id)
-                    ? formatClauseText(clause.text, 999, searchQuery || undefined)
-                    : formatClauseText(clause.text, 3, searchQuery || undefined)
-                  }
+                  {formatClauseText(clause.text, searchQuery || undefined)}
                 </div>
                 {/* Expand/Collapse Button - nur wenn Text überläuft */}
                 {(overflowingClauses.has(clause.id) || expandedClauses.has(clause.id)) && (
