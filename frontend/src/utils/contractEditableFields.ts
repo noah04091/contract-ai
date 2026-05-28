@@ -46,6 +46,23 @@ export const LAUFZEIT_OPTIONS = [
   { value: "Einmalig", label: "Einmalig (kein Abo)" },
 ];
 
+export const PAYMENT_FREQUENCY_OPTIONS = [
+  { value: "Monatlich", label: "Monatlich" },
+  { value: "Vierteljährlich", label: "Vierteljährlich" },
+  { value: "Halbjährlich", label: "Halbjährlich" },
+  { value: "Jährlich", label: "Jährlich" },
+  { value: "Einmalig", label: "Einmalig" },
+];
+
+export const PAYMENT_METHOD_OPTIONS = [
+  { value: "SEPA-Lastschrift", label: "SEPA-Lastschrift" },
+  { value: "Überweisung", label: "Überweisung" },
+  { value: "Kreditkarte", label: "Kreditkarte" },
+  { value: "PayPal", label: "PayPal" },
+  { value: "Bar", label: "Bar" },
+  { value: "Rechnung", label: "Rechnung" },
+];
+
 // ----------------------------------------
 // TYPES
 // ----------------------------------------
@@ -76,6 +93,9 @@ export interface EditableContractShape {
   startDate?: string;
   expiryDate?: string;
   kosten?: number;
+  customerNumber?: string;
+  paymentFrequency?: string;
+  paymentMethod?: string;
   provider?: {
     displayName?: string;
     name?: string;
@@ -185,6 +205,24 @@ export function createEditableFields(
         ? contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
         : '',
       rawValue: () => contract.kosten != null ? String(contract.kosten) : '',
+    },
+    {
+      key: 'customerNumber', label: 'Kundennummer', type: 'text',
+      hasValue: () => !isEmptyValue(contract.customerNumber),
+      displayValue: () => contract.customerNumber || '',
+      rawValue: () => contract.customerNumber || '',
+    },
+    {
+      key: 'paymentFrequency', label: 'Zahlungs-Häufigkeit', type: 'dropdown', options: PAYMENT_FREQUENCY_OPTIONS,
+      hasValue: () => !isEmptyValue(contract.paymentFrequency),
+      displayValue: () => contract.paymentFrequency || '',
+      rawValue: () => contract.paymentFrequency || '',
+    },
+    {
+      key: 'paymentMethod', label: 'Zahlungsmethode', type: 'dropdown', options: PAYMENT_METHOD_OPTIONS,
+      hasValue: () => !isEmptyValue(contract.paymentMethod),
+      displayValue: () => contract.paymentMethod || '',
+      rawValue: () => contract.paymentMethod || '',
     },
   ];
 }
