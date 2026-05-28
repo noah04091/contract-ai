@@ -322,6 +322,18 @@ const OUTPUT_FORMAT_HINT = `Output (beide Felder PFLICHT, mind. leeres Array):
 }
 ${FRIST_CALENDAR_HINT}`;
 
+// 🆕 Problem I (28.05.2026): Ausschluss-Hint für Beispiel-/Vorlagen-/Hypothesen-Datums.
+// Begründung: ohne diese Anweisung extrahiert GPT auch Datums aus "Beispiel: …",
+// "z.B. …", "Im Fall dass …" — landet dann als Phantom-Calendar-Event.
+// Bewusst semantisch via GPT, NICHT via Regex: ein deterministischer Filter würde
+// legitime Vertragsanhänge ("Anlage 1") und Anwalts-Klarstellungen ("Hinweis: …")
+// fälschlich killen (Audit 28.05. — File: project_offene-analyse-probleme.md).
+const EXAMPLE_EXCLUSION_HINT = `⚠️ NICHT extrahieren — Datums/Fristen NUR aus echten Klauseln, nicht aus:
+- Beispiel-Hinweisen: "Beispiel:", "z.B.", "beispielsweise", "Musterbeispiel", "zur Veranschaulichung", "nehmen wir an", "fiktiv"
+- Hypothesen / Konjunktiv: "würde …", "im Fall dass", "angenommen, dass", "wäre", "könnte", "müsste", "Im Zweifel"
+- Erläuterungs-Texten die NUR illustrieren, nicht verpflichten: "Hier ein Beispiel:", "Ein Beispiel wäre, wenn …"
+Regel: Lieber leere Arrays als Beispiel-/Hypothesen-Datums melden. Wenn das Datum keine echte Verpflichtung/Frist im Vertrag verankert → weglassen.`;
+
 /**
  * Stage 1 — Junior-User-Prompt.
  * Liest den ganzen Vertrag, sammelt breit. Kein 13-Regeln-Monster.
@@ -333,6 +345,8 @@ function buildJuniorPrompt(contractText) {
 Lies den folgenden Vertrag durch und schreibe alle wichtigen Datums (konkrete Kalendertage, auch berechenbare wie "6 Monate nach Vertragsbeginn") sowie alle wichtigen Frist-Regelungen (Kündigung, Widerruf, Gewährleistung, Probezeit, Reaktion, Einwendung, Annahme, Bestätigung, …) heraus.
 
 Datums erkennen in JEDER Form: "30.06.2026", "30. Juni 2026", "dreißigster Juni zweitausendsechsundzwanzig", "im April 2026", oder berechenbar aus Frist + Startdatum. Wörter-Datums ins ISO-Format wandeln.
+
+${EXAMPLE_EXCLUSION_HINT}
 
 Datums-Eintrag:
 ${DATE_SCHEMA}
@@ -352,6 +366,8 @@ ${contractText}`;
  */
 function buildChunkPrompt(chunkText, chunkIdx, totalChunks) {
   return `Vertragsabschnitt ${chunkIdx + 1} von ${totalChunks}. Welche Datums + Frist-Regelungen stehen in DIESEM Abschnitt?
+
+${EXAMPLE_EXCLUSION_HINT}
 
 Datums-Eintrag:
 ${DATE_SCHEMA}
@@ -390,6 +406,8 @@ ${fristenAlreadyFound}
 Deine Endprüfung: was steht IM VERTRAG, fehlt aber oben? Liefere NUR Zusätze. Wenn alles da ist → leere Arrays.
 
 Häufig übersehen werden: Reaktionsfristen, Einwendungsfristen, Annahmefristen, Bestätigungsfristen, Stellungnahmefristen, Optionsfristen, Sperrfristen. Aber: nur extrahieren wenn WIRKLICH im Vertrag.
+
+${EXAMPLE_EXCLUSION_HINT}
 
 Datums-Eintrag:
 ${DATE_SCHEMA}
@@ -1038,6 +1056,8 @@ function buildAnomalyUserPrompt(contractText) {
   return `Heutiges Datum: ${today}
 
 Schau nur in Anfang und Ende dieses Vertrags. Liefere Vertragsdatum / Beginn / Unterschriftsdatum / Kündigungsfrist NUR wenn wörtlich vorhanden.
+
+${EXAMPLE_EXCLUSION_HINT}
 
 Datums-Eintrag:
 ${DATE_SCHEMA}
