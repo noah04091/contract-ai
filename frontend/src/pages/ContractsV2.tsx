@@ -128,6 +128,7 @@ interface Contract {
   // 📄 Document Category (NEU - für dynamische Anzeige)
   documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract';
   contractType?: string;
+  contractTypeLabel?: string; // 🆕 A1 (28.05.2026): deutsche KI-Bezeichnung
   provider?: {
     displayName: string;
     category?: string;
@@ -510,7 +511,10 @@ export default function Contracts() {
         return manual || contract.provider?.displayName || muted('—');
       }
       case 'contractType':
-        return contract.contractType || contract.provider?.category || muted('—');
+        // 🆕 A1: contractTypeLabel (KI-deutsche-Bezeichnung) hat Vorrang vor altem
+        // contractType (recurring/one-time-Semantik). Fallback-Kette erhält
+        // Backwards-Compat für Alt-Verträge.
+        return contract.contractTypeLabel || contract.contractType || contract.provider?.category || muted('—');
       case 'contractNumber': {
         const v = (typeof c.vertragsnummer === 'string' ? c.vertragsnummer.trim() : '') || (typeof c.contractNumber === 'string' ? c.contractNumber.trim() : '');
         return v || muted('—');
@@ -642,7 +646,7 @@ export default function Contracts() {
     const c = contract as any;
     let primary: string | undefined;
     switch (subLabelField) {
-      case 'contractType':   primary = contract.contractType || contract.provider?.category; break;
+      case 'contractType':   primary = contract.contractTypeLabel || contract.contractType || contract.provider?.category; break;
       case 'provider':       primary = c.anbieter || contract.provider?.displayName; break;
       case 'startDate':      primary = contract.startDate ? formatDate(contract.startDate) : undefined; break;
       case 'contractNumber': primary = c.vertragsnummer || c.contractNumber; break;
@@ -3690,7 +3694,7 @@ export default function Contracts() {
           const manual = typeof c.anbieter === 'string' ? c.anbieter.trim() : '';
           return (manual || contract.provider?.displayName || '').toLowerCase();
         }
-        case 'contractType': return (contract.contractType || contract.provider?.category || '').toLowerCase();
+        case 'contractType': return (contract.contractTypeLabel || contract.contractType || contract.provider?.category || '').toLowerCase();
         case 'contractNumber': return (
           (typeof c.vertragsnummer === 'string' ? c.vertragsnummer.trim() : '') ||
           (typeof c.contractNumber === 'string' ? c.contractNumber.trim() : '')

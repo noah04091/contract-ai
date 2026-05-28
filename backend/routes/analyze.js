@@ -22,6 +22,7 @@ const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit, PLANS } = req
 const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/triggerEmailService"); // 📧 Behavior-based Emails
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 const dateHuntService = require("../services/dateHuntService"); // 📅 Stufe 2: Dedizierte Datums-Extraktion mit Evidence-Validierung
+const { pilotTypeToLabel } = require("../utils/contractTypeLabels"); // 🏷️ A1 (28.05.2026): KI-Vertragstyp → deutsche Bezeichnung
 
 const router = express.Router();
 
@@ -3400,6 +3401,13 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
       contractDuration: analysisData.contractDuration || null, // 🆕 CONTRACT DURATION object
       cancellationPeriod: analysisData.cancellationPeriod || null,
       isAutoRenewal: analysisData.isAutoRenewal || false, // 🆕 AUTO-RENEWAL
+      // 🆕 A1 (28.05.2026): Deutsche KI-Bezeichnung des Vertragstyps für V2-Liste.
+      // Mapping englisch→deutsch via pilotTypeToLabel (rental→Mietvertrag etc.).
+      contractTypeLabel: pilotTypeToLabel(analysisData.contractType) || null,
+      // 🆕 A2 (28.05.2026): gekuendigtZum auch im Top-Level persistieren.
+      // Vorher: nur in analysisData (für Calendar-Events), jetzt auch direkt am
+      // Contract-Dokument für V2-Modal-Anzeige.
+      gekuendigtZum: analysisData.gekuendigtZum || null,
       
       uploadedAt: new Date(),
       createdAt: new Date(),
@@ -4640,6 +4648,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           startDate: extractedStartDate || null, // 🆕 START DATE
           expiryDate: extractedEndDate || null,
           isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
+          // 🆕 A1 (28.05.2026): Deutsche KI-Bezeichnung für V2-Liste.
+          contractTypeLabel: pilotTypeToLabel(extractedContractType) || null,
+          // 🆕 A2 (28.05.2026): gekuendigtZum auch im Top-Level persistieren.
+          gekuendigtZum: extractedGekuendigtZum || null,
 
           // Enhanced metadata
           documentType: validationResult.documentType,

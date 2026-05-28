@@ -96,6 +96,12 @@ const contractSchema = new mongoose.Schema({
   customerNumber: String,
   contractType: String, // "recurring", "one-time", null
   contractTypeConfidence: String, // "high", "medium", "low"
+  // 🆕 28.05.2026 (A1): KI-erkannte deutsche Vertrags-Bezeichnung (z.B.
+  // "Mietvertrag", "Factoringvertrag"). Sauber getrennt von contractType
+  // (recurring/one-time-Semantik). Befüllt durch pilotTypeToLabel() in
+  // backend/utils/contractTypeLabels.js. Frontend ContractsV2 zeigt es
+  // mit Fallback: contractTypeLabel || contractType || '—'.
+  contractTypeLabel: String,
   hasCompanyProfile: { type: Boolean, default: false },
   designVariant: String,
   metadata: mongoose.Schema.Types.Mixed,
