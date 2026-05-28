@@ -82,6 +82,7 @@ interface CalendarEvent {
     isFollowUp?: boolean;
     expiresAt?: string;
     envelopeTitle?: string;
+    envelopeId?: string;
   };
   amount?: number;
   isManual?: boolean;
@@ -966,7 +967,9 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             )}
 
             {/* Info-Banner wenn Event completed (= Vertrag gekündigt) */}
-            {currentEvent.status === "completed" && (
+            {currentEvent.status === "completed"
+              && !currentEvent.type?.startsWith("SIGNATURE_")
+              && !currentEvent.metadata?.envelopeId && (
               <div className="cancelled-info-banner" style={{ gridColumn: '1 / -1' }}>
                 <XCircle size={16} />
                 <span>Vertrag wurde gekündigt</span>
