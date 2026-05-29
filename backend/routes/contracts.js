@@ -19,6 +19,7 @@ const { preprocessContract } = require("../services/legalLens/clausePreprocessor
 const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
 const { findContractWithOrgAccess, hasPermission, buildOrgFilter } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
+const { normalizeLaufzeit, normalizeKuendigung } = require("../utils/contractFieldLabels"); // 🇩🇪 Englisch→Deutsch Normalisierung für Eckdaten
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute;
 const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
@@ -895,6 +896,10 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
 
   // Step 5: Alles zusammenführen (identische Logik wie enrichContractWithAnalysis)
   for (const contract of contracts) {
+    // 🇩🇪 Eckdaten-Strings ins Deutsche normalisieren (idempotent — deutsche Werte bleiben)
+    contract.laufzeit = normalizeLaufzeit(contract.laufzeit);
+    contract.kuendigung = normalizeKuendigung(contract.kuendigung);
+
     // --- Events ---
     contract.upcomingEvents = eventsMap.get(contract._id.toString()) || [];
 
@@ -1016,6 +1021,10 @@ async function enrichContractWithAnalysis(contract) {
         contract.fullText = analysis.extractedText;
       }
     }
+
+    // 🇩🇪 Eckdaten-Strings ins Deutsche normalisieren (idempotent — deutsche Werte bleiben)
+    contract.laufzeit = normalizeLaufzeit(contract.laufzeit);
+    contract.kuendigung = normalizeKuendigung(contract.kuendigung);
 
     // ✅ NEU: Analysedaten auf Root-Level mappen (für Frontend-Kompatibilität)
     // Priorität: Direktes Feld auf Contract > Analysis Collection
@@ -1867,6 +1876,15 @@ router.put("/:id", verifyToken, async (req, res) => {
 
     delete updateData.userId;
     delete updateData._id;
+
+    // 🇩🇪 Defensive Normalisierung: falls Client (oder Re-Analyse) englische Eckdaten schickt,
+    // schreibe direkt deutsch in DB. Idempotent — deutsche Werte bleiben.
+    if (Object.prototype.hasOwnProperty.call(updateData, 'laufzeit')) {
+      updateData.laufzeit = normalizeLaufzeit(updateData.laufzeit);
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'kuendigung')) {
+      updateData.kuendigung = normalizeKuendigung(updateData.kuendigung);
+    }
 
     // ✅ NEU: Provider Re-Detection wenn content aktualisiert wird
     if (updateData.content && !updateData.provider) {
