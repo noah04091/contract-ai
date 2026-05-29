@@ -9220,99 +9220,8 @@
   padding: 0 !important;
 }
 
-/* === Toolbar kompakt + vertikal mittig + voll auffüllend === */
-.enterpriseToolbar {
-  display: flex !important;
-  align-items: center !important;
-  align-content: center !important;
-  gap: 0.625rem !important;
-  margin-bottom: 0 !important;
-  padding: 0.625rem 1.25rem !important;
-  background: #ffffff !important;
-  border: none !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  flex-shrink: 0 !important;
-  flex-wrap: wrap !important;
-  min-height: 56px !important;
-}
-.enterpriseToolbar .toolbarSection { gap: 8px !important; padding: 0 !important; }
-.enterpriseToolbar .toolbarDivider { display: none !important; }
-/* Dropdown-Filter bleiben sichtbar (User-Wunsch: kein Chip-Group oben) */
-.enterpriseToolbar .toolbarViewButtons { gap: 4px !important; }
+/* === Toolbar: Premium-Override entfernt (29.05.2026) — V2 erbt jetzt V1-Base-Styles (Z. 1661-1764) === */
 
-/* Buttons — Mockup btn-Style */
-/* Buttons kompakter (etwas weniger Padding als V1) */
-.enterpriseToolbar .toolbarButton {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.4375rem !important;
-  padding: 0.375rem 0.75rem !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 7px !important;
-  background: #ffffff !important;
-  color: #475569 !important;
-  font-size: 0.8125rem !important;
-  font-weight: 500 !important;
-  box-shadow: none !important;
-  letter-spacing: normal !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-}
-.enterpriseToolbar .toolbarButton:hover {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-  color: #1e293b !important;
-  transform: none !important;
-}
-
-/* Mobile-Filter-Button bleibt auf Desktop unsichtbar (V1-Verhalten) */
-.enterpriseToolbar .mobileFilterButton { display: none !important; }
-
-/* Hochladen-Primary 1:1 wie V1 */
-.enterpriseToolbar .toolbarButton.primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%) !important;
-  border: none !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
-}
-.enterpriseToolbar .toolbarButton.primary:hover {
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Suche füllt die volle verfügbare Breite (max-width raus) */
-.enterpriseToolbar .toolbarSearch {
-  flex: 1 !important;
-  max-width: none !important;
-  position: relative !important;
-}
-.enterpriseToolbar .toolbarSearchInput {
-  width: 100% !important;
-  padding: 0.375rem 0.875rem 0.375rem 2.25rem !important;
-  border: 1px solid #e2e8f0 !important;
-  border-radius: 7px !important;
-  font-size: 0.8125rem !important;
-  background: #f8fafc !important;
-  box-shadow: none !important;
-  letter-spacing: normal !important;
-  transition: all 0.2s ease !important;
-}
-.enterpriseToolbar .toolbarSearchInput:focus {
-  outline: none !important;
-  border-color: #3b82f6 !important;
-  background: #ffffff !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-}
-.enterpriseToolbar .toolbarSearchIcon {
-  position: absolute !important;
-  left: 0.75rem !important;
-  top: 50% !important;
-  transform: translateY(-50%) !important;
-  color: #94a3b8 !important;
-  pointer-events: none !important;
-}
 .mockupKbd {
   position: absolute;
   right: 10px;
@@ -9517,8 +9426,7 @@
 }
 .sidebarNavItem.active svg { color: var(--m-accent) !important; }
 
-/* === BORDERS WEICHER === */
-.toolbarSection .toolbarButton { border-color: var(--m-border) !important; }
+/* === Toolbar-Border-Override entfernt (29.05.2026) — fällt auf V1-Base #e2e8f0 zurück === */
 
 
 
