@@ -85,6 +85,7 @@ export interface EditableField {
  */
 export interface EditableContractShape {
   contractType?: string;
+  contractTypeLabel?: string; // 🆕 A1 (28.05.2026): KI-deutsche-Bezeichnung
   anbieter?: string;
   vertragsnummer?: string;
   gekuendigtZum?: string;
@@ -152,9 +153,14 @@ export function createEditableFields(
   return [
     {
       key: 'contractType', label: 'Vertragstyp', type: 'text',
-      hasValue: () => !isEmptyValue(contract.contractType),
-      displayValue: () => contract.contractType || '',
-      rawValue: () => contract.contractType || '',
+      // 🆕 A1 (28.05.2026): KI-deutsche-Bezeichnung (contractTypeLabel) hat Vorrang.
+      // Fallback auf altes Top-Level contractType (recurring/one-time-Semantik) für
+      // Backwards-Compat alter Daten. Save schreibt weiter in 'contractType' (key
+      // unverändert für Spalten-Konfigurator-Konsistenz) — User-Eingaben überschreiben
+      // dann manuell den KI-Wert in der Anzeige bis zur nächsten Re-Analyse.
+      hasValue: () => !isEmptyValue(contract.contractTypeLabel) || !isEmptyValue(contract.contractType),
+      displayValue: () => contract.contractTypeLabel || contract.contractType || '',
+      rawValue: () => contract.contractTypeLabel || contract.contractType || '',
     },
     {
       key: 'anbieter', label: 'Anbieter', type: 'text',
