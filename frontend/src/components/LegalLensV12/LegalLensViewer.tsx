@@ -1202,6 +1202,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         const apiUrl = getApiUrl();
         const token = localStorage.getItem('authToken') || localStorage.getItem('token');
         const response = await fetch(`${apiUrl}/api/s3/view?contractId=${contractId}`, {
+          credentials: 'include',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
