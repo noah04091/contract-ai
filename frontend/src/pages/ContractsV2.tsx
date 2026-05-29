@@ -6,12 +6,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle,
-  Plus, Calendar, Clock, Trash2, Eye, Edit, Edit3,
+  Plus, Clock, Trash2, Eye, Edit, Edit3,
   Search, X, Crown, Users, Loader,
   Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder, Archive,
   CheckSquare, Square, Mail, Bell, Download,
-  LayoutGrid, List, FolderPlus,
-  FileUp, AlertTriangle, Sparkles, RotateCcw, CreditCard,
+  FolderPlus,
+  FileUp, AlertTriangle, Sparkles, RotateCcw,
   MoreVertical, ChevronUp, ChevronDown, ChevronLeft,
   SlidersHorizontal, // 📱 Mobile Filter Icon
   Star, // ⭐ Favoriten-Icon
@@ -392,7 +392,6 @@ export default function Contracts() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   const [sourceFilter, setSourceFilter] = useState<'alle' | 'generated' | 'optimized'>('alle'); // 🆕 Quelle-Filter
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list'); // 🆕 Enterprise View Mode
   const [previewContract, setPreviewContract] = useState<Contract | null>(null); // 🆕 Preview Panel State
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null); // 📄 PDF Thumbnail URL
   const [previewPdfLoading, setPreviewPdfLoading] = useState(false); // 📄 PDF Thumbnail Loading
@@ -769,12 +768,6 @@ export default function Contracts() {
   const [selectedContracts, setSelectedContracts] = useState<string[]>([]);
   const [bulkActionDropdownOpen, setBulkActionDropdownOpen] = useState(false);
 
-  // ✏️ QuickFact Inline-Edit State
-  const [editingQuickFact, setEditingQuickFact] = useState<{
-    contractId: string;
-    factIndex: number;
-  } | null>(null);
-  const [editQfValue, setEditQfValue] = useState('');
   const [qfDropdownOpen, setQfDropdownOpen] = useState<{
     contractId: string;
     displayIndex: number;
@@ -3373,85 +3366,6 @@ export default function Contracts() {
     }
   };
 
-  // 📊 QuickFacts Helper: Gibt dynamische oder Legacy-Daten zurück
-  const getQuickFacts = (contract: Contract): Array<{ label: string; value: string; rating: 'good' | 'neutral' | 'bad' }> => {
-    // Wenn dynamische quickFacts vorhanden sind, diese verwenden
-    if (contract.quickFacts && contract.quickFacts.length > 0) {
-      return contract.quickFacts;
-    }
-
-    // Fallback auf Legacy-Daten für alte Verträge
-    return [
-      {
-        label: 'Kündigungsfrist',
-        value: contract.kuendigung || '—',
-        rating: 'neutral' as const
-      },
-      {
-        label: 'Ablaufdatum',
-        value: formatDate(contract.expiryDate),
-        rating: contract.expiryDate && new Date(contract.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-          ? 'bad' as const
-          : 'neutral' as const
-      },
-      {
-        label: 'Laufzeit',
-        value: contract.laufzeit || '—',
-        rating: 'neutral' as const
-      }
-    ];
-  };
-
-  // 📊 Rating zu CSS-Klasse Mapping
-  const getRatingClass = (rating: 'good' | 'neutral' | 'bad'): string => {
-    switch (rating) {
-      case 'good': return styles.ratingGood || '';
-      case 'bad': return styles.ratingBad || styles.warning || '';
-      default: return '';
-    }
-  };
-
-  // 📊 QuickFact Icon nach Label UND Wert (semantisch statt positionell)
-  const getQuickFactIcon = (label: string, value?: string): typeof Calendar => {
-    const lower = label.toLowerCase();
-    const lowerValue = (value || '').toLowerCase();
-
-    // Kündigungsfrist → Uhr-Icon
-    if (lower.includes('kündigung')) return Clock;
-    // Geldbeträge → Kreditkarten-Icon (Label ODER Wert)
-    if (lower.includes('kosten') || lower.includes('preis') || lower.includes('betrag') || lower.includes('gebühr') || lower.includes('miete') || lower.includes('gehalt') || lower.includes('honorar')) return CreditCard;
-    if (lowerValue.includes('€') || lowerValue.includes('eur') || lowerValue.includes('usd') || lowerValue.includes('netto') || lowerValue.includes('brutto')) return CreditCard;
-    // Datumsfelder → Kalender-Icon
-    if (lower.includes('ablauf') || lower.includes('ende') || lower.includes('frist') || lower.includes('fällig') || lower.includes('datum') || lower.includes('gekündigt')) return Calendar;
-    if (lower.includes('beginn') || lower.includes('start') || lower.includes('kaufdatum') || lower.includes('mietbeginn') || lower.includes('arbeitsbeginn')) return Calendar;
-    // Laufzeit/Dauer → Wiederholen-Icon
-    if (lower.includes('laufzeit') || lower.includes('dauer') || lower.includes('verlängerung') || lower.includes('gewährleistung') || lower.includes('befristung') || lower.includes('restlaufzeit')) return RotateCcw;
-    // Anbieter → Users-Icon
-    if (lower.includes('anbieter') || lower.includes('vertragspartner') || lower.includes('arbeitgeber')) return Users;
-    return Calendar;
-  };
-
-  // ✏️ QuickFact Inline-Edit: Wert speichern
-  const saveQuickFactValue = async (contractId: string, factIndex: number, newValue: string) => {
-    const contract = contracts.find(c => c._id === contractId);
-    if (!contract?.quickFacts) return;
-
-    const updated = [...contract.quickFacts];
-    updated[factIndex] = { ...updated[factIndex], value: newValue };
-
-    try {
-      await apiCall(`/contracts/${contractId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ quickFacts: updated })
-      });
-      setContracts(prev => prev.map(c =>
-        c._id === contractId ? { ...c, quickFacts: updated } : c
-      ));
-    } catch (err) {
-      console.error('QuickFact speichern fehlgeschlagen:', err);
-    }
-    setEditingQuickFact(null);
-  };
 
   // ✏️ QuickFact Dropdown: Spalte wechseln (Array-Reihenfolge tauschen)
   const swapQuickFact = async (contractId: string, displayIndex: number, targetFactIndex: number) => {
@@ -3741,307 +3655,6 @@ export default function Contracts() {
     });
   }, [contracts, sortOrder, columnSlots]);
 
-  // ✅ RESPONSIVE: Mobile Card Component
-  const MobileContractCard = ({ contract }: { contract: Contract }) => {
-    const isSelected = selectedContracts.includes(contract._id);
-
-    return (
-      <motion.div
-        className={styles.contractCard}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        onClick={() => handleRowDoubleClick(contract)}
-      >
-        {/* Card Header */}
-        <div className={styles.cardHeader}>
-          {/* 📋 Bulk Select Checkbox (nur wenn bulkSelectMode aktiv) */}
-          {bulkSelectMode && (
-            <div
-              className={styles.cardCheckbox}
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleSelectContract(contract._id);
-              }}
-            >
-              {isSelected ? (
-                <CheckSquare size={22} className={styles.checkboxChecked} />
-              ) : (
-                <Square size={22} className={styles.checkboxUnchecked} />
-              )}
-            </div>
-          )}
-          <div className={styles.cardIcon}>
-            <FileText size={20} />
-          </div>
-          <div className={styles.cardTitle}>
-            <h3 className={styles.cardFileName}>{fixUtf8Display(contract.name)}</h3>
-            <div className={styles.cardStatus}>
-              <span className={`${styles.statusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
-                {calculateSmartStatus(contract)}
-              </span>
-              {/* 🆕 Smart Signature Status Badge */}
-              {renderSignatureBadge(contract)}
-              {contract.isGenerated && (
-                <span className={styles.generatedBadge}>Generiert</span>
-              )}
-              {contract.isOptimized && (
-                <span className={styles.optimizedBadge}>Optimiert</span>
-              )}
-              {contract.uploadType === 'EMAIL_IMPORT' && (
-                <span
-                  className={styles.emailImportBadge}
-                  title={`Importiert am ${formatDate(contract.createdAt)} via Email`}
-                >
-                  <Mail size={12} />
-                  Per Email
-                </span>
-              )}
-              {isContractNotAnalyzed(contract) && (
-                <span className={styles.notAnalyzedBadge}>Nicht analysiert</span>
-              )}
-            </div>
-          </div>
-        </div>
-
-      {/* Card Details Grid - 📊 Dynamische QuickFacts – Inline-Edit */}
-      <div className={styles.cardDetails}>
-        {getQuickFacts(contract).slice(0, 2).map((fact, index) => {
-          const IconComp = getQuickFactIcon(fact.label, fact.value);
-          const isEditing = editingQuickFact?.contractId === contract._id && editingQuickFact?.factIndex === index;
-          const isDropdownOpen = qfDropdownOpen?.contractId === contract._id && qfDropdownOpen?.displayIndex === index;
-          const hasEditable = !!(contract.quickFacts && contract.quickFacts.length > 0);
-          const allFacts = contract.quickFacts || [];
-
-          return (
-            <div key={index} className={styles.cardDetailItem}>
-              <span className={styles.cardDetailLabel}>{fact.label}</span>
-              {isEditing ? (
-                <div className={styles.qfInlineEdit} onClick={(e) => e.stopPropagation()}>
-                  <input
-                    type="text"
-                    className={styles.qfInlineInput}
-                    value={editQfValue}
-                    onChange={(e) => setEditQfValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') saveQuickFactValue(contract._id, index, editQfValue);
-                      if (e.key === 'Escape') setEditingQuickFact(null);
-                    }}
-                    autoFocus
-                  />
-                  <button className={styles.qfSaveBtn} onClick={() => saveQuickFactValue(contract._id, index, editQfValue)} title="Speichern">
-                    <Check size={14} />
-                  </button>
-                  <button className={styles.qfCancelBtn} onClick={() => setEditingQuickFact(null)} title="Abbrechen">
-                    <X size={14} />
-                  </button>
-                </div>
-              ) : (
-                <div className={`${styles.qfCell} ${hasEditable ? styles.qfEditable : ''}`}>
-                  <div className={`${styles.cardDetailValue} ${getRatingClass(fact.rating)}`}>
-                    <IconComp size={14} />
-                    <span>{fact.value}</span>
-                  </div>
-                  {hasEditable && (
-                    <div className={styles.qfActions} onClick={(e) => e.stopPropagation()}>
-                      <button
-                        className={styles.qfEditBtn}
-                        onClick={() => {
-                          setEditingQuickFact({ contractId: contract._id, factIndex: index });
-                          setEditQfValue(fact.value);
-                          setQfDropdownOpen(null);
-                        }}
-                        title="Wert bearbeiten"
-                      >
-                        <Pencil size={12} />
-                      </button>
-                      {allFacts.length > 2 && (
-                        <button
-                          className={styles.qfDropdownBtn}
-                          onClick={(e) => {
-                            const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                            setQfDropdownOpen(isDropdownOpen ? null : {
-                              contractId: contract._id,
-                              displayIndex: index,
-                              position: { top: rect.bottom + 4, left: rect.left }
-                            });
-                          }}
-                          title="Eckdaten wechseln"
-                        >
-                          <ChevronDown size={12} />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        <div className={`${styles.cardDetailItem} ${styles.fullWidth}`}>
-          <span className={styles.cardDetailLabel}>Upload-Datum</span>
-          <div className={styles.cardDetailValue}>
-            <span>{formatDate(contract.createdAt)}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Card Actions - ✅ 2x2 Grid: Alle Buttons gleich groß */}
-      <div className={styles.cardActions}>
-        {/* ✅ Sonderfall: "Jetzt analysieren" für nicht-analysierte Verträge (volle Breite) */}
-        {isContractNotAnalyzed(contract) && (
-          <button
-            className={`${styles.cardActionButton} ${styles.analyzeNow} ${styles.fullWidthAction}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAnalyzeExistingContract(contract);
-            }}
-            disabled={analyzingContract[contract._id]}
-          >
-            {analyzingContract[contract._id] ? (
-              <>
-                <Loader size={14} className={styles.spinning} />
-                <span>Analysiert...</span>
-              </>
-            ) : (
-              <>
-                <Zap size={14} />
-                <span>Jetzt analysieren</span>
-              </>
-            )}
-          </button>
-        )}
-
-        {/* 🆕 Smart PDF Button - Signed or Original */}
-        <button
-          className={styles.cardActionButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            openSmartPDF(contract, true); // preferSigned=true
-          }}
-          disabled={pdfLoading[contract._id]}
-          title={contract.envelope?.s3KeySealed ? 'Signiertes PDF öffnen' : 'PDF öffnen'}
-        >
-          {pdfLoading[contract._id] ? (
-            <Loader size={14} className={styles.loadingIcon} />
-          ) : (
-            <ExternalLink size={14} />
-          )}
-          <span>
-            {pdfLoading[contract._id]
-              ? 'Lädt...'
-              : contract.envelope?.s3KeySealed
-                ? '📥 Signiert'
-                : 'PDF'}
-          </span>
-        </button>
-        {canEditContract(contract) && (
-          <button
-            className={styles.cardActionButton}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditContract(contract);
-            }}
-          >
-            <Edit size={14} />
-            <span>Bearbeiten</span>
-          </button>
-        )}
-
-        {/* 🔍 Legal Lens - Interaktive Vertragsanalyse */}
-        <button
-          className={styles.cardActionButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/legal-lens/${contract._id}`);
-          }}
-          title="Vertrag interaktiv analysieren"
-          style={{
-            background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-            color: 'white',
-            border: 'none'
-          }}
-        >
-          <Search size={14} />
-          <span>Legal Lens</span>
-        </button>
-
-        {/* 📁 Mobile Folder Dropdown */}
-        <div
-          className={styles.mobileFolderWrapper}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            className={`${styles.cardActionButton} ${folderDropdownOpen === contract._id ? styles.active : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              setFolderDropdownOpen(
-                folderDropdownOpen === contract._id ? null : contract._id
-              );
-            }}
-          >
-            <Folder size={14} />
-            <span>Ordner</span>
-          </button>
-          {folderDropdownOpen === contract._id && (
-            <div className={styles.mobileFolderDropdown}>
-              <div className={styles.mobileFolderHeader}>In Ordner verschieben</div>
-              <div className={styles.mobileFolderList}>
-                {/* Ohne Ordner */}
-                <button
-                  className={`${styles.mobileFolderItem} ${!contract.folderId ? styles.selected : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMoveToFolder(contract._id, null);
-                    setFolderDropdownOpen(null);
-                  }}
-                >
-                  <span className={styles.folderIcon}>📂</span>
-                  <span>Ohne Ordner</span>
-                </button>
-                {/* Folder List */}
-                {folders.map((folder) => (
-                  <button
-                    key={folder._id}
-                    className={`${styles.mobileFolderItem} ${contract.folderId === folder._id ? styles.selected : ''}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleMoveToFolder(contract._id, folder._id);
-                      setFolderDropdownOpen(null);
-                    }}
-                  >
-                    <span className={styles.folderIcon} style={{ color: folder.color }}>
-                      {folder.icon}
-                    </span>
-                    <span>{folder.name}</span>
-                    {contract.folderId === folder._id && (
-                      <CheckCircle size={12} className={styles.checkIcon} />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ✅ DESTRUKTIVE AKTION: Löschen (dezent, outline-only) */}
-        {canDeleteContract(contract) && (
-          <button
-            className={`${styles.cardActionButton} ${styles.deleteAction}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDeleteContract(contract._id, fixUtf8Display(contract.name));
-            }}
-          >
-            <Trash2 size={14} />
-            <span>Löschen</span>
-          </button>
-        )}
-      </div>
-    </motion.div>
-    );
-  };
 
   // ✅ PROFESSIONAL: Mobile List Row Component (kompakte Zeile wie Desktop)
   // Inspiriert von Microsoft Outlook, Apple Mail, Google Drive Mobile
@@ -4152,170 +3765,6 @@ export default function Contracts() {
     );
   };
 
-  // 🆕 Enterprise Grid Card Component (für Grid-Ansicht)
-  const EnterpriseGridCard = ({ contract }: { contract: Contract }) => {
-    const isSelected = selectedContracts.includes(contract._id);
-    const daysUntilExpiry = contract.expiryDate
-      ? Math.ceil((new Date(contract.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-      : null;
-
-    return (
-      <motion.div
-        className={`${styles.enterpriseGridCard} ${isSelected ? styles.selected : ''} ${previewContract?._id === contract._id ? styles.previewActive : ''}`}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.2 }}
-        onClick={() => handleRowClick(contract)}
-        onDoubleClick={() => handleRowDoubleClick(contract)}
-        whileHover={{ y: -2, boxShadow: '0 8px 25px rgba(0,0,0,0.1)' }}
-      >
-        {/* Selection Checkbox */}
-        {bulkSelectMode && (
-          <div
-            className={styles.gridCardCheckbox}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleSelectContract(contract._id);
-            }}
-          >
-            {isSelected ? (
-              <CheckSquare size={20} className={styles.checkboxChecked} />
-            ) : (
-              <Square size={20} className={styles.checkboxUnchecked} />
-            )}
-          </div>
-        )}
-
-        {/* Card Header with Icon & Status */}
-        <div className={styles.gridCardHeader}>
-          <div className={styles.gridCardIcon}>
-            <FileText size={24} />
-          </div>
-          <div className={styles.gridCardBadges}>
-            <span className={`${styles.gridStatusBadge} ${getStatusColor(calculateSmartStatus(contract))}`}>
-              {calculateSmartStatus(contract)}
-            </span>
-            {contract.isGenerated && (
-              <span className={styles.gridBadge} style={{ background: '#dbeafe', color: '#1d4ed8' }}>Generiert</span>
-            )}
-            {contract.isOptimized && (
-              <span className={styles.gridBadge} style={{ background: '#dcfce7', color: '#15803d' }}>Optimiert</span>
-            )}
-          </div>
-        </div>
-
-        {/* Contract Name */}
-        <h3 className={styles.gridCardTitle}>{fixUtf8Display(contract.name)}</h3>
-
-        {/* Quick Info */}
-        <div className={styles.gridCardInfo}>
-          {contract.kuendigung && (
-            <div className={styles.gridCardInfoRow}>
-              <Clock size={14} />
-              <span>{contract.kuendigung}</span>
-            </div>
-          )}
-          {contract.expiryDate && (
-            <div className={`${styles.gridCardInfoRow} ${daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 ? styles.warning : ''}`}>
-              <Calendar size={14} />
-              <span>{formatDate(contract.expiryDate)}</span>
-              {daysUntilExpiry !== null && daysUntilExpiry <= 30 && daysUntilExpiry > 0 && (
-                <span className={styles.daysLeft}>({daysUntilExpiry}d)</span>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Signature Status */}
-        {renderSignatureBadge(contract)}
-
-        {/* Quick Actions */}
-        {/* Not Analyzed Banner — im normalen Flex-Flow VOR den Action-Buttons */}
-        {isContractNotAnalyzed(contract) && (
-          <div
-            className={styles.gridNotAnalyzed}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (!analyzingContract[contract._id]) {
-                handleAnalyzeExistingContract(contract);
-              }
-            }}
-            style={{ cursor: analyzingContract[contract._id] ? 'wait' : 'pointer' }}
-            title="Klicken zum Analysieren"
-          >
-            {analyzingContract[contract._id] ? (
-              <>
-                <Loader size={12} className={styles.spinning} />
-                <span>Analysiert...</span>
-              </>
-            ) : (
-              <>
-                <Zap size={12} />
-                <span>Jetzt analysieren</span>
-              </>
-            )}
-          </div>
-        )}
-
-        <div className={styles.gridCardActions}>
-          <button
-            className={styles.gridActionBtn}
-            onClick={(e) => {
-              e.stopPropagation();
-              openSmartPDF(contract, true);
-            }}
-            disabled={pdfLoading[contract._id]}
-            title="PDF öffnen"
-          >
-            {pdfLoading[contract._id] ? <Loader size={14} className={styles.spinning} /> : <Eye size={14} />}
-          </button>
-          {canEditContract(contract) && (
-            <button
-              className={styles.gridActionBtn}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEditContract(contract);
-              }}
-              title="Bearbeiten"
-            >
-              <Edit size={14} />
-            </button>
-          )}
-          {/* ⚡ Analyze Button - nur für nicht-analysierte Verträge */}
-          {isContractNotAnalyzed(contract) && canEditContract(contract) && (
-            <button
-              className={`${styles.gridActionBtn} ${styles.analyzeBtn}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAnalyzeExistingContract(contract);
-              }}
-              disabled={analyzingContract[contract._id]}
-              title="Jetzt analysieren"
-            >
-              {analyzingContract[contract._id] ? (
-                <Loader size={14} className={styles.spinning} />
-              ) : (
-                <Zap size={14} />
-              )}
-            </button>
-          )}
-          {canDeleteContract(contract) && (
-            <button
-              className={`${styles.gridActionBtn} ${styles.deleteBtn}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDeleteContract(contract._id, fixUtf8Display(contract.name));
-              }}
-              title="Löschen"
-            >
-            <Trash2 size={14} />
-          </button>
-          )}
-        </div>
-
-      </motion.div>
-    );
-  };
 
   return (
     <>
@@ -4755,22 +4204,6 @@ export default function Contracts() {
                 </select>
               </div>
 
-              <div className={styles.toolbarViewButtons}>
-                <button
-                  className={`${styles.viewButton} ${viewMode === 'list' ? styles.active : ''}`}
-                  onClick={() => setViewMode('list')}
-                  title="Listenansicht"
-                >
-                  <List size={16} />
-                </button>
-                <button
-                  className={`${styles.viewButton} ${viewMode === 'grid' ? styles.active : ''}`}
-                  onClick={() => setViewMode('grid')}
-                  title="Rasteransicht"
-                >
-                  <LayoutGrid size={16} />
-                </button>
-              </div>
             </div>
 
             {/* 📱 MOBILE: Filter Bottom-Sheet */}
@@ -5627,19 +5060,8 @@ export default function Contracts() {
                     )}
                   </div>
                 ) : (
-                  // ✅ VIEW MODE CONTAINER - Grid oder Liste
+                  // ✅ ENTERPRISE LIST VIEW (Tabelle) — Rasteransicht entfernt 29.05.2026
                   <>
-                    {/* 🆕 ENTERPRISE GRID VIEW */}
-                    {viewMode === 'grid' && (
-                      <div className={styles.enterpriseGrid}>
-                        {displayedContracts.map((contract) => (
-                          <EnterpriseGridCard key={contract._id} contract={contract} />
-                        ))}
-                      </div>
-                    )}
-
-                    {/* ✅ ENTERPRISE LIST VIEW (Tabelle) */}
-                    {viewMode === 'list' && (
                     <div className={styles.tableContainer}>
                       <table className={`${styles.contractsTable} ${bulkSelectMode ? styles.withCheckboxes : ''} ${previewContract ? styles.withPreview : ''}`}>
                         <thead>
@@ -6139,33 +5561,17 @@ export default function Contracts() {
                         </tbody>
                       </table>
                     </div>
-                    )}
-                    {/* End of viewMode === 'list' */}
 
-                    {/* ✅ MOBILE VIEWS - Automatically shown on mobile via CSS */}
-                    {/* Liste = kompakte Zeilen, Raster = Cards */}
+                    {/* ✅ MOBILE VIEW — kompakte Listen-Zeilen (Outlook-Style) */}
                     <div className={styles.mobileCardsContainer}>
-                      {viewMode === 'list' ? (
-                        // 📋 LISTE: Kompakte Zeilen (wie Desktop/Outlook)
-                        <div className={styles.mobileListContainer}>
-                          {displayedContracts.map((contract) => (
-                            <MobileListRow
-                              key={`list-${contract._id}`}
-                              contract={contract}
-                            />
-                          ))}
-                        </div>
-                      ) : (
-                        // 🔲 RASTER: Cards (wie bisher)
-                        <div className={styles.mobileGridContainer}>
-                          {displayedContracts.map((contract) => (
-                            <MobileContractCard
-                              key={`grid-${contract._id}`}
-                              contract={contract}
-                            />
-                          ))}
-                        </div>
-                      )}
+                      <div className={styles.mobileListContainer}>
+                        {displayedContracts.map((contract) => (
+                          <MobileListRow
+                            key={`list-${contract._id}`}
+                            contract={contract}
+                          />
+                        ))}
+                      </div>
                     </div>
 
                     {/* ✅ NEU: Infinite Scroll Loading Indicator & Sentinel */}
