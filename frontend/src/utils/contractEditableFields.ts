@@ -94,6 +94,7 @@ export interface EditableContractShape {
   startDate?: string;
   expiryDate?: string;
   kosten?: number;
+  paymentAmount?: number; // 🆕 A3 (29.05.2026): KI-extrahierter Betrag (Fallback für kosten)
   customerNumber?: string;
   paymentFrequency?: string;
   paymentMethod?: string;
@@ -206,11 +207,20 @@ export function createEditableFields(
     },
     {
       key: 'kosten', label: 'Monatliche Kosten', type: 'number',
-      hasValue: () => contract.kosten != null && contract.kosten > 0,
-      displayValue: () => contract.kosten != null && contract.kosten > 0
-        ? contract.kosten.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
-        : '',
-      rawValue: () => contract.kosten != null ? String(contract.kosten) : '',
+      // 🆕 A3 (29.05.2026): Fallback auf paymentAmount (KI-extrahiert).
+      // User-Eingabe (kosten) hat Vorrang, KI-Wert (paymentAmount) zeigt sich nur wenn
+      // User noch nichts eingetragen hat. Save schreibt weiter in 'kosten' (key unverändert).
+      hasValue: () => (contract.kosten != null && contract.kosten > 0) || (contract.paymentAmount != null && contract.paymentAmount > 0),
+      displayValue: () => {
+        const value = contract.kosten ?? contract.paymentAmount;
+        return value != null && value > 0
+          ? value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR' })
+          : '';
+      },
+      rawValue: () => {
+        const value = contract.kosten ?? contract.paymentAmount;
+        return value != null ? String(value) : '';
+      },
     },
     {
       key: 'customerNumber', label: 'Kundennummer', type: 'text',

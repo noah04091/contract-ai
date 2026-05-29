@@ -421,6 +421,64 @@ const validateImportantDate = (dateObj, contract, requestId) => {
   return { valid: true, confidence, parsedDate: date };
 };
 
+// 🆕 A3 (29.05.2026): KI-extrahierte paymentTerms validieren + sanitieren.
+// Erlaubte Werte aus dem Prompt-Whitelist. Bei ungültigen/halluzinierten Werten
+// fallback auf null statt zu raten. Confidence-Gate ≥0.7 (analog Problem I).
+const VALID_PAYMENT_FREQUENCIES = new Set([
+  'Monatlich', 'Vierteljährlich', 'Halbjährlich', 'Jährlich', 'Einmalig'
+]);
+const VALID_PAYMENT_METHODS = new Set([
+  'SEPA-Lastschrift', 'Überweisung', 'Kreditkarte', 'PayPal', 'Bar', 'Rechnung'
+]);
+function extractAndValidatePaymentTerms(rawPaymentTerms, requestId) {
+  const empty = { amount: null, frequency: null, method: null, currency: 'EUR', confidence: 0 };
+  if (!rawPaymentTerms || typeof rawPaymentTerms !== 'object') return empty;
+
+  const confidence = typeof rawPaymentTerms.confidence === 'number'
+    ? Math.max(0, Math.min(1, rawPaymentTerms.confidence)) : 0;
+
+  // Confidence-Gate: <0.7 → komplett verwerfen (analog Problem I Filter)
+  if (confidence < 0.7) {
+    if (rawPaymentTerms.amount != null || rawPaymentTerms.frequency != null) {
+      console.log(`⚠️ [${requestId}] paymentTerms verworfen — Confidence ${confidence.toFixed(2)} < 0.7`);
+    }
+    return empty;
+  }
+
+  // Amount validieren — Number, positiv, plausibel (<1.000.000 EUR Schwelle gegen Halluzinationen)
+  let amount = null;
+  if (typeof rawPaymentTerms.amount === 'number' && rawPaymentTerms.amount > 0 && rawPaymentTerms.amount < 1000000) {
+    amount = Math.round(rawPaymentTerms.amount * 100) / 100; // 2 Dezimalstellen
+  }
+
+  // Frequency Whitelist
+  let frequency = null;
+  if (typeof rawPaymentTerms.frequency === 'string' && VALID_PAYMENT_FREQUENCIES.has(rawPaymentTerms.frequency)) {
+    frequency = rawPaymentTerms.frequency;
+  } else if (rawPaymentTerms.frequency) {
+    console.warn(`⚠️ [${requestId}] paymentTerms.frequency ungültig (außerhalb Whitelist): "${rawPaymentTerms.frequency}" → null`);
+  }
+
+  // Method Whitelist
+  let method = null;
+  if (typeof rawPaymentTerms.method === 'string' && VALID_PAYMENT_METHODS.has(rawPaymentTerms.method)) {
+    method = rawPaymentTerms.method;
+  } else if (rawPaymentTerms.method) {
+    console.warn(`⚠️ [${requestId}] paymentTerms.method ungültig (außerhalb Whitelist): "${rawPaymentTerms.method}" → null`);
+  }
+
+  // Currency — meist EUR, andere zugelassen
+  const currency = typeof rawPaymentTerms.currency === 'string' && rawPaymentTerms.currency.length <= 4
+    ? rawPaymentTerms.currency.toUpperCase()
+    : 'EUR';
+
+  if (amount != null || frequency || method) {
+    console.log(`💰 [${requestId}] paymentTerms validiert: ${amount} ${currency} / ${frequency || '∅'} / ${method || '∅'} (conf: ${confidence.toFixed(2)})`);
+  }
+
+  return { amount, frequency, method, currency, confidence };
+}
+
 /**
  * 🔒 Filtert und validiert alle importantDates
  * Entfernt ungültige Einträge und fügt Konfidenz hinzu
@@ -2645,6 +2703,13 @@ Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text d
     {"type": "minimum_term_end", "date": "2024-07-15", "label": "Kündbar ab", "description": "Mindestlaufzeit endet", "calculated": true, "source": "§ 4: 6 Monate Mindestlaufzeit"},
     {"type": "cancellation_deadline", "date": "2024-12-15", "label": "Kündigungsfrist", "description": "Nächster Termin für Kündigung", "calculated": true, "source": "§ 5: 1 Monat zum Jahresende"}
   ],
+  "paymentTerms": {
+    "amount": 1130.00,
+    "frequency": "Monatlich",
+    "method": "SEPA-Lastschrift",
+    "currency": "EUR",
+    "confidence": 0.95
+  },
   "legalPulseHooks": ["Mietpreisbremse", "TKG-Reform 2022", "..."],
   "detailedLegalOpinion": "Ausführliches Rechtsgutachten als Fließtext auf Fachanwaltsniveau: Dieser Vertrag ist grundsätzlich... [FLEXIBLE Länge je nach INHALT: 300-500 Wörter wenn wenig zu sagen, 500-800 Wörter bei moderater Analyse, 800-1500 Wörter wenn viel zu besprechen. Seitenzahl IRRELEVANT! Nur tatsächlicher Analyse-Bedarf zählt!]",
   "typeSpecificFindings": [
@@ -2657,7 +2722,46 @@ Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text d
 NUR FÜR PILOT-TYPEN (Mietvertrag, Arbeitsvertrag, NDA): typeSpecificFindings ist die strukturierte
 Antwort auf die PILOT-TIEFENANALYSE oben. Für alle anderen Vertragstypen: Feld weglassen oder leeres
 Array []. Status-Werte: "ok" | "issue" | "not_applicable". Bei "issue" möglichst klauselReferenz
-mitgeben.`;
+mitgeben.
+
+⚠️ PAYMENT-TERMS — REGELN (NICHT VERHANDELBAR, Anti-Halluzination):
+   paymentTerms-Feld extrahiert den primären, wiederkehrenden Hauptzahlungsbetrag des Vertrags.
+
+   AUSSCHLUSS — NIEMALS als paymentAmount nehmen:
+   - Kaution, Sicherheitsleistung, Bürgschaft (Einmalzahlung, kein laufender Beitrag)
+   - Mahngebühren, Vertragsstrafen, Verzugszinsen
+   - Selbstbeteiligung bei Versicherungen
+   - Beispiel-Beträge ("Beispiel: 800 EUR", "z.B. 1.000 EUR", "angenommen") → analog Problem-I-Fix
+   - Schwellenwerte aus AGB ("Bei Beträgen über 10.000 EUR gilt...")
+   - Steuer-Aufschlüsselungen (Netto + USt) → nimm den BRUTTOBETRAG
+
+   MIETVERTRÄGE: nimm die GESAMTMIETE / WARMMIETE (Kaltmiete + Nebenkostenpauschale).
+   Beispiel: "Kaltmiete 950 EUR + Nebenkosten 180 EUR = Gesamtmiete 1.130 EUR"
+            → amount: 1130.00 (NICHT 950)
+
+   FREQUENCY-WHITELIST (NUR diese Werte erlaubt, sonst null):
+   "Monatlich" | "Vierteljährlich" | "Halbjährlich" | "Jährlich" | "Einmalig"
+
+   METHOD-WHITELIST (NUR diese Werte erlaubt, sonst null):
+   "SEPA-Lastschrift" | "Überweisung" | "Kreditkarte" | "PayPal" | "Bar" | "Rechnung"
+
+   METHOD-EDGE-CASES:
+   - IBAN/Konto-Erwähnung allein ist KEINE Methoden-Angabe → method=null (nicht "Überweisung" raten)
+   - Mehrere Methoden erlaubt ("SEPA oder Überweisung") → "SEPA-Lastschrift" hat Vorrang
+   - Nichts explizit erwähnt → method=null (lieber ehrlich als geraten)
+
+   CONFIDENCE-REGELN für paymentTerms:
+   - 0.9-1.0: amount + frequency + method alle wörtlich im Text erkennbar
+   - 0.7-0.9: amount + frequency erkennbar, method evtl. null
+   - 0.5-0.7: nur amount erkennbar, Rest null
+   - <0.5: paymentTerms komplett weglassen oder amount=null setzen
+
+   CURRENCY: standardmäßig "EUR". Bei explizit anderem Vertrag (CHF/USD): die echte Währung, NICHT konvertieren.
+
+   amount-FORMAT: Number mit Dezimalpunkt (1130.50), keine Tausendertrenner (NICHT "1.130,50" oder "1130,50").
+
+   WENN UNKLAR → paymentTerms: { "amount": null, "frequency": null, "method": null, "currency": "EUR", "confidence": 0 }
+   Lieber leer als geraten.`;
 
   return professionalPrompt;
 }
@@ -3408,6 +3512,15 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
       // Vorher: nur in analysisData (für Calendar-Events), jetzt auch direkt am
       // Contract-Dokument für V2-Modal-Anzeige.
       gekuendigtZum: analysisData.gekuendigtZum || null,
+      // 🆕 A3 (29.05.2026): KI-extrahierte Zahlungs-Details (Betrag/Häufigkeit/Methode).
+      // Validiert in extractAndValidatePaymentTerms (Whitelist + Confidence-Gate ≥0.7).
+      // Bei Re-Analyse überschreibt KI diese Werte, falls User vorher manuell was anderes
+      // im Edit-Modal eingetragen hatte (akzeptierter Trade-off).
+      ...(analysisData.paymentTerms && {
+        paymentAmount: analysisData.paymentTerms.amount,
+        paymentFrequency: analysisData.paymentTerms.frequency,
+        paymentMethod: analysisData.paymentTerms.method
+      }),
       
       uploadedAt: new Date(),
       createdAt: new Date(),
@@ -4652,6 +4765,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           contractTypeLabel: pilotTypeToLabel(extractedContractType) || null,
           // 🆕 A2 (28.05.2026): gekuendigtZum auch im Top-Level persistieren.
           gekuendigtZum: extractedGekuendigtZum || null,
+          // 🆕 A3 (29.05.2026): KI-extrahierte Zahlungs-Details aus paymentTerms.
+          // extractAndValidatePaymentTerms wendet Whitelist + Confidence-Gate ≥0.7 an,
+          // verwirft halluzinierte Werte (Kaution, Beispiel-Beträge, ungültige Methoden).
+          ...(() => {
+            const pt = extractAndValidatePaymentTerms(result.paymentTerms, requestId);
+            return (pt.amount != null || pt.frequency || pt.method) ? {
+              paymentAmount: pt.amount,
+              paymentFrequency: pt.frequency,
+              paymentMethod: pt.method
+            } : {};
+          })(),
 
           // Enhanced metadata
           documentType: validationResult.documentType,
@@ -4958,7 +5082,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
           // 🆕 MINDESTLAUFZEIT (z.B. "Kündigung ab 6. Monat möglich")
           minimumTerm: extractedMinimumTerm || null,
-          canCancelAfterDate: extractedCanCancelAfterDate || null // 🆕 Datum ab wann kündbar - Für Kalender-Events
+          canCancelAfterDate: extractedCanCancelAfterDate || null, // 🆕 Datum ab wann kündbar - Für Kalender-Events
+
+          // 🆕 A1 Fix (29.05.2026): contractType muss in analysisData damit
+          // saveContractWithUpload via pilotTypeToLabel() den deutschen Label setzen kann.
+          // Vorher fehlte das — Bug aus A1-Implementation entdeckt während A3.
+          contractType: extractedContractType,
+          // 🆕 A3 (29.05.2026): KI-extrahierte Zahlungs-Details für saveContractWithUpload.
+          paymentTerms: extractAndValidatePaymentTerms(result.paymentTerms, requestId)
         };
 
         const savedContract = await saveContractWithUpload(

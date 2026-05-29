@@ -382,79 +382,87 @@ async function generateEventsForContract(db, contract) {
         });
       }
 
-      // 🔔 7. Custom Reminder Events (User-defined) — supports new reminderSettings format
-      const reminderSettingsArr = contract.reminderSettings && Array.isArray(contract.reminderSettings) && contract.reminderSettings.length > 0
-        ? contract.reminderSettings
-        : (contract.reminderDays && Array.isArray(contract.reminderDays) && contract.reminderDays.length > 0)
-          ? contract.reminderDays.map(d => ({ type: 'expiry', days: d }))
-          : [];
+    }
 
-      if (reminderSettingsArr.length > 0) {
-        console.log(`🔔 Generiere ${reminderSettingsArr.length} Custom Reminders für "${contract.name}"`);
+    // 🔔 7. Custom Reminder Events (User-defined) — supports new reminderSettings format.
+    // Läuft UNABHÄNGIG vom äußeren expiryDate-Check, weil User-eigene Datumsvorgaben
+    // (type='custom') semantisch nichts mit dem Vertrags-Ablaufdatum zu tun haben.
+    // expiry/cancellation-Typen brauchen expiryDate und skippen defensiv per `continue`.
+    const reminderSettingsArr = contract.reminderSettings && Array.isArray(contract.reminderSettings) && contract.reminderSettings.length > 0
+      ? contract.reminderSettings
+      : (contract.reminderDays && Array.isArray(contract.reminderDays) && contract.reminderDays.length > 0)
+        ? contract.reminderDays.map(d => ({ type: 'expiry', days: d }))
+        : [];
 
-        // Calculate cancellation deadline for cancellation-type reminders (kalendermonatgenau)
-        const cancellationDeadline = subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths);
+    if (reminderSettingsArr.length > 0) {
+      console.log(`🔔 Generiere ${reminderSettingsArr.length} Custom Reminders für "${contract.name}"`);
 
-        for (const setting of reminderSettingsArr) {
-          let reminderDate;
-          let title;
-          let description;
+      // Calculate cancellation deadline only when expiryDate exists (kalendermonatgenau)
+      const cancellationDeadline = expiryDate
+        ? subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths)
+        : null;
 
-          if (setting.type === 'expiry') {
-            const tempDate = new Date(expiryDate);
-            tempDate.setDate(tempDate.getDate() - setting.days);
-            reminderDate = createLocalDate(tempDate);
-            title = `🔔 Erinnerung: ${contract.name} läuft in ${setting.days} Tagen ab`;
-            description = `"${contract.name}" läuft in ${setting.days} Tagen ab (am ${expiryDate.toLocaleDateString('de-DE')}).${isAutoRenewal ? ' Dieser Vertrag verlängert sich automatisch, falls nicht gekündigt!' : ' Jetzt handeln!'}`;
-          } else if (setting.type === 'cancellation') {
-            const tempDate = new Date(cancellationDeadline);
-            tempDate.setDate(tempDate.getDate() - setting.days);
-            reminderDate = createLocalDate(tempDate);
-            title = `🔔 Erinnerung: Kündigungsfrist für ${contract.name} endet in ${setting.days} Tagen`;
-            description = `Die Kündigungsfrist für "${contract.name}" endet in ${setting.days} Tagen (am ${cancellationDeadline.toLocaleDateString('de-DE')}). Vertrag läuft ab am ${expiryDate.toLocaleDateString('de-DE')}.`;
-          } else if (setting.type === 'custom' && setting.targetDate) {
-            reminderDate = createLocalDate(new Date(setting.targetDate));
-            const labelText = setting.label || 'Eigene Erinnerung';
-            title = `🔔 Erinnerung: ${labelText} für ${contract.name}`;
-            description = `Eigene Erinnerung "${labelText}" für "${contract.name}" am ${reminderDate.toLocaleDateString('de-DE')}.`;
-          } else {
-            continue; // Skip invalid settings
-          }
+      for (const setting of reminderSettingsArr) {
+        let reminderDate;
+        let title;
+        let description;
 
-          // Nur zukünftige Reminders erstellen
-          if (reminderDate > now) {
-            const daysUntil = setting.type === 'custom'
-              ? Math.ceil((reminderDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-              : setting.days;
-            const severity = daysUntil <= 7 ? "critical" : daysUntil <= 30 ? "warning" : "info";
+        if (setting.type === 'expiry') {
+          if (!expiryDate) continue;
+          const tempDate = new Date(expiryDate);
+          tempDate.setDate(tempDate.getDate() - setting.days);
+          reminderDate = createLocalDate(tempDate);
+          title = `🔔 Erinnerung: ${contract.name} läuft in ${setting.days} Tagen ab`;
+          description = `"${contract.name}" läuft in ${setting.days} Tagen ab (am ${expiryDate.toLocaleDateString('de-DE')}).${isAutoRenewal ? ' Dieser Vertrag verlängert sich automatisch, falls nicht gekündigt!' : ' Jetzt handeln!'}`;
+        } else if (setting.type === 'cancellation') {
+          if (!cancellationDeadline) continue;
+          const tempDate = new Date(cancellationDeadline);
+          tempDate.setDate(tempDate.getDate() - setting.days);
+          reminderDate = createLocalDate(tempDate);
+          title = `🔔 Erinnerung: Kündigungsfrist für ${contract.name} endet in ${setting.days} Tagen`;
+          description = `Die Kündigungsfrist für "${contract.name}" endet in ${setting.days} Tagen (am ${cancellationDeadline.toLocaleDateString('de-DE')}). Vertrag läuft ab am ${expiryDate.toLocaleDateString('de-DE')}.`;
+        } else if (setting.type === 'custom' && setting.targetDate) {
+          reminderDate = createLocalDate(new Date(setting.targetDate));
+          const labelText = setting.label || 'Eigene Erinnerung';
+          title = `🔔 Erinnerung: ${labelText} für ${contract.name}`;
+          description = `Eigene Erinnerung "${labelText}" für "${contract.name}" am ${reminderDate.toLocaleDateString('de-DE')}.`;
+        } else {
+          continue; // Skip invalid settings
+        }
 
-            events.push({
-              userId: contract.userId,
-              contractId: contract._id,
-              type: "CUSTOM_REMINDER",
-              title,
-              description,
-              date: reminderDate,
-              severity: severity,
-              status: "scheduled",
-              confidence: confidence,
-              dataSource: dataSource,
-              isEstimated: isEstimated,
-              metadata: {
-                provider: contract.provider,
-                daysUntilExpiry: setting.days || 0,
-                expiryDate: expiryDate,
-                suggestedAction: "review",
-                contractName: contract.name,
-                isAutoRenewal,
-                customReminder: true,
-                reminderType: setting.type,
-                reminderLabel: setting.label || null
-              },
-              createdAt: new Date(),
-              updatedAt: new Date()
-            });
-          }
+        // Nur zukünftige Reminders erstellen
+        if (reminderDate > now) {
+          const daysUntil = setting.type === 'custom'
+            ? Math.ceil((reminderDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+            : setting.days;
+          const severity = daysUntil <= 7 ? "critical" : daysUntil <= 30 ? "warning" : "info";
+
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "CUSTOM_REMINDER",
+            title,
+            description,
+            date: reminderDate,
+            severity: severity,
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              daysUntilExpiry: setting.days || 0,
+              expiryDate: expiryDate,
+              suggestedAction: "review",
+              contractName: contract.name,
+              isAutoRenewal,
+              customReminder: true,
+              reminderType: setting.type,
+              reminderLabel: setting.label || null
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
         }
       }
     }
