@@ -774,8 +774,12 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     // Org
     organizationId: 1,
     // Detail-Modal Felder (werden über "Feld hinzufügen" gesetzt)
-    contractType: 1, anbieter: 1, vertragsnummer: 1, kosten: 1,
+    contractType: 1, contractTypeLabel: 1, anbieter: 1, vertragsnummer: 1, kosten: 1,
     provider: 1, customFields: 1, notes: 1,
+    // 🆕 A1 + Phase B Felder (28.05.2026): customerNumber/payment-Felder vom anderen Terminal,
+    // contractTypeLabel als KI-deutsche-Bezeichnung. Ohne diese Inclusion-Whitelist-Erweiterung
+    // werden die Felder zwar in DB geschrieben aber niemals an Frontend gesendet.
+    customerNumber: 1, paymentMethod: 1,
     // Sort-Felder (auch wenn nicht angezeigt, für Sortierung nötig)
     'legalPulse.riskScore': 1
   };
