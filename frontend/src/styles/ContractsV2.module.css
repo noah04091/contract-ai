@@ -1731,7 +1731,7 @@
 
 .toolbarSearch {
   flex: 1;
-  max-width: 400px;
+  max-width: 600px; /* 29.05.2026: von 400 -> 600px, fuellt freien Platz nach Grid-Toggle-Removal */
   position: relative;
 }
 
@@ -6809,7 +6809,6 @@
 /* Desktop Filter Selects - versteckt auf Mobile */
 .desktopFilters {
   display: flex;
-  margin-left: auto; /* 29.05.2026: rechtsbuendig (Stripe/Linear-Pattern), füllt Platz nach Grid-Toggle-Removal */
 }
 
 /* Upload Header mit Schließen-Button */
