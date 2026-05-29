@@ -1484,11 +1484,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   }, []);
 
   // ✅ NEUE METHODE: Erstelle Highlight-Overlays UNTER der Textschicht
-  const createHighlightOverlays = useCallback((spans: HTMLElement[]) => {
+  const createHighlightOverlays = useCallback((spans: HTMLElement[], targetPdfPage?: Element | null) => {
     if (spans.length === 0) return;
 
-    // Finde die PDF-Page
-    const pdfPage = document.querySelector('.react-pdf__Page');
+    // Finde die PDF-Page (Target hat Vorrang vor "erste Page im DOM"-Fallback)
+    const pdfPage = targetPdfPage ?? document.querySelector('.react-pdf__Page');
     if (!pdfPage) return;
 
     // Entferne alten Container falls vorhanden
@@ -1650,7 +1650,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
   // ========== EFFECT 4: Highlighting v7 - Wort-basiertes Matching ==========
   useEffect(() => {
-    if (viewMode !== 'pdf' || !selectedClause || !pdfUrl || pdfLoading) return;
+    if (viewMode !== 'pdf' || !selectedClause || !pdfUrl || pdfLoading || !pdfIndexReady) return;
 
     // Skip wenn User gerade in PDF geklickt hat (direkt nach Klick, nicht nach Zoom)
     if (pdfClickActiveRef.current) {
@@ -1673,9 +1673,17 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
       clearHighlight();
 
-      const textLayer = document.querySelector('.react-pdf__Page__textContent');
+      // Klausel-Page via Text-Index ermitteln (statt blind erste Page im DOM zu nehmen)
+      const targetPage = findPageForClause(selectedClause.text);
+      if (!targetPage) {
+        devLog('[Legal Lens] PDF highlight: Klausel-Page nicht im Index gefunden');
+        return;
+      }
+      const pageWrapper = document.querySelector(`[data-page-num="${targetPage}"]`);
+      const targetPdfPage = pageWrapper?.querySelector('.react-pdf__Page') ?? null;
+      const textLayer = targetPdfPage?.querySelector('.react-pdf__Page__textContent') ?? null;
       if (!textLayer) {
-        devLog('[Legal Lens] PDF highlight: No text layer found');
+        devLog('[Legal Lens] PDF highlight: Kein Text-Layer auf Page', targetPage);
         return;
       }
 
@@ -1771,8 +1779,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
       devLog('[Legal Lens] PDF highlight: Highlighting spans', firstMatchIdx, 'to', lastMatchIdx, '(', spansToHighlight.length, 'spans)');
 
-      // Erstelle Highlight-Overlays
-      createHighlightOverlays(spansToHighlight);
+      // Erstelle Highlight-Overlays (mit Target-Page für korrekte Geometrie)
+      createHighlightOverlays(spansToHighlight, targetPdfPage);
       highlightedElementsRef.current = spansToHighlight;
 
       // Scroll zum ersten Span — aber nur einmal pro Klausel-Auswahl
@@ -1788,7 +1796,10 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     const MAX_HIGHLIGHT_RETRIES = 5;
 
     const tryHighlight = () => {
-      const textLayer = document.querySelector('.react-pdf__Page__textContent');
+      // Warte target-spezifisch: Text-Layer der KLAUSEL-Page muss bereit sein, nicht irgendeine
+      const targetPage = findPageForClause(selectedClause.text);
+      const pageWrapper = targetPage ? document.querySelector(`[data-page-num="${targetPage}"]`) : null;
+      const textLayer = pageWrapper?.querySelector('.react-pdf__Page__textContent');
       if (!textLayer || textLayer.querySelectorAll('span').length === 0) {
         highlightRetries++;
         if (highlightRetries < MAX_HIGHLIGHT_RETRIES) {
@@ -1806,7 +1817,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         clearTimeout(syncPdfHighlightTimeoutRef.current);
       }
     };
-  }, [viewMode, selectedClause, pdfUrl, pdfLoading, pageNumber, scale, clearHighlight, createHighlightOverlays]);
+  }, [viewMode, selectedClause, pdfUrl, pdfLoading, pdfIndexReady, pageNumber, scale, clearHighlight, createHighlightOverlays, findPageForClause]);
 
   // ✅ PDF Selection Handler - Direktes Klicken in der PDF-Ansicht
   const handlePdfTextClick = (event: React.MouseEvent) => {
