@@ -4202,7 +4202,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         }
       }
     } catch (error) {
-      console.error(`❌ [${requestId}] Document parsing error:`, error);
+      // 🆕 29.05.2026 Watch-Item-Fix: nur Message statt ganzes Error-Objekt loggen.
+      // Stack-Trace (z.B. von pdf-parse "bad XRef entry") spammt das Log, ohne
+      // funktionalen Mehrwert — der Last-Resort-Fallback unten greift sowieso.
+      console.error(`❌ [${requestId}] Document parsing error: ${error.message || error}`);
 
       // Last-Resort: Bei harten pdf-parse-Crashes (z.B. "bad XRef entry",
       // korrupte Streams, defekte Trailer) Textract direkt mit den rohen
@@ -5504,9 +5507,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.error(`❌ [ANALYSIS] Error after ${duration}s | user=${req.user?.userId} | file="${req.file?.originalname}" | requestId=${requestId}`);
+    // 🆕 29.05.2026 Watch-Item-Fix: Stack-Trace nicht mehr loggen.
+    // Bei echten Pipeline-Fehlern (vs pdf-parse-Crashes) reicht die error.message —
+    // requestId reicht zum Auffinden im Log + Sentry hat den vollen Stack ohnehin.
     console.error(`❌ [${requestId}] Error in FIXED enhanced deep lawyer-level analysis:`, {
       message: error.message,
-      stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
       filename: req.file?.originalname,
       uploadType: storageInfo?.uploadType

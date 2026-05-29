@@ -431,6 +431,13 @@ ${contractText}`;
  */
 function normalize(s) {
   return s
+    // 🆕 29.05.2026 Watch-Item-Fix: KI liefert manchmal doppel-escaped Unicode
+    // (z.B. "K\\u00fcndigung" statt "Kündigung") im Evidence-Field. Wird hier
+    // dekodiert bevor andere Transformationen greifen. Junior-Stage hatte 5/5
+    // evidence_not_in_text-Fails am 28.05. wegen dieses Mismatchs — Senior und
+    // ClauseAudit kompensierten. Defensiv: Regex matched nur explizite \uXXXX-
+    // Sequenzen, keine False-Positives auf normalen Texten möglich.
+    .replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
     .toLowerCase()
     .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
     .replace(/[‘’‚‛′]/g, "'")
