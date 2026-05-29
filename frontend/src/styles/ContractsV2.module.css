@@ -9179,10 +9179,7 @@
   background: var(--m-bg);
 }
 
-/* === MAIN-CONTENT Padding kompakt === */
-.mainContent {
-  padding: 16px !important;
-}
+/* === MAIN-CONTENT Padding-Override entfernt (29.05.2026) — V2 erbt V1-Base (kein Padding) === */
 
 /* === PAGE-HEADER (h1 30px, dezenter Subtitle) === */
 .mockupPageHeader {
