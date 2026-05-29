@@ -1550,6 +1550,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const lastNavigatedClauseIdRef = useRef<string | null>(null);
   const syncPdfHighlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingNavigationRef = useRef<string | null>(null);
+  const lastScrolledClauseIdRef = useRef<string | null>(null);
 
   // ========== EFFECT 0: Clear highlights on zoom/page change ==========
   useEffect(() => {
@@ -1560,10 +1561,18 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   useEffect(() => {
     if (viewMode === 'text' && prevViewModeRef.current === 'pdf') {
       clearHighlight();
+      lastScrolledClauseIdRef.current = null;
       devLog('[Legal Lens] View switched to Text');
     }
     prevViewModeRef.current = viewMode;
   }, [viewMode, clearHighlight]);
+
+  // Reset Scroll-Guard bei Deselect, damit Re-Selektion derselben Klausel wieder scrollt
+  useEffect(() => {
+    if (!selectedClause?.id) {
+      lastScrolledClauseIdRef.current = null;
+    }
+  }, [selectedClause?.id]);
 
   // ========== EFFECT 2: Navigation bei neuer Klausel ==========
   useEffect(() => {
@@ -1647,6 +1656,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
     if (pdfClickActiveRef.current) {
       devLog('[Legal Lens] PDF highlight: Skipping - user clicked in PDF');
       pdfClickActiveRef.current = false;
+      lastScrolledClauseIdRef.current = selectedClause.id;
       return;
     }
 
@@ -1765,9 +1775,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       createHighlightOverlays(spansToHighlight);
       highlightedElementsRef.current = spansToHighlight;
 
-      // Scroll zum ersten Span
-      if (spansToHighlight.length > 0) {
+      // Scroll zum ersten Span — aber nur einmal pro Klausel-Auswahl
+      // (verhindert Auto-Scroll-Rückwurf bei manuellem User-Scroll, da pageNumber in Effect-deps)
+      if (spansToHighlight.length > 0 && lastScrolledClauseIdRef.current !== selectedClause.id) {
         spansToHighlight[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        lastScrolledClauseIdRef.current = selectedClause.id;
       }
     };
 
