@@ -6401,78 +6401,50 @@
   }
 }
 
-/* ===== PREMIUM ANALYSE-LIMIT BADGE ===== */
+/* ===== ANALYSE-LIMIT BADGE — dezenter Status-Hinweis ===== */
 .limitBadge {
   display: inline-flex;
   align-items: center;
-  gap: 1rem;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  border: 2px solid #7dd3fc;
-  border-radius: 16px;
-  padding: 0.875rem 1.25rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.15);
+  gap: 0.5rem;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  margin-bottom: 0.875rem;
 }
 
 .limitBadgeText {
-  font-size: 0.9375rem;
-  color: #0369a1;
+  font-size: 0.75rem;
+  color: #64748b;
   font-weight: 500;
+  line-height: 1.2;
 }
 
 .limitBadgeUpgrade {
-  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 100%);
+  background: #3b82f6;
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 0.5rem 1rem;
-  font-size: 0.8125rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  transition: background 0.15s ease;
 }
 
 .limitBadgeUpgrade:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: #2563eb;
 }
 
 /* 📱 Mobile Responsive für Limit-Badge */
 @media (max-width: 768px) {
-  .limitBadge {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-    padding: 0.875rem;
-    text-align: center;
-    border-radius: 14px;
-  }
-
   .limitBadgeText {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
   }
 
   .limitBadgeUpgrade {
-    width: 100%;
-    padding: 0.75rem;
-    font-size: 0.875rem;
-    min-height: 44px;
-    border-radius: 10px;
-  }
-}
-
-@media (max-width: 480px) {
-  .limitBadge {
-    padding: 0.75rem;
-  }
-
-  .limitBadgeText {
-    font-size: 0.8rem;
-  }
-
-  .limitBadgeUpgrade {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
   }
 }
 
