@@ -93,6 +93,16 @@ function getStatusLabel(status: UploadFileItem['status']): string {
 export default function MultiUploadResultNavigator({ uploadFiles, onReset }: MultiUploadResultNavigatorProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  // ⚠️ Alle Hooks MÜSSEN vor jeglichem early-return aufgerufen werden
+  // (react-hooks/rules-of-hooks). Daher Summary unconditional berechnen.
+  const summary = useMemo(() => {
+    const done = uploadFiles.filter(f => f.status === 'completed').length;
+    const analyzing = uploadFiles.filter(f => f.status === 'analyzing' || f.status === 'uploading').length;
+    const failed = uploadFiles.filter(f => f.status === 'error').length;
+    const duplicate = uploadFiles.filter(f => f.status === 'duplicate').length;
+    return { done, analyzing, failed, duplicate, total: uploadFiles.length };
+  }, [uploadFiles]);
+
   // Single-Upload: zeige direkt die normale ContractAnalysis (wie bisher beim BatchAnalysisResults)
   if (uploadFiles.length === 1) {
     const onlyFile = uploadFiles[0];
@@ -115,14 +125,6 @@ export default function MultiUploadResultNavigator({ uploadFiles, onReset }: Mul
   // currentIndex clampen falls Array sich verändert hat
   const safeIndex = Math.min(currentIndex, uploadFiles.length - 1);
   const currentFile = uploadFiles[safeIndex];
-
-  const summary = useMemo(() => {
-    const done = uploadFiles.filter(f => f.status === 'completed').length;
-    const analyzing = uploadFiles.filter(f => f.status === 'analyzing' || f.status === 'uploading').length;
-    const failed = uploadFiles.filter(f => f.status === 'error').length;
-    const duplicate = uploadFiles.filter(f => f.status === 'duplicate').length;
-    return { done, analyzing, failed, duplicate, total: uploadFiles.length };
-  }, [uploadFiles]);
 
   const goPrev = () => setCurrentIndex(i => Math.max(0, i - 1));
   const goNext = () => setCurrentIndex(i => Math.min(uploadFiles.length - 1, i + 1));
