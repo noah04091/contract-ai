@@ -539,7 +539,18 @@ const POLL_NORMAL_INTERVAL_MS = 3000;    // danach: alle 3s
 const POLL_HIDDEN_INTERVAL_MS = 15000;   // Tab im Hintergrund: alle 15s (Chrome drosselt eh)
 const POLL_MAX_DURATION_MS = 10 * 60 * 1000; // 10 Min
 const POLL_MAX_CONSECUTIVE_ERRORS = 5;
-const POLL_LOCALSTORAGE_KEY = 'pendingAnalysisJob';
+// 🆕 29.05.2026: Multi-Job-Pattern (Array) statt Single-Slot.
+// Hintergrund: Enterprise-User können bis zu 10 Verträge gleichzeitig hochladen.
+// Vorher: pendingAnalysisJob (single) → letzter Job überschrieb vorherige.
+// Jetzt: pendingAnalysisJobs (array) → alle Jobs persistiert für Page-Reload-Resume.
+const POLL_LOCALSTORAGE_KEY_LEGACY = 'pendingAnalysisJob';   // Backwards-Compat-Alt-Wert
+const POLL_LOCALSTORAGE_KEY = 'pendingAnalysisJobs';         // Neuer Array-Slot
+
+interface PendingJob {
+  jobId: string;
+  fileName: string;
+  startedAt: number;
+}
 
 // Re-use existing `sleep` from line ~309
 
@@ -554,30 +565,63 @@ function isAsyncDispatchResponse(value: unknown): value is AsyncDispatchResponse
   );
 }
 
-function setPendingJob(jobId: string, fileName: string): void {
-  try {
-    localStorage.setItem(POLL_LOCALSTORAGE_KEY, JSON.stringify({
-      jobId, fileName, startedAt: Date.now()
-    }));
-  } catch { /* localStorage quota / Safari private mode */ }
-}
-
-function clearPendingJob(): void {
-  try { localStorage.removeItem(POLL_LOCALSTORAGE_KEY); } catch { /* ignore */ }
-}
-
-export function getPendingAnalysisJob(): { jobId: string; fileName: string; startedAt: number } | null {
+function readPendingJobsArray(): PendingJob[] {
   try {
     const raw = localStorage.getItem(POLL_LOCALSTORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    // Stale-Cleanup: älter als 1h → wegwerfen (Cron hat Job sowieso als failed markiert)
-    if (Date.now() - parsed.startedAt > 60 * 60 * 1000) {
-      clearPendingJob();
-      return null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
     }
-    return parsed;
-  } catch { return null; }
+    // Backwards-Compat: alter Single-Slot migrieren
+    const legacy = localStorage.getItem(POLL_LOCALSTORAGE_KEY_LEGACY);
+    if (legacy) {
+      const single = JSON.parse(legacy);
+      localStorage.removeItem(POLL_LOCALSTORAGE_KEY_LEGACY);
+      if (single && single.jobId) {
+        const migrated = [single];
+        localStorage.setItem(POLL_LOCALSTORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+    }
+  } catch { /* parse error → behandle als leer */ }
+  return [];
+}
+
+function writePendingJobsArray(jobs: PendingJob[]): void {
+  try {
+    if (jobs.length === 0) localStorage.removeItem(POLL_LOCALSTORAGE_KEY);
+    else localStorage.setItem(POLL_LOCALSTORAGE_KEY, JSON.stringify(jobs));
+  } catch { /* quota / Safari private mode */ }
+}
+
+function setPendingJob(jobId: string, fileName: string): void {
+  const all = readPendingJobsArray()
+    .filter(j => j.jobId !== jobId); // doppelte vermeiden
+  all.push({ jobId, fileName, startedAt: Date.now() });
+  writePendingJobsArray(all);
+}
+
+function clearPendingJob(jobId?: string): void {
+  if (!jobId) {
+    // Legacy-Verhalten: alle clearen wenn kein jobId übergeben
+    writePendingJobsArray([]);
+    return;
+  }
+  const all = readPendingJobsArray().filter(j => j.jobId !== jobId);
+  writePendingJobsArray(all);
+}
+
+export function getPendingAnalysisJobs(): PendingJob[] {
+  // Stale-Cleanup: älter als 1h → wegwerfen (Backend-Cron hat sie sowieso als failed markiert)
+  const now = Date.now();
+  const fresh = readPendingJobsArray().filter(j => now - j.startedAt < 60 * 60 * 1000);
+  return fresh;
+}
+
+// Legacy-Export für Backwards-Compat (gibt jetzt das ERSTE Element zurück, falls jemand das alte API nutzt)
+export function getPendingAnalysisJob(): PendingJob | null {
+  const all = getPendingAnalysisJobs();
+  return all[0] || null;
 }
 
 /**
@@ -621,11 +665,11 @@ export async function pollAnalysisJob(
       options?.onProgress?.(status);
 
       if (status.status === 'done') {
-        clearPendingJob();
+        clearPendingJob(jobId);
         return status.result;
       }
       if (status.status === 'failed') {
-        clearPendingJob();
+        clearPendingJob(jobId);
         const errMsg = status.error?.message || `Analyse fehlgeschlagen (${status.error?.code || 'unknown'})`;
         throw new Error(errMsg);
       }
@@ -638,7 +682,7 @@ export async function pollAnalysisJob(
       consecutiveErrors++;
       console.warn(`⚠️ Polling-Fehler ${consecutiveErrors}/${POLL_MAX_CONSECUTIVE_ERRORS}:`, err);
       if (consecutiveErrors >= POLL_MAX_CONSECUTIVE_ERRORS) {
-        clearPendingJob();
+        clearPendingJob(jobId);
         throw new Error(`Status-Abfrage fehlgeschlagen nach ${consecutiveErrors} Versuchen. Schaue in der Vertragsliste — Analyse läuft eventuell noch.`);
       }
     }

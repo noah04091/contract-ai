@@ -344,8 +344,8 @@ const HelpCenter: React.FC = () => {
       id: 'batch-upload',
       icon: <Upload size={24} />,
       title: 'Mehrere Verträge gleichzeitig hochladen',
-      description: 'Batch-Upload für effizientes Arbeiten',
-      category: 'features',
+      description: 'Batch-Upload für effizientes Arbeiten (Enterprise-Feature)',
+      category: 'premium',
       steps: [
         {
           title: '1. Mehrfach-Auswahl',

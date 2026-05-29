@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractsV2.module.css";
 import ContractAnalysis from "../components/ContractAnalysisSwitch";
-import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
+import MultiUploadResultNavigator from "../components/MultiUploadResultNavigator"; // 🆕 29.05.2026: Navigator-View ("X von N") ersetzt Grid-View
 import NewContractDetailsModal from "../components/NewContractDetailsModal"; // 🎨 NEW: Professional Contract Details Modal
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
 import ContractDetailModal from "../components/ContractDetailModal"; // 🎨 Contract Detail Modal (Signatures)
@@ -5479,9 +5479,9 @@ export default function Contracts() {
                       </div>
                     )}
 
-                    {/* ✅ NEU: Zusätzliche Batch-Analyse für Multi-Upload (nur 4 Zeilen hinzugefügt!) */}
-                    {uploadFiles.length > 1 && uploadFiles.filter(f => f.status === 'completed').length > 0 && (
-                      <BatchAnalysisResults
+                    {/* 🆕 29.05.2026: Multi-Upload-Navigator zeigt eine Vertrags-Analyse + "X von N"-Schalter */}
+                    {uploadFiles.length > 1 && (
+                      <MultiUploadResultNavigator
                         uploadFiles={uploadFiles}
                         onReset={handleReset}
                       />

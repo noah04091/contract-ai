@@ -234,6 +234,7 @@ export default function Pricing() {
     // Verwaltung & Organisation
     { feature: "Vertragsverwaltung", free: "✓ Basis", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
     { feature: "Verträge hochladen", free: "✓ Nur ansehen", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    { feature: "Mehrfach-Upload (Batch)", free: "–", business: "–", premium: "✓ Bis zu 10 Verträge" },
     { feature: "Ordner-Organisation", free: "–", business: "✓ + KI-Vorschläge", premium: "✓ + KI-Vorschläge" },
     { feature: "Kalender & Fristen", free: "✓ Nur ansehen", business: "✓ Vollzugriff", premium: "✓ Vollzugriff" },
     { feature: "Email-Erinnerungen", free: "–", business: "✓", premium: "✓" },

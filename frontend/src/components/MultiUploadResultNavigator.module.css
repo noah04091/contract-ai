@@ -1,0 +1,404 @@
+/* 🆕 29.05.2026: MultiUploadResultNavigator Styles
+   Single-View + Status-Streifen + Prev/Next-Navigation für Batch-Upload. */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 0;
+}
+
+.singleContainer {
+  width: 100%;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.summary {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.825rem;
+  color: #475569;
+}
+
+.summaryItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.summaryItemError {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.resetButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.825rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.resetButton:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+/* Status-Streifen */
+.statusStrip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.5rem 0.25rem;
+  scrollbar-width: thin;
+}
+
+.statusStrip::-webkit-scrollbar {
+  height: 4px;
+}
+
+.statusStrip::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  font-size: 0.825rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusChip:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.statusChipActive {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: white;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+}
+
+.statusChipActive:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.chipNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.statusChipActive .chipNumber {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.chipFilename {
+  font-size: 0.8rem;
+}
+
+/* Status-spezifische Färbung (für ringartigen Indikator unten) */
+.status_completed {
+  border-bottom: 2px solid #10b981;
+}
+.status_analyzing,
+.status_uploading {
+  border-bottom: 2px solid #f59e0b;
+}
+.status_error {
+  border-bottom: 2px solid #ef4444;
+}
+.status_duplicate {
+  border-bottom: 2px solid #8b5cf6;
+}
+.status_pending {
+  border-bottom: 2px solid #94a3b8;
+}
+
+/* Status-Icons */
+.statusIconDone {
+  color: #10b981;
+}
+
+.statusChipActive .statusIconDone {
+  color: #bbf7d0;
+}
+
+.statusIconLoading {
+  color: #f59e0b;
+  animation: spin 1.5s linear infinite;
+}
+
+.statusChipActive .statusIconLoading {
+  color: #fef3c7;
+}
+
+.statusIconError {
+  color: #ef4444;
+}
+
+.statusChipActive .statusIconError {
+  color: #fecaca;
+}
+
+.statusIconDuplicate {
+  color: #8b5cf6;
+}
+
+.statusChipActive .statusIconDuplicate {
+  color: #ddd6fe;
+}
+
+.statusIconPending {
+  color: #94a3b8;
+}
+
+.statusChipActive .statusIconPending {
+  color: #e2e8f0;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Navigation Bar */
+.navBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.navButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.95rem;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navButton:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.navButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.navCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 0;
+  flex: 1;
+  text-align: center;
+}
+
+.navIndex {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.navIndexSep {
+  color: #94a3b8;
+  font-weight: 400;
+  margin: 0 0.2rem;
+}
+
+.navFilename {
+  font-size: 0.8rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Body */
+.body {
+  width: 100%;
+}
+
+/* Placeholder (für nicht-fertige Verträge) */
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 3rem 1.5rem;
+  background: white;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  text-align: center;
+  min-height: 240px;
+}
+
+.placeholder h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.placeholder p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  max-width: 500px;
+  line-height: 1.5;
+}
+
+.placeholderSpinner {
+  color: #f59e0b;
+  animation: spin 1.5s linear infinite;
+}
+
+.placeholderIconWarn {
+  color: #8b5cf6;
+}
+
+.placeholderIconError {
+  color: #ef4444;
+}
+
+.placeholderIconPending {
+  color: #94a3b8;
+}
+
+.placeholderProgress {
+  width: 60%;
+  max-width: 320px;
+  height: 6px;
+  background: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 0.5rem;
+}
+
+.placeholderProgressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #f59e0b 0%, #fbbf24 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.placeholderLink {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #8b5cf6;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: background 0.15s ease;
+}
+
+.placeholderLink:hover {
+  background: #7c3aed;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navBar {
+    gap: 0.5rem;
+  }
+
+  .navButton {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .navIndex {
+    font-size: 0.95rem;
+  }
+
+  .navFilename {
+    font-size: 0.75rem;
+  }
+}
