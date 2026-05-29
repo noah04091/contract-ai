@@ -39,6 +39,7 @@ type AnalysisData = {
   qualityScore?: number | string | null;
   documentType?: string | null;
   contractType?: string | null; // 🎯 NEU 20.05.2026 — für typspezifische UI
+  contractTypeLabel?: string | null; // 🎯 NEU 28.05.2026 (A1) — Backend liefert sauberes deutsches Label via pilotTypeToLabel
   textLength?: number | null; // 🎯 NEU 20.05.2026 Finding 2 — für Min-Text-Banner
   pageCount?: number | null;
   provider?: { name?: string } | null;
@@ -118,53 +119,102 @@ function isBackendDocTypeMarker(s: string | null | undefined): boolean {
   return !!s && BACKEND_DOC_TYPE_MARKERS.test(s);
 }
 
-function buildHeroTitle(d: AnalysisData): string {
-  // analysisMessage ist eine interne Backend-Strategy-Message (z.B. "Erweiterte
-  // Tabellenanalyse" bei Mis-Klassifikation als TABLE_DOCUMENT) — kein User-
-  // facing Titel. Wir bauen den Titel stattdessen aus dem sauberen DocType-
-  // Label + Score-Variante.
-  const cleanDocType = pickDocTypeLabel(d);
-  if (d.contractScore == null) return `${cleanDocType} — Bewertung steht aus`;
-  // Genus-agnostische Templates: "Vertrag" (m) und "Vereinbarung" (f) sollen
-  // beide grammatikalisch sauber passen → Adjektiv hinter Substantiv.
-  if (d.contractScore >= 85) return `${cleanDocType} — sehr fair gestaltet`;
-  if (d.contractScore >= 70) return `${cleanDocType} — solide, mit kleinen Stellen zum Verhandeln`;
-  if (d.contractScore >= 50) return `${cleanDocType} — deutlicher Verbesserungsbedarf`;
-  return `${cleanDocType} — kritisch, sorgfältig prüfen vor Unterschrift`;
+// 🎯 Hero-H1 = Tätigkeits-Wort je Dokumentklasse (29.05.2026, RDG-sicher).
+// Ersetzt frühere wertende Headlines ("Vertrag — deutlicher Verbesserungsbedarf").
+// Wertung wandert ins Score-Donut + Bewertungs-Card unten. Vermeidet RDG-Konflikt
+// (kein "anwaltlich"), keine User-Anklage, skaliert für alle Dokumenttypen.
+function buildHeroActivity(dc: DocClass): string {
+  switch (dc) {
+    case "INVOICE": return "Rechnungsprüfung";
+    case "RECEIPT": return "Belegprüfung";
+    case "TABLE_DOCUMENT":
+    case "FINANCIAL_DOCUMENT":
+    case "UNKNOWN":
+      return "Dokumentprüfung";
+    case "AGB":
+    case "CONTRACT":
+    default:
+      return "Vertragsprüfung";
+  }
 }
 
-/**
- * 🎯 Typspezifische Hero-Titel je Dokumentklasse (Erweiterung 20.05.2026)
- * Verwendet typspezifische Score-Templates statt der vertragszentrischen Default-Texte.
- */
-function buildHeroTitleByDocClass(d: AnalysisData, dc: DocClass): string {
-  const cleanDocType = pickDocTypeLabel(d);
-  if (d.contractScore == null) return `${cleanDocType} — Bewertung steht aus`;
-  const s = d.contractScore;
+// 🎯 Genus + Numerus + Action-Verb je DocClass für grammatikalisch saubere
+// Sub-Texts ("Die AGB sind solide" vs "Der Vertrag ist solide" vs "Die Rechnung wirkt…").
+function getDocSubject(dc: DocClass): { artikel: string; noun: string; verb_3p: string; action_verb: string } {
+  switch (dc) {
+    case "AGB":
+      return { artikel: "Die", noun: "AGB", verb_3p: "wirken", action_verb: "vor Einsatz" };
+    case "INVOICE":
+      return { artikel: "Die", noun: "Rechnung", verb_3p: "wirkt", action_verb: "vor der Zahlung" };
+    case "RECEIPT":
+      return { artikel: "Der", noun: "Beleg", verb_3p: "wirkt", action_verb: "vor der Ablage" };
+    case "TABLE_DOCUMENT":
+      return { artikel: "Die", noun: "Tabelle", verb_3p: "wirkt", action_verb: "bei der Weiterverarbeitung" };
+    case "FINANCIAL_DOCUMENT":
+      return { artikel: "Das", noun: "Finanzdokument", verb_3p: "wirkt", action_verb: "bei der Weiterverarbeitung" };
+    case "UNKNOWN":
+      return { artikel: "Das", noun: "Dokument", verb_3p: "wirkt", action_verb: "vor weiterer Nutzung" };
+    case "CONTRACT":
+    default:
+      return { artikel: "Der", noun: "Vertrag", verb_3p: "wirkt", action_verb: "vor Unterschrift" };
+  }
+}
 
-  if (dc === "INVOICE" || dc === "RECEIPT") {
-    if (s >= 85) return `${cleanDocType} — formal einwandfrei`;
-    if (s >= 70) return `${cleanDocType} — weitgehend korrekt, kleine Punkte zu klären`;
-    if (s >= 50) return `${cleanDocType} — mehrere Mängel, vor Zahlung prüfen`;
-    return `${cleanDocType} — gravierende Mängel, nicht akzeptieren`;
+// Pluralisierung mit Cap bei >5 → "mehrere" (sonst absurd "15 Punkte").
+function formatPunkte(n: number): string {
+  if (n === 1) return "1 Punkt";
+  if (n > 5) return "mehrere Punkte";
+  return `${n} Punkte`;
+}
+
+// 🎯 Konstruktiver, kurzer Hero-Sub-Text (29.05.2026). Ersetzt den langen
+// KI-`scoreReasoning`-Text im Hero. Der Volltext bleibt im Score-Drawer +
+// Bewertungs-Card unten verfügbar. Hier nur die Kernaussage in einem Satz.
+// WICHTIG: Sub-Text darf NICHT mit Bracket-Wort ("Verbesserung", "Solide",
+// "Kritisch") starten — sonst doppelt mit Score-Rating links neben dem Donut.
+function buildHeroSubtext(d: AnalysisData, dc: DocClass): string {
+  if (isFailedAnalysis(d)) {
+    return "Die Analyse ist unvollständig. Bitte erneut analysieren oder das Dokument prüfen.";
   }
-  if (dc === "AGB") {
-    if (s >= 85) return `${cleanDocType} — kundenfreundlich gestaltet`;
-    if (s >= 70) return `${cleanDocType} — überwiegend zulässig, einzelne Klauseln prüfen`;
-    if (s >= 50) return `${cleanDocType} — mehrere problematische Klauseln`;
-    return `${cleanDocType} — viele unwirksame Klauseln, dringend überarbeiten`;
+  const score = d.contractScore;
+  if (score == null) {
+    return "Die Analyse ist abgeschlossen. Die Details findest du in den Abschnitten unten.";
   }
+  const critCount = Array.isArray(d.criticalIssues) ? d.criticalIssues.length : 0;
+  const subj = getDocSubject(dc);
+
+  // TABLE/FINANCIAL: eigene Branch — "Vertrag" passt nicht, "ausgewogen" auch nicht
   if (dc === "TABLE_DOCUMENT" || dc === "FINANCIAL_DOCUMENT") {
-    if (s >= 85) return `${cleanDocType} — konsistent und plausibel`;
-    if (s >= 70) return `${cleanDocType} — überwiegend stimmig`;
-    if (s >= 50) return `${cleanDocType} — mehrere Auffälligkeiten`;
-    return `${cleanDocType} — gravierende Auffälligkeiten`;
+    if (score >= 70) {
+      return critCount === 0
+        ? `${subj.artikel} ${subj.noun} ${subj.verb_3p} plausibel. Details findest du in den Abschnitten unten.`
+        : `${subj.artikel} ${subj.noun} ${subj.verb_3p} überwiegend plausibel. Wir haben ${formatPunkte(critCount)} für dich markiert.`;
+    }
+    return critCount === 0
+      ? `Wir haben einige Auffälligkeiten markiert. Schau sie dir ${subj.action_verb} an.`
+      : `Wir haben ${formatPunkte(critCount)} markiert, die ${subj.action_verb} geprüft werden sollten.`;
   }
-  if (dc === "UNKNOWN") {
-    return `${cleanDocType} — Einschätzung verfügbar (Typ unklar)`;
+
+  // Standard-Branches (CONTRACT, AGB, INVOICE, RECEIPT, UNKNOWN)
+  if (score >= 85) {
+    return critCount === 0
+      ? `${subj.artikel} ${subj.noun} ${subj.verb_3p} ausgewogen — keine Auffälligkeiten gefunden.`
+      : `${subj.artikel} ${subj.noun} ${subj.verb_3p} überwiegend solide. Wir haben ${formatPunkte(critCount)} für dich markiert.`;
   }
-  // CONTRACT (default) — bestehende vertragszentrische Templates
-  return buildHeroTitle(d);
+  if (score >= 70) {
+    return critCount === 0
+      ? `${subj.artikel} ${subj.noun} ${subj.verb_3p} solide. Schau dir die Empfehlungen in den Abschnitten unten an.`
+      : `Wir haben ${formatPunkte(critCount)} gefunden, die du dir ${subj.action_verb} anschauen solltest.`;
+  }
+  if (score >= 50) {
+    return critCount === 0
+      ? `Wir haben einige Punkte im Detail markiert. Schau sie dir ${subj.action_verb} an.`
+      : `Wir haben ${formatPunkte(critCount)} gefunden, die du ${subj.action_verb} klären solltest.`;
+  }
+  // <50
+  return critCount === 0
+    ? `Wir haben mehrere Punkte für dich markiert. Eine sorgfältige Prüfung ${subj.action_verb} wird empfohlen.`
+    : `Wir haben ${formatPunkte(critCount)} gefunden. Eine sorgfältige Prüfung ${subj.action_verb} wird empfohlen.`;
 }
 
 function truncateAtWord(s: string, max = 280): string {
@@ -189,9 +239,14 @@ function cleanOcrSpacing(s: string): string {
 }
 
 // Wählt den besten Doc-Type für die File-Card-Pille:
-// 1. documentCharacterization.description, gekürzt + OCR-bereinigt
-// 2. documentCharacterization.documentType, OCR-bereinigt
-// 3. documentType (top-level) — niemals leer
+// 1. documentCharacterization.description, gekürzt + OCR-bereinigt MIT truncate
+//    (vorher: bei >40 Chars gesilent-skipped — User sah "Vertrag" statt "Negativerklärung
+//    im Rahmen eines Factoringvertrages". Jetzt: truncateAtWord auf 40)
+// 2. contractTypeLabel (Backend-Feld seit 28.05.2026 via pilotTypeToLabel —
+//    saubere deutsche Strings wie "Mietvertrag", "Factoringvertrag", "NDA-Vertrag")
+// 3. documentType (top-level) → getDocNoun(classify) — Fallback wie bisher
+// (Alter Pfad documentCharacterization.documentType entfernt: toter Code,
+//  Backend-Prompt setzt das Feld nicht — TÜV-Audit 29.05.)
 function pickDocTypeLabel(d: AnalysisData): string {
   const desc = d.documentCharacterization?.description;
   if (desc) {
@@ -199,18 +254,17 @@ function pickDocTypeLabel(d: AnalysisData): string {
       .replace(/^aktiver,?\s*beidseitig\s*unterzeichneter\s*/i, "")
       .replace(/\s+über\s+.*/i, "")
       .trim();
-    if (cleanDesc.length > 0 && cleanDesc.length <= 40) return cleanDesc;
+    if (cleanDesc.length > 0) {
+      return cleanDesc.length <= 40 ? cleanDesc : truncateAtWord(cleanDesc, 40);
+    }
   }
-  const docTypeRaw = d.documentCharacterization?.documentType;
-  if (docTypeRaw && !isBackendDocTypeMarker(docTypeRaw)) {
-    const cleaned = cleanOcrSpacing(docTypeRaw);
-    if (cleaned.length <= 40) return cleaned;
+  const ctl = d.contractTypeLabel;
+  if (ctl && typeof ctl === "string") {
+    const cleanCtl = ctl.trim();
+    if (cleanCtl.length > 0 && cleanCtl.length <= 40 && !isBackendDocTypeMarker(cleanCtl)) {
+      return cleanCtl;
+    }
   }
-  // Backend-Enum-Marker (CONTRACT/INVOICE/RECEIPT/FINANCIAL_DOCUMENT/
-  // TABLE_DOCUMENT/UNKNOWN) sind interne Tech-Strings und werden niemals
-  // user-facing gezeigt → Fallback typspezifisch via getDocNoun.
-  // 22.05.2026: Typspezifisch statt hartcodiert "Vertrag" — bei INVOICE
-  // erscheint "Rechnung", bei RECEIPT "Beleg", etc.
   const fallback = d.documentType;
   if (!fallback || isBackendDocTypeMarker(fallback)) {
     const dc = classifyDocType(d.documentType, d.contractType);
@@ -325,22 +379,23 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
     ? circumference
     : circumference - (Math.min(100, Math.max(0, animatedScore ?? 0)) / 100) * circumference;
 
-  // Layman-Modus: laymanSummary statt scoreReasoning anzeigen
+  // Layman-Modus: laymanSummary mit Truncate-Toggle (KI-Volltext, kann lang sein)
+  // Normal-Modus: konstruktiver Frontend-Sub-Text (kurz, kein Toggle nötig)
+  // Vorher: scoreReasoning direkt im Hero — wandert jetzt in Score-Drawer + Card unten
   const laymanArr = Array.isArray(d.laymanSummary) ? d.laymanSummary : (typeof d.laymanSummary === "string" ? [d.laymanSummary] : []);
   const hasLayman = laymanArr.length > 0;
   let heroSubFull: string;
+  let isHeroSubTruncated: boolean;
+  let heroSub: string;
   if (laymanMode && hasLayman) {
     heroSubFull = laymanArr.join(" ");
+    isHeroSubTruncated = heroSubFull.length > 600;
+    heroSub = heroSubExpanded || !isHeroSubTruncated ? heroSubFull : truncateAtWord(heroSubFull, 600);
   } else {
-    heroSubFull = d.scoreReasoning || laymanArr[0] || "";
+    heroSubFull = buildHeroSubtext(d, docClass);
+    isHeroSubTruncated = false;
+    heroSub = heroSubFull;
   }
-  // Truncate-Threshold abhängig von Modus + Expand-State.
-  // Wenn User „Mehr anzeigen" geklickt → vollständig, sonst gekürzt.
-  const truncateAt = laymanMode ? 600 : 280;
-  const isHeroSubTruncated = heroSubFull.length > truncateAt;
-  const heroSub = heroSubExpanded || !isHeroSubTruncated
-    ? heroSubFull
-    : truncateAtWord(heroSubFull, truncateAt);
 
   // Counts für Hero-Stats
   const critCount = Array.isArray(d.criticalIssues) ? d.criticalIssues.length : 0;
@@ -727,8 +782,8 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             </div>
           </div>
           <div>
-            <div className={styles.heroEye}>Rechtliche Gesamtbewertung</div>
-            <h2 className={styles.heroTitle}>{buildHeroTitleByDocClass(d, docClass)}</h2>
+            <div className={styles.heroEye}>Zusammenfassung</div>
+            <h2 className={styles.heroTitle}>{buildHeroActivity(docClass)}</h2>
             {heroSub && (
               <p className={styles.heroSub}>
                 {heroSub}
