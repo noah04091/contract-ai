@@ -12,7 +12,10 @@ interface Contract {
   // 💰 Cost Tracking Fields
   contractType?: 'recurring' | 'one-time' | null;
   contractTypeConfidence?: 'high' | 'medium' | 'low';
-  paymentFrequency?: 'monthly' | 'yearly' | 'weekly';
+  // 🆕 A3 (29.05.2026): String statt enum — Backend speichert deutsche Werte
+  // ("Monatlich", "Jährlich") via A3-KI-Extraktion + Phase-B-Edit-Modal-Eingabe.
+  // Alt-Daten können noch englisch ('monthly' etc.) sein.
+  paymentFrequency?: string;
   subscriptionStartDate?: string;
   paymentAmount?: number;
 }
@@ -22,10 +25,24 @@ interface CostTrackerProps {
   onCostUpdate?: () => void; // Callback nach erfolgreichem Save
 }
 
+// 🆕 A3 (29.05.2026) Side-Bug-Fix: Mapping deutsch→englisch für paymentFrequency.
+// Backend speichert "Monatlich"/"Vierteljährlich"/"Halbjährlich"/"Jährlich"/"Einmalig"
+// (A3-KI-Whitelist + Phase-B-Dropdown). CostTracker rechnet intern mit
+// 'monthly' | 'yearly' | 'weekly'. Ohne Mapping wurden alle Berechnungen 0.
+function normalizeFrequency(input: string | undefined): 'monthly' | 'yearly' | 'weekly' {
+  if (!input) return 'monthly';
+  const lower = input.toLowerCase();
+  if (lower.includes('jähr') || lower.includes('jahr') || lower === 'yearly') return 'yearly';
+  if (lower.includes('wöch') || lower.includes('woch') || lower === 'weekly') return 'weekly';
+  // Default: Monatlich / Vierteljährlich / Halbjährlich / Einmalig — alle als 'monthly' rechnen
+  // (vier/halbjährlich = mehrere Monate, Einmalig = irrelevant für Recurring-View)
+  return 'monthly';
+}
+
 export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps) {
   // State
   const [frequency, setFrequency] = useState<'monthly' | 'yearly' | 'weekly'>(
-    contract.paymentFrequency || 'monthly'
+    normalizeFrequency(contract.paymentFrequency)
   );
   const [startDate, setStartDate] = useState(contract.subscriptionStartDate || '');
   const [baseAmount, setBaseAmount] = useState(
@@ -35,7 +52,7 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
 
   // Synchronisiere State mit Contract Props
   useEffect(() => {
-    setFrequency(contract.paymentFrequency || 'monthly');
+    setFrequency(normalizeFrequency(contract.paymentFrequency));
   }, [contract.paymentFrequency]);
 
   useEffect(() => {
@@ -159,7 +176,7 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
       console.error('❌ Error saving cost data:', error);
       alert('Fehler beim Speichern. Bitte versuche es erneut.');
       // Rollback state on error
-      setFrequency(contract.paymentFrequency || 'monthly');
+      setFrequency(normalizeFrequency(contract.paymentFrequency));
       setStartDate(contract.subscriptionStartDate || '');
     } finally {
       setIsSaving(false);

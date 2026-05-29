@@ -6,6 +6,7 @@ interface Contract {
   _id: string;
   name: string;
   contractType?: 'recurring' | 'one-time' | null;
+  contractTypeLabel?: string; // 🆕 A1 (28.05.2026): KI-deutsche-Bezeichnung
   contractTypeConfidence?: 'high' | 'medium' | 'low';
   documentTypeOverride?: 'auto' | 'invoice' | 'recurring' | 'one-time' | null;
   manualOverride?: boolean;
@@ -21,6 +22,16 @@ export default function DocumentTypeSelector({ contract, onTypeChange }: Documen
     contract.documentTypeOverride || 'auto'
   );
   const [isSaving, setIsSaving] = useState(false);
+
+  // 🆕 29.05.2026 Side-Bug-Fix: Wenn KI bereits einen contractTypeLabel ("Mietvertrag",
+  // "Factoringvertrag" etc.) geliefert hat, ist die alte recurring/one-time-Auswahl
+  // redundant + verwirrend ("❓ Unsicher / Typ: Unbekannt"). Komponente komplett
+  // ausblenden — der User sieht den Vertragstyp bereits im Edit-Modal + Liste.
+  // Manual-Override bleibt sichtbar (User kann via documentTypeOverride explizit umstellen).
+  // Early return NACH useState (React Rules-of-Hooks).
+  if (contract.contractTypeLabel && !contract.manualOverride) {
+    return null;
+  }
 
   // Confidence Badge
   const getConfidenceBadge = () => {
