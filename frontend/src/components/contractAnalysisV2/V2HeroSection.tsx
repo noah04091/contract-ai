@@ -190,12 +190,15 @@ function buildHeroSubtext(d: AnalysisData, dc: DocClass): string {
         ? `${subj.artikel} ${subj.noun} ${subj.verb_3p} plausibel. Details findest du in den Abschnitten unten.`
         : `${subj.artikel} ${subj.noun} ${subj.verb_3p} überwiegend plausibel. Wir haben ${formatPunkte(critCount)} für dich markiert.`;
     }
+    // Relativsatz vermieden: bei N=1 würde "die geprüft werden sollten" grammatikalisch nicht passen
     return critCount === 0
-      ? `Wir haben einige Auffälligkeiten markiert. Schau sie dir ${subj.action_verb} an.`
-      : `Wir haben ${formatPunkte(critCount)} markiert, die ${subj.action_verb} geprüft werden sollten.`;
+      ? `Wir haben einige Auffälligkeiten markiert. Bitte ${subj.action_verb} prüfen.`
+      : `Wir haben ${formatPunkte(critCount)} markiert. Bitte ${subj.action_verb} prüfen.`;
   }
 
   // Standard-Branches (CONTRACT, AGB, INVOICE, RECEIPT, UNKNOWN)
+  // Singular/Plural-sicher: KEIN Relativsatz mit Pronomen-Bezug auf "Punkt"/"Punkte",
+  // weil Akkusativ-Singular-Maskulin ("den") und Plural ("die") sich unterscheiden.
   if (score >= 85) {
     return critCount === 0
       ? `${subj.artikel} ${subj.noun} ${subj.verb_3p} ausgewogen — keine Auffälligkeiten gefunden.`
@@ -204,12 +207,12 @@ function buildHeroSubtext(d: AnalysisData, dc: DocClass): string {
   if (score >= 70) {
     return critCount === 0
       ? `${subj.artikel} ${subj.noun} ${subj.verb_3p} solide. Schau dir die Empfehlungen in den Abschnitten unten an.`
-      : `Wir haben ${formatPunkte(critCount)} gefunden, die du dir ${subj.action_verb} anschauen solltest.`;
+      : `Wir haben ${formatPunkte(critCount)} markiert. Schau dir die Details ${subj.action_verb} an.`;
   }
   if (score >= 50) {
     return critCount === 0
-      ? `Wir haben einige Punkte im Detail markiert. Schau sie dir ${subj.action_verb} an.`
-      : `Wir haben ${formatPunkte(critCount)} gefunden, die du ${subj.action_verb} klären solltest.`;
+      ? `Wir haben einige Punkte im Detail markiert. Schau dir die Details ${subj.action_verb} an.`
+      : `Wir haben ${formatPunkte(critCount)} gefunden. Bitte ${subj.action_verb} klären.`;
   }
   // <50
   return critCount === 0
