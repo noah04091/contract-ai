@@ -6294,65 +6294,50 @@ export default function Contracts() {
       </div>
       {/* End of pageContainer */}
 
-      {/* 🐛 DEBUG: Always-visible red box when hoveredContractId is set */}
-      {hoveredContractId && createPortal(
-        <div style={{ position: 'fixed', top: 10, right: 10, background: 'red', color: 'white', padding: '12px 18px', fontWeight: 700, zIndex: 99999, borderRadius: 8, fontSize: 14 }}>
-          HOVER ACTIVE: {hoveredContractId.slice(-6)}<br/>
-          pos: {hoverPos ? `${hoverPos.x},${hoverPos.y}` : 'NULL'}<br/>
-          loading: {String(hoverLoading)} / error: {String(hoverError)}<br/>
-          url: {hoverUrl ? '✓' : '✗'}
-        </div>,
-        document.body
-      )}
-
-      {/* 👁️ Hover-Preview-Tooltip (Schritt 2) — als Portal in body */}
+      {/* 👁️ Hover-Preview-Tooltip — als Portal in body, iframe-basiert (browser-native PDF-Render) */}
       {hoveredContractId && hoverPos && createPortal(
         <div
-          className={styles.hoverPreviewTooltip}
-          style={{ left: hoverPos.x, top: hoverPos.y }}
-          onMouseEnter={handleRowMouseLeave /* Tooltip selbst soll Hover schließen — sonst Schwebe-Falle */}
+          style={{
+            position: 'fixed',
+            left: hoverPos.x,
+            top: hoverPos.y,
+            width: 240,
+            height: 320,
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: 10,
+            boxShadow: '0 8px 24px rgba(15,23,42,0.15), 0 2px 6px rgba(15,23,42,0.08)',
+            zIndex: 99998,
+            overflow: 'hidden',
+            pointerEvents: 'none',
+          }}
           aria-hidden="true"
         >
           {hoverLoading && (
-            <div className={styles.hoverPreviewState}>
-              <Loader size={18} className={styles.hoverPreviewSpinner} />
-              <span>Vorschau wird geladen…</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 8 }}>
+              <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
+              <span>Lade Vorschau…</span>
             </div>
           )}
           {!hoverLoading && hoverError === 'unsupported' && (
-            <div className={styles.hoverPreviewState}>
-              <FileText size={22} />
-              <span>Vorschau nur für PDF-Dokumente verfügbar</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 10, padding: 20, textAlign: 'center' }}>
+              <FileText size={28} />
+              <span>Vorschau nur für PDF-Dokumente</span>
             </div>
           )}
           {!hoverLoading && hoverError === 'fetch' && (
-            <div className={styles.hoverPreviewState}>
-              <AlertCircle size={18} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 10, padding: 20, textAlign: 'center' }}>
+              <AlertCircle size={22} />
               <span>Vorschau nicht verfügbar</span>
             </div>
           )}
           {!hoverLoading && !hoverError && hoverUrl && (
-            <Document
-              file={hoverUrl}
-              loading={
-                <div className={styles.hoverPreviewState}>
-                  <Loader size={18} className={styles.hoverPreviewSpinner} />
-                </div>
-              }
-              error={
-                <div className={styles.hoverPreviewState}>
-                  <AlertCircle size={18} />
-                  <span>Vorschau nicht verfügbar</span>
-                </div>
-              }
-            >
-              <Page
-                pageNumber={1}
-                width={220}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
-            </Document>
+            <iframe
+              src={`${hoverUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1`}
+              style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+              title="PDF Vorschau"
+              loading="lazy"
+            />
           )}
         </div>,
         document.body
