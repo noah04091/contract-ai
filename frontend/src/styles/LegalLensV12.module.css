@@ -2388,6 +2388,45 @@
     padding: 0.75rem 1.25rem;
   }
 
+  /* Header-Wachstums-Schutz: Items koennen schrumpfen, "Alle laden" bleibt rechts sichtbar */
+  .headerLeft {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .headerRight {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+
+  .decisionSummaryBanner {
+    max-width: 280px;
+    flex-wrap: wrap;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .headerStats {
+    max-width: clamp(220px, 28vw, 380px);
+    min-width: 0;
+    overflow: hidden;
+    flex-shrink: 1;
+    box-sizing: border-box;
+  }
+
+  .reviewProgress {
+    max-width: 140px;
+    flex-shrink: 0;
+  }
+
+  .batchProgress {
+    max-width: 200px;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
   .title {
     font-size: 1.125rem;
   }
@@ -5190,6 +5229,12 @@
     flex-wrap: wrap;
     gap: 8px;
     padding: 10px 16px;
+  }
+
+  /* Override fuer 1440px-Block max-width-Constraints — Mobile-Layout braucht volle Breite */
+  .headerStats,
+  .decisionSummaryBanner {
+    max-width: none;
   }
 
   .headerStats {
