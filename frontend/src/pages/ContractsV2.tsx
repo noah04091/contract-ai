@@ -1205,13 +1205,18 @@ export default function Contracts() {
 
   // 👁️ Hover-Preview: Row-Handler (350ms Delay)
   const handleRowMouseEnter = (contract: Contract, e: React.MouseEvent) => {
+    console.log('[HOVER-DEBUG] mouseEnter', contract._id, contract.name);
     // Mobile/Touch: kein Hover-Preview
-    if (typeof window !== 'undefined' && window.matchMedia?.('(hover: none)').matches) return;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(hover: none)').matches) {
+      console.log('[HOVER-DEBUG] BLOCKED: hover:none matches');
+      return;
+    }
 
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     const x = e.clientX;
     const y = e.clientY;
     hoverTimeoutRef.current = setTimeout(() => {
+      console.log('[HOVER-DEBUG] setTimeout FIRED, setting hoveredContractId', contract._id);
       setHoveredContractId(contract._id);
       // Position: rechts neben Maus, mit Rand-Fallback
       const TOOLTIP_W = 220;
@@ -6288,6 +6293,17 @@ export default function Contracts() {
           />
       </div>
       {/* End of pageContainer */}
+
+      {/* 🐛 DEBUG: Always-visible red box when hoveredContractId is set */}
+      {hoveredContractId && createPortal(
+        <div style={{ position: 'fixed', top: 10, right: 10, background: 'red', color: 'white', padding: '12px 18px', fontWeight: 700, zIndex: 99999, borderRadius: 8, fontSize: 14 }}>
+          HOVER ACTIVE: {hoveredContractId.slice(-6)}<br/>
+          pos: {hoverPos ? `${hoverPos.x},${hoverPos.y}` : 'NULL'}<br/>
+          loading: {String(hoverLoading)} / error: {String(hoverError)}<br/>
+          url: {hoverUrl ? '✓' : '✗'}
+        </div>,
+        document.body
+      )}
 
       {/* 👁️ Hover-Preview-Tooltip (Schritt 2) — als Portal in body */}
       {hoveredContractId && hoverPos && createPortal(
