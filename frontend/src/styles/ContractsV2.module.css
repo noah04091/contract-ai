@@ -9362,7 +9362,6 @@
 .statusBadge {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
   padding: 3px 9px !important;
   border-radius: 999px !important;
   font-size: 12px !important;
@@ -9371,24 +9370,12 @@
   letter-spacing: -0.005em !important;
   text-transform: none !important;
 }
-.statusBadge::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-  animation: previewStatusPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .statusBadge::before { animation: none; }
-}
+/* 30.05.2026: Pulse-Dot vor Status entfernt — User-Wunsch */
 /* Status-Color-Mapping über bestehende Klassen */
 .statusBadge.statusActive { color: var(--m-ok) !important; background: var(--m-ok-soft) !important; }
 .statusBadge.statusWarning { color: var(--m-warn) !important; background: var(--m-warn-soft) !important; }
 .statusBadge.statusDanger { color: var(--m-bad) !important; background: var(--m-bad-soft) !important; }
 .statusBadge.statusNeutral { color: var(--m-text-2) !important; background: var(--m-muted-soft, #f1f5f9) !important; }
-.statusBadge.statusNeutral::before { animation: none !important; }
 
 /* Aktionen-Spalte — Header-Text weg, Icons inline */
 .contractsTable thead th:last-child { color: transparent !important; user-select: none !important; }
