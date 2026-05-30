@@ -2384,19 +2384,8 @@
     width: clamp(320px, 32vw, 480px);
   }
 
-  /* Mehr Luft rechts, damit Progress-Text "X% durchgesehen" nicht angeschnitten wird */
   .header {
-    padding: 0.75rem 2.5rem 0.75rem 1.25rem;
-  }
-
-  /* "Alle laden"-Button auf Icon-Only — verhindert dass er als langer Text isoliert oben hängt */
-  .batchAnalyzeButton span {
-    display: none;
-  }
-
-  .batchAnalyzeButton {
-    padding: 0.5rem;
-    min-width: 36px;
+    padding: 0.75rem 1.25rem;
   }
 
   .title {
