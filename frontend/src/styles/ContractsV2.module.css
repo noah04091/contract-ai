@@ -9319,12 +9319,15 @@
 }
 .contractsTable tbody tr:last-child td { border-bottom: none !important; }
 
-/* Hover + Selected */
+/* Hover + Selected + Zebra-Striping (30.05.2026) */
 .tableRow {
   cursor: pointer !important;
   transition: background 0.12s ease !important;
 }
-.tableRow:hover { background: var(--m-surface-2) !important; }
+/* Zebra: jede 2. Zeile minimal warmer Grau-Hauch */
+.contractsTable tbody tr:nth-child(even):not(.selectedRow):not(.previewActive) { background: #fafbfc !important; }
+/* Hover (warmer Neutral-Grauton, deutlicher als Zebra) */
+.tableRow:hover { background: #f1f5f9 !important; }
 .tableRow.selectedRow,
 .tableRow.previewActive {
   background: var(--m-accent-soft) !important;
