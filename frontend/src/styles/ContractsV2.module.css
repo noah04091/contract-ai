@@ -9345,9 +9345,9 @@
   width: 38px !important;
   height: 38px !important;
   border-radius: 9px !important;
-  background: var(--m-surface-2) !important;
-  border: 1px solid var(--m-border-soft) !important;
-  color: var(--m-text-3) !important;
+  background: #eff6ff !important; /* 30.05.: Brand-Blau-Hauch (gleich wie Selected-Row) */
+  border: 1px solid #dbeafe !important; /* 30.05.: Brand-Blau-Border, weich */
+  color: #3b82f6 !important; /* 30.05.: Brand-Blau Icon */
   box-shadow: none !important;
 }
 .contractNameText {
