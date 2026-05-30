@@ -9345,10 +9345,32 @@
   width: 38px !important;
   height: 38px !important;
   border-radius: 9px !important;
-  background: #eff6ff !important; /* 30.05.: Brand-Blau-Hauch (gleich wie Selected-Row) */
-  border: 1px solid #dbeafe !important; /* 30.05.: Brand-Blau-Border, weich */
-  color: #3b82f6 !important; /* 30.05.: Brand-Blau Icon */
+  background: #eff6ff !important; /* 30.05.: Brand-Blau-Hauch (gleich wie Selected-Row) — Default */
+  border: 1px solid #dbeafe !important;
+  color: #3b82f6 !important;
   box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+/* 30.05.2026: File-Type-Color-Coding (Adobe-PDF rot, Word blau, FILE neutral) */
+.contractIcon_pdf {
+  background: #fef2f2 !important;   /* zarter Rot-Hauch */
+  border-color: #fecaca !important;
+  color: #dc2626 !important;        /* Adobe-PDF-Rot */
+}
+.contractIcon_doc {
+  background: #eff6ff !important;   /* Brand-Blau-Hauch */
+  border-color: #bfdbfe !important;
+  color: #2563eb !important;        /* MS-Word-Blau */
+}
+/* .contractIcon_default erbt von .contractIcon (Brand-Blau-Hauch, neutral) */
+.contractIconLabel {
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  line-height: 1 !important;
+  font-variant-numeric: tabular-nums !important;
 }
 .contractNameText {
   font-weight: 550 !important;

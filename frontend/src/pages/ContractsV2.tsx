@@ -3237,6 +3237,20 @@ export default function Contracts() {
     setActiveFolder(null); // ✅ Folder zurücksetzen
   };
 
+  // 📎 File-Type-Detection für den Vertragsname-Avatar
+  // Pure, idempotent, defensiv gegen null/empty/whitespace/edge-cases
+  const getFileType = (name?: string | null): { label: string; variant: 'pdf' | 'doc' | 'default' } => {
+    if (!name || typeof name !== 'string') return { label: 'FILE', variant: 'default' };
+    const trimmed = name.trim();
+    if (!trimmed) return { label: 'FILE', variant: 'default' };
+    const dotIdx = trimmed.lastIndexOf('.');
+    if (dotIdx <= 0 || dotIdx === trimmed.length - 1) return { label: 'FILE', variant: 'default' };
+    const ext = trimmed.slice(dotIdx + 1).toLowerCase();
+    if (ext === 'pdf') return { label: 'PDF', variant: 'pdf' };
+    if (ext === 'doc' || ext === 'docx') return { label: 'DOC', variant: 'doc' };
+    return { label: 'FILE', variant: 'default' };
+  };
+
   // 🎯 Intelligente Status-Berechnung basierend auf Vertragsdaten
   const calculateSmartStatus = (contract: Contract): string => {
     const today = new Date();
@@ -5345,9 +5359,14 @@ export default function Contracts() {
                               )}
                               <td>
                                 <div className={styles.contractName}>
-                                  <div className={styles.contractIcon}>
-                                    <FileText size={16} />
-                                  </div>
+                                  {(() => {
+                                    const ft = getFileType(contract.name);
+                                    return (
+                                      <div className={`${styles.contractIcon} ${styles[`contractIcon_${ft.variant}`]}`}>
+                                        <span className={styles.contractIconLabel}>{ft.label}</span>
+                                      </div>
+                                    );
+                                  })()}
                                   <div className={styles.contractNameWrap}>
                                     <span className={styles.contractNameText} title={fixUtf8Display(contract.name)}>{fixUtf8Display(contract.name)}</span>
                                     {/* 🆕 V2 TODO #4b: Sub-Label switchbar via renderSubLabel */}
