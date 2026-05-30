@@ -9297,17 +9297,17 @@
   background: var(--m-surface) !important;
 }
 
-/* Header-Cells — kompakter (User-Wunsch) */
+/* Header-Cells — kompakter (User-Wunsch) + minimal kraeftiger (30.05.2026) */
 .contractsTable thead th {
   text-align: left !important;
   font-size: 11.5px !important;
   font-weight: 550 !important;
-  color: var(--m-text-3) !important;
+  color: var(--m-text-2) !important; /* 30.05.: text-3 (#8896a8) -> text-2 (#475569) */
   text-transform: uppercase !important;
   letter-spacing: 0.06em !important;
   padding: 10px 12px !important;
-  background: var(--m-surface-2) !important;
-  border-bottom: 1px solid var(--m-border-soft) !important;
+  background: #eef2f6 !important; /* 30.05.: surface-2 (#fbfcfe) -> #eef2f6 (zwischen Zebra & Hover) */
+  border-bottom: 1px solid #e2e8f0 !important; /* 30.05.: matcht Toolbar-Border */
 }
 
 /* Body-Cells — kompakter (User-Wunsch) */
