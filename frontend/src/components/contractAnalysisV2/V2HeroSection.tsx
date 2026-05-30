@@ -242,6 +242,30 @@ function cleanOcrSpacing(s: string): string {
 }
 
 // Wählt den besten Doc-Type für die File-Card-Pille:
+// 🎯 Non-Final-Status (30.05.2026) — ersetzt den alten Recognition-Banner.
+// Mappt Backend-Hinweise auf eine kompakte Status-Pille in der File-Card.
+// Trigger-Logik identisch zum alten Banner — nur das Rendering ist neu (Pille statt Box).
+type NonFinalStatus = { label: string; icon: string; tooltip: string } | null;
+function getNonFinalStatus(
+  desc: string | undefined | null,
+  completeness: { isComplete?: boolean } | null | undefined
+): NonFinalStatus {
+  const lower = (desc || "").toLowerCase();
+  if (/\b(letter of intent|loi|memorandum of understanding|mou|term sheet|vorvertrag)\b/.test(lower)) {
+    return { label: "Vorvertrag", icon: "📋", tooltip: desc || "Vorvertrag / Letter of Intent — noch keine bindende Vereinbarung" };
+  }
+  if (/\bside letter\b/.test(lower)) {
+    return { label: "Side Letter", icon: "📝", tooltip: desc || "Side Letter — Zusatzvereinbarung zum Hauptvertrag" };
+  }
+  if (/\b(muster|mustervertrag|vorlage|template|entwurf|draft|placeholder|noch nicht ausgefüllt)\b/.test(lower)) {
+    return { label: "Entwurf", icon: "📝", tooltip: desc || "Dieses Dokument ist ein Entwurf / eine Vorlage — Bewertung mit Vorbehalt" };
+  }
+  if (completeness?.isComplete === false) {
+    return { label: "Unvollständig", icon: "⚠", tooltip: desc || "Dem Dokument fehlen Pflicht-Elemente — Details siehe unten" };
+  }
+  return null;
+}
+
 // 1. documentCharacterization.description, gekürzt + OCR-bereinigt MIT truncate
 //    (vorher: bei >40 Chars gesilent-skipped — User sah "Vertrag" statt "Negativerklärung
 //    im Rahmen eines Factoringvertrages". Jetzt: truncateAtWord auf 40)
@@ -288,7 +312,6 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const [heroSubExpanded, setHeroSubExpanded] = useState(false);
   const [scoreDrawerOpen, setScoreDrawerOpen] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
-  const [recognitionExpanded, setRecognitionExpanded] = useState(false);
 
   // Score-Counter-Animation: 0 → finaler Wert in 1.4s mit ease-out.
   // ALLE Hooks MÜSSEN vor dem isFailedAnalysis-early-return stehen (React Rules-of-Hooks).
@@ -444,9 +467,6 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const cols = qf.length;
   const factsCls = cols === 6 ? styles.facts6 : cols === 5 ? styles.facts5 : cols === 4 ? styles.facts4 : cols === 3 ? styles.facts3 : cols >= 2 ? styles.facts2 : "";
 
-  // Banner-Pills
-  const completeness = d.completeness;
-  const isIncomplete = completeness?.isComplete === false;
   // 0% ist ein Backend-Fallback wenn Validation nicht lief — nicht zeigen, das verwirrt mehr als es informiert
   const isMeaningfulPercent = (v: number | string | null | undefined) => {
     if (v == null || v === "") return false;
@@ -522,17 +542,26 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                   <Scale size={10} /> Premium-Analyse
                 </span>
               )}
-              {/* Warn-Pille bei Vollständigkeits-Lücken — nur wenn der recognitionBanner
-                  unten NICHT sowieso schon greift (=description fehlt). Sonst Doppelung. */}
-              {isIncomplete && !d.documentCharacterization?.description && (
-                <span
-                  className={styles.fcStatusPill}
-                  style={{ background: "#fef3c7", color: "#92400e" }}
-                  title="Wichtige Pflicht-Elemente fehlen — bitte im Dokument prüfen"
-                >
-                  ⚠ {(completeness?.openItems?.length ?? 0)} offene Punkte
-                </span>
-              )}
+              {/* 🎯 Non-Final-Status-Pille (30.05.2026) — ersetzt den alten Recognition-Banner.
+                  Trigger über getNonFinalStatus(). Tooltip zeigt KI-description.
+                  Mutex: bei Min-Text-Banner (<200 chars) NICHT zeigen — dort hat der
+                  Wenig-Text-Hinweis Priorität. */}
+              {(() => {
+                if (typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200) return null;
+                const nfs = getNonFinalStatus(d.documentCharacterization?.description, d.completeness);
+                if (!nfs) return null;
+                return (
+                  <span
+                    className={styles.fcStatusPill}
+                    style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d" }}
+                    title={nfs.tooltip}
+                  >
+                    {nfs.icon} {nfs.label}
+                  </span>
+                );
+              })()}
+              {/* Alte Warn-Pille entfernt (30.05.2026) — wird jetzt durch
+                  getNonFinalStatus oben + Pflichtangaben-Sektion unter dem Hero abgedeckt. */}
               {serviceHealth === false && (
                 <span className={`${styles.fcStatusPill} ${styles.statusService}`}>
                   <WifiOff size={10} /> Service nicht erreichbar
@@ -644,83 +673,8 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         </div>
       )}
 
-      {/* RECOGNITION-BANNER — erscheint VOR der Analyse-Card, wenn die KI
-          einen non-finalen Dokument-Status erkennt (Muster/Entwurf/LOI/etc.)
-          oder completeness.isComplete === false meldet. Render-if-present.
-          Mutex: bei Min-Text-Banner (<300 chars) wird dieser Banner suppressed,
-          weil „zu wenig Text" die fundamentalere Aussage ist. */}
-      {(() => {
-        // Mutex-Suppression bei Min-Text (höhere Priorität)
-        if (typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200) return null;
-        const docChar = d.documentCharacterization;
-        const completeness = d.completeness;
-        const desc = docChar?.description || "";
-        const lowerDesc = desc.toLowerCase();
-        const nonFinalSignals = [
-          "muster", "mustervertrag", "template", "vorlage",
-          "entwurf", "draft",
-          "vorvertrag", "letter of intent", "loi",
-          "term sheet", "memorandum of understanding", "mou",
-          "side letter",
-          "unvollständ", "incomplete", "noch nicht ausgefüllt", "placeholder",
-        ];
-        const isNonFinal = nonFinalSignals.some(s => lowerDesc.includes(s))
-          || completeness?.isComplete === false;
-        if (!isNonFinal || !desc) return null;
-        const hasOpenItems = Array.isArray(completeness?.openItems) && completeness.openItems.length > 0;
-        const hasRationale = !!docChar?.rationale;
-        // role="status" + aria-live="polite" statt "alert" — Vorabprüfung ist
-        // informativ, nicht zeitkritisch. Reduziert Screenreader-Unterbrechung.
-        return (
-          <div className={styles.recognitionBanner} role="status" aria-live="polite">
-            <div className={styles.recognitionIcon} aria-hidden="true">
-              <AlertTriangle size={16} />
-            </div>
-            <div className={styles.recognitionBody}>
-              <div className={styles.recognitionTop}>
-                <span className={styles.recognitionKicker}>Vorabprüfung</span>
-                <span className={styles.recognitionInlineTitle}>{desc}</span>
-              </div>
-              {hasOpenItems && (
-                <div className={styles.recognitionOpenItems}>
-                  <span className={styles.recognitionOpenLabel}>Noch offen:</span>
-                  {completeness.openItems!.map((item, i) => (
-                    <span key={i} className={styles.recognitionOpenPill} title={item}>{item}</span>
-                  ))}
-                  {hasRationale && (
-                    <button
-                      type="button"
-                      className={styles.recognitionMore}
-                      onClick={() => setRecognitionExpanded(v => !v)}
-                      aria-expanded={recognitionExpanded}
-                      aria-controls="recognition-rationale"
-                    >
-                      {recognitionExpanded ? "Weniger" : "Mehr anzeigen"}
-                    </button>
-                  )}
-                </div>
-              )}
-              {hasRationale && !hasOpenItems && (
-                <button
-                  type="button"
-                  className={styles.recognitionMore}
-                  onClick={() => setRecognitionExpanded(v => !v)}
-                  aria-expanded={recognitionExpanded}
-                  aria-controls="recognition-rationale"
-                  style={{ marginTop: 4 }}
-                >
-                  {recognitionExpanded ? "Weniger" : "Mehr anzeigen"}
-                </button>
-              )}
-              {hasRationale && recognitionExpanded && (
-                <div id="recognition-rationale" className={styles.recognitionRationale}>
-                  {docChar!.rationale}
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
+      {/* Recognition-Banner-Block entfernt (30.05.2026) — komplett ersetzt durch
+          Status-Pille in File-Card oben + Pflichtangaben-Sektion unter dem Hero. */}
 
       {/* ANALYSIS-CARD */}
       <div className={styles.analysisCard}>
@@ -871,6 +825,32 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             dieses Element. Sobald es out-of-viewport ist (User scrollt) erscheint
             der Mini-Header oben mit Filename + Score + Optimieren-Button. */}
         <div data-v2-hero-sentinel aria-hidden="true" style={{ width: 1, height: 1 }} />
+
+        {/* 🎯 PFLICHTANGABEN-SEKTION (30.05.2026) — ersetzt openItems aus altem
+            Recognition-Banner. Strukturell zwischen Hero und Quick-Facts, als
+            gleichwertiges Analyse-Finding. Mutex bei <200 Chars Text. */}
+        {(() => {
+          if (typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200) return null;
+          const openItems = Array.isArray(d.completeness?.openItems) ? d.completeness.openItems : [];
+          if (openItems.length === 0) return null;
+          return (
+            <div className={styles.openItemsSection} role="status" aria-live="polite">
+              <div className={styles.openItemsHeader}>
+                <AlertTriangle size={14} style={{ color: "#d97706", flexShrink: 0 }} aria-hidden="true" />
+                <span className={styles.openItemsTitle}>Pflichtangaben fehlen im Dokument</span>
+                <span className={styles.openItemsCount}>{openItems.length}</span>
+              </div>
+              <div className={styles.openItemsList}>
+                {openItems.map((item, i) => (
+                  <span key={i} className={styles.openItemsPill} title={item}>{item}</span>
+                ))}
+              </div>
+              <div className={styles.openItemsHint}>
+                Diese Punkte müssen vor Unterzeichnung ergänzt werden, damit das Dokument rechtlich wirksam wird.
+              </div>
+            </div>
+          );
+        })()}
 
         {/* QUICK-FACTS adaptive Spalten */}
         {qf.length > 0 && (
