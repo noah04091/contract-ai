@@ -1,7 +1,7 @@
 // backend/routes/s3Routes.js
 const express = require("express");
 const router = express.Router();
-const { generateSignedUrl } = require("../services/fileStorage");
+const { generateSignedUrl, generateInlineSignedUrl } = require("../services/fileStorage");
 const verifyToken = require("../middleware/verifyToken");
 const Contract = require("../models/Contract"); // Für refresh route
 const OrganizationMember = require("../models/OrganizationMember"); // Für Team-Zugriff
@@ -175,6 +175,50 @@ router.get("/view", verifyToken, async (req, res) => {
       error: "Failed to generate S3 URL", 
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+});
+
+// @route   GET /api/s3/view-inline?contractId=...
+// @desc    Liefert presigned URL mit Content-Disposition: inline
+//          (fuer iframe-Embedding / Hover-Preview, 31.05.2026)
+// @access  Private
+router.get("/view-inline", verifyToken, async (req, res) => {
+  try {
+    const { contractId } = req.query;
+    if (!contractId) {
+      return res.status(400).json({ error: "contractId required" });
+    }
+
+    // Owner-Check + s3Key holen
+    const contract = await Contract.findById(contractId).select('s3Key userId name organizationId').lean();
+    if (!contract) {
+      return res.status(404).json({ error: "Contract not found" });
+    }
+
+    // Zugriff: eigener Vertrag ODER Org-Mitgliedschaft
+    const isOwner = String(contract.userId) === String(req.user.userId);
+    let hasAccess = isOwner;
+    if (!hasAccess && contract.organizationId) {
+      const member = await OrganizationMember.findOne({
+        userId: new ObjectId(req.user.userId),
+        organizationId: contract.organizationId,
+        isActive: true,
+      }).lean();
+      hasAccess = !!member;
+    }
+    if (!hasAccess) {
+      return res.status(403).json({ error: "No access" });
+    }
+
+    if (!contract.s3Key) {
+      return res.status(404).json({ error: "No S3 key (pre-S3 upload?)" });
+    }
+
+    const fileUrl = await generateInlineSignedUrl(contract.s3Key, contract.name || 'document.pdf');
+    res.json({ fileUrl, expiresIn: 3600 });
+  } catch (error) {
+    console.error("❌ S3 inline URL error:", error.message);
+    res.status(500).json({ error: "Failed to generate inline URL" });
   }
 });
 

@@ -38,6 +38,22 @@ const generateSignedUrl = async (key) => {
   return url;
 };
 
+// ➤ Signierte URL fuer INLINE-Display (PDF-Viewer / iframe-Embedding)
+// Setzt Content-Disposition: inline statt default attachment, damit Browser
+// das PDF inline rendert statt Download triggert (31.05.2026, fuer Hover-Preview)
+const generateInlineSignedUrl = async (key, filename = 'document.pdf') => {
+  const safeFilename = String(filename).replace(/["\r\n]/g, '');
+  const command = new GetObjectCommand({
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: key,
+    ResponseContentDisposition: `inline; filename="${safeFilename}"`,
+    ResponseContentType: 'application/pdf',
+  });
+
+  const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+  return url;
+};
+
 // ➤ Datei aus S3 löschen
 const deleteFile = async (key) => {
   if (!key) {
@@ -85,6 +101,7 @@ const deleteFiles = async (keys) => {
 module.exports = {
   upload,
   generateSignedUrl,
+  generateInlineSignedUrl,
   deleteFile,
   deleteFiles,
 };

@@ -1138,14 +1138,15 @@ export default function Contracts() {
         const token = localStorage.getItem('authToken') || localStorage.getItem('token');
         let url: string | null = null;
         if (contract.s3Key) {
-          const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+          // Inline-URL fuer iframe-Embedding (Content-Disposition: inline)
+          const res = await fetch(`/api/s3/view-inline?contractId=${contract._id}`, {
             headers: { Authorization: `Bearer ${token}` },
             credentials: 'include',
             signal: ctrl.signal,
           });
           if (res.ok) {
             const data = await res.json();
-            url = data.fileUrl || data.url || null;
+            url = data.fileUrl || null;
           }
         } else if (contract.isGenerated) {
           const res = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
@@ -1205,18 +1206,13 @@ export default function Contracts() {
 
   // 👁️ Hover-Preview: Row-Handler (350ms Delay)
   const handleRowMouseEnter = (contract: Contract, e: React.MouseEvent) => {
-    console.log('[HOVER-DEBUG] mouseEnter', contract._id, contract.name);
     // Mobile/Touch: kein Hover-Preview
-    if (typeof window !== 'undefined' && window.matchMedia?.('(hover: none)').matches) {
-      console.log('[HOVER-DEBUG] BLOCKED: hover:none matches');
-      return;
-    }
+    if (typeof window !== 'undefined' && window.matchMedia?.('(hover: none)').matches) return;
 
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     const x = e.clientX;
     const y = e.clientY;
     hoverTimeoutRef.current = setTimeout(() => {
-      console.log('[HOVER-DEBUG] setTimeout FIRED, setting hoveredContractId', contract._id);
       setHoveredContractId(contract._id);
       // Position: rechts neben Maus, mit Rand-Fallback
       const TOOLTIP_W = 220;
@@ -6336,7 +6332,6 @@ export default function Contracts() {
               src={`${hoverUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1`}
               style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
               title="PDF Vorschau"
-              loading="lazy"
             />
           )}
         </div>,
