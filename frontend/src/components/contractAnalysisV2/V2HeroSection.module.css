@@ -229,59 +229,102 @@
 
 /* RECOGNITION-BANNER — non-finale Dokumente (Muster/Entwurf/LOI/unvollständig).
    Erscheint zwischen File-Header und Analyse-Card. Mockup-Style mit Border-Left-Stripe. */
+/* RECOGNITION-BANNER — kompakte Vorabprüfung-Notification.
+   Cleanup 30.05.2026: 2 Zeilen statt 4, OpenItems als Pillen, Rationale on-demand. */
 .recognitionBanner {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 10px;
   background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-left: 4px solid #f59e0b;
-  border-radius: 12px;
-  padding: 16px 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  border-left: 3px solid #f59e0b;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
 }
 .recognitionIcon {
-  font-size: 20px;
-  line-height: 1.2;
+  color: #d97706;
   flex-shrink: 0;
-  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
 }
 .recognitionBody {
   flex: 1;
   min-width: 0;
 }
-.recognitionTitle {
-  font-size: 14px;
+.recognitionTop {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.recognitionKicker {
+  font-size: 10.5px;
   font-weight: 700;
   color: #92400e;
-  margin: 0 0 6px 0;
-  letter-spacing: -0.005em;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  flex-shrink: 0;
 }
-.recognitionDesc {
-  font-size: 13.5px;
-  color: #78350f;
-  line-height: 1.55;
-}
-.recognitionRationale {
-  font-size: 12.5px;
-  color: #a16207;
-  line-height: 1.5;
-  font-style: italic;
-  margin-top: 6px;
+.recognitionInlineTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.4;
+  word-break: break-word;
 }
 .recognitionOpenItems {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.recognitionOpenLabel {
+  font-size: 12px;
+  color: #78350f;
+  font-weight: 500;
+  margin-right: 2px;
+}
+.recognitionOpenPill {
+  background: white;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  max-width: 100%;
+  word-break: break-word;
+  line-height: 1.3;
+}
+.recognitionMore {
+  background: none;
+  border: none;
+  color: #92400e;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+  font-family: inherit;
+  margin-left: 2px;
+}
+.recognitionMore:hover { color: #78350f; }
+.recognitionRationale {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(252, 211, 77, 0.15);
+  border-radius: 6px;
   font-size: 12.5px;
   color: #78350f;
   line-height: 1.5;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #fde68a;
+  font-style: italic;
 }
 @media (max-width: 600px) {
-  .recognitionBanner { padding: 14px 16px; gap: 10px; }
-  .recognitionTitle { font-size: 13.5px; }
-  .recognitionDesc { font-size: 13px; }
+  .recognitionBanner { padding: 10px 12px; gap: 8px; }
+  .recognitionInlineTitle { font-size: 12.5px; }
+  .recognitionOpenPill { font-size: 10.5px; padding: 2px 6px; }
 }
 
 /* 🎯 UNKNOWN-BANNER (20.05.2026) — wenn DocClass nicht eindeutig erkannt */

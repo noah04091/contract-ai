@@ -10,7 +10,7 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, RotateCcw, Scale, Eye } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, RotateCcw, Scale, Eye, AlertTriangle } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
@@ -288,6 +288,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const [heroSubExpanded, setHeroSubExpanded] = useState(false);
   const [scoreDrawerOpen, setScoreDrawerOpen] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [recognitionExpanded, setRecognitionExpanded] = useState(false);
 
   // Score-Counter-Animation: 0 → finaler Wert in 1.4s mit ease-out.
   // ALLE Hooks MÜSSEN vor dem isFailedAnalysis-early-return stehen (React Rules-of-Hooks).
@@ -666,18 +667,54 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         const isNonFinal = nonFinalSignals.some(s => lowerDesc.includes(s))
           || completeness?.isComplete === false;
         if (!isNonFinal || !desc) return null;
+        const hasOpenItems = Array.isArray(completeness?.openItems) && completeness.openItems.length > 0;
+        const hasRationale = !!docChar?.rationale;
+        // role="status" + aria-live="polite" statt "alert" — Vorabprüfung ist
+        // informativ, nicht zeitkritisch. Reduziert Screenreader-Unterbrechung.
         return (
-          <div className={styles.recognitionBanner} role="alert">
-            <div className={styles.recognitionIcon} aria-hidden="true">⚠️</div>
+          <div className={styles.recognitionBanner} role="status" aria-live="polite">
+            <div className={styles.recognitionIcon} aria-hidden="true">
+              <AlertTriangle size={16} />
+            </div>
             <div className={styles.recognitionBody}>
-              <div className={styles.recognitionTitle}>Hinweis zum Dokument-Status</div>
-              <div className={styles.recognitionDesc}>{desc}</div>
-              {docChar?.rationale && (
-                <div className={styles.recognitionRationale}>{docChar.rationale}</div>
-              )}
-              {completeness?.openItems && completeness.openItems.length > 0 && (
+              <div className={styles.recognitionTop}>
+                <span className={styles.recognitionKicker}>Vorabprüfung</span>
+                <span className={styles.recognitionInlineTitle}>{desc}</span>
+              </div>
+              {hasOpenItems && (
                 <div className={styles.recognitionOpenItems}>
-                  <strong>Noch offen:</strong> {completeness.openItems.join(" • ")}
+                  <span className={styles.recognitionOpenLabel}>Noch offen:</span>
+                  {completeness.openItems!.map((item, i) => (
+                    <span key={i} className={styles.recognitionOpenPill} title={item}>{item}</span>
+                  ))}
+                  {hasRationale && (
+                    <button
+                      type="button"
+                      className={styles.recognitionMore}
+                      onClick={() => setRecognitionExpanded(v => !v)}
+                      aria-expanded={recognitionExpanded}
+                      aria-controls="recognition-rationale"
+                    >
+                      {recognitionExpanded ? "Weniger" : "Mehr anzeigen"}
+                    </button>
+                  )}
+                </div>
+              )}
+              {hasRationale && !hasOpenItems && (
+                <button
+                  type="button"
+                  className={styles.recognitionMore}
+                  onClick={() => setRecognitionExpanded(v => !v)}
+                  aria-expanded={recognitionExpanded}
+                  aria-controls="recognition-rationale"
+                  style={{ marginTop: 4 }}
+                >
+                  {recognitionExpanded ? "Weniger" : "Mehr anzeigen"}
+                </button>
+              )}
+              {hasRationale && recognitionExpanded && (
+                <div id="recognition-rationale" className={styles.recognitionRationale}>
+                  {docChar!.rationale}
                 </div>
               )}
             </div>
