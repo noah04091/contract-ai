@@ -4,10 +4,11 @@
 .fileCard {
   /* Box-Soup entzaubert (13.05.2026): keine eigene Border/Shadow/Radius mehr —
      wird vom umschließenden v2UnifiedContainer (Wrapper) gehalten. fileCard
-     ist jetzt nur noch der File-Header-Streifen innerhalb der unified-Card. */
+     ist jetzt nur noch der File-Header-Streifen innerhalb der unified-Card.
+     Border-bottom dezenter (30.05.2026) — softer Übergang zu Hero. */
   background: #fafbfc;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 18px 22px;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 16px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -92,16 +93,16 @@
      v2UnifiedContainer trägt Border/Shadow/Radius. */
   background: #fff;
 }
-/* HERO mit Score-Donut */
+/* HERO mit Score-Donut — kompakter Mode (30.05.2026) */
 .acHero {
-  padding: 32px;
+  padding: 20px 24px;
   display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 32px;
+  grid-template-columns: 130px 1fr;
+  gap: 24px;
   align-items: center;
   border-bottom: 1px solid #f1f5f9;
 }
-.scoreDonut { position: relative; width: 160px; height: 160px; }
+.scoreDonut { position: relative; width: 120px; height: 120px; margin: 0 auto; }
 .scoreDonut svg { width: 100%; height: 100%; }
 .scoreTextWrap {
   position: absolute; inset: 0;
@@ -110,10 +111,10 @@
   z-index: 2;
   pointer-events: none;
 }
-.scoreNum { font-size: 44px; font-weight: 700; color: #0f172a; letter-spacing: -.04em; line-height: 1; position: relative; z-index: 3; }
-.scoreOf { font-size: 11px; color: #94a3b8; margin-top: 4px; letter-spacing: .5px; position: relative; z-index: 3; }
+.scoreNum { font-size: 34px; font-weight: 700; color: #0f172a; letter-spacing: -.04em; line-height: 1; position: relative; z-index: 3; }
+.scoreOf { font-size: 10px; color: #94a3b8; margin-top: 3px; letter-spacing: .5px; position: relative; z-index: 3; }
 .scoreDonut svg { width: 100%; height: 100%; position: relative; z-index: 1; }
-.scoreRating { text-align: center; margin-top: 6px; font-size: 12.5px; font-weight: 600; }
+.scoreRating { text-align: center; margin-top: 4px; font-size: 12px; font-weight: 600; }
 .ratingRed { color: #ef4444; }
 .ratingAmber { color: #f59e0b; }
 .ratingPrimary { color: #2563eb; }
@@ -125,12 +126,20 @@
   margin-bottom: 8px;
 }
 .heroTitle {
-  font-size: 22px; font-weight: 700; color: #0f172a;
-  letter-spacing: -.02em; line-height: 1.25;
-  margin-bottom: 12px;
+  font-size: 20px; font-weight: 700; color: #0f172a;
+  letter-spacing: -.02em; line-height: 1.2;
+  margin-bottom: 6px;
 }
-.heroSub { font-size: 14px; color: #475569; line-height: 1.6; margin-bottom: 14px; }
-.heroStats { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+.heroSub { font-size: 13.5px; color: #475569; line-height: 1.5; margin-bottom: 10px; }
+.heroStats { display: flex; gap: 16px; flex-wrap: wrap; }
+.heroLaymanInline {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: none; border: none; padding: 0;
+  color: #8b5cf6; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; text-decoration: underline; font-family: inherit;
+  margin-left: 2px;
+}
+.heroLaymanInline:hover { color: #7c3aed; }
 .laymanToggle {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 12px;
@@ -202,9 +211,9 @@
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
-  .acHero { grid-template-columns: 1fr; gap: 20px; padding: 24px 20px; }
-  .scoreDonut { width: 120px; height: 120px; margin: 0 auto; }
-  .heroTitle { font-size: 20px; }
+  .acHero { grid-template-columns: 1fr; gap: 14px; padding: 18px 16px; }
+  .scoreDonut { width: 110px; height: 110px; margin: 0 auto; }
+  .heroTitle { font-size: 19px; }
 }
 @media (max-width: 600px) {
   .facts6, .facts5, .facts4, .facts3 { grid-template-columns: repeat(2, 1fr); }
