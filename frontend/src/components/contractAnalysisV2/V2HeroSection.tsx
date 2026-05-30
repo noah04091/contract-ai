@@ -10,7 +10,7 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, FileText, RefreshCw, Gavel, WifiOff, Info, ShieldCheck, Sparkles, RotateCcw, Scale, CheckSquare, Eye } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, RotateCcw, Scale, Eye } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
@@ -258,7 +258,9 @@ function pickDocTypeLabel(d: AnalysisData): string {
       .replace(/\s+über\s+.*/i, "")
       .trim();
     if (cleanDesc.length > 0) {
-      return cleanDesc.length <= 40 ? cleanDesc : truncateAtWord(cleanDesc, 40);
+      // Cap 30 für KI-descriptions (knackiger als 40, weniger Layout-Risiko).
+      // contractTypeLabel-Pfad behält 40 weil kuratierte Labels (AVV/AGB sind 32-37 Chars lang).
+      return cleanDesc.length <= 30 ? cleanDesc : truncateAtWord(cleanDesc, 30);
     }
   }
   const ctl = d.contractTypeLabel;
@@ -461,13 +463,6 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   const fileIconText = (!dt || isBackendDocTypeMarker(dt) ? fileExt : dt).substring(0, 3).toUpperCase();
   const docTypeLabel = pickDocTypeLabel(d);
 
-  // Banner-Headline — analysisMessage (Backend-Strategy-Marker) wird hier
-  // bewusst nicht verwendet, weil er bei Mis-Klassifikation irreführend wird
-  // ("Erweiterte Tabellenanalyse" für einen NDA).
-  const bannerHead = d.lawyerLevelAnalysis
-    ? "Juristische Tiefenanalyse abgeschlossen"
-    : "Analyse abgeschlossen";
-
   return (
     <>
       {/* FILE-HEADER */}
@@ -477,7 +472,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           <div className={styles.fcMeta}>
             <div className={styles.fcName}>{fileName}</div>
             <div className={styles.fcPartners}>
-              <span className={styles.fcDoctype}>
+              <span className={styles.fcDoctype} title={d.documentCharacterization?.description || docTypeLabel}>
                 <FileText size={11} />
                 {docTypeLabel}
                 {d.pageCount ? ` · ${d.pageCount} Seiten` : ""}
@@ -518,17 +513,24 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 </span>
               )}
               {d.lawyerLevelAnalysis && (
-                <>
-                  <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
-                    <Scale size={10} /> 7-Punkte-Analyse
-                  </span>
-                  <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
-                    <Gavel size={10} /> Tiefenanalyse
-                  </span>
-                  <span className={styles.fcStatusPill} style={{ background: "#f5f3ff", color: "#8b5cf6" }}>
-                    <CheckSquare size={10} /> Vollständigkeitsgarantie
-                  </span>
-                </>
+                <span
+                  className={styles.fcStatusPill}
+                  style={{ background: "#f5f3ff", color: "#8b5cf6" }}
+                  title="Premium-Analyse mit 7-Punkte-Check, Tiefenanalyse und Vollständigkeitsgarantie"
+                >
+                  <Scale size={10} /> Premium-Analyse
+                </span>
+              )}
+              {/* Warn-Pille bei Vollständigkeits-Lücken — nur wenn der recognitionBanner
+                  unten NICHT sowieso schon greift (=description fehlt). Sonst Doppelung. */}
+              {isIncomplete && !d.documentCharacterization?.description && (
+                <span
+                  className={styles.fcStatusPill}
+                  style={{ background: "#fef3c7", color: "#92400e" }}
+                  title="Wichtige Pflicht-Elemente fehlen — bitte im Dokument prüfen"
+                >
+                  ⚠ {(completeness?.openItems?.length ?? 0)} offene Punkte
+                </span>
               )}
               {serviceHealth === false && (
                 <span className={`${styles.fcStatusPill} ${styles.statusService}`}>
@@ -686,31 +688,6 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
       {/* ANALYSIS-CARD */}
       <div className={styles.analysisCard}>
 
-        {/* BANNER */}
-        <div className={styles.acBanner}>
-          <div className={styles.acBannerLeft}>
-            <div className={styles.acBannerIcon}><CheckCircle size={14} /></div>
-            <div className={styles.acBannerText}><strong>{bannerHead}</strong></div>
-          </div>
-          <div className={styles.acBannerMeta}>
-            <span className={styles.acBannerPill} title="Vollständigkeit: alle Pflicht-Elemente vorhanden">
-              <CheckCircle size={11} />
-              {isIncomplete ? `${(completeness?.openItems || []).length} offene Punkte` : "Vollständig"}
-            </span>
-            {conf && (
-              <span className={styles.acBannerPill} title="Konfidenz: wie sicher ist die KI bei den extrahierten Werten">
-                <Info size={11} />Konfidenz {conf}
-              </span>
-            )}
-            {qual && (
-              <span className={styles.acBannerPill} title="Qualität der Text-Extraktion">
-                <ShieldCheck size={11} />Qualität {qual}
-              </span>
-            )}
-            {d.requestId && <span className={styles.acBannerId}>ID: {d.requestId}</span>}
-          </div>
-        </div>
-
         {/* HERO mit Score-Donut */}
         <div className={styles.acHero}>
           <div>
@@ -720,7 +697,12 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               type="button"
               onClick={() => setScoreDrawerOpen(true)}
               aria-label={`Score ${displayScore} von 100, klicken für Details zur Zusammensetzung`}
-              title="So setzt sich dein Score zusammen — klick für Details"
+              title={[
+                "So setzt sich dein Score zusammen — klick für Details",
+                conf && `Konfidenz: ${conf}`,
+                qual && `Qualität: ${qual}`,
+                d.requestId && `ID: ${d.requestId}`,
+              ].filter(Boolean).join(" · ")}
               style={{
                 background: "transparent",
                 border: "none",
