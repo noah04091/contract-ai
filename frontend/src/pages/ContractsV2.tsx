@@ -396,6 +396,15 @@ export default function Contracts() {
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null); // 📄 PDF Thumbnail URL
   const [previewPdfLoading, setPreviewPdfLoading] = useState(false); // 📄 PDF Thumbnail Loading
   const [previewPdfError, setPreviewPdfError] = useState(false); // 📄 PDF Thumbnail Fehler
+  // 👁️ Hover-Preview-Tooltip (Schritt 2)
+  const [hoveredContractId, setHoveredContractId] = useState<string | null>(null);
+  const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
+  const [hoverUrl, setHoverUrl] = useState<string | null>(null);
+  const [hoverLoading, setHoverLoading] = useState(false);
+  const [hoverError, setHoverError] = useState<'fetch' | 'unsupported' | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverUrlCache = useRef<Map<string, string>>(new Map());
+  const hoverAbortRef = useRef<AbortController | null>(null);
   const [sidebarPdfCollapsed, setSidebarPdfCollapsed] = useState<boolean>(
     () => !!user?.uiPreferences?.sidebarPdfCollapsed
   ); // 📄 PDF Thumbnail ein-/ausklappbar (geräteübergreifend)
@@ -1087,6 +1096,141 @@ export default function Contracts() {
       if (blobUrl) URL.revokeObjectURL(blobUrl);
     };
   }, [previewContract?._id]);
+
+  // 👁️ Hover-Preview: URL für gehoverten Vertrag holen (mit Cache + Abort)
+  useEffect(() => {
+    if (!hoveredContractId) {
+      setHoverUrl(null);
+      setHoverLoading(false);
+      return;
+    }
+    const contract = contracts.find(c => c._id === hoveredContractId);
+    if (!contract) return;
+
+    // Nicht-PDFs: kein Fetch, klare Meldung
+    const ft = getFileType(contract.name);
+    if (ft.variant !== 'pdf' && !contract.isGenerated) {
+      setHoverUrl(null);
+      setHoverError('unsupported');
+      setHoverLoading(false);
+      return;
+    }
+
+    // Cache-Hit
+    const cached = hoverUrlCache.current.get(hoveredContractId);
+    if (cached) {
+      setHoverUrl(cached);
+      setHoverError(null);
+      setHoverLoading(false);
+      return;
+    }
+
+    // Fetch
+    hoverAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    hoverAbortRef.current = ctrl;
+    setHoverLoading(true);
+    setHoverError(null);
+    setHoverUrl(null);
+
+    (async () => {
+      try {
+        const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+        let url: string | null = null;
+        if (contract.s3Key) {
+          const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include',
+            signal: ctrl.signal,
+          });
+          if (res.ok) {
+            const data = await res.json();
+            url = data.fileUrl || data.url || null;
+          }
+        } else if (contract.isGenerated) {
+          const res = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ design: 'executive' }),
+            signal: ctrl.signal,
+          });
+          if (res.ok) {
+            const blob = await res.blob();
+            url = URL.createObjectURL(blob);
+          }
+        }
+        if (ctrl.signal.aborted) return;
+        if (url) {
+          hoverUrlCache.current.set(hoveredContractId, url);
+          setHoverUrl(url);
+        } else {
+          setHoverError('fetch');
+        }
+      } catch (err) {
+        if ((err as { name?: string }).name === 'AbortError') return;
+        setHoverError('fetch');
+      } finally {
+        if (!ctrl.signal.aborted) setHoverLoading(false);
+      }
+    })();
+
+    return () => { ctrl.abort(); };
+  }, [hoveredContractId, contracts]);
+
+  // 👁️ Hover-Preview: Tooltip bei Scroll schliessen (sonst klebt es an alter Position)
+  useEffect(() => {
+    if (!hoveredContractId) return;
+    const close = () => {
+      if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
+      setHoveredContractId(null);
+      setHoverPos(null);
+    };
+    window.addEventListener('scroll', close, true);
+    return () => window.removeEventListener('scroll', close, true);
+  }, [hoveredContractId]);
+
+  // 👁️ Hover-Preview: Memory-Cleanup beim Unmount
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+      hoverAbortRef.current?.abort();
+      // Blob-URLs (von isGenerated) freigeben
+      hoverUrlCache.current.forEach(url => {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+      });
+      hoverUrlCache.current.clear();
+    };
+  }, []);
+
+  // 👁️ Hover-Preview: Row-Handler (350ms Delay)
+  const handleRowMouseEnter = (contract: Contract, e: React.MouseEvent) => {
+    // Mobile/Touch: kein Hover-Preview
+    if (typeof window !== 'undefined' && window.matchMedia?.('(hover: none)').matches) return;
+
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    const x = e.clientX;
+    const y = e.clientY;
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredContractId(contract._id);
+      // Position: rechts neben Maus, mit Rand-Fallback
+      const TOOLTIP_W = 220;
+      const TOOLTIP_H = 300;
+      const PAD = 16;
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const posX = x + PAD + TOOLTIP_W > winW ? x - PAD - TOOLTIP_W : x + PAD;
+      const posY = y + TOOLTIP_H > winH ? Math.max(8, winH - TOOLTIP_H - 8) : y;
+      setHoverPos({ x: posX, y: posY });
+    }, 350);
+  };
+  const handleRowMouseLeave = () => {
+    if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
+    setHoveredContractId(null);
+    setHoverPos(null);
+    setHoverError(null);
+    hoverAbortRef.current?.abort();
+  };
 
   // 📄 PDF-Thumbnail Toggle — geräteübergreifend speichern
   const toggleSidebarPdf = () => {
@@ -5342,6 +5486,8 @@ export default function Contracts() {
                               transition={{ duration: 0.3 }}
                               onClick={() => handleRowClick(contract)}
                               onDoubleClick={() => handleRowDoubleClick(contract)}
+                              onMouseEnter={(e) => handleRowMouseEnter(contract, e)}
+                              onMouseLeave={handleRowMouseLeave}
                             >
                               {/* 📋 Checkbox Cell - only visible in bulk select mode */}
                               {bulkSelectMode && (
@@ -6142,6 +6288,59 @@ export default function Contracts() {
           />
       </div>
       {/* End of pageContainer */}
+
+      {/* 👁️ Hover-Preview-Tooltip (Schritt 2) — als Portal in body */}
+      {hoveredContractId && hoverPos && createPortal(
+        <div
+          className={styles.hoverPreviewTooltip}
+          style={{ left: hoverPos.x, top: hoverPos.y }}
+          onMouseEnter={handleRowMouseLeave /* Tooltip selbst soll Hover schließen — sonst Schwebe-Falle */}
+          aria-hidden="true"
+        >
+          {hoverLoading && (
+            <div className={styles.hoverPreviewState}>
+              <Loader size={18} className={styles.hoverPreviewSpinner} />
+              <span>Vorschau wird geladen…</span>
+            </div>
+          )}
+          {!hoverLoading && hoverError === 'unsupported' && (
+            <div className={styles.hoverPreviewState}>
+              <FileText size={22} />
+              <span>Vorschau nur für PDF-Dokumente verfügbar</span>
+            </div>
+          )}
+          {!hoverLoading && hoverError === 'fetch' && (
+            <div className={styles.hoverPreviewState}>
+              <AlertCircle size={18} />
+              <span>Vorschau nicht verfügbar</span>
+            </div>
+          )}
+          {!hoverLoading && !hoverError && hoverUrl && (
+            <Document
+              file={hoverUrl}
+              loading={
+                <div className={styles.hoverPreviewState}>
+                  <Loader size={18} className={styles.hoverPreviewSpinner} />
+                </div>
+              }
+              error={
+                <div className={styles.hoverPreviewState}>
+                  <AlertCircle size={18} />
+                  <span>Vorschau nicht verfügbar</span>
+                </div>
+              }
+            >
+              <Page
+                pageNumber={1}
+                width={220}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
+            </Document>
+          )}
+        </div>,
+        document.body
+      )}
 
       {/* 🎨 Contract Details Modal als Portal (außerhalb pageContainer für korrektes Scroll-Verhalten) */}
       {selectedContract && showDetails && createPortal(

@@ -9437,5 +9437,47 @@
 
 /* === Toolbar-Border-Override entfernt (29.05.2026) — fällt auf V1-Base #e2e8f0 zurück === */
 
+/* === Hover-Preview-Tooltip (Schritt 2, 30.05.2026) === */
+.hoverPreviewTooltip {
+  position: fixed;
+  width: 220px;
+  min-height: 80px;
+  max-height: 320px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12), 0 2px 6px rgba(15, 23, 42, 0.06);
+  z-index: 9999;
+  overflow: hidden;
+  pointer-events: none; /* Tooltip blockiert Mouse-Events nicht */
+  animation: hoverPreviewFadeIn 0.12s ease-out;
+}
+@keyframes hoverPreviewFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hoverPreviewState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  color: #64748b;
+  font-size: 12.5px;
+  text-align: center;
+  min-height: 80px;
+}
+.hoverPreviewSpinner {
+  animation: spin 1s linear infinite;
+}
+@media (hover: none) {
+  .hoverPreviewTooltip { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hoverPreviewTooltip { animation: none; }
+  .hoverPreviewSpinner { animation: none; }
+}
+
 
 
