@@ -758,6 +758,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             </div>
           </div>
           <div>
+            <div className={styles.heroEye}>Zusammenfassung</div>
             <h2 className={styles.heroTitle}>{buildHeroActivity(docClass)}</h2>
             {heroSub && (
               <p className={styles.heroSub}>
@@ -782,51 +783,40 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                     {heroSubExpanded ? "Weniger" : "Mehr anzeigen"}
                   </button>
                 )}
-                {hasLayman && (
-                  <>
-                    {" "}
-                    <button
-                      type="button"
-                      className={styles.heroLaymanInline}
-                      onClick={() => setLaymanMode(v => !v)}
-                      aria-pressed={laymanMode}
-                      title={laymanMode ? "Zurück zur Anwalts-Sprache" : "In einfacher Sprache erklären"}
-                    >
-                      <Sparkles size={11} />
-                      {laymanMode ? "Anwalts-Sprache" : "einfach erklären"}
-                    </button>
-                  </>
-                )}
               </p>
             )}
-            {/* Hero-Stats: 0-Werte ausblenden (30.05.2026) — wirkten wie Mangel.
-                Stats werden nur gezeigt wenn relevante Werte vorhanden. */}
-            {(critCount > 0 || terminCount > 0 || (tsfCount > 0 || recoCount > 0)) && (
-              <div className={styles.heroStats}>
-                {critCount > 0 && (
-                  <div className={styles.hsItem}>
-                    <span className={`${styles.hsDot} ${styles.hsDotRed}`} />
-                    <strong>{critCount}</strong>&nbsp;{critCount === 1 ? "kritische Klausel" : "kritische Klauseln"}
-                  </div>
-                )}
-                {terminCount > 0 && (
-                  <div className={styles.hsItem}>
-                    <span className={`${styles.hsDot} ${styles.hsDotAmber}`} />
-                    <strong>{terminCount}</strong>&nbsp;{terminCount === 1 ? "Termin / Frist" : "Termine & Fristen"}
-                  </div>
-                )}
-                {tsfCount > 0 ? (
-                  <div className={styles.hsItem}>
-                    <span className={`${styles.hsDot} ${styles.hsDotViolet}`} />
-                    <strong>{tsfCount}</strong>&nbsp;Pilot-Checks
-                  </div>
-                ) : recoCount > 0 ? (
-                  <div className={styles.hsItem}>
-                    <span className={`${styles.hsDot} ${styles.hsDotViolet}`} />
-                    <strong>{recoCount}</strong>&nbsp;{recoCount === 1 ? "Empfehlung" : "Empfehlungen"}
-                  </div>
-                ) : null}
+            <div className={styles.heroStats}>
+              <div className={styles.hsItem}>
+                <span className={`${styles.hsDot} ${styles.hsDotRed}`} />
+                <strong>{critCount}</strong>&nbsp;{critCount === 1 ? "kritische Klausel" : "kritische Klauseln"}
               </div>
+              <div className={styles.hsItem}>
+                <span className={`${styles.hsDot} ${styles.hsDotAmber}`} />
+                <strong>{terminCount}</strong>&nbsp;{terminCount === 1 ? "Termin / Frist" : "Termine & Fristen"}
+              </div>
+              {tsfCount > 0 ? (
+                <div className={styles.hsItem}>
+                  <span className={`${styles.hsDot} ${styles.hsDotViolet}`} />
+                  <strong>{tsfCount}</strong>&nbsp;Pilot-Checks
+                </div>
+              ) : (
+                <div className={styles.hsItem}>
+                  <span className={`${styles.hsDot} ${styles.hsDotViolet}`} />
+                  <strong>{recoCount}</strong>&nbsp;{recoCount === 1 ? "Empfehlung" : "Empfehlungen"}
+                </div>
+              )}
+            </div>
+            {hasLayman && (
+              <button
+                type="button"
+                className={`${styles.laymanToggle} ${laymanMode ? styles.laymanToggleActive : ""}`}
+                onClick={() => setLaymanMode(v => !v)}
+                aria-pressed={laymanMode}
+                title={laymanMode ? "Zurück zur Anwalts-Sprache" : "In einfacher Sprache erklären"}
+              >
+                <Sparkles size={13} />
+                {laymanMode ? "Anwalts-Sprache" : "In einfachen Worten"}
+              </button>
             )}
           </div>
         </div>
