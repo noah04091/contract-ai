@@ -10,7 +10,7 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, RotateCcw, Scale, Eye, AlertTriangle } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, Scale, Eye, AlertTriangle } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
@@ -595,18 +595,6 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               >
                 <RefreshCw size={14} aria-hidden="true" className={analyzing ? styles.spinIcon : ""} />
                 <span>{analyzing ? "Analysiere..." : "Erneut analysieren"}</span>
-              </button>
-            )}
-            {onReset && (
-              <button
-                type="button"
-                className={styles.fcBtn}
-                onClick={onReset}
-                disabled={analyzing}
-                aria-label="Analyse zurücksetzen"
-              >
-                <RotateCcw size={14} aria-hidden="true" />
-                <span>Zurücksetzen</span>
               </button>
             )}
           </div>
