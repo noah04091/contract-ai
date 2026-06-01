@@ -60,6 +60,7 @@ import {
 } from 'recharts';
 import { Send as SendIcon } from 'lucide-react';
 import CampaignsTab from './CampaignsTab';
+import RefundFeedbackTab from './RefundFeedbackTab';
 import styles from './AdminDashboard.module.css';
 
 // API URL für Backend-Calls
@@ -463,7 +464,7 @@ const formatActivityType = (type: string): string => {
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'campaigns' | 'settings'>('costs');
+  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'campaigns' | 'refunds' | 'settings'>('costs');
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [betaStats, setBetaStats] = useState<BetaStats | null>(null);
@@ -1585,6 +1586,13 @@ export default function AdminDashboard() {
         >
           <SendIcon size={20} />
           <span>Kampagnen</span>
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'refunds' ? styles.active : ''}`}
+          onClick={() => setActiveTab('refunds')}
+        >
+          <RotateCcw size={20} />
+          <span>Rückerstattungen</span>
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'settings' ? styles.active : ''}`}
@@ -3973,6 +3981,8 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === 'campaigns' && <CampaignsTab />}
+
+        {activeTab === 'refunds' && <RefundFeedbackTab />}
 
         {activeTab === 'settings' && (
           <div className={styles.settingsTab}>
