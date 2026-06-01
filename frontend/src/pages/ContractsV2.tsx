@@ -408,6 +408,11 @@ export default function Contracts() {
   const [sidebarPdfCollapsed, setSidebarPdfCollapsed] = useState<boolean>(
     () => !!user?.uiPreferences?.sidebarPdfCollapsed
   ); // 📄 PDF Thumbnail ein-/ausklappbar (geräteübergreifend)
+  // 👁️ Hover-PDF-Vorschau an/aus (geräteübergreifend, Default AN)
+  const [hoverPreviewEnabled, setHoverPreviewEnabled] = useState<boolean>(
+    () => user?.uiPreferences?.hoverPreviewEnabled !== false
+  );
+  const [showViewSettings, setShowViewSettings] = useState(false); // ⚙️ "Ansicht"-Popover
 
   /* ============================================================
      V2 TODO #4c — Spalten-Konfigurator (aufgeräumt + Smart-Display)
@@ -907,10 +912,14 @@ export default function Contracts() {
         setColumnConfigFor(null);
         setColumnConfigPos(null);
       }
+      // ⚙️ Ansicht-Popover schließen
+      if (showViewSettings) {
+        setShowViewSettings(false);
+      }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen, morePopoverFor, columnConfigFor]);
+  }, [folderDropdownOpen, folderContextMenu, qfDropdownOpen, morePopoverFor, columnConfigFor, showViewSettings]);
 
   // 🆕 V2 TODO #6: Escape schließt Konfigurator + Focus-Restore zum Trigger
   useEffect(() => {
@@ -1219,6 +1228,7 @@ export default function Contracts() {
 
   // 👁️ Hover-Preview: Row-Handler (200ms Delay, Cursor-folgend)
   const handleRowMouseEnter = (contract: Contract, e: React.MouseEvent) => {
+    if (!hoverPreviewEnabled) return; // 👁️ Vom User abgeschaltet
     // Nur überspringen, wenn das Gerät GAR NICHT hovern kann (reines Touch-Gerät)
     if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(any-hover: hover)').matches) return;
 
@@ -1231,6 +1241,7 @@ export default function Contracts() {
   };
   // 👁️ Hover-Preview: Box folgt dem Cursor, solange man über der Zeile ist
   const handleRowMouseMove = (e: React.MouseEvent) => {
+    if (!hoverPreviewEnabled) return; // 👁️ Vom User abgeschaltet
     if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(any-hover: hover)').matches) return;
     setHoverPos(computeHoverPos(e.clientX, e.clientY));
   };
@@ -1252,6 +1263,28 @@ export default function Contracts() {
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({ sidebarPdfCollapsed: newValue })
+    }).catch(e => console.error('UI-Preference save error:', e));
+  };
+
+  // 👁️ Hover-Vorschau Toggle — geräteübergreifend speichern
+  const toggleHoverPreview = () => {
+    const newValue = !hoverPreviewEnabled;
+    setHoverPreviewEnabled(newValue);
+    // Beim Ausschalten eine evtl. offene Box sofort schließen
+    if (!newValue) {
+      if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
+      setHoveredContractId(null);
+      setHoverPos(null);
+    }
+    if (user) {
+      user.uiPreferences = { ...user.uiPreferences, hoverPreviewEnabled: newValue };
+    }
+    const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+    fetch('/api/auth/ui-preferences', {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ hoverPreviewEnabled: newValue })
     }).catch(e => console.error('UI-Preference save error:', e));
   };
 
@@ -4370,6 +4403,65 @@ export default function Contracts() {
                   <option value="slot2_asc">{getFieldLabel(columnSlots[2])} ↑</option>
                   <option value="slot2_desc">{getFieldLabel(columnSlots[2])} ↓</option>
                 </select>
+
+                {/* ⚙️ Ansicht-Einstellungen (Display-Popover wie Linear/Stripe) */}
+                <div style={{ position: 'relative' }}>
+                  <button
+                    type="button"
+                    className={`${styles.toolbarButton} ${showViewSettings ? styles.active : ''}`}
+                    onClick={(e) => { e.stopPropagation(); setShowViewSettings((v) => !v); }}
+                    title="Ansicht-Einstellungen"
+                    aria-haspopup="true"
+                    aria-expanded={showViewSettings}
+                  >
+                    <SlidersHorizontal size={16} />
+                    <span>Ansicht</span>
+                  </button>
+                  {showViewSettings && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        position: 'absolute', top: 'calc(100% + 6px)', right: 0, width: 290,
+                        background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 12,
+                        boxShadow: '0 12px 32px rgba(15,23,42,0.16), 0 3px 8px rgba(15,23,42,0.08)',
+                        zIndex: 1000, padding: '14px 16px',
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12 }}>
+                        Ansicht
+                      </div>
+                      <div
+                        role="switch"
+                        aria-checked={hoverPreviewEnabled}
+                        tabIndex={0}
+                        onClick={toggleHoverPreview}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHoverPreview(); } }}
+                        style={{ display: 'flex', alignItems: 'flex-start', gap: 14, cursor: 'pointer' }}
+                      >
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>PDF-Vorschau beim Hovern</div>
+                          <div style={{ fontSize: 12, color: '#64748b', marginTop: 3, lineHeight: 1.4 }}>
+                            Zeigt eine Vorschau, wenn du über eine Zeile fährst
+                          </div>
+                        </div>
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            flexShrink: 0, marginTop: 2, width: 42, height: 24, borderRadius: 999,
+                            background: hoverPreviewEnabled ? '#2563eb' : '#cbd5e1',
+                            position: 'relative', transition: 'background 0.18s ease', display: 'inline-block',
+                          }}
+                        >
+                          <span style={{
+                            position: 'absolute', top: 2, left: hoverPreviewEnabled ? 20 : 2,
+                            width: 20, height: 20, borderRadius: '50%', background: '#ffffff',
+                            boxShadow: '0 1px 3px rgba(15,23,42,0.25)', transition: 'left 0.18s ease',
+                          }} />
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
             </div>
