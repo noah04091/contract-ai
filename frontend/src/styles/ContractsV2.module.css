@@ -3292,6 +3292,24 @@
   margin-top: 2rem;
 }
 
+/* Desktop: Analyse-Ergebnis-Karte mit gleichem Abstand ringsum wie seitlich
+   (oben = unten = seitlich ≈ 4px). Die negativen Margins heben das vertikale
+   section-Padding (0.75rem oben/unten) auf; der :first-child-Reset nimmt der
+   inneren Karte (ContractAnalysis.module.css .analysisContainer) ihren eigenen
+   1.5rem-Top-Margin. Wirkt AUSSCHLIESSLICH auf die Hülle dieser einen Inline-
+   Ergebnis-Ansicht — Karten-Innenleben (Tabs/Verwaltung), Mobile, V1-Seite und
+   Quick-Analyse-Modal bleiben unberührt. */
+@media (min-width: 769px) {
+  .analysisContainer {
+    margin-top: -0.75rem;
+    margin-bottom: -0.75rem;
+  }
+
+  .analysisContainer > :first-child {
+    margin-top: 0;
+  }
+}
+
 /* Contracts Section */
 .contractsCount {
   color: #64748b;
