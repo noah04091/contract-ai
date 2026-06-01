@@ -671,12 +671,21 @@ export async function pollAnalysisJob(
       if (status.status === 'failed') {
         clearPendingJob(jobId);
         const errMsg = status.error?.message || `Analyse fehlgeschlagen (${status.error?.code || 'unknown'})`;
-        throw new Error(errMsg);
+        // Endgültigen Job-Fehler eindeutig markieren (Flag statt Text-Regex):
+        // Das Backend liefert die ECHTE Fehlermeldung (z.B. "📄 PDF-Datei beschädigt"),
+        // die den Fallback-Text nicht enthält — ein Regex auf den Text würde failed-Jobs
+        // als vorübergehenden Polling-Fehler fehldeuten und endlos weiterpollen.
+        const failure = new Error(errMsg) as Error & { jobFailed?: boolean };
+        failure.jobFailed = true;
+        throw failure;
       }
       // 'queued' oder 'processing' → weiter pollen
     } catch (err) {
-      // Tatsächlicher Backend-Fehler (status='failed') wird re-thrown — nicht mehr pollen
-      if (err instanceof Error && /Analyse fehlgeschlagen/.test(err.message)) {
+      // Endgültiger Backend-Fehler (status='failed') wird re-thrown — nicht mehr pollen.
+      // Erkennung über das jobFailed-Flag, NICHT über den Fehlertext (robust gegen
+      // beliebige Backend-Fehlermeldungen). Echte Netzwerk-/Timeout-Fehler tragen das
+      // Flag nicht und durchlaufen weiter die consecutiveErrors-Toleranz.
+      if (err instanceof Error && (err as Error & { jobFailed?: boolean }).jobFailed) {
         throw err;
       }
       consecutiveErrors++;
