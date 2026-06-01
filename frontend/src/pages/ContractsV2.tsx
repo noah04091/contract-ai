@@ -1204,26 +1204,35 @@ export default function Contracts() {
     };
   }, []);
 
-  // 👁️ Hover-Preview: Row-Handler (350ms Delay)
+  // 👁️ Hover-Preview: Position rechts neben dem Cursor mit Rand-Fallback
+  const computeHoverPos = (x: number, y: number) => {
+    const TOOLTIP_W = 260;
+    const TOOLTIP_H = 340;
+    const PAD = 18;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    // Bevorzugt rechts neben Cursor, sonst links; vertikal leicht oberhalb, am Rand geclamped
+    const posX = x + PAD + TOOLTIP_W > winW ? Math.max(8, x - PAD - TOOLTIP_W) : x + PAD;
+    const posY = Math.min(Math.max(8, y - 24), winH - TOOLTIP_H - 8);
+    return { x: posX, y: posY };
+  };
+
+  // 👁️ Hover-Preview: Row-Handler (200ms Delay, Cursor-folgend)
   const handleRowMouseEnter = (contract: Contract, e: React.MouseEvent) => {
-    // Mobile/Touch: kein Hover-Preview
-    if (typeof window !== 'undefined' && window.matchMedia?.('(hover: none)').matches) return;
+    // Nur überspringen, wenn das Gerät GAR NICHT hovern kann (reines Touch-Gerät)
+    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(any-hover: hover)').matches) return;
 
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    const x = e.clientX;
-    const y = e.clientY;
+    // Position sofort setzen, damit die Box beim Erscheinen direkt korrekt sitzt
+    setHoverPos(computeHoverPos(e.clientX, e.clientY));
     hoverTimeoutRef.current = setTimeout(() => {
       setHoveredContractId(contract._id);
-      // Position: rechts neben Maus, mit Rand-Fallback
-      const TOOLTIP_W = 220;
-      const TOOLTIP_H = 300;
-      const PAD = 16;
-      const winW = window.innerWidth;
-      const winH = window.innerHeight;
-      const posX = x + PAD + TOOLTIP_W > winW ? x - PAD - TOOLTIP_W : x + PAD;
-      const posY = y + TOOLTIP_H > winH ? Math.max(8, winH - TOOLTIP_H - 8) : y;
-      setHoverPos({ x: posX, y: posY });
-    }, 350);
+    }, 200);
+  };
+  // 👁️ Hover-Preview: Box folgt dem Cursor, solange man über der Zeile ist
+  const handleRowMouseMove = (e: React.MouseEvent) => {
+    if (typeof window !== 'undefined' && window.matchMedia && !window.matchMedia('(any-hover: hover)').matches) return;
+    setHoverPos(computeHoverPos(e.clientX, e.clientY));
   };
   const handleRowMouseLeave = () => {
     if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
@@ -5488,6 +5497,7 @@ export default function Contracts() {
                               onClick={() => handleRowClick(contract)}
                               onDoubleClick={() => handleRowDoubleClick(contract)}
                               onMouseEnter={(e) => handleRowMouseEnter(contract, e)}
+                              onMouseMove={handleRowMouseMove}
                               onMouseLeave={handleRowMouseLeave}
                             >
                               {/* 📋 Checkbox Cell - only visible in bulk select mode */}
@@ -6292,49 +6302,65 @@ export default function Contracts() {
 
       {/* 👁️ Hover-Preview-Tooltip — als Portal in body, iframe-basiert (browser-native PDF-Render) */}
       {hoveredContractId && hoverPos && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            left: hoverPos.x,
-            top: hoverPos.y,
-            width: 240,
-            height: 320,
-            background: '#ffffff',
-            border: '1px solid #e2e8f0',
-            borderRadius: 10,
-            boxShadow: '0 8px 24px rgba(15,23,42,0.15), 0 2px 6px rgba(15,23,42,0.08)',
-            zIndex: 99998,
-            overflow: 'hidden',
-            pointerEvents: 'none',
-          }}
-          aria-hidden="true"
-        >
-          {hoverLoading && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 8 }}>
-              <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
-              <span>Lade Vorschau…</span>
+        (() => {
+          const hc = contracts.find(c => c._id === hoveredContractId);
+          const hcName = hc ? fixUtf8Display(hc.name) : 'Dokument';
+          return (
+            <div
+              style={{
+                position: 'fixed',
+                left: hoverPos.x,
+                top: hoverPos.y,
+                width: 260,
+                height: 340,
+                background: '#ffffff',
+                border: '1px solid #e2e8f0',
+                borderRadius: 12,
+                boxShadow: '0 12px 32px rgba(15,23,42,0.22), 0 3px 8px rgba(15,23,42,0.10)',
+                zIndex: 999999,
+                overflow: 'hidden',
+                pointerEvents: 'none',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              aria-hidden="true"
+            >
+              {/* Kopfzeile — immer sichtbar, macht die Box unverkennbar */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderBottom: '1px solid #eef2f7', background: '#f8fafc', flexShrink: 0 }}>
+                <FileText size={15} style={{ color: '#7c2d3a', flexShrink: 0 }} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{hcName}</span>
+              </div>
+              {/* Inhalt */}
+              <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+                {hoverLoading && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 8 }}>
+                    <Loader size={18} style={{ animation: 'spin 1s linear infinite' }} />
+                    <span>Lade Vorschau…</span>
+                  </div>
+                )}
+                {!hoverLoading && hoverError === 'unsupported' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 10, padding: 20, textAlign: 'center' }}>
+                    <FileText size={28} />
+                    <span>Vorschau nur für PDF-Dokumente</span>
+                  </div>
+                )}
+                {!hoverLoading && hoverError === 'fetch' && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 10, padding: 20, textAlign: 'center' }}>
+                    <AlertCircle size={22} />
+                    <span>Vorschau nicht verfügbar</span>
+                  </div>
+                )}
+                {!hoverLoading && !hoverError && hoverUrl && (
+                  <iframe
+                    src={`${hoverUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1`}
+                    style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
+                    title="PDF Vorschau"
+                  />
+                )}
+              </div>
             </div>
-          )}
-          {!hoverLoading && hoverError === 'unsupported' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 10, padding: 20, textAlign: 'center' }}>
-              <FileText size={28} />
-              <span>Vorschau nur für PDF-Dokumente</span>
-            </div>
-          )}
-          {!hoverLoading && hoverError === 'fetch' && (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#64748b', fontSize: 13, gap: 10, padding: 20, textAlign: 'center' }}>
-              <AlertCircle size={22} />
-              <span>Vorschau nicht verfügbar</span>
-            </div>
-          )}
-          {!hoverLoading && !hoverError && hoverUrl && (
-            <iframe
-              src={`${hoverUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1`}
-              style={{ width: '100%', height: '100%', border: 'none', pointerEvents: 'none' }}
-              title="PDF Vorschau"
-            />
-          )}
-        </div>,
+          );
+        })(),
         document.body
       )}
 
