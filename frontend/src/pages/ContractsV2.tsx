@@ -823,6 +823,12 @@ export default function Contracts() {
     }
   }, [location.search]);
 
+  // Beim Verlassen der Listen-Ansicht das "Ansicht"-Popover schließen, damit es
+  // beim Zurückkehren nicht ungewollt wieder offen erscheint (Toolbar wird dort un-mountet).
+  useEffect(() => {
+    if (activeSection !== 'contracts') setShowViewSettings(false);
+  }, [activeSection]);
+
   // ⚡ Cleanup: Entferne verwaisten quickAnalysis-URL-Param wenn Modal nicht offen ist
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -4008,8 +4014,10 @@ export default function Contracts() {
       </Helmet>
 
       <div className={styles.pageContainer}>
-        {/* 🎯 Simple Tour - zuverlässiger als react-joyride */}
-        <SimpleTour tourId="contracts" />
+        {/* 🎯 Simple Tour - zuverlässiger als react-joyride.
+            Nur in der Listen-Ansicht mounten — ihre Ziel-Elemente (Toolbar/Suche)
+            existieren nur dort; so zeigt sie nie ins Leere (Upload-/Analyse-Flow). */}
+        {activeSection === 'contracts' && <SimpleTour tourId="contracts" />}
 
         {/* ========== ENTERPRISE LAYOUT ========== */}
         <div className={`${styles.enterpriseLayout} ${previewContract ? styles.withPreview : ''}`}>
@@ -4219,6 +4227,10 @@ export default function Contracts() {
               )}
             </AnimatePresence>
 
+            {/* Such-/Filter-Leisten (Mobile-Suche, Mobile-Chips, Desktop-Toolbar) nur in
+                der Listen-Ansicht. Im Upload-/Analyse-Flow haben sie keinen Nutzen → ausgeblendet. */}
+            {activeSection === 'contracts' && (
+            <>
             {/* 📱 MOBILE: Suchleiste oben - immer sichtbar */}
             <div className={styles.mobileSearchBar}>
               <Search size={16} className={styles.mobileSearchIcon} />
@@ -4471,6 +4483,8 @@ export default function Contracts() {
               </div>
 
             </div>
+            </>
+            )}
 
             {/* 📱 MOBILE: Filter Bottom-Sheet */}
             <AnimatePresence>
@@ -6129,8 +6143,8 @@ export default function Contracts() {
                   </div>
                 )}
 
-                {/* Badges */}
-                {(previewContract.isGenerated || previewContract.isOptimized || shouldShowAnalyzeButton(previewContract)) && (
+                {/* Badges — "Nicht analysiert"-Pille entfernt: redundant zu Header-Pille, Leerzustand & Analyse-Button */}
+                {(previewContract.isGenerated || previewContract.isOptimized || previewContract.envelope || previewContract.signatureStatus) && (
                   <div className={styles.previewBadges}>
                     {previewContract.isGenerated && (
                       <span className={styles.previewBadge} style={{ background: '#dbeafe', color: '#1d4ed8' }}>
@@ -6142,12 +6156,6 @@ export default function Contracts() {
                       <span className={styles.previewBadge} style={{ background: '#dcfce7', color: '#15803d' }}>
                         <CheckCircle size={12} />
                         Optimiert
-                      </span>
-                    )}
-                    {shouldShowAnalyzeButton(previewContract) && (
-                      <span className={styles.previewBadge} style={{ background: '#fef3c7', color: '#b45309' }}>
-                        <Clock size={12} />
-                        Nicht analysiert
                       </span>
                     )}
                     {renderSignatureBadge(previewContract)}
