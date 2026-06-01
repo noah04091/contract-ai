@@ -80,6 +80,10 @@ const NdaPruefen = lazy(() => import("./pages/landing/NdaPruefen"));
 const KaufvertragPruefen = lazy(() => import("./pages/landing/KaufvertragPruefen"));
 const AgenturvertragPruefen = lazy(() => import("./pages/landing/AgenturvertragPruefen"));
 
+// 📖 Öffentliches Rechtslexikon (Register + Einzelseiten)
+const Rechtslexikon = lazy(() => import("./pages/landing/Rechtslexikon"));
+const RechtslexikonTerm = lazy(() => import("./pages/landing/RechtslexikonTerm"));
+
 // 🏢 B2B / Team-Landingpage (für Agenturen, Verwaltungen, Berater)
 const FuerAgenturen = lazy(() => import("./pages/FuerAgenturen"));
 
@@ -223,6 +227,10 @@ function AppWithLoader() {
             <Route path="/nda-pruefen" element={<NdaPruefen />} />
             <Route path="/kaufvertrag-pruefen" element={<KaufvertragPruefen />} />
             <Route path="/agenturvertrag-pruefen" element={<AgenturvertragPruefen />} />
+
+            {/* 📖 Öffentliches Rechtslexikon */}
+            <Route path="/rechtslexikon" element={<Rechtslexikon />} />
+            <Route path="/rechtslexikon/:slug" element={<RechtslexikonTerm />} />
 
             {/* 🏢 B2B / Team-Landingpage */}
             <Route path="/fuer-agenturen" element={<FuerAgenturen />} />
