@@ -6450,6 +6450,13 @@ export default function Contracts() {
                   />
                 )}
               </div>
+              {/* Fußzeile — Hinweis: Hover = Blick, Klick = volles Dokument */}
+              {!hoverLoading && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '6px 10px', borderTop: '1px solid #eef2f7', background: '#f8fafc', flexShrink: 0, fontSize: 11, fontWeight: 500, color: '#64748b' }}>
+                  <Eye size={12} />
+                  <span>Zum Lesen klicken</span>
+                </div>
+              )}
             </div>
           );
         })(),
