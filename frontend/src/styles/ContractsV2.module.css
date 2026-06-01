@@ -2223,11 +2223,11 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: conic-gradient(#3b82f6 calc(var(--scoreVal) * 1%), #e2e8f0 0);
+  background: conic-gradient(var(--scoreColor, #3b82f6) calc(var(--scoreVal) * 1%), #e2e8f0 0);
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px #dbeafe;
+  box-shadow: 0 0 0 3px var(--scoreHalo, #dbeafe);
   position: relative;
 }
 
@@ -2248,6 +2248,51 @@
 
 /* Legacy SVG-Klassen — display: none (alte Render-Pfade noch im JSX bevor wir umbauen) */
 .scoreCircleBg, .scoreCircleProgress, .scoreValue, .scoreNumber, .scoreLabel { display: none; }
+
+/* 🎯 Sidebar-lokale Einpassung geteilter Sektionen (Termine/Fristen).
+   Neutralisiert deren Card-Look (gelbe Box etc.) NUR in der Vorschau-Sidebar,
+   ohne die geteilten Komponenten/CSS-Module selbst zu ändern (14 Nutzungsstellen). */
+.previewSharedWrap {
+  padding: 18px 28px;
+  border-bottom: 1px solid #f1f3f6;
+}
+.previewSharedWrap > div {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+/* 🆕 Leer-Zustand für nicht analysierte Verträge in der Vorschau-Sidebar */
+.previewEmptyState {
+  text-align: center;
+  padding: 36px 28px 28px;
+}
+.previewEmptyIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+}
+.previewEmptyTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+.previewEmptyText {
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+  max-width: 280px;
+  margin: 0 auto;
+}
 
 .scoreDetails {
   flex: 1;

@@ -413,6 +413,7 @@ export default function Contracts() {
     () => user?.uiPreferences?.hoverPreviewEnabled !== false
   );
   const [showViewSettings, setShowViewSettings] = useState(false); // ⚙️ "Ansicht"-Popover
+  const [summaryExpanded, setSummaryExpanded] = useState(false); // 📝 Sidebar-Zusammenfassung "Weiterlesen"
 
   /* ============================================================
      V2 TODO #4c — Spalten-Konfigurator (aufgeräumt + Smart-Display)
@@ -1104,6 +1105,11 @@ export default function Contracts() {
       cancelled = true;
       if (blobUrl) URL.revokeObjectURL(blobUrl);
     };
+  }, [previewContract?._id]);
+
+  // 📝 Zusammenfassung wieder einklappen, wenn ein anderer Vertrag in die Vorschau kommt
+  useEffect(() => {
+    setSummaryExpanded(false);
   }, [previewContract?._id]);
 
   // 👁️ Hover-Preview: URL für gehoverten Vertrag holen (mit Cache + Abort)
@@ -6065,6 +6071,18 @@ export default function Contracts() {
               <div className={styles.previewContent}>
                 {/* Status & Analysiert sind jetzt im Header bzw. im Score-Ring-Meta — keine Redundanz */}
 
+                {/* 🆕 Leer-Zustand: noch nicht analysierter Vertrag ohne Score/Summary/Termine */}
+                {shouldShowAnalyzeButton(previewContract)
+                  && (previewContract.contractScore === undefined || previewContract.contractScore === null)
+                  && !previewContract.summary
+                  && (!previewContract.importantDates || previewContract.importantDates.length === 0) && (
+                  <div className={styles.previewEmptyState}>
+                    <div className={styles.previewEmptyIcon}><FileText size={22} /></div>
+                    <div className={styles.previewEmptyTitle}>Noch nicht analysiert</div>
+                    <div className={styles.previewEmptyText}>Lass die KI Risiken, Fristen &amp; einen Score erstellen — der Button unten startet die Analyse.</div>
+                  </div>
+                )}
+
                 {/* 🎨 Mockup-1:1 Score-Ring via CSS conic-gradient */}
                 {previewContract.contractScore !== undefined && previewContract.contractScore !== null && (
                   <div className={styles.previewSection}>
@@ -6074,7 +6092,11 @@ export default function Contracts() {
                     <div className={styles.previewScoreRing}>
                       <div
                         className={styles.scoreCircle}
-                        style={{ ['--scoreVal' as string]: previewContract.contractScore } as React.CSSProperties}
+                        style={{
+                          ['--scoreVal' as string]: previewContract.contractScore,
+                          ['--scoreColor' as string]: previewContract.contractScore >= 70 ? '#10b981' : previewContract.contractScore >= 40 ? '#f59e0b' : '#ef4444',
+                          ['--scoreHalo' as string]: previewContract.contractScore >= 70 ? '#d1fae5' : previewContract.contractScore >= 40 ? '#fef3c7' : '#fee2e2',
+                        } as React.CSSProperties}
                       >
                         <div>{previewContract.contractScore}</div>
                       </div>
@@ -6162,7 +6184,7 @@ export default function Contracts() {
                         {items.map((it, i) => (
                           <Fragment key={i}>
                             <dt>{it.label}</dt>
-                            <dd className={it.cls}>{it.value}</dd>
+                            <dd className={it.cls} title={it.value}>{it.value}</dd>
                           </Fragment>
                         ))}
                       </dl>
@@ -6171,15 +6193,22 @@ export default function Contracts() {
                 })()}
 
                 {/* 📅 Wichtige Termine - KI-extrahierte Datums (VOR Zusammenfassung) */}
+                {/* Wrapper passt die geteilte Komponente NUR hier in den flachen Sidebar-Rhythmus ein */}
                 {previewContract.importantDates && previewContract.importantDates.length > 0 && (
-                  <ImportantDatesSection
-                    importantDates={previewContract.importantDates}
-                    contractName={previewContract.name}
-                  />
+                  <div className={styles.previewSharedWrap}>
+                    <ImportantDatesSection
+                      importantDates={previewContract.importantDates}
+                      contractName={previewContract.name}
+                    />
+                  </div>
                 )}
 
                 {/* ⏰ Wichtige Fristen & Hinweise — universelle Frist-Regelungen aus Date Hunt */}
-                <FristHinweiseSection fristHinweise={previewContract.fristHinweise} />
+                {Array.isArray(previewContract.fristHinweise) && previewContract.fristHinweise.length > 0 && (
+                  <div className={styles.previewSharedWrap}>
+                    <FristHinweiseSection fristHinweise={previewContract.fristHinweise} />
+                  </div>
+                )}
 
                 {/* Summary Section */}
                 {previewContract.summary && (
@@ -6191,9 +6220,15 @@ export default function Contracts() {
                       <h5>Zusammenfassung</h5>
                     </div>
                     <p className={styles.previewSummary}>
-                      {previewContract.summary.length > 200
-                        ? previewContract.summary.slice(0, 200) + '...'
-                        : previewContract.summary}
+                      {summaryExpanded || previewContract.summary.length <= 200
+                        ? previewContract.summary
+                        : previewContract.summary.slice(0, 200).replace(/\s+\S*$/, '') + '… '}
+                      {previewContract.summary.length > 200 && (
+                        <span
+                          className={styles.previewRiskMore}
+                          onClick={() => setSummaryExpanded(v => !v)}
+                        >{summaryExpanded ? 'Weniger anzeigen' : 'Weiterlesen'}</span>
+                      )}
                     </p>
                   </div>
                 )}
