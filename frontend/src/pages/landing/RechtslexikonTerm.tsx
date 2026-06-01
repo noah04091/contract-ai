@@ -82,6 +82,12 @@ export default function RechtslexikonTerm() {
   return (
     <>
       <Helmet>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap"
+          rel="stylesheet"
+        />
         <title>{term.term} – einfach erklärt | Rechtslexikon | Contract AI</title>
         <meta name="description" content={metaDescription} />
         <meta
@@ -127,7 +133,8 @@ export default function RechtslexikonTerm() {
                   className={styles.areaBadge}
                   style={{ color: info.color, background: hexToRgba(info.color, 0.1) }}
                 >
-                  {info.icon} {info.label}
+                  <span className={styles.badgeDot} style={{ background: info.color }} />
+                  {info.label}
                 </span>
                 {term.legalBasis && <span className={styles.basisChip}>{term.legalBasis}</span>}
               </div>

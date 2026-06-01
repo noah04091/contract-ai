@@ -23,6 +23,7 @@ function hexToRgba(hex: string, alpha: number): string {
 export default function Rechtslexikon() {
   const [query, setQuery] = useState("");
   const [activeArea, setActiveArea] = useState<"all" | LegalArea>("all");
+  const [activeLetter, setActiveLetter] = useState<string | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -72,6 +73,30 @@ export default function Rechtslexikon() {
     [grouped]
   );
 
+  // Scroll-Spy: markiert den Buchstaben des aktuell sichtbaren Abschnitts
+  useEffect(() => {
+    const sections = sortedLetters
+      .map((l) => document.getElementById(`letter-${l}`))
+      .filter((el): el is HTMLElement => el !== null);
+    if (sections.length === 0) {
+      setActiveLetter(null);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (visible[0]) {
+          setActiveLetter(visible[0].target.id.replace("letter-", ""));
+        }
+      },
+      { rootMargin: "-170px 0px -70% 0px", threshold: 0 }
+    );
+    sections.forEach((s) => observer.observe(s));
+    return () => observer.disconnect();
+  }, [sortedLetters]);
+
   // --- SEO Schema ---
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -109,6 +134,12 @@ export default function Rechtslexikon() {
   return (
     <>
       <Helmet>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap"
+          rel="stylesheet"
+        />
         <title>Rechtslexikon: Juristische Begriffe verständlich erklärt | Contract AI</title>
         <meta
           name="description"
@@ -175,11 +206,17 @@ export default function Rechtslexikon() {
               )}
             </div>
 
-            <p className={styles.heroMeta}>
-              {filtered.length === legalTerms.length
-                ? `${legalTerms.length} Begriffe`
-                : `${filtered.length} von ${legalTerms.length} Begriffen`}
-            </p>
+            <div className={styles.trustRow}>
+              <span className={styles.trustItem}>
+                <strong>{legalTerms.length}</strong> Begriffe
+              </span>
+              <span className={styles.trustSep} />
+              <span className={styles.trustItem}>
+                <strong>{Object.keys(areaCounts).length}</strong> Rechtsgebiete
+              </span>
+              <span className={styles.trustSep} />
+              <span className={styles.trustItem}>100% kostenlos</span>
+            </div>
           </div>
         </header>
 
@@ -215,7 +252,11 @@ export default function Rechtslexikon() {
             <nav className={styles.azNav} aria-label="Alphabetische Navigation">
               {ALPHABET.map((letter) =>
                 availableLetters.has(letter) ? (
-                  <a key={letter} href={`#letter-${letter}`} className={styles.azLink}>
+                  <a
+                    key={letter}
+                    href={`#letter-${letter}`}
+                    className={`${styles.azLink} ${activeLetter === letter ? styles.azActive : ""}`}
+                  >
                     {letter}
                   </a>
                 ) : (
@@ -252,7 +293,8 @@ export default function Rechtslexikon() {
                                 className={styles.areaBadge}
                                 style={{ color: info.color, background: hexToRgba(info.color, 0.1) }}
                               >
-                                {info.icon} {info.label}
+                                <span className={styles.badgeDot} style={{ background: info.color }} />
+                                {info.label}
                               </span>
                             </div>
                             <p className={styles.cardExplanation}>{term.simpleExplanation}</p>
