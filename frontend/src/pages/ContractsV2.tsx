@@ -3333,6 +3333,7 @@ export default function Contracts() {
   // 🆕 Single Click: Open Preview Panel | Double Click: Open Modal
   // 🆕 V2 Hybrid: Im Bulk-Mode toggelt Single-Click die Selection (statt Preview zu öffnen)
   const handleRowClick = (contract: Contract) => {
+    handleRowMouseLeave(); // 👁️ Hover-Vorschau schließen, sobald geklickt wird (sonst klebt sie ggf. über Panel/Modal)
     if (bulkSelectMode) {
       toggleSelectContract(contract._id);
       return;
@@ -3341,6 +3342,7 @@ export default function Contracts() {
   };
 
   const handleRowDoubleClick = (contract: Contract) => {
+    handleRowMouseLeave(); // 👁️ Hover-Vorschau schließen beim Öffnen des Detail-Modals
     // Double click opens full modal
     setSelectedContract(contract);
     setShowDetails(true);
@@ -6447,8 +6449,8 @@ export default function Contracts() {
       {/* End of pageContainer */}
 
       {/* 👁️ Hover-Preview-Tooltip — als Portal in body, iframe-basiert (browser-native PDF-Render) */}
-      {/* Nur in der Vertragsliste rendern — sonst "klebt" das Fenster beim Wechsel zu Upload/Analyse */}
-      {hoveredContractId && hoverPos && activeSection === 'contracts' && createPortal(
+      {/* Nur in der Vertragsliste rendern (nicht bei Upload/Analyse) und nicht über dem offenen Detail-Modal */}
+      {hoveredContractId && hoverPos && activeSection === 'contracts' && !showDetails && createPortal(
         (() => {
           const hc = contracts.find(c => c._id === hoveredContractId);
           const hcName = hc ? fixUtf8Display(hc.name) : 'Dokument';
