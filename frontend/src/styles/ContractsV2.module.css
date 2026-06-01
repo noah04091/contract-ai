@@ -1761,6 +1761,20 @@
   pointer-events: none;
 }
 
+/* 💻 Laptop-Breite (769–1440px): Toolbar kompakter machen, damit die Suchleiste
+   (flex:1) mehr Platz bekommt. Sekundär-Buttons nur als Icon, Dropdowns schmaler.
+   "Hochladen" (primary) behält sein Label. Desktop >1440px bleibt unverändert. */
+@media (min-width: 769px) and (max-width: 1440px) {
+  .enterpriseToolbar { gap: 0.5rem; padding-left: 1rem; padding-right: 1rem; }
+  .toolbarDivider { margin: 0 0.25rem; }
+  .toolbarButton { padding: 0.5rem 0.625rem; }
+  /* Labels der Sekundär-Buttons ausblenden (Auswählen, Export, Ansicht) — Hochladen behält Label */
+  .toolbarSection .toolbarButton span { display: none; }
+  .toolbarSection .toolbarButton.primary span { display: inline; }
+  /* Filter-Dropdowns schmaler (überschreibt die Inline-minWidths) */
+  .desktopFilters .toolbarButton { min-width: 0 !important; font-size: 0.78rem; padding: 0.5rem 0.5rem; }
+}
+
 .toolbarViewButtons {
   display: flex;
   border: 1px solid #e2e8f0;
