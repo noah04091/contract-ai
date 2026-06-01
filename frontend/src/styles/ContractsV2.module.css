@@ -1761,18 +1761,28 @@
   pointer-events: none;
 }
 
-/* 💻 Laptop-Breite (769–1440px): Toolbar kompakter machen, damit die Suchleiste
-   (flex:1) mehr Platz bekommt. Sekundär-Buttons nur als Icon, Dropdowns schmaler.
-   "Hochladen" (primary) behält sein Label. Desktop >1440px bleibt unverändert. */
-@media (min-width: 769px) and (max-width: 1440px) {
+/* 💻 Toolbar kompakter machen, wenn der Platz für die Suchleiste (flex:1) knapp wird.
+   Kompakt = Sekundär-Buttons (Auswählen/Export/Ansicht) nur als Icon, Dropdowns schmaler,
+   Abstände enger; "Hochladen" (primary) behält sein Label.
+   ROOT-Ursache war NICHT die Bildschirmbreite, sondern die offene Vorschau-Sidebar (~420px).
+   (a) Kleine Laptops ≤1536px: immer kompakt.
+   (b) Mittlere Screens ≤1920px: nur wenn die Vorschau offen ist (.withPreview).
+   Große Desktops >1920px bleiben unverändert. */
+@media (min-width: 769px) and (max-width: 1536px) {
   .enterpriseToolbar { gap: 0.5rem; padding-left: 1rem; padding-right: 1rem; }
-  .toolbarDivider { margin: 0 0.25rem; }
-  .toolbarButton { padding: 0.5rem 0.625rem; }
-  /* Labels der Sekundär-Buttons ausblenden (Auswählen, Export, Ansicht) — Hochladen behält Label */
-  .toolbarSection .toolbarButton span { display: none; }
-  .toolbarSection .toolbarButton.primary span { display: inline; }
-  /* Filter-Dropdowns schmaler (überschreibt die Inline-minWidths) */
-  .desktopFilters .toolbarButton { min-width: 0 !important; font-size: 0.78rem; padding: 0.5rem 0.5rem; }
+  .enterpriseToolbar .toolbarDivider { margin: 0 0.25rem; }
+  .enterpriseToolbar .toolbarButton { padding: 0.5rem 0.625rem; }
+  .enterpriseToolbar .toolbarSection .toolbarButton span { display: none; }
+  .enterpriseToolbar .toolbarSection .toolbarButton.primary span { display: inline; }
+  .enterpriseToolbar .desktopFilters .toolbarButton { min-width: 0 !important; font-size: 0.78rem; padding: 0.5rem 0.5rem; }
+}
+@media (min-width: 1537px) and (max-width: 1920px) {
+  .withPreview .enterpriseToolbar { gap: 0.5rem; padding-left: 1rem; padding-right: 1rem; }
+  .withPreview .enterpriseToolbar .toolbarDivider { margin: 0 0.25rem; }
+  .withPreview .enterpriseToolbar .toolbarButton { padding: 0.5rem 0.625rem; }
+  .withPreview .enterpriseToolbar .toolbarSection .toolbarButton span { display: none; }
+  .withPreview .enterpriseToolbar .toolbarSection .toolbarButton.primary span { display: inline; }
+  .withPreview .enterpriseToolbar .desktopFilters .toolbarButton { min-width: 0 !important; font-size: 0.78rem; padding: 0.5rem 0.5rem; }
 }
 
 .toolbarViewButtons {
