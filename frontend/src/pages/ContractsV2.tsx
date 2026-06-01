@@ -1225,6 +1225,17 @@ export default function Contracts() {
     };
   }, []);
 
+  // 👁️ Hover-Preview: State leeren, sobald man die Liste verlässt (Upload/Analyse) —
+  // verhindert, dass das Vorschaufenster "kleben" bleibt, weil onMouseLeave nicht feuert
+  useEffect(() => {
+    if (activeSection !== 'contracts') {
+      if (hoverTimeoutRef.current) { clearTimeout(hoverTimeoutRef.current); hoverTimeoutRef.current = null; }
+      setHoveredContractId(null);
+      setHoverPos(null);
+      hoverAbortRef.current?.abort();
+    }
+  }, [activeSection]);
+
   // 👁️ Hover-Preview: Position rechts neben dem Cursor mit Rand-Fallback
   const computeHoverPos = (x: number, y: number) => {
     const TOOLTIP_W = 260;
@@ -6436,7 +6447,8 @@ export default function Contracts() {
       {/* End of pageContainer */}
 
       {/* 👁️ Hover-Preview-Tooltip — als Portal in body, iframe-basiert (browser-native PDF-Render) */}
-      {hoveredContractId && hoverPos && createPortal(
+      {/* Nur in der Vertragsliste rendern — sonst "klebt" das Fenster beim Wechsel zu Upload/Analyse */}
+      {hoveredContractId && hoverPos && activeSection === 'contracts' && createPortal(
         (() => {
           const hc = contracts.find(c => c._id === hoveredContractId);
           const hcName = hc ? fixUtf8Display(hc.name) : 'Dokument';
