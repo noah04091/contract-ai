@@ -1,6 +1,6 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect, useRef } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail, Bell, Scale, Lightbulb, AlertTriangle } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -485,6 +485,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
   }, [onClose, editingField, editingQuickFact, addingQuickFact, showAddFieldMenu, addingCustomField, editingCustomField]);
+
+  // 🔒 Body-Scroll sperren, solange das Modal offen ist (verhindert Mitscrollen des Hintergrunds)
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
 
   // Dateityp-Erkennung: PDF vs. Word
   const isDocx = !!(contract.s3Key?.toLowerCase().endsWith('.docx') || (!contract.s3Key && contract.name?.toLowerCase().endsWith('.docx')));
@@ -992,7 +999,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     <div className={styles.tabContent}>
       <div className={styles.section}>
         <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>📋 Vertragsdetails</span>
+          <span><FileText size={16} style={{ verticalAlign: '-3px', marginRight: 7 }} />Vertragsdetails</span>
           <div className={styles.addFieldWrapper} ref={addFieldMenuRef}>
             <button
               className={styles.quickFactAddBtn}
@@ -1457,7 +1464,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         pointerEvents: (contract.status === 'gekündigt' || contract.cancellationId) ? 'none' : 'auto'
       }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <span style={{ fontSize: '1.2rem' }}>🔔</span> Kalendererinnerungen
+          <Bell size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} /> Kalendererinnerungen
         </h3>
         {loadingEvents ? (
           <p style={{ color: '#64748b', fontStyle: 'italic' }}>Lade Erinnerungen...</p>
@@ -1591,7 +1598,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       {/* 📊 QuickFacts - Dynamische Eckdaten (immer sichtbar) */}
       <div className={styles.section}>
         <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span>📊 Eckdaten auf einen Blick</span>
+          <span><BarChart3 size={16} style={{ verticalAlign: '-3px', marginRight: 7 }} />Eckdaten auf einen Blick</span>
           <button
             className={styles.quickFactAddBtn}
             onClick={() => {
@@ -1785,7 +1792,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       {/* Notes */}
       {contract.notes && (
         <div className={styles.section}>
-          <h3>📝 Notizen</h3>
+          <h3><Pencil size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Notizen</h3>
           <div className={styles.messageBox}>
             <p>{contract.notes}</p>
           </div>
@@ -1796,7 +1803,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       {(contract.extractedText || contract.fullText || contract.content) && (
         <div className={styles.section}>
           <div className={styles.contentSectionHeader}>
-            <h3>📄 Vertragsinhalt</h3>
+            <h3><FileText size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Vertragsinhalt</h3>
             <button
               className={styles.downloadButton}
               onClick={handleDownloadContent}
@@ -2142,7 +2149,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* Contract Score */}
         {hasScore && (
           <div className={styles.section}>
-            <h3>📊 Contract Score</h3>
+            <h3><BarChart3 size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Contract Score</h3>
             <div className={styles.progressContainer}>
               <div className={styles.progressBar}>
                 <div
@@ -2161,7 +2168,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* Summary */}
         {summary && (
           <div className={styles.section}>
-            <h3>📝 Zusammenfassung</h3>
+            <h3><FileText size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Zusammenfassung</h3>
             <div className={styles.messageBox}>
               {Array.isArray(summary) ? (
                 <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>
@@ -2179,7 +2186,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* Legal Assessment */}
         {legalAssessment && (
           <div className={styles.section}>
-            <h3>⚖️ Rechtliche Einordnung</h3>
+            <h3><Scale size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Rechtliche Einordnung</h3>
             <div className={styles.messageBox}>
               {Array.isArray(legalAssessment) ? (
                 <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>
@@ -2215,7 +2222,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* Suggestions */}
         {suggestions && (
           <div className={styles.section}>
-            <h3>💡 Optimierungsvorschläge</h3>
+            <h3><Lightbulb size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Optimierungsvorschläge</h3>
             <div className={styles.messageBox}>
               {Array.isArray(suggestions) ? (
                 <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>
@@ -2278,7 +2285,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* ⚠️ Kritische Punkte (strukturiert) */}
         {hasAnyStructured && (
           <div className={styles.section}>
-            <h3>⚠️ Kritische Punkte</h3>
+            <h3><AlertTriangle size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Kritische Punkte</h3>
             <div className={styles.messageBox}>
               {validCriticals.length > 0 ? (
                 <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
@@ -2326,7 +2333,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* 💡 Konkrete Empfehlungen (strukturiert) */}
         {hasAnyStructured && (
           <div className={styles.section}>
-            <h3>💡 Konkrete Empfehlungen</h3>
+            <h3><Lightbulb size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Konkrete Empfehlungen</h3>
             <div className={styles.messageBox}>
               {validRecommendations.length > 0 ? (
                 <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
@@ -2841,7 +2848,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   return (
     <>
       <div className={styles.modalOverlay} onClick={onClose}>
-        <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div
+          className={styles.modal}
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label={fixUtf8Display(contract.name)}
+        >
           {/* Header */}
           <div className={styles.modalHeader}>
             <div className={styles.headerLeft}>
