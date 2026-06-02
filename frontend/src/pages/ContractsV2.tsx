@@ -5681,7 +5681,7 @@ export default function Contracts() {
                               </td>
                               <td>
                                 {/* 🆕 V2 TODO #1: nur 2 Icons (Mockup-Style) — 👁 PDF + ⋮ Mehr */}
-                                <div className={styles.actionButtonsV2} onClick={(e) => e.stopPropagation()}>
+                                <div className={styles.actionButtonsV2} onClick={(e) => e.stopPropagation()} onMouseEnter={handleRowMouseLeave}>
                                   <button
                                     className={styles.actionButton}
                                     onClick={(e) => {
@@ -6449,8 +6449,8 @@ export default function Contracts() {
       {/* End of pageContainer */}
 
       {/* 👁️ Hover-Preview-Tooltip — als Portal in body, iframe-basiert (browser-native PDF-Render) */}
-      {/* Nur in der Vertragsliste rendern (nicht bei Upload/Analyse) und nicht über dem offenen Detail-Modal */}
-      {hoveredContractId && hoverPos && activeSection === 'contracts' && !showDetails && createPortal(
+      {/* Nur in der Vertragsliste rendern (nicht bei Upload/Analyse), nicht über Detail-Modal, nicht über offenem "Mehr"-Menü */}
+      {hoveredContractId && hoverPos && activeSection === 'contracts' && !showDetails && !morePopoverFor && createPortal(
         (() => {
           const hc = contracts.find(c => c._id === hoveredContractId);
           const hcName = hc ? fixUtf8Display(hc.name) : 'Dokument';
