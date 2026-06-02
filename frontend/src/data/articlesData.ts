@@ -1812,7 +1812,7 @@ export const articles: Article[] = [
 
       <h2>Falle 3: Eingeschränkte oder ausgeschlossene Gewährleistung</h2>
 
-      <p>Klauseln wie "keine Gewährleistung", "gekauft wie gesehen" oder "Reklamationen nur innerhalb von 14 Tagen" findest du immer wieder – wirksam sind sie gegenüber Verbrauchern aber nicht. Die gesetzliche <strong>Gewährleistung von zwei Jahren</strong> kann beim Verkauf an Verbraucher nicht ausgeschlossen oder verkürzt werden (§ 476 BGB). Nur bei <em>gebrauchten</em> Sachen darf die Frist unter engen Voraussetzungen auf ein Jahr verkürzt werden – und auch das muss klar und gesondert vereinbart sein, nicht im Kleingedruckten versteckt.</p>
+      <p>Klauseln wie "keine Gewährleistung", "gekauft wie gesehen" oder "Reklamationen nur innerhalb von 14 Tagen" findest du immer wieder – wirksam sind sie gegenüber Verbrauchern aber nicht. Die gesetzlichen <strong>Gewährleistungsrechte</strong> können beim Verkauf an Verbraucher nicht zu deinem Nachteil ausgeschlossen oder eingeschränkt werden (§ 476 Abs. 1 BGB). Auch die <strong>zweijährige Verjährungsfrist</strong> für Mängelansprüche gilt – nur bei <em>gebrauchten</em> Sachen darf sie auf mindestens ein Jahr verkürzt werden, und das nur, wenn du vor dem Kauf ausdrücklich und gesondert darauf hingewiesen wurdest (§ 476 Abs. 2 BGB), nicht versteckt im Kleingedruckten.</p>
 
       <h2>Falle 4: Ausgehebeltes Widerrufsrecht</h2>
 
@@ -1839,7 +1839,7 @@ export const articles: Article[] = [
       <p>Grundsätzlich ja – mit dem Akzeptieren werden sie Vertragsbestandteil. Einzelne unfaire oder überraschende Klauseln sind aber unabhängig davon unwirksam (§§ 305–309 BGB). Du musst eine unzulässige Klausel also nicht gegen dich gelten lassen, nur weil du zugestimmt hast.</p>
 
       <h3>Darf ein Online-Shop die Gewährleistung ausschließen?</h3>
-      <p>Beim Verkauf an Verbraucher nein. Die zweijährige Gewährleistung ist gesetzlich garantiert und kann nicht durch AGB ausgeschlossen werden (§ 476 BGB). Nur bei gebrauchter Ware ist eine Verkürzung auf ein Jahr unter engen Bedingungen möglich.</p>
+      <p>Beim Verkauf an Verbraucher nein. Die gesetzlichen Gewährleistungsrechte können nicht durch AGB zu deinem Nachteil ausgeschlossen oder eingeschränkt werden (§ 476 Abs. 1 BGB). Die zweijährige Verjährungsfrist darf nur bei gebrauchter Ware auf mindestens ein Jahr verkürzt werden – und das nur mit ausdrücklichem, gesondertem Hinweis vor dem Kauf (§ 476 Abs. 2 BGB).</p>
 
       <h3>Wie komme ich aus einem online abgeschlossenen Abo wieder heraus?</h3>
       <p>Nach Ablauf der Mindestlaufzeit ist ein ab März 2022 geschlossenes Abo monatlich kündbar. Fehlt der gesetzlich vorgeschriebene Kündigungsbutton (§ 312k BGB), kannst du sogar jederzeit fristlos kündigen.</p>
@@ -1861,7 +1861,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Darf ein Online-Shop die Gewährleistung ausschließen?',
-        answer: 'Beim Verkauf an Verbraucher nein. Die zweijährige Gewährleistung ist gesetzlich garantiert und kann nicht durch AGB ausgeschlossen werden (§ 476 BGB). Nur bei gebrauchter Ware ist eine Verkürzung auf ein Jahr unter engen Bedingungen möglich.'
+        answer: 'Beim Verkauf an Verbraucher nein. Die gesetzlichen Gewährleistungsrechte können nicht durch AGB zu deinem Nachteil ausgeschlossen oder eingeschränkt werden (§ 476 Abs. 1 BGB). Die zweijährige Verjährungsfrist darf nur bei gebrauchter Ware auf mindestens ein Jahr verkürzt werden – und das nur mit ausdrücklichem, gesondertem Hinweis vor dem Kauf (§ 476 Abs. 2 BGB).'
       },
       {
         question: 'Wie komme ich aus einem online abgeschlossenen Abo wieder heraus?',
