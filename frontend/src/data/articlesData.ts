@@ -867,6 +867,23 @@ export const articles: Article[] = [
         <p>Contract AI überwacht deine Verträge kontinuierlich auf DSGVO-Änderungen und warnt vor neuen Risiken. So bleibst du immer compliant.</p>
       </div>
 
+      <h2>Häufige Fragen zu DSGVO-Fallen in Verträgen</h2>
+
+      <h3>Wie hoch können DSGVO-Bußgelder werden?</h3>
+      <p>Der Bußgeldrahmen reicht bis zu 20 Millionen Euro oder 4 % des weltweiten Jahresumsatzes – je nachdem, welcher Betrag höher ist (Art. 83 DSGVO). In der Praxis treffen auch kleine und mittlere Unternehmen Bußgelder im vier- bis sechsstelligen Bereich.</p>
+
+      <h3>Brauche ich einen Auftragsverarbeitungsvertrag (AVV)?</h3>
+      <p>Ja, sobald ein Dienstleister in deinem Auftrag personenbezogene Daten verarbeitet – etwa Cloud-Anbieter, IT-Support, Marketing-Agenturen oder Buchhaltung. Der AVV nach Art. 28 DSGVO ist Pflicht; ohne ihn haftest du für Datenpannen des Dienstleisters mit.</p>
+
+      <h3>Darf ich US-Tools wie Zoom, Mailchimp oder Slack nutzen?</h3>
+      <p>Nur mit gültiger Rechtsgrundlage für den Datentransfer in die USA – etwa über das EU-US Data Privacy Framework oder Standardvertragsklauseln. Ohne eine solche Grundlage ist die Übermittlung in Drittländer unzulässig.</p>
+
+      <h3>Was muss eine wirksame Löschklausel enthalten?</h3>
+      <p>Konkrete Fristen statt vager Formulierungen wie "in angemessener Zeit". DSGVO-konform ist zum Beispiel: Löschung spätestens 30 Tage nach Vertragsende, vorbehaltlich gesetzlicher Aufbewahrungspflichten.</p>
+
+      <h3>Haftet mein Unternehmen für Datenpannen eines Dienstleisters?</h3>
+      <p>Ohne Auftragsverarbeitungsvertrag ja – die Verantwortung bleibt bei dir. Mit einem AVV werden Pflichten und Haftung klar zwischen dir und dem Dienstleister geregelt.</p>
+
       <h2>Fazit: Prävention ist billiger als Bußgelder</h2>
       
       <p>Ein DSGVO-konformer Vertrag kostet dich 30 Minuten Zeit mit Contract AI. Ein Bußgeld kostet dich mindestens 10.000€ - oft deutlich mehr. Die Rechnung ist einfach. Mit <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> erkennst du DSGVO-Fallen automatisch, bevor sie teuer werden.</p>
@@ -877,7 +894,29 @@ export const articles: Article[] = [
         <h4>Jetzt handeln</h4>
         <p>Prüfe deine bestehenden Verträge mit Contract AI auf DSGVO-Konformität. Jeden Tag, den du wartest, riskierst du ein Bußgeld.</p>
       </div>
-    `
+    `,
+    faqs: [
+      {
+        question: 'Wie hoch können DSGVO-Bußgelder werden?',
+        answer: 'Der Bußgeldrahmen reicht bis zu 20 Millionen Euro oder 4 % des weltweiten Jahresumsatzes – je nachdem, welcher Betrag höher ist (Art. 83 DSGVO). In der Praxis treffen auch kleine und mittlere Unternehmen Bußgelder im vier- bis sechsstelligen Bereich.'
+      },
+      {
+        question: 'Brauche ich einen Auftragsverarbeitungsvertrag (AVV)?',
+        answer: 'Ja, sobald ein Dienstleister in deinem Auftrag personenbezogene Daten verarbeitet – etwa Cloud-Anbieter, IT-Support, Marketing-Agenturen oder Buchhaltung. Der AVV nach Art. 28 DSGVO ist Pflicht; ohne ihn haftest du für Datenpannen des Dienstleisters mit.'
+      },
+      {
+        question: 'Darf ich US-Tools wie Zoom, Mailchimp oder Slack nutzen?',
+        answer: 'Nur mit gültiger Rechtsgrundlage für den Datentransfer in die USA – etwa über das EU-US Data Privacy Framework oder Standardvertragsklauseln. Ohne eine solche Grundlage ist die Übermittlung in Drittländer unzulässig.'
+      },
+      {
+        question: 'Was muss eine wirksame Löschklausel enthalten?',
+        answer: 'Konkrete Fristen statt vager Formulierungen wie "in angemessener Zeit". DSGVO-konform ist zum Beispiel: Löschung spätestens 30 Tage nach Vertragsende, vorbehaltlich gesetzlicher Aufbewahrungspflichten.'
+      },
+      {
+        question: 'Haftet mein Unternehmen für Datenpannen eines Dienstleisters?',
+        answer: 'Ohne Auftragsverarbeitungsvertrag ja – die Verantwortung bleibt bei dir. Mit einem AVV werden Pflichten und Haftung klar zwischen dir und dem Dienstleister geregelt.'
+      }
+    ]
   },
   {
     id: 14,
@@ -1740,7 +1779,7 @@ export const articles: Article[] = [
     excerpt: 'Automatische Vertragsverlängerung, versteckte Kosten, eingeschränkte Gewährleistung – so durchschauen Sie problematische AGB.',
     category: 'agb',
     date: '15. Mai 2025',
-    readTime: '4 Min. Lesezeit',
+    readTime: '8 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '📜',
     image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80',
@@ -1750,37 +1789,93 @@ export const articles: Article[] = [
         <p>Lass deinen Kaufvertrag inkl. AGB in 60 Sekunden auf versteckte Kosten, unwirksame Gewährleistungsausschlüsse und Stornofallen prüfen — auf Basis BGB-Kaufrecht und aktueller BGH-Rechtsprechung. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
       </div>
 
-      <p>Beim Online-Shopping klicken wir oft schnell auf "AGB akzeptieren" – doch das kann teuer werden. Wir zeigen, worauf Sie achten müssen.</p>
+      <p>Beim Online-Shopping klicken wir den Haken bei "AGB akzeptieren" meist in Sekunden – gelesen hat sie kaum jemand. Das Problem: In den Allgemeinen Geschäftsbedingungen von Online-Shops verstecken sich regelmäßig Klauseln, die dich Geld kosten oder dir Rechte nehmen sollen. Die gute Nachricht: Viele dieser Klauseln sind nach deutschem Verbraucherrecht schlicht <strong>unwirksam</strong> – selbst wenn du zugestimmt hast. Wir zeigen dir die fünf häufigsten Fallen und welche Paragraphen dich schützen.</p>
 
-      <h2>Versteckte Kosten erkennen</h2>
-      
-      <p>Häufige Kostenfallen in AGB:</p>
-      
+      <h2>Was AGB beim Online-Shopping eigentlich sind</h2>
+
+      <p>AGB sind vorformulierte Vertragsbedingungen, die ein Shop für eine Vielzahl von Käufen verwendet. Weil du sie nicht einzeln aushandeln kannst, unterliegen sie der gesetzlichen <strong>AGB-Kontrolle</strong> (§§ 305–310 BGB). Klauseln, die dich unangemessen benachteiligen oder überraschend sind, sind unwirksam – an ihre Stelle tritt dann automatisch das Gesetz. Beim Online-Kauf kommen zusätzlich die strengen Regeln des <strong>Fernabsatzrechts</strong> hinzu, die dir als Verbraucher besonderen Schutz geben.</p>
+
+      <h2>Falle 1: Abo-Fallen und automatische Verlängerung</h2>
+
+      <p>Besonders bei Streaming, Software, Fitness oder Box-Abos beliebt: lange Mindestlaufzeiten und eine stillschweigende Verlängerung um jeweils ein weiteres Jahr. Seit dem "Gesetz für faire Verbraucherverträge" gilt für Verträge, die ab dem 1. März 2022 geschlossen wurden:</p>
+
       <ul>
-        <li>Zusätzliche Versandkosten erst im letzten Schritt</li>
-        <li>Bearbeitungsgebühren für Standardleistungen</li>
-        <li>Aufschläge für bestimmte Zahlungsarten</li>
+        <li>Die <strong>Erstlaufzeit</strong> darf höchstens 24 Monate betragen.</li>
+        <li>Nach Ablauf darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern – und ist dann jederzeit mit einer Frist von maximal einem Monat <strong>kündbar</strong> (§ 309 Nr. 9 BGB).</li>
       </ul>
 
-      <h2>Gewährleistung und Garantie</h2>
-      
-      <p>Diese Klauseln sind problematisch:</p>
-      
-      <ul>
-        <li>Ausschluss der gesetzlichen Gewährleistung</li>
-        <li>Verkürzte Reklamationsfristen</li>
-        <li>Ausschluss bestimmter Mängelarten</li>
-      </ul>
+      <p>Dazu kommt die <strong>Kündigungsbutton-Pflicht</strong> (§ 312k BGB, seit 1. Juli 2022): Online geschlossene Dauerverträge müssen eine gut sichtbare Schaltfläche zum Kündigen bieten. Fehlt dieser Button, kannst du den Vertrag <strong>jederzeit und fristlos</strong> beenden.</p>
+
+      <h2>Falle 2: Versteckte Kosten und die "Button-Lösung"</h2>
+
+      <p>Klassiker: Der Preis wirkt günstig, doch im letzten Schritt kommen Versandkosten, "Servicegebühren" oder Aufschläge für bestimmte Zahlungsarten dazu. Dein Schutz heißt <strong>Button-Lösung</strong> (§ 312j Abs. 3 BGB): Die Bestell-Schaltfläche muss eindeutig mit "<strong>zahlungspflichtig bestellen</strong>" (oder einer ebenso klaren Formulierung) beschriftet sein, und alle Kosten müssen unmittelbar davor klar ausgewiesen werden. Passiert das nicht, kommt <strong>gar kein Vertrag zustande</strong> – du musst nichts zahlen.</p>
+
+      <h2>Falle 3: Eingeschränkte oder ausgeschlossene Gewährleistung</h2>
+
+      <p>Klauseln wie "keine Gewährleistung", "gekauft wie gesehen" oder "Reklamationen nur innerhalb von 14 Tagen" findest du immer wieder – wirksam sind sie gegenüber Verbrauchern aber nicht. Die gesetzliche <strong>Gewährleistung von zwei Jahren</strong> kann beim Verkauf an Verbraucher nicht ausgeschlossen oder verkürzt werden (§ 476 BGB). Nur bei <em>gebrauchten</em> Sachen darf die Frist unter engen Voraussetzungen auf ein Jahr verkürzt werden – und auch das muss klar und gesondert vereinbart sein, nicht im Kleingedruckten versteckt.</p>
+
+      <h2>Falle 4: Ausgehebeltes Widerrufsrecht</h2>
+
+      <p>Bei Online-Käufen hast du grundsätzlich ein <strong>14-tägiges Widerrufsrecht</strong> (§ 312g, §§ 355 ff. BGB) – ohne Angabe von Gründen. AGB-Klauseln, die das pauschal ausschließen ("vom Umtausch ausgeschlossen"), sind unwirksam. Wichtig: Belehrt dich der Shop nicht <strong>korrekt</strong> über dein Widerrufsrecht, verlängert sich die Frist auf bis zu <strong>zwölf Monate und 14 Tage</strong> (§ 356 Abs. 3 BGB). Es gibt allerdings echte gesetzliche Ausnahmen, etwa bei schnell verderblicher Ware oder versiegelten Hygieneartikeln nach dem Öffnen.</p>
+
+      <h2>Falle 5: Gerichtsstand und Rechtswahl bei Auslands-Shops</h2>
+
+      <p>Manche internationalen Shops schreiben in ihre AGB "Es gilt das Recht von Land X" oder einen Gerichtsstand im Ausland. Als Verbraucher bleibt dir der zwingende Schutz deines <strong>Heimatrechts</strong> trotzdem weitgehend erhalten – eine Rechtswahl darf dir diesen Mindestschutz nicht nehmen. Lass dich von solchen Klauseln also nicht abschrecken, deine Rechte geltend zu machen.</p>
 
       <div class="highlight-box">
-        <h4>Wichtig zu wissen</h4>
-        <p>Die gesetzliche Gewährleistung von 2 Jahren kann bei Verbraucherkäufen nicht ausgeschlossen werden.</p>
+        <h4>✅ Schnell-Checkliste vor dem Klick auf "Kaufen"</h4>
+        <p>
+          • Steht auf dem Bestell-Button klar "zahlungspflichtig bestellen"?<br>
+          • Sind alle Kosten inkl. Versand <em>vor</em> dem Klick sichtbar?<br>
+          • Gibt es eine Mindestlaufzeit oder automatische Verlängerung?<br>
+          • Ist eine Widerrufsbelehrung vorhanden und verständlich?<br>
+          • Wird die gesetzliche Gewährleistung eingeschränkt? (Dann Vorsicht.)
+        </p>
       </div>
 
+      <h2>Häufige Fragen zu AGB beim Online-Shopping</h2>
+
+      <h3>Sind AGB gültig, auch wenn ich sie nicht gelesen habe?</h3>
+      <p>Grundsätzlich ja – mit dem Akzeptieren werden sie Vertragsbestandteil. Einzelne unfaire oder überraschende Klauseln sind aber unabhängig davon unwirksam (§§ 305–309 BGB). Du musst eine unzulässige Klausel also nicht gegen dich gelten lassen, nur weil du zugestimmt hast.</p>
+
+      <h3>Darf ein Online-Shop die Gewährleistung ausschließen?</h3>
+      <p>Beim Verkauf an Verbraucher nein. Die zweijährige Gewährleistung ist gesetzlich garantiert und kann nicht durch AGB ausgeschlossen werden (§ 476 BGB). Nur bei gebrauchter Ware ist eine Verkürzung auf ein Jahr unter engen Bedingungen möglich.</p>
+
+      <h3>Wie komme ich aus einem online abgeschlossenen Abo wieder heraus?</h3>
+      <p>Nach Ablauf der Mindestlaufzeit ist ein ab März 2022 geschlossenes Abo monatlich kündbar. Fehlt der gesetzlich vorgeschriebene Kündigungsbutton (§ 312k BGB), kannst du sogar jederzeit fristlos kündigen.</p>
+
+      <h3>Wie lange habe ich Widerrufsrecht beim Online-Kauf?</h3>
+      <p>In der Regel 14 Tage ab Erhalt der Ware. Wurde nicht ordnungsgemäß über das Widerrufsrecht belehrt, verlängert sich die Frist auf bis zu zwölf Monate und 14 Tage (§ 356 Abs. 3 BGB).</p>
+
+      <h3>Was bedeutet die "Button-Lösung"?</h3>
+      <p>Der Bestell-Button muss eindeutig zeigen, dass die Bestellung kostenpflichtig ist – etwa durch die Beschriftung "zahlungspflichtig bestellen" (§ 312j Abs. 3 BGB). Fehlt dieser Hinweis, ist der Vertrag nicht wirksam zustande gekommen.</p>
+
       <h2>Fazit</h2>
-      
-      <p>Lesen Sie AGB zumindest überfliegend – oder nutzen Sie <a href="/ki-vertragsanalyse">KI-gestützte Vertragsanalyse</a>, um problematische Klauseln automatisch zu identifizieren.</p>
-    `
+
+      <p>Unwirksame AGB-Klauseln sind im Online-Handel eher die Regel als die Ausnahme – aber das Verbraucherrecht steht klar auf deiner Seite. Wer die fünf typischen Fallen kennt, zahlt nicht für versteckte Kosten und kommt aus ungewollten Abos wieder heraus. Bei größeren Käufen oder unübersichtlichen Bedingungen lohnt sich ein zweiter Blick: Lass problematische Klauseln von einer <a href="/ki-vertragsanalyse">KI-gestützten Vertragsanalyse</a> automatisch aufspüren oder prüfe deinen <a href="/kaufvertrag-pruefen">Kaufvertrag direkt online</a>.</p>
+    `,
+    faqs: [
+      {
+        question: 'Sind AGB gültig, auch wenn ich sie nicht gelesen habe?',
+        answer: 'Grundsätzlich ja – mit dem Akzeptieren werden sie Vertragsbestandteil. Einzelne unfaire oder überraschende Klauseln sind aber unabhängig davon unwirksam (§§ 305–309 BGB). Du musst eine unzulässige Klausel also nicht gegen dich gelten lassen, nur weil du zugestimmt hast.'
+      },
+      {
+        question: 'Darf ein Online-Shop die Gewährleistung ausschließen?',
+        answer: 'Beim Verkauf an Verbraucher nein. Die zweijährige Gewährleistung ist gesetzlich garantiert und kann nicht durch AGB ausgeschlossen werden (§ 476 BGB). Nur bei gebrauchter Ware ist eine Verkürzung auf ein Jahr unter engen Bedingungen möglich.'
+      },
+      {
+        question: 'Wie komme ich aus einem online abgeschlossenen Abo wieder heraus?',
+        answer: 'Nach Ablauf der Mindestlaufzeit ist ein ab März 2022 geschlossenes Abo monatlich kündbar. Fehlt der gesetzlich vorgeschriebene Kündigungsbutton (§ 312k BGB), kannst du sogar jederzeit fristlos kündigen.'
+      },
+      {
+        question: 'Wie lange habe ich Widerrufsrecht beim Online-Kauf?',
+        answer: 'In der Regel 14 Tage ab Erhalt der Ware. Wurde nicht ordnungsgemäß über das Widerrufsrecht belehrt, verlängert sich die Frist auf bis zu zwölf Monate und 14 Tage (§ 356 Abs. 3 BGB).'
+      },
+      {
+        question: 'Was bedeutet die "Button-Lösung"?',
+        answer: 'Der Bestell-Button muss eindeutig zeigen, dass die Bestellung kostenpflichtig ist – etwa durch die Beschriftung "zahlungspflichtig bestellen" (§ 312j Abs. 3 BGB). Fehlt dieser Hinweis, ist der Vertrag nicht wirksam zustande gekommen.'
+      }
+    ]
   },
   {
     id: 5,
@@ -1850,7 +1945,7 @@ export const articles: Article[] = [
     excerpt: 'Auch als Privatperson können Sie Verträge nachverhandeln. Mit diesen Strategien erreichen Sie fairere Konditionen.',
     category: 'tipps',
     date: '10. Mai 2025',
-    readTime: '5 Min. Lesezeit',
+    readTime: '7 Min. Lesezeit',
     author: 'Contract AI Team',
     icon: '⚖️',
     image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80',
@@ -1860,49 +1955,87 @@ export const articles: Article[] = [
         <p>Bevor du verhandelst — kenne die Schwachstellen. Lass deinen Vertrag in 60 Sekunden analysieren und gehe mit klaren Verhandlungspunkten ins Gespräch. Speziell für B2B-Verhandlungen: <a href="/nda-pruefen"><strong>NDA prüfen →</strong></a></p>
       </div>
 
-      <p>Viele glauben, Verträge seien in Stein gemeißelt. Doch oft lassen sich auch als Privatperson bessere Konditionen aushandeln.</p>
+      <p>Viele glauben, Verträge seien in Stein gemeißelt. Tatsächlich lässt sich erstaunlich viel nachverhandeln – nicht nur im Geschäftsleben, sondern auch als Privatperson bei Handy-, Versicherungs-, Miet- oder Fitnessverträgen. Entscheidend ist nicht Verhandlungsgeschick allein, sondern eine gute Vorbereitung und das Wissen, an welchen Stellen Spielraum besteht.</p>
 
-      <h2>Vorbereitung ist alles</h2>
-      
-      <p>Bevor Sie verhandeln:</p>
-      
+      <h2>Warum sich Nachverhandeln fast immer lohnt</h2>
+
+      <p>Für die Gegenseite ist ein bestehender Kunde günstiger als ein neuer. Anbieter haben deshalb oft mehr Spielraum, als sie zugeben – besonders kurz vor Vertragsende oder bei einer drohenden Kündigung. Wer fragt, riskiert nichts; im schlechtesten Fall bleibt es beim Status quo.</p>
+
+      <h2>Schritt 1: Vorbereitung – deine wichtigste Waffe</h2>
+
+      <p>Vor jeder Verhandlung solltest du drei Dinge klären:</p>
+
       <ul>
-        <li>Informieren Sie sich über marktübliche Konditionen</li>
-        <li>Sammeln Sie Vergleichsangebote</li>
-        <li>Identifizieren Sie Ihre wichtigsten Verhandlungspunkte</li>
+        <li><strong>Marktüberblick:</strong> Was zahlen andere für die gleiche Leistung? Sammle zwei bis drei konkrete Vergleichsangebote.</li>
+        <li><strong>Deine Alternative (BATNA):</strong> Was ist dein Plan B, wenn die Verhandlung scheitert? Wer eine echte Alternative hat, verhandelt souveräner.</li>
+        <li><strong>Deine Prioritäten:</strong> Was ist dir am wichtigsten – Preis, Laufzeit, Kündigungsfrist oder Zusatzleistungen? Du wirst selten alles bekommen.</li>
       </ul>
 
-      <h2>Verhandlungsstrategien</h2>
-      
-      <p>Erfolgreiche Verhandlungstaktiken:</p>
-      
+      <h2>Schritt 2: Die richtigen Verhandlungstaktiken</h2>
+
       <ul>
-        <li>Bleiben Sie sachlich und freundlich</li>
-        <li>Argumentieren Sie mit konkreten Zahlen und Fakten</li>
-        <li>Bieten Sie Win-Win-Lösungen an</li>
-        <li>Zeigen Sie Alternativen auf</li>
+        <li><strong>Sachlich und freundlich bleiben:</strong> Druck erzeugt Gegendruck. Ein kooperativer Ton öffnet mehr Türen als ein Ultimatum.</li>
+        <li><strong>Mit Fakten argumentieren:</strong> "Anbieter X bietet das Gleiche für 10 € weniger" wirkt stärker als "Das ist mir zu teuer".</li>
+        <li><strong>Anker setzen:</strong> Nenne zuerst eine ambitionierte, aber begründbare Zielmarke – sie verschiebt den Verhandlungsrahmen zu deinen Gunsten.</li>
+        <li><strong>Win-win anbieten:</strong> Eine längere Bindung gegen einen besseren Preis ist für beide Seiten attraktiv.</li>
+        <li><strong>Schweigen aushalten:</strong> Nach deinem Angebot nicht sofort nachlegen – die Pause arbeitet für dich.</li>
       </ul>
 
       <div class="highlight-box">
-        <h4>Verhandlungsbeispiel</h4>
-        <p>"Aufgrund meiner langjährigen Treue und der aktuellen Marktpreise bitte ich um eine Anpassung der Konditionen. Hier sind drei Vergleichsangebote..."</p>
+        <h4>Formulierungs-Beispiel</h4>
+        <p>"Ich bin seit drei Jahren zufriedener Kunde und würde gerne verlängern. Allerdings habe ich zwei deutlich günstigere Angebote vorliegen. Wenn Sie mir preislich entgegenkommen, bleibe ich gerne."</p>
       </div>
 
-      <h2>Häufige Verhandlungserfolge</h2>
-      
-      <p>Diese Bereiche lassen sich oft verbessern:</p>
-      
+      <h2>Schritt 3: Diese Punkte lassen sich oft verbessern</h2>
+
       <ul>
-        <li>Kündigungsfristen verkürzen</li>
-        <li>Preise oder Gebühren reduzieren</li>
-        <li>Zusätzliche Leistungen einschließen</li>
+        <li>Preise, Rabatte und einmalige Gebühren</li>
+        <li>Laufzeit und Kündigungsfristen</li>
+        <li>Zusätzliche Leistungen oder Gratis-Monate</li>
         <li>Flexiblere Zahlungsbedingungen</li>
+        <li>Einzelne Klauseln (z. B. Haftung, Vertragsstrafen)</li>
       </ul>
 
+      <h2>Worauf du bei B2B-Verträgen besonders achten solltest</h2>
+
+      <p>Im geschäftlichen Bereich geht es oft um mehr als den Preis: Haftungsbegrenzungen, Geheimhaltung, Nutzungsrechte und Gerichtsstand entscheiden im Streitfall über viel Geld. Wer mit Geschäftspartnern verhandelt, sollte den Vertrag vorab auf Schwachstellen prüfen – gerade bei Geheimhaltungsvereinbarungen lohnt ein <a href="/nda-pruefen">NDA-Check</a>, bevor man unterschreibt.</p>
+
+      <h2>Häufige Fragen zur Vertragsverhandlung</h2>
+
+      <h3>Kann ich auch laufende Verträge noch nachverhandeln?</h3>
+      <p>Ja. Besonders vor einer automatischen Verlängerung oder nach Ablauf der Mindestlaufzeit sind Anbieter häufig gesprächsbereit, um dich als Kunden zu halten. Ein konkreter Kündigungswunsch erhöht deine Verhandlungsmacht.</p>
+
+      <h3>Was ist eine BATNA und warum ist sie wichtig?</h3>
+      <p>BATNA steht für "Best Alternative To a Negotiated Agreement" – deine beste Alternative, falls keine Einigung zustande kommt. Je besser deine Alternative (zum Beispiel ein konkretes Konkurrenzangebot), desto stärker deine Verhandlungsposition.</p>
+
+      <h3>Sollte ich das erste Angebot annehmen?</h3>
+      <p>Selten. Das erste Angebot ist meist mit Spielraum kalkuliert. Ein sachliches Nachfragen ("Geht da noch etwas?") kostet nichts und führt überraschend oft zu besseren Konditionen.</p>
+
+      <h3>Ist eine mündliche Zusage bindend?</h3>
+      <p>Grundsätzlich können auch mündliche Vereinbarungen gelten – beweisen lässt sich das aber kaum. Lass dir Verhandlungsergebnisse deshalb immer schriftlich bestätigen, idealerweise per E-Mail.</p>
+
       <h2>Fazit</h2>
-      
-      <p>Verhandeln kostet nichts außer Zeit – und kann sich richtig lohnen. Tipp: Nutzen Sie vorher eine <a href="/ki-vertragsanalyse">automatische Vertragsprüfung</a>, um genau zu wissen, welche Klauseln verhandlungswürdig sind.</p>
-    `
+
+      <p>Verhandeln kostet nichts außer ein wenig Zeit – und kann sich richtig lohnen. Wer vorbereitet, sachlich und mit einer klaren Alternative ins Gespräch geht, erreicht messbar bessere Konditionen. Tipp: Nutze vorher eine <a href="/ki-vertragsanalyse">automatische Vertragsprüfung</a>, um genau zu wissen, welche Klauseln verhandlungswürdig sind.</p>
+    `,
+    faqs: [
+      {
+        question: 'Kann ich auch laufende Verträge noch nachverhandeln?',
+        answer: 'Ja. Besonders vor einer automatischen Verlängerung oder nach Ablauf der Mindestlaufzeit sind Anbieter häufig gesprächsbereit, um dich als Kunden zu halten. Ein konkreter Kündigungswunsch erhöht deine Verhandlungsmacht.'
+      },
+      {
+        question: 'Was ist eine BATNA und warum ist sie wichtig?',
+        answer: 'BATNA steht für "Best Alternative To a Negotiated Agreement" – deine beste Alternative, falls keine Einigung zustande kommt. Je besser deine Alternative (zum Beispiel ein konkretes Konkurrenzangebot), desto stärker deine Verhandlungsposition.'
+      },
+      {
+        question: 'Sollte ich das erste Angebot annehmen?',
+        answer: 'Selten. Das erste Angebot ist meist mit Spielraum kalkuliert. Ein sachliches Nachfragen ("Geht da noch etwas?") kostet nichts und führt überraschend oft zu besseren Konditionen.'
+      },
+      {
+        question: 'Ist eine mündliche Zusage bindend?',
+        answer: 'Grundsätzlich können auch mündliche Vereinbarungen gelten – beweisen lässt sich das aber kaum. Lass dir Verhandlungsergebnisse deshalb immer schriftlich bestätigen, idealerweise per E-Mail.'
+      }
+    ]
   },
   {
     id: 7,
@@ -1990,12 +2123,19 @@ export const articles: Article[] = [
       
       <p>Die gesetzlichen Fristen:</p>
       
+      <p>Die gesetzlichen Kündigungsfristen richten sich nach <strong>§ 622 BGB</strong> und verlängern sich mit der Dauer der Betriebszugehörigkeit:</p>
+
       <ul>
-        <li>Probezeit: 2 Wochen zu jedem Tag</li>
-        <li>Bis 2 Jahre: 4 Wochen zum 15. oder Monatsende</li>
-        <li>2-5 Jahre: 1 Monat zum Monatsende</li>
-        <li>5-8 Jahre: 2 Monate zum Monatsende</li>
+        <li><strong>Probezeit:</strong> 2 Wochen, zu jedem beliebigen Tag (§ 622 Abs. 3 BGB)</li>
+        <li><strong>Grundfrist:</strong> 4 Wochen zum 15. oder zum Monatsende</li>
+        <li><strong>Ab 2 Jahren:</strong> 1 Monat zum Monatsende</li>
+        <li><strong>Ab 5 Jahren:</strong> 2 Monate zum Monatsende</li>
+        <li><strong>Ab 8 Jahren:</strong> 3 Monate zum Monatsende</li>
+        <li><strong>Ab 10 Jahren:</strong> 4 Monate zum Monatsende</li>
+        <li><strong>Ab 12 Jahren:</strong> 5 Monate, ab 15 Jahren 6 Monate, ab 20 Jahren 7 Monate zum Monatsende</li>
       </ul>
+
+      <p>Wichtig: Diese verlängerten Fristen gelten für die Kündigung durch den <strong>Arbeitgeber</strong>. Als Arbeitnehmer kannst du in der Regel mit der Grundfrist von 4 Wochen kündigen – sofern der Arbeits- oder Tarifvertrag nichts anderes (Zulässiges) vorsieht.</p>
 
       <h2>Formvorschriften beachten</h2>
       
@@ -2034,10 +2174,49 @@ export const articles: Article[] = [
         <li>Vermeidung von Rechtsstreitigkeiten</li>
       </ul>
 
+      <h2>Häufige Fragen zur Kündigung des Arbeitsvertrags</h2>
+
+      <h3>Welche Kündigungsfrist gilt für mich als Arbeitnehmer?</h3>
+      <p>In der Regel die Grundfrist von 4 Wochen zum 15. oder zum Monatsende (§ 622 BGB). Die mit der Betriebszugehörigkeit gestaffelten längeren Fristen gelten grundsätzlich nur für Kündigungen durch den Arbeitgeber – es sei denn, der Vertrag oder ein Tarifvertrag regelt etwas anderes.</p>
+
+      <h3>Ist eine Kündigung per E-Mail oder WhatsApp wirksam?</h3>
+      <p>Nein. Eine Kündigung des Arbeitsverhältnisses bedarf der Schriftform mit eigenhändiger Unterschrift (§ 623 BGB). E-Mail, Fax, WhatsApp oder eine mündliche Kündigung sind unwirksam – das Arbeitsverhältnis besteht dann fort.</p>
+
+      <h3>Wie lange habe ich Zeit, gegen eine Kündigung vorzugehen?</h3>
+      <p>Drei Wochen. Eine Kündigungsschutzklage muss innerhalb von drei Wochen nach Zugang der Kündigung beim Arbeitsgericht eingehen (§ 4 KSchG). Wird die Frist versäumt, gilt die Kündigung in der Regel als wirksam.</p>
+
+      <h3>Wann greift der allgemeine Kündigungsschutz?</h3>
+      <p>Das Kündigungsschutzgesetz gilt, wenn das Arbeitsverhältnis länger als sechs Monate bestand und der Betrieb in der Regel mehr als zehn Arbeitnehmer beschäftigt (§§ 1, 23 KSchG). Dann braucht eine Kündigung einen anerkannten Grund (personen-, verhaltens- oder betriebsbedingt).</p>
+
+      <h3>Was ist der Unterschied zwischen Kündigung und Aufhebungsvertrag?</h3>
+      <p>Eine Kündigung ist eine einseitige Erklärung und an Fristen und Form gebunden. Ein Aufhebungsvertrag wird einvernehmlich geschlossen und kann das Arbeitsverhältnis flexibel und sofort beenden – Vorsicht aber: Er kann zu einer Sperrzeit beim Arbeitslosengeld führen.</p>
+
       <h2>Fazit</h2>
-      
+
       <p>Bei Kündigungen sind Form und Fristen entscheidend. Im Zweifel sollten Sie Ihren Arbeitsvertrag per <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> prüfen lassen, um alle Fristen und Klauseln sicher zu überblicken.</p>
-    `
+    `,
+    faqs: [
+      {
+        question: 'Welche Kündigungsfrist gilt für mich als Arbeitnehmer?',
+        answer: 'In der Regel die Grundfrist von 4 Wochen zum 15. oder zum Monatsende (§ 622 BGB). Die mit der Betriebszugehörigkeit gestaffelten längeren Fristen gelten grundsätzlich nur für Kündigungen durch den Arbeitgeber – es sei denn, der Vertrag oder ein Tarifvertrag regelt etwas anderes.'
+      },
+      {
+        question: 'Ist eine Kündigung per E-Mail oder WhatsApp wirksam?',
+        answer: 'Nein. Eine Kündigung des Arbeitsverhältnisses bedarf der Schriftform mit eigenhändiger Unterschrift (§ 623 BGB). E-Mail, Fax, WhatsApp oder eine mündliche Kündigung sind unwirksam – das Arbeitsverhältnis besteht dann fort.'
+      },
+      {
+        question: 'Wie lange habe ich Zeit, gegen eine Kündigung vorzugehen?',
+        answer: 'Drei Wochen. Eine Kündigungsschutzklage muss innerhalb von drei Wochen nach Zugang der Kündigung beim Arbeitsgericht eingehen (§ 4 KSchG). Wird die Frist versäumt, gilt die Kündigung in der Regel als wirksam.'
+      },
+      {
+        question: 'Wann greift der allgemeine Kündigungsschutz?',
+        answer: 'Das Kündigungsschutzgesetz gilt, wenn das Arbeitsverhältnis länger als sechs Monate bestand und der Betrieb in der Regel mehr als zehn Arbeitnehmer beschäftigt (§§ 1, 23 KSchG). Dann braucht eine Kündigung einen anerkannten Grund (personen-, verhaltens- oder betriebsbedingt).'
+      },
+      {
+        question: 'Was ist der Unterschied zwischen Kündigung und Aufhebungsvertrag?',
+        answer: 'Eine Kündigung ist eine einseitige Erklärung und an Fristen und Form gebunden. Ein Aufhebungsvertrag wird einvernehmlich geschlossen und kann das Arbeitsverhältnis flexibel und sofort beenden – Vorsicht aber: Er kann zu einer Sperrzeit beim Arbeitslosengeld führen.'
+      }
+    ]
   }
 ];
 
