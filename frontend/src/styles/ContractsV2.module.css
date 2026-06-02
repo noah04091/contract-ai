@@ -3328,6 +3328,13 @@
   .analysisContainer {
     margin-top: 0.25rem;
     margin-bottom: 0.25rem;
+    /* Auf breiten Monitoren nicht endlos mitwachsen: auf 1280px begrenzen und
+       mittig setzen (gleiche Inhaltsbreite, die der Sticky-Mini-Header schon nutzt).
+       margin-left/right EINZELN (nicht `margin: 0 auto`), sonst würden die oben/unten
+       0.25rem überschrieben. Auf Laptops <1280px greift max-width nicht → unverändert. */
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .analysisContainer > :first-child {
