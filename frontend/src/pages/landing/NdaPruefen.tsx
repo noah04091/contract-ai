@@ -951,6 +951,8 @@ const NdaPruefen: React.FC = () => {
                 Preise. In diesen Fällen ist ein gegenseitiges (mutual) NDA der Standard. Wenn dir
                 jemand ein einseitiges NDA vorlegt, du aber selbst sensible Informationen einbringen
                 wirst, ist die Umstellung auf mutual eine vernünftige und gut begründbare Forderung.
+                Konkrete Taktiken für die Verhandlung findest du in unseren{' '}
+                <Link to="/blog/vertragsverhandlung-strategien">Strategien für die Vertragsverhandlung</Link>.
               </p>
 
               <p className={styles.problemText} style={{ marginTop: '1.5rem' }}>

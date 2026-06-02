@@ -135,6 +135,8 @@
   border: 1px solid rgba(0, 122, 255, 0.08);
   transition: all 0.3s ease;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 }
 
 .featuredArticle:hover {
@@ -399,6 +401,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  text-decoration: none;
+  color: inherit;
 }
 
 .articleCard::before {

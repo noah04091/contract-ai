@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User, Share2, Twitter, Linkedin, Link2, ArrowRight } from 'lucide-react';
 import { Helmet } from "react-helmet-async";
 import styles from '../styles/BlogPost.module.css';
@@ -121,11 +121,6 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
     navigate('/dashboard');
   };
 
-  const handleRelatedArticleClick = (relatedSlug: string) => {
-    navigate(`/blog/${relatedSlug}`);
-    window.scrollTo(0, 0);
-  };
-
   // Share Functions
   const shareOnTwitter = () => {
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(currentArticle.title)}&url=${encodeURIComponent(canonicalUrl)}`;
@@ -149,9 +144,11 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
 
   // ✅ Dynamische Related Articles basierend auf zentralen Daten
   const getRelatedArticles = () => {
-    return articles
-      .filter(art => art.slug !== currentArticle.slug) // Aktuellen Artikel ausschließen
-      .slice(0, 3); // Erste 3 als Related nehmen
+    const others = articles.filter(art => art.slug !== currentArticle.slug);
+    // Themenverwandte (gleiche Kategorie) zuerst, dann mit übrigen auffüllen → immer 3
+    const sameCategory = others.filter(art => art.category === currentArticle.category);
+    const fillers = others.filter(art => art.category !== currentArticle.category);
+    return [...sameCategory, ...fillers].slice(0, 3);
   };
 
   const relatedArticles = getRelatedArticles();
@@ -396,10 +393,10 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
             </div>
             <div className={styles.relatedGrid}>
               {relatedArticles.map((relatedArticle) => (
-                <article
+                <Link
                   key={relatedArticle.id}
+                  to={`/blog/${relatedArticle.slug}`}
                   className={styles.relatedCard}
-                  onClick={() => handleRelatedArticleClick(relatedArticle.slug)}
                 >
                   <div className={styles.relatedCardImage}>
                     <img
@@ -432,7 +429,7 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
                       <ArrowRight size={16} />
                     </span>
                   </div>
-                </article>
+                </Link>
               ))}
             </div>
           </div>

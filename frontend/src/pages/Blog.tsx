@@ -1,6 +1,6 @@
 // 📁 src/pages/Blog.tsx - MODIFIZIERT für zentrale Artikel-Daten
 import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
 import { Search, Calendar, Clock, ArrowRight, Sparkles, Mail, TrendingUp } from 'lucide-react';
 import styles from '../styles/Blog.module.css';
@@ -50,10 +50,6 @@ const Blog: React.FC = () => {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-  };
-
-  const handleArticleClick = (slug: string) => {
-    navigate(`/blog/${slug}`);
   };
 
   const handleCTAClick = () => {
@@ -191,9 +187,9 @@ const Blog: React.FC = () => {
         {activeCategory === 'alle' && !searchTerm && (
           <section className={styles.featuredSection}>
             <div className={styles.containerWide}>
-              <article
+              <Link
+                to={`/blog/${featuredArticle.slug}`}
                 className={styles.featuredArticle}
-                onClick={() => handleArticleClick(featuredArticle.slug)}
               >
                 <div className={styles.featuredImage}>
                   <img
@@ -219,12 +215,12 @@ const Blog: React.FC = () => {
                   </div>
                   <h2 className={styles.featuredTitle}>{featuredArticle.title}</h2>
                   <p className={styles.featuredExcerpt}>{featuredArticle.excerpt}</p>
-                  <button className={styles.featuredCta}>
+                  <span className={styles.featuredCta}>
                     Artikel lesen
                     <ArrowRight size={18} />
-                  </button>
+                  </span>
                 </div>
-              </article>
+              </Link>
             </div>
           </section>
         )}
@@ -280,10 +276,10 @@ const Blog: React.FC = () => {
               <>
                 <div className={styles.articlesGrid}>
                   {remainingArticles.slice(0, 3).map((article: Article) => (
-                    <article
+                    <Link
                       key={article.id}
+                      to={`/blog/${article.slug}`}
                       className={`${styles.articleCard} ${styles.animateOnScroll}`}
-                      onClick={() => handleArticleClick(article.slug)}
                     >
                       <div className={styles.articleImage}>
                         <img
@@ -326,7 +322,7 @@ const Blog: React.FC = () => {
                           </span>
                         </div>
                       </div>
-                    </article>
+                    </Link>
                   ))}
                 </div>
 
@@ -359,10 +355,10 @@ const Blog: React.FC = () => {
                 {remainingArticles.length > 3 && (
                   <div className={styles.articlesGrid}>
                     {remainingArticles.slice(3).map((article: Article) => (
-                      <article
+                      <Link
                         key={article.id}
+                        to={`/blog/${article.slug}`}
                         className={`${styles.articleCard} ${styles.animateOnScroll}`}
-                        onClick={() => handleArticleClick(article.slug)}
                       >
                         <div className={styles.articleImage}>
                           <img
@@ -405,7 +401,7 @@ const Blog: React.FC = () => {
                             </span>
                           </div>
                         </div>
-                      </article>
+                      </Link>
                     ))}
                   </div>
                 )}

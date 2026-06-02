@@ -999,7 +999,9 @@ const KiVertragsanalyse: React.FC = () => {
               <p>
                 Eine berechtigte Frage bei KI-Vertragsanalyse ist: <strong>Was passiert mit meinen
                 Vertragsdaten?</strong> Gerade bei vertraulichen Dokumenten wie Arbeitsverträgen,
-                Geschäftsvereinbarungen oder NDAs ist Datenschutz nicht verhandelbar.
+                Geschäftsvereinbarungen oder NDAs ist Datenschutz nicht verhandelbar. Welche
+                DSGVO-Fallen in Verträgen zu Bußgeldern führen können, zeigt unser{' '}
+                <Link to="/blog/dsgvo-fallen-vertraege-bussgelder-vermeiden">Ratgeber zu DSGVO-Fallen in Verträgen</Link>.
               </p>
 
               <p>

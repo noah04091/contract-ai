@@ -937,6 +937,8 @@ const KaufvertragPruefen: React.FC = () => {
                 <strong>Stornogebühren</strong> — pauschale Klauseln über 10–15 % sind in AGB
                 regelmäßig unwirksam (§§ 307, 309 Nr. 5 BGB). Mehr zum Thema Autokauf im{' '}
                 <Link to="/blog/autokauf-vertrag-gewaehrleistung">Ratgeber Autokauf-Vertrag</Link>.
+                Worauf du bei AGB im Online-Handel achten musst, zeigt unser{' '}
+                <Link to="/blog/agb-fallen-online-shopping">Ratgeber zu AGB-Fallen beim Online-Shopping</Link>.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
