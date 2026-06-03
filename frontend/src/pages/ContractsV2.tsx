@@ -520,8 +520,8 @@ export default function Contracts() {
     switch (field) {
       case 'provider': {
         // Smart-Fallback: User-manuell `anbieter` > KI `provider.displayName`
-        // .trim() damit "  " (whitespace-only) als leer gilt
-        const manual = typeof c.anbieter === 'string' ? c.anbieter.trim() : '';
+        // .trim() damit "  " (whitespace-only) als leer gilt; String() robust gegen number-Werte
+        const manual = String(c.anbieter ?? '').trim();
         return manual || contract.provider?.displayName || muted('—');
       }
       case 'contractType':
@@ -3831,7 +3831,7 @@ export default function Contracts() {
       const c = contract as any;
       switch (fieldKey) {
         case 'provider': {
-          const manual = typeof c.anbieter === 'string' ? c.anbieter.trim() : '';
+          const manual = String(c.anbieter ?? '').trim();
           return (manual || contract.provider?.displayName || '').toLowerCase();
         }
         case 'contractType': return (contract.contractTypeLabel || contract.contractType || contract.provider?.category || '').toLowerCase();
@@ -6177,17 +6177,21 @@ export default function Contracts() {
                 {(() => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const c = previewContract as any;
-                  const anbieter = (typeof c.anbieter === 'string' && c.anbieter.trim()) || previewContract.provider?.displayName;
+                  const anbieter = String(c.anbieter ?? '').trim() || previewContract.provider?.displayName;
                   const vertragsnummer = String(c.vertragsnummer ?? '').trim() || String(c.contractNumber ?? '').trim();
+                  // Vertragstyp: gleiche Fallback-Kette wie Spalte/Sortierung (KI-Label > contractType > Kategorie)
+                  const vertragstyp = previewContract.contractTypeLabel || previewContract.contractType || previewContract.provider?.category;
                   const items: Array<{ label: string; value: string; cls?: string }> = [];
                   if (anbieter) items.push({ label: 'Anbieter', value: anbieter });
-                  if (previewContract.contractType) items.push({ label: 'Vertragstyp', value: previewContract.contractType });
+                  if (vertragstyp) items.push({ label: 'Vertragstyp', value: vertragstyp });
                   if (previewContract.laufzeit) items.push({ label: 'Laufzeit', value: previewContract.laufzeit });
                   if (previewContract.kuendigung) items.push({ label: 'Kündigung', value: previewContract.kuendigung, cls: styles.warn });
                   if (previewContract.startDate) items.push({ label: 'Vertragsbeginn', value: formatDate(previewContract.startDate) });
-                  if (previewContract.paymentAmount !== undefined && previewContract.paymentAmount !== null) {
+                  // Zahlung: paymentAmount ODER altes kosten-Feld (wie Spalte), 0 € korrekt anzeigen
+                  const zahlungBetrag = previewContract.paymentAmount ?? c.kosten;
+                  if (zahlungBetrag !== undefined && zahlungBetrag !== null && zahlungBetrag !== '') {
                     const freq = previewContract.paymentFrequency ? ` / ${previewContract.paymentFrequency}` : '';
-                    items.push({ label: 'Zahlung', value: `${previewContract.paymentAmount} €${freq}` });
+                    items.push({ label: 'Zahlung', value: `${zahlungBetrag} €${freq}` });
                   }
                   if (vertragsnummer) items.push({ label: 'Vertragsnummer', value: vertragsnummer });
                   if (items.length === 0) return null;
