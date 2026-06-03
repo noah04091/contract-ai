@@ -811,6 +811,33 @@ export default function Contracts() {
     }
   }, [location]);
 
+  // 🆕 Filter aus URL-Parametern setzen (Dashboard-Stat-Cards & Feature-Links) — von V1 portiert.
+  // Damit /contracts?status=active|expiring und ?filter=generated greifen (für V2-als-/contracts).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const statusParam = params.get('status');
+    const filterParam = params.get('filter');
+    let appliedFilter = false;
+    if (statusParam === 'active') {
+      setStatusFilter('aktiv');
+      setMobileNavTab('aktiv'); // Mobile Bottom-Nav synchron halten
+      appliedFilter = true;
+    } else if (statusParam === 'expiring') {
+      setStatusFilter('bald_ablaufend');
+      setMobileNavTab('faellig');
+      appliedFilter = true;
+    }
+    if (filterParam === 'generated') {
+      setSourceFilter('generated');
+      appliedFilter = true;
+    }
+    // URL säubern — Memory-Regel: navigate(replace) statt window.history.replaceState
+    if (appliedFilter) {
+      navigate(location.pathname, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ✅ NEW: Handle "upload" URL parameter to open upload section directly
   useEffect(() => {
     const params = new URLSearchParams(location.search);

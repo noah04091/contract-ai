@@ -229,7 +229,7 @@ export default function MultiUploadResultNavigator({ uploadFiles, onReset }: Mul
             <h3>Bereits hochgeladen</h3>
             <p>{currentFile.result?.message || 'Dieser Vertrag wurde schon einmal analysiert.'}</p>
             {currentFile.result?.contractId && (
-              <a className={styles.placeholderLink} href={`/contracts-v2/${currentFile.result.contractId}`}>
+              <a className={styles.placeholderLink} href={`/contracts/${currentFile.result.contractId}`}>
                 Vorhandene Analyse öffnen →
               </a>
             )}
