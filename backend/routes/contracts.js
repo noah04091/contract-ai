@@ -781,6 +781,10 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     // contractTypeLabel als KI-deutsche-Bezeichnung. Ohne diese Inclusion-Whitelist-Erweiterung
     // werden die Felder zwar in DB geschrieben aber niemals an Frontend gesendet.
     customerNumber: 1, paymentMethod: 1,
+    // 🆕 03.06.2026: contractNumber (KI-Analyse schreibt die erkannte Vertragsnummer hierhin,
+    // nicht in vertragsnummer) + kundennummer (Fallback der Kundennummer-Spalte). Ohne diese
+    // wurden die Felder bei analysierten Verträgen nie an die Liste gesendet -> Spalte zeigte "—".
+    contractNumber: 1, kundennummer: 1,
     // Sort-Felder (auch wenn nicht angezeigt, für Sortierung nötig)
     'legalPulse.riskScore': 1
   };
