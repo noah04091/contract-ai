@@ -530,11 +530,11 @@ export default function Contracts() {
         // Backwards-Compat für Alt-Verträge.
         return contract.contractTypeLabel || contract.contractType || contract.provider?.category || muted('—');
       case 'contractNumber': {
-        const v = (typeof c.vertragsnummer === 'string' ? c.vertragsnummer.trim() : '') || (typeof c.contractNumber === 'string' ? c.contractNumber.trim() : '');
+        const v = String(c.vertragsnummer ?? '').trim() || String(c.contractNumber ?? '').trim(); // robust gegen number-Werte
         return v || muted('—');
       }
       case 'customerNumber': {
-        const v = (typeof c.customerNumber === 'string' ? c.customerNumber.trim() : '') || (typeof c.kundennummer === 'string' ? c.kundennummer.trim() : '');
+        const v = String(c.customerNumber ?? '').trim() || String(c.kundennummer ?? '').trim(); // robust gegen number-Werte
         return v || muted('—');
       }
       case 'startDate':
@@ -3836,12 +3836,10 @@ export default function Contracts() {
         }
         case 'contractType': return (contract.contractTypeLabel || contract.contractType || contract.provider?.category || '').toLowerCase();
         case 'contractNumber': return (
-          (typeof c.vertragsnummer === 'string' ? c.vertragsnummer.trim() : '') ||
-          (typeof c.contractNumber === 'string' ? c.contractNumber.trim() : '')
+          String(c.vertragsnummer ?? '').trim() || String(c.contractNumber ?? '').trim()
         ).toLowerCase();
         case 'customerNumber': return (
-          (typeof c.customerNumber === 'string' ? c.customerNumber.trim() : '') ||
-          (typeof c.kundennummer === 'string' ? c.kundennummer.trim() : '')
+          String(c.customerNumber ?? '').trim() || String(c.kundennummer ?? '').trim()
         ).toLowerCase();
         case 'startDate': {
           if (!contract.startDate) return Number.POSITIVE_INFINITY;
@@ -6180,7 +6178,7 @@ export default function Contracts() {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const c = previewContract as any;
                   const anbieter = (typeof c.anbieter === 'string' && c.anbieter.trim()) || previewContract.provider?.displayName;
-                  const vertragsnummer = (typeof c.vertragsnummer === 'string' && c.vertragsnummer.trim()) || (typeof c.contractNumber === 'string' && c.contractNumber.trim());
+                  const vertragsnummer = String(c.vertragsnummer ?? '').trim() || String(c.contractNumber ?? '').trim();
                   const items: Array<{ label: string; value: string; cls?: string }> = [];
                   if (anbieter) items.push({ label: 'Anbieter', value: anbieter });
                   if (previewContract.contractType) items.push({ label: 'Vertragstyp', value: previewContract.contractType });
