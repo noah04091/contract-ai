@@ -252,16 +252,16 @@
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--lex-s1);
+  gap: 6px;
   justify-content: center;
 }
 
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 7px 14px;
-  font-size: 0.9rem;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.84rem;
   font-weight: 500;
   color: var(--lex-text-2);
   background: var(--lex-surface);
@@ -403,6 +403,9 @@
   letter-spacing: -0.01em;
   margin: 0;
   line-height: 1.25;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .areaBadge {

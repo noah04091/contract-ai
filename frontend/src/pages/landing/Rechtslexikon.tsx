@@ -179,7 +179,7 @@ export default function Rechtslexikon() {
           <div className={styles.heroGlow} />
           <div className={`${styles.container} ${styles.heroInner}`}>
             <span className={styles.eyebrow}>
-              <BookOpen size={15} /> Kostenloses Rechtslexikon
+              <BookOpen size={15} /> Rechtslexikon
             </span>
             <h1 className={styles.heroTitle}>
               Recht, <span className={styles.accent}>verständlich</span> erklärt.
