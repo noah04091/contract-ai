@@ -520,8 +520,8 @@ export default function Contracts() {
     switch (field) {
       case 'provider': {
         // Smart-Fallback: User-manuell `anbieter` > KI `provider.displayName`
-        // .trim() damit "  " (whitespace-only) als leer gilt
-        const manual = typeof c.anbieter === 'string' ? c.anbieter.trim() : '';
+        // .trim() damit "  " (whitespace-only) als leer gilt; String() robust gegen number-Werte
+        const manual = String(c.anbieter ?? '').trim();
         return manual || contract.provider?.displayName || muted('—');
       }
       case 'contractType':
@@ -530,11 +530,11 @@ export default function Contracts() {
         // Backwards-Compat für Alt-Verträge.
         return contract.contractTypeLabel || contract.contractType || contract.provider?.category || muted('—');
       case 'contractNumber': {
-        const v = (typeof c.vertragsnummer === 'string' ? c.vertragsnummer.trim() : '') || (typeof c.contractNumber === 'string' ? c.contractNumber.trim() : '');
+        const v = String(c.vertragsnummer ?? '').trim() || String(c.contractNumber ?? '').trim(); // robust gegen number-Werte
         return v || muted('—');
       }
       case 'customerNumber': {
-        const v = (typeof c.customerNumber === 'string' ? c.customerNumber.trim() : '') || (typeof c.kundennummer === 'string' ? c.kundennummer.trim() : '');
+        const v = String(c.customerNumber ?? '').trim() || String(c.kundennummer ?? '').trim(); // robust gegen number-Werte
         return v || muted('—');
       }
       case 'startDate':
@@ -810,6 +810,33 @@ export default function Contracts() {
       window.history.replaceState({}, document.title);
     }
   }, [location]);
+
+  // 🆕 Filter aus URL-Parametern setzen (Dashboard-Stat-Cards & Feature-Links) — von V1 portiert.
+  // Damit /contracts?status=active|expiring und ?filter=generated greifen (für V2-als-/contracts).
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const statusParam = params.get('status');
+    const filterParam = params.get('filter');
+    let appliedFilter = false;
+    if (statusParam === 'active') {
+      setStatusFilter('aktiv');
+      setMobileNavTab('aktiv'); // Mobile Bottom-Nav synchron halten
+      appliedFilter = true;
+    } else if (statusParam === 'expiring') {
+      setStatusFilter('bald_ablaufend');
+      setMobileNavTab('faellig');
+      appliedFilter = true;
+    }
+    if (filterParam === 'generated') {
+      setSourceFilter('generated');
+      appliedFilter = true;
+    }
+    // URL säubern — Memory-Regel: navigate(replace) statt window.history.replaceState
+    if (appliedFilter) {
+      navigate(location.pathname, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ✅ NEW: Handle "upload" URL parameter to open upload section directly
   useEffect(() => {
@@ -3831,17 +3858,15 @@ export default function Contracts() {
       const c = contract as any;
       switch (fieldKey) {
         case 'provider': {
-          const manual = typeof c.anbieter === 'string' ? c.anbieter.trim() : '';
+          const manual = String(c.anbieter ?? '').trim();
           return (manual || contract.provider?.displayName || '').toLowerCase();
         }
         case 'contractType': return (contract.contractTypeLabel || contract.contractType || contract.provider?.category || '').toLowerCase();
         case 'contractNumber': return (
-          (typeof c.vertragsnummer === 'string' ? c.vertragsnummer.trim() : '') ||
-          (typeof c.contractNumber === 'string' ? c.contractNumber.trim() : '')
+          String(c.vertragsnummer ?? '').trim() || String(c.contractNumber ?? '').trim()
         ).toLowerCase();
         case 'customerNumber': return (
-          (typeof c.customerNumber === 'string' ? c.customerNumber.trim() : '') ||
-          (typeof c.kundennummer === 'string' ? c.kundennummer.trim() : '')
+          String(c.customerNumber ?? '').trim() || String(c.kundennummer ?? '').trim()
         ).toLowerCase();
         case 'startDate': {
           if (!contract.startDate) return Number.POSITIVE_INFINITY;
@@ -5681,7 +5706,7 @@ export default function Contracts() {
                               </td>
                               <td>
                                 {/* 🆕 V2 TODO #1: nur 2 Icons (Mockup-Style) — 👁 PDF + ⋮ Mehr */}
-                                <div className={styles.actionButtonsV2} onClick={(e) => e.stopPropagation()}>
+                                <div className={styles.actionButtonsV2} onClick={(e) => e.stopPropagation()} onMouseEnter={handleRowMouseLeave}>
                                   <button
                                     className={styles.actionButton}
                                     onClick={(e) => {
@@ -6179,17 +6204,21 @@ export default function Contracts() {
                 {(() => {
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const c = previewContract as any;
-                  const anbieter = (typeof c.anbieter === 'string' && c.anbieter.trim()) || previewContract.provider?.displayName;
-                  const vertragsnummer = (typeof c.vertragsnummer === 'string' && c.vertragsnummer.trim()) || (typeof c.contractNumber === 'string' && c.contractNumber.trim());
+                  const anbieter = String(c.anbieter ?? '').trim() || previewContract.provider?.displayName;
+                  const vertragsnummer = String(c.vertragsnummer ?? '').trim() || String(c.contractNumber ?? '').trim();
+                  // Vertragstyp: gleiche Fallback-Kette wie Spalte/Sortierung (KI-Label > contractType > Kategorie)
+                  const vertragstyp = previewContract.contractTypeLabel || previewContract.contractType || previewContract.provider?.category;
                   const items: Array<{ label: string; value: string; cls?: string }> = [];
                   if (anbieter) items.push({ label: 'Anbieter', value: anbieter });
-                  if (previewContract.contractType) items.push({ label: 'Vertragstyp', value: previewContract.contractType });
+                  if (vertragstyp) items.push({ label: 'Vertragstyp', value: vertragstyp });
                   if (previewContract.laufzeit) items.push({ label: 'Laufzeit', value: previewContract.laufzeit });
                   if (previewContract.kuendigung) items.push({ label: 'Kündigung', value: previewContract.kuendigung, cls: styles.warn });
                   if (previewContract.startDate) items.push({ label: 'Vertragsbeginn', value: formatDate(previewContract.startDate) });
-                  if (previewContract.paymentAmount !== undefined && previewContract.paymentAmount !== null) {
+                  // Zahlung: paymentAmount ODER altes kosten-Feld (wie Spalte), 0 € korrekt anzeigen
+                  const zahlungBetrag = previewContract.paymentAmount ?? c.kosten;
+                  if (zahlungBetrag !== undefined && zahlungBetrag !== null && zahlungBetrag !== '') {
                     const freq = previewContract.paymentFrequency ? ` / ${previewContract.paymentFrequency}` : '';
-                    items.push({ label: 'Zahlung', value: `${previewContract.paymentAmount} €${freq}` });
+                    items.push({ label: 'Zahlung', value: `${zahlungBetrag} €${freq}` });
                   }
                   if (vertragsnummer) items.push({ label: 'Vertragsnummer', value: vertragsnummer });
                   if (items.length === 0) return null;
@@ -6449,8 +6478,8 @@ export default function Contracts() {
       {/* End of pageContainer */}
 
       {/* 👁️ Hover-Preview-Tooltip — als Portal in body, iframe-basiert (browser-native PDF-Render) */}
-      {/* Nur in der Vertragsliste rendern (nicht bei Upload/Analyse) und nicht über dem offenen Detail-Modal */}
-      {hoveredContractId && hoverPos && activeSection === 'contracts' && !showDetails && createPortal(
+      {/* Nur in der Vertragsliste rendern (nicht bei Upload/Analyse), nicht über Detail-Modal, nicht über offenem "Mehr"-Menü */}
+      {hoveredContractId && hoverPos && activeSection === 'contracts' && !showDetails && !morePopoverFor && createPortal(
         (() => {
           const hc = contracts.find(c => c._id === hoveredContractId);
           const hcName = hc ? fixUtf8Display(hc.name) : 'Dokument';
