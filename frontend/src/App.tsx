@@ -22,7 +22,7 @@ import { CelebrationProvider } from "./components/Celebration";
 // Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
 import HomeRedesign from "./pages/HomeRedesign";
 import Login from "./pages/Login";
-import Contracts from "./pages/Contracts"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
+import ContractsV2 from "./pages/ContractsV2"; // 🎯 V2 = Standard /contracts, eager-Import (verhindert CSS-Preload-Fehler, wie zuvor V1)
 import Profile from "./pages/Profile"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
 // 🔧 FIX: Direct imports für rechtliche Seiten - verhindert CSS-Preload-Fehler
 import Impressum from "./pages/Impressum";
@@ -93,7 +93,7 @@ const DashboardLegacy = lazy(() => import("./pages/Dashboard")); // 🔙 Altes D
 // Contracts und Profile werden direkt importiert (siehe oben) - verhindert CSS-Preload-Fehler
 const ContractDetails = lazy(() => import("./pages/ContractDetails"));
 const ContractDetailsV2 = lazy(() => import("./pages/ContractDetailsV2")); // V2 - Premium Enterprise Design
-const ContractsV2 = lazy(() => import("./pages/ContractsV2")); // 🎯 V2-Vorschau der Vertragsverwaltung (eigene Route, V1 unverändert)
+const Contracts = lazy(() => import("./pages/Contracts")); // 🔙 V1 = Legacy-Backup-Route /contracts-legacy (selten genutzt, daher lazy)
 const EditContract = lazy(() => import("./pages/EditContract"));
 const CalendarView = lazy(() => import("./pages/Calendar"));
 const Cancel = lazy(() => import("./pages/Cancel"));
@@ -258,8 +258,9 @@ function AppWithLoader() {
             {/* 🔒 Geschützte Seiten */}
             <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
             <Route path="/dashboard-legacy" element={<RequireAuth><DashboardLegacy /></RequireAuth>} /> {/* 🔙 Altes Dashboard */}
-            <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
-            <Route path="/contracts-v2" element={<RequireAuth><ContractsV2 /></RequireAuth>} /> {/* 🎯 V2-Vorschau, parallele Route, V1 bleibt aktiv */}
+            <Route path="/contracts" element={<RequireAuth><ContractsV2 /></RequireAuth>} /> {/* 🎯 V2 ist jetzt Standard (04.06.2026) */}
+            <Route path="/contracts-v2" element={<RequireAuth><ContractsV2 /></RequireAuth>} /> {/* Alias bleibt gültig (MultiUploadResultNavigator etc.) */}
+            <Route path="/contracts-legacy" element={<RequireAuth><Contracts /></RequireAuth>} /> {/* 🔙 V1 Backup, analog /dashboard-legacy */}
             <Route path="/contracts/:id" element={<RequireAuth><ContractDetailsV2 /></RequireAuth>} /> {/* V2 - Premium Enterprise Design */}
             <Route path="/contracts/:id/legacy" element={<RequireAuth><ContractDetails /></RequireAuth>} /> {/* Legacy Backup */}
             <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />

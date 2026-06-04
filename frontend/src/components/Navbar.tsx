@@ -134,7 +134,7 @@ export default function Navbar() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
   // Definiere geschützte Seiten
-  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/generate", "/chat", "/envelopes", "/generate", "/legal-pulse", "/cancellations", "/playbook-review"];
+  const protectedRoutes = ["/dashboard", "/contracts", "/contracts-v2", "/contracts-legacy", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/generate", "/chat", "/envelopes", "/generate", "/legal-pulse", "/cancellations", "/playbook-review"];
   const isProtectedPage = protectedRoutes.includes(location.pathname);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
