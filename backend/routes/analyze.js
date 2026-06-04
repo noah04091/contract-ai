@@ -4011,15 +4011,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       }
     );
 
-    console.log(`🔍 [${requestId}] RAW Update Result:`, JSON.stringify(updateResult, null, 2));
-    console.log(`🔍 [${requestId}] Update Result Keys:`, Object.keys(updateResult || {}));
-    console.log(`🔍 [${requestId}] Update Result.value:`, updateResult?.value);
-    console.log(`🔍 [${requestId}] Update Result parsed:`, {
-      success: !!updateResult?.value,
-      hasValue: 'value' in (updateResult || {}),
-      newCount: updateResult?.value?.analysisCount,
-      plan: updateResult?.value?.subscriptionPlan
-    });
+    // (Debug-Logs entfernt: dumpten das komplette User-Objekt inkl. Passwort-Hash/Tokens
+    //  und waren zudem irreführend. Echte Erfolgsmeldung folgt unten via "analysisCount atomar erhöht".)
 
     // Prüfen ob Update erfolgreich war
     // NOTE: MongoDB native driver returns document directly, NOT in .value property!
