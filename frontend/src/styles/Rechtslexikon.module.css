@@ -11,7 +11,7 @@
   --lex-surface-2: #f5f5f7;
   --lex-text: #1d1d1f;
   --lex-text-2: #515154;
-  --lex-muted: #86868b;
+  --lex-muted: #6e6e73;
   --lex-border: #e7e7ea;
   --lex-border-strong: #d2d2d7;
   --lex-primary: #2563eb;
@@ -67,6 +67,19 @@
   max-width: 760px;
   margin: 0 auto;
   padding: 0 var(--lex-s3);
+}
+
+/* nur für Screenreader sichtbar (z. B. Live-Ansage der Trefferzahl) */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* =================================================================
@@ -195,12 +208,6 @@
 
 .searchClear:hover {
   background: var(--lex-border);
-}
-
-.heroMeta {
-  margin-top: var(--lex-s3);
-  font-size: 0.95rem;
-  color: var(--lex-muted);
 }
 
 .trustRow {
@@ -419,6 +426,8 @@
   border-radius: var(--lex-r-pill);
   white-space: nowrap;
   flex-shrink: 0;
+  /* dunkler Text (statt Gebietsfarbe) für WCAG-AA-Kontrast; Farbe trägt der Punkt */
+  color: var(--lex-text-2);
 }
 
 .badgeDot {
@@ -571,7 +580,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--lex-muted);
-  margin-bottom: var(--lex-s2);
+  margin: 0 0 var(--lex-s2);
 }
 
 .definition {
@@ -736,6 +745,17 @@
   color: var(--lex-primary-hover);
 }
 
+/* --- Hinweis: keine Rechtsberatung --- */
+.disclaimer {
+  margin-top: var(--lex-s4);
+  padding-top: var(--lex-s3);
+  border-top: 1px solid var(--lex-border);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--lex-muted);
+  text-align: center;
+}
+
 /* --- 404 / nicht gefunden --- */
 .notFound {
   text-align: center;
@@ -778,9 +798,24 @@
     margin: 0 calc(-1 * var(--lex-s3));
     padding-left: var(--lex-s3);
     padding-right: var(--lex-s3);
+    /* rechter Verlauf signalisiert: hier kann weitergescrollt werden */
+    -webkit-mask-image: linear-gradient(to right, #000 90%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 90%, transparent 100%);
   }
   .chips::-webkit-scrollbar {
     display: none;
+  }
+  /* größere Touch-Flächen auf dem Handy */
+  .chip {
+    padding: 9px 14px;
+  }
+  .searchClear {
+    width: 36px;
+    height: 36px;
+  }
+  /* Sticky-Kopf ist auf Mobile kompakter → kleinerer Anker-Abstand */
+  .letterGroup {
+    scroll-margin-top: 84px;
   }
   .cta {
     padding: var(--lex-s4) var(--lex-s3);

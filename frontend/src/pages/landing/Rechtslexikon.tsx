@@ -7,18 +7,10 @@ import Footer from "../../components/Footer";
 import { legalTerms } from "../../data/legalTerms";
 import { LEGAL_AREA_INFO } from "../../types/clauseLibrary";
 import type { LegalArea, LegalTerm } from "../../types/clauseLibrary";
-import { termPath, termUrl, SITE_URL, LEXIKON_BASE_PATH } from "../../utils/lexikon";
+import { termPath, termUrl, SITE_URL, LEXIKON_BASE_PATH, hexToRgba } from "../../utils/lexikon";
 import styles from "../../styles/Rechtslexikon.module.css";
 
 const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-
-function hexToRgba(hex: string, alpha: number): string {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
 
 export default function Rechtslexikon() {
   const [query, setQuery] = useState("");
@@ -134,16 +126,10 @@ export default function Rechtslexikon() {
   return (
     <>
       <Helmet>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap"
-          rel="stylesheet"
-        />
         <title>Rechtslexikon: Juristische Begriffe verständlich erklärt | Contract AI</title>
         <meta
           name="description"
-          content="Kostenloses Rechtslexikon: über 90 juristische Begriffe aus Vertrags-, Arbeits-, Miet- und Datenschutzrecht – in einfacher Sprache erklärt, mit Gesetzesbezug und Praxisbeispielen."
+          content="Kostenloses Rechtslexikon: über 90 juristische Begriffe aus dem deutschen Recht – in einfacher Sprache erklärt, mit Gesetzesbezug und Beispielen."
         />
         <meta
           name="keywords"
@@ -179,7 +165,7 @@ export default function Rechtslexikon() {
           <div className={styles.heroGlow} />
           <div className={`${styles.container} ${styles.heroInner}`}>
             <span className={styles.eyebrow}>
-              <BookOpen size={15} /> Rechtslexikon
+              <BookOpen size={15} aria-hidden="true" /> Rechtslexikon
             </span>
             <h1 className={styles.heroTitle}>
               Recht, <span className={styles.accent}>verständlich</span> erklärt.
@@ -190,7 +176,7 @@ export default function Rechtslexikon() {
             </p>
 
             <div className={styles.searchWrap}>
-              <Search className={styles.searchIcon} size={20} />
+              <Search className={styles.searchIcon} size={20} aria-hidden="true" />
               <input
                 className={styles.searchInput}
                 type="text"
@@ -201,7 +187,7 @@ export default function Rechtslexikon() {
               />
               {query && (
                 <button className={styles.searchClear} onClick={() => setQuery("")} aria-label="Suche zurücksetzen">
-                  <X size={16} />
+                  <X size={16} aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -215,7 +201,11 @@ export default function Rechtslexikon() {
                 <strong>{Object.keys(areaCounts).length}</strong> Rechtsgebiete
               </span>
               <span className={styles.trustSep} />
-              <span className={styles.trustItem}>100% kostenlos</span>
+              <span className={styles.trustItem}>Mit Gesetzesbezug</span>
+            </div>
+
+            <div className={styles.srOnly} aria-live="polite">
+              {query || activeArea !== "all" ? `${filtered.length} Begriffe gefunden` : ""}
             </div>
           </div>
         </header>
@@ -260,7 +250,7 @@ export default function Rechtslexikon() {
                     {letter}
                   </a>
                 ) : (
-                  <span key={letter} className={`${styles.azLink} ${styles.azDisabled}`}>
+                  <span key={letter} className={`${styles.azLink} ${styles.azDisabled}`} aria-hidden="true">
                     {letter}
                   </span>
                 )
@@ -291,7 +281,7 @@ export default function Rechtslexikon() {
                               <h3 className={styles.cardTerm}>{term.term}</h3>
                               <span
                                 className={styles.areaBadge}
-                                style={{ color: info.color, background: hexToRgba(info.color, 0.1) }}
+                                style={{ background: hexToRgba(info.color, 0.1) }}
                               >
                                 <span className={styles.badgeDot} style={{ background: info.color }} />
                                 {info.label}
@@ -301,7 +291,7 @@ export default function Rechtslexikon() {
                             <div className={styles.cardFooter}>
                               <span className={styles.cardBasis}>{term.legalBasis || ""}</span>
                               <span className={styles.cardArrow}>
-                                Mehr <ArrowRight size={15} />
+                                Mehr <ArrowRight size={15} aria-hidden="true" />
                               </span>
                             </div>
                           </Link>
@@ -314,6 +304,13 @@ export default function Rechtslexikon() {
             )}
           </div>
         </main>
+
+        <div className={styles.container}>
+          <p className={styles.disclaimer}>
+            Hinweis: Dieses Rechtslexikon bietet allgemeine, redaktionell aufbereitete Erklärungen
+            und ersetzt keine Rechtsberatung im Einzelfall.
+          </p>
+        </div>
 
         <Footer />
       </div>

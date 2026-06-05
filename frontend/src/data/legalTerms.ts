@@ -807,7 +807,7 @@ export const legalTerms: LegalTerm[] = [
     relatedTerms: ['arbeitsvertrag', 'kuendigung'],
     legalArea: 'arbeitsrecht',
     legalBasis: '§ 109 GewO',
-    letterGroup: 'Z',
+    letterGroup: 'A',
   },
   {
     id: 'zinsen',
@@ -931,7 +931,7 @@ export const legalTerms: LegalTerm[] = [
     relatedTerms: ['anfechtung', 'irrtum', 'willenserklarung'],
     legalArea: 'vertragsrecht',
     legalBasis: '§ 123 BGB',
-    letterGroup: 'T',
+    letterGroup: 'A',
   },
   {
     id: 'meldepflicht',

@@ -5,16 +5,8 @@ import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
 import Footer from "../../components/Footer";
 import { getTermById, getRelatedTerms } from "../../data/legalTerms";
 import { LEGAL_AREA_INFO } from "../../types/clauseLibrary";
-import { slugToTermId, termPath, termUrl, SITE_URL, LEXIKON_BASE_PATH } from "../../utils/lexikon";
+import { slugToTermId, termPath, termUrl, SITE_URL, LEXIKON_BASE_PATH, hexToRgba } from "../../utils/lexikon";
 import styles from "../../styles/Rechtslexikon.module.css";
-
-function hexToRgba(hex: string, alpha: number): string {
-  const h = hex.replace("#", "");
-  const r = parseInt(h.substring(0, 2), 16);
-  const g = parseInt(h.substring(2, 4), 16);
-  const b = parseInt(h.substring(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
 
 export default function RechtslexikonTerm() {
   const { slug } = useParams<{ slug: string }>();
@@ -38,7 +30,7 @@ export default function RechtslexikonTerm() {
               <h1>Begriff nicht gefunden</h1>
               <p>Diesen Rechtsbegriff haben wir (noch) nicht im Lexikon.</p>
               <Link to={LEXIKON_BASE_PATH} className={styles.backLink}>
-                <ArrowLeft size={16} /> Zurück zum Rechtslexikon
+                <ArrowLeft size={16} aria-hidden="true" /> Zurück zum Rechtslexikon
               </Link>
             </div>
           </div>
@@ -82,12 +74,6 @@ export default function RechtslexikonTerm() {
   return (
     <>
       <Helmet>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap"
-          rel="stylesheet"
-        />
         <title>{term.term} – einfach erklärt | Rechtslexikon | Contract AI</title>
         <meta name="description" content={metaDescription} />
         <meta
@@ -115,14 +101,14 @@ export default function RechtslexikonTerm() {
       </Helmet>
 
       <div className={styles.page}>
-        <article className={styles.detailWrap}>
+        <main className={styles.detailWrap}>
           <div className={styles.containerNarrow}>
             {/* Breadcrumb */}
             <nav className={styles.breadcrumb} aria-label="Brotkrumen-Navigation">
               <Link to="/">Home</Link>
-              <ChevronRight size={14} className={styles.breadcrumbSep} />
+              <ChevronRight size={14} className={styles.breadcrumbSep} aria-hidden="true" />
               <Link to={LEXIKON_BASE_PATH}>Rechtslexikon</Link>
-              <ChevronRight size={14} className={styles.breadcrumbSep} />
+              <ChevronRight size={14} className={styles.breadcrumbSep} aria-hidden="true" />
               <span className={styles.breadcrumbCurrent}>{term.term}</span>
             </nav>
 
@@ -131,7 +117,7 @@ export default function RechtslexikonTerm() {
               <div className={styles.detailBadges}>
                 <span
                   className={styles.areaBadge}
-                  style={{ color: info.color, background: hexToRgba(info.color, 0.1) }}
+                  style={{ background: hexToRgba(info.color, 0.1) }}
                 >
                   <span className={styles.badgeDot} style={{ background: info.color }} />
                   {info.label}
@@ -146,14 +132,14 @@ export default function RechtslexikonTerm() {
 
             {/* Juristische Definition */}
             <section className={styles.section}>
-              <span className={styles.sectionLabel}>Juristische Definition</span>
+              <h2 className={styles.sectionLabel}>Juristische Definition</h2>
               <p className={styles.definition}>{term.legalDefinition}</p>
             </section>
 
             {/* Beispiele */}
             {term.examples.length > 0 && (
               <section className={styles.section}>
-                <span className={styles.sectionLabel}>Beispiele aus der Praxis</span>
+                <h2 className={styles.sectionLabel}>Beispiele aus der Praxis</h2>
                 <ul className={styles.exampleList}>
                   {term.examples.map((example, i) => (
                     <li key={i} className={styles.exampleItem}>
@@ -167,7 +153,7 @@ export default function RechtslexikonTerm() {
             {/* Verwandte Begriffe */}
             {related.length > 0 && (
               <section className={styles.section}>
-                <span className={styles.sectionLabel}>Verwandte Begriffe</span>
+                <h2 className={styles.sectionLabel}>Verwandte Begriffe</h2>
                 <div className={styles.relatedGrid}>
                   {related.map((rel) => {
                     const relInfo = LEGAL_AREA_INFO[rel.legalArea];
@@ -190,15 +176,20 @@ export default function RechtslexikonTerm() {
                 unfaire Klauseln auf einen Blick.
               </p>
               <Link to="/ki-vertragsanalyse" className={styles.ctaButton}>
-                Vertrag jetzt prüfen <ArrowRight size={18} />
+                Vertrag jetzt prüfen <ArrowRight size={18} aria-hidden="true" />
               </Link>
             </section>
 
             <Link to={LEXIKON_BASE_PATH} className={styles.backLink}>
-              <ArrowLeft size={16} /> Alle Begriffe im Rechtslexikon
+              <ArrowLeft size={16} aria-hidden="true" /> Alle Begriffe im Rechtslexikon
             </Link>
+
+            <p className={styles.disclaimer}>
+              Hinweis: Dieses Rechtslexikon bietet allgemeine, redaktionell aufbereitete Erklärungen
+              und ersetzt keine Rechtsberatung im Einzelfall.
+            </p>
           </div>
-        </article>
+        </main>
 
         <Footer />
       </div>
