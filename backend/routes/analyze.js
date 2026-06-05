@@ -3635,7 +3635,7 @@ function resolveSystemPrompt(documentType, contractType) {
 /**
  * 🛠️ FIXED: Enhanced Rate-Limited GPT-4 Request (Uses GPT-4-Turbo for 128k Context)
  */
-const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3, documentType = null, contractType = null) => {
+const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3, documentType = null, contractType = null, maxOutputTokens = 16000) => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -3677,7 +3677,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
           response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
           temperature: 0.1, // Low for consistency
           seed: 42, // 🎯 Determinismus best-effort — gleicher Vertrag → gleicher Score (siehe Memory: project_datehunt-3-schichten-proposal)
-          max_tokens: 16000, // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
+          max_tokens: maxOutputTokens, // 📦 Koffer-Fix: adaptiver Antwort-Platz (vom Aufrufer berechnet) statt fix 16k — verhindert 128k-Überlauf bei großen Verträgen
         }, { signal: reqController.signal, maxRetries: 0 });
       } finally {
         clearTimeout(reqTimeoutHandle);
@@ -3687,6 +3687,11 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       // Removed redundant tracking here since we don't have access to req.user.userId
       if (completion.usage) {
         console.log(`💰 [${requestId}] OpenAI Usage: ${completion.usage.total_tokens} tokens (prompt: ${completion.usage.prompt_tokens}, completion: ${completion.usage.completion_tokens})`);
+      }
+      // 📦 Koffer-Fix Sicherheitsnetz: Antwort am max_tokens-Limit abgeschnitten? Dann ist
+      // das JSON evtl. unvollständig → klar loggen statt stillem JSON.parse-Fehler später.
+      if (completion.choices?.[0]?.finish_reason === 'length') {
+        console.warn(`⚠️ [${requestId}] Antwort am Limit abgeschnitten (finish_reason=length, max_tokens=${maxOutputTokens}) — Analyse-JSON evtl. unvollständig`);
       }
       // 🔑 system_fingerprint loggen — wenn er sich ändert, hat OpenAI das Modell intern gewechselt
       // und seed wird kurzzeitig nicht-deterministisch. Ohne dieses Log fliegen wir blind.
@@ -4539,15 +4544,48 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // contractType-Detection nichts liefert, nutzen wir die Dokumentenklasse wie zuvor —
     // das landet beim "other"-Awareness, identisch zum alten Verhalten.
     const promptContractType = extractedContractType || validationResult.documentType;
-    // 📏 Plan-basiertes Token-Limit übergeben statt hardcoded 3000 — sonst sieht
-    // die Hauptanalyse bei langen Verträgen nur einen Bruchteil des Inhalts.
-    // maxInputTokens stammt aus getAnalysisLimits(plan) — Free 20k / Business 40k / Enterprise 60k.
+
+    // 📦 KOFFER-FIX: Input-Bedarf realistisch schätzen + Antwort-Platz adaptiv setzen,
+    // damit (Vertrag + Anweisungen + Antwort) GARANTIERT ins 128k-Modell-Fenster passt.
+    // Crash-Ursache bei großen Verträgen: fixe 16k Antwort-Reservierung + untertreibende
+    // chars/4-Schätzung → 113k Input + 16k = 129k > 128k → 400-Fehler "context_length_exceeded".
+    // Korrektur 1.2: chars/4 untertreibt deutschen Text (gemessen 98k→113k ≈ 1.15) — 1.2 ist
+    // konservativ ≥ Realität, schätzt also NIE zu niedrig → Überlauf strukturell unmöglich.
+    const MODEL_CONTEXT_TOKENS = MODEL_LIMITS['gpt-4o']; // 128000
+    const PROMPT_OVERHEAD_TOKENS = 4500;   // System-Prompt + Instruktionen/Schema (gemessen ~4.1k + Puffer)
+    const ESTIMATE_CORRECTION = 1.2;       // konservativer Aufschlag auf chars/4
+    const SAFETY_MARGIN_TOKENS = 1500;
+    const MIN_OUTPUT_TOKENS = 4000;        // reale Analyse-Antwort ~1.4k → ~2.8x Puffer
+    const MAX_OUTPUT_TOKENS = 16000;
+
+    const realisticInputTokens = Math.ceil(estimateTokenCount(fullTextContent) * ESTIMATE_CORRECTION) + PROMPT_OVERHEAD_TOKENS;
+    let analysisMaxTokens = Math.min(
+      MAX_OUTPUT_TOKENS,
+      MODEL_CONTEXT_TOKENS - realisticInputTokens - SAFETY_MARGIN_TOKENS
+    );
+    let contractBudgetTokens = maxInputTokens; // Default: Plan-Limit → kein Kürzen wenn es passt
+
+    if (analysisMaxTokens < MIN_OUTPUT_TOKENS) {
+      // Vertrag so groß, dass nicht mal minimaler Antwort-Platz bleibt → Text kürzen
+      // (optimizeTextForGPT4 in generateDeepLawyerLevelPrompt macht Head+Mitte+Ende mit Marker).
+      analysisMaxTokens = MIN_OUTPUT_TOKENS;
+      contractBudgetTokens = Math.max(
+        1000,
+        Math.floor((MODEL_CONTEXT_TOKENS - PROMPT_OVERHEAD_TOKENS - MIN_OUTPUT_TOKENS - SAFETY_MARGIN_TOKENS) / ESTIMATE_CORRECTION)
+      );
+      console.warn(`📦 [${requestId}] Großer Vertrag (~${realisticInputTokens} tok geschätzt): Text wird auf ~${contractBudgetTokens} tok gekürzt, Antwort-Platz ${analysisMaxTokens} tok`);
+    } else {
+      console.log(`📦 [${requestId}] Koffer-Budget OK: Vertrag≈${realisticInputTokens} tok, Antwort-Platz=${analysisMaxTokens} tok (voll, kein Kürzen)`);
+    }
+
+    // 📏 Token-Budget für die Hauptanalyse: contractBudgetTokens (Plan-Limit, oder gekürzt
+    // bei Monster-Verträgen). maxInputTokens stammt aus getAnalysisLimits(plan).
     const analysisPrompt = generateDeepLawyerLevelPrompt(
       fullTextContent,
       promptContractType,
       validationResult.strategy,
       requestId,
-      maxInputTokens,
+      contractBudgetTokens,
       { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence }
     );
 
@@ -4562,7 +4600,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     try {
       const [completionResult, dateHuntPromiseResult] = await Promise.all([
         Promise.race([
-          makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3, validationResult.documentType, extractedContractType),
+          makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3, validationResult.documentType, extractedContractType, analysisMaxTokens),
           // 🎯 Promise.race 185s — Library-AbortController (180s) soll zuerst feuern.
           // Diese externe Race ist Backup für den Fall dass AbortController hängt.
           new Promise((_, reject) =>
