@@ -3826,10 +3826,23 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   let storageInfo;
   let cleanupLocalFile = false;
 
-  if (S3_CONFIGURED && S3_AVAILABLE && s3Instance && PutObjectCommand) {
+  // S3 ist Pflicht-Speicher in Produktion (Render-Disk ist flüchtig — lokal gespeicherte PDFs
+  // sind beim nächsten Deploy weg). Daher bei S3-Fehler: 2 Retries, dann sauberer Abbruch
+  // statt stillem LOCAL-Fallback. S3_AVAILABLE bewusst NICHT geprüft (wird nur beim Start
+  // gesetzt, kein Laufzeit-Re-Test → unzuverlässig): wir versuchen immer und behandeln Fehler.
+  if (S3_CONFIGURED && s3Instance && PutObjectCommand) {
     console.log(`📤 [${requestId}] Uploading to S3...`);
-    try {
-      const s3Result = await uploadToS3(req.file.path, req.file.originalname, req.user.userId);
+    let s3Result = null;
+    for (let attempt = 1; attempt <= 3 && !s3Result; attempt++) {
+      try {
+        s3Result = await uploadToS3(req.file.path, req.file.originalname, req.user.userId);
+      } catch (s3Error) {
+        console.error(`❌ [${requestId}] S3 upload attempt ${attempt}/3 failed: ${s3Error.message}`);
+        if (attempt < 3) await new Promise(r => setTimeout(r, 800 * attempt)); // kurzer Backoff
+      }
+    }
+
+    if (s3Result) {
       storageInfo = {
         uploadType: "S3_UPLOAD",
         s3Key: s3Result.s3Key,
@@ -3843,16 +3856,19 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       };
       cleanupLocalFile = true;
       console.log(`✅ [${requestId}] S3 upload successful`);
-    } catch (s3Error) {
-      console.error(`❌ [${requestId}] S3 upload failed, using local storage:`, s3Error.message);
-      storageInfo = {
-        uploadType: "LOCAL_UPLOAD",
-        filePath: req.file.path,
-        localInfo: {
-          filename: req.file.filename,
-          path: req.file.path
-        }
-      };
+    } else {
+      // Dauerhafter S3-Fehler → NICHT still lokal speichern (PDF wäre nach Deploy weg).
+      // Abbruch VOR Zähler/Lock/Analyse → nichts zurückzurollen. Lokale Temp-Datei löschen.
+      console.error(`❌ [${requestId}] S3 upload endgültig fehlgeschlagen nach 3 Versuchen — Analyse abgebrochen.`);
+      if (req.file && req.file.path && fsSync.existsSync(req.file.path)) {
+        try { await fs.unlink(req.file.path); } catch { /* non-fatal */ }
+      }
+      return res.status(503).json({
+        success: false,
+        error: "STORAGE_UNAVAILABLE",
+        message: "📦 Dokument konnte gerade nicht sicher gespeichert werden. Bitte in einem Moment erneut versuchen.",
+        requestId
+      });
     }
   } else {
     console.log(`📁 [${requestId}] S3 not available, using local storage`);
