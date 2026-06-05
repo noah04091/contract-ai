@@ -726,9 +726,13 @@ export default function Contracts() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für Infinite Scroll Sentinel
   const contentAreaRef = useRef<HTMLDivElement>(null); // ✅ Ref für scrollbaren Content-Bereich
-  const hasScrolledRef = useRef(false); // ✅ Flag um initiales Auto-Loading zu verhindern
+  const hasScrolledRef = useRef(false); // (Legacy-Flag; vom robusten Callback-Ref-Observer nicht mehr als Gate genutzt)
+  // 🆕 Robuster Infinite-Scroll: Callback-Ref-Observer + stets frische Werte (gegen Attach-Race + Stale-Closure)
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const paginationInfoRef = useRef(paginationInfo);
+  const loadingMoreRef = useRef(loadingMore);
+  const loadMoreContractsRef = useRef<(() => void) | null>(null);
   const userInfoCacheRef = useRef<{ data: UserInfo | null; timestamp: number }>({ data: null, timestamp: 0 }); // ✅ Cache für User-Info
   const isFirstMountRef = useRef(true); // ✅ Flag um First Mount zu erkennen (verhindert doppelten API-Call)
   const fetchRequestIdRef = useRef(0); // 🚀 Request-ID um veraltete Responses zu ignorieren
@@ -1080,6 +1084,7 @@ export default function Contracts() {
         if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
         return null;
       });
+      setPreviewPdfLoading(false); // 🆕 kein Spinner-Hänger beim Schließen während des Ladens
       return;
     }
 
@@ -1153,7 +1158,7 @@ export default function Contracts() {
       return;
     }
     const contract = contracts.find(c => c._id === hoveredContractId);
-    if (!contract) return;
+    if (!contract) { setHoverLoading(false); return; } // 🆕 kein Spinner-Hänger wenn Vertrag verschwindet
 
     // Nicht-PDFs: kein Fetch, klare Meldung
     const ft = getFileType(contract.name);
@@ -2453,68 +2458,38 @@ export default function Contracts() {
     fetchFolders(); // 📁 Load folders
   }, []);
 
-  // ✅ NEU: Infinite Scroll - IntersectionObserver für automatisches Nachladen
+  // 🆕 Refs für den Observer-Callback stets aktuell halten (jeder Render) — gegen Stale-Closure
   useEffect(() => {
-    const loadMoreElement = loadMoreRef.current;
-    const scrollContainer = contentAreaRef.current;
+    paginationInfoRef.current = paginationInfo;
+    loadingMoreRef.current = loadingMore;
+    loadMoreContractsRef.current = loadMoreContracts;
+  });
 
-    // Nur aktivieren wenn Element existiert
-    if (!loadMoreElement) {
-      return;
+  // 🆕 Infinite Scroll via CALLBACK-REF: React hängt den IntersectionObserver GARANTIERT genau dann
+  // an, wenn das Sentinel ins DOM kommt (und ab beim Verschwinden). Das löst den Attach-Timing-Race,
+  // der dazu führte, dass das Nachladen intermittierend "bei 50 hängen blieb".
+  const sentinelRef = useCallback((node: HTMLDivElement | null) => {
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+      observerRef.current = null;
     }
-
-    // ✅ FIX: Scroll-Event-Listener auf Container UND Window (für Mobile)
-    const handleContainerScroll = () => {
-      if (!hasScrolledRef.current && scrollContainer && scrollContainer.scrollTop > 50) {
-        hasScrolledRef.current = true;
-      }
-    };
-
-    const handleWindowScroll = () => {
-      if (!hasScrolledRef.current && window.scrollY > 50) {
-        hasScrolledRef.current = true;
-      }
-    };
-
-    // Event-Listener auf beide Scroll-Quellen
-    if (scrollContainer) {
-      scrollContainer.addEventListener('scroll', handleContainerScroll);
-    }
-    window.addEventListener('scroll', handleWindowScroll, { passive: true });
-
-    // ✅ MOBILE FIX: IntersectionObserver ohne root (nutzt Viewport)
-    // Das funktioniert besser auf Mobile, wo der gesamte Body scrollt
+    if (!node) return; // Sentinel verschwunden (loading/empty) → sauber abgehängt
     const isMobile = window.innerWidth <= 768;
-
-    const observer = new IntersectionObserver(
+    observerRef.current = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
-        // ✅ FIX: Nur triggern wenn User gescrollt hat UND noch mehr vorhanden UND nicht bereits ladend
-        if (entry.isIntersecting && paginationInfo.hasMore && !loadingMore && hasScrolledRef.current) {
-          loadMoreContracts();
+        if (!entries[0]?.isIntersecting) return;
+        if (paginationInfoRef.current.hasMore && !loadingMoreRef.current) {
+          loadMoreContractsRef.current?.();
         }
       },
       {
-        // ✅ Auf Mobile: Viewport als root (null), auf Desktop: Container
-        root: isMobile ? null : scrollContainer,
-        rootMargin: '300px', // ✅ Noch früher triggern (300px vor Ende)
-        threshold: 0.01 // ✅ Schon bei 1% Sichtbarkeit triggern
+        root: isMobile ? null : contentAreaRef.current, // Desktop: contentArea scrollt; Mobile: Viewport
+        rootMargin: '300px', // früh triggern (300px vor Ende)
+        threshold: 0.01,
       }
     );
-
-    observer.observe(loadMoreElement);
-
-    // Cleanup
-    return () => {
-      observer.disconnect();
-      if (scrollContainer) {
-        scrollContainer.removeEventListener('scroll', handleContainerScroll);
-      }
-      window.removeEventListener('scroll', handleWindowScroll);
-    };
-  // 🚀 OPTIMIERT: Nur hasMore und loadingMore als Dependencies
-  // contracts.length verursachte unnötige Re-Creation des IntersectionObservers
-  }, [paginationInfo.hasMore, loadingMore]);
+    observerRef.current.observe(node);
+  }, []);
 
   // ✅ FIX: Wenn contracts sich ändern und ein Contract ausgewählt ist, aktualisiere selectedContract
   useEffect(() => {
@@ -3284,9 +3259,17 @@ export default function Contracts() {
         // 📅 Invalidiere Kalender-Cache - neue Events wurden generiert!
         clearCalendarCache();
       } else if (result?.duplicate) {
-        setUploadFiles(prev => prev.map(item => 
-          item.id === fileId 
+        setUploadFiles(prev => prev.map(item =>
+          item.id === fileId
             ? { ...item, status: 'duplicate', progress: 100, duplicateInfo: result }
+            : item
+        ));
+      } else {
+        // 🆕 Defensive: Async-Polling-Pfad kann ein Result ohne success/duplicate liefern
+        // → File-Item nicht ewig im "analyzing"-Spinner hängen lassen.
+        setUploadFiles(prev => prev.map(item =>
+          item.id === fileId
+            ? { ...item, status: 'completed', progress: 100, result }
             : item
         ));
       }
@@ -5904,7 +5887,7 @@ export default function Contracts() {
                     {/* 📱 MOBILE-FIX: Extra padding-bottom damit es nicht von Bottom-Nav überdeckt wird */}
                     {paginationInfo.hasMore && (
                       <div
-                        ref={loadMoreRef}
+                        ref={sentinelRef}
                         style={{
                           display: 'flex',
                           flexDirection: 'column',
@@ -5929,13 +5912,27 @@ export default function Contracts() {
                             </div>
                           </>
                         ) : (
-                          <div style={{
-                            fontSize: '14px',
-                            color: '#6b7280',
-                            fontWeight: 500
-                          }}>
-                            {contracts.length} von {paginationInfo.total} Verträgen geladen
-                          </div>
+                          <>
+                            <div style={{
+                              fontSize: '14px',
+                              color: '#6b7280',
+                              fontWeight: 500
+                            }}>
+                              {contracts.length} von {paginationInfo.total} Verträgen geladen
+                            </div>
+                            {/* 🆕 Sicherheitsnetz: manuell nachladen, falls der Auto-Observer je streikt */}
+                            <button
+                              type="button"
+                              onClick={() => loadMoreContracts()}
+                              style={{
+                                marginTop: '4px', padding: '8px 18px', borderRadius: '9px',
+                                border: '1px solid #e2e8f0', background: '#ffffff', color: '#2563eb',
+                                fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                              }}
+                            >
+                              Mehr laden
+                            </button>
+                          </>
                         )}
                       </div>
                     )}

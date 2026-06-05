@@ -167,8 +167,10 @@ function createTrackedOpenAI(openaiClient, context = {}) {
                 contractId: contractId || null,
                 model: params.model || 'gpt-4-turbo-preview',
                 feature: feature,
-                promptTokens: response.usage.prompt_tokens,
-                completionTokens: response.usage.completion_tokens,
+                // trackAPICall liest inputTokens/outputTokens (NICHT promptTokens/completionTokens) —
+                // die falschen Feldnamen führten zu $0.0000 im Cost-Tracking. Jetzt korrekt benannt.
+                inputTokens: response.usage.prompt_tokens,
+                outputTokens: response.usage.completion_tokens,
                 totalTokens: response.usage.total_tokens,
                 estimatedCost: cost,
                 duration: duration

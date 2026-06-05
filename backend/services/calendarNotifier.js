@@ -31,11 +31,15 @@ async function checkAndSendNotifications(db) {
 
     const now = new Date();
     // Lookahead = 7 Tage (Safety-Net für Edge-Cases ohne Reminder-Coverage).
-    // 3-Klassen-Hybrid-Skip-Logik weiter unten entscheidet pro Event, ob die Mail
+    // 4-Klassen-Hybrid-Skip-Logik weiter unten entscheidet pro Event, ob die Mail
     // tatsächlich vorgezogen wird oder erst am Event-Tag rausgeht:
     //   Klasse A — Haupt-Event MIT _REMINDER_XD-Begleiter → skippen, Reminder feuert
     //   Klasse B — Haupt-Event OHNE Reminder → Lookahead-Safety-Net aktiv (Vorab-Mail)
     //   Klasse C — Frist-Hinweis-Event (fristHinweis-recurring/anchor) → skippen, ist selbst Reminder
+    //   Klasse D — Erinnerungs-Events (AI-Staffelung _REMINDER_XD, benannte Vorwarn-Typen,
+    //              Custom-Reminder, manuell angelegte Termine) → NIEMALS vorziehen,
+    //              feuern an ihrem eigenen Datum (Fix 04.06.2026: vorher kamen
+    //              "7 Tage vorher"-Mails bis zu 7 Tage zu früh = 14 Tage vor dem Termin)
     const lookaheadDays = parseInt(process.env.REMINDER_LOOKAHEAD_DAYS || "7");
     const lookaheadDate = new Date();
     lookaheadDate.setDate(lookaheadDate.getDate() + lookaheadDays);
@@ -103,12 +107,35 @@ async function checkAndSendNotifications(db) {
       }
     }
 
-    // Helpers für 3-Klassen-Skip-Logik
+    // Helpers für 4-Klassen-Skip-Logik
     const isReminderType = (t) => /_REMINDER_\d+D$/i.test(t || "");
     const isFristHinweisEvent = (e) => {
       const src = e.metadata?.source;
       return src === "fristHinweis-recurring" || src === "fristHinweis-anchor";
     };
+    // Klasse D: Event-Typen mit Erinnerungs-Charakter — ihr Datum IST bereits der
+    // gewollte Benachrichtigungszeitpunkt (z.B. "⏰ In 7 Tagen kündbar" liegt 7 Tage
+    // vor dem Stichtag). Vorziehen würde den Mail-Text zur Lüge machen.
+    // Erzeugung: calendarEvents.js (520/549, 613/642, 711, 777, 1487, 443),
+    // cancellations.js (298, 697, 814).
+    const REMINDER_SEMANTIC_TYPES = new Set([
+      "CANCELLATION_REMINDER",          // "Vertrag endet in 30/7 Tagen"
+      "MINIMUM_TERM_REMINDER",          // "In 2 Wochen / 7 Tagen kündbar"
+      "PROBATION_REMINDER",             // "Probezeit endet in 2 Wochen"
+      "WARRANTY_REMINDER",              // "Gewährleistung endet in 30 Tagen"
+      "PAYMENT_REMINDER",               // "Zahlung in 3 Tagen"
+      "CUSTOM_REMINDER",                // User-konfigurierte Vertrags-Erinnerung
+      "CANCEL_WARNING",                 // "Nur noch 7 Tage" (Kündigungsfrist)
+      "PRICE_INCREASE_WARNING",         // "Preiserhöhung in 30 Tagen"
+      "CANCELLATION_CONFIRMATION_CHECK" // Follow-up "Bestätigung erhalten?" (+14d)
+    ]);
+    // Manuell angelegte Termine (isManual/manuallyCreated): Der User hat das Datum
+    // bewusst gewählt — Erinnerung kommt an diesem Tag, nicht Tage vorher.
+    const hasReminderSemantics = (e) =>
+      isReminderType(e.type) ||
+      REMINDER_SEMANTIC_TYPES.has(e.type) ||
+      e.isManual === true ||
+      e.manuallyCreated === true;
     const todayDateOnly = new Date();
     todayDateOnly.setHours(0, 0, 0, 0);
 
@@ -144,8 +171,16 @@ async function checkAndSendNotifications(db) {
           continue;
         }
 
+        // Klasse D: Erinnerungs-Events SIND die Erinnerung → niemals vorziehen.
+        // Schließt die Lücke vom 27.05.: _REMINDER_XD-Events fielen bis dahin durch
+        // und wurden vom Lookahead bis zu 7 Tage vor ihrem eigenen Datum verschickt.
+        if (hasReminderSemantics(event)) {
+          console.log(`⏸️ Klasse D (Erinnerungs-Event) skip: ${event.type} in ${daysUntilEventDay}d — feuert an seinem Tag`);
+          continue;
+        }
+
         // Klasse A: Haupt-Event MIT zugehörigem _REMINDER_XD → skippen, Reminder feuert
-        if (!isReminderType(event.type) && event.contractId) {
+        if (event.contractId) {
           const key = `${event.contractId.toString()}|${event.type}`;
           if (remindersByContractAndBaseType.has(key)) {
             console.log(`⏸️ Klasse A (Haupt+Reminder) skip: ${event.type} in ${daysUntilEventDay}d — Reminder übernimmt`);
@@ -153,8 +188,8 @@ async function checkAndSendNotifications(db) {
           }
         }
 
-        // Klasse B (Haupt-Event OHNE Reminder) ODER Reminder-Event selbst:
-        // Fall-through zum normalen Versand → Lookahead-Safety-Net aktiv.
+        // Klasse B: Haupt-Event OHNE Reminder-Coverage → Fall-through zum normalen
+        // Versand (Lookahead-Safety-Net, z.B. alte Verträge ohne importantDates).
       }
 
       if (!event.user?.email) {
@@ -187,17 +222,25 @@ async function checkAndSendNotifications(db) {
         continue;
       }
 
-      // deadlineReminders-Timing prüfen
+      // deadlineReminders-Timing prüfen.
+      // Bei Erinnerungs-Events zählt der GEMEINTE Vorlauf (metadata.daysUntil, z.B. 7
+      // bei "_REMINDER_7D"), nicht der Abstand zum Versand-Tag: Seit Klasse D werden
+      // diese Events erst an ihrem eigenen Tag verschickt (daysUntilEvent ≈ 0-1) —
+      // ohne dieses Mapping würde der "1 Tag vorher"-Toggle ALLE Staffel-Mails steuern
+      // und das UI-Versprechen ("7 Tage vorher" an/aus) brechen.
       const daysUntilEvent = Math.ceil((new Date(event.date) - now) / (1000 * 60 * 60 * 24));
+      const intendedLead = Number.isFinite(event.metadata?.daysUntil)
+        ? event.metadata.daysUntil
+        : daysUntilEvent;
       const dr = ns?.deadlineReminders;
       if (dr) {
         const skipTiming =
-          (daysUntilEvent >= 6 && dr.days7 === false) ||
-          (daysUntilEvent >= 2 && daysUntilEvent <= 3 && dr.days3 === false) ||
-          (daysUntilEvent === 1 && dr.days1 === false) ||
-          (daysUntilEvent <= 0 && dr.daysSame === false);
+          (intendedLead >= 6 && dr.days7 === false) ||
+          (intendedLead >= 2 && intendedLead <= 3 && dr.days3 === false) ||
+          (intendedLead === 1 && dr.days1 === false) ||
+          (intendedLead <= 0 && dr.daysSame === false);
         if (skipTiming) {
-          console.log(`Skipping ${maskEmail(event.user.email)} - Erinnerung ${daysUntilEvent}d deaktiviert`);
+          console.log(`Skipping ${maskEmail(event.user.email)} - Erinnerung ${intendedLead}d deaktiviert`);
           continue;
         }
       }
