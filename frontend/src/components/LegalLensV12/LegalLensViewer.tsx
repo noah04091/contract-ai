@@ -2170,7 +2170,11 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
   const percentComplete = useMemo(() => {
     if (!progress || !clauses || clauses.length === 0) return 0;
     const reviewed = progress.reviewedClauses?.length || 0;
-    return Math.min(100, Math.round((reviewed / clauses.length) * 100));
+    // Nur analysierbare Klauseln zählen (Adressen/Unterschriften sind nicht "durchsehbar") —
+    // konsistent mit reviewStats und der 100%-Celebration, damit der Header-Balken 100% erreicht.
+    const analyzableTotal = clauses.filter(c => !c.nonAnalyzable).length;
+    if (analyzableTotal === 0) return 0;
+    return Math.min(100, Math.round((reviewed / analyzableTotal) * 100));
   }, [progress, clauses]);
 
   // 🚪 Document Gate: Dokument ist kein Rechtsdokument → Stop-Screen

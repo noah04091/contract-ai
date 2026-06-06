@@ -1403,7 +1403,12 @@ router.post(
         [`perspectives.${perspective}.analyzedAt`]: { $exists: true }
       });
 
-      if (directCache?.perspectives?.[perspective]) {
+      // Treffer nur akzeptieren, wenn der Klauseltext unverändert ist (Hash-Abgleich).
+      // Verhindert, dass nach einem Re-Parse eine veraltete Analyse zur falschen Klausel
+      // angezeigt wird (positionelle clauseId kann nach Re-Parse auf anderen Text zeigen).
+      const directHashMatches = directCache?.clauseTextHash && directCache.clauseTextHash === clauseTextHash;
+
+      if (directCache?.perspectives?.[perspective] && directHashMatches) {
         console.log(`💾 [Legal Lens] Direct cache hit for ${clauseId}`);
         return res.json({
           success: true,
@@ -1413,6 +1418,10 @@ router.post(
           clauseId,
           perspective
         });
+      }
+
+      if (directCache?.perspectives?.[perspective] && !directHashMatches) {
+        console.log(`♻️ [Legal Lens] Veralteten Direct-Cache übersprungen für ${clauseId} (Text geändert oder Legacy ohne Hash) → Re-Analyse`);
       }
 
       // Stufe 2: Hash-basierter Cache (identische Klauseln über Verträge hinweg)
@@ -2915,8 +2924,21 @@ router.get('/export/sections', verifyToken, (req, res) => {
 router.post('/:contractId/export-report', verifyToken, async (req, res) => {
   try {
     const { contractId } = req.params;
-    const { design = 'executive', includeSections = ['summary', 'criticalClauses'] } = req.body;
+    const { design = 'executive', includeSections = ['summary', 'criticalClauses'], perspective } = req.body;
     const userId = req.user.userId;
+
+    // Bevorzugte Perspektive (falls vom Client gesendet & gültig), sonst Fallback-Reihenfolge.
+    // Verhindert leere Zusammenfassungen, wenn der User NICHT aus der contractor-Sicht gearbeitet hat.
+    const preferredPerspective = VALID_PERSPECTIVES.includes(perspective) ? perspective : null;
+    const reportPerspectiveOrder = preferredPerspective
+      ? [preferredPerspective, ...VALID_PERSPECTIVES.filter(p => p !== preferredPerspective)]
+      : [...VALID_PERSPECTIVES];
+    const pickPerspectiveData = (a) => {
+      for (const p of reportPerspectiveOrder) {
+        if (a.perspectives?.[p]) return a.perspectives[p];
+      }
+      return null;
+    };
 
     console.log(`📄 [Legal Lens] Export report request for contract: ${contractId}`);
     console.log(`📄 [Legal Lens] Design: ${design}, Sections: ${includeSections.join(', ')}`);
@@ -2952,6 +2974,15 @@ router.post('/:contractId/export-report', verifyToken, async (req, res) => {
       userId: new ObjectId(userId)
     }).sort({ 'position.start': 1 });
 
+    // Kein Report ohne analysierte Klauseln — sonst entsteht ein leeres, nutzloses PDF.
+    if (!analyses || analyses.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Für diesen Vertrag wurden noch keine Klauseln analysiert. Bitte analysiere zuerst die Klauseln (z. B. über „Alle laden"), bevor du den Report exportierst.',
+        code: 'NO_ANALYSES'
+      });
+    }
+
     // Progress laden (für Branchen-Kontext etc.)
     const progress = await LegalLensProgress.findOne({
       userId: new ObjectId(userId),
@@ -2959,16 +2990,19 @@ router.post('/:contractId/export-report', verifyToken, async (req, res) => {
     });
 
     // Daten für Report aufbereiten
-    const clauses = analyses.map(a => ({
-      id: a.clauseId,
-      number: a.clauseId,
-      text: a.clauseText,
-      riskLevel: a.riskLevel,
-      riskScore: a.riskScore,
-      actionLevel: a.actionLevel,
-      summary: a.perspectives?.contractor?.explanation?.simple || '',
-      alternative: a.perspectives?.contractor?.betterAlternative?.text || ''
-    }));
+    const clauses = analyses.map(a => {
+      const persp = pickPerspectiveData(a);
+      return {
+        id: a.clauseId,
+        number: a.clauseId,
+        text: a.clauseText,
+        riskLevel: a.riskLevel,
+        riskScore: a.riskScore,
+        actionLevel: a.actionLevel,
+        summary: persp?.explanation?.simple || '',
+        alternative: persp?.betterAlternative?.text || ''
+      };
+    });
 
     // Kritische Klauseln (high und medium risk)
     const criticalClauses = clauses.filter(c =>

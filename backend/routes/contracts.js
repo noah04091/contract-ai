@@ -1976,6 +1976,9 @@ router.delete("/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
+    // 🧹 DSGVO: Legal-Lens-Daten (Klausel-Analysen + Fortschritt/Notizen) des Vertrags mitlöschen
+    await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: id });
+
     // 📋 Activity Log: Vertrag gelöscht
     try {
       const { logActivityStandalone, ActivityTypes } = require('../services/activityLogger');
@@ -4048,6 +4051,8 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
     };
     const result = await contractsCollection.deleteMany(deleteFilter);
 
+    // 🧹 DSGVO: Legal-Lens-Daten aller gelöschten Verträge mitlöschen
+    await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: objectIds });
 
     res.json({
       success: true,

@@ -518,6 +518,9 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     const contractsResult = await contractsCollection.deleteMany({ userId: userId });
     console.log(`   📄 Deleted ${contractsResult.deletedCount} contracts`);
 
+    // 🧹 DSGVO: Legal-Lens-Daten (Analysen + Fortschritt/Notizen) des Users mitlöschen
+    await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId });
+
     // Delete user's calendar events
     const eventsResult = await db.collection("contract_events").deleteMany({ userId: userId });
     console.log(`   📅 Deleted ${eventsResult.deletedCount} calendar events`);
@@ -631,6 +634,9 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
     const contractsResult = await contractsCollection.deleteMany({
       userId: { $in: userIdsToDelete }
     });
+
+    // 🧹 DSGVO: Legal-Lens-Daten aller gelöschten User mitlöschen
+    await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId: userIdsToDelete });
 
     // Delete calendar events
     await db.collection("contract_events").deleteMany({
