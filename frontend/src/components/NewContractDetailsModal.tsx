@@ -1,6 +1,6 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect, useRef } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail, Bell, Scale, Lightbulb, AlertTriangle } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail, Bell, Scale, Lightbulb, AlertTriangle, Users, Sparkles, Info, Star, Search } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -263,6 +263,28 @@ const hasAnalysisData = (contract: Contract): boolean => {
 // ✅ KUENDIGUNG_OPTIONS und LAUFZEIT_OPTIONS sind jetzt in der Shared-Utility:
 // frontend/src/utils/contractEditableFields.ts
 
+// 🖥️ Split-View greift nur ab Desktop-Breite: Dokument dauerhaft links, Details rechts.
+// Darunter (Tablet/Mobil) bleibt das bewährte gestapelte Layout 1:1 erhalten.
+const SPLIT_MIN_WIDTH = 1024;
+const useIsWideScreen = (minWidth: number): boolean => {
+  const [isWide, setIsWide] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth >= minWidth : false
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia(`(min-width: ${minWidth}px)`);
+    const handler = (e: MediaQueryListEvent) => setIsWide(e.matches);
+    setIsWide(mq.matches);
+    if (mq.addEventListener) mq.addEventListener('change', handler);
+    else mq.addListener(handler); // Safari < 14 Fallback
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', handler);
+      else mq.removeListener(handler);
+    };
+  }, [minWidth]);
+  return isWide;
+};
+
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
   onClose,
@@ -273,12 +295,14 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 }) => {
   const { user } = useAuth();
   const v2Active = isAnalysisV2Enabled(user);
+  const isWide = useIsWideScreen(SPLIT_MIN_WIDTH); // 🖥️ Desktop-Split aktiv?
   const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'overview');
   const [contract, setContract] = useState<Contract>(initialContract);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [optimizedPdfUrl, setOptimizedPdfUrl] = useState<string | null>(null); // 🆕 Optimized PDF URL
   const [optimizedPdfLoading, setOptimizedPdfLoading] = useState(false); // 🆕 Optimized PDF loading
+  const [docView, setDocView] = useState<'original' | 'optimized'>('original'); // 🖥️ Split-View: welches Dokument links
   const [contentExpanded, setContentExpanded] = useState(false);
 
   // 🆕 Legal Pulse Polling
@@ -498,11 +522,17 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
   // Load PDF URL when PDF tab is opened
   const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML || contract.isGenerated);
+
+  // 🖥️ Split-View nur bei Desktop-Breite + echtem PDF-Dokument (kein DOCX, kein Reupload-Fall).
+  // Sonst greift überall das bewährte gestapelte Layout.
+  const isSplit = isWide && hasPdfSource && !isDocx && !contract.needsReupload;
+
+  // PDF laden: bei Reiter-Klick (gestapelt) ODER sofort im Split (Dokument dauerhaft sichtbar links)
   useEffect(() => {
-    if (activeTab === 'pdf' && hasPdfSource && !pdfUrl && !pdfLoading) {
+    if ((activeTab === 'pdf' || isSplit) && hasPdfSource && !pdfUrl && !pdfLoading) {
       loadPdfUrl();
     }
-  }, [activeTab, contract.s3Key, hasPdfSource]);
+  }, [activeTab, isSplit, contract.s3Key, hasPdfSource]);
 
   // Load envelope details when signature tab is opened
   useEffect(() => {
@@ -517,6 +547,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       loadOptimizedPdfUrl();
     }
   }, [activeTab, contract.optimizedPdfS3Key, optimizedPdfUrl, optimizedPdfLoading]);
+
+  // 🖥️ Split-View: optimiertes PDF laden, sobald links auf "Optimiert" gewechselt wird
+  useEffect(() => {
+    if (isSplit && docView === 'optimized' && contract.optimizedPdfS3Key && !optimizedPdfUrl && !optimizedPdfLoading) {
+      loadOptimizedPdfUrl();
+    }
+  }, [isSplit, docView, contract.optimizedPdfS3Key, optimizedPdfUrl, optimizedPdfLoading]);
 
   // 🆕 Poll for Legal Pulse data when analysis tab is active and Legal Pulse not yet loaded
   // 🔐 NUR für Premium/Business/Enterprise User - Free User bekommen kein Legal Pulse
@@ -1025,6 +1062,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 {fieldsMissing.length > 0 && <div className={styles.addFieldDivider} />}
                 <button
                   className={styles.addFieldItem}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                   onClick={() => {
                     setShowAddFieldMenu(false);
                     setAddingCustomField(true);
@@ -1032,7 +1070,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                     setCustomFieldValue('');
                   }}
                 >
-                  ✏️ Eigenes Feld hinzufügen
+                  <Pencil size={14} /> Eigenes Feld hinzufügen
                 </button>
               </div>
             )}
@@ -1082,7 +1120,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           {contract.isGenerated && (
             <div className={styles.detailItem}>
               <span className={styles.label}>Quelle:</span>
-              <span className={styles.value}>✨ KI-generiert</span>
+              <span className={styles.value} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Sparkles size={14} /> KI-generiert</span>
             </div>
           )}
 
@@ -1224,17 +1262,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
       {/* 🔴/🟢 Kündigungsinfo-Banner — 3 States */}
       {(contract.status === 'gekündigt' || contract.cancellationId) && contract.cancellationConfirmed && (
-        <div className={styles.section}>
-          <div style={{
-            padding: '16px 20px',
-            background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
-            border: '1px solid #86efac',
-            borderRadius: '12px',
-            display: 'flex', alignItems: 'center', gap: '12px'
-          }}>
+        <div className={`${styles.cancelBanner} ${styles.cancelBannerSuccess}`}>
+          <div className={styles.cancelBannerHead}>
             <CheckCircle size={20} style={{ color: '#16a34a', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, color: '#166534' }}>
+              <div className={styles.cancelBannerTitle}>
                 Kündigung erfolgreich bestätigt
                 {contract.cancellationConfirmedAt && (
                   <span style={{ fontWeight: 400, marginLeft: '8px' }}>
@@ -1242,23 +1274,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: '13px', color: '#15803d', marginTop: '4px' }}>
+              <div className={styles.cancelBannerSub}>
                 Die Kündigungsbestätigung liegt vor.
               </div>
             </div>
             <button
               onClick={() => window.location.href = '/cancellations'}
-              style={{
-                padding: '6px 14px',
-                borderRadius: '6px',
-                border: '1px solid #86efac',
-                background: 'white',
-                color: '#166534',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap' as const
-              }}
+              className={styles.cancelBtn}
             >
               Archiv →
             </button>
@@ -1266,30 +1288,24 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </div>
       )}
       {(contract.status === 'gekündigt' || contract.cancellationId) && !contract.cancellationConfirmed && (
-        <div className={styles.section}>
-          <div style={{
-            padding: '16px 20px',
-            background: 'linear-gradient(135deg, #fef2f2, #fee2e2)',
-            border: '1px solid #fca5a5',
-            borderRadius: '12px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-              <XCircle size={20} style={{ color: '#dc2626', flexShrink: 0 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, color: '#991b1b' }}>
-                  Vertrag wurde gekündigt
-                  {contract.cancellationDate && (
-                    <span style={{ fontWeight: 400, marginLeft: '8px' }}>
-                      am {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: '13px', color: '#b91c1c', marginTop: '4px' }}>
-                  Bestätigung steht noch aus — Prüfen Sie Ihren Posteingang
-                </div>
+        <div className={`${styles.cancelBanner} ${styles.cancelBannerWarning}`}>
+          <div className={styles.cancelBannerHead}>
+            <XCircle size={20} style={{ color: '#dc2626', flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div className={styles.cancelBannerTitle}>
+                Vertrag wurde gekündigt
+                {contract.cancellationDate && (
+                  <span style={{ fontWeight: 400, marginLeft: '8px' }}>
+                    am {new Date(contract.cancellationDate).toLocaleDateString('de-DE')}
+                  </span>
+                )}
+              </div>
+              <div className={styles.cancelBannerSub}>
+                Bestätigung steht noch aus — Prüfen Sie Ihren Posteingang
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          </div>
+          <div className={styles.cancelBannerActions}>
               <button
                 onClick={async () => {
                   try {
@@ -1333,37 +1349,14 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                   }
                 }}
                 disabled={saving}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                  color: 'white',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  opacity: saving ? 0.6 : 1,
-                  transition: 'all 0.2s'
-                }}
+                className={`${styles.cancelBtn} ${styles.cancelBtnPrimary}`}
               >
                 <CheckCircle size={14} />
                 Bestätigung erhalten
               </button>
               <button
                 onClick={() => window.location.href = '/calendar'}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                  color: 'white',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
+                className={styles.cancelBtn}
               >
                 <Mail size={14} />
                 Anbieter erinnern
@@ -1402,41 +1395,17 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                   }
                 }}
                 disabled={saving}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid #d1d5db',
-                  background: 'white',
-                  color: '#374151',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: saving ? 'not-allowed' : 'pointer',
-                  opacity: saving ? 0.6 : 1,
-                  transition: 'all 0.2s'
-                }}
+                className={styles.cancelBtn}
               >
                 <RotateCcw size={14} />
                 Kündigung zurücknehmen
               </button>
               <button
                 onClick={() => window.location.href = '/cancellations'}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid #fca5a5',
-                  background: 'white',
-                  color: '#991b1b',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap' as const,
-                  transition: 'all 0.2s'
-                }}
+                className={styles.cancelBtn}
               >
                 Archiv →
               </button>
-            </div>
           </div>
         </div>
       )}
@@ -1617,8 +1586,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div style={{ color: '#9ca3af', fontSize: '0.875rem', fontStyle: 'italic', margin: 0 }}>
             <span>Keine Eckdaten vorhanden. Klicke + um welche hinzuzufügen.</span>
             {!hasAnalysisData(contract) && (
-              <span style={{ display: 'block', marginTop: '6px', fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'normal' }}>
-                💡 Tipp: Eckdaten werden auch automatisch erkannt, wenn du den Vertrag analysierst.
+              <span style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginTop: '6px', fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'normal' }}>
+                <Lightbulb size={13} style={{ flexShrink: 0, marginTop: '1px' }} /> Tipp: Eckdaten werden auch automatisch erkannt, wenn du den Vertrag analysierst.
               </span>
             )}
           </div>
@@ -2010,6 +1979,69 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     );
   };
 
+  // 🖥️ Split-View: dauerhaft sichtbare Dokument-Pane links (Original/Optimiert wählbar)
+  const renderSplitDocPane = () => {
+    const hasOptimized = !!contract.optimizedPdfS3Key;
+    const showingOptimized = hasOptimized && docView === 'optimized';
+    const activeUrl = showingOptimized ? optimizedPdfUrl : pdfUrl;
+    const activeLoading = showingOptimized ? optimizedPdfLoading : pdfLoading;
+    const fileLabel = showingOptimized ? 'Optimierter Vertrag' : fixUtf8Display(contract.name);
+
+    return (
+      <div className={styles.docPane}>
+        <div className={styles.docPaneBar}>
+          <div className={styles.docPaneTitle}>
+            <FileText size={16} />
+            <span title={fileLabel}>{fileLabel}</span>
+          </div>
+          <div className={styles.docPaneActions}>
+            {hasOptimized && (
+              <div className={styles.docChips} role="tablist" aria-label="Dokument wählen">
+                <button
+                  className={`${styles.docChip} ${!showingOptimized ? styles.docChipActive : ''}`}
+                  onClick={() => setDocView('original')}
+                >Original</button>
+                <button
+                  className={`${styles.docChip} ${showingOptimized ? styles.docChipActive : ''}`}
+                  onClick={() => setDocView('optimized')}
+                >Optimiert</button>
+              </div>
+            )}
+            {activeUrl && (
+              <button
+                className={styles.docPaneIconBtn}
+                onClick={() => window.open(activeUrl, '_blank')}
+                title="In neuem Tab öffnen"
+                aria-label="In neuem Tab öffnen"
+              >
+                <ExternalLink size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+        <div className={styles.docPaneBody}>
+          {activeLoading ? (
+            <div className={styles.loadingContainer}>
+              <div className={styles.spinner}></div>
+              <p>Lade PDF...</p>
+            </div>
+          ) : activeUrl ? (
+            <iframe
+              src={`${activeUrl}#view=FitH&toolbar=0&navpanes=0`}
+              className={styles.docFrame}
+              title={fileLabel}
+            />
+          ) : (
+            <div className={styles.emptyState}>
+              <AlertCircle size={48} />
+              <p>Dokument konnte nicht geladen werden</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   // Download Analysis as PDF
   // 📋 Rechtliche Vorprüfung als PDF herunterladen (10-seitiges Anwalts-Gutachten).
   // Umgestellt 16.05.2026: von altem /analysis-report-Endpoint auf /gutachten-pdf
@@ -2159,7 +2191,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               </div>
               <div className={styles.progressStats}>
                 <span>{score!}/100</span>
-                <span>{score! >= 70 ? '✅ Gut' : score! >= 40 ? '⚠️ Mittel' : '❌ Verbesserungsbedarf'}</span>
+                <span>{score! >= 70 ? 'Gut' : score! >= 40 ? 'Mittel' : 'Verbesserungsbedarf'}</span>
               </div>
             </div>
           </div>
@@ -2204,7 +2236,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* Comparison */}
         {comparison && (
           <div className={styles.section}>
-            <h3>🔍 Vergleich & Analyse</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Search size={17} /> Vergleich & Analyse</h3>
             <div className={styles.messageBox}>
               {Array.isArray(comparison) ? (
                 <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>
@@ -2241,12 +2273,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {contract.detailedLegalOpinion && (
           <div className={styles.legalOpinionSection}>
             <div className={styles.legalOpinionHeader}>
-              <div className={styles.legalOpinionIcon}>⚖️</div>
+              <div className={styles.legalOpinionIcon}><Scale size={18} /></div>
               <h3 className={styles.legalOpinionTitle}>
                 Ausführliches Rechtsgutachten
               </h3>
-              <div className={styles.legalOpinionBadge}>
-                ⭐ Premium
+              <div className={styles.legalOpinionBadge} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <Star size={13} /> Premium
               </div>
             </div>
             <div className={styles.legalOpinionContent}>
@@ -2260,7 +2292,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         {/* ✅ Positive Aspekte (strukturiert) — wird nur gerendert, wenn die Analyse strukturierte Daten hat */}
         {hasAnyStructured && (
           <div className={styles.section}>
-            <h3>✅ Positive Aspekte</h3>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><CheckCircle size={17} /> Positive Aspekte</h3>
             <div className={styles.messageBox}>
               {validPositives.length > 0 ? (
                 <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
@@ -2396,7 +2428,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             alignItems: 'center',
             gap: '8px'
           }}>
-            <span style={{ fontSize: '16px' }}>ℹ️</span>
+            <Info size={16} style={{ flexShrink: 0 }} />
             <span>Diese Analyse enthält noch keine strukturierten Detail-Insights.</span>
           </div>
         )}
@@ -2435,7 +2467,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     return (
       <div className={styles.tabContent}>
         <div className={styles.section}>
-          <h3>✨ Vorgenommene Optimierungen</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Sparkles size={17} /> Vorgenommene Optimierungen</h3>
           <p className={styles.hint}>
             {optimizations.length} Optimierung{optimizations.length !== 1 ? 'en' : ''} wurden am Originalvertrag vorgenommen:
           </p>
@@ -2618,23 +2650,23 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       );
     };
 
-    const eventIcons: Record<string, string> = {
-      CREATED: '📝',
-      SENT: '📤',
-      VIEWED: '👀',
-      SIGNED: '✍️',
-      DECLINED: '❌',
-      PDF_SEALED: '🔒',
-      COMPLETED: '✅',
-      EXPIRED: '⏰',
-      VOIDED: '🚫'
+    const eventIcons: Record<string, React.ReactNode> = {
+      CREATED: <Pencil size={16} />,
+      SENT: <Mail size={16} />,
+      VIEWED: <Eye size={16} />,
+      SIGNED: <PenTool size={16} />,
+      DECLINED: <XCircle size={16} />,
+      PDF_SEALED: <CheckCircle size={16} />,
+      COMPLETED: <CheckCircle size={16} />,
+      EXPIRED: <Clock size={16} />,
+      VOIDED: <AlertCircle size={16} />
     };
 
     return (
       <div className={styles.tabContent}>
         {/* Signatur-Details Section */}
         <div className={styles.section}>
-          <h3>📋 Signatur-Details</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={18} /> Signatur-Details</h3>
           <div className={styles.detailsGrid}>
             <div className={styles.detailItem}>
               <span className={styles.label}>Titel:</span>
@@ -2647,8 +2679,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <div className={styles.detailItem}>
               <span className={styles.label}>Signaturmodus:</span>
               <span className={styles.value}>
-                {envelope.signingMode === 'SEQUENTIAL' ? '📝 Sequenziell' :
-                 envelope.signingMode === 'PARALLEL' ? '🔄 Parallel' : '✍️ Einzeln'}
+                {envelope.signingMode === 'SEQUENTIAL' ? 'Sequenziell' :
+                 envelope.signingMode === 'PARALLEL' ? 'Parallel' : 'Einzeln'}
               </span>
             </div>
             <div className={styles.detailItem}>
@@ -2683,7 +2715,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
         {/* Fortschritt Section */}
         <div className={styles.section}>
-          <h3>📊 Signatur-Fortschritt</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><BarChart3 size={18} /> Signatur-Fortschritt</h3>
           <div className={styles.progressContainer}>
             <div className={styles.progressBar}>
               <div
@@ -2692,7 +2724,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               ></div>
             </div>
             <div className={styles.progressStats}>
-              <span>✅ {envelope.stats.signersSigned} von {envelope.stats.signersTotal} signiert</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}><CheckCircle size={15} /> {envelope.stats.signersSigned} von {envelope.stats.signersTotal} signiert</span>
               <span>{envelope.stats.progressPercentage}%</span>
             </div>
           </div>
@@ -2700,7 +2732,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
         {/* Unterzeichner Section */}
         <div className={styles.section}>
-          <h3>👥 Unterzeichner ({envelope.signers.length})</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Users size={18} /> Unterzeichner ({envelope.signers.length})</h3>
           <div className={styles.signersGrid}>
             {envelope.signers.map((signer) => (
               <div key={signer._id} className={styles.signerCard}>
@@ -2717,19 +2749,19 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                   </div>
                 </div>
                 <div className={styles.signerDetails}>
-                  <span className={styles.signerRole}>{signer.role === 'sender' ? '📤 Absender' : '📥 Empfänger'}</span>
+                  <span className={styles.signerRole}>{signer.role === 'sender' ? 'Absender' : 'Empfänger'}</span>
                   {envelope.signingMode === 'SEQUENTIAL' && (
                     <span className={styles.signerOrder}>Reihenfolge: {signer.order}</span>
                   )}
                 </div>
                 {signer.signedAt && (
-                  <div className={styles.signerTimestamp}>
-                    ✅ Signiert am: {formatDateTime(signer.signedAt)}
+                  <div className={styles.signerTimestamp} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <CheckCircle size={14} /> Signiert am: {formatDateTime(signer.signedAt)}
                   </div>
                 )}
                 {signer.declinedAt && (
-                  <div className={styles.signerTimestamp}>
-                    ❌ Abgelehnt am: {formatDateTime(signer.declinedAt)}
+                  <div className={styles.signerTimestamp} style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <XCircle size={14} /> Abgelehnt am: {formatDateTime(signer.declinedAt)}
                     {signer.declineReason && <p className={styles.declineReason}>Grund: {signer.declineReason}</p>}
                   </div>
                 )}
@@ -2740,12 +2772,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
         {/* PDF-Dokumente Section */}
         <div className={styles.section}>
-          <h3>📄 PDF-Dokumente</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><FileText size={18} /> PDF-Dokumente</h3>
 
           {/* Original PDF */}
           <div style={{ marginBottom: '2rem' }}>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.75rem', color: '#4b5563' }}>
-              📄 Original PDF
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.75rem', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={16} /> Original PDF
             </h4>
             {originalPdfUrl ? (
               <div>
@@ -2773,8 +2805,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
           {/* Signiertes PDF */}
           <div>
-            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.75rem', color: '#4b5563' }}>
-              ✍️ Signiertes PDF
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.75rem', color: '#4b5563', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <PenTool size={16} /> Signiertes PDF
             </h4>
             {signedPdfUrl ? (
               <div>
@@ -2807,13 +2839,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
         {/* Historie Section */}
         <div className={styles.section}>
-          <h3>📅 Signatur-Historie</h3>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Clock size={18} /> Signatur-Historie</h3>
           <div className={styles.timeline}>
             {envelope.auditTrail && envelope.auditTrail.length > 0 ? (
               envelope.auditTrail.map((event, index) => (
                 <div key={index} className={styles.timelineItem}>
                   <div className={styles.timelineIcon}>
-                    {eventIcons[event.action] || '📌'}
+                    {eventIcons[event.action] || <FileText size={16} />}
                   </div>
                   <div className={styles.timelineContent}>
                     <div className={styles.timelineHeader}>
@@ -2822,11 +2854,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                     </div>
                     {event.details && (
                       <div className={styles.timelineDetails}>
-                        {event.details.email && <p>👤 {event.details.email}</p>}
-                        {event.details.ip && <p>🌐 IP: {event.details.ip}</p>}
-                        {event.details.reason && <p>💬 {event.details.reason}</p>}
+                        {event.details.email && <p>{event.details.email}</p>}
+                        {event.details.ip && <p>IP: {event.details.ip}</p>}
+                        {event.details.reason && <p>{event.details.reason}</p>}
                         {event.details.signedCount !== undefined && (
-                          <p>📊 {event.details.signedCount}/{event.details.totalSigners} Unterzeichner</p>
+                          <p>{event.details.signedCount}/{event.details.totalSigners} Unterzeichner</p>
                         )}
                       </div>
                     )}
@@ -2845,11 +2877,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     );
   };
 
+  // 🖥️ Split-View: aktiver Reiter rechts. 'pdf'/'optimizedPdf' existieren rechts nicht
+  // (Dokument ist links) → auf 'overview' abbilden, damit Deep-Links sauber landen.
+  const rightTab: 'overview' | 'analysis' | 'optimizations' | 'signature' =
+    (activeTab === 'analysis' || activeTab === 'optimizations' || activeTab === 'signature')
+      ? activeTab
+      : 'overview';
+
   return (
     <>
-      <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={`${styles.modalOverlay} ${isSplit ? styles.overlaySplit : ''}`} onClick={onClose}>
         <div
-          className={styles.modal}
+          className={`${styles.modal} ${isSplit ? styles.modalSplit : ''}`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
@@ -2928,6 +2967,73 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             </div>
           </div>
 
+          {isSplit ? (
+            /* 🖥️ Desktop Split-View: Dokument links dauerhaft sichtbar, Details rechts */
+            <div className={styles.splitBody}>
+              {renderSplitDocPane()}
+              <div className={styles.rightPane}>
+                <div className={styles.rightTabNav}>
+                  <div className={styles.tabNavLeft}>
+                    <button
+                      className={`${styles.tabButton} ${rightTab === 'overview' ? styles.tabActive : ''}`}
+                      onClick={() => setActiveTab('overview')}
+                    >
+                      <FileText size={18} />
+                      <span>Übersicht</span>
+                    </button>
+                    <button
+                      className={`${styles.tabButton} ${rightTab === 'analysis' ? styles.tabActive : ''}`}
+                      onClick={() => setActiveTab('analysis')}
+                      disabled={!hasAnalysisData(contract)}
+                    >
+                      <BarChart3 size={18} />
+                      <span>Analyse</span>
+                      {!hasAnalysisData(contract) && (
+                        <span className={styles.tabDisabled}>(nicht verfügbar)</span>
+                      )}
+                    </button>
+                    {contract.isOptimized && contract.optimizations && contract.optimizations.length > 0 && (
+                      <button
+                        className={`${styles.tabButton} ${rightTab === 'optimizations' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('optimizations')}
+                      >
+                        <CheckCircle size={18} />
+                        <span>Optimierungen</span>
+                      </button>
+                    )}
+                    {(contract.envelope || contract.signatureEnvelopeId) && (
+                      <button
+                        className={`${styles.tabButton} ${rightTab === 'signature' ? styles.tabActive : ''}`}
+                        onClick={() => setActiveTab('signature')}
+                      >
+                        <PenTool size={18} />
+                        <span>Signatur</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className={styles.tabNavRight}>
+                    {rightTab === 'analysis' && hasAnalysisData(contract) && (
+                      <button
+                        onClick={handleDownloadAnalysisPDF}
+                        className={styles.tabActionButton}
+                        title="Rechtliche Vorprüfung als PDF herunterladen"
+                      >
+                        <Download size={16} />
+                        <span>Vorprüfung als PDF</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className={styles.rightTabContent}>
+                  {rightTab === 'overview' && renderOverviewTab()}
+                  {rightTab === 'analysis' && renderAnalysisTab()}
+                  {rightTab === 'optimizations' && renderOptimizationsTab()}
+                  {rightTab === 'signature' && renderSignatureTab()}
+                </div>
+              </div>
+            </div>
+          ) : (
+          <>
           {/* Tab Navigation */}
           <div className={styles.tabNav}>
             {/* Tab Buttons - Left */}
@@ -3028,6 +3134,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             {activeTab === 'optimizedPdf' && renderOptimizedPdfTab()}
             {activeTab === 'signature' && renderSignatureTab()}
           </div>
+          </>
+          )}
         </div>
       </div>
 

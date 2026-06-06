@@ -2678,3 +2678,251 @@
 .closeButton:focus:not(:focus-visible) {
   outline: none;
 }
+
+/* ============================================================
+   Kündigungs-Banner — an das ruhige Karten-/Section-System angeglichen.
+   Weicher Ton + farbiger Seitenstreifen (statt greller Gradient),
+   einheitliches Button-System (ein Primary, Rest sekundär).
+   ============================================================ */
+.cancelBanner {
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #9ca3af;
+  background: #f9fafb;
+}
+.cancelBannerSuccess {
+  border-left-color: #16a34a;
+  background: #f0fdf4;
+}
+.cancelBannerWarning {
+  border-left-color: #dc2626;
+  background: #fef2f2;
+}
+.cancelBannerHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cancelBannerTitle {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.9375rem;
+}
+.cancelBannerSub {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin-top: 3px;
+}
+.cancelBannerActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.cancelBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.cancelBtn:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+.cancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.cancelBtnPrimary {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+.cancelBtnPrimary:hover:not(:disabled) {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+/* ============================================================
+   🖥️ DESKTOP SPLIT-VIEW (≥1024px): Dokument links, Details rechts.
+   Nur in dieser Breite aktiv (JS-gated via isSplit) → mobil komplett unberührt.
+   ============================================================ */
+@media (min-width: 1024px) {
+  /* Near-Fullscreen-Workspace: kleiner Rand ringsum, Liste bleibt abgedunkelt dahinter */
+  .overlaySplit {
+    padding: clamp(20px, 3vh, 40px) !important;
+  }
+  .modalSplit {
+    max-width: 1700px;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  .splitBody {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ── Linke Pane: Dokument (dauerhaft sichtbar) ── */
+  .docPane {
+    flex: 0 0 56%;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+  }
+
+  .docPaneBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+  }
+
+  .docPaneTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    color: #374151;
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+  .docPaneTitle span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .docPaneTitle svg { flex-shrink: 0; color: #9ca3af; }
+
+  .docPaneActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .docChips {
+    display: inline-flex;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .docChip {
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .docChip:hover { color: #111827; }
+  .docChipActive {
+    background: #ffffff;
+    color: #111827;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+
+  .docPaneIconBtn {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #6b7280;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .docPaneIconBtn:hover { color: #111827; border-color: #d1d5db; }
+
+  .docPaneBody {
+    flex: 1;
+    min-height: 0;
+    padding: 18px;
+    display: flex;
+    overflow: hidden;
+  }
+  .docFrame {
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  /* ── Rechte Pane: Details + reduzierte Reiter ── */
+  .rightPane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+  .rightTabNav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+    flex-shrink: 0;
+  }
+  .rightTabContent {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 24px;
+  }
+
+  /* Eckdaten als ruhige Zeilen (Label links, Wert rechts, dünne Linie) statt Karten — Mockup-Look */
+  .rightTabContent .detailsGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .rightTabContent .detailItem {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    align-items: start;
+    gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .rightTabContent .detailItem:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .rightTabContent .detailItem .label {
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+    padding-top: 1px;
+  }
+}
