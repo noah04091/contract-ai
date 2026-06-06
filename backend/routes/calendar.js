@@ -166,10 +166,6 @@ router.get("/events", verifyToken, async (req, res) => {
           }
         },
         { $unwind: { path: "$contract", preserveNullAndEmptyArrays: true } },
-        // 🪶 Große Vertragsfelder NICHT durch den $sort schleppen — sie sind nie Teil
-        // der Antwort (Transform unten nutzt nur name/provider/amount), sprengen aber
-        // das 32MB-Sort-Memory-Limit bei Verträgen mit vielen Events → 500-Fehler.
-        { $project: { "contract.fullText": 0, "contract.content": 0, "contract.extractedText": 0, "contract.analysis": 0, "contract.legalLens": 0, "contract.legalPulse": 0 } },
         { $sort: { date: 1 } }
       ])
       .toArray();
