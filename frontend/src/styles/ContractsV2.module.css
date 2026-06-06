@@ -2215,6 +2215,11 @@
 .previewContent > .previewSection:last-of-type {
   border-bottom: none;
 }
+/* Badge-Reihe (Generiert/Optimiert/Pending) bündig zum Section-Inhalt einrücken
+   — sonst klebt sie am linken Panel-Rand (kein .previewSection → keine Einrückung). */
+.previewContent > .previewBadges {
+  padding: 16px 28px;
+}
 
 /* Legacy support - falls noch verwendet */
 .previewStatus {

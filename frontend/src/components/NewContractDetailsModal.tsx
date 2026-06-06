@@ -17,7 +17,6 @@ import { useAuth } from "../hooks/useAuth";
 import { isAnalysisV2Enabled } from "../utils/featureFlags";
 import V2HeroSection from "./contractAnalysisV2/V2HeroSection";
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection";
-import V2StickyMiniHeader from "./contractAnalysisV2/V2StickyMiniHeader";
 import AnalysisImportantDates from "./AnalysisImportantDates";
 import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css";
 
@@ -2121,26 +2120,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     // wir reichen es defensiv als generisches Objekt durch (V2 liest defensiv).
     if (v2Active) {
       const data = contract as unknown as Parameters<typeof V2HeroSection>[0]['data'];
-      const heroScore = data?.contractScore ?? null;
-      const scoreColor = heroScore == null
-        ? "#94a3b8"
-        : heroScore >= 90 ? "#10b981"
-        : heroScore >= 70 ? "#2563eb"
-        : heroScore >= 40 ? "#f59e0b"
-        : "#ef4444";
       return (
         <div className={styles.tabContent}>
-          {/* Sticky Mini-Header — erscheint beim Runter-Scrollen mit Filename + Score-Pille.
-              Optimieren wechselt zum Optimizer-Tab im Modal (kein Page-Reload). */}
-          <V2StickyMiniHeader
-            filename={contract.name || 'Dokument'}
-            score={heroScore}
-            scoreColor={scoreColor}
-            onOptimize={() => setActiveTab('optimizations')}
-            optimizeLabel="Optimieren"
-            documentType={(data as { documentType?: string | null })?.documentType}
-            contractType={(data as { contractType?: string | null })?.contractType}
-          />
           <div className={v2HeroStyles.v2UnifiedContainer}>
             <V2HeroSection
               data={data}
@@ -2963,6 +2944,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               )}
               <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={handleDelete} title="Löschen">
                 <Trash2 size={18} />
+              </button>
+              <button onClick={onClose} className={styles.closeBtn} aria-label="Schließen" title="Schließen" style={{ marginLeft: '4px' }}>
+                <X size={20} />
               </button>
             </div>
           </div>
