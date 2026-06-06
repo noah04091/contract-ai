@@ -13,7 +13,7 @@
   text-align: center;
   padding: 80px 2rem 40px;
   position: relative;
-  background: linear-gradient(180deg, #ffffff 0%, #ffffff 70%, #fff8f5 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 70%, #ffffff 100%);
 }
 
 .heroTitle {
@@ -76,6 +76,9 @@
   position: relative;
   z-index: 10;
   overflow: hidden;
+  /* Einheitlicher Grund in den diagonalen Schnitt-Dreiecken
+     (sonst scheint der graue Seiten-Hintergrund durch) */
+  background: #ffffff;
 }
 
 .urgencyContent {
@@ -245,7 +248,7 @@
 .billingSection {
   padding: 3rem 2rem 2rem;
   text-align: center;
-  background: linear-gradient(180deg, #fff5f0 0%, #fafbfc 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
 }
 
 .billingToggle {
