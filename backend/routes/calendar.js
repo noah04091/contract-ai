@@ -166,8 +166,13 @@ router.get("/events", verifyToken, async (req, res) => {
           }
         },
         { $unwind: { path: "$contract", preserveNullAndEmptyArrays: true } },
+        // 🪶 Große Vertragsfelder raus, BEVOR sortiert/zurückgegeben wird — sonst trägt
+        // jedes Event eine ~1MB-Kopie des Vertrags (fullText/analysis/legalLens/...);
+        // bei Accounts mit vielen Events sprengt das den Sort + die App. Antwort nutzt
+        // aus contract nur name/provider/amount (Transform unten) → byte-identisch.
+        { $project: { "contract.fullText": 0, "contract.content": 0, "contract.extractedText": 0, "contract.analysis": 0, "contract.legalLens": 0, "contract.legalPulse": 0 } },
         { $sort: { date: 1 } }
-      ])
+      ], { allowDiskUse: true })  // 🛟 Sort darf zur Not auf Disk auslagern → "Sort exceeded memory limit" technisch unmöglich
       .toArray();
     
     // Parse date range for recurrence expansion
