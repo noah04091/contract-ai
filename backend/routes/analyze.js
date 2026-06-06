@@ -3731,7 +3731,16 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
           throw new Error(`GPT-4-Turbo rate limit reached. Please try again in a few minutes.`);
         }
       }
-      
+
+      // 🚫 Permanente Fehler (HTTP 400 = Bad Request, z.B. context_length_exceeded)
+      // sind deterministisch — Retry löst sie nie. Sofort werfen statt 3× blind zu
+      // wiederholen (spart ~15-30s + 2 zwecklose Calls). Transiente Fehler bleiben
+      // unberührt: 429 oben (mit Backoff), 5xx/Timeout fallen unten durch die Schleife.
+      if (error.status === 400 || error.code === 'context_length_exceeded') {
+        console.error(`❌ [${requestId}] Permanenter Fehler — kein Retry (status=${error.status}, code=${error.code || 'n/a'})`);
+        throw error;
+      }
+
       if (attempt === maxRetries) {
         throw error;
       }
