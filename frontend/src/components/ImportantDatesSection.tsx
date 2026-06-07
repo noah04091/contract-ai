@@ -199,7 +199,10 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
                         backgroundColor: dateItem.confidence && dateItem.confidence < 75 ? '#f59e0b' : '#6366f1'
                       }}
                     >
-                      {dateItem.confidence && dateItem.confidence < 75 ? '~' : 'KI'}
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4z" />
+                      </svg>
+                      KI
                     </span>
                   )}
                 </div>

@@ -418,6 +418,71 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   // Manual → Hard-Delete (DELETE), AI → Dismiss (POST quick-action) — bleibt in DB
   // mit status='dismissed', damit Re-Analyse kein Duplikat erzeugt.
   const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+
+  // 🔔 Inline "Erinnerung hinzufügen" (Kalendererinnerungen-Sektion)
+  const [addingReminder, setAddingReminder] = useState(false);
+  const [reminderTitle, setReminderTitle] = useState('');
+  const [reminderDate, setReminderDate] = useState('');
+  const [reminderSeverity, setReminderSeverity] = useState<'info' | 'warning' | 'critical'>('info');
+  const [savingReminder, setSavingReminder] = useState(false);
+
+  const resetReminderForm = () => {
+    setAddingReminder(false);
+    setReminderTitle('');
+    setReminderDate('');
+    setReminderSeverity('info');
+  };
+
+  const handleAddReminder = async () => {
+    const canCreate = user?.subscriptionPlan === 'business' || user?.subscriptionPlan === 'enterprise';
+    if (!canCreate) {
+      toast.info('Eigene Erinnerungen sind ein Business/Enterprise-Feature');
+      return;
+    }
+    if (!reminderTitle.trim() || !reminderDate) {
+      toast.error('Bitte Titel und Datum angeben');
+      return;
+    }
+    setSavingReminder(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/calendar/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          contractId: contract._id,
+          title: reminderTitle.trim(),
+          date: reminderDate,
+          type: 'CUSTOM',
+          severity: reminderSeverity,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success !== false) {
+        const created = data.event || {};
+        setCalendarEvents(prev => [...prev, {
+          id: created._id || created.id || `tmp-${Date.now()}`,
+          title: created.title || reminderTitle.trim(),
+          date: created.date || reminderDate,
+          type: created.type || 'CUSTOM',
+          severity: (created.severity || reminderSeverity) as 'info' | 'warning' | 'critical',
+          isManual: true,
+        }]);
+        toast.success('Erinnerung hinzugefügt');
+        resetReminderForm();
+      } else if (res.status === 403 && data.upgradeRequired) {
+        toast.error(data.error || 'Business/Enterprise-Plan erforderlich');
+      } else {
+        toast.error(data.error || 'Fehler beim Hinzufügen der Erinnerung');
+      }
+    } catch (err) {
+      console.error('Error adding reminder:', err);
+      toast.error('Netzwerkfehler beim Hinzufügen');
+    } finally {
+      setSavingReminder(false);
+    }
+  };
+
   const handleDeleteCalendarEvent = async (event: typeof calendarEvents[0]) => {
     const canDelete = user?.subscriptionPlan === 'business' || user?.subscriptionPlan === 'enterprise';
     if (!canDelete) {
@@ -1431,9 +1496,67 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         opacity: (contract.status === 'gekündigt' || contract.cancellationId) ? 0.5 : 1,
         pointerEvents: (contract.status === 'gekündigt' || contract.cancellationId) ? 'none' : 'auto'
       }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-          <Bell size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} /> Kalendererinnerungen
+        <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '1rem' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+            <Bell size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} /> Kalendererinnerungen
+          </span>
+          <button
+            className={styles.quickFactAddBtn}
+            onClick={() => setAddingReminder(v => !v)}
+            title="Erinnerung hinzufügen"
+            aria-label="Erinnerung hinzufügen"
+          >
+            <Plus size={16} />
+          </button>
         </h3>
+        {addingReminder && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: '8px',
+            padding: '12px', marginBottom: '12px',
+            background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: '10px'
+          }}>
+            <input
+              type="text"
+              value={reminderTitle}
+              onChange={(e) => setReminderTitle(e.target.value)}
+              placeholder="Titel (z. B. Kündigung prüfen)"
+              autoFocus
+              style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.875rem' }}
+            />
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <input
+                type="date"
+                value={reminderDate}
+                onChange={(e) => setReminderDate(e.target.value)}
+                style={{ flex: 1, minWidth: '140px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.875rem' }}
+              />
+              <select
+                value={reminderSeverity}
+                onChange={(e) => setReminderSeverity(e.target.value as 'info' | 'warning' | 'critical')}
+                style={{ flex: 1, minWidth: '140px', padding: '8px 10px', borderRadius: '8px', border: '1px solid #d1d5db', fontSize: '0.875rem', background: '#fff' }}
+              >
+                <option value="info">Info</option>
+                <option value="warning">Warnung</option>
+                <option value="critical">Kritisch</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={resetReminderForm}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: '1px solid #e5e7eb', background: '#fff', color: '#374151', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleAddReminder}
+                disabled={savingReminder}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '8px', border: 'none', background: '#2563eb', color: '#fff', fontSize: '0.8125rem', fontWeight: 600, cursor: savingReminder ? 'not-allowed' : 'pointer', opacity: savingReminder ? 0.6 : 1 }}
+              >
+                <Bell size={14} /> {savingReminder ? 'Speichern…' : 'Erinnerung speichern'}
+              </button>
+            </div>
+          </div>
+        )}
         {loadingEvents ? (
           <p style={{ color: '#64748b', fontStyle: 'italic' }}>Lade Erinnerungen...</p>
         ) : calendarEvents.length === 0 ? (
