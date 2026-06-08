@@ -1615,7 +1615,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <Plus size={16} />
           </button>
         </h3>
-        <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 14px' }}>Wann du benachrichtigt wirst — eigene oben, automatische pro Termin eingeklappt.</p>
+        <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 14px' }}>Damit du keine Frist verpasst.</p>
         {addingReminder && (
           <div style={{
             display: 'flex', flexDirection: 'column', gap: '8px',
@@ -1668,10 +1668,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <p style={{ color: '#64748b', fontStyle: 'italic' }}>Lade Erinnerungen...</p>
         ) : calendarEvents.length === 0 ? (
           <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
-            Keine Kalendererinnerungen für diesen Vertrag vorhanden.
+            Noch keine Erinnerungen für diesen Vertrag.
             <br />
             <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-              Erstelle im Kalender ein Ereignis und verknüpfe es mit diesem Vertrag.
+              Oben mit dem +‑Knopf eine hinzufügen.
             </span>
           </p>
         ) : (() => {
