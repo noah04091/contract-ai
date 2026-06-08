@@ -1,6 +1,7 @@
 // 📄 src/App.tsx
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useEffect, useState, lazy, Suspense } from "react";
+import { captureAcquisitionOnce } from "./utils/acquisition";
 import Navbar from "./components/Navbar";
 import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
@@ -161,6 +162,11 @@ function AppWithLoader() {
       window.removeEventListener('error', handleDOMError, true);
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
+  }, []);
+
+  // 📊 Herkunfts-Tracking: erfasst beim ersten Besuch, wie der Nutzer zu uns kam (first-touch)
+  useEffect(() => {
+    captureAcquisitionOnce();
   }, []);
 
   // ✅ FIX: Nur bei echten Seitenwechseln laden, nicht bei Query-Parameter-Änderungen

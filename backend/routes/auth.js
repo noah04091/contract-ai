@@ -87,7 +87,7 @@ module.exports = (db) => {
 // ✅ Registrierung - ERWEITERT mit Double-Opt-In + Beta-Tester Support + Geräteerkennung
 // 🛡️ Rate Limited: Max 5 Versuche pro 15 Minuten (Brute-Force-Schutz)
 router.post("/register", authLimiter, async (req, res) => {
-  const { email: rawEmail, password, isBetaTester, firstName, lastName, companyName } = req.body;
+  const { email: rawEmail, password, isBetaTester, firstName, lastName, companyName, acquisition } = req.body;
 
   // 🆕 Validierung der Pflichtfelder
   if (!rawEmail || !password)
@@ -111,6 +111,18 @@ router.post("/register", authLimiter, async (req, res) => {
   const userAgent = req.headers['user-agent'] || '';
   const deviceInfo = parseDeviceInfo(userAgent);
   const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'Unbekannt';
+
+  // 📊 Herkunfts-Tracking säubern: nur erlaubte String-Felder, Länge begrenzt (kein wildes Client-Objekt in die DB)
+  const sanitizeAcquisition = (raw) => {
+    if (!raw || typeof raw !== 'object') return null;
+    const allowed = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'referrer', 'landingPage', 'capturedAt'];
+    const out = {};
+    for (const k of allowed) {
+      if (typeof raw[k] === 'string' && raw[k].length > 0) out[k] = raw[k].slice(0, 500);
+    }
+    return Object.keys(out).length > 0 ? out : null;
+  };
+  const acquisitionData = sanitizeAcquisition(acquisition);
 
   try {
     const existing = await usersCollection.findOne({ email });
@@ -152,6 +164,8 @@ router.post("/register", authLimiter, async (req, res) => {
       // 📅 TIMESTAMPS
       createdAt: new Date(),
       updatedAt: new Date(),
+      // 📊 HERKUNFT (first-touch, woher kam der Nutzer) — null wenn keine Daten
+      acquisition: acquisitionData,
       // 🔔 NOTIFICATION SETTINGS
       emailNotifications: true,
       contractReminders: true,

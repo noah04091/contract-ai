@@ -378,6 +378,10 @@ export default function Datenschutz() {
                     <span className={styles.bulletDot}></span>
                     <span>Historie der Analysen</span>
                   </li>
+                  <li className={styles.bulletItem}>
+                    <span className={styles.bulletDot}></span>
+                    <span>Herkunftsquelle bei der Registrierung (Referrer und ggf. Kampagnen-Parameter) – ausschließlich zur internen Reichweiten- und Marketing-Analyse, keine Weitergabe an Dritte</span>
+                  </li>
                 </ul>
 
                 <div className={styles.highlightBox}>

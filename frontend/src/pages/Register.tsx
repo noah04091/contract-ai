@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Eye, EyeOff } from "lucide-react";
 import "../styles/SplitAuth.css";
+import { getAcquisition } from "../utils/acquisition";
 
 // Back Arrow Icon SVG
 const BackArrowIcon = () => (
@@ -86,7 +87,8 @@ export default function Register() {
           companyName: companyName.trim() || undefined, // Nur senden wenn ausgefüllt
           email,
           password,
-          isBetaTester
+          isBetaTester,
+          acquisition: getAcquisition() // 📊 Herkunft (first-touch), unsichtbar fürs Frontend
         }),
       });
 
