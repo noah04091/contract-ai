@@ -284,6 +284,45 @@ const useIsWideScreen = (minWidth: number): boolean => {
   return isWide;
 };
 
+// 🔔 Kalender-Erinnerungen rein optisch nach Termin gruppieren.
+// Reminder-Events tragen type = "<FAMILIE>_REMINDER_<N>D"; das Stichtag-Event = "<FAMILIE>".
+// Eigene (isManual) bleiben separat oben. Defensive: nichts wird verworfen — alles landet sichtbar.
+type CalEventLite = { id: string; title: string; date: string; type: string; severity: 'info' | 'warning' | 'critical'; isManual?: boolean };
+const REMINDER_TYPE_RE = /^(.+)_REMINDER_(\d+)D$/i;
+const groupCalendarEvents = (events: CalEventLite[], contractName: string) => {
+  const customs: CalEventLite[] = [];
+  const famMap = new Map<string, { family: string; base: CalEventLite | null; reminders: CalEventLite[] }>();
+  for (const ev of events) {
+    if (ev.isManual) { customs.push(ev); continue; }
+    const m = (ev.type || '').match(REMINDER_TYPE_RE);
+    const fam = m ? m[1] : (ev.type || `__${ev.id}`);
+    if (!famMap.has(fam)) famMap.set(fam, { family: fam, base: null, reminders: [] });
+    const g = famMap.get(fam)!;
+    if (m) g.reminders.push(ev); else g.base = ev;
+  }
+  const cleanLabel = (raw: string): string => {
+    let s = raw || 'Termin';
+    if (contractName && s.endsWith(`: ${contractName}`)) s = s.slice(0, -(`: ${contractName}`).length);
+    const rm = s.match(/vorher[^:]*:\s*(.+)$/i); // "… N Tage vorher: <Label>" → <Label>
+    if (rm) s = rm[1];
+    return s.trim() || 'Termin';
+  };
+  const groups = Array.from(famMap.values()).map((g) => {
+    const rows = [...(g.base ? [g.base] : []), ...g.reminders]
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const head = g.base || (g.reminders.length ? g.reminders[g.reminders.length - 1] : null);
+    return {
+      family: g.family,
+      label: cleanLabel(g.base ? g.base.title : (g.reminders[0]?.title || 'Termin')),
+      severity: (head?.severity || 'info') as 'info' | 'warning' | 'critical',
+      date: head?.date || (g.reminders[0]?.date ?? ''),
+      count: rows.length,
+      rows,
+    };
+  }).sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime());
+  return { customs, groups };
+};
+
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
   onClose,
@@ -425,6 +464,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [reminderDate, setReminderDate] = useState('');
   const [reminderSeverity, setReminderSeverity] = useState<'info' | 'warning' | 'critical'>('info');
   const [savingReminder, setSavingReminder] = useState(false);
+  const [expandedReminderGroups, setExpandedReminderGroups] = useState<Set<string>>(new Set());
 
   const resetReminderForm = () => {
     setAddingReminder(false);
@@ -521,6 +561,76 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     } finally {
       setDeletingEventId(null);
     }
+  };
+
+  // 🔔 Eine Kalender-Erinnerungs-Zeile (wiederverwendet für „Eigene" + aufgeklappte Gruppen)
+  const renderCalendarEventRow = (event: typeof calendarEvents[0]) => {
+    const eventDate = new Date(event.date);
+    eventDate.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daysUntil = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const isPast = daysUntil < 0;
+    const severityColors = {
+      critical: { stripe: '#ef4444', dot: '#ef4444', dotRing: '#fef2f2' },
+      warning: { stripe: '#f59e0b', dot: '#f59e0b', dotRing: '#fffbeb' },
+      info: { stripe: '#2563eb', dot: '#2563eb', dotRing: '#eff6ff' },
+    };
+    const colors = severityColors[event.severity] || severityColors.info;
+    return (
+      <div
+        key={event.id}
+        style={{
+          padding: '12px 16px',
+          borderRadius: '10px',
+          background: '#fff',
+          border: '1px solid #e5e7eb',
+          borderLeft: `4px solid ${colors.stripe}`,
+          boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+          opacity: isPast ? 0.7 : 1,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+          <div
+            aria-hidden="true"
+            style={{ width: '12px', height: '12px', borderRadius: '50%', background: colors.dot, boxShadow: `0 0 0 3px ${colors.dotRing}`, flexShrink: 0 }}
+          />
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '13.5px', lineHeight: 1.4 }}>{event.title}</div>
+            <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '3px', fontVariantNumeric: 'tabular-nums' }}>
+              {eventDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              {' · '}
+              {isPast ? `vor ${Math.abs(daysUntil)} Tagen` : daysUntil === 0 ? 'heute' : daysUntil === 1 ? 'morgen' : `in ${daysUntil} Tagen`}
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+          <button
+            onClick={() => window.location.href = `/calendar?eventId=${event.id}`}
+            style={{ padding: '7px 12px', fontSize: '12.5px', fontWeight: 600, background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', color: '#475569', cursor: 'pointer', transition: 'background .15s, border-color .15s' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#f6f8fb'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e5e7eb'; }}
+          >
+            Zum Kalender
+          </button>
+          <button
+            onClick={() => handleDeleteCalendarEvent(event)}
+            disabled={deletingEventId === event.id}
+            aria-label={`Termin „${event.title}" entfernen`}
+            title="Termin entfernen"
+            style={{ padding: '7px 9px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', color: '#94a3b8', cursor: deletingEventId === event.id ? 'not-allowed' : 'pointer', opacity: deletingEventId === event.id ? 0.5 : 1, display: 'inline-flex', alignItems: 'center', transition: 'background .15s, border-color .15s, color .15s' }}
+            onMouseEnter={(e) => { if (deletingEventId === event.id) return; e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.borderColor = '#fecaca'; e.currentTarget.style.color = '#ef4444'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.color = '#94a3b8'; }}
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </div>
+    );
   };
 
   // 🔐 User Subscription Plan laden für Legal Pulse Zugriffsprüfung
@@ -1496,7 +1606,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         opacity: (contract.status === 'gekündigt' || contract.cancellationId) ? 0.5 : 1,
         pointerEvents: (contract.status === 'gekündigt' || contract.cancellationId) ? 'none' : 'auto'
       }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '1rem' }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.25rem' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center' }}>
             <Bell size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} /> Kalendererinnerungen
           </span>
@@ -1509,6 +1619,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <Plus size={16} />
           </button>
         </h3>
+        <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 14px' }}>Wann du benachrichtigt wirst — eigene oben, automatische pro Termin eingeklappt.</p>
         {addingReminder && (
           <div style={{
             display: 'flex', flexDirection: 'column', gap: '8px',
@@ -1567,123 +1678,60 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               Erstelle im Kalender ein Ereignis und verknüpfe es mit diesem Vertrag.
             </span>
           </p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {calendarEvents.map((event) => {
-              const eventDate = new Date(event.date);
-              eventDate.setHours(0, 0, 0, 0);
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const daysUntil = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-              const isPast = daysUntil < 0;
-
-              const severityColors = {
-                critical: { stripe: '#ef4444', dot: '#ef4444', dotRing: '#fef2f2' },
-                warning: { stripe: '#f59e0b', dot: '#f59e0b', dotRing: '#fffbeb' },
-                info: { stripe: '#2563eb', dot: '#2563eb', dotRing: '#eff6ff' },
-              };
-              const colors = severityColors[event.severity] || severityColors.info;
-
-              return (
-                <div
-                  key={event.id}
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '10px',
-                    background: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderLeft: `4px solid ${colors.stripe}`,
-                    boxShadow: '0 1px 2px rgba(15,23,42,0.04)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '12px',
-                    opacity: isPast ? 0.7 : 1,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
-                    <div
-                      aria-hidden="true"
-                      style={{
-                        width: '12px',
-                        height: '12px',
-                        borderRadius: '50%',
-                        background: colors.dot,
-                        boxShadow: `0 0 0 3px ${colors.dotRing}`,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontWeight: 600, color: '#0f172a', fontSize: '13.5px', lineHeight: 1.4 }}>{event.title}</div>
-                      <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '3px', fontVariantNumeric: 'tabular-nums' }}>
-                        {eventDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                        {' · '}
-                        {isPast ? `vor ${Math.abs(daysUntil)} Tagen` : daysUntil === 0 ? 'heute' : daysUntil === 1 ? 'morgen' : `in ${daysUntil} Tagen`}
+        ) : (() => {
+          const { customs, groups } = groupCalendarEvents(calendarEvents, contract.name || '');
+          const groupColor = (sev: 'info' | 'warning' | 'critical') =>
+            sev === 'critical' ? '#ef4444' : sev === 'warning' ? '#f59e0b' : '#2563eb';
+          const subLabel = (t: string) => (
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', margin: '4px 0 2px' }}>{t}</div>
+          );
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {customs.length > 0 && (
+                <>
+                  {subLabel('Deine')}
+                  {customs.map(renderCalendarEventRow)}
+                </>
+              )}
+              {groups.length > 0 && (
+                <>
+                  {customs.length > 0 && subLabel('Automatisch — pro Termin')}
+                  {groups.map((g) => {
+                    const open = expandedReminderGroups.has(g.family);
+                    return (
+                      <div key={g.family} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <button
+                          onClick={() => setExpandedReminderGroups((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(g.family)) next.delete(g.family); else next.add(g.family);
+                            return next;
+                          })}
+                          aria-expanded={open}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: '12px', width: '100%', textAlign: 'left',
+                            padding: '12px 16px', borderRadius: '10px', background: '#fff',
+                            border: '1px solid #e5e7eb', borderLeft: `4px solid ${groupColor(g.severity)}`,
+                            boxShadow: '0 1px 2px rgba(15,23,42,0.04)', cursor: 'pointer',
+                          }}
+                        >
+                          <Bell size={15} style={{ color: groupColor(g.severity), flexShrink: 0 }} />
+                          <span style={{ flex: 1, minWidth: 0, fontWeight: 600, color: '#0f172a', fontSize: '13.5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.label}</span>
+                          <span style={{ fontSize: '11.5px', color: '#475569', background: '#f1f5f9', borderRadius: '9999px', padding: '2px 9px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>{g.count} {g.count === 1 ? 'Erinnerung' : 'Erinnerungen'}</span>
+                          <span style={{ color: '#cbd5e1', fontSize: '14px', flexShrink: 0 }}>{open ? '▾' : '▸'}</span>
+                        </button>
+                        {open && (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '14px' }}>
+                            {g.rows.map(renderCalendarEventRow)}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                    <button
-                      onClick={() => window.location.href = `/calendar?eventId=${event.id}`}
-                      style={{
-                        padding: '7px 12px',
-                        fontSize: '12.5px',
-                        fontWeight: 600,
-                        background: '#fff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        color: '#475569',
-                        cursor: 'pointer',
-                        transition: 'background .15s, border-color .15s',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#f6f8fb';
-                        e.currentTarget.style.borderColor = '#cbd5e1';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#fff';
-                        e.currentTarget.style.borderColor = '#e5e7eb';
-                      }}
-                    >
-                      Zum Kalender
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCalendarEvent(event)}
-                      disabled={deletingEventId === event.id}
-                      aria-label={`Termin „${event.title}" entfernen`}
-                      title="Termin entfernen"
-                      style={{
-                        padding: '7px 9px',
-                        background: '#fff',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        color: '#94a3b8',
-                        cursor: deletingEventId === event.id ? 'not-allowed' : 'pointer',
-                        opacity: deletingEventId === event.id ? 0.5 : 1,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        transition: 'background .15s, border-color .15s, color .15s',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (deletingEventId === event.id) return;
-                        e.currentTarget.style.background = '#fef2f2';
-                        e.currentTarget.style.borderColor = '#fecaca';
-                        e.currentTarget.style.color = '#ef4444';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = '#fff';
-                        e.currentTarget.style.borderColor = '#e5e7eb';
-                        e.currentTarget.style.color = '#94a3b8';
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* 📊 QuickFacts - Dynamische Eckdaten (immer sichtbar) */}

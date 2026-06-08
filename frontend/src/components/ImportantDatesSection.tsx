@@ -166,6 +166,7 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
           <h3 className={styles.title}>Wichtige Termine</h3>
           <span className={styles.badge}>{sortedDates.length}</span>
         </div>
+        <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 14px' }}>Stichtage, die die KI im Vertrag gefunden hat.</p>
 
         <div className={styles.datesList}>
           {sortedDates.map((dateItem, index) => {
