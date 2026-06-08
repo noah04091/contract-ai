@@ -2101,4 +2101,67 @@ router.get('/campaigns/:id', verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// ===== 📈 GET ACQUISITION STATS =====
+// GET /api/admin/acquisition-stats
+// Herkunfts-Trichter: pro Quelle Anmeldungen/Aktiviert/Analysiert/Zahler (read-only)
+router.get("/acquisition-stats", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
+    const contractsCollection = db.collection("contracts");
+
+    const TEST_DOMAINS = new Set(['flirt.ms']);
+    const isTest = (email) => TEST_DOMAINS.has((email?.split('@')[1] || '').toLowerCase());
+    const sourceLabel = (acq) => {
+      if (!acq) return '(kein Tracking — vor Einbau)';
+      if (acq.utm_source) return `utm:${acq.utm_source}${acq.utm_campaign ? '/' + acq.utm_campaign : ''}`;
+      if (acq.referrer) {
+        try { return 'ref:' + new URL(acq.referrer).hostname.replace(/^www\./, ''); } catch { return 'ref:?'; }
+      }
+      return 'direct (kein Referrer)';
+    };
+
+    const users = await usersCollection.find(
+      {}, { projection: { _id: 1, email: 1, subscriptionPlan: 1, stripeCustomerId: 1, role: 1, analysisCount: 1, acquisition: 1 } }
+    ).toArray();
+    const contracts = await contractsCollection.find({}, { projection: { userId: 1 } }).toArray();
+
+    const contractCount = {};
+    for (const c of contracts) {
+      const k = c.userId ? c.userId.toString() : '∅';
+      contractCount[k] = (contractCount[k] || 0) + 1;
+    }
+
+    const groups = {};
+    const landing = {};
+    let tracked = 0, total = 0;
+    for (const u of users) {
+      if (isTest(u.email) || u.role === 'admin') continue;
+      total++;
+      const label = sourceLabel(u.acquisition);
+      if (u.acquisition) {
+        tracked++;
+        const lp = u.acquisition.landingPage || '(?)';
+        landing[lp] = (landing[lp] || 0) + 1;
+      }
+      const g = groups[label] || (groups[label] = { source: label, signups: 0, activated: 0, analyzed: 0, paid: 0 });
+      g.signups++;
+      if ((contractCount[u._id.toString()] || 0) >= 1) g.activated++;
+      if ((u.analysisCount || 0) >= 1) g.analyzed++;
+      if (u.stripeCustomerId && ['business', 'enterprise', 'premium'].includes(u.subscriptionPlan)) g.paid++;
+    }
+
+    const sources = Object.values(groups).sort((a, b) => b.signups - a.signups);
+    const landingPages = Object.entries(landing)
+      .map(([page, count]) => ({ page, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    res.json({ success: true, sources, landingPages, tracked, total });
+  } catch (error) {
+    console.error('❌ [ADMIN] acquisition-stats error:', error.message);
+    res.status(500).json({ success: false, message: 'Fehler beim Laden der Akquise-Statistik' });
+  }
+});
+
 module.exports = router;

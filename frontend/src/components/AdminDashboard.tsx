@@ -464,13 +464,20 @@ const formatActivityType = (type: string): string => {
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'campaigns' | 'refunds' | 'settings'>('costs');
+  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'campaigns' | 'refunds' | 'settings' | 'acquisition'>('costs');
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [betaStats, setBetaStats] = useState<BetaStats | null>(null);
   const [deletedAccountsData, setDeletedAccountsData] = useState<DeletedAccountsStats | null>(null);
   const [activityLogData, setActivityLogData] = useState<ActivityLogData | null>(null);
   const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null);
+  const [acquisitionStats, setAcquisitionStats] = useState<{
+    sources: { source: string; signups: number; activated: number; analyzed: number; paid: number }[];
+    landingPages: { page: string; count: number }[];
+    tracked: number;
+    total: number;
+  } | null>(null);
+  const [acquisitionLoading, setAcquisitionLoading] = useState(false);
   const [financeLoading, setFinanceLoading] = useState(false);
   const [emailLogsData, setEmailLogsData] = useState<EmailLogsData | null>(null);
   const [emailLogsStats, setEmailLogsStats] = useState<EmailLogsStats | null>(null);
@@ -721,6 +728,30 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (activeTab === 'finance' && !financeStats) {
       fetchFinanceData();
+    }
+  }, [activeTab]);
+
+  const fetchAcquisitionStats = async () => {
+    try {
+      setAcquisitionLoading(true);
+      const res = await fetch(`${API_URL}/api/admin/acquisition-stats`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAcquisitionStats(data);
+      }
+    } catch (err) {
+      console.error('Error fetching acquisition stats:', err);
+    } finally {
+      setAcquisitionLoading(false);
+    }
+  };
+
+  // Load acquisition data when tab is selected
+  useEffect(() => {
+    if (activeTab === 'acquisition' && !acquisitionStats) {
+      fetchAcquisitionStats();
     }
   }, [activeTab]);
 
@@ -1601,10 +1632,69 @@ export default function AdminDashboard() {
           <Server size={20} />
           <span>Einstellungen</span>
         </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'acquisition' ? styles.active : ''}`}
+          onClick={() => setActiveTab('acquisition')}
+        >
+          <TrendingUp size={20} />
+          <span>Akquise</span>
+        </button>
       </div>
 
       {/* Tab Content */}
       <div className={styles.tabContent}>
+        {/* AKQUISE / HERKUNFT TAB */}
+        {activeTab === 'acquisition' && (
+          <div style={{ padding: '8px 0' }}>
+            <h2 style={{ marginBottom: 8 }}>📈 Akquise — Herkunft der Nutzer</h2>
+            {acquisitionLoading && <p>Lädt…</p>}
+            {acquisitionStats && (
+              <>
+                <p style={{ color: '#64748b', marginBottom: 16 }}>
+                  {acquisitionStats.tracked} von {acquisitionStats.total} Nutzern getrackt — das Tracking greift nur für Anmeldungen seit Einbau (08.06.2026). Bestandsnutzer erscheinen unter „kein Tracking".
+                </p>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                    <thead>
+                      <tr style={{ textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>
+                        <th style={{ padding: '8px 12px' }}>Quelle</th>
+                        <th style={{ padding: '8px 12px' }}>Anmeldungen</th>
+                        <th style={{ padding: '8px 12px' }}>Aktiviert</th>
+                        <th style={{ padding: '8px 12px' }}>Analysiert</th>
+                        <th style={{ padding: '8px 12px' }}>Zahler</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {acquisitionStats.sources.map((s) => {
+                        const perc = (n: number) => (s.signups > 0 ? Math.round((n / s.signups) * 100) : 0);
+                        return (
+                          <tr key={s.source} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '8px 12px', fontWeight: 500 }}>{s.source}</td>
+                            <td style={{ padding: '8px 12px' }}>{s.signups}</td>
+                            <td style={{ padding: '8px 12px' }}>{s.activated} ({perc(s.activated)}%)</td>
+                            <td style={{ padding: '8px 12px' }}>{s.analyzed} ({perc(s.analyzed)}%)</td>
+                            <td style={{ padding: '8px 12px', fontWeight: 600, color: s.paid > 0 ? '#16a34a' : '#94a3b8' }}>{s.paid}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {acquisitionStats.landingPages.length > 0 && (
+                  <div style={{ marginTop: 24 }}>
+                    <h3 style={{ marginBottom: 8 }}>Top-Landingpages (getrackte Nutzer)</h3>
+                    <ul style={{ color: '#475569', fontSize: 14, lineHeight: 1.7 }}>
+                      {acquisitionStats.landingPages.map((lp) => (
+                        <li key={lp.page}>{lp.count} × {lp.page}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
+            )}
+            {!acquisitionLoading && !acquisitionStats && <p>Keine Daten verfügbar.</p>}
+          </div>
+        )}
         {/* COST TRACKING TAB */}
         {activeTab === 'costs' && (
           <div className={styles.costsTab}>
