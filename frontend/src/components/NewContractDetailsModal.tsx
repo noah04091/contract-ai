@@ -1586,19 +1586,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
       {/* 📅 Wichtige Termine - KI-extrahierte Datums */}
       {contract.importantDates && contract.importantDates.length > 0 && (
-        <div className={styles.section}>
-          <ImportantDatesSection
-            importantDates={contract.importantDates}
-            contractName={fixUtf8Display(contract.name)}
-          />
-        </div>
+        <ImportantDatesSection
+          importantDates={contract.importantDates}
+          contractName={fixUtf8Display(contract.name)}
+        />
       )}
 
       {/* ⏰ Wichtige Fristen & Hinweise — universelle Frist-Regelungen aus Date Hunt */}
       {contract.fristHinweise && contract.fristHinweise.length > 0 && (
-        <div className={styles.section}>
-          <FristHinweiseSection fristHinweise={contract.fristHinweise} />
-        </div>
+        <FristHinweiseSection fristHinweise={contract.fristHinweise} />
       )}
 
       {/* 🔔 Kalendererinnerungen für diesen Vertrag — V2-Look: weißer BG mit Border-Stripe */}
