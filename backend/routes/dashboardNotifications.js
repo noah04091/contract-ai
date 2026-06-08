@@ -860,15 +860,11 @@ router.get("/", verifyToken, async (req, res) => {
             status: { $in: ["scheduled", "notified"] }
           }
         },
-        {
-          $lookup: {
-            from: "contracts",
-            localField: "contractId",
-            foreignField: "_id",
-            as: "contract"
-          }
-        },
-        { $unwind: { path: "$contract", preserveNullAndEmptyArrays: true } },
+        // 🛟 32MB-Sort-Fix: KEIN contract-$lookup. Das eingebettete Vertrags-Doc wurde
+        // hier nie gelesen (Code nutzt nur event.metadata.contractName + event.contractId).
+        // Früher hängte der $lookup das ganze ~5MB-Vertrags-Doc an jedes Event → der
+        // nachfolgende $sort konnte das 32MB-Limit sprengen (Atlas-Flex ohne allowDiskUse).
+        // Weglassen → Sort läuft nur über schlanke Event-Docs. Verhalten unverändert.
         { $sort: { date: 1 } },
         { $limit: perSourceLimit }
       ])
@@ -904,6 +900,10 @@ router.get("/", verifyToken, async (req, res) => {
             _lastActivity: { $max: ['$analyzedAt', '$uploadedAt'] }
           }
         },
+        // 🛟 32MB-Sort-Fix: nur die genutzten kleinen Felder behalten, BEVOR sortiert wird.
+        // Sonst sortiert MongoDB die vollen ~5MB-Vertrags-Docs → 32MB-Limit (Atlas-Flex
+        // ohne allowDiskUse). Downstream genutzt: name/analyzedAt/uploadedAt/_lastActivity/_id.
+        { $project: { name: 1, analyzedAt: 1, uploadedAt: 1, _lastActivity: 1 } },
         { $sort: { _lastActivity: -1 } },
         { $limit: perSourceLimit }
       ])
