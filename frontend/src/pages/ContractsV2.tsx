@@ -773,7 +773,8 @@ export default function Contracts() {
   const [morePopoverFolderExpanded, setMorePopoverFolderExpanded] = useState(false);
   // 🛠️ Fix: Popover wurde von overflow:hidden + motion.tr-Transform abgeschnitten → als
   // position:fixed-Portal rendern (wie qfDropdown). Position vom ⋮-Button berechnet.
-  const [morePopoverPos, setMorePopoverPos] = useState<{ top: number; right: number } | null>(null);
+  // top ODER bottom (Auto-Flip nach oben bei wenig Platz unten); maxHeight kappt + scrollt.
+  const [morePopoverPos, setMorePopoverPos] = useState<{ right: number; top?: number; bottom?: number; maxHeight: number } | null>(null);
   const [folderDropdownPosition, setFolderDropdownPosition] = useState<{ top: number; right: number } | null>(null); // Position für fixed Dropdown
   const [folderDropdownContractId, setFolderDropdownContractId] = useState<string | null>(null); // Contract ID für Portal
   // selectedFolderId entfernt — Sidebar-Navigation nutzt jetzt activeFolder + statusFilter direkt
@@ -5721,10 +5722,15 @@ export default function Contracts() {
                                         } else {
                                           // 🛠️ Fixed-Portal: Position vom Button (rechtsbündig, vom Rand geklammert)
                                           const rect = e.currentTarget.getBoundingClientRect();
-                                          setMorePopoverPos({
-                                            top: rect.bottom + 6,
-                                            right: Math.max(8, window.innerWidth - rect.right),
-                                          });
+                                          const right = Math.max(8, window.innerWidth - rect.right);
+                                          const spaceBelow = window.innerHeight - rect.bottom - 12;
+                                          const spaceAbove = rect.top - 12;
+                                          // Nach oben aufklappen, wenn unten zu wenig Platz (lange Listen, unterste Zeilen)
+                                          if (spaceBelow < 300 && spaceAbove > spaceBelow) {
+                                            setMorePopoverPos({ right, bottom: window.innerHeight - rect.top + 6, maxHeight: spaceAbove });
+                                          } else {
+                                            setMorePopoverPos({ right, top: rect.bottom + 6, maxHeight: spaceBelow });
+                                          }
                                           setMorePopoverFor(contract._id);
                                           setMorePopoverFolderExpanded(false);
                                         }
@@ -5736,7 +5742,14 @@ export default function Contracts() {
                                     {morePopoverFor === contract._id && morePopoverPos && createPortal(
                                       <div
                                         className={styles.morePopover}
-                                        style={{ position: 'fixed', top: morePopoverPos.top, right: morePopoverPos.right }}
+                                        style={{
+                                          position: 'fixed',
+                                          right: morePopoverPos.right,
+                                          top: morePopoverPos.top,
+                                          bottom: morePopoverPos.bottom,
+                                          maxHeight: morePopoverPos.maxHeight,
+                                          overflowY: 'auto',
+                                        }}
                                         onClick={(e) => e.stopPropagation()}
                                       >
                                         {/* 1. Vollständige Details öffnen */}
