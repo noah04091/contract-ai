@@ -635,10 +635,18 @@ router.get("/upcoming", verifyToken, async (req, res) => {
           }
         },
         {
+          // 🛟 32MB-Sort-Fix: NUR contract.name holen (Sub-Pipeline), statt das ganze
+          // ~5MB-Vertrags-Doc an jedes Event zu hängen. Sonst sprengt der nachfolgende
+          // $sort das 32MB-Limit (Atlas-Flex ohne allowDiskUse). Antwort nutzt nur
+          // contract.name (Z. weiter unten) → Verhalten unverändert.
+          // (Großfelder einzeln strippen reicht NICHT — Vertrag hat zu viele große Felder.)
           $lookup: {
             from: "contracts",
-            localField: "contractId",
-            foreignField: "_id",
+            let: { cid: "$contractId" },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$_id", "$$cid"] } } },
+              { $project: { name: 1 } }
+            ],
             as: "contract"
           }
         },
