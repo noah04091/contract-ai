@@ -4255,7 +4255,7 @@ export default function Contracts() {
 
             {/* Such-/Filter-Leisten (Mobile-Suche, Mobile-Chips, Desktop-Toolbar) nur in
                 der Listen-Ansicht. Im Upload-/Analyse-Flow haben sie keinen Nutzen → ausgeblendet. */}
-            {activeSection === 'contracts' && (
+            {activeSection === 'contracts' && !quickAnalysisModal.show && (
             <>
             {/* 📱 MOBILE: Suchleiste oben - immer sichtbar */}
             <div className={styles.mobileSearchBar}>
@@ -4736,9 +4736,49 @@ export default function Contracts() {
             </AnimatePresence>
 
             {/* Content Area - nur dieser Bereich scrollt */}
-            <div className={`${styles.contentArea} ${activeSection !== 'contracts' ? styles.contentAreaNoNav : ''}`} ref={contentAreaRef} data-tour="contracts-list">
+            <div className={`${styles.contentArea} ${(activeSection !== 'contracts' || quickAnalysisModal.show) ? styles.contentAreaNoNav : ''}`} ref={contentAreaRef} data-tour="contracts-list">
               <AnimatePresence mode="wait" initial={false}>
-                {activeSection === 'upload' && (
+                {/* ⚡ Re-Analyse-Ergebnis IN-PAGE (wie Upload→Analyse), nicht als Overlay */}
+                {quickAnalysisModal.show && quickAnalysisModal.analysisResult && (
+                  <motion.div
+                    key="analysis-section"
+                    className={styles.section}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* 📱 Mobile Back-Button (Desktop: ContractAnalysis hat eigenen Reset) */}
+                    <button
+                      className={styles.mobileBackButton}
+                      onClick={closeQuickAnalysis}
+                    >
+                      <ChevronLeft size={20} />
+                      <span>Zurück zu Verträgen</span>
+                    </button>
+                    <div className={styles.analysisContainer}>
+                      <ContractAnalysis
+                        contractName={quickAnalysisModal.contractName}
+                        contractId={quickAnalysisModal.contractId}
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        initialResult={quickAnalysisModal.analysisResult as any}
+                        onReset={closeQuickAnalysis}
+                        onNavigateToContract={async (navContractId) => {
+                          const analyzedContractId = quickAnalysisModal.contractId;
+                          setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
+                          const refreshedContracts = await silentRefreshContracts(analyzedContractId);
+                          const contract = refreshedContracts?.find((c: Contract) => c._id === navContractId);
+                          if (contract) {
+                            setSelectedContract(contract);
+                            setShowDetails(true);
+                            navigate(`/contracts?view=${navContractId}`, { replace: true });
+                          }
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+                {activeSection === 'upload' && !quickAnalysisModal.show && (
                   <motion.div
                     key="upload-section"
                     className={styles.section}
@@ -5252,7 +5292,7 @@ export default function Contracts() {
               </motion.div>
             )}
 
-            {activeSection === 'contracts' && (
+            {activeSection === 'contracts' && !quickAnalysisModal.show && (
               <motion.div
                 key="contracts-section"
                 className={`${styles.section} ${styles.contractsMainCard}`}
@@ -6437,46 +6477,9 @@ export default function Contracts() {
 
         {/* 🎨 Contract Details Modal wurde als Portal nach document.body verschoben (unterhalb) */}
 
-          {/* ⚡ Schnellanalyse-Modal (Portal → über Navbar) */}
-          {quickAnalysisModal.show && quickAnalysisModal.analysisResult && createPortal(
-            <div className={styles.quickAnalysisOverlay} onClick={closeQuickAnalysis}>
-              <div className={styles.quickAnalysisModal} onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
-                <div className={styles.quickAnalysisHeader}>
-                  <div className={styles.quickAnalysisHeaderTitle}>
-                    <Zap size={18} />
-                    <h3>Analyse-Ergebnis</h3>
-                  </div>
-                  <button className={styles.quickAnalysisCloseBtn} onClick={closeQuickAnalysis}>
-                    <X size={18} />
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className={styles.quickAnalysisBody}>
-                  <ContractAnalysis
-                    contractName={quickAnalysisModal.contractName}
-                    contractId={quickAnalysisModal.contractId}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    initialResult={quickAnalysisModal.analysisResult as any}
-                    onReset={closeQuickAnalysis}
-                    onNavigateToContract={async (navContractId) => {
-                      const analyzedContractId = quickAnalysisModal.contractId;
-                      setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
-                      const refreshedContracts = await silentRefreshContracts(analyzedContractId);
-                      const contract = refreshedContracts?.find((c: Contract) => c._id === navContractId);
-                      if (contract) {
-                        setSelectedContract(contract);
-                        setShowDetails(true);
-                        navigate(`/contracts?view=${navContractId}`, { replace: true });
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </div>,
-            document.body
-          )}
+          {/* ⚡ Re-Analyse-Ergebnis wird jetzt IN-PAGE im contentArea gerendert
+              (siehe activeSection-Block oben), nicht mehr als Portal-Overlay —
+              damit es exakt wie der Upload→Analyse-Flow aussieht. */}
 
           {/* ✅ NEU: Legacy-Modal für alte Verträge */}
           {legacyModal?.show && legacyModal.contract && (
