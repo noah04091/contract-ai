@@ -717,7 +717,9 @@ router.get("/ics", async (req, res) => {
     const contractIds = [...new Set(allEvents.filter(e => e.contractId).map(e => e.contractId.toString()))];
     const contracts = contractIds.length > 0
       ? await req.db.collection("contracts")
-          .find({ _id: { $in: contractIds.map(id => new ObjectId(id)) } })
+          // 🛟 Speicher-Schutz: nur die 3 vom ICS-Generator genutzten Felder
+          // (_id/name/provider) holen, nicht das ganze ~5MB-Vertrags-Doc.
+          .find({ _id: { $in: contractIds.map(id => new ObjectId(id)) } }, { projection: { name: 1, provider: 1 } })
           .toArray()
       : [];
     const contractMap = new Map(contracts.map(c => [c._id.toString(), c]));

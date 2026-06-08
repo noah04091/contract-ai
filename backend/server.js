@@ -549,10 +549,16 @@ const connectDB = async () => {
                 }
               },
               {
+                // 🛟 Speicher-Schutz: nur die 3 vom ICS-Generator genutzten Vertragsfelder
+                // (_id/name/provider) holen statt des ganzen ~5MB-Vertrags-Docs. Sonst lädt
+                // der Feed bei schweren Accounts hunderte MB in den Node-Heap (.toArray()).
                 $lookup: {
                   from: "contracts",
-                  localField: "contractId",
-                  foreignField: "_id",
+                  let: { cid: "$contractId" },
+                  pipeline: [
+                    { $match: { $expr: { $eq: ["$_id", "$$cid"] } } },
+                    { $project: { name: 1, provider: 1 } }
+                  ],
                   as: "contract"
                 }
               },
