@@ -771,6 +771,9 @@ export default function Contracts() {
   // 🆕 V2 TODO #1: Mehr-Popover (⋮) State
   const [morePopoverFor, setMorePopoverFor] = useState<string | null>(null);
   const [morePopoverFolderExpanded, setMorePopoverFolderExpanded] = useState(false);
+  // 🛠️ Fix: Popover wurde von overflow:hidden + motion.tr-Transform abgeschnitten → als
+  // position:fixed-Portal rendern (wie qfDropdown). Position vom ⋮-Button berechnet.
+  const [morePopoverPos, setMorePopoverPos] = useState<{ top: number; right: number } | null>(null);
   const [folderDropdownPosition, setFolderDropdownPosition] = useState<{ top: number; right: number } | null>(null); // Position für fixed Dropdown
   const [folderDropdownContractId, setFolderDropdownContractId] = useState<string | null>(null); // Contract ID für Portal
   // selectedFolderId entfernt — Sidebar-Navigation nutzt jetzt activeFolder + statusFilter direkt
@@ -943,6 +946,7 @@ export default function Contracts() {
       // 🆕 V2 TODO #1: Mehr-Popover schließen
       if (morePopoverFor) {
         setMorePopoverFor(null);
+        setMorePopoverPos(null);
         setMorePopoverFolderExpanded(false);
       }
       // 🆕 V2 TODO #4b: Konfigurator-Popover schließen
@@ -5712,8 +5716,15 @@ export default function Contracts() {
                                         e.stopPropagation();
                                         if (morePopoverFor === contract._id) {
                                           setMorePopoverFor(null);
+                                          setMorePopoverPos(null);
                                           setMorePopoverFolderExpanded(false);
                                         } else {
+                                          // 🛠️ Fixed-Portal: Position vom Button (rechtsbündig, vom Rand geklammert)
+                                          const rect = e.currentTarget.getBoundingClientRect();
+                                          setMorePopoverPos({
+                                            top: rect.bottom + 6,
+                                            right: Math.max(8, window.innerWidth - rect.right),
+                                          });
                                           setMorePopoverFor(contract._id);
                                           setMorePopoverFolderExpanded(false);
                                         }
@@ -5722,8 +5733,12 @@ export default function Contracts() {
                                     >
                                       <MoreVertical size={16} />
                                     </button>
-                                    {morePopoverFor === contract._id && (
-                                      <div className={styles.morePopover} onClick={(e) => e.stopPropagation()}>
+                                    {morePopoverFor === contract._id && morePopoverPos && createPortal(
+                                      <div
+                                        className={styles.morePopover}
+                                        style={{ position: 'fixed', top: morePopoverPos.top, right: morePopoverPos.right }}
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
                                         {/* 1. Vollständige Details öffnen */}
                                         <button
                                           className={styles.morePopoverItem}
@@ -5860,7 +5875,8 @@ export default function Contracts() {
                                             <span>Löschen</span>
                                           </button>
                                         )}
-                                      </div>
+                                      </div>,
+                                      document.body
                                     )}
                                   </div>
                                 </div>

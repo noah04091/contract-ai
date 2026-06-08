@@ -8841,16 +8841,16 @@
 }
 
 .morePopover {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
+  /* 🛠️ Fix: position:fixed-Portal (top/right per inline-style vom Button berechnet),
+     da overflow:hidden der Tabelle + motion.tr-Transform ein absolutes Popover abschnitten. */
+  position: fixed;
   min-width: 220px;
   background: #ffffff;
   border: 1px solid #eaecf0;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(15,23,42,0.04), 0 20px 36px rgba(15,23,42,0.10);
   padding: 6px;
-  z-index: 30;
+  z-index: 9999;
   display: flex;
   flex-direction: column;
   gap: 1px;
