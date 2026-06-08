@@ -2439,9 +2439,15 @@ ADAPTIVE FELDER (nur ausgeben wenn substanziell):
       - Label 3: "Restlaufzeit" (bis zur Wirksamkeit)
 
    📋 Bei LAUFENDEM VERTRAG (Abo, Versicherung, Telekom, etc.):
-      - Label 1: "Kündigungsfrist" (z.B. "3 Monate")
-      - Label 2: "Ablaufdatum" / "Nächste Verlängerung"
-      - Label 3: "Monatliche Kosten" oder "Laufzeit"
+      → Zeige die 3 wichtigsten KAUFMÄNNISCHEN Eckwerte, die NICHT bereits in den
+        Stammdaten erscheinen. NICHT verwenden (stehen schon woanders): Kündigungsfrist,
+        Laufzeit, Ablaufdatum, Vertragsbeginn, Monatliche Kosten, Anbieter, Vertragstyp.
+      - Bevorzugt 1: "Jährliche Gesamtkosten" (z.B. "468 EUR / Jahr")
+      - Bevorzugt 2: "Mindestlaufzeit" (z.B. "24 Monate"; falls keine: "Keine")
+      - Bevorzugt 3: "Automatische Verlängerung" (z.B. "Ja, +12 Monate" / "Nein")
+      - Steht einer dieser Werte nicht im Dokument, nimm den nächstwichtigen geldwerten
+        Fakt (z.B. Kaution, Einrichtungsgebühr, Preis pro Nutzer/Einheit, Staffelpreis).
+      - rating: lange Bindung / automatische Verlängerung → "bad", sonst "neutral".
 
    🛒 Bei EINMALIGEM KAUFVERTRAG:
       - Label 1: "Kaufdatum"
