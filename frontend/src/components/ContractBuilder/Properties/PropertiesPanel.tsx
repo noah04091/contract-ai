@@ -1166,17 +1166,18 @@ const ContentEditor: React.FC<ContentEditorProps> = ({
       );
 
     case 'custom': {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const customContent = content as any;
+      // body ist die kanonische Quelle (gleiches Feld wie Canvas-Doppelklick &
+      // PDF-Export); text wird nur als Legacy-Fallback gelesen.
+      const customContent = content as { body?: string; text?: string };
       return (
         <div className={styles.field}>
           <label className={styles.label}>Freitext</label>
           <textarea
             className={styles.textarea}
             rows={6}
-            value={String(customContent.text || '')}
+            value={String(customContent.body ?? customContent.text ?? '')}
             placeholder="Benutzerdefinierter Text..."
-            onChange={(e) => onUpdate({ ...content, text: e.target.value })}
+            onChange={(e) => onUpdate({ ...content, body: e.target.value })}
           />
         </div>
       );

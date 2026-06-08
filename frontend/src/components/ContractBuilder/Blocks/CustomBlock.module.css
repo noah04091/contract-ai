@@ -3,7 +3,11 @@
  */
 
 .custom {
-  /* Text-Eigenschaften werden vom Wrapper geerbt */
+  /* Text-Eigenschaften + Farben werden vom Block-Wrapper geerbt (BlockRenderer),
+     damit der Freitext-Block wie jeder andere Inhalts-Block voll stylebar ist.
+     Kein hartcodierter Hintergrund/Rahmen mehr — sonst überdeckt er die im
+     Eigenschaften-Panel gewählte Farbe und sieht im fertigen Vertrag aus wie
+     ein Debug-Kasten. */
   text-align: inherit;
   font-family: inherit;
   font-size: inherit;
@@ -13,16 +17,18 @@
   color: inherit;
   position: relative;
   margin: 16px 0;
-  padding: 16px;
-  background: #f0fff4;
-  border: 1px dashed #68d391;
-  border-radius: 8px;
 }
 
 .custom.selected {
-  border-color: #3182ce;
-  border-style: solid;
   box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+  border-radius: 8px;
+}
+
+/* Editor-Platzhalter (nur im Bearbeitungsmodus sichtbar, nie in Vorschau/PDF) */
+.placeholder {
+  color: #94a3b8;
+  font-style: italic;
+  cursor: text;
 }
 
 .customBadge {
@@ -40,13 +46,6 @@
   border-radius: 4px;
 }
 
-.customTitle {
-  font-size: inherit;
-  font-weight: 600;
-  color: inherit;
-  margin: 0 0 8px;
-}
-
 .customContent {
   font-size: inherit;
   line-height: inherit;
@@ -60,21 +59,6 @@
 }
 
 /* Inline Editing Styles */
-.inlineInput {
-  width: 100%;
-  padding: 4px 8px;
-  border: 2px solid #3b82f6;
-  border-radius: 4px;
-  font-size: inherit;
-  font-family: inherit;
-  font-weight: inherit;
-  color: inherit;
-  background: white;
-  outline: none;
-  text-align: inherit;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
-}
-
 .inlineTextarea {
   width: 100%;
   padding: 8px;

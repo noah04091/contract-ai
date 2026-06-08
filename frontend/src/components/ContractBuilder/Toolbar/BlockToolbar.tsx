@@ -756,6 +756,10 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
         noticeText: 'Hier können Sie Ihren Hinweistext eingeben. Doppelklicken zum Bearbeiten.',
         showNoticeIcon: false,
       };
+    case 'custom':
+      return {
+        body: '',
+      };
     default:
       return {};
   }

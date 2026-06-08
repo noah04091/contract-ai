@@ -147,7 +147,7 @@ describe('BlockRenderer - Smoke Tests', () => {
     { type: 'page-break' as const, content: {} },
     { type: 'definitions' as const, content: { definitionsTitle: 'Definitionen', definitions: [{ term: 'API', definition: 'Application Programming Interface' }] } },
     { type: 'notice' as const, content: { noticeType: 'info', noticeTitle: 'Hinweis', noticeText: 'Bitte beachten' } },
-    { type: 'custom' as const, content: { text: '<p>Custom HTML</p>' } },
+    { type: 'custom' as const, content: { body: 'Custom Freitext' } },
     { type: 'logo' as const, content: { logoUrl: '', altText: 'Logo' } },
   ];
 

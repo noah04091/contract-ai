@@ -1,6 +1,12 @@
 /**
- * CustomBlock - Benutzerdefinierter Block
- * Unterstützt Inline-Editing per Doppelklick
+ * CustomBlock - Freitext-Block
+ * Ein freier Textbaustein, der im fertigen Vertrag wie normaler Inhalt aussieht
+ * und über das Eigenschaften-Panel voll stylebar ist (Farbe/Rahmen/Schrift via
+ * Wrapper). Unterstützt Inline-Editing per Doppelklick.
+ *
+ * Bewusst KEIN separater Titel: das Backend rendert für custom-Blöcke nur einen
+ * reinen Textkörper, ein Titel ginge im PDF lautlos verloren. Wer eine
+ * Überschrift braucht, nutzt den Klausel-Block.
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -16,96 +22,61 @@ interface CustomBlockProps {
   isPreview: boolean;
 }
 
-type EditingField = 'title' | 'body' | null;
-
 export const CustomBlock: React.FC<CustomBlockProps> = ({
   blockId,
   content,
   isSelected,
   isPreview,
 }) => {
-  const { body, title } = content;
+  // body ist die kanonische Quelle; text nur als Legacy-Fallback (alte, über das
+  // früher fehlerhafte Panel geschriebene Daten weiterhin anzeigen).
+  const bodyValue = (content.body ?? (content as { text?: string }).text ?? '') as string;
   const updateBlockContent = useContractBuilderStore((state) => state.updateBlockContent);
   const syncVariables = useContractBuilderStore((state) => state.syncVariables);
 
-  const [editingField, setEditingField] = useState<EditingField>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (editingField) {
-      if (editingField === 'body') {
-        textareaRef.current?.focus();
-        textareaRef.current?.select();
-      } else {
-        inputRef.current?.focus();
-        inputRef.current?.select();
-      }
+    if (isEditing) {
+      textareaRef.current?.focus();
+      textareaRef.current?.select();
     }
-  }, [editingField]);
+  }, [isEditing]);
 
-  const handleDoubleClick = useCallback((field: EditingField, currentValue: string) => {
+  const handleDoubleClick = useCallback(() => {
     if (isPreview) return;
-    setEditingField(field);
-    setEditValue(currentValue);
-  }, [isPreview]);
+    setEditValue(bodyValue);
+    setIsEditing(true);
+  }, [isPreview, bodyValue]);
 
   const handleSave = useCallback(() => {
-    if (!editingField) return;
-
-    if (editingField === 'title') {
-      updateBlockContent(blockId, { title: editValue });
-    } else if (editingField === 'body') {
-      updateBlockContent(blockId, { body: editValue });
-    }
-
+    if (!isEditing) return;
+    updateBlockContent(blockId, { body: editValue });
     syncVariables();
-    setEditingField(null);
+    setIsEditing(false);
     setEditValue('');
-  }, [editingField, editValue, blockId, updateBlockContent, syncVariables]);
+  }, [isEditing, editValue, blockId, updateBlockContent, syncVariables]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSave();
-    } else if (e.key === 'Escape') {
-      setEditingField(null);
+    if (e.key === 'Escape') {
+      setIsEditing(false);
       setEditValue('');
     }
-  }, [handleSave]);
+  }, []);
 
   return (
     <div className={`${styles.custom} ${isSelected ? styles.selected : ''}`}>
       {!isPreview && (
         <div className={styles.customBadge}>
           <Puzzle size={12} />
-          <span>Benutzerdefiniert</span>
+          <span>Freitext</span>
         </div>
       )}
 
-      <h4 className={styles.customTitle}>
-        {editingField === 'title' ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            className={styles.inlineInput}
-          />
-        ) : (
-          <VariableHighlight
-            text={title || 'Benutzerdefinierter Block'}
-            isPreview={isPreview}
-            onDoubleClick={() => handleDoubleClick('title', title || 'Benutzerdefinierter Block')}
-          />
-        )}
-      </h4>
-
       <div className={styles.customContent}>
-        {editingField === 'body' ? (
+        {isEditing ? (
           <textarea
             ref={textareaRef}
             value={editValue}
@@ -115,14 +86,18 @@ export const CustomBlock: React.FC<CustomBlockProps> = ({
             className={styles.inlineTextarea}
             rows={Math.max(3, editValue.split('\n').length)}
           />
-        ) : (
+        ) : bodyValue ? (
           <VariableHighlight
-            text={body || 'Benutzerdefinierter Inhalt...'}
+            text={bodyValue}
             multiline
             isPreview={isPreview}
-            onDoubleClick={() => handleDoubleClick('body', body || '')}
+            onDoubleClick={handleDoubleClick}
           />
-        )}
+        ) : !isPreview ? (
+          <span className={styles.placeholder} onDoubleClick={handleDoubleClick}>
+            Doppelklick zum Bearbeiten …
+          </span>
+        ) : null}
       </div>
     </div>
   );

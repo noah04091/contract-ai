@@ -2745,7 +2745,7 @@ router.post('/:id/export/pdf', auth, async (req, res) => {
         }
 
         case 'custom': {
-          const customText = block.content?.text || block.content?.body || block.content?.html || '';
+          const customText = block.content?.body || block.content?.text || block.content?.html || '';
           if (customText) {
             // Strip HTML tags for plain text rendering
             const plainText = customText.replace(/<[^>]+>/g, '').trim();
