@@ -63,8 +63,8 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
   },
   {
     id: 'companyProfileComplete',
-    label: 'Firmenprofil vervollständigt',
-    description: 'Für automatische Vertragsgenerierung',
+    label: 'Profil vervollständigt',
+    description: 'Deine Daten für die Vertragserstellung – privat oder geschäftlich',
     icon: Building2,
     iconColor: '#F59E0B',
     action: {

@@ -755,7 +755,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                 { label: 'Account erstellt', done: onboardingState?.checklist?.accountCreated ?? true },
                 { label: 'E-Mail bestätigt', done: onboardingState?.checklist?.emailVerified ?? true },
                 { label: 'Ersten Vertrag hochladen', done: uploadState === 'success' || (onboardingState?.checklist?.firstContractUploaded ?? false) },
-                { label: 'Firmenprofil vervollständigen', done: onboardingState?.checklist?.companyProfileComplete ?? false },
+                { label: 'Profil vervollständigen', done: onboardingState?.checklist?.companyProfileComplete ?? false },
                 { label: 'Erste Analyse durchführen', done: onboardingState?.checklist?.firstAnalysisComplete ?? false }
               ].map((item, index) => (
                 <motion.div
