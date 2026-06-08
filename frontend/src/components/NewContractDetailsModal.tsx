@@ -1671,7 +1671,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             Noch keine Erinnerungen für diesen Vertrag.
             <br />
             <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-              Oben mit dem +‑Knopf eine hinzufügen.
+              {hasAnalysisData(contract)
+                ? 'Oben mit dem +‑Knopf eine hinzufügen.'
+                : 'Analysiere ihn — dann legen wir Fristen automatisch an. Oder oben mit + selbst eine hinzufügen.'}
             </span>
           </p>
         ) : (() => {
