@@ -54,15 +54,15 @@ async function checkAndSendNotifications(db) {
             severity: { $in: ["info", "warning", "critical"] }
           }
         },
-        {
-          $lookup: {
-            from: "contracts",
-            localField: "contractId",
-            foreignField: "_id",
-            as: "contract"
-          }
-        },
-        { $unwind: { path: "$contract", preserveNullAndEmptyArrays: true } },
+        // 🛟 32MB-Sort-Fix: KEIN contract-$lookup mehr.
+        // Das eingebettete Vertrags-Doc wurde hier nie gelesen (Code nutzt ausschließlich
+        // event.contractId / event.contractName / event.metadata + event.user). Früher
+        // hängte der $lookup das ganze ~5MB-Vertrags-Doc an JEDES Event → der nachfolgende
+        // $sort sprengte das 32MB-Limit (Atlas-Flex unterstützt kein allowDiskUse).
+        // Smoke-Test (smokeTestNotifierSort.js, 921 Events) bewies: ein $project einzelner
+        // Großfelder reicht NICHT (der Vertrag hat weitere große Felder wie criticalIssues/
+        // recommendations/optimizations). Lösung: das tote Embed ganz weglassen → der Sort
+        // läuft nur noch über schlanke Event+User-Docs. Verhalten unverändert.
         {
           $lookup: {
             from: "users",
