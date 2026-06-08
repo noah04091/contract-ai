@@ -23,6 +23,95 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: 22,
+    slug: 'freelancer-vertrag-pruefen',
+    title: 'Freelancer-Vertrag prüfen: 7 Klauseln, die dich Geld kosten',
+    subtitle: 'Jeder neue Kunde bringt einen neuen Vertrag — und fast jeder enthält Klauseln, die zu deinen Lasten gehen. Diese 7 Fallen solltest du als Selbstständiger kennen, bevor du unterschreibst.',
+    excerpt: 'Nutzungsrechte verschenkt, unbegrenzte Haftung, 90-Tage-Zahlungsziele und das Scheinselbständigkeits-Risiko: Wir zeigen die 7 gefährlichsten Klauseln in Freelancer- und Dienstleistungsverträgen — und wie du jeden Vertrag in unter einer Minute prüfst, bevor du unterschreibst.',
+    category: 'tipps',
+    date: '8. Juni 2026',
+    readTime: '8 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '🧑‍💻',
+    image: 'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?w=800&q=80',
+    faqs: [
+      {
+        question: 'Lohnt es sich, jeden einzelnen Freelancer-Vertrag prüfen zu lassen?',
+        answer: 'Ja — gerade als Selbstständiger. Anders als bei einem einmaligen Kauf unterschreibst du als Freelancer ständig neue Verträge: pro Kunde, pro Projekt, pro Rahmenvereinbarung. Eine einzige übersehene Klausel (z.B. unbegrenzte Haftung oder ein Rechte-Buy-out ohne Extra-Vergütung) kann dich mehr kosten als das ganze Projekt einbringt. Eine Anwaltsprüfung pro Vertrag (150–400 €) ist dabei meist unwirtschaftlich — eine KI-Prüfung in unter einer Minute schließt genau diese Lücke.'
+      },
+      {
+        question: 'Was ist die gefährlichste Klausel in Freelancer-Verträgen?',
+        answer: 'Es gibt zwei Spitzenreiter. Erstens die unbegrenzte Haftung ohne Haftungsbegrenzung — hier haftest du theoretisch mit deinem gesamten Privatvermögen für Folgeschäden. Zweitens die vollständige Übertragung aller Nutzungs- und Verwertungsrechte ohne gesonderte Vergütung: Du gibst dauerhaft und exklusiv alle Rechte an deiner Arbeit ab, oft ohne es zu merken. Beide Klauseln lassen sich fast immer verhandeln — wenn man sie erkennt.'
+      },
+      {
+        question: 'Was hat Scheinselbständigkeit mit meinem Vertrag zu tun?',
+        answer: 'Sehr viel. Wenn dein Vertrag dich wie einen Angestellten behandelt — feste Arbeitszeiten, Weisungsgebundenheit, Eingliederung in die Betriebsabläufe, Exklusivität für nur einen Auftraggeber — droht die Einstufung als Scheinselbständigkeit. Folge: Nachzahlung von Sozialversicherungsbeiträgen für bis zu vier Jahre, im Zweifel für dich und den Auftraggeber. Entscheidend sind oft genau die Formulierungen im Vertrag, weshalb sich eine Prüfung auf diese Merkmale lohnt.'
+      },
+      {
+        question: 'Welche Zahlungsfristen sind in Freelancer-Verträgen üblich und was ist problematisch?',
+        answer: 'Üblich und fair sind 14 bis 30 Tage. Problematisch wird es bei 60 oder 90 Tagen Zahlungsziel — gerade als Solo-Selbstständiger finanzierst du damit faktisch deinen Auftraggeber. Achte außerdem darauf, ob Verzugszinsen und eine Verzugspauschale (40 € nach § 288 Abs. 5 BGB) ausgeschlossen wurden. Solche Ausschlüsse sind ein klares Warnsignal.'
+      },
+      {
+        question: 'Wie prüfe ich einen Freelancer-Vertrag mit Contract AI?',
+        answer: 'Du lädst den Vertrag als PDF hoch, die KI analysiert ihn in unter einer Minute und markiert jede problematische Klausel — mit Begründung, Risiko-Einstufung und Paragraphen-Verweis. Du siehst sofort, wo du nachverhandeln solltest, bevor du unterschreibst. Du kannst das Ergebnis als Report exportieren und direkt als Argumentationsgrundlage gegenüber dem Kunden nutzen.'
+      },
+      {
+        question: 'Ist meine Vertragsdaten bei der KI-Prüfung sicher?',
+        answer: 'Ja. Contract AI betreibt alle Server in Frankfurt am Main, verarbeitet ausschließlich innerhalb der EU und trainiert keine Modelle mit deinen Daten. Deine Verträge werden nicht an Dritte weitergegeben. Details dazu findest du in unserer Datenschutzerklärung.'
+      }
+    ],
+    content: `
+      <p>Als Freelancer unterschreibst du ständig Verträge: ein neuer Kunde, ein neues Projekt, eine neue Rahmenvereinbarung, dazwischen NDAs und Auftragsbestätigungen. Und im Gegensatz zu einem Angestellten hast du keine Rechtsabteilung im Rücken, die kurz drüberschaut. Die Realität sieht meist so aus: Vertrag kommt per Mail, du überfliegst ihn, willst den Auftrag nicht gefährden — und unterschreibst.</p>
+
+      <p>Das Problem: Fast jeder Kundenvertrag ist vom Auftraggeber formuliert und damit zu dessen Gunsten. Einzelne Klauseln können dich im Schadensfall mehr kosten, als das gesamte Projekt einbringt. Die gute Nachricht: Die gefährlichen Klauseln wiederholen sich. Wer sie kennt, erkennt sie in jedem neuen Vertrag — und kann fast immer nachverhandeln. Hier sind die sieben wichtigsten.</p>
+
+      <h2>Warum Freelancer jeden Vertrag prüfen sollten</h2>
+
+      <p>Ein einzelner schlechter Vertrag ist ärgerlich. Aber als Selbstständiger ist Vertragsprüfung kein Einmal-Thema, sondern ein Dauerlauf: Bei 10 bis 30 neuen Verträgen im Jahr summiert sich jedes übersehene Risiko. Drei Dinge machen Freelancer besonders verwundbar:</p>
+
+      <ul>
+        <li><strong>Kein juristischer Rückhalt.</strong> Du liest den Vertrag selbst — meist unter Zeitdruck und mit dem Wunsch, den Auftrag nicht zu verlieren.</li>
+        <li><strong>Anwalt ist unwirtschaftlich.</strong> 150 bis 400 € pro Vertragsprüfung lohnen sich bei einem 2.000-€-Projekt nicht — also wird gar nicht geprüft.</li>
+        <li><strong>Du haftest persönlich.</strong> Als Einzelunternehmer ohne GmbH haftest du mit deinem Privatvermögen. Genau deshalb sind Haftungsklauseln für dich existenziell.</li>
+      </ul>
+
+      <h2>Die 7 gefährlichsten Klauseln in Freelancer-Verträgen</h2>
+
+      <p>Diese sieben Klauseltypen tauchen in Dienstleistungs-, Werk- und Beraterverträgen immer wieder auf. Jede einzelne ist verhandelbar — wenn du sie erkennst, bevor du unterschreibst.</p>
+
+      <ul>
+        <li><strong>1. Vollständige Rechteübertragung ohne Extra-Vergütung.</strong> „Der Auftragnehmer überträgt sämtliche ausschließlichen Nutzungs- und Verwertungsrechte zeitlich, räumlich und inhaltlich unbeschränkt." Das klingt harmlos, bedeutet aber: Du gibst deine Arbeit dauerhaft und exklusiv ab — der Kunde darf sie beliebig weiterverwenden, abändern und weiterverkaufen, ohne dich je wieder zu beteiligen. Für Designer, Texter, Entwickler und Fotografen ein echter Wertverlust. Verhandle einfache statt ausschließliche Rechte oder eine gesonderte Vergütung für den Buy-out.</li>
+        <li><strong>2. Unbegrenzte Haftung.</strong> Fehlt eine Haftungsbegrenzung, haftest du theoretisch unbegrenzt — auch für Folgeschäden, die ein Vielfaches deines Honorars betragen können. Üblich und fair ist eine Begrenzung auf die Höhe des Auftragswerts (oder des Jahreshonorars) und der Ausschluss von mittelbaren Schäden/entgangenem Gewinn.</li>
+        <li><strong>3. Lange Zahlungsziele & ausgeschlossener Verzug.</strong> 60 oder 90 Tage Zahlungsziel bedeuten, dass du den Auftraggeber finanzierst. Kritisch wird es, wenn zusätzlich Verzugszinsen und die Verzugspauschale (40 € nach § 288 Abs. 5 BGB) ausgeschlossen werden. Faire Spanne: 14–30 Tage.</li>
+        <li><strong>4. Scheinselbständigkeits-Merkmale.</strong> Feste Arbeitszeiten, Weisungsgebundenheit, Anwesenheitspflicht, Eingliederung in Betriebsabläufe oder Exklusivität für nur einen Auftraggeber — solche Formulierungen können zur Einstufung als scheinselbständig führen. Folge: Nachzahlung von Sozialversicherungsbeiträgen für bis zu vier Jahre. Das ist eines der teuersten Risiken überhaupt und versteckt sich oft in Nebensätzen.</li>
+        <li><strong>5. Vertragsstrafen.</strong> Pauschale Vertragsstrafen bei Terminverzug oder Pflichtverletzung — oft in unverhältnismäßiger Höhe und ohne Verschuldenserfordernis. Achte auf eine Deckelung und darauf, dass die Strafe nur bei tatsächlichem Verschulden greift.</li>
+        <li><strong>6. Wettbewerbsverbot & Exklusivität ohne Ausgleich.</strong> Klauseln, die dir untersagen, für Wettbewerber des Kunden zu arbeiten — manchmal sogar über das Projektende hinaus, ohne Karenzentschädigung. Das schränkt dein Geschäft direkt ein. Befriste solche Verbote eng oder streiche sie.</li>
+        <li><strong>7. Unbegrenzte Korrekturschleifen & schwammige Abnahme.</strong> „Der Auftragnehmer nimmt Änderungen bis zur vollständigen Zufriedenheit des Auftraggebers vor." Ohne Begrenzung der Korrekturrunden arbeitest du potenziell endlos zum Festpreis. Definiere eine feste Anzahl an Korrekturschleifen und klare, objektive Abnahmekriterien.</li>
+      </ul>
+
+      <h2>So prüfst du einen Freelancer-Vertrag in unter einer Minute</h2>
+
+      <p>Alle sieben Klauseln manuell in jedem Vertrag zu suchen, kostet Zeit und juristisches Wissen — beides hast du als Freelancer selten übrig. Genau dafür ist <a href="/features/vertragsanalyse">die KI-Vertragsanalyse von Contract AI</a> gebaut: Du lädst den Vertrag als PDF hoch, die KI liest ihn in unter einer Minute und markiert jede problematische Stelle — mit Risiko-Einstufung, verständlicher Begründung und Paragraphen-Verweis.</p>
+
+      <p>Konkret bekommst du:</p>
+
+      <ul>
+        <li>eine klare Ampel-Bewertung jeder kritischen Klausel (z.B. Haftung, Rechteübertragung, Zahlungsziele),</li>
+        <li>einen verständlichen Hinweis, <em>warum</em> die Klausel problematisch ist und was üblich wäre,</li>
+        <li>konkrete Formulierungsvorschläge, mit denen du nachverhandeln kannst,</li>
+        <li>einen exportierbaren Report, den du direkt als Argumentationsgrundlage gegenüber dem Kunden nutzen kannst.</li>
+      </ul>
+
+      <p>Damit drehst du das Kräfteverhältnis um: Statt einen vom Kunden formulierten Vertrag blind zu unterschreiben, gehst du mit konkreten, belegten Punkten ins Gespräch — und wirkst dabei professioneller, nicht weniger.</p>
+
+      <h2>Fazit: Vertragsprüfung gehört zum Freelancer-Alltag</h2>
+
+      <p>Als Selbstständiger ist jeder neue Auftrag auch ein neuer Vertrag — und damit ein neues Risiko. Die sieben hier gezeigten Klauseln sind die Muster, die immer wieder auftauchen: verschenkte Rechte, unbegrenzte Haftung, lange Zahlungsziele, Scheinselbständigkeit, Vertragsstrafen, Exklusivität und endlose Korrekturschleifen. Wer sie kennt und vor der Unterschrift prüft, schützt sein Honorar, sein Privatvermögen und seine Unabhängigkeit.</p>
+
+      <p>Du musst dafür weder Jura studieren noch für jeden Vertrag zum Anwalt: Lade deinen nächsten Kundenvertrag bei <a href="/pricing">Contract AI</a> hoch und sieh in unter einer Minute, wo du nachverhandeln solltest — bevor du unterschreibst.</p>
+    `
+  },
+  {
     id: 21,
     slug: 'ki-vertragsmanagement-agenturen-anwendungsfaelle',
     title: 'KI-Vertragsmanagement für Agenturen: 5 Anwendungsfälle aus der Praxis',
