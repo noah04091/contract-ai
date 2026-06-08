@@ -5789,3 +5789,6 @@ router.get("/health", async (req, res) => {
 module.exports = router;
 module.exports.generateDeepLawyerLevelPrompt = generateDeepLawyerLevelPrompt;
 module.exports.getContractTypeAwareness = getContractTypeAwareness;
+// ♻️ Wiederverwendung der kanonischen Analyse-Pipeline durch die Re-Analyse-Route
+// (POST /api/contracts/:id/analyze) — damit "Jetzt analysieren" identisch zum Upload läuft.
+module.exports.handleEnhancedDeepLawyerAnalysisRequest = handleEnhancedDeepLawyerAnalysisRequest;

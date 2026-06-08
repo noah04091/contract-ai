@@ -9,6 +9,8 @@ const pdfParse = require("pdf-parse");
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const path = require("path");
+const os = require("os"); // 📄 Temp-Datei für Re-Analyse-Delegation an die Upload-Pipeline
+const crypto = require("crypto"); // 🛡️ fileHash-Sicherheitsnetz (verhindert Doppel-Vertrag bei Re-Analyse)
 const { OpenAI } = require("openai");
 const { validateAttachment, generateIdempotencyKey } = require("../utils/emailImportSecurity"); // 🔒 Security Utils
 const nodemailer = require("nodemailer"); // 📧 Email Service
@@ -20,7 +22,7 @@ const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
 const { findContractWithOrgAccess, hasPermission, buildOrgFilter } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { normalizeLaufzeit, normalizeKuendigung } = require("../utils/contractFieldLabels"); // 🇩🇪 Englisch→Deutsch Normalisierung für Eckdaten
-const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute;
+const { generateDeepLawyerLevelPrompt, getContractTypeAwareness, handleEnhancedDeepLawyerAnalysisRequest } = analyzeRoute;
 const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 
@@ -2431,6 +2433,7 @@ router.post("/:id/detect-provider", verifyToken, async (req, res) => {
 // ✅ NEU: POST /contracts/:id/analyze – Nachträgliche Analyse für bestehenden Vertrag
 router.post("/:id/analyze", verifyToken, async (req, res) => {
   const requestId = `ANALYZE-${Date.now()}`;
+  let tempFilePath = null; // 📄 Temp-Datei der Re-Analyse-Delegation (im finally aufgeräumt)
 
   try {
     await ensureDb();
@@ -2516,330 +2519,149 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       });
     }
 
-    // ===== PARSE PDF =====
-    let pdfData;
-
-    try {
-      pdfData = await pdfParse(buffer);
-    } catch (parseError) {
-      console.error(`❌ [${requestId}] PDF parse error:`, parseError);
-      return res.status(400).json({
-        success: false,
-        message: 'PDF konnte nicht gelesen werden'
-      });
+    // 🛡️ Sicherheitsnetz: fileHash am Vertrag sicherstellen, damit die Upload-Pipeline
+    // diesen Vertrag als Duplikat ERKENNT (forceReanalyze) und ihn AKTUALISIERT, statt einen
+    // zweiten Vertrag anzulegen. (Beide Pfade hashen identisch: sha256 über den Datei-Buffer.)
+    const fileHash = crypto.createHash("sha256").update(buffer).digest("hex");
+    if (contract.fileHash !== fileHash) {
+      await contractsCollection.updateOne({ _id: new ObjectId(id) }, { $set: { fileHash } });
     }
 
-    const fullTextContent = pdfData.text;
+    // 📄 Buffer in Temp-Datei schreiben — die Upload-Pipeline erwartet req.file.path auf Platte.
+    tempFilePath = path.join(os.tmpdir(), `reanalyze-${id}-${Date.now()}.pdf`);
+    await fs.writeFile(tempFilePath, buffer);
 
+    // ♻️ DIESELBE Pipeline wie beim Upload aufrufen (erprobtes fakeReq/fakeRes-Muster aus dem
+    // Async-Modus von analyze.js). Der Handler übernimmt: Text/OCR, GPT mit Koffer-Fix
+    // (adaptiver max_tokens), DateHunt, Validierung, Speicherung (contracts + analyses),
+    // Kalender. forceReanalyze=true → bestehender Vertrag wird via fileHash erkannt & aktualisiert.
+    const fakeReq = {
+      file: {
+        path: tempFilePath,
+        originalname: contract.name || 'vertrag.pdf',
+        mimetype: 'application/pdf',
+        size: buffer.length,
+        filename: path.basename(tempFilePath)
+      },
+      user: { userId: req.user.userId },
+      body: { forceReanalyze: 'true' },
+      query: {},
+      on: () => {},
+      removeListener: () => {}
+    };
+    const fakeRes = {
+      headersSent: false,
+      _statusCode: 200,
+      _body: null,
+      status(code) { this._statusCode = code; return this; },
+      json(body) { this._body = body; this.headersSent = true; return this; }
+    };
 
-    // ===== 🆕 CONTRACT ANALYZER (v10) =====
+    await handleEnhancedDeepLawyerAnalysisRequest(fakeReq, fakeRes);
 
-    let extractedProvider = null;
-    let extractedContractNumber = null;
-    let extractedCustomerNumber = null;
-    let extractedEndDate = null;
-    let extractedCancellationPeriod = null;
-    let extractedIsAutoRenewal = null;
-    let extractedContractDuration = null;
-    let extractedStartDate = null;
-    let extractedEndDateConfidence = 0;
-    let extractedStartDateConfidence = 0;
-    let extractedAutoRenewalConfidence = 50;
-    let extractedDataSource = null;
-    let providerAnalysis = null;
-
-    try {
-      providerAnalysis = await contractAnalyzer.analyzeContract(
-        fullTextContent,
-        contract.name
+    // Handler-Fehler 1:1 an das Frontend durchreichen
+    const pipelineOk = fakeRes._statusCode >= 200 && fakeRes._statusCode < 300 && fakeRes._body?.success === true;
+    if (!pipelineOk) {
+      console.warn(`⚠️ [${requestId}] Re-Analyse-Pipeline fehlgeschlagen: ${fakeRes._statusCode} ${fakeRes._body?.error || ''}`);
+      return res.status(fakeRes._statusCode || 500).json(
+        fakeRes._body || { success: false, message: 'KI-Analyse fehlgeschlagen' }
       );
-
-      if (providerAnalysis.success && providerAnalysis.data) {
-        extractedProvider = providerAnalysis.data.provider;
-        extractedContractNumber = providerAnalysis.data.contractNumber;
-        extractedCustomerNumber = providerAnalysis.data.customerNumber;
-        extractedStartDate = providerAnalysis.data.startDate;
-        extractedEndDate = providerAnalysis.data.endDate;
-        extractedContractDuration = providerAnalysis.data.contractDuration;
-        extractedCancellationPeriod = providerAnalysis.data.cancellationPeriod;
-        extractedIsAutoRenewal = providerAnalysis.data.isAutoRenewal || false;
-        extractedEndDateConfidence = providerAnalysis.data.endDateConfidence || 0;
-        extractedStartDateConfidence = providerAnalysis.data.startDateConfidence || 0;
-        extractedAutoRenewalConfidence = providerAnalysis.data.autoRenewalConfidence || 50;
-        extractedDataSource = providerAnalysis.data.dataSource;
-
-      } else {
-      }
-    } catch (analyzerError) {
-      console.error(`❌ [${requestId}] Contract Analyzer error:`, analyzerError.message);
     }
 
-    // ===== GPT-4 ANALYSIS V2 =====
+    // ✅ Vertrag ist jetzt von der kanonischen Pipeline aktualisiert (contractScore, summary,
+    // criticalIssues, recommendations, quickFacts, importantDates, …).
+    const analyzedContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
 
-    // 🚀 V2: Use new deep lawyer-level prompt
-    const documentType = providerAnalysis?.data?.contractType || 'other';
-    const analysisPrompt = generateDeepLawyerLevelPrompt(
-      fullTextContent,
-      documentType,
-      'deep-lawyer-level',
-      requestId
-    );
-
-
-    let analysisResult;
-
+    // ⚡ LEGAL PULSE: initiales legalPulse aus den Analyse-Ergebnissen ableiten.
+    // (Die Upload-Pipeline füllt dieses reiche Objekt nicht — wir behalten das Mapping hier,
+    //  damit die Re-Analyse gegenüber vorher keine Daten verliert. Quelle: gespeicherter Vertrag.)
     try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o", // 🚀 GPT-4o for 128k context + 16k output tokens
-        messages: [
-          {
-            role: "system",
-            content: "Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Alle Sätze müssen vollständig ausformuliert sein. Sei präzise, konkret und vermeide Standardphrasen."
-          },
-          { role: "user", content: analysisPrompt }
-        ],
-        response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
-        temperature: 0.1,
-        max_tokens: 16000 // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
-      });
-
-      const responseText = completion.choices[0].message.content;
-
-      // Parse JSON from response
-      const jsonStart = responseText.indexOf("{");
-      const jsonEnd = responseText.lastIndexOf("}") + 1;
-      const jsonText = responseText.substring(jsonStart, jsonEnd);
-
-      analysisResult = JSON.parse(jsonText);
-
-    } catch (gptError) {
-      console.error(`❌ [${requestId}] GPT-4 analysis error:`, gptError);
-      return res.status(500).json({
-        success: false,
-        message: 'KI-Analyse fehlgeschlagen'
-      });
-    }
-
-    // 🔧 FIX: Override extractedEndDate from AI importantDates if available (more accurate than regex)
-    const aiEndDate = extractEndDateFromImportantDates(analysisResult.importantDates);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (aiEndDate) {
-      extractedEndDate = aiEndDate;
-      extractedEndDateConfidence = 95; // AI is more reliable
-      extractedDataSource = 'ai_importantDates';
-    } else if (extractedEndDate && new Date(extractedEndDate) < today) {
-      // 🛡️ PLAUSIBILITY CHECK: Regex date in past but AI found nothing - clear it!
-      extractedEndDate = null;
-      extractedEndDateConfidence = 0;
-      extractedDataSource = 'cleared_implausible';
-    }
-
-    // ===== UPDATE CONTRACT IN DATABASE =====
-
-    const analysisObject = {
-      contractScore: analysisResult.contractScore || 0,
-      // 🚀 V2: New structured fields
-      laymanSummary: analysisResult.laymanSummary || [],
-      summary: analysisResult.summary || [],
-      legalAssessment: analysisResult.legalAssessment || [],
-      suggestions: analysisResult.suggestions || [],
-      comparison: analysisResult.comparison || [],
-      positiveAspects: analysisResult.positiveAspects || [],
-      criticalIssues: analysisResult.criticalIssues || [],
-      recommendations: analysisResult.recommendations || [],
-      quickFacts: analysisResult.quickFacts || [],
-      legalPulseHooks: analysisResult.legalPulseHooks || [],
-      detailedLegalOpinion: analysisResult.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
-      // Legacy fields (for backward compatibility)
-      kuendigung: analysisResult.kuendigung || 'Unbekannt',
-      laufzeit: analysisResult.laufzeit || 'Unbekannt',
-      status: analysisResult.status || 'Unbekannt',
-      risiken: analysisResult.risiken || [],
-      optimierungen: analysisResult.optimierungen || [],
-      lastAnalyzed: new Date(),
-      analysisDate: new Date()
-    };
-
-    const updateData = {
-      analyzed: true,
-      analyzedAt: new Date(), // 🔧 FIX: Zeitpunkt der Analyse für Status-Berechnung
-      updatedAt: new Date(),
-      importantDates: analysisResult.importantDates || [], // 🔧 FIX: KI-extrahierte Daten speichern
-      // 🚀 V2: New structured fields (stored directly for easy access)
-      contractScore: analysisResult.contractScore || 0,
-      laymanSummary: analysisResult.laymanSummary || [],
-      summary: analysisResult.summary || [],
-      legalAssessment: analysisResult.legalAssessment || [],
-      suggestions: analysisResult.suggestions || [],
-      comparison: analysisResult.comparison || [],
-      positiveAspects: analysisResult.positiveAspects || [],
-      criticalIssues: analysisResult.criticalIssues || [],
-      recommendations: analysisResult.recommendations || [],
-      quickFacts: analysisResult.quickFacts || [],
-      legalPulseHooks: analysisResult.legalPulseHooks || [],
-      // Legacy fields (for backward compatibility)
-      kuendigung: analysisResult.kuendigung || 'Unbekannt',
-      laufzeit: analysisResult.laufzeit || 'Unbekannt',
-      status: analysisResult.status || 'Unbekannt',
-      risiken: analysisResult.risiken || [],
-      optimierungen: analysisResult.optimierungen || [],
-      // 💳 Payment Tracking Fields
-      contractType: analysisResult.contractType || null,
-      contractTypeConfidence: analysisResult.contractTypeConfidence || 'low',
-      paymentAmount: analysisResult.paymentAmount || null,
-      paymentStatus: analysisResult.paymentStatus || null,
-      paymentDueDate: analysisResult.paymentDueDate || null,
-      paymentMethod: analysisResult.paymentMethod || null,
-      paymentFrequency: analysisResult.paymentFrequency || null,
-      // ✅ CRITICAL: Auch im analysis-Objekt speichern (für ContractDetailsView)
-      analysis: analysisObject,
-      // ✅ CRITICAL: PDF-Text speichern (für "Inhalt"-Tab in ContractDetailsView)
-      content: fullTextContent.substring(0, 100000), // Max 100k chars
-      fullText: fullTextContent.substring(0, 100000),
-
-      // 🆕 CONTRACT ANALYZER v10 - Extracted Data with Confidence Scores
-      ...(extractedProvider && {
-        provider: extractedProvider.displayName || extractedProvider.name,
-        providerConfidence: extractedProvider.confidence
-      }),
-      ...(extractedContractNumber && { contractNumber: extractedContractNumber }),
-      ...(extractedCustomerNumber && { customerNumber: extractedCustomerNumber }),
-      ...(extractedStartDate && {
-        startDate: extractedStartDate,
-        startDateConfidence: extractedStartDateConfidence
-      }),
-      ...(extractedEndDate && {
-        expiryDate: extractedEndDate, // ⚡ CRITICAL für Calendar Events!
-        expiryDateConfidence: extractedEndDateConfidence,
-        dataSource: extractedDataSource
-      }),
-      ...(extractedCancellationPeriod && {
-        cancellationPeriod: extractedCancellationPeriod
-      }),
-      ...(extractedContractDuration && {
-        contractDuration: extractedContractDuration
-      }),
-      ...(extractedIsAutoRenewal !== null && {
-        isAutoRenewal: extractedIsAutoRenewal,
-        autoRenewalConfidence: extractedAutoRenewalConfidence
-      })
-    };
-
-    await contractsCollection.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: updateData }
-    );
-
-
-    // 💳 Log Payment Detection
-    if (analysisResult.contractType || analysisResult.paymentAmount) {
-    }
-
-    // 🆕 FIXED: Trigger calendar event generation mit korrektem Contract-Objekt
-    try {
-      // Hole das AKTUALISIERTE Contract-Objekt aus der DB
-      const updatedContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
-
-      if (updatedContract) {
-        await onContractChange(await database.connect(), updatedContract, "update");
-      } else {
-      }
-    } catch (calError) {
-      console.error(`❌ [${requestId}] Calendar update error:`, calError.message);
-    }
-
-    // ⚡ LEGAL PULSE: Create initial legalPulse from analysis results (synchronous)
-    // This ensures Legal Pulse has data immediately, before the async deep-analysis runs
-    const contractScoreRaw = analysisResult.contractScore || 0;
-    // contractScore is quality (0-100, higher=better), riskScore is risk (0-100, higher=worse)
-    const initialRiskScore = Math.max(0, Math.min(100, 100 - contractScoreRaw));
-    const AILegalPulse = require('../services/aiLegalPulse');
-    const aiLegalPulseInstance = new AILegalPulse();
-    const initialHealthScore = aiLegalPulseInstance.calculateHealthScore(initialRiskScore, { uploadedAt: new Date() });
-
-    // Map criticalIssues to topRisks format
-    const initialTopRisks = (analysisResult.criticalIssues || []).map(issue => ({
-      title: issue.title || 'Kritischer Punkt',
-      description: issue.description || '',
-      severity: issue.impact === 'high' || issue.severity === 'high' ? 'high' : 'medium',
-      impact: issue.impact || '',
-      solution: issue.recommendation || issue.action || ''
-    }));
-
-    // Map recommendations to recommendation objects
-    const initialRecommendations = (analysisResult.recommendations || []).map(rec => {
-      if (typeof rec === 'string') {
-        return { title: rec, description: rec, priority: 'medium', effort: 'mittel', impact: 'mittel' };
-      }
-      return rec;
-    });
-
-    const initialLegalPulse = {
-      riskScore: initialRiskScore,
-      healthScore: initialHealthScore,
-      summary: Array.isArray(analysisResult.summary) ? analysisResult.summary.join(' ') : (analysisResult.summary || ''),
-      lastChecked: new Date(),
-      analysisDate: new Date(),
-      topRisks: initialTopRisks,
-      recommendations: initialRecommendations,
-      riskFactors: (analysisResult.risiken || []).map(r => typeof r === 'string' ? r : r.title || r.description || ''),
-      lawInsights: (analysisResult.legalPulseHooks || []).slice(0, 5),
-      marketSuggestions: [],
-      scoreHistory: [{ date: new Date(), score: initialRiskScore }],
-      analysisHistory: [{
-        date: new Date(),
+      const contractScoreRaw = analyzedContract?.contractScore || 0;
+      const initialRiskScore = Math.max(0, Math.min(100, 100 - contractScoreRaw));
+      const initialHealthScore = aiLegalPulse.calculateHealthScore(initialRiskScore, { uploadedAt: new Date() });
+      const initialTopRisks = (analyzedContract?.criticalIssues || []).map(issue => ({
+        title: issue.title || 'Kritischer Punkt',
+        description: issue.description || '',
+        severity: issue.impact === 'high' || issue.severity === 'high' ? 'high' : 'medium',
+        impact: issue.impact || '',
+        solution: issue.recommendation || issue.action || ''
+      }));
+      const initialRecommendations = (analyzedContract?.recommendations || []).map(rec =>
+        typeof rec === 'string'
+          ? { title: rec, description: rec, priority: 'medium', effort: 'mittel', impact: 'mittel' }
+          : rec
+      );
+      const initialLegalPulse = {
         riskScore: initialRiskScore,
         healthScore: initialHealthScore,
-        changes: ['Initiale Analyse aus Vertragsanalyse abgeleitet'],
-        triggeredBy: 'contract_analysis'
-      }],
-      aiGenerated: true,  // Data comes from real AI contract analysis
-      status: 'synced'    // Initial sync complete, deep Legal Pulse analysis may follow
-    };
-
-    await contractsCollection.updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { legalPulse: initialLegalPulse } }
-    );
-
-    // V1 Legal Pulse Deep-Analyse — DEAKTIVIERT (22.04.2026)
-    // War ein async Background-Job der aiLegalPulse.analyzeFullContract() aufrief (OpenAI-Kosten).
-    // V2 Pipeline hat V1 vollständig ersetzt. Initiales legalPulse-Objekt oben bleibt erhalten
-    // (kostenlos, mapped nur vorhandene Analysedaten um).
-
-    // ✅ NEU: Hole den vollständig aktualisierten Contract für Frontend
-    const finalContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
-
-    // Ensure analysis is in the response (MongoDB timing edge case)
-    if (finalContract && !finalContract.analysis) {
-      finalContract.analysis = analysisObject;
+        summary: Array.isArray(analyzedContract?.summary) ? analyzedContract.summary.join(' ') : (analyzedContract?.summary || ''),
+        lastChecked: new Date(),
+        analysisDate: new Date(),
+        topRisks: initialTopRisks,
+        recommendations: initialRecommendations,
+        riskFactors: (analyzedContract?.risiken || []).map(r => typeof r === 'string' ? r : r.title || r.description || ''),
+        lawInsights: (analyzedContract?.legalPulseHooks || []).slice(0, 5),
+        marketSuggestions: [],
+        scoreHistory: [{ date: new Date(), score: initialRiskScore }],
+        analysisHistory: [{
+          date: new Date(),
+          riskScore: initialRiskScore,
+          healthScore: initialHealthScore,
+          changes: ['Initiale Analyse aus Vertragsanalyse abgeleitet'],
+          triggeredBy: 'contract_analysis'
+        }],
+        aiGenerated: true,
+        status: 'synced'
+      };
+      await contractsCollection.updateOne({ _id: new ObjectId(id) }, { $set: { legalPulse: initialLegalPulse } });
+    } catch (lpErr) {
+      console.warn(`⚠️ [${requestId}] Legal Pulse Mapping fehlgeschlagen:`, lpErr.message);
     }
 
     // Onboarding: firstAnalysisComplete automatisch auf true setzen
     try {
       await usersCollection.updateOne(
         { _id: new ObjectId(req.user.userId) },
-        {
-          $set: {
-            'onboarding.checklist.firstAnalysisComplete': true,
-            updatedAt: new Date()
-          }
-        }
+        { $set: { 'onboarding.checklist.firstAnalysisComplete': true, updatedAt: new Date() } }
       );
     } catch (onboardingErr) {
       console.warn('⚠️ [ONBOARDING] Checklist update failed:', onboardingErr.message);
+    }
+
+    // ✅ Antwort in der bisherigen Form (Frontend bleibt unverändert).
+    const finalContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
+    // Defensive: nested analysis-Objekt sicherstellen (für ContractDetailsView), falls die
+    // Pipeline es nicht setzt — aus den gespeicherten Top-Level-Feldern abgeleitet.
+    if (finalContract && !finalContract.analysis) {
+      finalContract.analysis = {
+        contractScore: finalContract.contractScore || 0,
+        laymanSummary: finalContract.laymanSummary || [],
+        summary: finalContract.summary || [],
+        legalAssessment: finalContract.legalAssessment || [],
+        suggestions: finalContract.suggestions || [],
+        comparison: finalContract.comparison || [],
+        positiveAspects: finalContract.positiveAspects || [],
+        criticalIssues: finalContract.criticalIssues || [],
+        recommendations: finalContract.recommendations || [],
+        quickFacts: finalContract.quickFacts || [],
+        legalPulseHooks: finalContract.legalPulseHooks || [],
+        detailedLegalOpinion: finalContract.detailedLegalOpinion || '',
+        kuendigung: finalContract.kuendigung || 'Unbekannt',
+        laufzeit: finalContract.laufzeit || 'Unbekannt',
+        status: finalContract.status || 'Unbekannt',
+        risiken: finalContract.risiken || [],
+        optimierungen: finalContract.optimierungen || [],
+        lastAnalyzed: new Date(),
+        analysisDate: new Date()
+      };
     }
 
     res.json({
       success: true,
       message: 'Analyse erfolgreich abgeschlossen',
       contractId: id,
-      analysis: analysisResult,
+      analysis: finalContract?.analysis || fakeRes._body,
       contract: finalContract
-      // legalPulseStatus entfernt — Frontend referenzierte das Feld nirgends,
-      // war toter Legacy aus V1-Zeit. V2 ist user-getriggert über /legal-pulse.
     });
 
   } catch (error) {
@@ -2849,6 +2671,11 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       message: 'Fehler bei der Analyse',
       error: error.message
     });
+  } finally {
+    // 🧹 Temp-Datei der Delegation best-effort aufräumen (kein Disk-Müll auf Render)
+    if (tempFilePath) {
+      try { await fs.unlink(tempFilePath); } catch (_) { /* ignore */ }
+    }
   }
 });
 
