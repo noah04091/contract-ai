@@ -6445,7 +6445,7 @@ export default function Contracts() {
                 <div className={styles.quickAnalysisHeader}>
                   <div className={styles.quickAnalysisHeaderTitle}>
                     <Zap size={18} />
-                    <h3>Schnellanalyse</h3>
+                    <h3>Analyse-Ergebnis</h3>
                   </div>
                   <button className={styles.quickAnalysisCloseBtn} onClick={closeQuickAnalysis}>
                     <X size={18} />
