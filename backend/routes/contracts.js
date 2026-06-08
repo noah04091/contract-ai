@@ -97,7 +97,10 @@ let usersCollection; // ✅ NEU: Users Collection für Bulk-Ops
 
 // 🚀 Server-seitiger Contracts-Cache (löst das Shared-Tier-Latenz-Problem)
 const _contractsCache = new Map();
-const CACHE_TTL = 60000; // 60 Sekunden
+// 🛠️ 08.06.2026: 60s → 5s. Der Cache fängt v.a. schnelle Wiederhol-Aufrufe (Re-Renders,
+// Navigation) ab — dafür reichen 5s. Senkt das Stale-Fenster drastisch, falls je ein
+// Schreibweg das explizite Invalidieren vergisst (Selbstheilung). Burst-Perf bleibt erhalten.
+const CACHE_TTL = 5000; // 5 Sekunden
 const CACHE_MAX_ENTRIES = 100; // Max Einträge um Memory Leak zu verhindern
 
 function getContractsCacheKey(filter, sort, skip, limit) {
@@ -4824,3 +4827,6 @@ router.get('/verify/:id', async (req, res) => {
 });
 
 module.exports = router;
+// ♻️ Damit andere Schreibwege (z.B. /api/upload) den Listen-Cache gezielt leeren können,
+// sodass neu erstellte Verträge sofort in GET /api/contracts erscheinen.
+module.exports.invalidateContractsCache = invalidateContractsCache;

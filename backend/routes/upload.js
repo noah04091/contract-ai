@@ -334,6 +334,19 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
 
     console.log(`✅ [${requestId}] Contract saved without analysis:`, result.insertedId);
 
+    // 🆕 08.06.2026: Listen-Cache invalidieren, damit der neue Vertrag SOFORT in
+    // GET /api/contracts erscheint. Der Upload läuft über einen eigenen Router, daher
+    // greift die Invalidierungs-Middleware aus contracts.js hier sonst nicht.
+    // Guarded + try/catch → kann den Upload niemals fehlschlagen lassen.
+    try {
+      const { invalidateContractsCache } = require("./contracts");
+      if (typeof invalidateContractsCache === "function" && req.user?.userId) {
+        invalidateContractsCache(req.user.userId);
+      }
+    } catch (cacheErr) {
+      console.warn(`⚠️ [${requestId}] Contracts-Cache-Invalidierung übersprungen:`, cacheErr.message);
+    }
+
     // 🧠 LEGAL LENS: GPT-Klausel-Parsing im Hintergrund starten
     // Läuft async - blockiert die Response nicht
     // So ist Legal Lens beim nächsten Öffnen sofort bereit
