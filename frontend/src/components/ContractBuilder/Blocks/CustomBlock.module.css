@@ -24,6 +24,13 @@
   border-radius: 8px;
 }
 
+/* Nur im Editor: Platz nach oben, damit das absolut positionierte „Freitext"-
+   Badge (top:-10px) nicht in die erste Textzeile ragt. In der Vorschau/PDF gibt
+   es kein Badge → kein Padding, Block sitzt flush wie normaler Vertragsinhalt. */
+.editing {
+  padding-top: 14px;
+}
+
 /* Editor-Platzhalter (nur im Bearbeitungsmodus sichtbar, nie in Vorschau/PDF) */
 .placeholder {
   color: #94a3b8;

@@ -67,7 +67,7 @@ export const CustomBlock: React.FC<CustomBlockProps> = ({
   }, []);
 
   return (
-    <div className={`${styles.custom} ${isSelected ? styles.selected : ''}`}>
+    <div className={`${styles.custom} ${!isPreview ? styles.editing : ''} ${isSelected ? styles.selected : ''}`}>
       {!isPreview && (
         <div className={styles.customBadge}>
           <Puzzle size={12} />
