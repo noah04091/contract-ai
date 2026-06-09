@@ -461,8 +461,34 @@ function normalize(s) {
 function evidenceMatchesText(normEvidence, normText) {
   if (normText.includes(normEvidence)) return true;
   const stripped = normEvidence.replace(/[.!?,;]\s*$/, '').trim();
-  if (stripped === normEvidence) return false;  // Nichts zu strippen — kein Retry
-  return normText.includes(stripped);
+  if (stripped !== normEvidence && normText.includes(stripped)) return true;
+  // 🆕 09.06.2026: Das LLM tippt beim Zitieren deutschen Texts sporadisch das Unicode-
+  // Replacement-Zeichen "�" statt Umlaut/§ (z.B. "l�uft" statt "läuft") — der
+  // Quelltext ist sauber, nur das KI-Zitat ist betroffen. Der strikte Substring-Match
+  // scheitert dann → valide Termine/Fristen wurden fälschlich als "evidence_not_in_text"
+  // verworfen (v.a. bei gescannten/OCR-Verträgen). Fallback NUR nach Fehlschlag UND nur
+  // wenn "�" vorkommt: jedes "�" als Platzhalter für 1–2 Zeichen (deckt § → 1
+  // Zeichen UND die ae/oe/ue/ss-Expansion aus normalize() ab). Der Rest muss weiter exakt
+  // matchen → Halluzinationen bleiben abgewehrt.
+  if (normEvidence.includes('�')) return matchWithReplacementChar(normEvidence, normText);
+  return false;
+}
+
+// 🆕 Toleranter Match für KI-Zitate mit "�" (Unicode-Replacement-Zeichen).
+// Guards: mind. 10 echte Anker-Zeichen (Halluzinations-Schutz) + max. 20 Platzhalter
+// (keine Regex-Überlastung). Bei Regex-Fehler defensiv strikt ablehnen.
+function matchWithReplacementChar(normEvidence, normText) {
+  const phCount = (normEvidence.match(/�/g) || []).length;
+  const literalLen = normEvidence.length - phCount;
+  if (literalLen < 10 || phCount > 20) return false;
+  const pattern = [...normEvidence]
+    .map(ch => ch === '�' ? '.{1,2}' : ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('');
+  try {
+    return new RegExp(pattern, 's').test(normText);
+  } catch {
+    return false;
+  }
 }
 
 /**
