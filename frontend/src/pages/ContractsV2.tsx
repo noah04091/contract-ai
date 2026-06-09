@@ -6443,7 +6443,7 @@ export default function Contracts() {
                         setShowDetails(true);
                       }}
                     >
-                      <Pencil size={18} strokeWidth={2.5} />
+                      <Pencil size={20} strokeWidth={2.75} />
                       Bearbeiten
                     </button>
                   )}
