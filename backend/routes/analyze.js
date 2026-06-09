@@ -2431,17 +2431,27 @@ ADAPTIVE FELDER (nur ausgeben wenn substanziell):
    → 1-29: Inakzeptabel, nicht unterschreiben
 
 10. **quickFacts** (Object[], 3 Objekte — Pflichtfeld bei Verträgen, sonst nach Dokumenttyp):
-   → Wähle die 3 WICHTIGSTEN Eckdaten basierend auf DOKUMENTTYP:
+
+   → GRUNDREGELN (gelten für ALLE Dokumenttypen, haben VORRANG vor den Typ-Beispielen):
+     • Zeige die 3 NÜTZLICHSTEN Eckdaten für genau diesen Dokumenttyp.
+     • Bevorzuge KAUFMÄNNISCHE/geldwerte Fakten (Beträge, Kosten, Gebühren, Kaution,
+       Gehalt, Beitrag, Preis). Hat das Dokument keine Geldwerte (z.B. AGB, NDA,
+       Tabelle, unbekanntes Dokument), zeige stattdessen die entscheidungsrelevantesten
+       Fakten — niemals einfach 3× "n/a".
+     • TABU — NIEMALS als Eckdatum verwenden (steht bereits in den Stammdaten):
+       Vertragstyp, Anbieter, Vertragsnummer, Kundennummer, Kündigungsfrist, Laufzeit,
+       Vertragsbeginn, Enddatum/Ablaufdatum, "Gekündigt zum", Monatliche Kosten,
+       Zahlungs-Häufigkeit, Zahlungsmethode.
+     • Nur faktisch Extrahierbares — niemals erfinden, "n/a" nur als Notlösung.
+   → Die folgenden Label-Vorschläge je Typ sind GUIDANCE (für Konsistenz); die Grundregeln
+     oben haben immer Vorrang:
 
    📄 Bei KÜNDIGUNGSBESTÄTIGUNG:
-      - Label 1: "Gekündigt zum" (Datum der Wirksamkeit)
-      - Label 2: "Anbieter" (Firmenname)
-      - Label 3: "Restlaufzeit" (bis zur Wirksamkeit)
+      - Label 1: "Erstattung/Guthaben" (Betrag, falls vorhanden)
+      - Label 2: "Wirksam zum" (Stichtag, ab dem die Kündigung greift)
+      - Label 3: "Vorgangs-/Bestätigungsnr."
 
-   📋 Bei LAUFENDEM VERTRAG (Abo, Versicherung, Telekom, etc.):
-      → Zeige die 3 wichtigsten KAUFMÄNNISCHEN Eckwerte, die NICHT bereits in den
-        Stammdaten erscheinen. NICHT verwenden (stehen schon woanders): Kündigungsfrist,
-        Laufzeit, Ablaufdatum, Vertragsbeginn, Monatliche Kosten, Anbieter, Vertragstyp.
+   📋 Bei LAUFENDEM VERTRAG (Abo, Versicherung, Telekom, Energie, Leasing, etc.):
       - Bevorzugt 1: "Jährliche Gesamtkosten" (z.B. "468 EUR / Jahr")
       - Bevorzugt 2: "Mindestlaufzeit" (z.B. "24 Monate"; falls keine: "Keine")
       - Bevorzugt 3: "Automatische Verlängerung" (z.B. "Ja, +12 Monate" / "Nein")
@@ -2450,27 +2460,27 @@ ADAPTIVE FELDER (nur ausgeben wenn substanziell):
       - rating: lange Bindung / automatische Verlängerung → "bad", sonst "neutral".
 
    🛒 Bei EINMALIGEM KAUFVERTRAG:
-      - Label 1: "Kaufdatum"
-      - Label 2: "Kaufpreis"
-      - Label 3: "Gewährleistung bis"
+      - Label 1: "Kaufpreis"
+      - Label 2: "Gewährleistung bis"
+      - Label 3: "Zahlart" (z.B. "Einmalzahlung" / "Ratenzahlung")
 
    👔 Bei ARBEITSVERTRAG:
-      - Label 1: "Arbeitsbeginn"
-      - Label 2: "Kündigungsfrist"
-      - Label 3: "Befristung" oder "Unbefristet"
+      - Label 1: "Gehalt" (brutto, z.B. "4.500 EUR / Monat")
+      - Label 2: "Wochenstunden" (z.B. "40 h / Woche")
+      - Label 3: "Urlaubstage" (z.B. "30 Tage")
 
    🏠 Bei MIETVERTRAG:
-      - Label 1: "Mietbeginn"
-      - Label 2: "Kündigungsfrist"
-      - Label 3: "Monatliche Miete"
+      - Label 1: "Kaltmiete" (z.B. "850 EUR / Monat")
+      - Label 2: "Nebenkosten" (z.B. "180 EUR / Monat")
+      - Label 3: "Kaution" (z.B. "2.550 EUR")
 
    📜 Bei AGB / GESCHÄFTSBEDINGUNGEN:
       - Label 1: "Klauseln gesamt" (z.B. "23 Klauseln")
       - Label 2: "Geltungsbereich" (z.B. "B2C / B2B")
-      - Label 3: "Anbieter" (Firmenname)
+      - Label 3: "Stand/Version" (z.B. "Stand 01/2026")
 
    🧾 Bei RECHNUNG:
-      - Label 1: "Rechnungsdatum"
+      - Label 1: "Fällig am" (Zahlungsziel)
       - Label 2: "Rechnungsbetrag" (brutto)
       - Label 3: "Steuersatz" (z.B. "19% / 7% / Reverse-Charge / steuerbefreit")
 
