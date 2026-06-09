@@ -6443,7 +6443,7 @@ export default function Contracts() {
                         setShowDetails(true);
                       }}
                     >
-                      <Edit3 size={16} />
+                      <Edit size={16} />
                       Bearbeiten
                     </button>
                   )}
