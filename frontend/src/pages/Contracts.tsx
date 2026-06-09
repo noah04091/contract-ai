@@ -6157,7 +6157,7 @@ export default function Contracts() {
                         setShowDetails(true);
                       }}
                     >
-                      <Edit3 size={14} />
+                      <Pencil size={20} strokeWidth={2.75} />
                       Bearbeiten
                     </button>
                   )}
