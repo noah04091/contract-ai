@@ -163,6 +163,26 @@ async function checkAndSendNotifications(db) {
       eventDateOnly.setHours(0, 0, 0, 0);
       const daysUntilEventDay = Math.floor((eventDateOnly - todayDateOnly) / 86400000);
 
+      // ─── USER-GEWÄHLTE EXAKT-TERMINE: punktgenau am gewählten Tag, kein Vortags-Versand ───
+      // Der bestehende Klasse-D-Skip greift nur bei `daysUntilEventDay > 1`. Bei genau 1
+      // (= Event morgen) fiel ein user-gewählter Reminder durch und wurde EINEN TAG ZU FRÜH
+      // verschickt (z.B. Reminder auf den 11.6. kam am 10.6.). Der User hat das Datum aber
+      // bewusst gewählt — eine Mail "am 11.6." die am 10.6. ankommt wirkt wie ein Bug.
+      // Darum: solche Events erst am Tag selbst (daysUntilEventDay === 0) feuern lassen.
+      // WICHTIG — `reminderType === "custom"` ist load-bearing: der Typ CUSTOM_REMINDER wird
+      // AUCH für abgeleitete Fristen-Vorwarner (reminderType 'expiry'/'cancellation') benutzt,
+      // die bewusst Tage VOR der Frist kommen sollen. Die dürfen hier NICHT erfasst werden.
+      // (Der Digest-Pfad calendarDigestService.js hat denselben Vortags-Effekt, ist aber
+      // aktuell ein totes Feature ohne UI — separat als Tech-Debt dokumentiert.)
+      const isUserPickedDate =
+        (event.type === "CUSTOM_REMINDER" && event.metadata?.reminderType === "custom") ||
+        event.isManual === true ||
+        event.manuallyCreated === true;
+      if (isUserPickedDate && daysUntilEventDay >= 1) {
+        console.log(`⏸️ User-Exakt-Termin skip: ${event.type} in ${daysUntilEventDay}d — feuert am gewählten Tag`);
+        continue;
+      }
+
       if (daysUntilEventDay > 1) {
         // Klasse C: Frist-Hinweis-Events sind selbst „die Reminder" (Tier-2-Arbeit vom 27.05.2026)
         // → niemals vorziehen, immer am Event-Tag feuern
