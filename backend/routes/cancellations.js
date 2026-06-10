@@ -251,6 +251,7 @@ router.post("/send", verifyToken, sensitiveLimiter, async (req, res) => {
           {
             $set: {
               status: "gekündigt",
+              statusOverride: false, // 🔒 echte Kündigung hebt manuellen Override auf
               statusUpdatedAt: new Date(),
               cancellationId: cancellationId,
               cancellationDate: new Date(),
@@ -894,6 +895,7 @@ router.post("/:id/reactivate", verifyToken, async (req, res) => {
         {
           $set: {
             status: "aktiv",
+            statusOverride: false, // 🔒 Reaktivierung hebt manuellen Override auf
             cancellationConfirmed: false,
             updatedAt: new Date()
           },

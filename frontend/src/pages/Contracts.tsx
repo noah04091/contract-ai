@@ -63,6 +63,7 @@ interface Contract {
   expiryDate: string;
   startDate?: string;
   status: string;
+  statusOverride?: boolean; // 🔒 true = Status manuell gesetzt → Automatik (Cron + Datums-Logik) lässt ihn in Ruhe
   createdAt: string;
   content?: string;
   isGenerated?: boolean;
@@ -2990,6 +2991,20 @@ export default function Contracts() {
     // 2. Rechnung = "Bezahlt" oder "Offen"
     if (contract.documentCategory === 'invoice') {
       return contract.paymentStatus === 'paid' ? 'Bezahlt' : 'Offen';
+    }
+
+    // 2.5 🔒 MANUELLER OVERRIDE — nur wenn vom User gesetzt. Bewusst NACH Kündigung (1/1.5)
+    // und Rechnung (2), damit echte Ereignisse nie verdeckt werden; VOR der Datums-Logik (3),
+    // damit der manuelle Status nicht vom Ablaufdatum überschrieben wird.
+    if (contract.statusOverride && contract.status) {
+      const s = contract.status.toLowerCase();
+      if (s === 'aktiv' || s === 'gültig' || s === 'laufend' || s === 'active') return 'Aktiv';
+      if (s === 'gekündigt' || s === 'gekuendigt') return 'Gekündigt';
+      if (s === 'beendet' || s === 'abgelaufen' || s === 'expired') return 'Beendet';
+      if (s === 'läuft ab' || s === 'bald fällig' || s === 'bald_ablaufend') return 'Läuft ab';
+      if (s === 'pausiert') return 'Pausiert';
+      if (s === 'entwurf' || s === 'draft') return 'Entwurf';
+      return 'Aktiv'; // sicherer Fallback bei unbekanntem Wert
     }
 
     // 3. Prüfe Ablaufdatum

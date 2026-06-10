@@ -95,6 +95,13 @@ async function updateContractStatuses(db) {
         continue; // Nächster Vertrag
       }
 
+      // 🔒 MANUELLER OVERRIDE: Status wurde vom User manuell gesetzt → Automatik fasst ihn NICHT an.
+      // Bewusst NACH dem Auto-Renewal-Block (oben), damit die Laufzeit-Verlängerung — eine reine
+      // Datums-Operation — weiterhin greift; nur die Status-Überschreibung wird übersprungen.
+      if (contract.statusOverride === true) {
+        continue;
+      }
+
       // ⚠️ BALD ABLAUFEND (30 Tage)
       if (daysUntilExpiry > 0 && daysUntilExpiry <= 30 && oldStatus !== 'bald_ablaufend') {
         newStatus = 'bald_ablaufend';

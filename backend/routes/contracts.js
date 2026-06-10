@@ -697,6 +697,18 @@ function calculateSmartStatusBackend(contract) {
     return contract.paymentStatus === 'paid' ? 'Bezahlt' : 'Offen';
   }
 
+  // 2.5 🔒 Manueller Override (nur wenn gesetzt) — nach Kündigung/Rechnung, vor Datums-Logik
+  if (contract.statusOverride && contract.status) {
+    const s = contract.status.toLowerCase();
+    if (['aktiv', 'gültig', 'laufend', 'active'].includes(s)) return 'Aktiv';
+    if (s === 'gekündigt' || s === 'gekuendigt') return 'Gekündigt';
+    if (['beendet', 'abgelaufen', 'expired'].includes(s)) return 'Beendet';
+    if (['läuft ab', 'bald fällig', 'bald_ablaufend'].includes(s)) return 'Läuft ab';
+    if (s === 'pausiert') return 'Pausiert';
+    if (['entwurf', 'draft'].includes(s)) return 'Entwurf';
+    return 'Aktiv';
+  }
+
   // 3. Ablaufdatum
   const expiryDate = contract.expiryDate ? new Date(contract.expiryDate) : null;
   if (expiryDate && !isNaN(expiryDate.getTime())) {
@@ -3507,7 +3519,19 @@ router.patch("/:id/status", verifyToken, async (req, res) => {
     await ensureDb();
     const contractId = req.params.id;
     const userId = req.user.userId;
-    const { status, notes } = req.body;
+    const { status, notes, statusOverride } = req.body;
+
+    // 🔓 Modus „Automatisch": Override aufheben → Cron + Datums-Logik übernehmen wieder.
+    if (statusOverride === false) {
+      const r = await req.db.collection("contracts").updateOne(
+        { _id: new ObjectId(contractId), userId: new ObjectId(userId) },
+        { $set: { statusOverride: false, updatedAt: new Date() } }
+      );
+      if (r.matchedCount === 0) {
+        return res.status(404).json({ success: false, message: "Vertrag nicht gefunden" });
+      }
+      return res.json({ success: true, message: "Status wieder automatisch", statusOverride: false });
+    }
 
     if (!status) {
       return res.status(400).json({
@@ -3535,11 +3559,18 @@ router.patch("/:id/status", verifyToken, async (req, res) => {
       notes || 'Manuell durch User geändert'
     );
 
+    // 🔒 Als manuell markieren → Automatik (Cron + Datums-Logik) lässt ihn künftig in Ruhe.
+    await req.db.collection("contracts").updateOne(
+      { _id: new ObjectId(contractId), userId: new ObjectId(userId) },
+      { $set: { statusOverride: true } }
+    );
+
     res.json({
       success: true,
       message: `Status erfolgreich aktualisiert: ${result.oldStatus} → ${result.newStatus}`,
       oldStatus: result.oldStatus,
-      newStatus: result.newStatus
+      newStatus: result.newStatus,
+      statusOverride: true
     });
 
   } catch (error) {

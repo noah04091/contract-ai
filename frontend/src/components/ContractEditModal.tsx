@@ -118,6 +118,25 @@ const FIELD_SECTIONS: { id: string; title: string; icon: React.ComponentType<{ s
   { id: 'kosten', title: 'Kosten', icon: Euro, fields: ['kosten'] },
 ];
 
+// 🔒 Status — manuell setzbar. 'auto' = Automatik (Ablaufdatum/Cron), sonst manueller Override.
+type StatusSelection = 'auto' | 'aktiv' | 'abgelaufen' | 'gekündigt';
+// „Gekündigt" bewusst NICHT als manuelle Option — läuft über die dedizierte Kündigungs-Funktion
+// (sauberer Prozess + korrekte Anzeige). Manuell nur die eindeutig konsistent darstellbaren Werte.
+const STATUS_OPTIONS: { value: StatusSelection; label: string; dot: string }[] = [
+  { value: 'auto', label: 'Automatisch', dot: '#94a3b8' },
+  { value: 'aktiv', label: 'Aktiv', dot: '#16a34a' },
+  { value: 'abgelaufen', label: 'Beendet', dot: '#64748b' },
+];
+// Bestehenden gespeicherten Status auf eine der manuellen Optionen abbilden (nur wenn Override aktiv)
+function statusToSelection(c: { status?: string; statusOverride?: boolean }): StatusSelection {
+  if (!c.statusOverride) return 'auto';
+  const s = (c.status || '').toLowerCase();
+  if (s === 'gekündigt' || s === 'gekuendigt') return 'gekündigt';
+  if (['abgelaufen', 'beendet', 'expired'].includes(s)) return 'abgelaufen';
+  if (['aktiv', 'gültig', 'laufend', 'active'].includes(s)) return 'aktiv';
+  return 'aktiv';
+}
+
 interface Contract {
   _id: string;
   name: string;
@@ -130,6 +149,7 @@ interface Contract {
   kosten?: number;
   vertragsnummer?: string;
   status: string;
+  statusOverride?: boolean;
   createdAt: string;
   updatedAt?: string;
   notes?: string;
@@ -156,6 +176,10 @@ export default function ContractEditModal({
   // Basis-Felder
   const [name, setName] = useState('');
   const [notes, setNotes] = useState('');
+
+  // 🔒 Status (manuell setzbar)
+  const [statusSelection, setStatusSelection] = useState<StatusSelection>('auto');
+  const [initialStatusSelection, setInitialStatusSelection] = useState<StatusSelection>('auto');
 
   // Dynamische Felder (können hinzugefügt/entfernt werden)
   const [activeFields, setActiveFields] = useState<FieldType[]>(DEFAULT_FIELDS);
@@ -341,6 +365,11 @@ export default function ContractEditModal({
       setName(fixUtf8Display(contract.name || ''));
       setNotes(fixUtf8Display(contract.notes || ''));
 
+      // 🔒 Status-Auswahl aus Contract ableiten
+      const sel = statusToSelection(contract);
+      setStatusSelection(sel);
+      setInitialStatusSelection(sel);
+
       // Dynamische Felder aus Contract-Daten laden
       const initialValues: FieldValues = {};
       const initialActiveFields: FieldType[] = [];
@@ -430,8 +459,10 @@ export default function ContractEditModal({
       return fieldValues[key] !== compareValue;
     });
 
-    setHasChanges(nameChanged || notesChanged || fieldsChanged);
-  }, [name, notes, fieldValues, activeFields, contract]);
+    const statusChanged = statusSelection !== initialStatusSelection;
+
+    setHasChanges(nameChanged || notesChanged || fieldsChanged || statusChanged);
+  }, [name, notes, fieldValues, activeFields, statusSelection, initialStatusSelection, contract]);
 
   const validateForm = (): boolean => {
     if (!name.trim()) {
@@ -495,16 +526,37 @@ export default function ContractEditModal({
       }) as { success: boolean; message?: string; contract?: Contract };
 
       if (response.success) {
+        // 🔒 Status separat über die validierte Status-Route speichern — nur bei Änderung.
+        let statusFields: Partial<Contract> = {};
+        if (statusSelection !== initialStatusSelection) {
+          if (statusSelection === 'auto') {
+            await apiCall(`/contracts/${contract._id}/status`, {
+              method: 'PATCH',
+              body: JSON.stringify({ statusOverride: false })
+            });
+            statusFields = { statusOverride: false };
+          } else {
+            await apiCall(`/contracts/${contract._id}/status`, {
+              method: 'PATCH',
+              body: JSON.stringify({ status: statusSelection })
+            });
+            statusFields = { status: statusSelection, statusOverride: true };
+          }
+          setInitialStatusSelection(statusSelection);
+        }
+
         setSuccess(true);
         setHasChanges(false);
 
         // Verwende Server-Response wenn verfügbar, sonst lokale Daten
         const updatedContract: Contract = response.contract ? {
           ...contract,
-          ...response.contract
+          ...response.contract,
+          ...statusFields
         } : {
           ...contract,
           ...updateData as Partial<Contract>,
+          ...statusFields,
           updatedAt: new Date().toISOString()
         };
 
@@ -635,6 +687,33 @@ export default function ContractEditModal({
 
               {/* Optionale Allgemein-Felder (Anbieter, Vertragsnummer) */}
               {ALLGEMEIN_FIELDS.filter(f => activeFields.includes(f)).map(renderField)}
+            </div>
+
+            {/* 🔒 Status */}
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <Tag size={14} />
+                <span>Status</span>
+              </div>
+              <div className={styles.statusSeg}>
+                {STATUS_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`${styles.statusSegBtn} ${statusSelection === opt.value ? styles.statusSegOn : ''}`}
+                    onClick={() => setStatusSelection(opt.value)}
+                    disabled={loading}
+                  >
+                    <span className={styles.statusDot} style={{ background: opt.dot }} />
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <div className={styles.statusHint}>
+                {statusSelection === 'auto'
+                  ? 'Der Status wird automatisch aus dem Ablaufdatum berechnet.'
+                  : 'Manuell gesetzt — die Automatik überschreibt ihn nicht mehr.'}
+              </div>
             </div>
 
             {/* 📅💶 Gruppierte Sektionen (Laufzeit & Kündigung, Kosten) — nur wenn aktive Felder vorhanden */}
