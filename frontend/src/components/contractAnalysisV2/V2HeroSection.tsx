@@ -825,7 +825,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             <div className={styles.openItemsSection} role="status" aria-live="polite">
               <div className={styles.openItemsHeader}>
                 <AlertTriangle size={14} style={{ color: "#d97706", flexShrink: 0 }} aria-hidden="true" />
-                <span className={styles.openItemsTitle}>Pflichtangaben fehlen im Dokument</span>
+                <span className={styles.openItemsTitle}>Mögliche offene Punkte</span>
                 <span className={styles.openItemsCount}>{openItems.length}</span>
               </div>
               <div className={styles.openItemsList}>
@@ -834,7 +834,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 ))}
               </div>
               <div className={styles.openItemsHint}>
-                Diese Punkte müssen vor Unterzeichnung ergänzt werden, damit das Dokument rechtlich wirksam wird.
+                Diese Angaben konnten im Dokument nicht eindeutig erkannt werden — bitte am Original prüfen.
               </div>
             </div>
           );

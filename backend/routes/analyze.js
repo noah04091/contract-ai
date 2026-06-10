@@ -2286,12 +2286,12 @@ ${usedOCR ? `⚠️ OCR-KONTEXT (WICHTIG — dieser Text stammt aus Bild-Erkennu
 ─────────────────────────────────────────────
 - Der vorliegende Text wurde aus einem GESCANNTEN PDF per OCR (Texterkennung) extrahiert.
 - Handschriftliche Inhalte (handschriftliche Namen, Adressen, Unterschriften, ausgefüllte Felder) sind für OCR UNSICHTBAR — sie sind Bilder, kein Text.
-- Bei nicht im Text erkennbaren Strukturelementen (z.B. Unterschriftenblock, ausgefüllte Felder) formuliere VORSICHTIG:
-  → in completeness.observation und completeness.openItems: "in der gescannten Vorlage nicht eindeutig erkennbar — bitte am Original verifizieren"
+- Bei nicht im Text erkennbaren Strukturelementen (z.B. Unterschriftenblock, Unterschrift, Vertragsdatum, ausgefüllte Felder) formuliere VORSICHTIG:
+  → in completeness.observation (NICHT in openItems): "in der gescannten Vorlage nicht eindeutig erkennbar — bitte am Original verifizieren"
   → NICHT "fehlt" / "nicht enthalten" / "ist nicht vorhanden" (das wäre eine falsche Tatsachenbehauptung — du weißt nicht, ob es wirklich fehlt oder OCR es nur nicht sehen kann).
 - WICHTIG — Trennung der Felder:
   → documentCharacterization.description bleibt rein TYP-beschreibend (z.B. "Standard-Mietvertrag", "Werkvertrag", "Rechnung") — KEINE OCR-Hinweise dort.
-  → Die OCR-Vorsichts-Sprache gehört AUSSCHLIESSLICH in completeness.observation / completeness.openItems.
+  → Die OCR-Vorsichts-Sprache gehört AUSSCHLIESSLICH in completeness.observation (NICHT in openItems — openItems = nur echte, im Text sichtbare inhaltliche Lücken).
 - Das JSON-Schema bleibt UNVERÄNDERT — keine neuen Felder erfinden, nur Wortwahl anpassen.
 
 ` : ''}🔍 RECOGNITION-FELDER (PFLICHT — IMMER AUSGEBEN):
@@ -2323,8 +2323,9 @@ B. **completeness** (Object, PFLICHTFELD):
    }
    → Prüfe inhaltlich: Sind alle für DIESEN Dokumenttyp essenziellen Elemente ausgefüllt?
    → KEINE starre Checkliste — beurteile relativ zu dem, was das Dokument zu sein vorgibt
-   → Beispiel komplett: { "isComplete": true, "observation": "Alle Parteien benannt, Datum vorhanden, Unterschriftenblock am Dokumentende vorhanden, alle Konditionen ausgefüllt", "openItems": [] }
-   → Beispiel unvollständig: { "isComplete": false, "observation": "Mustervertrag — Lieferanten-Adresse, Unterschriftenblock und Datum fehlen", "openItems": ["Adresse Supplier", "Unterschriftenblock", "Vertragsdatum"] }
+   → openItems = NUR konkret im Text erkennbar leere/unausgefüllte ANGABEN (Platzhalter wie "____", nicht bezifferte Beträge, leere Pflichtfelder). KEINE knappen Struktur-/Status-Items wie "Unterschriftenblock", "Vertragsdatum" oder "Unterschrift" — deren Status gehört NUR in observation (bei gescannten/OCR-Dokumenten vorsichtig: "nicht eindeutig erkennbar — am Original verifizieren"), NIE als knappes openItem.
+   → Beispiel komplett: { "isComplete": true, "observation": "Alle Konditionen ausgefüllt, Parteien benannt", "openItems": [] }
+   → Beispiel unvollständig (Text-Vertrag mit Platzhaltern): { "isComplete": false, "observation": "Mehrere Konditionen sind unausgefüllt: Mietzins und Wohnfläche stehen als Platzhalter '____', die Nebenkostenvorauszahlung ist nicht beziffert.", "openItems": ["Mietzins (Platzhalter ____)", "Wohnfläche", "Nebenkostenvorauszahlung"] }
 
 ⚠️ KONSISTENZ-PFLICHT (NICHT VERHANDELBAR):
    - documentCharacterization.description und completeness.observation MÜSSEN sich gegenseitig stützen, niemals widersprechen.
@@ -2695,7 +2696,7 @@ RICHTIG: "Klausel § 12 Abs. 3 streichen: 'Bei Zahlungsverzug Verzugszinsen i.H.
 
 ${optimizedText}
 ${usedOCR ? `
-⚠️ ERINNERUNG: Dieser Text stammt aus OCR (gescanntes PDF). Handschriftliche Inhalte sind unsichtbar. Bei nicht erkennbaren Strukturelementen formuliere "in der gescannten Vorlage nicht eindeutig erkennbar — bitte am Original verifizieren" in completeness.observation/openItems (NICHT in documentCharacterization.description, NICHT "fehlt").
+⚠️ ERINNERUNG: Dieser Text stammt aus OCR (gescanntes PDF). Handschriftliche Inhalte sind unsichtbar. Bei nicht erkennbaren Strukturelementen formuliere "in der gescannten Vorlage nicht eindeutig erkennbar — bitte am Original verifizieren" NUR in completeness.observation (NICHT in openItems, NICHT in documentCharacterization.description, NICHT "fehlt").
 ` : ''}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚡ ANTWORT-FORMAT: NUR VALIDES JSON
