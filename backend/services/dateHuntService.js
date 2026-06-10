@@ -491,6 +491,74 @@ function matchWithReplacementChar(normEvidence, normText) {
   }
 }
 
+// 🆕 10.06.2026 — Anzeige-Text-Reparatur für das Unicode-Ersatzzeichen "�".
+// GPT tippt sporadisch "�" statt Umlaut/§ in die GENERIERTEN Felder label/title/
+// description (NICHT in evidence — der Quelltext ist sauber). Wir holen das echte
+// Zeichen aus dem sauberen Vertragstext zurück: pro zusammenhängendem Buchstaben-
+// Lauf mit "�" werden Kandidaten gebildet (jedes "�" → eines aus UMLAUT_CANDIDATES)
+// und der Kandidat gewählt, der im Quelltext vorkommt ("m�ssen" → "müssen").
+// Akkurat & universell (kein Raten); berührt KEINE Validierungs-/Dedup-Logik,
+// da evidence unangetastet bleibt. Kein Treffer → "�" entfernen (sauberer Fallback).
+const UMLAUT_CANDIDATES = ['ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü', 'ß', '§'];
+
+// Fallback-Wortliste (lowercase): häufige deutsche Umlaut-/ß-Wörter, die in KI-
+// PARAPHRASEN vorkommen können, ohne im Vertragstext verbatim zu stehen (z.B.
+// "müssen", während das Original "...sind zu überweisen" sagt). Greift NUR, wenn
+// die Quelltext-Recovery scheitert. Bewusst auf Funktions-/Vertrags-Vokabular
+// fokussiert — bei Unbekanntem wird das "�" sauber entfernt statt geraten.
+const GERMAN_UMLAUT_WORDS = new Set([
+  'für','über','müssen','muss','müsste','müssten','möglich','möglichkeit','während','gegenüber',
+  'zunächst','dafür','hängt','abhängig','gehört','könnte','würde','wäre','hätte','größer','höher',
+  'später','spätestens','frühestens','frühzeitig','regelmäßig','gemäß','jährlich','täglich','wöchentlich',
+  'monatliche','jährliche','ändern','änderung','änderungen','erhöhung','erhöhungen','prüfen','prüfung',
+  'kündigung','kündigungsfrist','kündigen','vergütung','vergütungen','verfügung','rückzahlung','rücktritt',
+  'zurück','gebühr','gebühren','fällig','fälligkeit','beträgt','beträge','enthält','schönheitsreparaturen',
+  'schäden','mängel','räume','übernahme','überlassung','geschäft','geschäftlich','persönlich','zusätzlich',
+  'nachträglich','ordnungsgemäß','unverzüglich','einschließlich','ausschließlich','beschädigung','erklärung',
+  'behörde','grundsätzlich','mietverhältnis','vertragsgemäß','überweisen','überweisung','rückgabe','wohnfläche'
+]);
+
+function recoverReplacementRun(run, lowerSource) {
+  const phCount = (run.match(/�/g) || []).length;
+  const anchorLen = run.length - phCount;
+  // Kein echter Buchstabe als Anker → nicht raten. Max 3 "�" pro Lauf (Kombinations-Deckel).
+  if (anchorLen < 1 || phCount > 3) return run.replace(/�/g, '');
+  let candidates = [''];
+  for (const ch of run) {
+    if (ch === '�') {
+      const next = [];
+      for (const c of candidates) for (const u of UMLAUT_CANDIDATES) next.push(c + u);
+      candidates = next;
+    } else {
+      candidates = candidates.map(c => c + ch);
+    }
+  }
+  // 1. Primär: das echte Wort steht im sauberen Quelltext (akkurat, jeder Vertrag).
+  const fromSource = candidates.find(c => lowerSource.includes(c.toLowerCase()));
+  if (fromSource) return fromSource;
+  // 2. Fallback: häufiges deutsches Umlaut-Wort (deckt KI-Paraphrasen ab).
+  const fromList = candidates.find(c => GERMAN_UMLAUT_WORDS.has(c.toLowerCase()));
+  if (fromList) return fromList;
+  // 3. Notnagel: "�" entfernen (besser als ein Kästchen).
+  return run.replace(/�/g, '');
+}
+
+function repairReplacementChars(text, lowerSource) {
+  if (typeof text !== 'string' || text.indexOf('�') === -1) return text;
+  if (!lowerSource) return text.replace(/�/g, '');
+  const isRunChar = (ch) => ch === '�' || /\p{L}/u.test(ch);
+  const chars = [...text];
+  let out = '';
+  let i = 0;
+  while (i < chars.length) {
+    if (!isRunChar(chars[i])) { out += chars[i]; i++; continue; }
+    let run = '';
+    while (i < chars.length && isRunChar(chars[i])) { run += chars[i]; i++; }
+    out += run.indexOf('�') === -1 ? run : recoverReplacementRun(run, lowerSource);
+  }
+  return out;
+}
+
 /**
  * Validiert ein einzelnes Datum strikt.
  * Returns { valid: boolean, reason?: string }.
@@ -708,6 +776,8 @@ function dedupFristen(stageA, stageB) {
 function validateAndCollect(parsed, contractText, source, requestId) {
   const dateCands = Array.isArray(parsed?.importantDates) ? parsed.importantDates : [];
   const fristCands = Array.isArray(parsed?.fristHinweise) ? parsed.fristHinweise : [];
+  // 🆕 Sauberer Quelltext (lowercase, einmalig) für die "�"-Anzeige-Reparatur.
+  const lowerSource = (typeof contractText === 'string' ? contractText : '').toLowerCase();
   const stats = {
     raw_dates: dateCands.length,
     raw_fristen: fristCands.length,
@@ -723,8 +793,8 @@ function validateAndCollect(parsed, contractText, source, requestId) {
       validDates.push({
         type: e.type,
         date: e.date,
-        label: e.label,
-        description: e.description || e.label,
+        label: repairReplacementChars(e.label, lowerSource),
+        description: repairReplacementChars(e.description || e.label, lowerSource),
         calculated: !!e.calculated,
         confidence: typeof e.confidence === 'number' ? e.confidence : 70, // 🆕 Problem F Schritt 1: GPT-Konfidenz durchreichen (Bugfix 26.05. — Feld wurde vorher beim Push verworfen)
         source: e.source || '',
@@ -758,8 +828,8 @@ function validateAndCollect(parsed, contractText, source, requestId) {
     if (v.valid) {
       validFristen.push({
         type: e.type,
-        title: e.title,
-        description: e.description || '',
+        title: repairReplacementChars(e.title, lowerSource),
+        description: repairReplacementChars(e.description || '', lowerSource),
         legalBasis: e.legalBasis || '',
         evidence: e.evidence,
         // 🆕 Tier 2 (Problem F, 27.05.2026): Calendar-Felder durchreichen
@@ -1300,6 +1370,7 @@ module.exports = {
   // Export für Tests
   validateDateEntry,
   validateFristHinweis,
+  repairReplacementChars,
   buildJuniorPrompt,
   buildChunkPrompt,
   buildSeniorPrompt,
