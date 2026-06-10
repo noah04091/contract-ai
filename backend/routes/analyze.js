@@ -4640,11 +4640,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // NUR gesetzt, wenn die Erkennung wirklich lief (Flag AN + OCR genutzt) — sonst undefined,
     // damit das Frontend bei Text-PDFs / Flag AUS kein irreführendes "keine erkannt" zeigt.
     // detected:false bedeutet hier "geprüft, aber keine gefunden".
-    let signatureStatus;
+    // ⚠️ Eigenes Feld `signatureDetection` (Objekt) — NICHT `signatureStatus` (das ist
+    // app-weit ein String für den Envelope-/Signatur-Flow; Kollision crasht die Liste).
+    let signatureDetection;
     if (process.env.ENABLE_SIGNATURE_DETECTION === 'true' && pdfData.usedOCR === true) {
       const _sigs = Array.isArray(pdfData.signatures) ? pdfData.signatures : [];
       const _pages = [...new Set(_sigs.map(s => s && s.page).filter(Boolean))].sort((a, b) => a - b);
-      signatureStatus = {
+      signatureDetection = {
         detected: _sigs.length > 0,
         count: _sigs.length,
         pages: _pages,
@@ -4999,7 +5001,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         };
 
         // ✍️ Unterschrifts-Status (nur wenn Erkennung lief; sonst undefined → Feld bleibt weg)
-        if (signatureStatus) updateData.signatureStatus = signatureStatus;
+        if (signatureDetection) updateData.signatureDetection = signatureDetection;
 
         await contractsCollection.updateOne(
           { _id: existingContract._id },
@@ -5274,7 +5276,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               analyzedAt: new Date(), // Zeitpunkt der Analyse
               contractScore: result.contractScore || 0,
               // ✍️ Unterschrifts-Status (nur wenn Erkennung lief; sonst kein Feld)
-              ...(signatureStatus ? { signatureStatus } : {}),
+              ...(signatureDetection ? { signatureDetection } : {}),
               // 🌐 Phase-1-Redesign: Recognition-Felder + Adaptive-Output (siehe oben)
               documentCharacterization: result.documentCharacterization,
               completeness: result.completeness,
@@ -5574,7 +5576,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       ...result,
 
       // ✍️ Unterschrifts-Status (nur wenn Erkennung lief — sonst kein Feld → kein Badge)
-      ...(signatureStatus ? { signatureStatus } : {}),
+      ...(signatureDetection ? { signatureDetection } : {}),
 
       analysisId: inserted.insertedId,
       usage: {

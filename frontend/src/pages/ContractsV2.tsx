@@ -223,7 +223,7 @@ interface UserInfo {
 }
 
 // ✅ Erweiterte Filter-Typen
-type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt';
+type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt' | 'neu' | 'entwurf' | 'optimiert';
 type DateFilter = 'alle' | 'heute' | 'woche' | 'monat' | 'quartal' | 'jahr';
 type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za'
   | 'status_asc' | 'status_desc'
@@ -3647,10 +3647,14 @@ export default function Contracts() {
 
   // 🆕 Smart Signature Badge Renderer
   const renderSignatureBadge = (contract: Contract) => {
-    if (!contract.envelope && !contract.signatureStatus) return null;
+    // 🛡️ contract.signatureStatus ist app-weit ein STRING (Envelope-Signatur-Flow).
+    // Defensiv gegen fremde/alte Nicht-String-Werte (z.B. ein versehentlich unter
+    // gleichem Namen gespeichertes Objekt) — sonst crasht status.toUpperCase() die Liste.
+    const contractSigStatus = typeof contract.signatureStatus === 'string' ? contract.signatureStatus : null;
+    if (!contract.envelope && !contractSigStatus) return null;
 
     const envelope = contract.envelope;
-    const status = envelope?.signatureStatus || contract.signatureStatus;
+    const status = envelope?.signatureStatus || contractSigStatus;
 
     // Map backend status to UI display
     let icon = "📝";
@@ -4112,7 +4116,7 @@ export default function Contracts() {
                 onClick={() => { setActiveSection('contracts'); setStatusFilter(statusFilter === 'bald_ablaufend' ? 'alle' : 'bald_ablaufend'); setActiveFolder(null); }}
               >
                 <AlertTriangle size={18} className={styles.sidebarNavIcon} style={{ color: '#f59e0b' }} />
-                <span>Bald ablaufend</span>
+                <span>Läuft ab</span>
                 <span className={styles.sidebarNavBadge}>
                   {sidebarCounts.baldAblaufend}
                 </span>
@@ -4421,9 +4425,12 @@ export default function Contracts() {
                 >
                   <option value="alle">Alle Status</option>
                   <option value="aktiv">Aktiv</option>
-                  <option value="bald_ablaufend">Bald ablaufend</option>
-                  <option value="abgelaufen">Abgelaufen</option>
+                  <option value="bald_ablaufend">Läuft ab</option>
+                  <option value="abgelaufen">Beendet</option>
                   <option value="gekündigt">Gekündigt</option>
+                  <option value="neu">Neu</option>
+                  <option value="entwurf">Entwurf</option>
+                  <option value="optimiert">Optimiert</option>
                 </select>
 
                 {/* Zeitraum Filter */}
@@ -4577,9 +4584,12 @@ export default function Contracts() {
                         >
                           <option value="alle">Alle Status</option>
                           <option value="aktiv">Aktiv</option>
-                          <option value="bald_ablaufend">Bald ablaufend</option>
-                          <option value="abgelaufen">Abgelaufen</option>
+                          <option value="bald_ablaufend">Läuft ab</option>
+                          <option value="abgelaufen">Beendet</option>
                           <option value="gekündigt">Gekündigt</option>
+                  <option value="neu">Neu</option>
+                  <option value="entwurf">Entwurf</option>
+                  <option value="optimiert">Optimiert</option>
                         </select>
                       </div>
 
@@ -6263,7 +6273,7 @@ export default function Contracts() {
                 )}
 
                 {/* Badges — "Nicht analysiert"-Pille entfernt: redundant zu Header-Pille, Leerzustand & Analyse-Button */}
-                {(previewContract.isGenerated || previewContract.isOptimized || previewContract.envelope || previewContract.signatureStatus) && (
+                {(previewContract.isGenerated || previewContract.isOptimized || previewContract.envelope || typeof previewContract.signatureStatus === 'string') && (
                   <div className={styles.previewBadges}>
                     {previewContract.isGenerated && (
                       <span className={styles.previewBadge} style={{ background: '#dbeafe', color: '#1d4ed8' }}>

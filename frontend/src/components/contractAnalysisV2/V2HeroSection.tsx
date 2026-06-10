@@ -46,7 +46,7 @@ type AnalysisData = {
   providerConfidence?: number | null; // 0-100 (Backend-Skala). <75 → Warn-Badge im UI
   providerDetected?: boolean | null;
   // ✍️ Unterschrifts-Status aus Textract SIGNATURES (nur gesetzt, wenn Erkennung lief).
-  signatureStatus?: {
+  signatureDetection?: {
     detected?: boolean;
     count?: number;
     pages?: number[];
@@ -530,16 +530,16 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                   Vertragspartei nicht erkannt
                 </span>
               )}
-              {/* ✍️ Unterschrifts-Status (nur wenn Erkennung lief — Backend setzt signatureStatus
+              {/* ✍️ Unterschrifts-Status (nur wenn Erkennung lief — Backend setzt signatureDetection
                   ausschließlich bei aktivem Flag + OCR). detected=true → grün; false → neutral-amber. */}
-              {d.signatureStatus && (
-                d.signatureStatus.detected ? (
+              {d.signatureDetection && (
+                d.signatureDetection.detected ? (
                   <span
                     className={styles.fcStatusPill}
                     style={{ background: "#ecfdf5", color: "#047857" }}
-                    title={`${d.signatureStatus.count || 1} Unterschrift(en) im Dokument erkannt${d.signatureStatus.pages?.length ? ` (Seite ${d.signatureStatus.pages.join(", ")})` : ""}. Hinweis: erkennt nur, dass unterschrieben wurde — nicht von wem.`}
+                    title={`${d.signatureDetection.count || 1} Unterschrift(en) im Dokument erkannt${d.signatureDetection.pages?.length ? ` (Seite ${d.signatureDetection.pages.join(", ")})` : ""}. Hinweis: erkennt nur, dass unterschrieben wurde — nicht von wem.`}
                   >
-                    <PenLine size={10} /> {(d.signatureStatus.count || 1) > 1 ? `${d.signatureStatus.count} Unterschriften` : "Unterschrift"} erkannt
+                    <PenLine size={10} /> {(d.signatureDetection.count || 1) > 1 ? `${d.signatureDetection.count} Unterschriften` : "Unterschrift"} erkannt
                   </span>
                 ) : (
                   <span

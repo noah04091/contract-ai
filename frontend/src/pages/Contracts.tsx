@@ -3209,10 +3209,13 @@ export default function Contracts() {
 
   // 🆕 Smart Signature Badge Renderer
   const renderSignatureBadge = (contract: Contract) => {
-    if (!contract.envelope && !contract.signatureStatus) return null;
+    // 🛡️ contract.signatureStatus ist app-weit ein STRING (Envelope-Signatur-Flow).
+    // Defensiv gegen Nicht-String-Werte — sonst crasht status.toUpperCase() die Liste.
+    const contractSigStatus = typeof contract.signatureStatus === 'string' ? contract.signatureStatus : null;
+    if (!contract.envelope && !contractSigStatus) return null;
 
     const envelope = contract.envelope;
-    const status = envelope?.signatureStatus || contract.signatureStatus;
+    const status = envelope?.signatureStatus || contractSigStatus;
 
     // Map backend status to UI display
     let icon = "📝";
