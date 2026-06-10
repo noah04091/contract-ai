@@ -359,6 +359,8 @@ class PdfExtractor {
           result.success = true;
           result.usedOCR = true;
           result.ocrPages = ocrResult.pages || 1;
+          // Unterschriften aus Textract durchreichen (additiv; [] wenn Flag aus oder keine erkannt)
+          result.signatures = Array.isArray(ocrResult.signatures) ? ocrResult.signatures : [];
           result.quality.charCount = ocrResult.text.length;
           result.quality.wordCount = ocrResult.text.split(/\s+/).filter(w => w.length > 0).length;
           result.quality.qualityScore = Math.round(ocrResult.confidence);

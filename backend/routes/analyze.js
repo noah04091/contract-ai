@@ -2167,6 +2167,16 @@ function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId, 
   // Default greift bei Re-Analyze-Pfaden ohne OCR-Info (contracts.js) → kein Block.
   const usedOCR = extractionMeta && extractionMeta.usedOCR === true;
 
+  // Unterschriften-Evidenz (Feature-Flag ENABLE_SIGNATURE_DETECTION): Textract hat
+  // Unterschriften als BILD erkannt. Nur befüllt, wenn das Flag aktiv war UND Signaturen
+  // gefunden wurden (kommt ausschließlich über den OCR-Pfad). Sonst leer → kein Block.
+  const detectedSignatures = Array.isArray(extractionMeta && extractionMeta.signatures) ? extractionMeta.signatures : [];
+  const hasDetectedSignatures = detectedSignatures.length > 0;
+  const signaturePagesLabel = (() => {
+    const pages = [...new Set(detectedSignatures.map(s => s && s.page).filter(Boolean))].sort((a, b) => a - b);
+    return pages.length ? ` (Seite ${pages.join(', ')})` : '';
+  })();
+
   // Get contract-type-specific AWARENESS (nicht Checklisten!)
   const awareness = getContractTypeAwareness(documentType);
 
@@ -2293,6 +2303,15 @@ ${usedOCR ? `⚠️ OCR-KONTEXT (WICHTIG — dieser Text stammt aus Bild-Erkennu
   → documentCharacterization.description bleibt rein TYP-beschreibend (z.B. "Standard-Mietvertrag", "Werkvertrag", "Rechnung") — KEINE OCR-Hinweise dort.
   → Die OCR-Vorsichts-Sprache gehört AUSSCHLIESSLICH in completeness.observation (NICHT in openItems — openItems = nur echte, im Text sichtbare inhaltliche Lücken).
 - Das JSON-Schema bleibt UNVERÄNDERT — keine neuen Felder erfinden, nur Wortwahl anpassen.
+
+` : ''}${hasDetectedSignatures ? `✍️ UNTERSCHRIFTEN-EVIDENZ (technische Bild-Erkennung, NICHT aus dem OCR-Text):
+─────────────────────────────────────────────
+- Eine Bild-Analyse hat im Dokument ${detectedSignatures.length} Unterschrift(en) als BILD erkannt${signaturePagesLabel}.
+- Das ist ein POSITIVES, belastbares Signal: Das Dokument trägt mindestens eine (handschriftliche oder gedruckte) Unterschrift — auch wenn der OCR-Text sie nicht als Buchstaben zeigt.
+- Du DARFST daher in completeness.observation festhalten, dass das Dokument unterschrieben erscheint (z.B. "mindestens eine Unterschrift im Dokument erkannt"). Schreibe NICHT "Unterschrift fehlt" / "nicht unterzeichnet" — das wäre hier nachweislich falsch.
+- BLEIBE EHRLICH über die GRENZEN: Die Bild-Erkennung sagt nur, DASS unterschrieben wurde — NICHT WER und NICHT, ob ALLE erforderlichen Parteien unterschrieben haben. Wenn typischerweise zwei Parteien unterschreiben und nur eine Unterschrift erkannt wurde, weise vorsichtig darauf hin ("nur eine von vermutlich zwei Unterschriften erkennbar — am Original prüfen").
+- Diese Evidenz ÜBERSCHREIBT die obige OCR-Vorsicht NUR für die Unterschrift selbst — NICHT für andere handschriftliche Felder (Datum, Namen, ausgefüllte Felder); die bleiben vorsichtig zu behandeln.
+- Beeinflusst NICHT den contractScore oder die rechtliche Bewertung — es ist reine Status-Information. Das JSON-Schema bleibt UNVERÄNDERT — keine neuen Felder.
 
 ` : ''}🔍 RECOGNITION-FELDER (PFLICHT — IMMER AUSGEBEN):
 ─────────────────────────────────────────────
@@ -4198,7 +4217,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     let pdfData;
     try {
       const extracted = await extractTextFromBuffer(buffer, fileMimetype);
-      pdfData = { text: extracted.text, numpages: extracted.pageCount || 0, usedOCR: false, ocrConfidence: null };
+      pdfData = { text: extracted.text, numpages: extracted.pageCount || 0, usedOCR: false, ocrConfidence: null, signatures: [] };
       console.log(`📄 [${requestId}] Document parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
 
       // OCR-Fallback für gescannte PDFs mit wenig/keinem Text
@@ -4221,6 +4240,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             pdfData.numpages = ocrResult.quality.pageCount || pdfData.numpages;
             pdfData.usedOCR = ocrResult.usedOCR === true;
             pdfData.ocrConfidence = typeof ocrResult.confidence === 'number' ? ocrResult.confidence : null;
+            pdfData.signatures = Array.isArray(ocrResult.signatures) ? ocrResult.signatures : [];
           } else if (!pdfData.text || pdfData.text.trim().length === 0) {
             // OCR tried but still no text — return clear error to user
             console.warn(`⚠️ [${requestId}] OCR-Fallback lieferte keinen Text — Scan unleserlich`);
@@ -4267,7 +4287,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               text: ocrResult.text,
               numpages: ocrResult.quality?.pageCount || ocrResult.ocrPages || 0,
               usedOCR: ocrResult.usedOCR === true,
-              ocrConfidence: typeof ocrResult.confidence === 'number' ? ocrResult.confidence : null
+              ocrConfidence: typeof ocrResult.confidence === 'number' ? ocrResult.confidence : null,
+              signatures: Array.isArray(ocrResult.signatures) ? ocrResult.signatures : []
             };
             // weiter im normalen Flow — pdfData ist gesetzt
           } else {
@@ -4612,8 +4633,25 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       validationResult.strategy,
       requestId,
       contractBudgetTokens,
-      { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence }
+      { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence, signatures: Array.isArray(pdfData.signatures) ? pdfData.signatures : [] }
     );
+
+    // ✍️ Unterschrifts-Status fürs Frontend-Badge (Feature-Flag ENABLE_SIGNATURE_DETECTION).
+    // NUR gesetzt, wenn die Erkennung wirklich lief (Flag AN + OCR genutzt) — sonst undefined,
+    // damit das Frontend bei Text-PDFs / Flag AUS kein irreführendes "keine erkannt" zeigt.
+    // detected:false bedeutet hier "geprüft, aber keine gefunden".
+    let signatureStatus;
+    if (process.env.ENABLE_SIGNATURE_DETECTION === 'true' && pdfData.usedOCR === true) {
+      const _sigs = Array.isArray(pdfData.signatures) ? pdfData.signatures : [];
+      const _pages = [...new Set(_sigs.map(s => s && s.page).filter(Boolean))].sort((a, b) => a - b);
+      signatureStatus = {
+        detected: _sigs.length > 0,
+        count: _sigs.length,
+        pages: _pages,
+        source: 'textract_signatures',
+        checkedAt: new Date()
+      };
+    }
 
     console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document (contractType passed to prompt: ${promptContractType})`);
 
@@ -4960,6 +4998,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           substantialContent: true
         };
 
+        // ✍️ Unterschrifts-Status (nur wenn Erkennung lief; sonst undefined → Feld bleibt weg)
+        if (signatureStatus) updateData.signatureStatus = signatureStatus;
+
         await contractsCollection.updateOne(
           { _id: existingContract._id },
           { $set: updateData }
@@ -5232,6 +5273,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               analyzed: true, // 🔧 FIX: Flag setzen damit Status "Aktiv" statt "Neu" angezeigt wird
               analyzedAt: new Date(), // Zeitpunkt der Analyse
               contractScore: result.contractScore || 0,
+              // ✍️ Unterschrifts-Status (nur wenn Erkennung lief; sonst kein Feld)
+              ...(signatureStatus ? { signatureStatus } : {}),
               // 🌐 Phase-1-Redesign: Recognition-Felder + Adaptive-Output (siehe oben)
               documentCharacterization: result.documentCharacterization,
               completeness: result.completeness,
@@ -5528,8 +5571,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       }),
       
       // ✅ WICHTIG: Result-Felder DIREKT im Root spreaden (kein data wrapper!)
-      ...result, 
-      
+      ...result,
+
+      // ✍️ Unterschrifts-Status (nur wenn Erkennung lief — sonst kein Feld → kein Badge)
+      ...(signatureStatus ? { signatureStatus } : {}),
+
       analysisId: inserted.insertedId,
       usage: {
         count: newCount,  // Already incremented earlier (line 2080)

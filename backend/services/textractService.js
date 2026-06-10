@@ -17,7 +17,12 @@ const {
   TextractClient,
   DetectDocumentTextCommand,
   StartDocumentTextDetectionCommand,
-  GetDocumentTextDetectionCommand
+  GetDocumentTextDetectionCommand,
+  // Signatur-Erkennung (nur aktiv bei ENABLE_SIGNATURE_DETECTION) — Analyze-Varianten
+  // liefern dieselben LINE-Blöcke wie Detect + zusätzlich SIGNATURE-Blöcke.
+  AnalyzeDocumentCommand,
+  StartDocumentAnalysisCommand,
+  GetDocumentAnalysisCommand
 } = require('@aws-sdk/client-textract');
 
 const {
@@ -32,6 +37,14 @@ const {
 // Textract + temp S3 beides in eu-central-1
 const TEXTRACT_REGION = 'eu-central-1';
 const TEMP_BUCKET = process.env.TEXTRACT_TEMP_BUCKET || 'contract-ai-ocr-temp-eu-central';
+
+// ── Feature-Flag: echte Unterschrifts-Erkennung (default AUS) ──
+// AUS  → exakt der bisherige Pfad (DetectDocumentText / StartDocumentTextDetection),
+//        kein zusätzlicher API-Aufruf, signatures bleibt [].
+// AN   → AnalyzeDocument / StartDocumentAnalysis mit FeatureTypes:['SIGNATURES'];
+//        liefert dieselben LINE-Blöcke + zusätzlich SIGNATURE-Blöcke.
+// Muster identisch zu COMPARE_HOLISTIC / LEGAL_LENS_DIRECT_PARSER.
+const ENABLE_SIGNATURE_DETECTION = process.env.ENABLE_SIGNATURE_DETECTION === 'true';
 
 // Column-detection tuning (see assemblePageEntries)
 const COL_LEFT_TOLERANCE = 0.03;   // cluster gap: ≤ 3% of page width = same column
@@ -144,19 +157,21 @@ async function extractTextWithOCR(documentBuffer) {
 async function ocrSync(buf, docType) {
   const startTime = Date.now();
 
-  const command = new DetectDocumentTextCommand({
-    Document: { Bytes: buf }
-  });
+  // Flag AUS → bisheriger Command 1:1. Flag AN → Analyze mit SIGNATURES (liefert dieselben LINE-Blöcke).
+  const command = ENABLE_SIGNATURE_DETECTION
+    ? new AnalyzeDocumentCommand({ Document: { Bytes: buf }, FeatureTypes: ['SIGNATURES'] })
+    : new DetectDocumentTextCommand({ Document: { Bytes: buf } });
 
   const response = await textractClient.send(command);
   const { text, confidence, lineCount, pageCount } = assembleTextFromBlocks(response.Blocks);
+  const signatures = ENABLE_SIGNATURE_DETECTION ? extractSignaturesFromBlocks(response.Blocks) : [];
   const duration = Date.now() - startTime;
   const pages = pageCount || 1;
 
-  console.log(`✅ [Textract] Sync-OCR (${docType}) in ${duration}ms: ${lineCount} Zeilen, ${text.trim().length} Zeichen, ${confidence.toFixed(1)}% Confidence`);
+  console.log(`✅ [Textract] Sync-OCR (${docType}) in ${duration}ms: ${lineCount} Zeilen, ${text.trim().length} Zeichen, ${confidence.toFixed(1)}% Confidence${ENABLE_SIGNATURE_DETECTION ? `, ${signatures.length} Signatur(en)` : ''}`);
 
   if (text.trim().length < 200) {
-    return { success: false, text, confidence, pages, lineCount, duration,
+    return { success: false, text, confidence, pages, lineCount, duration, signatures,
       error: `OCR hat nur ${text.trim().length} Zeichen erkannt — Dokument möglicherweise leer oder unleserlich` };
   }
 
@@ -167,7 +182,8 @@ async function ocrSync(buf, docType) {
     lowConfidence: confidence > 0 && confidence < 70,
     pages,
     lineCount,
-    duration
+    duration,
+    signatures
   };
 }
 
@@ -196,14 +212,23 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
     // 3. Async Textract Job starten
     console.log(`🔍 [Textract] Starte Async-OCR für ${pageCount} Seiten...`);
 
-    const startResponse = await textractClient.send(new StartDocumentTextDetectionCommand({
-      DocumentLocation: {
-        S3Object: { Bucket: TEMP_BUCKET, Name: tempKey }
-      }
-    }));
+    // Flag AUS → bisheriger Start-Command 1:1. Flag AN → Analyse-Job mit SIGNATURES.
+    const startResponse = await textractClient.send(ENABLE_SIGNATURE_DETECTION
+      ? new StartDocumentAnalysisCommand({
+          DocumentLocation: { S3Object: { Bucket: TEMP_BUCKET, Name: tempKey } },
+          FeatureTypes: ['SIGNATURES']
+        })
+      : new StartDocumentTextDetectionCommand({
+          DocumentLocation: { S3Object: { Bucket: TEMP_BUCKET, Name: tempKey } }
+        }));
 
     const jobId = startResponse.JobId;
     console.log(`⏳ [Textract] Job gestartet: ${jobId}`);
+
+    // Get-Command passend zum Start-Command (Flag AUS → TextDetection, AN → Analysis).
+    const buildGetCommand = (args) => ENABLE_SIGNATURE_DETECTION
+      ? new GetDocumentAnalysisCommand(args)
+      : new GetDocumentTextDetectionCommand(args);
 
     // 4. Polling — max 3 Minuten warten
     const maxWaitMs = 180000;
@@ -215,7 +240,7 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
       await sleep(pollInterval);
       elapsed += pollInterval;
 
-      const getResponse = await textractClient.send(new GetDocumentTextDetectionCommand({ JobId: jobId }));
+      const getResponse = await textractClient.send(buildGetCommand({ JobId: jobId }));
       const status = getResponse.JobStatus;
 
       if (elapsed % 15000 < pollInterval) {
@@ -246,7 +271,7 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
 
     while (nextToken) {
       console.log(`📄 [Textract] Lade weitere Ergebnisse (NextToken)...`);
-      const nextResponse = await textractClient.send(new GetDocumentTextDetectionCommand({
+      const nextResponse = await textractClient.send(buildGetCommand({
         JobId: jobId,
         NextToken: nextToken
       }));
@@ -256,12 +281,13 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
 
     // 6. Column-aware Textzusammenbau (siehe assembleTextFromBlocks)
     const { text: fullText, confidence: avgConfidence, lineCount: blockCount, pageCount: ocrPageCount } = assembleTextFromBlocks(allBlocks);
+    const signatures = ENABLE_SIGNATURE_DETECTION ? extractSignaturesFromBlocks(allBlocks) : [];
     const duration = Date.now() - startTime;
 
-    console.log(`✅ [Textract] Async-OCR abgeschlossen in ${duration}ms: ${ocrPageCount} Seiten, ${blockCount} Zeilen, ${avgConfidence.toFixed(1)}% Confidence`);
+    console.log(`✅ [Textract] Async-OCR abgeschlossen in ${duration}ms: ${ocrPageCount} Seiten, ${blockCount} Zeilen, ${avgConfidence.toFixed(1)}% Confidence${ENABLE_SIGNATURE_DETECTION ? `, ${signatures.length} Signatur(en)` : ''}`);
 
     if (fullText.trim().length < 200) {
-      return { success: false, text: fullText, confidence: avgConfidence, pages: ocrPageCount,
+      return { success: false, text: fullText, confidence: avgConfidence, pages: ocrPageCount, signatures,
         error: `OCR hat nur ${fullText.trim().length} Zeichen erkannt — Dokument möglicherweise leer oder unleserlich` };
     }
 
@@ -272,7 +298,8 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
       lowConfidence: avgConfidence > 0 && avgConfidence < 70,
       pages: ocrPageCount,
       lineCount: blockCount,
-      duration
+      duration,
+      signatures
     };
 
   } finally {
@@ -289,6 +316,35 @@ async function ocrAsyncMultiPage(pdfBuffer, pageCount) {
 // ════════════════════════════════════════════════════════
 // Hilfsfunktionen
 // ════════════════════════════════════════════════════════
+
+/**
+ * Parst SIGNATURE-Blöcke aus einer Textract-AnalyzeDocument/Analysis-Antwort.
+ *
+ * Wird NUR aufgerufen, wenn ENABLE_SIGNATURE_DETECTION aktiv ist (sonst []).
+ * SIGNATURE-Blöcke entstehen nur bei FeatureTypes:['SIGNATURES']; DetectDocumentText
+ * liefert sie nie. Jeder Block markiert die erkannte Position einer (handschriftlichen
+ * oder gedruckten) Unterschrift samt Konfidenz — sagt NICHTS über die Identität aus.
+ *
+ * Defensiv: tolerant gegen fehlende Felder, wirft nie (additiv, darf den OCR-Pfad
+ * niemals stören).
+ */
+function extractSignaturesFromBlocks(blocks) {
+  const signatures = [];
+  try {
+    for (const b of (blocks || [])) {
+      if (!b || b.BlockType !== 'SIGNATURE') continue;
+      signatures.push({
+        page: b.Page || 1,
+        confidence: typeof b.Confidence === 'number' ? Math.round(b.Confidence * 10) / 10 : 0,
+        boundingBox: b.Geometry?.BoundingBox || null
+      });
+    }
+  } catch (err) {
+    console.warn(`⚠️ [Textract] Signatur-Parsing fehlgeschlagen (ignoriert): ${err.message}`);
+    return [];
+  }
+  return signatures;
+}
 
 /**
  * Column-aware text assembly from Textract LINE blocks.

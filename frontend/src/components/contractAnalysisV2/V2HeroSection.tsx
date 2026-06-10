@@ -10,7 +10,7 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, Scale, Eye, AlertTriangle } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, Scale, Eye, AlertTriangle, PenLine } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
@@ -45,6 +45,13 @@ type AnalysisData = {
   provider?: { name?: string } | null;
   providerConfidence?: number | null; // 0-100 (Backend-Skala). <75 → Warn-Badge im UI
   providerDetected?: boolean | null;
+  // ✍️ Unterschrifts-Status aus Textract SIGNATURES (nur gesetzt, wenn Erkennung lief).
+  signatureStatus?: {
+    detected?: boolean;
+    count?: number;
+    pages?: number[];
+    source?: string;
+  } | null;
   isReanalysis?: boolean;
   lawyerLevelAnalysis?: boolean;
   requestId?: string;
@@ -522,6 +529,27 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 >
                   Vertragspartei nicht erkannt
                 </span>
+              )}
+              {/* ✍️ Unterschrifts-Status (nur wenn Erkennung lief — Backend setzt signatureStatus
+                  ausschließlich bei aktivem Flag + OCR). detected=true → grün; false → neutral-amber. */}
+              {d.signatureStatus && (
+                d.signatureStatus.detected ? (
+                  <span
+                    className={styles.fcStatusPill}
+                    style={{ background: "#ecfdf5", color: "#047857" }}
+                    title={`${d.signatureStatus.count || 1} Unterschrift(en) im Dokument erkannt${d.signatureStatus.pages?.length ? ` (Seite ${d.signatureStatus.pages.join(", ")})` : ""}. Hinweis: erkennt nur, dass unterschrieben wurde — nicht von wem.`}
+                  >
+                    <PenLine size={10} /> {(d.signatureStatus.count || 1) > 1 ? `${d.signatureStatus.count} Unterschriften` : "Unterschrift"} erkannt
+                  </span>
+                ) : (
+                  <span
+                    className={styles.fcStatusPill}
+                    style={{ background: "#fef3c7", color: "#92400e" }}
+                    title="Im gescannten Dokument wurde keine Unterschrift als Bild erkannt — bitte am Original prüfen."
+                  >
+                    <PenLine size={10} /> Keine Unterschrift erkannt
+                  </span>
+                )
               )}
               {d.isReanalysis && (
                 <span className={`${styles.fcStatusPill} ${styles.statusReanalyze}`}>
