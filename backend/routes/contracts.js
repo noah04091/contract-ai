@@ -783,6 +783,7 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     suggestions: 1, legalAssessment: 1, quickFacts: 1,
     importantDates: 1, fristHinweise: 1, positiveAspects: 1, recommendations: 1, laymanSummary: 1,
     // Status-Felder
+    statusOverride: 1,
     isGenerated: 1, isOptimized: 1, gekuendigtZum: 1, cancellationId: 1, cancellationDate: 1, cancellationConfirmed: 1, cancellationConfirmedAt: 1,
     paymentStatus: 1, paymentAmount: 1, paymentFrequency: 1,
     // Signatur
@@ -1431,7 +1432,7 @@ router.get("/", async (req, res) => {
     // 🚀 OPTIMIERT: Batch-Queries statt Aggregation + Sidebar-Counts PARALLEL
     const _t4 = Date.now();
     const SIDEBAR_PROJECTION = {
-      expiryDate: 1, status: 1, folderId: 1, documentCategory: 1,
+      expiryDate: 1, status: 1, statusOverride: 1, folderId: 1, documentCategory: 1,
       gekuendigtZum: 1, cancellationId: 1, cancellationConfirmed: 1,
       isGenerated: 1, isOptimized: 1, analyzed: 1, contractScore: 1,
       paymentStatus: 1, createdAt: 1
