@@ -8,6 +8,28 @@ import { LEGAL_AREA_INFO } from "../../types/clauseLibrary";
 import { slugToTermId, termPath, termUrl, SITE_URL, LEXIKON_BASE_PATH, hexToRgba } from "../../utils/lexikon";
 import styles from "../../styles/Rechtslexikon.module.css";
 
+// Begriff → passende „[Typ] prüfen"-Landingpage (kontextbezogene interne Verlinkung).
+// Unbekannte Begriffe sind hier einfach nicht enthalten → sie behalten den generischen CTA.
+const TERM_TO_PRUEFEN: Record<string, { path: string; label: string }> = {
+  arbeitsvertrag: { path: "/arbeitsvertrag-pruefen", label: "Arbeitsvertrag prüfen" },
+  kuendigungsschutz: { path: "/arbeitsvertrag-pruefen", label: "Arbeitsvertrag prüfen" },
+  probezeit: { path: "/arbeitsvertrag-pruefen", label: "Arbeitsvertrag prüfen" },
+  wettbewerbsverbot: { path: "/arbeitsvertrag-pruefen", label: "Arbeitsvertrag prüfen" },
+  sozialauswahl: { path: "/arbeitsvertrag-pruefen", label: "Arbeitsvertrag prüfen" },
+  aufhebungsvertrag: { path: "/aufhebungsvertrag-pruefen", label: "Aufhebungsvertrag prüfen" },
+  abfindung: { path: "/aufhebungsvertrag-pruefen", label: "Aufhebungsvertrag prüfen" },
+  sperrzeit: { path: "/aufhebungsvertrag-pruefen", label: "Aufhebungsvertrag prüfen" },
+  mietvertrag: { path: "/mietvertrag-pruefen", label: "Mietvertrag prüfen" },
+  kaution: { path: "/mietvertrag-pruefen", label: "Mietvertrag prüfen" },
+  nebenkosten: { path: "/mietvertrag-pruefen", label: "Mietvertrag prüfen" },
+  betriebskosten: { path: "/mietvertrag-pruefen", label: "Mietvertrag prüfen" },
+  kaufvertrag: { path: "/kaufvertrag-pruefen", label: "Kaufvertrag prüfen" },
+  gewaehrleistung: { path: "/kaufvertrag-pruefen", label: "Kaufvertrag prüfen" },
+  eigentumsvorbehalt: { path: "/kaufvertrag-pruefen", label: "Kaufvertrag prüfen" },
+  nacherfuellung: { path: "/kaufvertrag-pruefen", label: "Kaufvertrag prüfen" },
+  geschaeftsgeheimnis: { path: "/nda-pruefen", label: "NDA prüfen" },
+};
+
 export default function RechtslexikonTerm() {
   const { slug } = useParams<{ slug: string }>();
   const term = slug ? getTermById(slugToTermId(slug)) : undefined;
@@ -43,6 +65,7 @@ export default function RechtslexikonTerm() {
   const info = LEGAL_AREA_INFO[term.legalArea];
   const related = getRelatedTerms(term);
   const url = termUrl(term.id);
+  const pruefenMatch = TERM_TO_PRUEFEN[term.id];
 
   // --- SEO Schema ---
   const breadcrumbSchema = {
@@ -175,9 +198,16 @@ export default function RechtslexikonTerm() {
                 Lass deinen Vertrag in 60 Sekunden von unserer KI prüfen – Risiken, Fristen und
                 unfaire Klauseln auf einen Blick.
               </p>
-              <Link to="/ki-vertragsanalyse" className={styles.ctaButton}>
-                Vertrag jetzt prüfen <ArrowRight size={18} aria-hidden="true" />
+              <Link to={pruefenMatch ? pruefenMatch.path : "/ki-vertragsanalyse"} className={styles.ctaButton}>
+                {pruefenMatch ? pruefenMatch.label : "Vertrag jetzt prüfen"} <ArrowRight size={18} aria-hidden="true" />
               </Link>
+              {pruefenMatch && (
+                <div style={{ marginTop: 12 }}>
+                  <Link to="/ki-vertragsanalyse" style={{ fontSize: "0.9rem", color: "#3b82f6", textDecoration: "none" }}>
+                    Oder allgemeine KI-Vertragsanalyse ansehen →
+                  </Link>
+                </div>
+              )}
             </section>
 
             <Link to={LEXIKON_BASE_PATH} className={styles.backLink}>
