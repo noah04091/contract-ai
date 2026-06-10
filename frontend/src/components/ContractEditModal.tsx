@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Save, AlertCircle, CheckCircle, Edit,
   FileText, Clock, Calendar, StickyNote,
-  Loader2, ChevronDown, RotateCcw, Plus, Minus, Tag
+  Loader2, ChevronDown, RotateCcw, Plus, Minus, Tag, Euro
 } from "lucide-react";
 import styles from "../styles/ContractEditModal.module.css";
 import { apiCall } from "../utils/api";
@@ -111,6 +111,13 @@ const AVAILABLE_FIELDS: FieldConfig[] = [
 // Standard-Felder die initial angezeigt werden
 const DEFAULT_FIELDS: FieldType[] = ['kuendigung', 'laufzeit', 'expiryDate'];
 
+// 🗂️ Gruppierung der Felder in Sektionen (rein optisch — Add-/Save-Logik bleibt unberührt)
+const ALLGEMEIN_FIELDS: FieldType[] = ['anbieter', 'vertragsnummer'];
+const FIELD_SECTIONS: { id: string; title: string; icon: React.ComponentType<{ size?: number }>; fields: FieldType[] }[] = [
+  { id: 'laufzeit-kuendigung', title: 'Laufzeit & Kündigung', icon: Calendar, fields: ['kuendigung', 'laufzeit', 'startDate', 'expiryDate', 'gekuendigtZum'] },
+  { id: 'kosten', title: 'Kosten', icon: Euro, fields: ['kosten'] },
+];
+
 interface Contract {
   _id: string;
   name: string;
@@ -198,6 +205,117 @@ export default function ContractEditModal({
 
   // Verfügbare Felder (die noch nicht aktiv sind)
   const availableFieldsToAdd = AVAILABLE_FIELDS.filter(f => !activeFields.includes(f.id));
+
+  // 🧩 Einzelnes Feld rendern (ausgelagert, damit es pro Sektion aufgerufen werden kann)
+  const renderField = (fieldId: FieldType) => {
+    const fieldConfig = AVAILABLE_FIELDS.find(f => f.id === fieldId);
+    if (!fieldConfig) return null;
+
+    const IconComponent = fieldConfig.icon;
+    const isCustomMode = customInputMode[fieldId];
+    const currentValue = fieldValues[fieldId] || '';
+
+    return (
+      <div key={fieldId} className={styles.formGroup}>
+        <label className={styles.formLabel}>
+          <IconComponent size={16} />
+          <span>{fieldConfig.label}</span>
+
+          {/* Aktions-Buttons Container (rechts) */}
+          <div className={styles.fieldActions}>
+            {/* Toggle für Dropdown-Felder */}
+            {fieldConfig.type === 'dropdown' && (
+              <button
+                type="button"
+                className={styles.modeToggle}
+                onClick={() => toggleCustomInput(fieldId)}
+                disabled={loading}
+                title={isCustomMode ? 'Aus Liste wählen' : 'Eigene Eingabe'}
+              >
+                {isCustomMode ? (
+                  <><ChevronDown size={12} /> Liste</>
+                ) : (
+                  <><Edit size={12} /> Eigene</>
+                )}
+              </button>
+            )}
+
+            {/* Entfernen-Button */}
+            <button
+              type="button"
+              className={styles.removeFieldBtn}
+              onClick={() => removeField(fieldId)}
+              disabled={loading}
+              title="Feld entfernen"
+            >
+              <Minus size={14} />
+            </button>
+          </div>
+        </label>
+
+        {/* Dropdown-Feld */}
+        {fieldConfig.type === 'dropdown' && !isCustomMode && (
+          <div className={styles.selectWrapper}>
+            <select
+              value={isInOptions(currentValue, fieldConfig.options) ? currentValue : ''}
+              onChange={(e) => updateFieldValue(fieldId, e.target.value)}
+              className={styles.formSelect}
+              disabled={loading}
+            >
+              <option value="">-- Auswählen --</option>
+              {fieldConfig.options?.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <ChevronDown size={16} className={styles.selectIcon} />
+          </div>
+        )}
+
+        {/* Text-Input (für Custom-Dropdown oder Text-Felder) */}
+        {(fieldConfig.type === 'text' || (fieldConfig.type === 'dropdown' && isCustomMode)) && (
+          <input
+            type="text"
+            value={currentValue}
+            onChange={(e) => updateFieldValue(fieldId, e.target.value)}
+            className={styles.formInput}
+            placeholder={fieldConfig.placeholder || `${fieldConfig.label} eingeben...`}
+            disabled={loading}
+            maxLength={100}
+          />
+        )}
+
+        {/* Datum-Input */}
+        {fieldConfig.type === 'date' && (
+          <input
+            type="date"
+            value={currentValue}
+            onChange={(e) => updateFieldValue(fieldId, e.target.value)}
+            className={styles.formInput}
+            disabled={loading}
+          />
+        )}
+
+        {/* Number-Input */}
+        {fieldConfig.type === 'number' && (
+          <div className={styles.numberInputWrapper}>
+            <input
+              type="number"
+              value={currentValue}
+              onChange={(e) => updateFieldValue(fieldId, e.target.value)}
+              className={styles.formInput}
+              placeholder={fieldConfig.placeholder}
+              disabled={loading}
+              step="0.01"
+              min="0"
+            />
+            {fieldConfig.suffix && (
+              <span className={styles.inputSuffix}>{fieldConfig.suffix}</span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // ✅ Escape-Key-Handler für Accessibility
   useEffect(() => {
@@ -488,133 +606,49 @@ export default function ContractEditModal({
 
           {/* Form */}
           <div className={styles.form}>
-            {/* Vertragsname (immer sichtbar) */}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                <FileText size={16} />
-                <span>Vertragsname *</span>
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={styles.formInput}
-                placeholder="z.B. Mietvertrag Hauptstraße 123"
-                disabled={loading}
-                maxLength={100}
-              />
-              <div className={styles.charCount}>
-                {name.length}/100
+            {/* 📄 Allgemein */}
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <FileText size={14} />
+                <span>Allgemein</span>
               </div>
+
+              {/* Vertragsname (immer sichtbar) */}
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  <FileText size={16} />
+                  <span>Vertragsname *</span>
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={styles.formInput}
+                  placeholder="z.B. Mietvertrag Hauptstraße 123"
+                  disabled={loading}
+                  maxLength={100}
+                />
+                <div className={styles.charCount}>
+                  {name.length}/100
+                </div>
+              </div>
+
+              {/* Optionale Allgemein-Felder (Anbieter, Vertragsnummer) */}
+              {ALLGEMEIN_FIELDS.filter(f => activeFields.includes(f)).map(renderField)}
             </div>
 
-            {/* Dynamische Felder */}
-            {activeFields.map((fieldId) => {
-              const fieldConfig = AVAILABLE_FIELDS.find(f => f.id === fieldId);
-              if (!fieldConfig) return null;
-
-              const IconComponent = fieldConfig.icon;
-              const isCustomMode = customInputMode[fieldId];
-              const currentValue = fieldValues[fieldId] || '';
-
+            {/* 📅💶 Gruppierte Sektionen (Laufzeit & Kündigung, Kosten) — nur wenn aktive Felder vorhanden */}
+            {FIELD_SECTIONS.map(section => {
+              const sectionFields = section.fields.filter(f => activeFields.includes(f));
+              if (sectionFields.length === 0) return null;
+              const SecIcon = section.icon;
               return (
-                <div key={fieldId} className={styles.formGroup}>
-                  <label className={styles.formLabel}>
-                    <IconComponent size={16} />
-                    <span>{fieldConfig.label}</span>
-
-                    {/* Aktions-Buttons Container (rechts) */}
-                    <div className={styles.fieldActions}>
-                      {/* Toggle für Dropdown-Felder */}
-                      {fieldConfig.type === 'dropdown' && (
-                        <button
-                          type="button"
-                          className={styles.modeToggle}
-                          onClick={() => toggleCustomInput(fieldId)}
-                          disabled={loading}
-                          title={isCustomMode ? 'Aus Liste wählen' : 'Eigene Eingabe'}
-                        >
-                          {isCustomMode ? (
-                            <><ChevronDown size={12} /> Liste</>
-                          ) : (
-                            <><Edit size={12} /> Eigene</>
-                          )}
-                        </button>
-                      )}
-
-                      {/* Entfernen-Button */}
-                      <button
-                        type="button"
-                        className={styles.removeFieldBtn}
-                        onClick={() => removeField(fieldId)}
-                        disabled={loading}
-                        title="Feld entfernen"
-                      >
-                        <Minus size={14} />
-                      </button>
-                    </div>
-                  </label>
-
-                  {/* Dropdown-Feld */}
-                  {fieldConfig.type === 'dropdown' && !isCustomMode && (
-                    <div className={styles.selectWrapper}>
-                      <select
-                        value={isInOptions(currentValue, fieldConfig.options) ? currentValue : ''}
-                        onChange={(e) => updateFieldValue(fieldId, e.target.value)}
-                        className={styles.formSelect}
-                        disabled={loading}
-                      >
-                        <option value="">-- Auswählen --</option>
-                        {fieldConfig.options?.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                      <ChevronDown size={16} className={styles.selectIcon} />
-                    </div>
-                  )}
-
-                  {/* Text-Input (für Custom-Dropdown oder Text-Felder) */}
-                  {(fieldConfig.type === 'text' || (fieldConfig.type === 'dropdown' && isCustomMode)) && (
-                    <input
-                      type="text"
-                      value={currentValue}
-                      onChange={(e) => updateFieldValue(fieldId, e.target.value)}
-                      className={styles.formInput}
-                      placeholder={fieldConfig.placeholder || `${fieldConfig.label} eingeben...`}
-                      disabled={loading}
-                      maxLength={100}
-                    />
-                  )}
-
-                  {/* Datum-Input */}
-                  {fieldConfig.type === 'date' && (
-                    <input
-                      type="date"
-                      value={currentValue}
-                      onChange={(e) => updateFieldValue(fieldId, e.target.value)}
-                      className={styles.formInput}
-                      disabled={loading}
-                    />
-                  )}
-
-                  {/* Number-Input */}
-                  {fieldConfig.type === 'number' && (
-                    <div className={styles.numberInputWrapper}>
-                      <input
-                        type="number"
-                        value={currentValue}
-                        onChange={(e) => updateFieldValue(fieldId, e.target.value)}
-                        className={styles.formInput}
-                        placeholder={fieldConfig.placeholder}
-                        disabled={loading}
-                        step="0.01"
-                        min="0"
-                      />
-                      {fieldConfig.suffix && (
-                        <span className={styles.inputSuffix}>{fieldConfig.suffix}</span>
-                      )}
-                    </div>
-                  )}
+                <div key={section.id} className={styles.section}>
+                  <div className={styles.sectionHeader}>
+                    <SecIcon size={14} />
+                    <span>{section.title}</span>
+                  </div>
+                  {sectionFields.map(renderField)}
                 </div>
               );
             })}
@@ -665,23 +699,25 @@ export default function ContractEditModal({
               </div>
             )}
 
-            {/* Notizen (immer sichtbar) */}
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>
-                <StickyNote size={16} />
-                <span>Eigene Notizen</span>
-              </label>
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className={styles.formTextarea}
-                placeholder="Hier können Sie eigene Notizen zu diesem Vertrag hinzufügen..."
-                disabled={loading}
-                rows={3}
-                maxLength={500}
-              />
-              <div className={styles.charCount}>
-                {notes.length}/500
+            {/* 📝 Notizen (immer sichtbar) */}
+            <div className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <StickyNote size={14} />
+                <span>Notizen</span>
+              </div>
+              <div className={styles.formGroup}>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className={styles.formTextarea}
+                  placeholder="Hier können Sie eigene Notizen zu diesem Vertrag hinzufügen..."
+                  disabled={loading}
+                  rows={3}
+                  maxLength={500}
+                />
+                <div className={styles.charCount}>
+                  {notes.length}/500
+                </div>
               </div>
             </div>
           </div>
