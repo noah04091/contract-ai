@@ -750,6 +750,18 @@ function calculateSmartStatusBackend(contract) {
   return 'Aktiv';
 }
 
+// 🗂️ Filter-Wert → Smart-Status-Label(s). So gilt: Filter == Badge == Sidebar-Zähler
+// (alle nutzen calculateSmartStatusBackend). Ersetzt die alte, abweichende Datums-Query.
+const STATUS_FILTER_BUCKETS = {
+  aktiv: ['Aktiv'],
+  bald_ablaufend: ['Läuft ab'],
+  abgelaufen: ['Beendet'],
+  'gekündigt': ['Gekündigt', 'Gekündigt ✓', 'Gekündigt — offen'],
+  neu: ['Neu'],
+  entwurf: ['Entwurf'],
+  optimiert: ['Optimiert'],
+};
+
 // 🚀 Keine $lookup-Aggregation mehr — ALLE Lookups als parallele Batch-Queries
 // $expr-basierte $lookups (auch für Events/Envelopes) können Indexes nicht nutzen
 // und verursachen pro Vertrag einen Collection-Scan → 34 Verträge × 3 Collections = ~100 Scans
@@ -1187,115 +1199,8 @@ router.get("/", async (req, res) => {
       ];
     }
 
-    // 📊 Status-Filter - basierend auf berechneten Werten (wie Frontend calculateSmartStatus)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const in30Days = new Date(today);
-    in30Days.setDate(in30Days.getDate() + 30);
-
-    if (statusFilter !== 'alle') {
-      switch (statusFilter) {
-        case 'aktiv':
-          // Aktiv = Ablaufdatum > 30 Tage ODER kein Ablaufdatum (und nicht gekündigt/beendet)
-          // ✅ FIX: $type-Checks für gemischte BSON-Typen (Date + String), Invoices/CancellationId ausschließen
-          mongoFilter.$and = mongoFilter.$and || [];
-          mongoFilter.$and.push({
-            $or: [
-              // Ablaufdatum > 30 Tage (BSON Date)
-              { expiryDate: { $type: 'date', $gt: in30Days } },
-              // Ablaufdatum > 30 Tage (BSON String/ISO)
-              { expiryDate: { $type: 'string', $gt: in30Days.toISOString() } },
-              // Kein Ablaufdatum gesetzt
-              { expiryDate: { $exists: false } },
-              { expiryDate: null }
-            ]
-          });
-          // Nicht gekündigt (gekuendigtZum)
-          mongoFilter.$and.push({
-            $or: [
-              { gekuendigtZum: { $exists: false } },
-              { gekuendigtZum: null }
-            ]
-          });
-          // Keine Rechnungen oder Kündigungsbestätigungen
-          mongoFilter.$and.push({
-            $or: [
-              { documentCategory: { $exists: false } },
-              { documentCategory: null },
-              { documentCategory: { $nin: ['cancellation_confirmation', 'invoice'] } }
-            ]
-          });
-          // Nicht über Contract AI gekündigt
-          mongoFilter.$and.push({
-            $or: [
-              { cancellationId: { $exists: false } },
-              { cancellationId: null }
-            ]
-          });
-          // Kein manueller Gekündigt-Status
-          mongoFilter.$and.push({
-            $or: [
-              { status: { $exists: false } },
-              { status: null },
-              { status: { $not: /^gekündigt$/i } }
-            ]
-          });
-          break;
-        case 'bald_ablaufend':
-          // Bald ablaufend = Ablaufdatum in 0-30 Tagen (inkl. heute) — spiegelt Frontend calculateSmartStatus
-          // ✅ FIX: $type-Checks für gemischte BSON-Typen (Date + String), $gte statt $gt
-          mongoFilter.$and = mongoFilter.$and || [];
-          mongoFilter.$and.push({
-            $or: [
-              // expiryDate in Range (BSON Date)
-              { expiryDate: { $type: 'date', $gte: today, $lte: in30Days } },
-              // expiryDate in Range (BSON String/ISO)
-              { expiryDate: { $type: 'string', $gte: today.toISOString(), $lte: in30Days.toISOString() } },
-              // Manueller Status
-              { status: { $in: ['läuft ab', 'Läuft ab', 'bald fällig', 'Bald fällig'] } }
-            ]
-          });
-          // Nicht bereits gekündigt
-          mongoFilter.$and.push({
-            $or: [
-              { gekuendigtZum: { $exists: false } },
-              { gekuendigtZum: null }
-            ]
-          });
-          // Keine Rechnungen oder Kündigungsbestätigungen
-          mongoFilter.$and.push({
-            $or: [
-              { documentCategory: { $exists: false } },
-              { documentCategory: null },
-              { documentCategory: { $nin: ['cancellation_confirmation', 'invoice'] } }
-            ]
-          });
-          // Nicht über Contract AI gekündigt
-          mongoFilter.$and.push({
-            $or: [
-              { cancellationId: { $exists: false } },
-              { cancellationId: null }
-            ]
-          });
-          break;
-        case 'abgelaufen':
-          // Abgelaufen/Beendet = Ablaufdatum in der Vergangenheit ODER gekuendigtZum in der Vergangenheit
-          mongoFilter.$or = [
-            { expiryDate: { $lt: today } },
-            { gekuendigtZum: { $lt: today } }
-          ];
-          break;
-        case 'gekündigt':
-          // Gekündigt = documentCategory ist cancellation_confirmation ODER gekuendigtZum gesetzt ODER über Contract AI gekündigt
-          mongoFilter.$or = [
-            { documentCategory: 'cancellation_confirmation' },
-            { gekuendigtZum: { $exists: true, $ne: null, $gte: today } },
-            { status: 'gekündigt' },
-            { cancellationId: { $exists: true, $ne: null } }
-          ];
-          break;
-      }
-    }
+    // 📊 Status-Filter: vereinheitlicht auf calculateSmartStatusBackend (= Badge & Zähler).
+    // Die Trefferermittlung passiert direkt vor der Query (unten), da sie allUserContracts braucht.
 
     // 📅 Datums-Filter (erweitert für Mobile UI)
     if (dateFilter !== 'alle') {
@@ -1438,10 +1343,26 @@ router.get("/", async (req, res) => {
       paymentStatus: 1, createdAt: 1
     };
 
-    const [enrichResult, allUserContracts] = await Promise.all([
-      enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit),
-      contractsCollection.find(userBaseFilter, { projection: SIDEBAR_PROJECTION }).toArray()
-    ]);
+    // 📊 Status-Filter (vereinheitlicht): Treffer-IDs aus calculateSmartStatusBackend bestimmen,
+    // damit Filter == Badge == Zähler. allUserContracts wird ohnehin für die Zähler gebraucht.
+    let enrichResult, allUserContracts;
+    if (statusFilter !== 'alle') {
+      // Sequenziell: erst alle (schlanken) Verträge holen, Treffer-IDs bestimmen, dann Liste laden
+      allUserContracts = await contractsCollection.find(userBaseFilter, { projection: SIDEBAR_PROJECTION }).toArray();
+      const targetLabels = STATUS_FILTER_BUCKETS[statusFilter] || [];
+      const ids = allUserContracts
+        .filter(c => targetLabels.includes(calculateSmartStatusBackend(c)))
+        .map(c => c._id)
+        .sort((a, b) => a.toString().localeCompare(b.toString())); // stabile Cache-Keys
+      mongoFilter._id = { $in: ids };
+      enrichResult = await enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit);
+    } else {
+      // Normalfall 'alle': Liste + Zähler parallel (kein Tempo-Verlust)
+      [enrichResult, allUserContracts] = await Promise.all([
+        enrichContractsWithAggregation(mongoFilter, sortOptions, skip, limit),
+        contractsCollection.find(userBaseFilter, { projection: SIDEBAR_PROJECTION }).toArray()
+      ]);
+    }
 
     const { contracts: enrichedContracts, totalCount, _enrichTiming } = enrichResult;
 
