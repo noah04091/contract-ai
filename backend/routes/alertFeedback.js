@@ -312,4 +312,7 @@ router.delete("/:feedbackId", verifyToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+// ⚠️ KEIN zweites "module.exports = router;" hier einfügen!
+// Der gültige Export ist die Factory ganz oben: module.exports = (db) => {...; return router;}.
+// Ein roher Router-Export würde die Factory überschreiben → server.js ruft require(...)(db)
+// auf und crasht mit "Cannot read properties of undefined (reading 'apply')" (10.06.2026).
