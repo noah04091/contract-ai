@@ -237,7 +237,12 @@ async function checkAndSendNotifications(db) {
         console.log(`Skipping ${maskEmail(event.user.email)} - E-Mail-Benachrichtigungen deaktiviert`);
         continue;
       }
-      if (ns?.email?.contractDeadlines === false) {
+      // Selbst gesetzte Erinnerungen sind KEINE „Vertragsfrist": Der Schalter heißt im UI
+      // „Vertragsfristen — Kündigungsfristen & Ablaufdaten". Schaltet der User den aus, will er
+      // keine automatischen Fristen-Mails mehr — aber NICHT, dass sein eigener Wecker (z.B.
+      // Reminder auf den 11.6.) still verschwindet. Darum: user-gewählte Exakt-Termine hier
+      // ausnehmen. Echte abgeleitete Fristen-Events bleiben vom Schalter gestoppt.
+      if (ns?.email?.contractDeadlines === false && !isUserPickedDate) {
         console.log(`Skipping ${maskEmail(event.user.email)} - Vertragsfristen-Mails deaktiviert`);
         continue;
       }
@@ -253,7 +258,12 @@ async function checkAndSendNotifications(db) {
         ? event.metadata.daysUntil
         : daysUntilEvent;
       const dr = ns?.deadlineReminders;
-      if (dr) {
+      // Selbst gesetzte Exakt-Termine sind keine Frist-Vorwarn-Stufen — die 7/3/1/selber-Tag-
+      // Schalter dürfen sie weder steuern noch unterdrücken. Sonst verschluckt z.B. ein
+      // abgeschaltetes „1 Tag vorher" die Erinnerung am EIGENEN Tag still (intendedLead wird
+      // durch den 12:00-Mittagsanker vs. Cron-08:00 zu 1 hochgerundet). Echte Staffel-Reminder
+      // (_REMINDER_XD mit metadata.daysUntil) bleiben unverändert von den Schaltern gesteuert.
+      if (dr && !isUserPickedDate) {
         const skipTiming =
           (intendedLead >= 6 && dr.days7 === false) ||
           (intendedLead >= 2 && intendedLead <= 3 && dr.days3 === false) ||
