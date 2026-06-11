@@ -62,7 +62,8 @@ async function updateContractStatuses(db) {
               expiryDate: newExpiryDate,
               endDate: newExpiryDate,
               lastRenewalDate: now,
-              status: 'aktiv',
+              // 🔒 Bei manuellem Override Status NICHT überschreiben (nur Datum verlängern)
+              status: contract.statusOverride === true ? (contract.status || 'aktiv') : 'aktiv',
               updatedAt: now
             },
             $inc: { renewalCount: 1 }

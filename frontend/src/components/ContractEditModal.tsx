@@ -130,11 +130,10 @@ const STATUS_OPTIONS: { value: StatusSelection; label: string; dot: string }[] =
 // Bestehenden gespeicherten Status auf eine der manuellen Optionen abbilden (nur wenn Override aktiv)
 function statusToSelection(c: { status?: string; statusOverride?: boolean }): StatusSelection {
   if (!c.statusOverride) return 'auto';
-  const s = (c.status || '').toLowerCase();
-  if (s === 'gekündigt' || s === 'gekuendigt') return 'gekündigt';
+  const s = (typeof c.status === 'string' ? c.status : '').toLowerCase();
   if (['abgelaufen', 'beendet', 'expired'].includes(s)) return 'abgelaufen';
   if (['aktiv', 'gültig', 'laufend', 'active'].includes(s)) return 'aktiv';
-  return 'aktiv';
+  return 'aktiv'; // 'gekündigt' u.a. sind keine manuellen Optionen → sicherer Default (kein „kein Button aktiv")
 }
 
 interface Contract {

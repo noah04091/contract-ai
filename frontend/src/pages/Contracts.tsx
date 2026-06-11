@@ -2996,7 +2996,7 @@ export default function Contracts() {
     // 2.5 🔒 MANUELLER OVERRIDE — nur wenn vom User gesetzt. Bewusst NACH Kündigung (1/1.5)
     // und Rechnung (2), damit echte Ereignisse nie verdeckt werden; VOR der Datums-Logik (3),
     // damit der manuelle Status nicht vom Ablaufdatum überschrieben wird.
-    if (contract.statusOverride && contract.status) {
+    if (contract.statusOverride && typeof contract.status === 'string') {
       const s = contract.status.toLowerCase();
       if (s === 'aktiv' || s === 'gültig' || s === 'laufend' || s === 'active') return 'Aktiv';
       if (s === 'gekündigt' || s === 'gekuendigt') return 'Gekündigt';
@@ -3041,8 +3041,8 @@ export default function Contracts() {
       return 'Aktiv';
     }
 
-    // 4. Prüfe ob manuell gesetzter Status vorhanden
-    if (contract.status) {
+    // 4. Prüfe ob manuell gesetzter Status vorhanden (typeof-Guard gegen Nicht-String → kein Render-Crash)
+    if (typeof contract.status === 'string') {
       const status = contract.status.toLowerCase();
       if (status === 'aktiv' || status === 'gültig' || status === 'laufend') return 'Aktiv';
       if (status === 'gekündigt') return 'Gekündigt';

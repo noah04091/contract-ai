@@ -698,7 +698,8 @@ function calculateSmartStatusBackend(contract) {
   }
 
   // 2.5 🔒 Manueller Override (nur wenn gesetzt) — nach Kündigung/Rechnung, vor Datums-Logik
-  if (contract.statusOverride && contract.status) {
+  // typeof-Guard: schützt vor 500-Crash, falls status mal kein String ist (Daten-Korruption)
+  if (contract.statusOverride && typeof contract.status === 'string') {
     const s = contract.status.toLowerCase();
     if (['aktiv', 'gültig', 'laufend', 'active'].includes(s)) return 'Aktiv';
     if (s === 'gekündigt' || s === 'gekuendigt') return 'Gekündigt';
@@ -728,8 +729,8 @@ function calculateSmartStatusBackend(contract) {
     return 'Aktiv';
   }
 
-  // 4. Manueller Status
-  if (contract.status) {
+  // 4. Manueller Status (typeof-Guard gegen Nicht-String-status → kein 500-Crash)
+  if (typeof contract.status === 'string') {
     const status = contract.status.toLowerCase();
     if (['aktiv', 'gültig', 'laufend'].includes(status)) return 'Aktiv';
     if (status === 'gekündigt') return 'Gekündigt';
@@ -1380,14 +1381,19 @@ router.get("/", async (req, res) => {
     const sidebarCounts = { total: allUserContracts.length, baldAblaufend: 0, aktiv: 0, ohneOrdner: 0,
       abgelaufen: 0, gekuendigt: 0, neu: 0, entwurf: 0, optimiert: 0 };
     for (const c of allUserContracts) {
-      const smartStatus = calculateSmartStatusBackend(c);
-      if (smartStatus === 'Aktiv') sidebarCounts.aktiv++;
-      else if (smartStatus === 'Läuft ab') sidebarCounts.baldAblaufend++;
-      else if (smartStatus === 'Beendet') sidebarCounts.abgelaufen++;
-      else if (smartStatus.startsWith('Gekündigt')) sidebarCounts.gekuendigt++;
-      else if (smartStatus === 'Neu') sidebarCounts.neu++;
-      else if (smartStatus === 'Entwurf') sidebarCounts.entwurf++;
-      else if (smartStatus === 'Optimiert') sidebarCounts.optimiert++;
+      try {
+        const smartStatus = calculateSmartStatusBackend(c);
+        if (smartStatus === 'Aktiv') sidebarCounts.aktiv++;
+        else if (smartStatus === 'Läuft ab') sidebarCounts.baldAblaufend++;
+        else if (smartStatus === 'Beendet') sidebarCounts.abgelaufen++;
+        else if (smartStatus.startsWith('Gekündigt')) sidebarCounts.gekuendigt++;
+        else if (smartStatus === 'Neu') sidebarCounts.neu++;
+        else if (smartStatus === 'Entwurf') sidebarCounts.entwurf++;
+        else if (smartStatus === 'Optimiert') sidebarCounts.optimiert++;
+      } catch (e) {
+        // Defekter Vertrag zählt in keinen Status-Eimer — bricht aber NICHT die ganze Liste
+        console.error(`⚠️ Status-Berechnung fehlgeschlagen für Vertrag ${c?._id}:`, e?.message);
+      }
       if (!c.folderId) sidebarCounts.ohneOrdner++;
     }
 
