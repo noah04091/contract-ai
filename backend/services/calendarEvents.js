@@ -1127,6 +1127,16 @@ async function generateEventsForContract(db, contract) {
 
         // Pfad A: WIEDERKEHRENDE Frist (recurrencePattern gesetzt)
         if (frist.recurrencePattern && frist.recurrencePattern.intervalType) {
+          // 🆕 11.06.2026 Anti-Flut: Eine wiederkehrende ZAHLUNGSFRIST (Miete/Abo) NICHT
+          // als 12 identische Monats-Events ausrollen — das ist reines Zeitstrahl-Rauschen.
+          // Die Frist bleibt als Hinweis in "Wichtige Fristen & Hinweise" sichtbar, und der
+          // Reminder-Notifier überspringt diese Events ohnehin (Klasse C, calendarNotifier.js).
+          // WICHTIG: betrifft NUR den Wiederhol-Pfad von zahlungsfrist — Extraktion, andere
+          // Fristtypen und einmalige Anker-Zahlungstermine (Pfad B) bleiben unberührt.
+          if (frist.type === 'zahlungsfrist') {
+            console.log(`  ⏭️ Wiederkehrende zahlungsfrist NICHT als Kalender-Events ausgerollt (Anti-Flut) — bleibt UI-Hinweis (${frist.recurrencePattern.intervalType})`);
+            continue;
+          }
           const cfg = intervalConfig[frist.recurrencePattern.intervalType];
           if (!cfg) {
             console.log(`  ⚠️ Frist übersprungen: unbekannter intervalType=${frist.recurrencePattern.intervalType} (${frist.type})`);
