@@ -2281,7 +2281,7 @@ export default function Contracts() {
 
       // 📊 Sidebar-Counts vom Backend (stabil, unabhängig von Filtern)
       if (response.sidebarCounts) {
-        setSidebarCounts(response.sidebarCounts);
+        setSidebarCounts(prev => ({ ...prev, ...response.sidebarCounts }));
       }
 
       return response.contracts;
@@ -2340,7 +2340,7 @@ export default function Contracts() {
 
       // 📊 Sidebar-Counts aktualisieren
       if (response.sidebarCounts) {
-        setSidebarCounts(response.sidebarCounts);
+        setSidebarCounts(prev => ({ ...prev, ...response.sidebarCounts }));
       }
 
       // 🔧 FIX: previewContract aktualisieren - nutze explizite ID oder aktuelle previewContract ID
