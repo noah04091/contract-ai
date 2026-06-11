@@ -2180,7 +2180,13 @@ router.get("/feature-usage", verifyToken, verifyAdmin, async (req, res) => {
 
     // Test-/Admin-Accounts identisch zur Akquise-Statistik ausschließen
     const TEST_DOMAINS = new Set(['flirt.ms']);
-    const isTest = (email) => TEST_DOMAINS.has((email?.split('@')[1] || '').toLowerCase());
+    // Gründer-/Test-Accounts explizit ausschließen (zusätzlich zu role:'admin' +
+    // flirt.ms-Domain), damit Noahs tägliches Feature-Testen die Zahlen nicht verfälscht.
+    const EXCLUDED_EMAILS = new Set(['liebold.noah@web.de']);
+    const isTest = (email) => {
+      const e = (email || '').toLowerCase();
+      return TEST_DOMAINS.has((e.split('@')[1] || '')) || EXCLUDED_EMAILS.has(e);
+    };
     const allUsers = await usersCollection.find(
       {}, { projection: { _id: 1, email: 1, role: 1 } }
     ).toArray();
