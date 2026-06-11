@@ -830,7 +830,7 @@ function validateAndCollect(parsed, contractText, source, requestId) {
         type: e.type,
         title: repairReplacementChars(e.title, lowerSource),
         description: repairReplacementChars(e.description || '', lowerSource),
-        legalBasis: e.legalBasis || '',
+        legalBasis: repairReplacementChars(e.legalBasis || '', lowerSource),
         evidence: e.evidence,
         // 🆕 Tier 2 (Problem F, 27.05.2026): Calendar-Felder durchreichen
         actionable: e.actionable === true,
