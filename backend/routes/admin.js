@@ -2164,4 +2164,57 @@ router.get("/acquisition-stats", verifyToken, verifyAdmin, async (req, res) => {
   }
 });
 
+// ===== 📊 GET FEATURE USAGE STATS =====
+// GET /api/admin/feature-usage?days=30
+// Stilles internes Produkt-Analytics: welche Features wie oft & von wie vielen
+// ECHTEN Usern genutzt werden (Test-/Admin-Accounts ausgeschlossen). Read-only.
+router.get("/feature-usage", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const db = await database.connect();
+    const usersCollection = db.collection("users");
+    const featureUsageCollection = db.collection("feature_usage");
+
+    // Zeitraum in Tagen, Default 30, robust geklemmt
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // Test-/Admin-Accounts identisch zur Akquise-Statistik ausschließen
+    const TEST_DOMAINS = new Set(['flirt.ms']);
+    const isTest = (email) => TEST_DOMAINS.has((email?.split('@')[1] || '').toLowerCase());
+    const allUsers = await usersCollection.find(
+      {}, { projection: { _id: 1, email: 1, role: 1 } }
+    ).toArray();
+    // feature_usage.userId wird als String gespeichert → Vergleich als String
+    const excludedIds = allUsers
+      .filter(u => isTest(u.email) || u.role === 'admin')
+      .map(u => u._id.toString());
+
+    // Aggregation: pro Feature Anzahl Nutzungen + eindeutige User
+    const rows = await featureUsageCollection.aggregate([
+      { $match: { timestamp: { $gte: since }, userId: { $nin: excludedIds } } },
+      { $group: { _id: '$feature', count: { $sum: 1 }, users: { $addToSet: '$userId' } } },
+      { $project: { _id: 0, feature: '$_id', count: 1, uniqueUsers: { $size: '$users' } } },
+      { $sort: { count: -1 } }
+    ]).toArray();
+
+    const totalUses = rows.reduce((sum, r) => sum + r.count, 0);
+    const features = rows.map(r => ({
+      ...r,
+      percentage: totalUses > 0 ? Math.round((r.count / totalUses) * 1000) / 10 : 0
+    }));
+
+    res.json({
+      success: true,
+      days,
+      since: since.toISOString(),
+      totalUses,
+      excludedAccounts: excludedIds.length,
+      features
+    });
+  } catch (error) {
+    console.error('❌ [ADMIN] feature-usage error:', error.message);
+    res.status(500).json({ success: false, message: 'Fehler beim Laden der Feature-Nutzung' });
+  }
+});
+
 module.exports = router;

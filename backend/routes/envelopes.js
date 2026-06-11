@@ -590,6 +590,9 @@ router.post("/envelopes", verifyToken, requirePremium, async (req, res) => {
       }
     }
 
+    // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'envelope' }).catch(() => {});
+
     res.status(201).json({
       success: true,
       message: "Envelope erfolgreich erstellt",

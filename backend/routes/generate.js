@@ -3356,6 +3356,8 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
       console.error("Activity Log Error:", logErr);
     }
 
+    // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'generate' }).catch(() => {});
     // Response mit allen Daten
     res.json({
       message: existingContractId

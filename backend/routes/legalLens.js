@@ -900,6 +900,9 @@ router.post('/parse', verifyToken, async (req, res) => {
 
     const contract = access.contract;
 
+    // 📊 Feature-Usage-Tracking (fire-and-forget): User öffnet diesen Vertrag in Legal Lens
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId, feature: 'legal-lens' }).catch(() => {});
+
     // ⚡ FAST PATH: Prüfen ob Cache gültig ist (TTL + Version + Force-Refresh)
     const cacheCheck = isCacheValid(contract.legalLens, forceRefresh);
 

@@ -5619,6 +5619,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // 🛑 Stufe 2: Guard gegen Race-Condition mit Client-Disconnect
     if (!res.headersSent && !clientDisconnected) {
       res.json(responseData);
+      // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+      require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'analyze' }).catch(() => {});
     } else if (clientDisconnected) {
       console.log(`ℹ️ [${requestId}] Response nicht gesendet — Client war disconnected. Pipeline-Ergebnis ist in DB persistiert.`);
     }

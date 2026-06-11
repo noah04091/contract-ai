@@ -1087,6 +1087,8 @@ router.post("/:id/message", verifyToken, async (req, res) => {
         followUpQuestions: followUpQuestions || []
       })}\n\n`);
       res.end();
+      // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+      require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'chat' }).catch(() => {});
 
       // Persist assistant message
       await chats.updateOne(

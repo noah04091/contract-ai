@@ -4993,6 +4993,8 @@ router.post("/", verifyToken, uploadLimiter, analyzeLimiter, upload.single("file
       console.error("Activity Log Error:", logErr);
     }
 
+    // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'optimize' }).catch(() => {});
     // Sende erfolgreiche Antwort
     res.json({
       success: true,
@@ -5715,6 +5717,8 @@ router.post("/stream", verifyToken, uploadLimiter, analyzeLimiter, upload.single
 
     sendProgress(100, "🎉 Optimierung abgeschlossen!");
     sendComplete(finalResult);
+    // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'optimize' }).catch(() => {});
 
   } catch (error) {
     const errorDetails = {

@@ -1027,6 +1027,9 @@ router.post("/", verifyToken, upload.fields([
       console.warn('⚠️ Compare cost tracking error:', costErr.message);
     }
 
+    // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'compare' }).catch(() => {});
+
     // 🛡️ DSGVO-Compliance: Sofortige Dateilöschung nach Verarbeitung
     sendProgress(res, 'cleanup', 95, 'Aufräumen...', wantsSSE);
     console.log("🗑️ Lösche temporäre Dateien (DSGVO-konform)...");

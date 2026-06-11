@@ -52,6 +52,9 @@ router.post("/analyze/:contractId", verifyToken, requirePremium, legalPulseRateL
     
     // Einzelanalyse durchführen
     const result = await runLegalPulseScan.scanSingle(contractId);
+
+    // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'legal-pulse' }).catch(() => {});
     
     res.json({
       success: true,

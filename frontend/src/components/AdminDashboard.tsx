@@ -463,8 +463,21 @@ const formatActivityType = (type: string): string => {
   return typeMap[type] || type;
 };
 
+// Anzeige-Labels für die Feature-Nutzungs-Tabelle (Tag → menschenlesbar)
+const FEATURE_LABELS: Record<string, string> = {
+  analyze: 'Vertragsanalyse',
+  optimize: 'Optimizer',
+  chat: 'Vertrags-Chat',
+  generate: 'Vertragsgenerator',
+  compare: 'Vertragsvergleich',
+  playbook: 'Playbook',
+  'legal-lens': 'Legal Lens',
+  'legal-pulse': 'Legal Pulse',
+  envelope: 'E-Signatur',
+};
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'campaigns' | 'refunds' | 'settings' | 'acquisition'>('costs');
+  const [activeTab, setActiveTab] = useState<'costs' | 'system' | 'users' | 'beta' | 'deleted' | 'activity' | 'monitoring' | 'finance' | 'emails' | 'campaigns' | 'refunds' | 'settings' | 'acquisition' | 'feature-usage'>('costs');
   const [users, setUsers] = useState<User[]>([]);
   const [adminStats, setAdminStats] = useState<AdminStats | null>(null);
   const [betaStats, setBetaStats] = useState<BetaStats | null>(null);
@@ -478,6 +491,14 @@ export default function AdminDashboard() {
     total: number;
   } | null>(null);
   const [acquisitionLoading, setAcquisitionLoading] = useState(false);
+  const [featureUsageStats, setFeatureUsageStats] = useState<{
+    days: number;
+    totalUses: number;
+    excludedAccounts: number;
+    features: { feature: string; count: number; uniqueUsers: number; percentage: number }[];
+  } | null>(null);
+  const [featureUsageLoading, setFeatureUsageLoading] = useState(false);
+  const [featureUsageDays, setFeatureUsageDays] = useState(30);
   const [financeLoading, setFinanceLoading] = useState(false);
   const [emailLogsData, setEmailLogsData] = useState<EmailLogsData | null>(null);
   const [emailLogsStats, setEmailLogsStats] = useState<EmailLogsStats | null>(null);
@@ -752,6 +773,30 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (activeTab === 'acquisition' && !acquisitionStats) {
       fetchAcquisitionStats();
+    }
+  }, [activeTab]);
+
+  const fetchFeatureUsage = async (days: number) => {
+    try {
+      setFeatureUsageLoading(true);
+      const res = await fetch(`${API_URL}/api/admin/feature-usage?days=${days}`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFeatureUsageStats(data);
+      }
+    } catch (err) {
+      console.error('Error fetching feature usage:', err);
+    } finally {
+      setFeatureUsageLoading(false);
+    }
+  };
+
+  // Load feature-usage data when tab is selected
+  useEffect(() => {
+    if (activeTab === 'feature-usage' && !featureUsageStats) {
+      fetchFeatureUsage(featureUsageDays);
     }
   }, [activeTab]);
 
@@ -1639,6 +1684,13 @@ export default function AdminDashboard() {
           <TrendingUp size={20} />
           <span>Akquise</span>
         </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'feature-usage' ? styles.active : ''}`}
+          onClick={() => setActiveTab('feature-usage')}
+        >
+          <Activity size={20} />
+          <span>Feature-Nutzung</span>
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -1693,6 +1745,72 @@ export default function AdminDashboard() {
               </>
             )}
             {!acquisitionLoading && !acquisitionStats && <p>Keine Daten verfügbar.</p>}
+          </div>
+        )}
+        {/* FEATURE-NUTZUNG TAB */}
+        {activeTab === 'feature-usage' && (
+          <div style={{ padding: '8px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
+              <h2 style={{ margin: 0 }}>📊 Feature-Nutzung</h2>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[7, 30, 90].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => { setFeatureUsageDays(d); fetchFeatureUsage(d); }}
+                    style={{
+                      padding: '4px 12px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
+                      border: '1px solid #e2e8f0',
+                      background: featureUsageDays === d ? '#2563eb' : '#fff',
+                      color: featureUsageDays === d ? '#fff' : '#475569'
+                    }}
+                  >
+                    {d} Tage
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p style={{ color: '#64748b', marginBottom: 16 }}>
+              Welche Features echte Nutzer aktiv verwenden (Test-/Admin-Accounts ausgeschlossen). Das Tracking greift ab Einbau — Werte starten bei 0 und wachsen mit der Nutzung.
+            </p>
+            {featureUsageLoading && <p>Lädt…</p>}
+            {featureUsageStats && featureUsageStats.features.length > 0 && (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                  <thead>
+                    <tr style={{ textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>
+                      <th style={{ padding: '8px 12px' }}>Feature</th>
+                      <th style={{ padding: '8px 12px' }}>Nutzungen</th>
+                      <th style={{ padding: '8px 12px' }}>Eindeutige Nutzer</th>
+                      <th style={{ padding: '8px 12px' }}>Anteil</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {featureUsageStats.features.map((f) => (
+                      <tr key={f.feature} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '8px 12px', fontWeight: 500 }}>{FEATURE_LABELS[f.feature] || f.feature}</td>
+                        <td style={{ padding: '8px 12px', fontWeight: 600 }}>{f.count}</td>
+                        <td style={{ padding: '8px 12px' }}>{f.uniqueUsers}</td>
+                        <td style={{ padding: '8px 12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ flex: '0 0 120px', height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                              <div style={{ width: `${f.percentage}%`, height: '100%', background: '#2563eb' }} />
+                            </div>
+                            <span style={{ color: '#64748b' }}>{f.percentage}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 12 }}>
+                  Insgesamt {featureUsageStats.totalUses} Nutzungen in {featureUsageStats.days} Tagen.
+                </p>
+              </div>
+            )}
+            {featureUsageStats && featureUsageStats.features.length === 0 && !featureUsageLoading && (
+              <p>Noch keine Nutzungsdaten im gewählten Zeitraum.</p>
+            )}
+            {!featureUsageLoading && !featureUsageStats && <p>Keine Daten verfügbar.</p>}
           </div>
         )}
         {/* COST TRACKING TAB */}

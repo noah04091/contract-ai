@@ -149,6 +149,9 @@ router.post("/:type/generate", verifyToken, requirePremium, async (req, res) => 
 
     console.log(`✅ [PLAYBOOK] Vertrag generiert: ${contractId} (${type}, Modus: ${engineResult.mode})`);
 
+    // 📊 Feature-Usage-Tracking (fire-and-forget, bricht/blockiert nie)
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'playbook' }).catch(() => {});
+
     res.json({
       success: true,
       contractId: contractId.toString(),
