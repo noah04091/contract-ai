@@ -1191,12 +1191,22 @@ router.get("/", async (req, res) => {
     if (searchQuery.trim()) {
       // ✅ Escape special regex characters (., *, +, ?, ^, $, {, }, (, ), |, [, ], \)
       const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-      mongoFilter.$or = [
+      const searchOr = [
         { name: { $regex: escapedQuery, $options: 'i' } },
         { status: { $regex: escapedQuery, $options: 'i' } },
         { kuendigung: { $regex: escapedQuery, $options: 'i' } }
       ];
+
+      // 🛡️ FIX (Org-Scope-Bug): Suche NICHT direkt in $or schreiben — das würde bei Org-Usern
+      // den User/Org-Scope-$or überschreiben (fremde Verträge sichtbar). Stattdessen Scope UND
+      // Suche per $and kombinieren. Für Einzel-User (mongoFilter = {userId}) ändert sich nichts
+      // am Ergebnis (userId AND Suche).
+      mongoFilter.$and = mongoFilter.$and || [];
+      if (mongoFilter.$or) {
+        mongoFilter.$and.push({ $or: mongoFilter.$or }); // bestehender Scope (Org-User)
+        delete mongoFilter.$or;
+      }
+      mongoFilter.$and.push({ $or: searchOr }); // die eigentliche Suche
     }
 
     // 📊 Status-Filter: vereinheitlicht auf calculateSmartStatusBackend (= Badge & Zähler).
@@ -1367,11 +1377,17 @@ router.get("/", async (req, res) => {
     const { contracts: enrichedContracts, totalCount, _enrichTiming } = enrichResult;
 
     // 📊 Sidebar-Counts: Aus ALLEN User-Verträgen berechnet (unabhängig von aktiven Filtern)
-    const sidebarCounts = { total: allUserContracts.length, baldAblaufend: 0, aktiv: 0, ohneOrdner: 0 };
+    const sidebarCounts = { total: allUserContracts.length, baldAblaufend: 0, aktiv: 0, ohneOrdner: 0,
+      abgelaufen: 0, gekuendigt: 0, neu: 0, entwurf: 0, optimiert: 0 };
     for (const c of allUserContracts) {
       const smartStatus = calculateSmartStatusBackend(c);
-      if (smartStatus === 'Läuft ab') sidebarCounts.baldAblaufend++;
       if (smartStatus === 'Aktiv') sidebarCounts.aktiv++;
+      else if (smartStatus === 'Läuft ab') sidebarCounts.baldAblaufend++;
+      else if (smartStatus === 'Beendet') sidebarCounts.abgelaufen++;
+      else if (smartStatus.startsWith('Gekündigt')) sidebarCounts.gekuendigt++;
+      else if (smartStatus === 'Neu') sidebarCounts.neu++;
+      else if (smartStatus === 'Entwurf') sidebarCounts.entwurf++;
+      else if (smartStatus === 'Optimiert') sidebarCounts.optimiert++;
       if (!c.folderId) sidebarCounts.ohneOrdner++;
     }
 

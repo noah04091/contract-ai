@@ -690,7 +690,12 @@ export default function Contracts() {
     total: 0,
     baldAblaufend: 0,
     aktiv: 0,
-    ohneOrdner: 0
+    ohneOrdner: 0,
+    abgelaufen: 0,
+    gekuendigt: 0,
+    neu: 0,
+    entwurf: 0,
+    optimiert: 0
   });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
@@ -2256,7 +2261,7 @@ export default function Contracts() {
           skip: number;
           hasMore: boolean;
         };
-        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number };
+        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number; abgelaufen: number; gekuendigt: number; neu: number; entwurf: number; optimiert: number };
       };
 
       // 🚀 Race Condition Check: Ignoriere Response wenn neuerer Request gestartet wurde
@@ -2323,7 +2328,7 @@ export default function Contracts() {
           skip: number;
           hasMore: boolean;
         };
-        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number };
+        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number; abgelaufen: number; gekuendigt: number; neu: number; entwurf: number; optimiert: number };
       };
 
       setContracts(response.contracts);
@@ -4423,14 +4428,14 @@ export default function Contracts() {
                   onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                   style={{ minWidth: '120px' }}
                 >
-                  <option value="alle">Alle Status</option>
-                  <option value="aktiv">Aktiv</option>
-                  <option value="bald_ablaufend">Läuft ab</option>
-                  <option value="abgelaufen">Beendet</option>
-                  <option value="gekündigt">Gekündigt</option>
-                  <option value="neu">Neu</option>
-                  <option value="entwurf">Entwurf</option>
-                  <option value="optimiert">Optimiert</option>
+                  <option value="alle">Alle Status ({sidebarCounts.total})</option>
+                  <option value="aktiv">Aktiv ({sidebarCounts.aktiv})</option>
+                  <option value="bald_ablaufend">Läuft ab ({sidebarCounts.baldAblaufend})</option>
+                  <option value="abgelaufen">Beendet ({sidebarCounts.abgelaufen})</option>
+                  <option value="gekündigt">Gekündigt ({sidebarCounts.gekuendigt})</option>
+                  <option value="neu">Neu ({sidebarCounts.neu})</option>
+                  <option value="entwurf">Entwurf ({sidebarCounts.entwurf})</option>
+                  <option value="optimiert">Optimiert ({sidebarCounts.optimiert})</option>
                 </select>
 
                 {/* Zeitraum Filter */}
@@ -4582,14 +4587,14 @@ export default function Contracts() {
                           value={statusFilter}
                           onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
                         >
-                          <option value="alle">Alle Status</option>
-                          <option value="aktiv">Aktiv</option>
-                          <option value="bald_ablaufend">Läuft ab</option>
-                          <option value="abgelaufen">Beendet</option>
-                          <option value="gekündigt">Gekündigt</option>
-                  <option value="neu">Neu</option>
-                  <option value="entwurf">Entwurf</option>
-                  <option value="optimiert">Optimiert</option>
+                          <option value="alle">Alle Status ({sidebarCounts.total})</option>
+                          <option value="aktiv">Aktiv ({sidebarCounts.aktiv})</option>
+                          <option value="bald_ablaufend">Läuft ab ({sidebarCounts.baldAblaufend})</option>
+                          <option value="abgelaufen">Beendet ({sidebarCounts.abgelaufen})</option>
+                          <option value="gekündigt">Gekündigt ({sidebarCounts.gekuendigt})</option>
+                  <option value="neu">Neu ({sidebarCounts.neu})</option>
+                  <option value="entwurf">Entwurf ({sidebarCounts.entwurf})</option>
+                  <option value="optimiert">Optimiert ({sidebarCounts.optimiert})</option>
                         </select>
                       </div>
 
