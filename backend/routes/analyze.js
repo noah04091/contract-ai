@@ -4,6 +4,7 @@ const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = require("../services/textExtractor");
 const pdfExtractor = require("../services/pdfExtractor");
+const { sanitizeAnalysisResult } = require("../utils/textSanitizer");
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const { OpenAI } = require("openai");
@@ -4778,6 +4779,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       result.fristHinweise = undefined;
       console.log(`📅 [${requestId}] Date Hunt im Fallback — Hauptanalyse-importantDates bleiben, fristHinweise leer`);
     }
+
+    // 🧹 Zentraler Anzeige-Text-Säuberungs-Layer (12.06.2026): EINMAL ganz am Ende, bevor
+    // gespeichert/gesendet wird, repariert deterministisch kaputte Zeichen (�, weggelassene
+    // Umlaute, Mojibake) in ALLEN angezeigten KI-Textfeldern — quelltext-validiert, erfindet
+    // nie. Display-only: Score/Logik/Datums/Enums bleiben bitidentisch (siehe textSanitizer.js).
+    result = sanitizeAnalysisResult(result, (pdfData && pdfData.text) || fullTextContent || '');
 
     console.log(`🛠️ [${requestId}] FIXED Deep lawyer-level analysis successful, saving to DB...`);
 
