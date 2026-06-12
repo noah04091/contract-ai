@@ -346,14 +346,28 @@ router.get("/settings", verifyToken, async (req, res) => {
         endTime: "08:00"
       },
       deadlineReminders: {
+        days30: true,
         days7: true,
-        days3: true,
         days1: true,
         daysSame: true
       }
     };
 
     const settings = user?.notificationSettings || defaultSettings;
+
+    // 3a: deadlineReminders auf den kanonischen Satz 30/7/1/0 normalisieren (sanfte Migration).
+    // Bestands-User haben evtl. noch das alte Schema (days7/days3/days1/daysSame ohne days30):
+    // days30 fehlt → Default true; das alte days3 wird ignoriert (3-Tage-Stufe existiert nicht
+    // mehr). Nicht-destruktiv — wird erst beim nächsten Speichern in kanonischer Form persistiert.
+    {
+      const dr = settings.deadlineReminders || {};
+      settings.deadlineReminders = {
+        days30: dr.days30 !== false,
+        days7: dr.days7 !== false,
+        days1: dr.days1 !== false,
+        daysSame: dr.daysSame !== false
+      };
+    }
 
     res.json({
       success: true,
@@ -421,8 +435,8 @@ router.put("/settings", verifyToken, async (req, res) => {
         endTime: settings.quietHours?.endTime || "08:00"
       },
       deadlineReminders: {
+        days30: settings.deadlineReminders?.days30 !== false,
         days7: settings.deadlineReminders?.days7 !== false,
-        days3: settings.deadlineReminders?.days3 !== false,
         days1: settings.deadlineReminders?.days1 !== false,
         daysSame: settings.deadlineReminders?.daysSame !== false
       }

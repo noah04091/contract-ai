@@ -982,15 +982,20 @@ async function generateEventsForContract(db, contract) {
           // nicht Termine, die in X Tagen ab heute liegen. "In 30 Tagen: Kündigungsfristende"
           // wurde sonst mit dem absoluten Datum + "In 7 Monaten"-Anzeige als widersprüchlich
           // wahrgenommen. "30 Tage vorher: Kündigungsfristende" ist eindeutig.
+          // 3a — KANONISCHER VORWARN-SATZ: nur noch 30 / 7 / 1 Tage vorher.
+          // Der Stichtag selbst (Vorlauf 0 / „am Tag") wird durch das Haupt-Event abgedeckt,
+          // das am Frist-Tag liegt und vom „Am Stichtag"-Schalter (daysSame) gesteuert wird —
+          // darum hier KEINE 0-Stufe (sonst Doppel-Mail am Frist-Tag).
+          // Frühere 14- und 3-Tage-Stufen entfernt: sie hatten keinen eigenen Schalter und
+          // ließen das Etikett lügen. Jetzt mappt jede erzeugte Stufe 1:1 auf einen Schalter.
           const reminderConfig = {
             critical: [
               { days: 30, emoji: '📅', urgency: 'info', label: '30 Tage vorher' },
-              { days: 14, emoji: '⚠️', urgency: 'warning', label: '2 Wochen vorher' },
               { days: 7, emoji: '🚨', urgency: 'warning', label: '7 Tage vorher' },
-              { days: 3, emoji: '🔴', urgency: 'critical', label: '3 Tage vorher – DRINGEND' }
+              { days: 1, emoji: '🔴', urgency: 'critical', label: '1 Tag vorher – DRINGEND' }
             ],
             warning: [
-              { days: 14, emoji: '📅', urgency: 'info', label: '2 Wochen vorher' },
+              { days: 30, emoji: '📅', urgency: 'info', label: '30 Tage vorher' },
               { days: 7, emoji: '⚠️', urgency: 'warning', label: '7 Tage vorher' }
             ],
             info: [

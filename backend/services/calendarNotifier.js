@@ -258,19 +258,30 @@ async function checkAndSendNotifications(db) {
         ? event.metadata.daysUntil
         : daysUntilEvent;
       const dr = ns?.deadlineReminders;
-      // Selbst gesetzte Exakt-Termine sind keine Frist-Vorwarn-Stufen — die 7/3/1/selber-Tag-
-      // Schalter dürfen sie weder steuern noch unterdrücken. Sonst verschluckt z.B. ein
-      // abgeschaltetes „1 Tag vorher" die Erinnerung am EIGENEN Tag still (intendedLead wird
-      // durch den 12:00-Mittagsanker vs. Cron-08:00 zu 1 hochgerundet). Echte Staffel-Reminder
-      // (_REMINDER_XD mit metadata.daysUntil) bleiben unverändert von den Schaltern gesteuert.
+      // 3a — EHRLICHE 1:1-ZUORDNUNG Stufe → Schalter (kanonischer Satz 30/7/1/0).
+      // Früher mappte ein Bereichs-Schema (>=6 → days7) den 7-Tage-Schalter heimlich auf
+      // ALLE Vorläufe ab 6 Tagen (auch 14 und 30) — das Etikett log. Jetzt steuert jeder
+      // Schalter exakt seine Stufe.
+      // Selbst gesetzte Exakt-Termine (isUserPickedDate) bleiben ausgenommen — sie sind keine
+      // Frist-Vorwarn-Stufen; ein abgeschaltetes „1 Tag vorher" darf sie nicht still verschlucken.
+      // Nicht-kanonische Vorläufe werden auf die NÄCHSTE kanonische Stufe abgebildet — so
+      // bleiben sie sauber von genau einem Schalter gesteuert und feuern nie ungewollt.
+      // Das betrifft (a) Alt-Events aus Bestandsverträgen (vor 3a erzeugt, laufen aus) UND
+      // (b) seltene Spezial-Erzeuger, die weiter eigene Vorläufe nutzen: Mindestlaufzeit-/
+      // Probezeit-Reminder (14d → days7) und Zahlungs-Reminder (3d → days1).
       if (dr && !isUserPickedDate) {
-        const skipTiming =
-          (intendedLead >= 6 && dr.days7 === false) ||
-          (intendedLead >= 2 && intendedLead <= 3 && dr.days3 === false) ||
-          (intendedLead === 1 && dr.days1 === false) ||
-          (intendedLead <= 0 && dr.daysSame === false);
-        if (skipTiming) {
-          console.log(`Skipping ${maskEmail(event.user.email)} - Erinnerung ${intendedLead}d deaktiviert`);
+        const canonicalStages = [
+          { lead: 30, enabled: dr.days30 !== false },
+          { lead: 7,  enabled: dr.days7 !== false },
+          { lead: 1,  enabled: dr.days1 !== false },
+          { lead: 0,  enabled: dr.daysSame !== false }
+        ];
+        // nächstliegende kanonische Stufe (bei Gleichstand gewinnt die frühere/größere Stufe)
+        const stage = canonicalStages.reduce((best, s) =>
+          Math.abs(s.lead - intendedLead) < Math.abs(best.lead - intendedLead) ? s : best
+        );
+        if (stage.enabled === false) {
+          console.log(`Skipping ${maskEmail(event.user.email)} - Erinnerung ${intendedLead}d (Stufe ${stage.lead}d) deaktiviert`);
           continue;
         }
       }

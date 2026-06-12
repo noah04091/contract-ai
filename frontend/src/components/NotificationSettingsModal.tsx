@@ -43,8 +43,8 @@ interface NotificationSettings {
     signatureUpdates: boolean;
   };
   deadlineReminders: {
+    days30: boolean;
     days7: boolean;
-    days3: boolean;
     days1: boolean;
     daysSame: boolean;
   };
@@ -483,10 +483,22 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
                         <Calendar size={18} />
                         <div>
                           <h3>Frist-Erinnerungen</h3>
-                          <p>Wann möchtest du erinnert werden?</p>
+                          <p>Wann möchtest du vor wichtigen Fristen erinnert werden?</p>
                         </div>
                       </div>
+                      <p style={{ fontSize: '13px', color: '#6b7280', margin: '0 0 12px' }}>
+                        Diese Einstellung gilt für alle deine Verträge. Jede Stufe schickt genau eine
+                        Erinnerung zum gewählten Zeitpunkt vor der Frist.
+                      </p>
                       <div className={styles.checkboxGrid}>
+                        <label className={styles.checkbox}>
+                          <input
+                            type="checkbox"
+                            checked={notificationSettings.deadlineReminders.days30}
+                            onChange={e => updateSetting('deadlineReminders', 'days30', e.target.checked)}
+                          />
+                          <span>30 Tage vorher</span>
+                        </label>
                         <label className={styles.checkbox}>
                           <input
                             type="checkbox"
@@ -494,14 +506,6 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
                             onChange={e => updateSetting('deadlineReminders', 'days7', e.target.checked)}
                           />
                           <span>7 Tage vorher</span>
-                        </label>
-                        <label className={styles.checkbox}>
-                          <input
-                            type="checkbox"
-                            checked={notificationSettings.deadlineReminders.days3}
-                            onChange={e => updateSetting('deadlineReminders', 'days3', e.target.checked)}
-                          />
-                          <span>3 Tage vorher</span>
                         </label>
                         <label className={styles.checkbox}>
                           <input
@@ -517,7 +521,7 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
                             checked={notificationSettings.deadlineReminders.daysSame}
                             onChange={e => updateSetting('deadlineReminders', 'daysSame', e.target.checked)}
                           />
-                          <span>Am selben Tag</span>
+                          <span>Am Stichtag</span>
                         </label>
                       </div>
                     </div>
