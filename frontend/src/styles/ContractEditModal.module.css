@@ -172,6 +172,22 @@
   min-width: 0; /* verhindert Grid-Überlauf bei langen Inhalten */
 }
 
+/* Einzelnes Feld spannt beide Spalten (kein halb-breites, einsames Feld) */
+.fieldGrid > :only-child {
+  grid-column: 1 / -1;
+}
+
+/* Labels dürfen im engen Grid schrumpfen statt überzulaufen (lange dt. Labels + Aktions-Buttons) */
+.fieldGrid .formLabel {
+  min-width: 0;
+}
+.fieldGrid .formLabel > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 560px) {
   .fieldGrid { grid-template-columns: 1fr; }
 }

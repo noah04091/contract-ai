@@ -959,6 +959,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     if (l.startsWith('gekündigt')) { className = styles.statusDeclined; icon = <XCircle size={16} />; }
     else if (l === 'beendet' || l === 'abgelaufen') { className = styles.statusExpired; icon = <Clock size={16} />; }
     else if (l === 'läuft ab' || l === 'offen') { className = styles.statusExpired; icon = <AlertCircle size={16} />; }
+    else if (l === 'neu' || l === 'entwurf' || l === 'pausiert') { className = styles.statusDraft; icon = <AlertCircle size={16} />; }
+    // 'Aktiv', 'Optimiert', 'Bezahlt' → Default (statusCompleted, grün)
 
     return (
       <div className={`${styles.statusBadge} ${className}`}>
