@@ -37,6 +37,7 @@ const createCheckSubscription = require("./middleware/checkSubscription");
 
 // ✅ CALENDAR INTEGRATION IMPORTS
 const { onContractChange } = require("./services/calendarEvents");
+const { VISIBLE_EVENT_MATCH } = require("./utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus ICS-Anzeige ausblenden
 const { checkAndSendNotifications, processEmailQueue } = require("./services/calendarNotifier");
 const { processDigests } = require("./services/calendarDigestService");
 
@@ -545,7 +546,9 @@ const connectDB = async () => {
                 $match: {
                   userId,
                   date: { $gte: new Date() },
-                  status: { $ne: "dismissed" }
+                  status: { $ne: "dismissed" },
+                  // 3b: Auto-Vorwarnungen aus dem ICS-Feed ausblenden — siehe utils/calendarVisibility.js
+                  $and: [VISIBLE_EVENT_MATCH]
                 }
               },
               {

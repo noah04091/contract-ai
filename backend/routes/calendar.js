@@ -6,6 +6,7 @@ const crypto = require("crypto");
 const verifyToken = require("../middleware/verifyToken");
 const { generateEventsForContract, cleanAndRegenerateAIEvents, regenerateAllEvents } = require("../services/calendarEvents");
 const { generateICSFeed, generateCalendarLinks } = require("../utils/icsGenerator");
+const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
 
 const router = express.Router();
 
@@ -151,6 +152,17 @@ router.get("/events", verifyToken, async (req, res) => {
       const validContractId = safeObjectId(contractId);
       if (!validContractId) return res.status(400).json({ success: false, error: "Ungültige Vertrags-ID" });
       filter.contractId = validContractId;
+    }
+
+    // 3b: Auto-Vorwarnungen ("X Tage vorher"-Staffel + benannte Vorwarner) aus der
+    // BREITEN Kalender-Anzeige ausblenden — pro Frist nur 1 Eintrag. Reiner Anzeige-Filter;
+    // Events bleiben in der DB + mailen weiter. Sichtbar bleiben Haupt-Termine,
+    // Exakt-Datum-/manuelle/Signatur-Einträge (siehe utils/calendarVisibility.js).
+    // WICHTIG: NUR ausblenden, wenn nicht nach einem einzelnen Vertrag gefragt wird.
+    // Bei ?contractId=… (Vertrags-Detail-/Reminder-Verwaltungs-Modal) zeigen wir ALLE
+    // Events inkl. Vorwarnungen — dort werden sie verwaltet, nicht nur angezeigt.
+    if (!contractId) {
+      filter.$and = [...(filter.$and || []), VISIBLE_EVENT_MATCH];
     }
 
     // Fetch events with contract details
@@ -630,8 +642,10 @@ router.get("/upcoming", verifyToken, async (req, res) => {
           $match: {
             userId,
             date: { $gte: now, $lte: future },
-            status: { $in: ["scheduled", "notified"] }
+            status: { $in: ["scheduled", "notified"] },
             // Show all severities: info, warning, critical
+            // 3b: Auto-Vorwarnungen ausblenden (nur Anzeige) — siehe utils/calendarVisibility.js
+            $and: [VISIBLE_EVENT_MATCH]
           }
         },
         {

@@ -9,6 +9,7 @@ const verifyToken = require("../middleware/verifyToken");
 const { isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 const { getEmailHealth, reactivateEmail } = require("../services/emailBounceService");
 const LegalPulseV2Result = require("../models/LegalPulseV2Result"); // 🆕 Pulse-V2 Mongoose Model
+const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
 
 // S3 für Profilbild-Upload
 let S3Client, PutObjectCommand, s3Instance;
@@ -871,7 +872,9 @@ router.get("/", verifyToken, async (req, res) => {
           $match: {
             userId: new ObjectId(userId),
             date: { $gte: now, $lte: daysFromNow },
-            status: { $in: ["scheduled", "notified"] }
+            status: { $in: ["scheduled", "notified"] },
+            // 3b: Auto-Vorwarnungen aus dem Glocken-Feed ausblenden — siehe utils/calendarVisibility.js
+            $and: [VISIBLE_EVENT_MATCH]
           }
         },
         // 🛟 32MB-Sort-Fix: KEIN contract-$lookup. Das eingebettete Vertrags-Doc wurde
