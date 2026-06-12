@@ -94,7 +94,7 @@ interface Contract {
   paymentMethod?: string;
   paymentStatus?: 'paid' | 'unpaid';
   paymentAmount?: number;
-  paymentFrequency?: 'monthly' | 'yearly' | 'weekly';
+  paymentFrequency?: string; // deutsche Werte (Monatlich, Jährlich, …) — siehe contractEditableFields.ts
   paymentDate?: string;
   subscriptionStartDate?: string;
   // 📁 Folder Organization
