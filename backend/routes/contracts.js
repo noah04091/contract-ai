@@ -670,8 +670,13 @@ ensureDb().then(() => ensureIndexes()).catch(err => {
   console.error("❌ MongoDB-Fehler (contracts.js):", err);
 });
 
-// 📊 Backend-seitige Status-Berechnung (spiegelt Frontend calculateSmartStatus 1:1)
-// Wird für stabile Sidebar-Counts verwendet, unabhängig von aktiven Filtern
+// 📊 Backend-seitige Status-Berechnung — SINGLE SOURCE für Filter, Sidebar-Counts und das
+// an jeden Vertrag angehängte `computedStatus` (= Detail-Anzeige).
+// ⚠️⚠️ MUSS 1:1 IDENTISCH bleiben mit `calculateSmartStatus` in:
+//        - frontend/src/pages/ContractsV2.tsx   (Listen-Badge)
+//        - frontend/src/pages/Contracts.tsx     (V1-Kopie)
+//      Bei JEDER Änderung der Status-Logik ALLE DREI Funktionen gleich anpassen —
+//      sonst weichen Liste, Detail, Filter und Zähler wieder voneinander ab.
 function calculateSmartStatusBackend(contract) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);

@@ -2963,6 +2963,9 @@ export default function Contracts() {
   };
 
   // 🎯 Intelligente Status-Berechnung basierend auf Vertragsdaten
+  // ⚠️⚠️ MUSS 1:1 IDENTISCH bleiben mit calculateSmartStatusBackend (backend/routes/contracts.js)
+  //      und der V2-Funktion in ContractsV2.tsx. Bei Änderung ALLE anpassen — sonst Drift
+  //      zwischen Liste, Detail, Filter und Zähler.
   const calculateSmartStatus = (contract: Contract): string => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
