@@ -1907,9 +1907,17 @@ router.put("/:id", verifyToken, async (req, res) => {
       }
     }
 
+    // 🎯 Berechneten Status mitschicken → Detail-Ansicht aktualisiert ihr Badge sofort live
+    let computedStatus = 'Aktiv';
+    try {
+      const fresh = await contractsCollection.findOne({ _id: new ObjectId(id) });
+      if (fresh) computedStatus = calculateSmartStatusBackend(fresh);
+    } catch (e) { /* Fallback Aktiv */ }
+
     res.json({
       success: true,
-      message: "Vertrag erfolgreich aktualisiert" 
+      message: "Vertrag erfolgreich aktualisiert",
+      computedStatus
     });
 
   } catch (error) {
@@ -3489,7 +3497,12 @@ router.patch("/:id/status", verifyToken, async (req, res) => {
       if (r.matchedCount === 0) {
         return res.status(404).json({ success: false, message: "Vertrag nicht gefunden" });
       }
-      return res.json({ success: true, message: "Status wieder automatisch", statusOverride: false });
+      let computedStatusAuto = 'Aktiv';
+      try {
+        const fresh = await req.db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
+        if (fresh) computedStatusAuto = calculateSmartStatusBackend(fresh);
+      } catch (e) { /* Fallback */ }
+      return res.json({ success: true, message: "Status wieder automatisch", statusOverride: false, computedStatus: computedStatusAuto });
     }
 
     if (!status) {
@@ -3524,12 +3537,19 @@ router.patch("/:id/status", verifyToken, async (req, res) => {
       { $set: { statusOverride: true } }
     );
 
+    let computedStatus = 'Aktiv';
+    try {
+      const fresh = await req.db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
+      if (fresh) computedStatus = calculateSmartStatusBackend(fresh);
+    } catch (e) { /* Fallback */ }
+
     res.json({
       success: true,
       message: `Status erfolgreich aktualisiert: ${result.oldStatus} → ${result.newStatus}`,
       oldStatus: result.oldStatus,
       newStatus: result.newStatus,
-      statusOverride: true
+      statusOverride: true,
+      computedStatus
     });
 
   } catch (error) {

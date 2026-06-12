@@ -1042,7 +1042,9 @@ export default function ContractDetailsV2() {
       });
 
       if (!res.ok) throw new Error('Speichern fehlgeschlagen');
-      setContract({ ...contract, ...updateData } as Contract);
+      let computedStatus: string | undefined;
+      try { computedStatus = (await res.json())?.computedStatus; } catch { /* ignore */ }
+      setContract({ ...contract, ...updateData, ...(computedStatus ? { computedStatus } : {}) } as Contract);
       toast.success('Gespeichert');
     } catch (err) {
       console.error('Inline save error:', err);

@@ -1011,7 +1011,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         body: JSON.stringify(updateData),
       }) as Record<string, unknown>;
       if (response.success !== false) {
-        setContract(prev => ({ ...prev, ...updateData } as Contract));
+        const cs = response.computedStatus;
+        setContract(prev => ({ ...prev, ...updateData, ...(typeof cs === 'string' ? { computedStatus: cs } : {}) } as Contract));
         toast.success('Gespeichert');
         if (onEdit) onEdit(contract._id);
       }

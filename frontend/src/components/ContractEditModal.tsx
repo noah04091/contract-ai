@@ -183,6 +183,7 @@ interface Contract {
   paymentMethod?: string;
   status: string;
   statusOverride?: boolean;
+  computedStatus?: string;
   createdAt: string;
   updatedAt?: string;
   notes?: string;
@@ -584,20 +585,24 @@ export default function ContractEditModal({
 
       if (response.success) {
         // 🔒 Status separat über die validierte Status-Route speichern — nur bei Änderung.
+        // 🎯 computedStatus vom Save: PUT liefert ihn; bei Status-Änderung überschreibt der PATCH-Wert (frischer)
+        let freshComputedStatus: string | undefined = (response as { computedStatus?: string }).computedStatus;
         let statusFields: Partial<Contract> = {};
         if (statusSelection !== initialStatusSelection) {
           if (statusSelection === 'auto') {
-            await apiCall(`/contracts/${contract._id}/status`, {
+            const r = await apiCall(`/contracts/${contract._id}/status`, {
               method: 'PATCH',
               body: JSON.stringify({ statusOverride: false })
-            });
+            }) as { computedStatus?: string };
             statusFields = { statusOverride: false };
+            if (typeof r.computedStatus === 'string') freshComputedStatus = r.computedStatus;
           } else {
-            await apiCall(`/contracts/${contract._id}/status`, {
+            const r = await apiCall(`/contracts/${contract._id}/status`, {
               method: 'PATCH',
               body: JSON.stringify({ status: statusSelection })
-            });
+            }) as { computedStatus?: string };
             statusFields = { status: statusSelection, statusOverride: true };
+            if (typeof r.computedStatus === 'string') freshComputedStatus = r.computedStatus;
           }
           setInitialStatusSelection(statusSelection);
         }
@@ -609,11 +614,13 @@ export default function ContractEditModal({
         const updatedContract: Contract = response.contract ? {
           ...contract,
           ...response.contract,
-          ...statusFields
+          ...statusFields,
+          ...(freshComputedStatus ? { computedStatus: freshComputedStatus } : {})
         } : {
           ...contract,
           ...updateData as Partial<Contract>,
           ...statusFields,
+          ...(freshComputedStatus ? { computedStatus: freshComputedStatus } : {}),
           updatedAt: new Date().toISOString()
         };
 
