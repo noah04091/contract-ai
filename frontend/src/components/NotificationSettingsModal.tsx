@@ -8,7 +8,6 @@ import {
   BellRing,
   Monitor,
   Clock,
-  Moon,
   Calendar,
   AlertTriangle,
   PenTool,
@@ -42,11 +41,6 @@ interface NotificationSettings {
     legalPulse: boolean;
     analysisComplete: boolean;
     signatureUpdates: boolean;
-  };
-  quietHours: {
-    enabled: boolean;
-    startTime: string;
-    endTime: string;
   };
   deadlineReminders: {
     days7: boolean;
@@ -191,7 +185,7 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
   };
 
   const updateSetting = (
-    category: 'email' | 'push' | 'inApp' | 'quietHours' | 'deadlineReminders',
+    category: 'email' | 'push' | 'inApp' | 'deadlineReminders',
     key: string,
     value: boolean | string
   ) => {
@@ -483,46 +477,6 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
                 {/* Schedule Tab */}
                 {settingsTab === 'schedule' && (
                   <div className={styles.section}>
-                    {/* Quiet Hours */}
-                    <div className={styles.group}>
-                      <div className={styles.groupHeader}>
-                        <Moon size={18} />
-                        <div>
-                          <h3>Ruhezeiten</h3>
-                          <p>Keine Benachrichtigungen während dieser Zeit</p>
-                        </div>
-                        <label className={styles.toggle}>
-                          <input
-                            type="checkbox"
-                            checked={notificationSettings.quietHours.enabled}
-                            onChange={e => updateSetting('quietHours', 'enabled', e.target.checked)}
-                          />
-                          <span className={styles.toggleSlider} />
-                        </label>
-                      </div>
-                      {notificationSettings.quietHours.enabled && (
-                        <div className={styles.timeRange}>
-                          <div className={styles.timeInput}>
-                            <label>Von</label>
-                            <input
-                              type="time"
-                              value={notificationSettings.quietHours.startTime}
-                              onChange={e => updateSetting('quietHours', 'startTime', e.target.value)}
-                            />
-                          </div>
-                          <span className={styles.timeSeparator}>bis</span>
-                          <div className={styles.timeInput}>
-                            <label>Bis</label>
-                            <input
-                              type="time"
-                              value={notificationSettings.quietHours.endTime}
-                              onChange={e => updateSetting('quietHours', 'endTime', e.target.value)}
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
                     {/* Deadline Reminders */}
                     <div className={styles.group}>
                       <div className={styles.groupHeader}>
