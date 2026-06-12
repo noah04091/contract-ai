@@ -4633,26 +4633,39 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       validationResult.strategy,
       requestId,
       contractBudgetTokens,
-      { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence, signatures: Array.isArray(pdfData.signatures) ? pdfData.signatures : [] }
+      // Signaturen NUR bei echten Verträgen an die KI geben (konsistent zum Badge-Gate unten).
+      { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence, signatures: (validationResult.documentType === 'CONTRACT' && Array.isArray(pdfData.signatures)) ? pdfData.signatures : [] }
     );
 
     // ✍️ Unterschrifts-Status fürs Frontend-Badge (Feature-Flag ENABLE_SIGNATURE_DETECTION).
-    // NUR gesetzt, wenn die Erkennung wirklich lief (Flag AN + OCR genutzt) — sonst undefined,
-    // damit das Frontend bei Text-PDFs / Flag AUS kein irreführendes "keine erkannt" zeigt.
-    // detected:false bedeutet hier "geprüft, aber keine gefunden".
+    // Bewusst KONSERVATIV & ZUVERLÄSSIG (11.06.2026):
+    //  - Nur bei echten Verträgen (documentType === 'CONTRACT') — Rechnung/Quittung/Tabelle/
+    //    Finanzdok/Unbekannt bekommen NICHTS (kein Falsch-Alarm).
+    //  - Wir zeigen NUR die FAKTISCH erkannte Anzahl. KEINE "X von N"-Aussage, weil die Zahl
+    //    nötiger Unterschriften nicht zuverlässig bekannt ist (Mehr-Unterzeichner, 3-Parteien,
+    //    Firma mit 2 Zeichnern). So ist jede Unterzeichner-Konstellation korrekt abgedeckt.
+    //  - "Keine erkannt"-Warnung NUR wenn ein echtes Partei-Verhältnis existiert (provider+
+    //    customer evidence-geprüft) — AGB/einseitige Doks ohne Partei-Paar bleiben still.
+    //  - Im Zweifel: kein Badge. Display-only — Score/Risiken/Termine/Extraktion unberührt.
     // ⚠️ Eigenes Feld `signatureDetection` (Objekt) — NICHT `signatureStatus` (das ist
     // app-weit ein String für den Envelope-/Signatur-Flow; Kollision crasht die Liste).
     let signatureDetection;
-    if (process.env.ENABLE_SIGNATURE_DETECTION === 'true' && pdfData.usedOCR === true) {
+    if (process.env.ENABLE_SIGNATURE_DETECTION === 'true'
+        && pdfData.usedOCR === true
+        && validationResult.documentType === 'CONTRACT') {
       const _sigs = Array.isArray(pdfData.signatures) ? pdfData.signatures : [];
+      const _count = _sigs.length;
       const _pages = [...new Set(_sigs.map(s => s && s.page).filter(Boolean))].sort((a, b) => a - b);
-      signatureDetection = {
-        detected: _sigs.length > 0,
-        count: _sigs.length,
-        pages: _pages,
-        source: 'textract_signatures',
-        checkedAt: new Date()
-      };
+      const _parties = validationResult.parties || {};
+      const _identifiedParties = [_parties.provider, _parties.customer].filter(Boolean).length;
+      if (_count >= 1) {
+        // Mindestens eine Unterschrift als Bild erkannt → faktische Anzeige.
+        signatureDetection = { detected: true, count: _count, pages: _pages, source: 'textract_signatures', checkedAt: new Date() };
+      } else if (_identifiedParties >= 1) {
+        // Echter Vertrag mit Parteien, aber keine Unterschrift erkannt → verlässlicher Hinweis.
+        signatureDetection = { detected: false, count: 0, pages: [], source: 'textract_signatures', checkedAt: new Date() };
+      }
+      // sonst (0 Unterschriften UND kein Partei-Paar) → kein Badge.
     }
 
     console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document (contractType passed to prompt: ${promptContractType})`);

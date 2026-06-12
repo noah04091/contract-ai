@@ -545,9 +545,9 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                   <span
                     className={styles.fcStatusPill}
                     style={{ background: "#fef3c7", color: "#92400e" }}
-                    title="Im gescannten Dokument wurde keine Unterschrift als Bild erkannt — bitte am Original prüfen."
+                    title="Im gescannten Vertrag wurde keine Unterschrift als Bild erkannt — möglicherweise noch nicht unterschrieben (Entwurf) oder die Scan-Qualität war zu niedrig. Bitte am Original prüfen."
                   >
-                    <PenLine size={10} /> Keine Unterschrift erkannt
+                    <PenLine size={10} /> Keine Unterschrift erkannt — am Original prüfen
                   </span>
                 )
               )}
