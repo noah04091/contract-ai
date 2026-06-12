@@ -20,7 +20,7 @@
 
 .modal {
   width: 100%;
-  max-width: 520px;
+  max-width: 580px;
   max-height: 90vh;
   max-height: 90dvh; /* Dynamic viewport height für iOS Safari */
   background: white;
@@ -159,6 +159,21 @@
 
 .sectionHeader svg {
   color: #94a3b8;
+}
+
+/* 🔲 Zweispaltiges Feld-Raster (wie Mockup) — auf schmalen Screens einspaltig */
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.875rem 0.75rem;
+}
+
+.fieldGrid > * {
+  min-width: 0; /* verhindert Grid-Überlauf bei langen Inhalten */
+}
+
+@media (max-width: 560px) {
+  .fieldGrid { grid-template-columns: 1fr; }
 }
 
 /* 🔒 Status-Segment-Buttons */

@@ -684,8 +684,12 @@ export default function ContractEditModal({
                 </div>
               </div>
 
-              {/* Optionale Allgemein-Felder (Anbieter, Vertragsnummer) */}
-              {ALLGEMEIN_FIELDS.filter(f => activeFields.includes(f)).map(renderField)}
+              {/* Optionale Allgemein-Felder (Anbieter, Vertragsnummer) — zweispaltig wie im Mockup */}
+              {ALLGEMEIN_FIELDS.some(f => activeFields.includes(f)) && (
+                <div className={styles.fieldGrid}>
+                  {ALLGEMEIN_FIELDS.filter(f => activeFields.includes(f)).map(renderField)}
+                </div>
+              )}
             </div>
 
             {/* 🔒 Status */}
@@ -726,7 +730,9 @@ export default function ContractEditModal({
                     <SecIcon size={14} />
                     <span>{section.title}</span>
                   </div>
-                  {sectionFields.map(renderField)}
+                  <div className={styles.fieldGrid}>
+                    {sectionFields.map(renderField)}
+                  </div>
                 </div>
               );
             })}
