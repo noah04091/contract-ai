@@ -1028,11 +1028,11 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               </div>
             )}
 
-            {/* Secondary Action Buttons - Different for manual vs contract events */}
+            {/* Sekundär-Aktionen: Vertrags-Aktionen + Erinnerungen (gruppiert) */}
             <div style={{
               gridColumn: '1 / -1',
               display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
+              gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)',
               gap: '8px',
               marginTop: '8px'
             }}>
@@ -1122,7 +1122,14 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 </motion.button>
               )}
 
-              {/* 3c: Erinnerungen verwalten — nur bei Vertrags-Events */}
+              {/* ─── Erinnerungen (gruppiert) — Überschrift ─── */}
+              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0 0', fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <Bell size={13} style={{ flexShrink: 0 }} />
+                <span>Erinnerungen</span>
+                <span style={{ flex: 1, height: '1px', background: '#f1f1f4' }} />
+              </div>
+
+              {/* Erinnerungen verwalten — nur bei Vertrags-Events */}
               {onManageReminders && currentEvent.contractId && (
                 <motion.button
                   onClick={() => {
@@ -1148,7 +1155,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   }}
                 >
                   <SlidersHorizontal size={16} style={{ flexShrink: 0 }} />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Erinnerungen verwalten</span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Verwalten</span>
                 </motion.button>
               )}
 
@@ -1174,8 +1181,8 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   minWidth: 0
                 }}
               >
-                <Bell size={16} style={{ flexShrink: 0 }} />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Erinnern</span>
+                <Clock size={16} style={{ flexShrink: 0 }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Verschieben</span>
               </motion.button>
             </div>
 
@@ -1209,7 +1216,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               }}
             >
               <EyeOff size={16} style={{ flexShrink: 0 }} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Nicht mehr erinnern</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Ausblenden</span>
             </motion.button>
           </div>
         </div>
