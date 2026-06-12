@@ -8,9 +8,10 @@ import {
 import styles from "../styles/ContractEditModal.module.css";
 import { apiCall } from "../utils/api";
 import { fixUtf8Display } from "../utils/textUtils";
+import { PAYMENT_FREQUENCY_OPTIONS, PAYMENT_METHOD_OPTIONS } from "../utils/contractEditableFields";
 
 // 📋 Alle verfügbaren Feldtypen mit ihren Optionen
-type FieldType = 'kuendigung' | 'laufzeit' | 'startDate' | 'expiryDate' | 'gekuendigtZum' | 'anbieter' | 'kosten' | 'vertragsnummer';
+type FieldType = 'kuendigung' | 'laufzeit' | 'startDate' | 'expiryDate' | 'gekuendigtZum' | 'anbieter' | 'kosten' | 'vertragsnummer' | 'contractType' | 'customerNumber' | 'paymentFrequency' | 'paymentMethod';
 
 interface FieldConfig {
   id: FieldType;
@@ -105,6 +106,34 @@ const AVAILABLE_FIELDS: FieldConfig[] = [
     icon: FileText,
     type: 'text',
     placeholder: 'z.B. VN-123456'
+  },
+  {
+    id: 'contractType',
+    label: 'Vertragstyp',
+    icon: Tag,
+    type: 'text',
+    placeholder: 'z.B. Mietvertrag, SaaS-Abo...'
+  },
+  {
+    id: 'customerNumber',
+    label: 'Kundennummer',
+    icon: FileText,
+    type: 'text',
+    placeholder: 'z.B. KD-78910'
+  },
+  {
+    id: 'paymentFrequency',
+    label: 'Zahlungs-Häufigkeit',
+    icon: RotateCcw,
+    type: 'dropdown',
+    options: PAYMENT_FREQUENCY_OPTIONS
+  },
+  {
+    id: 'paymentMethod',
+    label: 'Zahlungsmethode',
+    icon: Euro,
+    type: 'dropdown',
+    options: PAYMENT_METHOD_OPTIONS
   }
 ];
 
@@ -112,10 +141,10 @@ const AVAILABLE_FIELDS: FieldConfig[] = [
 const DEFAULT_FIELDS: FieldType[] = ['kuendigung', 'laufzeit', 'expiryDate'];
 
 // 🗂️ Gruppierung der Felder in Sektionen (rein optisch — Add-/Save-Logik bleibt unberührt)
-const ALLGEMEIN_FIELDS: FieldType[] = ['anbieter', 'vertragsnummer'];
+const ALLGEMEIN_FIELDS: FieldType[] = ['contractType', 'anbieter', 'vertragsnummer', 'customerNumber'];
 const FIELD_SECTIONS: { id: string; title: string; icon: React.ComponentType<{ size?: number }>; fields: FieldType[] }[] = [
   { id: 'laufzeit-kuendigung', title: 'Laufzeit & Kündigung', icon: Calendar, fields: ['kuendigung', 'laufzeit', 'startDate', 'expiryDate', 'gekuendigtZum'] },
-  { id: 'kosten', title: 'Kosten', icon: Euro, fields: ['kosten'] },
+  { id: 'kosten', title: 'Kosten', icon: Euro, fields: ['kosten', 'paymentFrequency', 'paymentMethod'] },
 ];
 
 // 🔒 Status — manuell setzbar. 'auto' = Automatik (Ablaufdatum/Cron), sonst manueller Override.
@@ -147,6 +176,11 @@ interface Contract {
   anbieter?: string;
   kosten?: number;
   vertragsnummer?: string;
+  contractType?: string;
+  contractTypeLabel?: string;
+  customerNumber?: string;
+  paymentFrequency?: string;
+  paymentMethod?: string;
   status: string;
   statusOverride?: boolean;
   createdAt: string;
@@ -423,6 +457,30 @@ export default function ContractEditModal({
         initialValues.vertragsnummer = fixUtf8Display(contract.vertragsnummer);
       }
 
+      if (contract.contractType || contract.contractTypeLabel) {
+        initialActiveFields.push('contractType');
+        initialValues.contractType = fixUtf8Display(contract.contractTypeLabel || contract.contractType || '');
+      }
+
+      if (contract.customerNumber) {
+        initialActiveFields.push('customerNumber');
+        initialValues.customerNumber = fixUtf8Display(contract.customerNumber);
+      }
+
+      if (contract.paymentFrequency) {
+        initialActiveFields.push('paymentFrequency');
+        initialValues.paymentFrequency = contract.paymentFrequency;
+        const fc = AVAILABLE_FIELDS.find(f => f.id === 'paymentFrequency');
+        if (!isInOptions(contract.paymentFrequency, fc?.options)) initialCustomMode.paymentFrequency = true;
+      }
+
+      if (contract.paymentMethod) {
+        initialActiveFields.push('paymentMethod');
+        initialValues.paymentMethod = contract.paymentMethod;
+        const fc = AVAILABLE_FIELDS.find(f => f.id === 'paymentMethod');
+        if (!isInOptions(contract.paymentMethod, fc?.options)) initialCustomMode.paymentMethod = true;
+      }
+
       // Wenn keine Felder vorhanden, nutze Default-Felder
       if (initialActiveFields.length === 0) {
         setActiveFields(DEFAULT_FIELDS);
@@ -509,7 +567,7 @@ export default function ContractEditModal({
       });
 
       // Felder die nicht mehr aktiv sind, auf null setzen
-      const allFieldIds: FieldType[] = ['kuendigung', 'laufzeit', 'startDate', 'expiryDate', 'gekuendigtZum', 'anbieter', 'kosten', 'vertragsnummer'];
+      const allFieldIds: FieldType[] = ['kuendigung', 'laufzeit', 'startDate', 'expiryDate', 'gekuendigtZum', 'anbieter', 'kosten', 'vertragsnummer', 'contractType', 'customerNumber', 'paymentFrequency', 'paymentMethod'];
       allFieldIds.forEach(fieldId => {
         if (!activeFields.includes(fieldId)) {
           updateData[fieldId] = null;
