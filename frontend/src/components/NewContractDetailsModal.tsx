@@ -105,6 +105,7 @@ interface Contract {
   laufzeit?: string;
   expiryDate?: string;
   status: string;
+  computedStatus?: string; // 🎯 Vom Backend berechneter Status (= Liste) → einheitliche Anzeige
   reminder?: boolean;
   createdAt: string;
   uploadDate?: string;
@@ -950,19 +951,19 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
   // Get status badge
   const renderStatusBadge = () => {
-    const statusMap: Record<string, { className: string; icon: React.ReactNode; text: string }> = {
-      aktiv: { className: styles.statusCompleted, icon: <CheckCircle size={16} />, text: 'Aktiv' },
-      gekuendigt: { className: styles.statusDeclined, icon: <AlertCircle size={16} />, text: 'Gekündigt' },
-      'gekündigt': { className: styles.statusDeclined, icon: <XCircle size={16} />, text: 'Gekündigt' },
-      abgelaufen: { className: styles.statusExpired, icon: <Clock size={16} />, text: 'Abgelaufen' }
-    };
-
-    const status = statusMap[contract.status?.toLowerCase()] || statusMap.aktiv;
+    // 🎯 Einheitlich: zeigt den vom Backend berechneten Status (= exakt das, was die Liste zeigt)
+    const label = contract.computedStatus || contract.status || 'Aktiv';
+    const l = (typeof label === 'string' ? label : 'Aktiv').toLowerCase();
+    let className = styles.statusCompleted;
+    let icon = <CheckCircle size={16} />;
+    if (l.startsWith('gekündigt')) { className = styles.statusDeclined; icon = <XCircle size={16} />; }
+    else if (l === 'beendet' || l === 'abgelaufen') { className = styles.statusExpired; icon = <Clock size={16} />; }
+    else if (l === 'läuft ab' || l === 'offen') { className = styles.statusExpired; icon = <AlertCircle size={16} />; }
 
     return (
-      <div className={`${styles.statusBadge} ${status.className}`}>
-        {status.icon}
-        <span>{status.text}</span>
+      <div className={`${styles.statusBadge} ${className}`}>
+        {icon}
+        <span>{label}</span>
       </div>
     );
   };

@@ -96,6 +96,7 @@ interface Contract {
   uploadedAt?: string;
   expiryDate?: string;
   status?: string;
+  computedStatus?: string; // 🎯 Vom Backend berechneter Status (= Liste) → einheitliche Anzeige
   filePath?: string;
   s3Key?: string;
   content?: string;
@@ -1503,20 +1504,12 @@ export default function ContractDetailsV2() {
   };
 
   const getStatusStyle = (status?: string): string => {
-    if (!status) return styles.statusNeutral;
-    switch (status.toLowerCase()) {
-      case 'aktiv':
-      case 'gültig':
-        return styles.statusActive;
-      case 'gekündigt':
-      case 'beendet':
-        return styles.statusCancelled;
-      case 'läuft ab':
-      case 'bald fällig':
-        return styles.statusExpiring;
-      default:
-        return styles.statusNeutral;
-    }
+    if (!status || typeof status !== 'string') return styles.statusNeutral;
+    const s = status.toLowerCase();
+    if (s.startsWith('gekündigt') || s === 'beendet' || s === 'abgelaufen') return styles.statusCancelled;
+    if (s === 'läuft ab' || s === 'bald fällig' || s === 'offen') return styles.statusExpiring;
+    if (['aktiv', 'gültig', 'laufend', 'neu', 'entwurf', 'optimiert', 'bezahlt'].includes(s)) return styles.statusActive;
+    return styles.statusNeutral;
   };
 
   const getRiskLevel = (score: number | null | undefined) => {
@@ -1780,14 +1773,17 @@ export default function ContractDetailsV2() {
                   <Calendar size={14} />
                   {contract.isGenerated ? 'Erstellt' : 'Hochgeladen'}: {formatDate(contract.isGenerated ? contract.createdAt : contract.uploadedAt)}
                 </span>
-                {contract.status && contract.status !== 'Unbekannt' && (
-                  <span className={`${styles.statusBadge} ${getStatusStyle(contract.status)}`} style={{ fontSize: 11, padding: '4px 10px' }}>
-                    {contract.status === 'Aktiv' && <CheckCircle size={12} />}
-                    {contract.status === 'Gekündigt' && <XCircle size={12} />}
-                    {contract.status === 'Läuft ab' && <AlertTriangle size={12} />}
-                    {contract.status}
-                  </span>
-                )}
+                {(() => {
+                  const dispStatus = contract.computedStatus || contract.status;
+                  return dispStatus && dispStatus !== 'Unbekannt' ? (
+                    <span className={`${styles.statusBadge} ${getStatusStyle(dispStatus)}`} style={{ fontSize: 11, padding: '4px 10px' }}>
+                      {dispStatus === 'Aktiv' && <CheckCircle size={12} />}
+                      {dispStatus.startsWith('Gekündigt') && <XCircle size={12} />}
+                      {dispStatus === 'Läuft ab' && <AlertTriangle size={12} />}
+                      {dispStatus}
+                    </span>
+                  ) : null;
+                })()}
               </div>
             </motion.div>
           )}

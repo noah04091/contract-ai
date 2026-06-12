@@ -1409,8 +1409,15 @@ router.get("/", async (req, res) => {
     };
     console.log('[PERF] GET /contracts:', JSON.stringify(_timing));
 
+    // 🎯 EINHEITLICHER STATUS: Backend hängt den berechneten Status an jeden Vertrag an,
+    // damit Liste, Detail-Ansicht UND Dashboard exakt denselben Wert zeigen (eine Quelle, keine Drift).
+    const contractsWithStatus = enrichedContracts.map(c => {
+      try { return { ...c, computedStatus: calculateSmartStatusBackend(c) }; }
+      catch { return { ...c, computedStatus: 'Aktiv' }; }
+    });
+
     res.json({
-      contracts: enrichedContracts,
+      contracts: contractsWithStatus,
       pagination: {
         total: totalCount,
         limit: limit || totalCount,
@@ -1646,8 +1653,11 @@ router.get("/:id", verifyToken, async (req, res) => {
 
     const enrichedContract = await enrichContractWithAnalysis(access.contract);
 
+    // 🎯 Einheitlicher Status (wie in der Liste) — Detail-Ansicht liest denselben Wert
+    let computedStatus = 'Aktiv';
+    try { computedStatus = calculateSmartStatusBackend(enrichedContract); } catch (e) { /* Fallback Aktiv */ }
 
-    res.json(enrichedContract);
+    res.json({ ...enrichedContract, computedStatus });
 
   } catch (err) {
     console.error("❌ Fehler beim Laden des Vertrags:", err.message);
