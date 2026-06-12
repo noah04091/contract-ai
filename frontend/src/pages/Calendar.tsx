@@ -44,6 +44,7 @@ import axios from "axios";
 import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
+import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 3c: Erinnerungen vom Kalender aus verwalten
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
@@ -626,9 +627,10 @@ interface QuickActionsModalProps {
   onClose: () => void;
   onEventChange?: (event: CalendarEvent) => void; // Callback when navigating to different event
   onEdit?: (event: CalendarEvent) => void; // Callback to open edit modal
+  onManageReminders?: (event: CalendarEvent) => void; // 3c: Erinnerungen des Vertrags verwalten
 }
 
-function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit }: QuickActionsModalProps) {
+function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit, onManageReminders }: QuickActionsModalProps) {
   useEscapeKey(onClose);
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -1117,6 +1119,36 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 >
                   <Pencil size={16} style={{ flexShrink: 0 }} />
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Bearbeiten</span>
+                </motion.button>
+              )}
+
+              {/* 3c: Erinnerungen verwalten — nur bei Vertrags-Events */}
+              {onManageReminders && currentEvent.contractId && (
+                <motion.button
+                  onClick={() => {
+                    onManageReminders(currentEvent);
+                  }}
+                  whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#6366f1' }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{
+                    background: '#f9fafb',
+                    color: '#4f46e5',
+                    border: '1px solid #e5e7eb',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    transition: 'all 0.2s ease',
+                    minWidth: 0
+                  }}
+                >
+                  <SlidersHorizontal size={16} style={{ flexShrink: 0 }} />
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Erinnerungen verwalten</span>
                 </motion.button>
               )}
 
@@ -3153,6 +3185,41 @@ export default function CalendarPage() {
   // 🔔 NOTIFICATION SETTINGS MODAL
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
 
+  // 🔔 3c: REMINDER-SETTINGS-MODAL (Erinnerungen eines Vertrags vom Kalender aus verwalten).
+  // Wir laden den Vertrag NACH (reminderSettings etc.), bevor wir das Modal öffnen —
+  // sonst würde Speichern die bestehenden eigenen Erinnerungen überschreiben.
+  const [reminderSettingsData, setReminderSettingsData] = useState<{
+    contractId: string;
+    contractName: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    reminderSettings: any[];
+    reminderDays: number[];
+    expiryDate?: string;
+    kuendigung?: string;
+  } | null>(null);
+
+  const handleManageReminders = async (ev: CalendarEvent) => {
+    if (!ev.contractId) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`/api/contracts/${ev.contractId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const c: any = res.data || {};
+      setReminderSettingsData({
+        contractId: ev.contractId,
+        contractName: fixUtf8Display(ev.contractName || c.name || 'Vertrag'),
+        reminderSettings: Array.isArray(c.reminderSettings) ? c.reminderSettings : [],
+        reminderDays: Array.isArray(c.reminderDays) ? c.reminderDays : [],
+        expiryDate: c.expiryDate,
+        kuendigung: c.kuendigung
+      });
+    } catch {
+      toast.error('Erinnerungen konnten nicht geladen werden');
+    }
+  };
+
   // 🔒 UPGRADE MODAL STATE
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeAction, setUpgradeAction] = useState<string>(''); // Welche Aktion wurde versucht
@@ -4087,6 +4154,29 @@ export default function CalendarPage() {
               setShowQuickActions(false);
               setSelectedEvent(null);
               setEditingEvent(event);
+            }}
+            onManageReminders={(event) => {
+              setShowQuickActions(false);
+              setSelectedEvent(null);
+              setAllDayEventsForPagination([]);
+              handleManageReminders(event);
+            }}
+          />
+        )}
+
+        {/* 🔔 3c: Erinnerungen eines Vertrags verwalten (aus dem Termin-Popup geöffnet) */}
+        {reminderSettingsData && (
+          <ReminderSettingsModal
+            contractId={reminderSettingsData.contractId}
+            contractName={reminderSettingsData.contractName}
+            currentReminderSettings={reminderSettingsData.reminderSettings}
+            currentReminderDays={reminderSettingsData.reminderDays}
+            expiryDate={reminderSettingsData.expiryDate}
+            kuendigung={reminderSettingsData.kuendigung}
+            onClose={() => setReminderSettingsData(null)}
+            onSuccess={() => {
+              setReminderSettingsData(null);
+              fetchEvents(true); // neue eigene Erinnerung erscheint sofort im Kalender
             }}
           />
         )}
