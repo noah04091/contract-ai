@@ -881,6 +881,7 @@ async function runSingleGPTCall({
     response = await openaiClient.chat.completions.create({
       model: DATE_HUNT_MODEL,
       temperature: 0,
+      seed: 42, // 🎯 Reproduzierbarkeit — identisch zur Hauptanalyse (analyze.js:3716); gleicher Vertrag → konstante Termin-Anzahl. Nur Determinismus, kein Einfluss auf WAS gefunden wird.
       response_format: { type: 'json_object' },
       max_tokens: maxTokens,
       messages: [
