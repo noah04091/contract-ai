@@ -26,14 +26,6 @@ interface NotificationSettings {
     legalPulse: boolean;
     analysisComplete: boolean;
     signatureUpdates: boolean;
-    weeklyReport: boolean;
-  };
-  push: {
-    enabled: boolean;
-    contractDeadlines: boolean;
-    legalPulse: boolean;
-    analysisComplete: boolean;
-    signatureUpdates: boolean;
   };
   inApp: {
     enabled: boolean;
@@ -185,7 +177,7 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
   };
 
   const updateSetting = (
-    category: 'email' | 'push' | 'inApp' | 'deadlineReminders',
+    category: 'email' | 'inApp' | 'deadlineReminders',
     key: string,
     value: boolean | string
   ) => {
@@ -320,37 +312,6 @@ export default function NotificationSettingsModal({ isOpen, onClose, onSaved, de
                             type="checkbox"
                             checked={notificationSettings.email.enabled}
                             onChange={e => updateSetting('email', 'enabled', e.target.checked)}
-                          />
-                          <span className={styles.toggleSlider} />
-                        </label>
-                      </div>
-                      {notificationSettings.email.enabled && (
-                        <div className={styles.subOptions}>
-                          <label className={styles.option}>
-                            <input
-                              type="checkbox"
-                              checked={notificationSettings.email.weeklyReport}
-                              onChange={e => updateSetting('email', 'weeklyReport', e.target.checked)}
-                            />
-                            <span>Wöchentlicher Bericht</span>
-                          </label>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Push */}
-                    <div className={styles.group}>
-                      <div className={styles.groupHeader}>
-                        <BellRing size={18} />
-                        <div>
-                          <h3>Push-Benachrichtigungen</h3>
-                          <p>Browser-Benachrichtigungen in Echtzeit</p>
-                        </div>
-                        <label className={styles.toggle}>
-                          <input
-                            type="checkbox"
-                            checked={notificationSettings.push.enabled}
-                            onChange={e => updateSetting('push', 'enabled', e.target.checked)}
                           />
                           <span className={styles.toggleSlider} />
                         </label>
