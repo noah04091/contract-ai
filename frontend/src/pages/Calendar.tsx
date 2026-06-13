@@ -45,6 +45,7 @@ import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 3c: Erinnerungen vom Kalender aus verwalten
+import { cleanDeadlineName, reminderLeadLabel, isReminderEntry } from "../utils/reminderGrouping"; // 🔔 Erinnerungen dieser Frist
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
@@ -731,6 +732,38 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
   const hasContract = !!currentEvent.contractId && currentEvent.contractId !== '';
   const isManualEvent = currentEvent.isManual === true && !hasContract;
 
+  // 🔔 Erinnerungen DIESER Frist laden (reine Anzeige). ?contractId liefert auch die in 3b
+  // ausgeblendeten Vorwarnungen; Zuordnung über cleanDeadlineName + isReminderEntry.
+  const [deadlineReminders, setDeadlineReminders] = useState<{ id: string; label: string; dateStr: string }[]>([]);
+  const [remindersLoading, setRemindersLoading] = useState(false);
+  useEffect(() => {
+    const cid = currentEvent.contractId;
+    if (!cid || isReminderEntry(currentEvent)) { setDeadlineReminders([]); return; }
+    let cancelled = false;
+    setRemindersLoading(true);
+    const token = localStorage.getItem('token');
+    const deadlineKey = cleanDeadlineName(currentEvent.title);
+    const now = new Date();
+    axios.get<{ events?: CalendarEvent[] }>(`/api/calendar/events?contractId=${cid}`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => {
+        if (cancelled) return;
+        const evs = res.data?.events || [];
+        setDeadlineReminders(
+          evs
+            .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && new Date(e.date) > now)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map(e => ({
+              id: e.id,
+              label: reminderLeadLabel(e.title) || 'Erinnerung',
+              dateStr: new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
+            }))
+        );
+        setRemindersLoading(false);
+      })
+      .catch(() => { if (!cancelled) { setDeadlineReminders([]); setRemindersLoading(false); } });
+    return () => { cancelled = true; };
+  }, [currentEvent.id, currentEvent.contractId, currentEvent.title]);
+
   return (
     <motion.div
       className="quick-actions-overlay"
@@ -911,6 +944,39 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 )}
                 {currentEvent.dataSource === 'ai_extracted' && ' — KI-erkannt'}
               </span>
+            </div>
+          )}
+
+          {/* 🔔 Deine Erinnerungen — Vorwarnungen DIESER Frist, direkt sichtbar (reine Anzeige) */}
+          {hasContract && !isReminderEntry(currentEvent) && (
+            <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', fontSize: '13px', fontWeight: 700, color: '#374151' }}>
+                <Bell size={16} style={{ color: '#4f46e5', flexShrink: 0 }} />
+                <span>Deine Erinnerungen</span>
+              </div>
+              {remindersLoading ? (
+                <div style={{ fontSize: '13px', color: '#9ca3af' }}>Lädt …</div>
+              ) : deadlineReminders.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {deadlineReminders.map(r => (
+                    <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', color: '#374151' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#4f46e5' }}>🔔</span>{r.label}</span>
+                      <span style={{ color: '#9ca3af', fontSize: '12px' }}>{r.dateStr}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: '13px', color: '#9ca3af' }}>Keine automatischen Erinnerungen für diese Frist.</div>
+              )}
+              {onManageReminders && (
+                <button
+                  onClick={() => onManageReminders(currentEvent)}
+                  style={{ marginTop: '12px', background: 'none', border: 'none', color: '#4f46e5', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <SlidersHorizontal size={14} style={{ flexShrink: 0 }} />
+                  Erinnerung hinzufügen / verwalten
+                </button>
+              )}
             </div>
           )}
 
@@ -1119,43 +1185,6 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 >
                   <Pencil size={16} style={{ flexShrink: 0 }} />
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Bearbeiten</span>
-                </motion.button>
-              )}
-
-              {/* ─── Erinnerungen (gruppiert) — Überschrift ─── */}
-              <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: '8px', margin: '4px 0 0', fontSize: '11px', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                <Bell size={13} style={{ flexShrink: 0 }} />
-                <span>Erinnerungen</span>
-                <span style={{ flex: 1, height: '1px', background: '#f1f1f4' }} />
-              </div>
-
-              {/* Erinnerungen verwalten — nur bei Vertrags-Events */}
-              {onManageReminders && currentEvent.contractId && (
-                <motion.button
-                  onClick={() => {
-                    onManageReminders(currentEvent);
-                  }}
-                  whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#6366f1' }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{
-                    background: '#f9fafb',
-                    color: '#4f46e5',
-                    border: '1px solid #e5e7eb',
-                    padding: '10px 12px',
-                    borderRadius: '8px',
-                    fontWeight: 500,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    cursor: 'pointer',
-                    fontSize: '13px',
-                    transition: 'all 0.2s ease',
-                    minWidth: 0
-                  }}
-                >
-                  <SlidersHorizontal size={16} style={{ flexShrink: 0 }} />
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Verwalten</span>
                 </motion.button>
               )}
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import styles from './ReminderSettingsModal.module.css';
+import { cleanDeadlineName, reminderLeadLabel, isReminderEntry } from '../utils/reminderGrouping';
 import {
   X,
   Bell,
@@ -310,20 +311,7 @@ export default function ReminderSettingsModal({
   };
 
   // 🗂️ Auto-Erinnerungen PRO FRIST gruppieren (REINE ANZEIGE; Daten/Backend unverändert).
-  // Vorwarnungen ("X vorher: <Frist>") werden unter ihre Frist (Haupt-Event) gebündelt.
-  // Robust mit Fallback: nicht zuordenbare Einträge bilden einfach eine eigene Gruppe.
-  const cleanDeadlineName = (title: string): string => {
-    let t = title.replace(/^[^0-9A-Za-zÀ-ÿ]+/, '');                            // führende Emojis/Symbole weg
-    t = t.replace(/^\d+\s*(?:Tage?|Wochen?|Monate?)\s*vorher\s*:\s*/i, '');     // "N ... vorher:" weg (Vorwarnung)
-    t = t.replace(/\s*:\s*[^:]*\.(?:pdf|docx?|xlsx?|pptx?|png|jpe?g)\s*$/i, ''); // ": datei.pdf" weg (Haupt-Event)
-    return t.trim();
-  };
-  const reminderLeadLabel = (title: string): string | null => {
-    const m = title.match(/(\d+\s*(?:Tage?|Wochen?|Monate?))\s*vorher/i);
-    return m ? `${m[1].replace(/\s+/g, ' ')} vorher` : null;
-  };
-  const isReminderEntry = (e: AutoEvent): boolean =>
-    reminderLeadLabel(e.title) !== null || /_REMINDER_\d+D$/i.test(e.type);
+  // Zuordnungs-Helfer (cleanDeadlineName/reminderLeadLabel/isReminderEntry) aus utils/reminderGrouping.
   const autoEventGroups = (() => {
     const map = new Map<string, { name: string; main: AutoEvent | null; reminders: AutoEvent[] }>();
     for (const e of autoEvents) {
