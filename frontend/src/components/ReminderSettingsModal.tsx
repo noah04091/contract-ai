@@ -312,6 +312,37 @@ export default function ReminderSettingsModal({
     return new Date(dateStr).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
   };
 
+  // 🗂️ Auto-Erinnerungen PRO FRIST gruppieren (REINE ANZEIGE; Daten/Backend unverändert).
+  // Vorwarnungen ("X vorher: <Frist>") werden unter ihre Frist (Haupt-Event) gebündelt.
+  // Robust mit Fallback: nicht zuordenbare Einträge bilden einfach eine eigene Gruppe.
+  const cleanDeadlineName = (title: string): string => {
+    let t = title.replace(/^[^0-9A-Za-zÀ-ÿ]+/, '');                            // führende Emojis/Symbole weg
+    t = t.replace(/^\d+\s*(?:Tage?|Wochen?|Monate?)\s*vorher\s*:\s*/i, '');     // "N ... vorher:" weg (Vorwarnung)
+    t = t.replace(/\s*:\s*[^:]*\.(?:pdf|docx?|xlsx?|pptx?|png|jpe?g)\s*$/i, ''); // ": datei.pdf" weg (Haupt-Event)
+    return t.trim();
+  };
+  const reminderLeadLabel = (title: string): string | null => {
+    const m = title.match(/(\d+\s*(?:Tage?|Wochen?|Monate?))\s*vorher/i);
+    return m ? `${m[1].replace(/\s+/g, ' ')} vorher` : null;
+  };
+  const isReminderEntry = (e: AutoEvent): boolean =>
+    reminderLeadLabel(e.title) !== null || /_REMINDER_\d+D$/i.test(e.type);
+  const autoEventGroups = (() => {
+    const map = new Map<string, { name: string; main: AutoEvent | null; reminders: AutoEvent[] }>();
+    for (const e of autoEvents) {
+      const name = cleanDeadlineName(e.title) || e.title;
+      if (!map.has(name)) map.set(name, { name, main: null, reminders: [] });
+      const g = map.get(name)!;
+      if (isReminderEntry(e)) g.reminders.push(e);
+      else if (!g.main) g.main = e;
+      else g.reminders.push(e); // zweites Nicht-Reminder-Event (selten) → als Sub-Eintrag
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      new Date(a.main?.date || a.reminders[0]?.date || 0).getTime()
+      - new Date(b.main?.date || b.reminders[0]?.date || 0).getTime()
+    );
+  })();
+
   // Check if a preset is already added for the current type
   const isPresetAdded = (days: number): boolean => {
     return reminders.some(r => r.type === selectedType && r.days === days);
@@ -541,23 +572,46 @@ export default function ReminderSettingsModal({
                 </div>
                 {autoEventsExpanded && (
                   <div className={styles.autoEventsList}>
-                    {autoEvents.map((event) => (
-                      <div
-                        key={event.id}
-                        className={`${styles.autoEventItem} ${styles.autoEventClickable} ${getSeverityClass(event.severity)}`}
-                        onClick={() => navigate(`/calendar?eventId=${event.id}`)}
-                        title="Im Kalender anzeigen"
-                      >
-                        <div className={styles.autoEventInfo}>
-                          <span className={styles.autoEventTitle}>{event.title}</span>
-                          <span className={styles.autoBadge}>Automatisch</span>
+                    {autoEventGroups.map((group) => {
+                      const headEvent = group.main || group.reminders[0];
+                      const headSeverity = group.main?.severity || group.reminders[0]?.severity || 'info';
+                      return (
+                        <div
+                          key={group.name}
+                          className={`${styles.autoEventItem} ${getSeverityClass(headSeverity)}`}
+                          style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
+                        >
+                          {/* Frist-Kopf (klickbar → Kalender) */}
+                          <div
+                            className={`${styles.autoEventInfo} ${styles.autoEventClickable}`}
+                            style={{ cursor: 'pointer', justifyContent: 'space-between', width: '100%' }}
+                            onClick={() => headEvent && navigate(`/calendar?eventId=${headEvent.id}`)}
+                            title="Im Kalender anzeigen"
+                          >
+                            <span className={styles.autoEventTitle} style={{ fontWeight: 600 }}>{group.name}</span>
+                            <span className={styles.autoEventRight}>
+                              {group.main && <span className={styles.autoEventDate}>{formatAutoEventDate(group.main.date)}</span>}
+                              <ExternalLink size={12} className={styles.autoEventLink} />
+                            </span>
+                          </div>
+                          {/* Vorwarnungen als Chips */}
+                          {group.reminders.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {group.reminders.map((r) => (
+                                <span
+                                  key={r.id}
+                                  onClick={() => navigate(`/calendar?eventId=${r.id}`)}
+                                  title="Im Kalender anzeigen"
+                                  style={{ fontSize: '11px', color: '#475569', background: '#f1f5f9', borderRadius: '999px', padding: '2px 9px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                >
+                                  🔔 {reminderLeadLabel(r.title) || formatAutoEventDate(r.date)}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <div className={styles.autoEventRight}>
-                          <span className={styles.autoEventDate}>{formatAutoEventDate(event.date)}</span>
-                          <ExternalLink size={12} className={styles.autoEventLink} />
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
                 {!autoEventsExpanded && autoEvents.length > 3 && (
