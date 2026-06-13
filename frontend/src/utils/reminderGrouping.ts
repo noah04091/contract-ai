@@ -32,3 +32,17 @@ export const reminderLeadLabel = (title: string): string | null => {
 // Ist das Event eine Vorwarnung (vs. das Haupt-Frist-Event)?
 export const isReminderEntry = (e: ReminderLike): boolean =>
   reminderLeadLabel(e.title) !== null || /_REMINDER_\d+D$/i.test(e.type);
+
+// Entfernt einen eingebetteten Dateinamen ("…Santander.pdf") aus einem Anzeige-Titel.
+// Backend baut manche Titel als "LETZTER TAG: {dateiname}.pdf kündigen!" — der rohe
+// Dateiname mitten im Satz sieht hässlich aus. REINE Darstellung: ändert NICHT den
+// Zuordnungs-Schlüssel (cleanDeadlineName) und keine Daten. Greift nur bei echten
+// Datei-Endungen; lässt normale Titel ("Erste Rate fällig") unangetastet.
+export const stripFileName = (title: string): string => {
+  const cleaned = title
+    .replace(/\s*:?\s*\S*\.(?:pdf|docx?|xlsx?|pptx?|png|jpe?g)\b\S*/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([:!?.,])/g, '$1')
+    .trim();
+  return cleaned || title; // nie leer zurückgeben
+};

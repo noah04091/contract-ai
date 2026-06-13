@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import styles from './ReminderSettingsModal.module.css';
-import { cleanDeadlineName, reminderLeadLabel, isReminderEntry } from '../utils/reminderGrouping';
+import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from '../utils/reminderGrouping';
 import {
   X,
   Bell,
@@ -93,6 +93,8 @@ export default function ReminderSettingsModal({
   const [autoEvents, setAutoEvents] = useState<AutoEvent[]>([]);
   const [autoEventsLoading, setAutoEventsLoading] = useState(true);
   const [autoEventsExpanded, setAutoEventsExpanded] = useState(false);
+  // Pro Frist: ob die zusammengefasste Wiederhol-Liste ("🔁 N Termine") aufgeklappt ist (reine Anzeige)
+  const [expandedRecurring, setExpandedRecurring] = useState<Record<string, boolean>>({});
 
   // Fetch automatic calendar events for this contract
   useEffect(() => {
@@ -110,8 +112,9 @@ export default function ReminderSettingsModal({
               .filter((e: AutoEvent) => e.type !== 'CUSTOM_REMINDER' && new Date(e.date) > now)
               .sort((a: AutoEvent, b: AutoEvent) => new Date(a.date).getTime() - new Date(b.date).getTime());
             setAutoEvents(filtered);
-            // Auto-expand if 3 or fewer events
-            setAutoEventsExpanded(filtered.length <= 3);
+            // Immer direkt offen — kein "N Erinnerungen anzeigen"-Klick mehr (Wiederhol-Flut
+            // wird stattdessen pro Frist zu einer Zeile gefaltet, siehe Render).
+            setAutoEventsExpanded(true);
           }
         }
       } catch (err) {
@@ -570,22 +573,51 @@ export default function ReminderSettingsModal({
                             className={styles.autoEventInfo}
                             style={{ justifyContent: 'space-between', width: '100%' }}
                           >
-                            <span className={styles.autoEventTitle} style={{ fontWeight: 600 }}>{group.name}</span>
+                            <span className={styles.autoEventTitle} style={{ fontWeight: 600 }}>{stripFileName(group.name)}</span>
                             {group.main && <span className={styles.autoEventDate}>{formatAutoEventDate(group.main.date)}</span>}
                           </div>
-                          {/* Vorwarnungen als Chips (informativ) */}
-                          {group.reminders.length > 0 && (
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                              {group.reminders.map((r) => (
-                                <span
-                                  key={r.id}
-                                  style={{ fontSize: '11px', color: '#475569', background: '#f1f5f9', borderRadius: '999px', padding: '2px 9px', whiteSpace: 'nowrap' }}
-                                >
-                                  🔔 {reminderLeadLabel(r.title) || formatAutoEventDate(r.date)}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                          {/* Vorwarnungen als Chips. Echte "X vorher"-Vorwarnungen bleiben als Chips;
+                              reine Datums-Wiederholungen (z.B. monatliche Frist) werden ab >3 zu EINER
+                              "🔁 N Termine"-Zeile gefaltet — reine Anzeige, alle Termine bleiben erhalten. */}
+                          {group.reminders.length > 0 && (() => {
+                            const labeled = group.reminders.filter((r) => reminderLeadLabel(r.title));
+                            const dateOnly = group.reminders.filter((r) => !reminderLeadLabel(r.title));
+                            const isOpen = !!expandedRecurring[group.name];
+                            const fold = dateOnly.length > 3 && !isOpen;
+                            const chip = { fontSize: '11px', color: '#475569', background: '#f1f5f9', borderRadius: '999px', padding: '2px 9px', whiteSpace: 'nowrap' as const };
+                            const toggle = { ...chip, color: '#4f46e5', background: '#eef2ff', border: 'none', cursor: 'pointer', fontWeight: 600 };
+                            return (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {labeled.map((r) => (
+                                  <span key={r.id} style={chip}>🔔 {reminderLeadLabel(r.title)}</span>
+                                ))}
+                                {fold ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: true }))}
+                                    style={toggle}
+                                  >
+                                    🔁 {dateOnly.length} Termine anzeigen
+                                  </button>
+                                ) : (
+                                  <>
+                                    {dateOnly.map((r) => (
+                                      <span key={r.id} style={chip}>🔔 {formatAutoEventDate(r.date)}</span>
+                                    ))}
+                                    {dateOnly.length > 3 && isOpen && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: false }))}
+                                        style={toggle}
+                                      >
+                                        weniger
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </div>
                       );
                     })}

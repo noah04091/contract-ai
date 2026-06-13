@@ -45,7 +45,7 @@ import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 3c: Erinnerungen vom Kalender aus verwalten
-import { cleanDeadlineName, reminderLeadLabel, isReminderEntry } from "../utils/reminderGrouping"; // 🔔 Erinnerungen dieser Frist
+import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from "../utils/reminderGrouping"; // 🔔 Erinnerungen dieser Frist
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
@@ -805,7 +805,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
             <div className="modal-header-text">
               <h3>{isManualEvent ? currentEvent.title : formatContractName(currentEvent.contractName)}</h3>
-              <p>{isManualEvent ? 'Manuelles Ereignis' : currentEvent.title}</p>
+              <p>{isManualEvent ? 'Manuelles Ereignis' : stripFileName(currentEvent.title)}</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
@@ -952,7 +952,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', fontSize: '13px', fontWeight: 700, color: '#374151' }}>
                 <Bell size={16} style={{ color: '#4f46e5', flexShrink: 0 }} />
-                <span>Deine Erinnerungen</span>
+                <span>Erinnerungen zu dieser Frist</span>
               </div>
               {remindersLoading ? (
                 <div style={{ fontSize: '13px', color: '#9ca3af' }}>Lädt …</div>
