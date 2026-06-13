@@ -108,15 +108,23 @@ function sanitizeText(text, maps) {
   if (typeof text !== 'string' || text.length === 0) return text;
   let out = text;
 
-  // 1. Steuer-/Zero-Width-Zeichen raus.
+  // 1. Literale \uXXXX-Escapes dekodieren (KI tippt sporadisch "prüfen" statt "prüfen").
+  //    Deterministisch & eindeutig (kein Raten); dateHuntService.normalize macht das ebenso.
+  if (out.indexOf('\\u') !== -1) {
+    out = out.replace(/\\u([0-9a-fA-F]{4})/g, (m, hex) => {
+      try { return String.fromCharCode(parseInt(hex, 16)); } catch { return m; }
+    });
+  }
+
+  // 2. Steuer-/Zero-Width-Zeichen raus.
   out = out.replace(CONTROL_RE, '');
 
-  // 2. Mojibake (deterministisch).
+  // 3. Mojibake (deterministisch).
   if (out.includes('Ã') || out.includes('â') || out.includes('Â')) {
     for (const [bad, good] of MOJIBAKE_PAIRS) out = out.split(bad).join(good);
   }
 
-  // 3. NFC: zerlegte Umlaut-Sequenzen ("ü") zusammenführen.
+  // 4. NFC: zerlegte Umlaut-Sequenzen ("ü") zusammenführen.
   out = out.normalize('NFC');
 
   const hasFFFD = out.includes('�');
