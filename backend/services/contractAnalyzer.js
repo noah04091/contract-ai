@@ -1574,6 +1574,27 @@ class ContractAnalyzer {
         strong: ['allgemeine geschäftsbedingungen', 'agb', 'nutzungsbedingungen', 'geschäftsbedingungen', 'terms of service', 'terms and conditions'],
         medium: ['§ 305', '§ 306', '§ 307', '§ 308', '§ 309', 'salvatorische klausel', 'klauselverbote', 'einbeziehungsvereinbarung', 'transparenzgebot', 'verbraucher', 'unternehmer', 'haftungsausschluss', 'kardinalpflicht', 'schriftformklausel', 'gerichtsstand'],
         weak: ['geltungsbereich', 'schlussbestimmungen', 'anwendbares recht']
+      },
+
+      // 🤝 AGENTURVERTRAG (agency) — Pilot-Typ (13.06.2026)
+      // ⚠️ DISTINKTIVE Keywords — bewusst KEIN bloßes 'agentur' (sonst Fehltreffer in
+      // "Bundesagentur für Arbeit", das in Aufhebungsverträgen steht). GPT (Türsteher 2)
+      // ist der primäre Erkenner; dies ist nur das Keyword-Fallback-Netz.
+      agency: {
+        strong: ['agenturvertrag', 'handelsvertretervertrag', 'handelsvertreter', 'werbeagentur', 'mediaagentur', 'agenturleistungen'],
+        medium: ['ausgleichsanspruch', 'bezirksvertretung', 'alleinvertretung', 'vermittlungsprovision', 'handelsvertreterrecht'],
+        weak: []
+      },
+
+      // 📝 AUFHEBUNGSVERTRAG (aufhebung) — Pilot-Typ (13.06.2026)
+      // ⚠️ DISTINKTIVE Keywords — bewusst KEIN bloßes 'aufhebung'. Hinweis: ein echter
+      // Aufhebungsvertrag enthält viel Arbeitsvertrags-Vokabular (arbeitnehmer/arbeitgeber),
+      // daher kann 'employment' im Keyword-Score gewinnen — GPT (primär) trägt diesen Typ;
+      // der Keyword-Block ist Best-Effort und verschlechtert nie das bisherige Verhalten.
+      aufhebung: {
+        strong: ['aufhebungsvertrag', 'auflösungsvertrag', 'aufhebungsvereinbarung', 'abwicklungsvertrag'],
+        medium: ['einvernehmliche beendigung', 'sperrzeit', 'erledigungsklausel', 'ausgleichsquittung', 'turbo-klausel'],
+        weak: []
       }
     };
 

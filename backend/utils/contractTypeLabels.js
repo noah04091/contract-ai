@@ -23,6 +23,8 @@ const CONTRACT_TYPE_LABELS = Object.freeze({
   license: 'Lizenzvertrag',
   avv: 'Auftragsverarbeitungsvertrag (AVV)',
   franchise: 'Franchisevertrag',
+  agency: 'Agenturvertrag',           // 13.06.2026: Pilot-Typ (deckt Handelsvertreter + Kreativagentur)
+  aufhebung: 'Aufhebungsvertrag',     // 13.06.2026: Pilot-Typ (einvernehmliche Beendigung Arbeitsverhältnis)
   other: 'Sonstiger Vertrag'
 });
 

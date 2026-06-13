@@ -980,7 +980,7 @@ async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) 
 Antworte NUR mit JSON in diesem Format:
 {
   "category": "CONTRACT" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "UNKNOWN",
-  "contractType": "factoring" | "rental" | "employment" | "purchase" | "nda" | "loan" | "service" | "telecom" | "insurance" | "energy" | "agb" | "leasing" | "license" | "avv" | "franchise" | "other" | null,
+  "contractType": "factoring" | "rental" | "employment" | "purchase" | "nda" | "loan" | "service" | "telecom" | "insurance" | "energy" | "agb" | "leasing" | "license" | "avv" | "franchise" | "agency" | "aufhebung" | "other" | null,
   "contractTypeConfidence": 0-1,
   "parties": {
     "provider": "<Name der anbietenden/leistenden Partei, oder null>",
@@ -996,7 +996,12 @@ CATEGORY:
 CONTRACT: alle Verträge & rechtsverbindliche Vereinbarungen — Mietvertrag,
 Arbeitsvertrag, NDA, Kaufvertrag, Factoring, AGB, Versicherungspolice,
 Datenschutzerklärung, Leasing, Kredit, Darlehen, SaaS, Dienstleistung,
-Energieliefervertrag, Telekommunikationsvertrag, Werkvertrag usw.
+Energieliefervertrag, Telekommunikationsvertrag, Werkvertrag, Agenturvertrag,
+Handelsvertretervertrag, Aufhebungsvertrag usw.
+contractType-Hinweis: "agency" = Agenturvertrag/Handelsvertretervertrag (Vermittlung
+oder Kreativ-/Werbeagentur-Leistung); "aufhebung" = Aufhebungs-/Auflösungsvertrag
+zur einvernehmlichen Beendigung eines Arbeitsverhältnisses (NICHT der normale
+Arbeitsvertrag = "employment").
 INVOICE: Rechnungen mit Beträgen/Steuern.
 RECEIPT: Quittungen, Belege, Kassenbons.
 TABLE_DOCUMENT: reine Tabellen, Listen, Konditionsblätter ohne Vertragscharakter.
@@ -1110,7 +1115,7 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
     const VALID_CONTRACT_TYPES = new Set([
       'factoring', 'rental', 'employment', 'purchase', 'nda', 'loan',
       'service', 'telecom', 'insurance', 'energy', 'agb', 'leasing',
-      'license', 'avv', 'franchise', 'other'
+      'license', 'avv', 'franchise', 'agency', 'aufhebung', 'other'
     ]);
     let contractType = null;
     let contractTypeConfidence = 0;
@@ -2101,6 +2106,121 @@ Wenn der Vertrag detaillierte Konditionen hat → analysiere alle relevanten.`,
 • Aufrechnungs-/Zurückbehaltungsverbote im B2C — unwirksam (§ 309 Nr. 2, 3 BGB)`
     },
 
+    // 🤝 AGENTURVERTRAG (agency) — Pilot-Typ (13.06.2026)
+    // ⚠️ "Agenturvertrag" ist juristisch MEHRDEUTIG — die Awareness lässt die KI
+    // ZUERST den Typ bestimmen (Handelsvertreter §§84-92c HGB vs. Kreativ-/Marketing-
+    // Agentur §§611/631 BGB + UrhG vs. sonstige Vermittlung), dann den passenden
+    // Prüfblock anwenden. Recherche-gestützt, verifizierte §-Anker.
+    agency: {
+      title: "Fachanwalt für Handelsvertreter- und Agenturrecht",
+      expertise: `Als Fachanwalt für Vertriebs-, Handelsvertreter- und Medien-/Agenturrecht mit 20+ Jahren Erfahrung weißt du:
+
+"Agenturvertrag" ist KEIN gesetzlich definierter Vertragstyp — bestimme ZUERST, um welchen es sich handelt:
+• TYP A — HANDELSVERTRETERVERTRAG (§§ 84–92c HGB): Die Agentur/der Vertreter vermittelt oder schließt DAUERHAFT Geschäfte für einen Unternehmer, in fremdem Namen und auf fremde Rechnung, gegen Provision. Signalwörter: Handelsvertreter, Vermittlung/Abschluss von Geschäften, Provision, Bezirk/Kundenkreis, Ausgleichsanspruch, Buchauszug.
+• TYP B — KREATIV-/WERBE-/MARKETING-/PR-/SOCIAL-MEDIA-AGENTUR (Werkvertrag § 631 oder Dienstvertrag § 611 BGB): Die Agentur erbringt eine EIGENE Leistung (Kampagne, Website, Content, Beratung) für einen Kunden. Signalwörter: Agenturleistung, Leistungsbeschreibung/Scope/Briefing, Kampagne/Konzept/Content, Nutzungsrechte, Abnahme, Retainer/Monatspauschale.
+• TYP C — sonstige Vermittlungs-Agentur (Künstler-/Model-/Spieler-/Reise-Agentur): meist Maklerrecht (§§ 652 ff. BGB) bzw. § 84 HGB analog, bei Künstler-/Modelvermittlung zusätzlich §§ 296 f. SGB III.
+
+Bei TYP A (Handelsvertreter) zentral: Ausgleichsanspruch (§ 89b HGB) — kann im Voraus NICHT ausgeschlossen werden (§ 89b Abs. 4), Höchstgrenze 1 Jahresprovision (5-Jahres-Schnitt), Geltendmachung binnen 1 Jahr; Provision (§§ 87–87c), Buchauszug (§ 87c Abs. 2); Kündigungsfristen (§ 89 — gestaffelt 1–6 Monate, für den Unternehmer nie kürzer als für den Vertreter); nachvertragliches Wettbewerbsverbot (§ 90a — max. 2 Jahre, Schriftform, ZWINGEND angemessene Karenzentschädigung); Delkredere nur schriftlich + gegen besondere Provision (§ 86b). Bei EU/EWR-Tätigkeit ist der Ausgleichsanspruch auch bei Drittstaats-Rechtswahl nicht abdingbar (EuGH "Ingmar").
+
+Bei TYP B (Kreativagentur) zentral: Rechtsnatur (Werk § 631 = geschuldeter Erfolg + Abnahme/Mängelrechte vs. Dienst § 611 = Tätigkeit); NUTZUNGSRECHTE/Urheberrecht (§§ 31 ff. UrhG) — Urheberrecht selbst nicht übertragbar (§ 29), nur Nutzungsrechte; Zweckübertragungsregel (§ 31 Abs. 5): fehlt eine ausdrückliche Rechte-Regelung, verbleiben Rechte im Zweifel beim Urheber/der Agentur; angemessene Vergütung (§ 32) + Bestseller-Nachvergütung (§ 32a); Total-Buy-out per AGB oft unwirksam (§ 307, Transparenz); AVV nach Art. 28 DSGVO PFLICHT bei Auftragsdatenverarbeitung (bei eigener Entscheidungsmacht ggf. Art. 26 Joint Control); Haftungsausschluss-Grenzen (§ 309 Nr. 7).
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Bestimme zuerst TYP A/B/C und wende den passenden Maßstab an — wende NICHT die Handelsvertreter-Regeln auf eine Kreativagentur an oder umgekehrt.`,
+
+      commonTraps: `Häufige Fallen bei Agenturverträgen (je nach Typ, falls im Vertrag vorhanden):
+HANDELSVERTRETER (Typ A):
+• Vorab-Verzicht auf den Ausgleichsanspruch — auch verschleiert als "Provisionsverzicht für Nachgeschäfte" → unwirksam (§ 89b Abs. 4 HGB)
+• Kündigungsfrist für den Unternehmer kürzer als für den Vertreter → unzulässig (§ 89 Abs. 2 HGB)
+• Nachvertragliches Wettbewerbsverbot ohne/zu geringe Karenzentschädigung oder > 2 Jahre → unverbindlich (§ 90a HGB)
+• Ausschluss von Buchauszug/Auskunft → unzulässige Kontroll-Beschneidung (§ 87c HGB)
+• Provision an Zahlungseingang/freies Unternehmer-Ermessen geknüpft, abweichend von § 87a HGB
+• Pauschale, unentgeltliche Delkrederehaftung (§ 86b HGB)
+• Drittstaats-Rechtswahl zur Umgehung des Ausgleichs bei EU-Tätigkeit (EuGH Ingmar)
+KREATIV-/MARKETING-AGENTUR (Typ B):
+• Nutzungsrechte unklar/fehlend geregelt → im Zweifel verbleiben sie beim Urheber (§ 31 Abs. 5 UrhG) — böse Überraschung für den Kunden
+• Total-Buy-out aller Rechte per AGB ohne angemessene/Nachvergütung → § 307 BGB, §§ 32/32a UrhG
+• Genereller Haftungsausschluss "für alle Schäden" → unwirksam (§ 309 Nr. 7 BGB)
+• Fehlender AVV / falsche DSGVO-Rollenverteilung (Art. 28 vs. 26 DSGVO)
+• Fehlende Abnahmeregelung bei klaren Werkleistungen (§ 640 BGB)
+• Zu weite, unentschädigte Exklusivitäts-/Wettbewerbsklausel → § 138 BGB (NICHT § 90a HGB!)
+• Lange/automatisch verlängernde Laufzeiten gegenüber Verbrauchern (§ 309 Nr. 9 BGB)`,
+
+      pilotChecklist: `AGENTURVERTRAGS-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse):
+SCHRITT 0 — Bestimme zuerst den Vertragstyp: A) Handelsvertretervertrag (§§ 84 ff. HGB), B) Kreativ-/Marketing-Agentur (§§ 611/631 BGB), C) sonstige Vermittlungsagentur. Prüfe DANN nur die Punkte des zutreffenden Blocks; die Punkte der anderen Blöcke → status "not_applicable".
+Gib das Ergebnis im Feld typeSpecificFindings zurück. Punkt nicht vorhanden → "not_applicable"; vorhanden + ok → "ok"; vorhanden + problematisch → "issue" mit Klausel-Verweis.
+
+CHECKPOINTS — TYP A (Handelsvertreter):
+1. Vertragsnatur (§ 84 HGB) — echte Selbständigkeit + ständige Betrauung? Abgrenzung zu Scheinselbständigkeit/Vertragshändler/Kommissionär
+2. Ausgleichsanspruch (§ 89b HGB) — nicht im Voraus ausgeschlossen (Abs. 4)? Höchstgrenze 1 Jahresprovision (5-J.-Schnitt) beachtet? Kein verschleierter Verzicht?
+3. Provision (§§ 87–87b HGB) — Satz, Bezugsgeschäfte, Bezirksprovision, Entstehung/Fälligkeit (§ 87a) sachgerecht?
+4. Buchauszug & Abrechnung (§ 87c HGB) — Anspruch auf Buchauszug/Auskunft nicht ausgeschlossen? Abrechnung max. 3-monatlich?
+5. Kündigungsfristen (§ 89 HGB) — gestaffelt 1–6 Monate; Frist für Unternehmer nicht kürzer als für Vertreter (Abs. 2)?
+6. Nachvertragliches Wettbewerbsverbot (§ 90a HGB) — Schriftform, max. 2 Jahre, auf Bezirk/Kundenkreis begrenzt, ZWINGEND angemessene Karenzentschädigung?
+7. Delkredere (§ 86b HGB) — nur schriftlich, für bestimmtes Geschäft, gegen besondere Provision?
+8. Rechtswahl/EU-Bezug (§ 92c HGB / EuGH Ingmar) — keine Drittstaats-Rechtswahl, die den Ausgleich bei EU-Tätigkeit aushebelt?
+
+CHECKPOINTS — TYP B (Kreativ-/Marketing-Agentur):
+9. Rechtsnatur Werk (§ 631) vs. Dienst (§ 611 BGB) — klar? Passende Abnahme-/Mängel-/Vergütungsregeln?
+10. Nutzungsrechte/Urheberrecht (§§ 31 ff. UrhG) — Umfang (einfach/ausschließlich, räumlich/zeitlich/inhaltlich) ausdrücklich geregelt? Zweckübertragung (§ 31 Abs. 5) bedacht? Rechte an Quelldateien/Bearbeitung?
+11. Vergütung & Buy-out (§§ 32, 32a UrhG) — angemessen? Total-Buy-out per AGB ohne Nachvergütung problematisch (§ 307)?
+12. Abnahme & Gewährleistung (§§ 640, 633 ff. BGB) — bei Werkleistung geregelt?
+13. Haftungsbegrenzung (§ 309 Nr. 7 BGB) — Vorsatz/grobe Fahrlässigkeit/Leben-Körper-Gesundheit ausgenommen?
+14. Datenschutz (Art. 28/26 DSGVO) — AVV vorhanden bei Auftragsdatenverarbeitung? Bei eigener Entscheidung der Agentur ggf. Joint Control?
+15. Laufzeit/Kündigung — faire Laufzeit + Verlängerung (§ 309 Nr. 9 bei Verbrauchern), außerordentliche Kündigung (§ 314)?
+16. Exklusivität/IP-Kette — Reichweite/Dauer der Exklusivität angemessen (§ 138 BGB)? Nutzungsrechte bei Subunternehmern/Freelancern lückenlos gesichert?`
+    },
+
+    // 📝 AUFHEBUNGSVERTRAG (aufhebung) — Pilot-Typ (13.06.2026)
+    // Einvernehmliche Beendigung eines Arbeitsverhältnisses. Wird FAST IMMER aus
+    // Arbeitnehmer-Sicht geprüft (schutzbedürftige Partei). Recherche-gestützt:
+    // §623 BGB (Schriftform), §159/§158 SGB III (Sperrzeit/Ruhen), §1a KSchG,
+    // §34 EStG, BAG 6 AZR 75/18 + 6 AZR 333/21.
+    aufhebung: {
+      title: "Fachanwalt für Arbeitsrecht (Schwerpunkt Aufhebungsverträge)",
+      expertise: `Als Fachanwalt für Arbeitsrecht mit 20+ Jahren Erfahrung in der Verhandlung von Aufhebungsverträgen weißt du:
+
+PERSPEKTIVE: Ein Aufhebungsvertrag wird FAST IMMER aus Sicht des ARBEITNEHMERS (AN) geprüft — er gibt freiwillig seinen Kündigungsschutz auf und trägt nahezu alle Risiken. Gewichte jede Klausel danach, ob sie dem AN schadet (Ausnahme: das Dokument soll erkennbar aus Arbeitgeber-Sicht geprüft werden).
+
+Die drei großen GELD-Fallen für den AN:
+• SPERRZEIT (§ 159 SGB III): freiwilliger Aufhebungsvertrag = "Arbeitsaufgabe" → in der Regel 12 Wochen Sperrzeit beim Arbeitslosengeld PLUS Minderung der Anspruchsdauer um mind. ein Viertel. Nur ein anerkannter "wichtiger Grund" vermeidet sie (drohende rechtmäßige betriebs-/personenbedingte AG-Kündigung, Einhaltung der AG-Kündigungsfrist, Abfindung im Rahmen 0,25–0,5 Monatsgehälter/Jahr).
+• RUHEN (§ 158 SGB III): wird die ordentliche AG-Kündigungsfrist NICHT eingehalten und zugleich eine Abfindung gezahlt → das ALG ruht (Zahlungsbeginn verschoben, bis zu 1 Jahr). Korrektes Beendigungsdatum ist die wichtigste Stellschraube.
+• GENERALQUITTUNG/Erledigungsklausel: vernichtet ausstehende Boni, Provisionen, Überstunden, Spesen, bAV-Ansprüche — größtes "stilles" Risiko.
+
+Weitere Eckpfeiler: SCHRIFTFORM § 623 BGB (eigenhändige Originalunterschrift beider, KEINE E-Mail/Fax/Scan/elektronische Signatur — Verstoß = Nichtigkeit, § 125 BGB); KEIN Widerrufsrecht (BAG 6 AZR 75/18 — kein Haustürgeschäft); "Gebot fairen Verhandelns" eng (BAG 6 AZR 333/21: bloßer Zeitdruck/Sofort-Annahme reicht NICHT für Unwirksamkeit); Abfindungs-Orientierung § 1a KSchG (0,5 Bruttomonatsgehälter/Jahr — verhandelbar, kein Automatik-Anspruch); Steuer: Fünftelregelung § 34 EStG nur bei Zusammenballung in EINEM Jahr (ab 2025 nicht mehr im Lohnsteuerabzug → AN muss sie über die Steuererklärung geltend machen).
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!`,
+
+      commonTraps: `Häufige Fallen bei Aufhebungsverträgen (aus AN-Sicht, falls im Vertrag vorhanden):
+• Beendigungsdatum vor Ablauf der ordentlichen AG-Kündigungsfrist + Abfindung → Ruhen des ALG (§ 158 SGB III)
+• Kein "wichtiger Grund" formuliert / AN als Initiator ("auf eigenen Wunsch") → Sperrzeit (§ 159 SGB III)
+• Umfassende Erledigungs-/Ausgleichsklausel ohne Ausnahmen → Verlust offener Boni/Überstunden/Provisionen/bAV
+• Abfindung in Raten über den Jahreswechsel → Zusammenballung entfällt, Fünftelregelung verloren (§ 34 EStG)
+• "Wohlwollendes Zeugnis" ohne zugesicherte Note/Schlussformel → faktisch wertlos (§ 109 GewO)
+• Widerrufliche statt unwiderruflicher Freistellung → AN bleibt gebunden, Resturlaub nicht sicher verbraucht
+• Bestehendes Wettbewerbsverbot bestätigt ohne Karenzentschädigung (§ 74 Abs. 2 HGB)
+• Vertrauen auf "Bedenkzeit/Widerruf" — existiert nicht (BAG 6 AZR 333/21)
+• Formverstoß gegen § 623 BGB (E-Mail/Scan/elektronisch) → Gesamtnichtigkeit`,
+
+      pilotChecklist: `AUFHEBUNGSVERTRAGS-PFLICHTPRÜFUNG (Pilot-Tiefenanalyse, AN-Perspektive):
+Prüfe gezielt jeden Punkt und gib das Ergebnis im Feld typeSpecificFindings zurück.
+Punkt nicht vorhanden → "not_applicable"; vorhanden + ok → "ok"; vorhanden + problematisch → "issue" mit Klausel-Verweis.
+
+CHECKPOINTS:
+1. Schriftform & Unterschrift (§ 623 i.V.m. § 126 BGB) — eigenhändige Originalunterschrift beider Parteien? Keine E-Mail/Fax/Scan/elektronische Form (sonst Nichtigkeit). HARTES Kriterium.
+2. Beendigungszeitpunkt & AG-Kündigungsfrist (§ 158 SGB III, § 622 BGB) — Enddatum = korrekt berechnete ordentliche AG-Kündigungsfrist? Sonst Ruhen des ALG bei Abfindung.
+3. Sperrzeit-Risiko & "wichtiger Grund" (§ 159 SGB III) — ist ein sperrzeit-vermeidender Grund (drohende betriebs-/personenbedingte AG-Kündigung) formuliert? Keine AN-Initiative/verhaltensbedingten Andeutungen?
+4. Abfindung (§ 1a KSchG als Orientierung) — Höhe (Faustformel 0,5 Gehälter/Jahr), brutto/netto, Fälligkeit, Vererblichkeit/Unverfallbarkeit geregelt?
+5. Steuerliche Gestaltung (§ 34 EStG) — Auszahlung in EINEM Veranlagungsjahr (Zusammenballung für Fünftelregelung)? Keine jahresübergreifende Ratenzahlung ohne Grund?
+6. Freistellung — unwiderruflich (AN-günstig) vs. widerruflich? Anrechnung Resturlaub/anderweitiger Verdienst, Vergütungsfortzahlung?
+7. Resturlaub & Überstunden (§ 7 Abs. 4 BUrlG) — voller Anspruch korrekt abgegolten? Überstunden/Gleitzeit ausdrücklich geregelt (sonst von Erledigungsklausel erfasst)?
+8. Arbeitszeugnis (§ 109 GewO) — Note (mind. "gut") + wohlwollende Schlussformel konkret zugesichert, idealerweise als Anlage?
+9. Erledigungs-/Ausgleichsklausel (Generalquittung) — Reichweite? Offene Ansprüche (Boni/Provision/Überstunden/bAV) ausdrücklich ausgenommen? HÖCHSTE Wachsamkeit.
+10. Nachvertragliches Wettbewerbsverbot (§§ 74 ff. HGB) — bestätigt/aufgehoben? Bei Bestätigung Karenzentschädigung ≥ 50 %?
+11. Betriebliche Altersvorsorge (§ 1b BetrAVG) — erdiente Anwartschaften gesichert, nicht von Erledigungsklausel erfasst?
+12. Variable Vergütung & Turbo-/Sprinterklausel — Boni/Tantiemen/anteilige Sonderzahlung beziffert + fällig? Prämie für vorzeitiges Ausscheiden steuer-/sozialrechtlich sauber terminiert?
+13. Rückgabe Arbeitsmittel & Verschwiegenheit — Dienstwagen/Laptop/Schlüssel-Rückgabe geregelt? Verschwiegenheit kein "Maulkorb" gegenüber Behörden/Agentur für Arbeit?`
+    },
+
     other: {
       title: "Fachanwalt für allgemeines Vertragsrecht",
       expertise: `Als Fachanwalt für allgemeines Vertragsrecht mit 20+ Jahren Erfahrung weißt du:
@@ -2756,7 +2876,8 @@ Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text d
   ]
 }
 
-NUR FÜR PILOT-TYPEN (Mietvertrag, Arbeitsvertrag, NDA): typeSpecificFindings ist die strukturierte
+NUR FÜR PILOT-TYPEN (z.B. Mietvertrag, Arbeitsvertrag, NDA, Kaufvertrag, Dienstleistung, Darlehen,
+Versicherung, Energie, Agenturvertrag, Aufhebungsvertrag): typeSpecificFindings ist die strukturierte
 Antwort auf die PILOT-TIEFENANALYSE oben. Für alle anderen Vertragstypen: Feld weglassen oder leeres
 Array []. Status-Werte: "ok" | "issue" | "not_applicable". Bei "issue" möglichst klauselReferenz
 mitgeben.
