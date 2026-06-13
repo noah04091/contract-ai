@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import styles from './ReminderSettingsModal.module.css';
@@ -18,8 +17,7 @@ import {
   ArrowLeft,
   ChevronDown,
   ChevronUp,
-  Zap,
-  ExternalLink
+  Zap
 } from 'lucide-react';
 
 interface ReminderSetting {
@@ -77,7 +75,6 @@ export default function ReminderSettingsModal({
   onClose,
   onSuccess
 }: ReminderSettingsModalProps) {
-  const navigate = useNavigate();
 
   // Initialize reminders from new format or legacy
   const initialReminders: ReminderSetting[] = currentReminderSettings.length > 0
@@ -365,7 +362,7 @@ export default function ReminderSettingsModal({
               <Bell size={24} />
             </div>
             <div className={styles.headerContent}>
-              <h2>Erinnerungen einrichten</h2>
+              <h2>Erinnerungen verwalten</h2>
               <p>{contractName}</p>
             </div>
             <button className={styles.closeButton} onClick={onClose}>
@@ -573,7 +570,6 @@ export default function ReminderSettingsModal({
                 {autoEventsExpanded && (
                   <div className={styles.autoEventsList}>
                     {autoEventGroups.map((group) => {
-                      const headEvent = group.main || group.reminders[0];
                       const headSeverity = group.main?.severity || group.reminders[0]?.severity || 'info';
                       return (
                         <div
@@ -581,28 +577,21 @@ export default function ReminderSettingsModal({
                           className={`${styles.autoEventItem} ${getSeverityClass(headSeverity)}`}
                           style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
                         >
-                          {/* Frist-Kopf (klickbar → Kalender) */}
+                          {/* Frist-Kopf — reine Übersicht, keine Weiterleitung */}
                           <div
-                            className={`${styles.autoEventInfo} ${styles.autoEventClickable}`}
-                            style={{ cursor: 'pointer', justifyContent: 'space-between', width: '100%' }}
-                            onClick={() => headEvent && navigate(`/calendar?eventId=${headEvent.id}`)}
-                            title="Im Kalender anzeigen"
+                            className={styles.autoEventInfo}
+                            style={{ justifyContent: 'space-between', width: '100%' }}
                           >
                             <span className={styles.autoEventTitle} style={{ fontWeight: 600 }}>{group.name}</span>
-                            <span className={styles.autoEventRight}>
-                              {group.main && <span className={styles.autoEventDate}>{formatAutoEventDate(group.main.date)}</span>}
-                              <ExternalLink size={12} className={styles.autoEventLink} />
-                            </span>
+                            {group.main && <span className={styles.autoEventDate}>{formatAutoEventDate(group.main.date)}</span>}
                           </div>
-                          {/* Vorwarnungen als Chips */}
+                          {/* Vorwarnungen als Chips (informativ) */}
                           {group.reminders.length > 0 && (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                               {group.reminders.map((r) => (
                                 <span
                                   key={r.id}
-                                  onClick={() => navigate(`/calendar?eventId=${r.id}`)}
-                                  title="Im Kalender anzeigen"
-                                  style={{ fontSize: '11px', color: '#475569', background: '#f1f5f9', borderRadius: '999px', padding: '2px 9px', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                  style={{ fontSize: '11px', color: '#475569', background: '#f1f5f9', borderRadius: '999px', padding: '2px 9px', whiteSpace: 'nowrap' }}
                                 >
                                   🔔 {reminderLeadLabel(r.title) || formatAutoEventDate(r.date)}
                                 </span>
