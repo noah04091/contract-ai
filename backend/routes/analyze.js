@@ -23,6 +23,7 @@ const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit, PLANS } = req
 const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/triggerEmailService"); // 📧 Behavior-based Emails
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 const dateHuntService = require("../services/dateHuntService"); // 📅 Stufe 2: Dedizierte Datums-Extraktion mit Evidence-Validierung
+const pilotCheckService = require("../services/pilotCheck"); // 🎯 Isolierte Pilot-Tiefenanalyse (typeSpecificFindings) — abgekapselt wie DateHunt, berührt Hauptanalyse nicht
 const { pilotTypeToLabel } = require("../utils/contractTypeLabels"); // 🏷️ A1 (28.05.2026): KI-Vertragstyp → deutsche Bezeichnung
 
 const router = express.Router();
@@ -4899,6 +4900,32 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       // damit Frontend per render-if-present sauber unterscheidet).
       result.fristHinweise = undefined;
       console.log(`📅 [${requestId}] Date Hunt im Fallback — Hauptanalyse-importantDates bleiben, fristHinweise leer`);
+    }
+
+    // 🎯 ISOLIERTE Pilot-Tiefenanalyse (13.06.2026) — eigene, abgekapselte Stufe (Muster: DateHunt).
+    // Erzeugt zuverlässig den strukturierten typeSpecificFindings-Block für Pilot-Typen
+    // (Miet-/Arbeits-/NDA-/Kauf-/Agentur-/Aufhebungsvertrag, …). Berührt die Hauptanalyse NICHT:
+    // hängt das Array nur additiv an. Jeder Fehler → leer (= heutiges Verhalten, Block fehlt, nie schlechter).
+    try {
+      const pilotAwareness = getContractTypeAwareness(promptContractType);
+      if (pilotAwareness && pilotAwareness.pilotChecklist) {
+        const pilotFindings = await pilotCheckService.runPilotCheck(
+          fullTextContent,
+          pilotAwareness.title,
+          pilotAwareness.pilotChecklist,
+          createTrackedOpenAI(getOpenAI(), { userId: req.user.userId, feature: 'pilot-check', requestId }),
+          requestId
+        );
+        if (Array.isArray(pilotFindings) && pilotFindings.length > 0) {
+          result.typeSpecificFindings = pilotFindings;
+          const issues = pilotFindings.filter(f => f.status === 'issue').length;
+          console.log(`🎯 [${requestId}] Pilot-Tiefenanalyse: ${pilotFindings.length} Checkpoints (${issues} issue) für contractType=${promptContractType}`);
+        } else {
+          console.log(`🎯 [${requestId}] Pilot-Tiefenanalyse: keine Findings (contractType=${promptContractType}) — Block bleibt wie bisher`);
+        }
+      }
+    } catch (pilotErr) {
+      console.warn(`⚠️ [${requestId}] Pilot-Tiefenanalyse übersprungen (ignoriert): ${pilotErr.message}`);
     }
 
     // 🧹 Zentraler Anzeige-Text-Säuberungs-Layer (12.06.2026): EINMAL ganz am Ende, bevor
