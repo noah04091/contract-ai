@@ -4,6 +4,7 @@ const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = require("../services/textExtractor");
 const pdfExtractor = require("../services/pdfExtractor");
+const { shouldAttemptOcr } = require("../utils/ocrGate"); // 🔍 OCR-Weiche (Text-Menge + Scan-Dichte)
 const { sanitizeAnalysisResult } = require("../utils/textSanitizer");
 const fs = require("fs").promises;
 const fsSync = require("fs");
@@ -4343,13 +4344,16 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       pdfData = { text: extracted.text, numpages: extracted.pageCount || 0, usedOCR: false, ocrConfidence: null, signatures: [] };
       console.log(`📄 [${requestId}] Document parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
 
-      // OCR-Fallback für gescannte PDFs mit wenig/keinem Text
+      // OCR-Fallback für gescannte PDFs mit wenig Text ODER scan-typischer Dichte (14.06.2026).
+      // Bisher nur „<200 Zeichen gesamt" → gescannte Mehrseiter mit etwas Junk-Text rutschten durch.
+      // Jetzt zusätzlich Dichte-Prüfung (≥2 Seiten, <100 Zeichen/Seite). SICHER: OCR-Text wird unten
+      // nur übernommen, wenn er LÄNGER ist (Accept-Guard) → kein Qualitätsverlust, nur ggf. OCR-Kosten.
       const isPdf = fileMimetype === 'application/pdf';
-      const textTooShort = !pdfData.text || pdfData.text.trim().length < 200;
+      const ocrDecision = shouldAttemptOcr({ text: pdfData.text, numPages: pdfData.numpages, isPdf });
       let ocrAttempted = false;
-      if (isPdf && textTooShort) {
+      if (ocrDecision.ocr) {
         ocrAttempted = true;
-        console.log(`🔍 [${requestId}] Wenig Text (${pdfData.text?.trim().length || 0} Zeichen) — versuche OCR-Fallback...`);
+        console.log(`🔍 [${requestId}] OCR-Fallback (Grund: ${ocrDecision.reason}, ${ocrDecision.charLen} Zeichen${ocrDecision.avgPerPage !== null ? `, ~${ocrDecision.avgPerPage}/Seite` : ''})...`);
         try {
           const ocrResult = await pdfExtractor.extractTextWithOCRFallback(buffer, {
             mimetype: fileMimetype,
