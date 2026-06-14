@@ -1277,6 +1277,16 @@ async function generateEventsForContract(db, contract) {
       }
     }
 
+    // 🆕 Problem B: synonyme Meilenstein-Events am selben Tag zusammenfassen (vor dem Speichern)
+    {
+      const { kept, dropped } = dedupeSameDayMilestones(events);
+      if (dropped.length > 0) {
+        console.log(`🔗 Problem-B-Merge: ${dropped.length} synonyme Dopplungs-Events zusammengefasst für "${contract.name}"`);
+        events.length = 0;
+        events.push(...kept);
+      }
+    }
+
     // Speichere Events in DB (update or insert)
     if (events.length > 0) {
       // 🔍 DEBUG: Log event data BEFORE saving to DB
@@ -1754,11 +1764,80 @@ async function cleanAndRegenerateAIEvents(db, contract) {
   };
 }
 
+// ============================================================================
+// 🆕 14.06.2026 Problem B: Synonyme Meilenstein-Events am selben Tag zusammenfassen.
+// Pro (Vertrag, Kalendertag, Semantik-Gruppe) bleibt EIN Event übrig — das höchst-
+// priorisierte (spezifischer End-/Start-Typ MIT Vorwarnungen vor generischem ohne).
+// Die übrigen + ihre Vorwarn-Kinder werden entfernt. Zwei VERSCHIEDENE echte Termine
+// (andere Gruppe / anderer Tag) bleiben getrennt → kein echter Termin geht verloren.
+// Wird von der Erzeugung UND vom Cleanup-Script genutzt (deckungsgleich).
+const MILESTONE_SEM_GROUP = {
+  CONTRACT_END: 'ENDE', MINIMUM_TERM_END: 'ENDE', LEASE_END: 'ENDE', INSURANCE_END: 'ENDE',
+  LOAN_END: 'ENDE', LICENSE_EXPIRY: 'ENDE', TRIAL_END: 'ENDE', AUTO_RENEWAL: 'ENDE',
+  CONTRACT_EXPIRY: 'ENDE', REMAINING_TIME_END: 'ENDE',
+  CONTRACT_START: 'START', SERVICE_START: 'START'
+};
+// Höhere Zahl = behalten. Tatsächliche End-Typen (spezifisch + mit Vorwarnungen) ganz oben;
+// "ab jetzt kündbar" darunter; Verlängerung/generisch/abgeleitet unten.
+const MILESTONE_PRIORITY = {
+  CONTRACT_END: 100, LEASE_END: 99, LOAN_END: 98, INSURANCE_END: 97, LICENSE_EXPIRY: 96, TRIAL_END: 95,
+  MINIMUM_TERM_END: 60,
+  AUTO_RENEWAL: 50, CONTRACT_EXPIRY: 20, REMAINING_TIME_END: 10,
+  CONTRACT_START: 100, SERVICE_START: 50
+};
+function isReminderEventB(e) {
+  return /_REMINDER_\d+D$/i.test(e.type || '') ||
+    /\d+\s*(?:Tage?|Wochen?|Monate?)\s*vorher/i.test(e.title || '');
+}
+function dedupeSameDayMilestones(events) {
+  const dayStr = (d) => new Date(d).toISOString().slice(0, 10);
+  const mains = events.filter(e => !isReminderEventB(e));
+  const reminders = events.filter(e => isReminderEventB(e));
+
+  // Gruppieren nach Vertrag + Tag + Semantik-Gruppe
+  const groups = new Map();
+  for (const e of mains) {
+    const g = MILESTONE_SEM_GROUP[e.type];
+    if (!g) continue;
+    const key = `${String(e.contractId)}|${dayStr(e.date)}|${g}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(e);
+  }
+
+  const droppedMains = [];
+  for (const list of groups.values()) {
+    if (list.length < 2) continue;
+    list.sort((a, b) => (MILESTONE_PRIORITY[b.type] || 0) - (MILESTONE_PRIORITY[a.type] || 0));
+    for (let i = 1; i < list.length; i++) droppedMains.push(list[i]); // [0] bleibt
+  }
+
+  // Vorwarn-Kinder der entfernten Mains (nur die zum selben Stichtag gehörenden)
+  const droppedReminders = [];
+  for (const d of droppedMains) {
+    const dTime = new Date(d.date).getTime();
+    for (const r of reminders) {
+      if (String(r.contractId) !== String(d.contractId)) continue;
+      if (r.metadata?.originalEvent !== d.type) continue;
+      const lead = Number(r.metadata?.daysUntil);
+      if (Number.isFinite(lead)) {
+        const target = new Date(r.date); target.setDate(target.getDate() + lead);
+        if (Math.abs(target.getTime() - dTime) > 2 * 86400000) continue; // anderer Stichtag → kein Kind
+      }
+      droppedReminders.push(r);
+    }
+  }
+
+  const dropSet = new Set([...droppedMains, ...droppedReminders]);
+  const kept = events.filter(e => !dropSet.has(e));
+  return { kept, dropped: [...dropSet] };
+}
+
 module.exports = {
   generateEventsForContract,
   cleanAndRegenerateAIEvents,
   regenerateAllEvents,
   updateExpiredEvents,
   onContractChange,
-  extractNoticePeriod
+  extractNoticePeriod,
+  dedupeSameDayMilestones
 };
