@@ -83,6 +83,13 @@ async function generateEventsForContract(db, contract) {
       console.log(`📅 Ablaufdatum angepasst von ${originalExpiry.toISOString()} auf ${expiryDate.toISOString()}`);
     }
     
+    // 🆕 14.06.2026 Guard (Problem A): "echtes" Enddatum = existiert UND liegt NACH dem Start.
+    // Stoppt "Vertrag läuft ab"/"Verlängerung" am Starttag bei Verträgen, deren Enddatum
+    // fälschlich = Startdatum gesetzt wurde (unbefristet / Aufhebungsvertrag). Verträge mit
+    // echtem zukünftigem Enddatum (auch Auto-Renewals) sind davon NICHT betroffen.
+    const startDate = contract.startDate ? new Date(contract.startDate) : null;
+    const hasValidExpiry = !!expiryDate && (!startDate || expiryDate.getTime() > startDate.getTime());
+
     const createdDate = new Date(contract.createdAt || contract.uploadedAt);
     
     // 🔧 FIX: Extrahiere Notice Period aus verschiedenen Quellen
@@ -132,7 +139,7 @@ async function generateEventsForContract(db, contract) {
     }
 
     // 🆕 GENERIERE EVENTS AUCH FÜR "ALTE" AKTIVE VERTRÄGE
-    if (expiryDate && shouldCreateCriticalEvents) { // 🔒 Mit Konfidenz-Check
+    if (hasValidExpiry && shouldCreateCriticalEvents) { // 🔒 Konfidenz-Check + echtes Enddatum (Problem-A-Guard)
       
       // 1. Kündigungsfenster öffnet (30 Tage VOR der Deadline)
       if (noticePeriodDays > 0) {
@@ -237,8 +244,11 @@ async function generateEventsForContract(db, contract) {
         }
       }
       
-      // 3. Automatische Verlängerung
-      if (expiryDate > now) {
+      // 3. Automatische Verlängerung — NUR bei echtem Auto-Renewal (Problem-A-Guard):
+      // verhindert falsche "Mögliche Verlängerung" bei Verträgen, die sich gar nicht
+      // verlängern (z.B. Aufhebungsvertrag, befristet-ohne-Verlängerung). Echte
+      // Auto-Renewals (isAutoRenewal=true) bleiben unberührt.
+      if (expiryDate > now && isAutoRenewal) {
         const renewalDate = createLocalDate(expiryDate);
         events.push({
           userId: contract.userId,
