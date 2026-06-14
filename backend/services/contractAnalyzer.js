@@ -1595,6 +1595,34 @@ class ContractAnalyzer {
         strong: ['aufhebungsvertrag', 'auflösungsvertrag', 'aufhebungsvereinbarung', 'abwicklungsvertrag'],
         medium: ['einvernehmliche beendigung', 'sperrzeit', 'erledigungsklausel', 'ausgleichsquittung', 'turbo-klausel'],
         weak: []
+      },
+
+      // 🚗 LEASINGVERTRAG (leasing) — Pilot-Typ (14.06.2026), distinktiv
+      leasing: {
+        strong: ['leasingvertrag', 'leasingnehmer', 'leasinggeber', 'kilometerleasing', 'restwertleasing', 'finanzierungsleasing'],
+        medium: ['andienungsrecht', 'restwert', 'leasingrate', 'grundmietzeit', 'minderwertausgleich'],
+        weak: []
+      },
+
+      // 📄 LIZENZVERTRAG (license) — Pilot-Typ (14.06.2026), distinktiv (kein bloßes 'lizenz'/'nutzungsrecht')
+      license: {
+        strong: ['lizenzvertrag', 'lizenzvereinbarung', 'nutzungslizenz', 'patentlizenz', 'markenlizenz', 'softwarelizenz'],
+        medium: ['lizenzgebühr', 'lizenzgeber', 'lizenznehmer', 'unterlizenz', 'stücklizenz'],
+        weak: []
+      },
+
+      // 🔐 AUFTRAGSVERARBEITUNGSVERTRAG / AVV (avv) — Pilot-Typ (14.06.2026), distinktiv (kein bloßes 'avv')
+      avv: {
+        strong: ['auftragsverarbeitungsvertrag', 'auftragsverarbeitung', 'auftragsdatenverarbeitung', 'data processing agreement'],
+        medium: ['art. 28 dsgvo', 'weisungsgebunden', 'technische und organisatorische maßnahmen', 'unterauftragsverarbeiter', 'auftragsverarbeiter'],
+        weak: []
+      },
+
+      // 🏪 FRANCHISEVERTRAG (franchise) — Pilot-Typ (14.06.2026), distinktiv
+      franchise: {
+        strong: ['franchisevertrag', 'franchisegeber', 'franchisenehmer', 'franchisesystem', 'franchisenehmerin'],
+        medium: ['franchisegebühr', 'eintrittsgebühr', 'systemhandbuch', 'gebietsschutz', 'franchise'],
+        weak: []
       }
     };
 
