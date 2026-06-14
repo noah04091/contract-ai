@@ -370,12 +370,15 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     if (status) {
       updateData.status = status;
 
-      // Handle snooze
+      // Handle snooze: Datum verschieben (ab JETZT bzw. ab Event-Datum, je nachdem was später ist)
+      // UND als 'scheduled' markieren — NICHT 'snoozed'. Der Versand-Cron sucht nur status:'scheduled';
+      // bei 'snoozed' kam die Erinnerung NIE wieder ("Snooze-Lüge"). Jetzt feuert sie am neuen Tag.
       if (status === 'snoozed' && snoozeDays) {
-        const newDate = new Date(event.date);
+        const newDate = new Date(Math.max(Date.now(), new Date(event.date).getTime()));
         newDate.setDate(newDate.getDate() + snoozeDays);
         updateData.date = newDate;
         updateData.snoozedUntil = newDate;
+        updateData.status = 'scheduled';
       }
     }
 
@@ -844,18 +847,18 @@ router.post("/quick-action", verifyToken, async (req, res) => {
       case "snooze":
         // Snooze event for X days
         const snoozeDays = data?.days || 7;
-        const newDate = new Date(event.date);
+        const newDate = new Date(Math.max(Date.now(), new Date(event.date).getTime()));
         newDate.setDate(newDate.getDate() + snoozeDays);
-        
+
         await req.db.collection("contract_events").updateOne(
           { _id: event._id },
-          { 
-            $set: { 
+          {
+            $set: {
               date: newDate,
-              status: "snoozed",
+              status: "scheduled", // 🆕 Fix: re-fire am neuen Tag (NICHT 'snoozed' = kam nie wieder)
               snoozedUntil: newDate,
               updatedAt: new Date()
-            } 
+            }
           }
         );
         
@@ -953,11 +956,11 @@ router.get("/quick-action", async (req, res) => {
 
     if (action === "snooze") {
       const snoozeDays = parseInt(days) || 7;
-      const newDate = new Date(event.date);
+      const newDate = new Date(Math.max(Date.now(), new Date(event.date).getTime()));
       newDate.setDate(newDate.getDate() + snoozeDays);
       await db.collection("contract_events").updateOne(
         { _id: event._id },
-        { $set: { date: newDate, status: "snoozed", snoozedUntil: newDate, updatedAt: new Date() } }
+        { $set: { date: newDate, status: "scheduled", snoozedUntil: newDate, updatedAt: new Date() } } // 🆕 Fix: re-fire
       );
       return res.redirect(`${baseUrl}/calendar?success=snoozed&days=${snoozeDays}`);
     }
