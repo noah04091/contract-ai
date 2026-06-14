@@ -5,6 +5,7 @@ const pdfParse = require("pdf-parse");
 const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = require("../services/textExtractor");
 const pdfExtractor = require("../services/pdfExtractor");
 const { shouldAttemptOcr } = require("../utils/ocrGate"); // 🔍 OCR-Weiche (Text-Menge + Scan-Dichte)
+const { tryParseLenient } = require("../utils/jsonRepair"); // 🩹 Tolerantes JSON-Parsen für abgeschnittene KI-Antworten
 const { sanitizeAnalysisResult } = require("../utils/textSanitizer");
 const fs = require("fs").promises;
 const fsSync = require("fs");
@@ -5035,13 +5036,21 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     const jsonString = aiMessage.slice(jsonStart, jsonEnd);
     let result;
-    
-    try {
-      result = JSON.parse(jsonString);
-    } catch (parseError) {
-      console.error(`❌ [${requestId}] JSON parse error:`, parseError.message);
-      console.error(`❌ [${requestId}] Raw JSON string:`, jsonString.substring(0, 500));
-      throw new Error("Error parsing AI response");
+
+    // 🩹 Robustheit C (14.06.2026): Abgeschnittenes JSON (sehr große Verträge → finish_reason=length)
+    // tolerant parsen statt hart zu scheitern. tryParseLenient versucht erst normales JSON.parse,
+    // dann eine KONSERVATIVE Reparatur (offene Strukturen schließen — erfindet KEINE Werte).
+    // Ein gerettetes Teil-Ergebnis läuft anschließend durch die normale Validierung +
+    // render-if-present. Nur wenn auch das scheitert → klarer Truncation-Fehler (freundlich gemappt).
+    const parsedLenient = tryParseLenient(jsonString);
+    if (parsedLenient.ok) {
+      result = parsedLenient.value;
+      if (parsedLenient.repaired) {
+        console.warn(`🩹 [${requestId}] JSON war abgeschnitten — konservativ repariert (Teil-Analyse gerettet, läuft durch Validierung)`);
+      }
+    } else {
+      console.error(`❌ [${requestId}] JSON-Parse fehlgeschlagen (auch nach Reparatur). Auszug: ${jsonString.substring(0, 300)}`);
+      throw new Error("ANALYSIS_TRUNCATED: AI-Antwort unvollständig/abgeschnitten");
     }
 
     // ✅ FIXED: Simplified validation
@@ -6013,6 +6022,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     } else if (error.message.includes("Timeout")) {
       errorMessage = "Analysis timeout. Please try with a smaller file.";
       errorCode = "TIMEOUT_ERROR";
+    } else if (error.message.includes("ANALYSIS_TRUNCATED")) {
+      errorMessage = "Der Vertrag ist sehr umfangreich — die KI-Analyse-Antwort wurde abgeschnitten. Bitte versuchen Sie es erneut; bei sehr großen Verträgen ggf. das Dokument in Teilen hochladen.";
+      errorCode = "ANALYSIS_TRUNCATED";
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
       errorMessage = "Error in deep analysis processing.";
       errorCode = "PARSE_ERROR";
