@@ -966,7 +966,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: '13px', color: '#9ca3af' }}>Keine automatischen Erinnerungen für diese Frist.</div>
+                <div style={{ fontSize: '13px', color: '#9ca3af' }}>Keine Vorwarnung für diese Frist — unten kannst du eine hinzufügen.</div>
               )}
               {onManageReminders && (
                 <button

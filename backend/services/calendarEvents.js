@@ -1132,14 +1132,19 @@ async function generateEventsForContract(db, contract) {
 
         // Pfad A: WIEDERKEHRENDE Frist (recurrencePattern gesetzt)
         if (frist.recurrencePattern && frist.recurrencePattern.intervalType) {
-          // 🆕 11.06.2026 Anti-Flut: Eine wiederkehrende ZAHLUNGSFRIST (Miete/Abo) NICHT
-          // als 12 identische Monats-Events ausrollen — das ist reines Zeitstrahl-Rauschen.
-          // Die Frist bleibt als Hinweis in "Wichtige Fristen & Hinweise" sichtbar, und der
-          // Reminder-Notifier überspringt diese Events ohnehin (Klasse C, calendarNotifier.js).
-          // WICHTIG: betrifft NUR den Wiederhol-Pfad von zahlungsfrist — Extraktion, andere
-          // Fristtypen und einmalige Anker-Zahlungstermine (Pfad B) bleiben unberührt.
-          if (frist.type === 'zahlungsfrist') {
-            console.log(`  ⏭️ Wiederkehrende zahlungsfrist NICHT als Kalender-Events ausgerollt (Anti-Flut) — bleibt UI-Hinweis (${frist.recurrencePattern.intervalType})`);
+          // 🆕 11.06.2026 / erweitert 14.06.2026 Anti-Flut: Hochfrequent wiederkehrende Fristen
+          // NICHT als bis zu 12 identische Monats-Events ausrollen. Das ist (a) reines Zeitstrahl-
+          // Rauschen in Kalender/Liste/Dashboard UND (b) monatlicher Mail-Spam (der Notifier feuert
+          // jede Monats-Instanz am eigenen Tag — Klasse C überspringt nur das VORZIEHEN, nicht den
+          // Tag-of-Versand). Eine hochfrequente Frist (monatlich/wöchentlich) ist ein DAUERZUSTAND
+          // ("monatlich kündbar") → bleibt als Hinweis in "Wichtige Fristen & Hinweise" sichtbar,
+          // statt als Termin-Flut. Niederfrequente (quartalsweise/halbjährlich/jährlich) bleiben
+          // erhalten (1–4×/Jahr = sinnvolle Erinnerung, kein Spam). zahlungsfrist bleibt wie bisher
+          // komplett ausgenommen (jede Frequenz). WICHTIG: betrifft NUR den Wiederhol-Pfad (Pfad A) —
+          // Extraktion, einmalige Anker-Fristen (Pfad B) und alle anderen Event-Typen bleiben unberührt.
+          const HIGH_FREQ_INTERVALS = ['weekly', 'biweekly', 'monthly'];
+          if (frist.type === 'zahlungsfrist' || HIGH_FREQ_INTERVALS.includes(frist.recurrencePattern.intervalType)) {
+            console.log(`  ⏭️ Wiederkehrende ${frist.type} (${frist.recurrencePattern.intervalType}) NICHT als Kalender-Events ausgerollt (Anti-Flut) — bleibt UI-Hinweis`);
             continue;
           }
           const cfg = intervalConfig[frist.recurrencePattern.intervalType];
