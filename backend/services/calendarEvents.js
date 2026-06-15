@@ -112,6 +112,14 @@ async function generateEventsForContract(db, contract) {
     
     const autoRenewMonths = contract.autoRenewMonths || 12;
     
+    // 🆕 15.06.2026 (TÜV-Fund C): Kündigungs-Lifecycle (CANCEL_WINDOW_OPEN/LAST_CANCEL_DAY/
+    // CANCEL_WARNING) nur bei echtem Kündigungs-/Verlängerungs-Grund — Auto-Renewal ODER eine
+    // WIRKLICH extrahierte Kündigungsfrist. Sonst erzeugte der Default noticePeriodDays=90 für
+    // JEDEN Festvertrag ein erfundenes "kündige sonst verlängert sich" — auch für auslaufende
+    // Verträge, die sich gar nicht verlängern. CONTRACT_EXPIRY ("läuft ab") bleibt unberührt →
+    // der Vertrag zeigt weiter sein Ende, nur ohne den falschen Kündigungsdruck.
+    const hasCancelReason = isAutoRenewal || !!contract.cancellationPeriod || !!contract.kuendigung;
+
     // 🎯 Extract confidence data from contract
     // 🔒 NEU: Kein Default mehr auf 100 - wenn keine Konfidenz, dann 0 (alte Daten)
     const confidence = contract.endDateConfidence || contract.startDateConfidence || 0;
@@ -142,7 +150,7 @@ async function generateEventsForContract(db, contract) {
     if (hasValidExpiry && shouldCreateCriticalEvents) { // 🔒 Konfidenz-Check + echtes Enddatum (Problem-A-Guard)
       
       // 1. Kündigungsfenster öffnet (30 Tage VOR der Deadline)
-      if (noticePeriodDays > 0) {
+      if (noticePeriodDays > 0 && hasCancelReason) {
         // Deadline = letzter Kündigungstag (kalendermonatgenau)
         const tempDeadline = subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths);
         const deadlineStr = tempDeadline.toLocaleDateString('de-DE');
@@ -182,7 +190,7 @@ async function generateEventsForContract(db, contract) {
       }
 
       // 2. Letzter Kündigungstag (kalendermonatgenau)
-      if (noticePeriodDays > 0) {
+      if (noticePeriodDays > 0 && hasCancelReason) {
         const tempLastDate = subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths);
         const lastCancelDate = createLocalDate(tempLastDate);
 
@@ -192,7 +200,7 @@ async function generateEventsForContract(db, contract) {
             contractId: contract._id,
             type: "LAST_CANCEL_DAY",
             title: `🔴 LETZTER TAG: ${contract.name} kündigen!`,
-            description: `Heute ist die letzte Chance, "${contract.name}" zu kündigen. ${isAutoRenewal ? `Der Vertrag verlängert sich sonst automatisch um ${autoRenewMonths} Monate!` : 'Sonst verlängert sich der Vertrag!'}`,
+            description: `Heute ist die letzte Chance, "${contract.name}" zu kündigen. ${isAutoRenewal ? `Der Vertrag verlängert sich sonst automatisch um ${autoRenewMonths} Monate!` : 'Danach ist eine fristgerechte Kündigung nicht mehr möglich.'}`,
             date: lastCancelDate,
             severity: "critical",
             status: "scheduled",
