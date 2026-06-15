@@ -2934,87 +2934,89 @@
 }
 
 /* ========== UPLOAD HERO BAND (Redesign Variante C) ========== */
+/* Variante E: heller, leichter Header (kein schwerer Farbblock) */
 .uploadBand {
   position: relative;
   display: flex;
-  align-items: stretch;
-  gap: 2.25rem;
-  /* full-bleed: hebt das 0.5rem-Padding der .section auf → bündig in die Kartenecke (overflow:hidden rundet oben) */
+  flex-direction: column;
+  gap: 1.1rem;
+  /* full-bleed: hebt das 0.5rem-Padding der .section auf → bündig in die Kartenecke */
   margin: -0.5rem -0.5rem 0;
   border-radius: 0;
-  padding: 1.4rem 2.25rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 55%, #8b5cf6 100%);
-  color: #fff;
+  padding: 1.4rem 2.25rem 1.35rem;
+  background: linear-gradient(135deg, #f5f9ff 0%, #eef4ff 100%);
+  border-bottom: 1px solid #e6eefc;
   overflow: hidden;
 }
 
-/* gepolsterter Arbeitsbereich unter dem Band (wie c-body im Mockup) */
+/* dünner Farb-Akzent links */
+.uploadBand::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
+}
+
+/* gepolsterter Arbeitsbereich unter dem Band */
 .uploadBody {
   padding: 1.75rem 2rem 1.75rem;
 }
 
-.uploadBand::after {
-  content: '';
-  position: absolute;
-  right: -60px;
-  top: -70px;
-  width: 220px;
-  height: 220px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 70%);
-  pointer-events: none;
-}
-
-/* linke Spalte: Titel/Text */
-.uploadBandInner {
+/* obere Zeile: Text links, Analysen-Badge rechts */
+.uploadBandTop {
   position: relative;
   z-index: 1;
-  flex: 1 1 0;
-  min-width: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.uploadBandInner {
+  min-width: 0;
 }
 
 .uploadBandEyebrow {
   display: inline-block;
   font-size: 0.6875rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  opacity: 0.85;
+  color: #3b82f6;
   margin-bottom: 0.3rem;
 }
 
 .uploadBandTitle {
-  font-size: 1.3125rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
   margin: 0;
-  color: #fff;
+  color: #0f172a;
 }
 
 .uploadBandDesc {
-  font-size: 0.825rem;
+  font-size: 0.85rem;
   line-height: 1.5;
-  margin: 0.35rem 0 0;
-  opacity: 0.82;
-  color: #fff;
-  max-width: 420px;
+  margin: 0.4rem 0 0;
+  color: #64748b;
+  max-width: 460px;
 }
 
 .uploadBandBadge {
-  align-self: flex-start;
-  margin-top: 0.8rem;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.7rem;
+  gap: 0.4rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(4px);
-  padding: 0.3rem 0.65rem;
+  color: #0d9488;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  color: #fff;
   white-space: nowrap;
 }
 
@@ -3022,91 +3024,80 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #6ee7b7;
+  background: #10b981;
 }
 
-/* rechte Spalte: kompakte Schritt-Liste (Icon + Titel) */
+/* flacher nummerierter Stepper (1–2–3–4 verbunden) */
 .uploadBandSteps {
   position: relative;
   z-index: 1;
-  flex: 0 0 230px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-left: 2.25rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  align-items: center;
 }
 
 .uploadBandStep {
-  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  padding-bottom: 0.8rem;
+  gap: 0.55rem;
 }
 
-.uploadBandStep:last-child {
-  padding-bottom: 0;
-}
-
-.uploadBandStep::before {
-  content: '';
-  position: absolute;
-  left: 13px;
-  top: 27px;
-  bottom: -1px;
-  width: 1.5px;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.uploadBandStep:last-child::before {
-  display: none;
-}
-
-.uploadBandStepIcon {
+.uploadBandStepNum {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.15);
+  font-size: 0.75rem;
+  font-weight: 700;
   color: #fff;
-  position: relative;
-  z-index: 1;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.28);
 }
 
-.uploadBandStepBody h4 {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: #fff;
-  margin: 0;
+.uploadBandStep:nth-child(3) .uploadBandStepNum {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.uploadBandStep:nth-child(5) .uploadBandStepNum {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.28);
+}
+
+.uploadBandStep:nth-child(7) .uploadBandStepNum {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.28);
+}
+
+.uploadBandStepBody b {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
   line-height: 1.2;
 }
 
-/* Tablet / schmaler Content (mit Sidebar): stapeln, Schritte zu 2×2 */
-@media (max-width: 1000px) {
-  .uploadBand {
-    flex-direction: column;
-    gap: 1.25rem;
-  }
+.uploadBandStepBody span {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+}
+
+.uploadBandStepLine {
+  flex: 1;
+  height: 2px;
+  background: linear-gradient(90deg, #cdd9ec, #e3ebf6);
+  margin: 0 0.75rem;
+  border-radius: 2px;
+}
+
+/* Schmaler Content: Stepper bricht um, Linien aus */
+@media (max-width: 760px) {
   .uploadBandSteps {
-    flex: 1 1 auto;
-    width: 100%;
-    flex-direction: row;
     flex-wrap: wrap;
-    row-gap: 0.85rem;
-    padding-left: 0;
-    padding-top: 1rem;
-    border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    gap: 0.85rem 1.5rem;
   }
-  .uploadBandStep {
-    flex: 1 1 42%;
-    padding-bottom: 0;
-  }
-  .uploadBandStep::before {
+  .uploadBandStepLine {
     display: none;
   }
 }
@@ -3117,6 +3108,9 @@
   }
   .uploadBandTitle {
     font-size: 1.25rem;
+  }
+  .uploadBandTop {
+    flex-direction: column;
   }
 }
 

@@ -15,8 +15,6 @@ import {
   MoreVertical, ChevronUp, ChevronDown, ChevronLeft,
   SlidersHorizontal, // 📱 Mobile Filter Icon
   Star, // ⭐ Favoriten-Icon
-  Scale, // ⚖️ Rechtsprüfung Icon
-  Radar, // 📡 Legal Pulse Icon
   Camera, // 📸 Document Scanner Icon
   Check, // ✅ QuickFact Inline-Edit Save
   Pencil // ✏️ QuickFact Inline-Edit Icon
@@ -4884,16 +4882,18 @@ export default function Contracts() {
                     {/* 🎨 GRADIENT-BAND HEADER (Redesign Variante C) */}
                     {!allAnalyzed && (
                       <div className={styles.uploadBand}>
-                        <div className={styles.uploadBandInner}>
-                          <span className={styles.uploadBandEyebrow}>Schritt 1 von 4 · Upload</span>
-                          <h2 className={styles.uploadBandTitle}>
-                            {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
-                          </h2>
-                          <p className={styles.uploadBandDesc}>
-                            {canMultiUpload
-                              ? "Lade einen oder mehrere Verträge hoch — wir prüfen sie wie ein Anwalt und behalten alle Fristen für dich im Blick."
-                              : "Lade einen Vertrag hoch — wir prüfen ihn wie ein Anwalt und behalten alle Fristen für dich im Blick."}
-                          </p>
+                        <div className={styles.uploadBandTop}>
+                          <div className={styles.uploadBandInner}>
+                            <span className={styles.uploadBandEyebrow}>Schritt 1 von 4 · Upload</span>
+                            <h2 className={styles.uploadBandTitle}>
+                              {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
+                            </h2>
+                            <p className={styles.uploadBandDesc}>
+                              {canMultiUpload
+                                ? "Lade einen oder mehrere Verträge hoch — wir prüfen sie wie ein Anwalt und behalten alle Fristen für dich im Blick."
+                                : "Lade einen Vertrag hoch — wir prüfen ihn wie ein Anwalt und behalten alle Fristen für dich im Blick."}
+                            </p>
+                          </div>
                           {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
                             <span className={styles.uploadBandBadge}>
                               <span className={styles.uploadBandBadgeDot}></span>
@@ -4904,30 +4904,37 @@ export default function Contracts() {
                           )}
                         </div>
 
-                        {/* 📋 Ablauf rechts als kompakte Schritt-Liste (Icon + Titel) */}
+                        {/* 📋 Ablauf als flacher nummerierter Stepper (Variante E: A + C) */}
                         <div className={styles.uploadBandSteps}>
                           <div className={styles.uploadBandStep}>
-                            <div className={styles.uploadBandStepIcon}><FileText size={15} /></div>
+                            <span className={styles.uploadBandStepNum}>1</span>
                             <div className={styles.uploadBandStepBody}>
-                              <h4>1. Upload</h4>
+                              <b>Upload</b>
+                              <span>Vertrag hochladen</span>
                             </div>
                           </div>
+                          <div className={styles.uploadBandStepLine} />
                           <div className={styles.uploadBandStep}>
-                            <div className={styles.uploadBandStepIcon}><Scale size={15} /></div>
+                            <span className={styles.uploadBandStepNum}>2</span>
                             <div className={styles.uploadBandStepBody}>
-                              <h4>2. Rechtsprüfung</h4>
+                              <b>Rechtsprüfung</b>
+                              <span>Analyse wie vom Anwalt</span>
                             </div>
                           </div>
+                          <div className={styles.uploadBandStepLine} />
                           <div className={styles.uploadBandStep}>
-                            <div className={styles.uploadBandStepIcon}><Folder size={15} /></div>
+                            <span className={styles.uploadBandStepNum}>3</span>
                             <div className={styles.uploadBandStepBody}>
-                              <h4>3. Verwaltung</h4>
+                              <b>Verwaltung</b>
+                              <span>Sicher gespeichert</span>
                             </div>
                           </div>
+                          <div className={styles.uploadBandStepLine} />
                           <div className={styles.uploadBandStep}>
-                            <div className={styles.uploadBandStepIcon}><Radar size={15} /></div>
+                            <span className={styles.uploadBandStepNum}>4</span>
                             <div className={styles.uploadBandStepBody}>
-                              <h4>4. Legal Pulse</h4>
+                              <b>Legal Pulse</b>
+                              <span>Laufende Überwachung</span>
                             </div>
                           </div>
                         </div>
