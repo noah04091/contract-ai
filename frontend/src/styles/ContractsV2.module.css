@@ -2936,13 +2936,18 @@
 /* ========== UPLOAD HERO BAND (Redesign Variante C) ========== */
 .uploadBand {
   position: relative;
-  border-radius: 22px;
-  padding: 1.75rem 2rem;
-  margin-bottom: 1.5rem;
+  /* full-bleed: hebt das 0.5rem-Padding der .section auf → bündig in die Kartenecke (overflow:hidden rundet oben) */
+  margin: -0.5rem -0.5rem 0;
+  border-radius: 0;
+  padding: 2.25rem 2.5rem 2rem;
   background: linear-gradient(135deg, #3b82f6 0%, #6366f1 55%, #8b5cf6 100%);
   color: #fff;
   overflow: hidden;
-  box-shadow: 0 12px 30px -8px rgba(59, 130, 246, 0.45);
+}
+
+/* gepolsterter Arbeitsbereich unter dem Band (wie c-body im Mockup) */
+.uploadBody {
+  padding: 1.75rem 2rem 1.75rem;
 }
 
 .uploadBand::after {
@@ -2990,8 +2995,8 @@
 
 .uploadBandBadge {
   position: absolute;
-  top: 1.5rem;
-  right: 1.75rem;
+  top: 2.25rem;
+  right: 2.5rem;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -7043,15 +7048,15 @@
 /* Upload Tabs */
 .uploadTabs {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  padding: 0.375rem;
-  background: #f3f4f6;
+  gap: 0.25rem;
+  margin: 0 auto 1.75rem;
+  width: fit-content;
+  padding: 0.3125rem;
+  background: #f1f5f9;
   border-radius: 14px;
 }
 
 .uploadTab {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -7128,8 +7133,19 @@
     padding: 0 1rem;
   }
 
+  /* Body-Polsterung auf Mobile aufheben — Kinder bringen eigene 1rem-Margins mit */
+  .uploadBody {
+    padding: 0;
+  }
+
+  /* Tabs auf Mobile wieder volle Breite (Desktop = zentriert/kompakt) */
   .uploadTabs {
     margin: 0 1rem 1.25rem;
+    width: auto;
+  }
+
+  .uploadTab {
+    flex: 1;
   }
 
   .uploadArea {

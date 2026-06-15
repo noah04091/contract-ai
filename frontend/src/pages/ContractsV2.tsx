@@ -4906,6 +4906,9 @@ export default function Contracts() {
                       </div>
                     )}
 
+                    {/* 🎨 Gepolsterter Arbeitsbereich unter dem Band (Variante C) */}
+                    <div className={styles.uploadBody}>
+
                     {/* 📱 UPLOAD TABS: Datei-Upload / E-Mail-Upload */}
                     {!allAnalyzed && (
                     <div className={styles.uploadTabs}>
@@ -5292,6 +5295,7 @@ export default function Contracts() {
                     )}
                     </>
                     )}
+                    </div>
                   </>
                 )}
               </motion.div>
