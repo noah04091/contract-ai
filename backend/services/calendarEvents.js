@@ -1800,12 +1800,19 @@ function isReminderEventB(e) {
   return /_REMINDER_\d+D$/i.test(e.type || '') ||
     /\d+\s*(?:Tage?|Wochen?|Monate?)\s*vorher/i.test(e.title || '');
 }
+// ENDE-Meilensteine, die nur 1–2 Tage auseinander liegen, meinen denselben Stichtag
+// (GPT-Varianz, z.B. "Ende der festen Laufzeit" 30.06 vs abgeleitetes "Vertragsende" 01.07).
+const ENDE_WINDOW_DAYS = 2;
 function dedupeSameDayMilestones(events) {
+  const DAY_MS = 86400000;
   const dayStr = (d) => new Date(d).toISOString().slice(0, 10);
+  const prio = (e) => MILESTONE_PRIORITY[e.type] || 0;
   const mains = events.filter(e => !isReminderEventB(e));
   const reminders = events.filter(e => isReminderEventB(e));
 
-  // Gruppieren nach Vertrag + Tag + Semantik-Gruppe
+  const droppedMains = [];
+
+  // Pass 1: exakt taggleich pro (Vertrag, Tag, Semantik-Gruppe) — höchste Priorität bleibt
   const groups = new Map();
   for (const e of mains) {
     const g = MILESTONE_SEM_GROUP[e.type];
@@ -1814,28 +1821,73 @@ function dedupeSameDayMilestones(events) {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(e);
   }
-
-  const droppedMains = [];
   for (const list of groups.values()) {
     if (list.length < 2) continue;
-    list.sort((a, b) => (MILESTONE_PRIORITY[b.type] || 0) - (MILESTONE_PRIORITY[a.type] || 0));
+    list.sort((a, b) => prio(b) - prio(a));
     for (let i = 1; i < list.length; i++) droppedMains.push(list[i]); // [0] bleibt
   }
 
-  // Vorwarn-Kinder der entfernten Mains (nur die zum selben Stichtag gehörenden)
-  const droppedReminders = [];
-  for (const d of droppedMains) {
-    const dTime = new Date(d.date).getTime();
-    for (const r of reminders) {
-      if (String(r.contractId) !== String(d.contractId)) continue;
-      if (r.metadata?.originalEvent !== d.type) continue;
-      const lead = Number(r.metadata?.daysUntil);
-      if (Number.isFinite(lead)) {
-        const target = new Date(r.date); target.setDate(target.getDate() + lead);
-        if (Math.abs(target.getTime() - dTime) > 2 * 86400000) continue; // anderer Stichtag → kein Kind
-      }
-      droppedReminders.push(r);
+  // Pass 2: ENDE-Meilensteine, die nur ±2 Tage auseinander liegen, meinen denselben Stichtag.
+  // Pro Cluster bleibt EINER: höchste Priorität, bei Gleichstand der FRÜHESTE (= echter,
+  // vorwarn-tragender Stichtag). NUR innerhalb der ENDE-Gruppe, nie gruppenübergreifend →
+  // zwei wirklich verschiedene Termine (START/ENDE oder weit auseinander) bleiben getrennt.
+  const dropped1 = new Set(droppedMains);
+  const endeByContract = new Map();
+  for (const e of mains) {
+    if (dropped1.has(e) || MILESTONE_SEM_GROUP[e.type] !== 'ENDE') continue;
+    const k = String(e.contractId);
+    if (!endeByContract.has(k)) endeByContract.set(k, []);
+    endeByContract.get(k).push(e);
+  }
+  for (const list of endeByContract.values()) {
+    if (list.length < 2) continue;
+    list.sort((a, b) => new Date(a.date) - new Date(b.date));
+    let cluster = [list[0]];
+    const flush = () => {
+      if (cluster.length < 2) return;
+      const winner = cluster.reduce((best, e) =>
+        (prio(e) > prio(best) || (prio(e) === prio(best) && new Date(e.date) < new Date(best.date))) ? e : best,
+        cluster[0]);
+      for (const e of cluster) if (e !== winner) droppedMains.push(e);
+    };
+    for (let i = 1; i < list.length; i++) {
+      if (Math.abs(new Date(list[i].date) - new Date(list[i - 1].date)) <= ENDE_WINDOW_DAYS * DAY_MS) {
+        cluster.push(list[i]);
+      } else { flush(); cluster = [list[i]]; }
     }
+    flush();
+  }
+
+  // Vorwarn-Kinder: jede Erinnerung gehört zum NÄCHSTGELEGENEN Main GLEICHEN Typs (Stichtag =
+  // Erinnerungsdatum + daysUntil). Entfernt wird sie nur, wenn dieser Eltern-Main entfernt wurde.
+  // So behält der bleibende Stichtag genau EIN Vorwarn-Set, und bei zwei fast-gleichen Enden
+  // verschwinden nur die Vorwarner des verworfenen Endes (keine doppelten, keine fehlenden).
+  const dropMainSet = new Set(droppedMains);
+  const mainsByType = new Map();
+  for (const m of mains) {
+    if (!mainsByType.has(m.type)) mainsByType.set(m.type, []);
+    mainsByType.get(m.type).push(m);
+  }
+  const droppedReminders = [];
+  for (const r of reminders) {
+    const candidates = (mainsByType.get(r.metadata?.originalEvent) || [])
+      .filter(m => String(m.contractId) === String(r.contractId));
+    if (candidates.length === 0) continue; // kein passender Main → unverändert lassen
+    const lead = Number(r.metadata?.daysUntil);
+    if (!Number.isFinite(lead)) {
+      // ohne Stichtag-Anker: nur entfernen, wenn der ganze Typ verschwindet
+      if (candidates.every(m => dropMainSet.has(m))) droppedReminders.push(r);
+      continue;
+    }
+    const target = new Date(r.date); target.setDate(target.getDate() + lead);
+    const owner = candidates.reduce((best, m) => {
+      const dM = Math.abs(new Date(m.date) - target);
+      const dB = Math.abs(new Date(best.date) - target);
+      if (dM < dB) return m;
+      if (dM === dB && dropMainSet.has(best) && !dropMainSet.has(m)) return m; // Gleichstand → bleibenden bevorzugen
+      return best;
+    }, candidates[0]);
+    if (dropMainSet.has(owner)) droppedReminders.push(r);
   }
 
   const dropSet = new Set([...droppedMains, ...droppedReminders]);
