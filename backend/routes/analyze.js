@@ -8,6 +8,7 @@ const { shouldAttemptOcr } = require("../utils/ocrGate"); // 🔍 OCR-Weiche (Te
 const { tryParseLenient } = require("../utils/jsonRepair"); // 🩹 Tolerantes JSON-Parsen für abgeschnittene KI-Antworten
 const { shouldClearExpiry, isImplausibleAiEndDate } = require("../utils/expiryPlausibility"); // 🛡️ Enddatum-Plausibilität (Vergangenheit / ==Start) + KI-Enddatum-Guard (TÜV-Fund #1)
 const { isMilestoneBeforeStart } = require("../utils/milestonePlausibility"); // 🛡️ Meilenstein-Datum vor Vertragsbeginn = unmöglich
+const { hasColumnArtifacts, extractColumnAwareText } = require("../services/optimizerV2/utils/clauseSplitter"); // 🔀 Spalten-Korrektur für mehrspaltige PDFs (TÜV #4)
 const { sanitizeAnalysisResult } = require("../utils/textSanitizer");
 const fs = require("fs").promises;
 const fsSync = require("fs");
@@ -4561,6 +4562,30 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           }
         } catch (ocrErr) {
           console.warn(`⚠️ [${requestId}] OCR-Fallback fehlgeschlagen: ${ocrErr.message} — fahre mit Original-Text fort`);
+        }
+      }
+
+      // 🔀 15.06.2026 (TÜV-Fund #4): Spalten-Korrektur für DIGITALE mehrspaltige PDFs.
+      // pdf-parse liest zweispaltige Layouts links-nach-rechts über beide Spalten → verwürfelter
+      // Text an GPT → ganze Analyse auf Müll-Input. Die erprobte Korrektur (optimizerV2-Muster)
+      // hier im Analyse-Pfad einhängen, DOPPELT gegated:
+      //   (1) nur re-extrahieren, wenn hasColumnArtifacts den verwürfelten Text erkennt,
+      //   (2) das Ergebnis nur übernehmen, wenn die Re-Extraktion die Artefakte BESEITIGT.
+      // → Einspaltige Verträge: Gate 1 = false → Text bit-identisch unberührt (kein Regress).
+      // → OCR-Pfad hat eigene Korrektur (pdfExtractor), daher nur !usedOCR. try/catch → Original bleibt.
+      if (isPdf && !pdfData.usedOCR && hasColumnArtifacts(pdfData.text)) {
+        console.log(`🔀 [${requestId}] Spalten-Artefakte erkannt — versuche spalten-bewusste Re-Extraktion...`);
+        try {
+          const colResult = await extractColumnAwareText(buffer);
+          if (colResult && colResult.text && !hasColumnArtifacts(colResult.text)) {
+            console.log(`✅ [${requestId}] Spalten-Korrektur übernommen: ${pdfData.text.length} → ${colResult.text.length} Zeichen, Artefakte beseitigt`);
+            pdfData.text = colResult.text;
+            pdfData.numpages = colResult.pages || pdfData.numpages;
+          } else {
+            console.log(`↩️ [${requestId}] Spalten-Re-Extraktion verworfen (kein/ungenügender Gewinn) — Original-Text behalten`);
+          }
+        } catch (colErr) {
+          console.warn(`⚠️ [${requestId}] Spalten-Korrektur fehlgeschlagen: ${colErr.message} — Original-Text behalten`);
         }
       }
     } catch (error) {
