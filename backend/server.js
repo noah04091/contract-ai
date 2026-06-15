@@ -1643,10 +1643,18 @@ const connectDB = async () => {
       };
     }
 
+    // 🔐 Cross-Process Cron Lock (Deploy-Overlap-Schutz) — Doku & Mechanik in der Datei.
+    // Single Source of Truth: utils/distributedCronLock.js (auch vom Unit-Test genutzt).
+    // Lokaler Wrapper bindet die Modul-DB, damit die 11 Call-Sites schlank `withDistributedLock(name, fn)` bleiben.
+    const { withDistributedLock: distributedLock } = require("./utils/distributedCronLock");
+    const withDistributedLock = (jobName, fn) => distributedLock(db, jobName, fn);
+
     // ⏰ ERWEITERTE Cron Jobs mit Calendar Integration
     try {
+      // 🔐 TTL-Index für cron_locks (räumt alte Tages-Locks weg; Korrektheit hängt NICHT daran)
+      db.collection('cron_locks').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }).catch(() => {});
       // ✅ BESTEHENDER Reminder-Cronjob ERWEITERT mit Calendar Notifications
-      cron.schedule("0 8 * * *", withCronLock('reminder-calendar', async () => {
+      cron.schedule("0 8 * * *", withDistributedLock('reminder-calendar', withCronLock('reminder-calendar', async () => {
         console.log("⏰ Täglicher Reminder-Check gestartet");
         try {
           await withCronLogging('reminder-calendar', async () => {
@@ -1663,7 +1671,7 @@ const connectDB = async () => {
           console.error("❌ Reminder/Calendar Cron Error:", error);
           await captureError(error, { route: 'CRON:reminder-calendar', method: 'SCHEDULED', severity: 'high' });
         }
-      }));
+      })));
 
       // 📧 NEU: E-Mail Queue Retry (alle 15 Minuten)
       cron.schedule("*/15 * * * *", async () => {
@@ -1707,7 +1715,7 @@ const connectDB = async () => {
       });
 
       // 📤 NEU: Notification Queue Sender (täglich um 9 Uhr morgens)
-      cron.schedule("0 9 * * *", async () => {
+      cron.schedule("0 9 * * *", withDistributedLock('notification-queue', async () => {
         console.log("📤 Starte Notification Queue Verarbeitung...");
         try {
           const { processNotificationQueue } = require("./services/notificationSender");
@@ -1717,11 +1725,11 @@ const connectDB = async () => {
           console.error("❌ Notification Queue Cron Error:", error);
           await captureError(error, { route: 'CRON:notification-queue', method: 'SCHEDULED', severity: 'high' });
         }
-      });
+      }));
 
       // 📬 NEU: Digest-E-Mails (täglich um 7 Uhr morgens)
       // Sammelt alle Events eines Users und sendet EINE zusammenfassende E-Mail
-      cron.schedule("0 7 * * *", async () => {
+      cron.schedule("0 7 * * *", withDistributedLock('digest-emails', async () => {
         console.log("📬 Starte Digest-E-Mail Verarbeitung...");
         try {
           await withCronLogging('digest-emails', async () => {
@@ -1733,12 +1741,12 @@ const connectDB = async () => {
           console.error("❌ Digest Cron Error:", error);
           await captureError(error, { route: 'CRON:digest-emails', method: 'SCHEDULED', severity: 'high' });
         }
-      });
+      }));
 
       // 📬 Legal Pulse: Täglicher Digest (täglich um 8:10 Uhr morgens)
       // Verarbeitet alle Legal-Pulse-Alerts aus der digest_queue und sendet Sammel-Emails
       // Gestaffelt: 08:10 statt 08:00 um DB-Connection-Kollision mit reminder-calendar zu vermeiden
-      cron.schedule("10 8 * * *", async () => {
+      cron.schedule("10 8 * * *", withDistributedLock('legal-pulse-daily-digest', async () => {
         console.log("📬 [LEGAL-PULSE] Starte Daily Digest Verarbeitung...");
         try {
           const DigestProcessor = require("./jobs/digestProcessor");
@@ -1750,12 +1758,12 @@ const connectDB = async () => {
           console.error("❌ [LEGAL-PULSE] Daily Digest Cron Error:", error);
           await captureError(error, { route: 'CRON:legal-pulse-daily-digest', method: 'SCHEDULED', severity: 'high' });
         }
-      });
+      }));
 
       // 📬 Legal Pulse: Wöchentlicher Digest (jeden Montag um 8:20 Uhr morgens)
       // Weekly Check läuft Sonntag 02:00 → Digest versendet Montag 08:20
       // Gestaffelt: 08:20 statt 08:00 um DB-Connection-Kollision zu vermeiden
-      cron.schedule("20 8 * * 1", async () => {
+      cron.schedule("20 8 * * 1", withDistributedLock('legal-pulse-weekly-digest', async () => {
         console.log("📬 [LEGAL-PULSE] Starte Weekly Digest Verarbeitung...");
         try {
           const DigestProcessor = require("./jobs/digestProcessor");
@@ -1768,11 +1776,11 @@ const connectDB = async () => {
           console.error("❌ [LEGAL-PULSE] Weekly Digest Cron Error:", error);
           await captureError(error, { route: 'CRON:legal-pulse-weekly-digest', method: 'SCHEDULED', severity: 'high' });
         }
-      });
+      }));
 
       // 📧 NEU: Onboarding E-Mail Sequence (täglich um 8:30 Uhr morgens)
       // Sendet automatisch Day 2, Day 7, Day 14 und Day 30 E-Mails an neue/Free User
-      cron.schedule("30 8 * * *", async () => {
+      cron.schedule("30 8 * * *", withDistributedLock('onboarding-emails', async () => {
         console.log("📧 [ONBOARDING] Starte E-Mail Sequence Verarbeitung...");
         try {
           const { processOnboardingEmails } = require("./services/onboardingEmailService");
@@ -1782,11 +1790,11 @@ const connectDB = async () => {
           console.error("❌ Onboarding E-Mail Cron Error:", error);
           await captureError(error, { route: 'CRON:onboarding-emails', method: 'SCHEDULED', severity: 'medium' });
         }
-      });
+      }));
 
       // 📧 Winback E-Mails für inaktive User (täglich um 10:00 Uhr)
       // Sendet Re-Engagement E-Mails an User, die 30+ Tage inaktiv sind
-      cron.schedule("0 10 * * *", async () => {
+      cron.schedule("0 10 * * *", withDistributedLock('winback-emails', async () => {
         console.log("📧 [WINBACK] Starte Winback E-Mail Verarbeitung...");
         try {
           const { processWinbackEmails } = require("./services/triggerEmailService");
@@ -1796,7 +1804,7 @@ const connectDB = async () => {
           console.error("❌ Winback E-Mail Cron Error:", error);
           await captureError(error, { route: 'CRON:winback-emails', method: 'SCHEDULED', severity: 'low' });
         }
-      });
+      }));
 
       // ✅ CALENDAR: Event-Generierung für neue Verträge (täglich um 2 Uhr nachts)
       cron.schedule("0 2 * * *", withCronLock('event-generation', async () => {
@@ -1995,7 +2003,7 @@ const connectDB = async () => {
 
       // 🎁 BETA-TESTER: Feedback-Erinnerung nach 2 Tagen (täglich um 10:10 Uhr)
       // Gestaffelt: 10:10 statt 10:00 um DB-Connection-Kollision mit Winback zu vermeiden
-      cron.schedule("10 10 * * *", async () => {
+      cron.schedule("10 10 * * *", withDistributedLock('beta-feedback-reminder', async () => {
         console.log("🎁 [BETA] Starte Feedback-Erinnerungs-Check...");
         try {
           // Finde ALLE Beta-Tester, die sich vor MINDESTENS 2 Tagen registriert haben
@@ -2224,10 +2232,10 @@ const connectDB = async () => {
           console.error("❌ [BETA] Feedback Reminder Cron Error:", error);
           await captureError(error, { route: 'CRON:beta-feedback-reminder', method: 'SCHEDULED', severity: 'medium' });
         }
-      });
+      }));
 
       // 📊 ADMIN NOTIFICATIONS: Daily Summary (täglich um 18 Uhr)
-      cron.schedule("0 18 * * *", async () => {
+      cron.schedule("0 18 * * *", withDistributedLock('admin-daily-summary', async () => {
         console.log("📊 [ADMIN] Starte Daily Summary E-Mail...");
         try {
           const { sendDailyAdminSummary } = require("./services/adminNotificationService");
@@ -2236,10 +2244,10 @@ const connectDB = async () => {
           console.error("❌ [ADMIN] Daily Summary Cron Error:", error);
           await captureError(error, { route: 'CRON:admin-daily-summary', method: 'SCHEDULED', severity: 'medium' });
         }
-      });
+      }));
 
       // 📊 ADMIN NOTIFICATIONS: Weekly Summary (jeden Sonntag um 20 Uhr)
-      cron.schedule("0 20 * * 0", async () => {
+      cron.schedule("0 20 * * 0", withDistributedLock('admin-weekly-summary', async () => {
         console.log("📊 [ADMIN] Starte Weekly Summary E-Mail...");
         try {
           const { sendWeeklyAdminSummary } = require("./services/adminNotificationService");
@@ -2248,11 +2256,11 @@ const connectDB = async () => {
           console.error("❌ [ADMIN] Weekly Summary Cron Error:", error);
           await captureError(error, { route: 'CRON:admin-weekly-summary', method: 'SCHEDULED', severity: 'medium' });
         }
-      });
+      }));
 
       // 📧 VERIFICATION REMINDER: Erinnerung für nicht verifizierte Accounts (täglich um 10:20 Uhr)
       // Gestaffelt: 10:20 statt 10:00 um DB-Connection-Kollision zu vermeiden
-      cron.schedule("20 10 * * *", async () => {
+      cron.schedule("20 10 * * *", withDistributedLock('verification-reminder', async () => {
         console.log("📧 [VERIFICATION] Starte Erinnerungs-E-Mails für nicht verifizierte Accounts...");
         try {
           const { sendVerificationReminders } = require("./services/verificationReminderService");
@@ -2262,7 +2270,7 @@ const connectDB = async () => {
           console.error("❌ [VERIFICATION] Reminder Cron Error:", error);
           await captureError(error, { route: 'CRON:verification-reminder', method: 'SCHEDULED', severity: 'medium' });
         }
-      });
+      }));
 
       // 🗑️ AUTO-DELETE: Stornierte Envelopes nach 30 Tagen endgültig löschen (täglich um 4 Uhr nachts)
       cron.schedule("0 4 * * *", async () => {
