@@ -4881,21 +4881,27 @@ export default function Contracts() {
                   </div>
                 ) : (
                   <>
-                    {/* ✅ Dezente Analyse-Limit-Anzeige für Free & Business */}
-                    {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
-                      <div className={styles.limitBadge}>
-                        <span className={styles.limitBadgeText}>
-                          {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)} von {userInfo.analysisLimit} Analysen verfügbar
-                          {userInfo.subscriptionPlan === 'free' && ' (einmalig)'}
-                          {userInfo.subscriptionPlan === 'business' && ' (mtl.)'}
-                        </span>
-                        {userInfo.analysisCount >= userInfo.analysisLimit && (
-                          <button
-                            className={styles.limitBadgeUpgrade}
-                            onClick={() => window.location.href = '/pricing'}
-                          >
-                            Upgrade
-                          </button>
+                    {/* 🎨 GRADIENT-BAND HEADER (Redesign Variante C) */}
+                    {!allAnalyzed && (
+                      <div className={styles.uploadBand}>
+                        <div className={styles.uploadBandInner}>
+                          <span className={styles.uploadBandEyebrow}>Schritt 1 von 4 · Upload</span>
+                          <h2 className={styles.uploadBandTitle}>
+                            {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
+                          </h2>
+                          <p className={styles.uploadBandDesc}>
+                            {canMultiUpload
+                              ? "Lade einen oder mehrere Verträge hoch — wir prüfen sie wie ein Anwalt und behalten alle Fristen für dich im Blick."
+                              : "Lade einen Vertrag hoch — wir prüfen ihn wie ein Anwalt und behalten alle Fristen für dich im Blick."}
+                          </p>
+                        </div>
+                        {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
+                          <span className={styles.uploadBandBadge}>
+                            <span className={styles.uploadBandBadgeDot}></span>
+                            {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)} / {userInfo.analysisLimit} Analysen
+                            {userInfo.subscriptionPlan === 'free' && ' · einmalig'}
+                            {userInfo.subscriptionPlan === 'business' && ' · mtl.'}
+                          </span>
                         )}
                       </div>
                     )}
@@ -4935,33 +4941,18 @@ export default function Contracts() {
                       </div>
                     ) : (
                     <>
-                    {/* TAB CONTENT: Datei-Upload (bestehender Code) */}
-                    {!allAnalyzed && (
-                    <div className={styles.sectionHeader}>
-                      <h2>
-                        {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
-                      </h2>
-                      <p className={styles.sectionDescription}>
-                        {canMultiUpload
-                          ? "Lade einen oder mehrere Verträge gleichzeitig hoch, um sie zu analysieren und zu verwalten"
-                          : "Lade einen Vertrag hoch, um ihn zu analysieren und zu verwalten"
-                        }
-                      </p>
-
-                      {/* ✅ KORRIGIERT: Limit-Warnung für Business */}
-                      {userInfo.subscriptionPlan === 'business' && !hasAnalysesLeft && (
-                        <div className={styles.limitWarning}>
-                          <AlertCircle size={16} />
-                          <span>
-                            Analyse-Limit erreicht ({userInfo.analysisCount}/{userInfo.analysisLimit}).
-                            <button onClick={() => window.location.href = '/pricing'}>
-                              Mehr Analysen freischalten
-                            </button>
-                          </span>
-                        </div>
-                      )}
-
-                    </div>
+                    {/* TAB CONTENT: Datei-Upload (Header → Gradient-Band oben, Variante C) */}
+                    {/* ⚠️ Limit-Warnung für Business */}
+                    {!allAnalyzed && userInfo.subscriptionPlan === 'business' && !hasAnalysesLeft && (
+                      <div className={styles.limitWarning}>
+                        <AlertCircle size={16} />
+                        <span>
+                          Analyse-Limit erreicht ({userInfo.analysisCount}/{userInfo.analysisLimit}).
+                          <button onClick={() => window.location.href = '/pricing'}>
+                            Mehr Analysen freischalten
+                          </button>
+                        </span>
+                      </div>
                     )}
                     
                     {!allAnalyzed && (
@@ -5266,7 +5257,7 @@ export default function Contracts() {
                           </div>
                           <div className={styles.uploadFlowContent}>
                             <h4>4. Legal Pulse</h4>
-                            <p>Laufende Überwachung startet automatisch</p>
+                            <p>Aktiviere die laufende Überwachung – und verpasse keine Frist mehr</p>
                           </div>
                         </div>
                       </div>

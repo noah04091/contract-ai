@@ -2933,6 +2933,102 @@
   align-items: center;
 }
 
+/* ========== UPLOAD HERO BAND (Redesign Variante C) ========== */
+.uploadBand {
+  position: relative;
+  border-radius: 22px;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 55%, #8b5cf6 100%);
+  color: #fff;
+  overflow: hidden;
+  box-shadow: 0 12px 30px -8px rgba(59, 130, 246, 0.45);
+}
+
+.uploadBand::after {
+  content: '';
+  position: absolute;
+  right: -60px;
+  top: -70px;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 70%);
+  pointer-events: none;
+}
+
+.uploadBandInner {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+}
+
+.uploadBandEyebrow {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.uploadBandTitle {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin: 0;
+  color: #fff;
+}
+
+.uploadBandDesc {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin: 0.6rem 0 0;
+  opacity: 0.92;
+  color: #fff;
+}
+
+.uploadBandBadge {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(4px);
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  color: #fff;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.uploadBandBadgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6ee7b7;
+}
+
+@media (max-width: 640px) {
+  .uploadBand {
+    padding: 1.5rem 1.25rem;
+  }
+  .uploadBandTitle {
+    font-size: 1.35rem;
+  }
+  .uploadBandBadge {
+    position: static;
+    margin-top: 1rem;
+  }
+  .uploadBandInner {
+    max-width: 100%;
+  }
+}
+
 /* ========== PREMIUM UPLOAD AREA ========== */
 .uploadArea {
   border: 3px dashed #d1d5db;
