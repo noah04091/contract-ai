@@ -2934,41 +2934,23 @@
 }
 
 /* ========== UPLOAD HERO BAND (Redesign Variante C) ========== */
-/* Variante E: heller, leichter Header (kein schwerer Farbblock) */
+/* Variante 1 "Stripe Clean": ruhiger, neutraler weißer Header */
 .uploadBand {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-  /* full-bleed: hebt das 0.5rem-Padding der .section auf → bündig in die Kartenecke */
+  /* full-bleed oben: hebt das 0.5rem-Padding der .section auf → bündig in die Kartenecke */
   margin: -0.5rem -0.5rem 0;
   border-radius: 0;
-  padding: 1.4rem 2.25rem 1.35rem;
-  background: linear-gradient(135deg, #f5f9ff 0%, #eef4ff 100%);
-  border-bottom: 1px solid #e6eefc;
-  overflow: hidden;
+  padding: 1.85rem 2rem 1.6rem;
+  background: #ffffff;
+  border-bottom: 1px solid #ececf1;
 }
 
-/* dünner Farb-Akzent links */
-.uploadBand::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, #3b82f6, #8b5cf6);
-}
-
-/* gepolsterter Arbeitsbereich unter dem Band */
+/* gepolsterter Arbeitsbereich unter dem Header */
 .uploadBody {
-  padding: 1.75rem 2rem 1.75rem;
+  padding: 1.6rem 2rem;
 }
 
-/* obere Zeile: Text links, Analysen-Badge rechts */
 .uploadBandTop {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -2982,147 +2964,130 @@
 .uploadBandEyebrow {
   display: inline-block;
   font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-weight: 600;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: #3b82f6;
-  margin-bottom: 0.3rem;
+  color: #9ca3af;
+  margin-bottom: 0.45rem;
 }
 
 .uploadBandTitle {
-  font-size: 1.375rem;
-  font-weight: 800;
-  letter-spacing: -0.025em;
+  font-size: 1.3125rem;
+  font-weight: 600;
+  letter-spacing: -0.021em;
   margin: 0;
-  color: #0f172a;
+  color: #111827;
 }
 
 .uploadBandDesc {
   font-size: 0.85rem;
   line-height: 1.5;
   margin: 0.4rem 0 0;
-  color: #64748b;
-  max-width: 460px;
+  color: #6b7280;
+  max-width: 440px;
 }
 
 .uploadBandBadge {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #0d9488;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
   padding: 0.35rem 0.7rem;
-  border-radius: 999px;
+  border-radius: 8px;
   white-space: nowrap;
 }
 
-.uploadBandBadgeDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-}
-
-/* flacher nummerierter Stepper (1–2–3–4 verbunden) */
-.uploadBandSteps {
-  position: relative;
-  z-index: 1;
+/* Footer-Stepper: dezente Fußzeile, full-bleed unten */
+.uploadFlowFooter {
   display: flex;
   align-items: center;
+  /* full-bleed unten + seitlich (hebt das 0.5rem-Padding der .section auf) */
+  margin: 0 -0.5rem -0.5rem;
+  padding: 1.05rem 2rem;
+  border-top: 1px solid #ececf1;
+  background: #fcfcfd;
 }
 
-.uploadBandStep {
+.uploadFlowFstep {
   display: flex;
   align-items: center;
   gap: 0.55rem;
 }
 
-.uploadBandStepNum {
+.uploadFlowFnum {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
+  border: 1.5px solid #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.28);
-}
-
-.uploadBandStep:nth-child(3) .uploadBandStepNum {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-}
-
-.uploadBandStep:nth-child(5) .uploadBandStepNum {
-  background: linear-gradient(135deg, #f59e0b, #f97316);
-  box-shadow: 0 4px 10px rgba(245, 158, 11, 0.28);
-}
-
-.uploadBandStep:nth-child(7) .uploadBandStepNum {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.28);
-}
-
-.uploadBandStepBody b {
-  display: block;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.uploadBandStepBody span {
   font-size: 0.6875rem;
-  color: #94a3b8;
+  font-weight: 600;
+  color: #9ca3af;
+  background: #fff;
 }
 
-.uploadBandStepLine {
+.uploadFlowFstep:first-child .uploadFlowFnum {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.uploadFlowFlabel {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.uploadFlowFline {
   flex: 1;
-  height: 2px;
-  background: linear-gradient(90deg, #cdd9ec, #e3ebf6);
-  margin: 0 0.75rem;
-  border-radius: 2px;
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0 0.85rem;
 }
 
-/* Schmaler Content: Stepper bricht um, Linien aus */
 @media (max-width: 760px) {
-  .uploadBandSteps {
+  .uploadFlowFooter {
     flex-wrap: wrap;
-    gap: 0.85rem 1.5rem;
+    gap: 0.7rem 1.25rem;
   }
-  .uploadBandStepLine {
+  .uploadFlowFline {
     display: none;
   }
 }
 
 @media (max-width: 640px) {
   .uploadBand {
-    padding: 1.25rem 1.25rem;
+    padding: 1.5rem 1.25rem 1.3rem;
   }
   .uploadBandTitle {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
   }
   .uploadBandTop {
     flex-direction: column;
+  }
+  .uploadBody {
+    padding: 1.25rem;
+  }
+  .uploadFlowFooter {
+    padding: 1rem 1.25rem;
   }
 }
 
 /* ========== PREMIUM UPLOAD AREA ========== */
 .uploadArea {
-  border: 3px dashed #d1d5db;
-  border-radius: 24px;
-  padding: 4rem 2.5rem;
+  border: 1.5px dashed #d7dbe2;
+  border-radius: 16px;
+  padding: 3rem 2rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
   position: relative;
   overflow: hidden;
 }
@@ -3143,13 +3108,10 @@
 }
 
 .uploadArea:hover {
-  border-color: #3b82f6;
+  border-color: #2563eb;
   border-style: dashed;
-  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%);
-  transform: translateY(-4px);
-  box-shadow:
-    0 0 0 4px rgba(59, 130, 246, 0.1),
-    0 12px 40px rgba(59, 130, 246, 0.2);
+  background: #f7f9ff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
 }
 
 .uploadArea:hover::before {
@@ -3157,13 +3119,10 @@
 }
 
 .dragActive {
-  border-color: #3b82f6 !important;
+  border-color: #2563eb !important;
   border-style: solid !important;
-  background: linear-gradient(135deg, #dbeafe 0%, #c7d2fe 50%, #a5b4fc 100%) !important;
-  transform: scale(1.02) !important;
-  box-shadow:
-    0 0 0 6px rgba(59, 130, 246, 0.15),
-    0 20px 50px rgba(59, 130, 246, 0.3) !important;
+  background: #eef4ff !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
 }
 
 .fileInput {
@@ -3193,62 +3152,59 @@
 }
 
 .uploadIcon {
-  margin: 0 auto 2rem;
-  color: white;
+  margin: 0 auto 1.25rem;
+  color: #2563eb;
   display: flex;
   justify-content: center;
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3b82f6 0%, #3b82f6 50%, #60a5fa 100%);
-  border-radius: 24px;
+  width: 52px;
+  height: 52px;
+  background: #eef4ff;
+  border: 1px solid #dbe7fb;
+  border-radius: 14px;
   align-items: center;
-  box-shadow:
-    0 8px 24px rgba(59, 130, 246, 0.35),
-    0 4px 8px rgba(99, 102, 241, 0.2);
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+}
+
+.uploadIcon svg {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.7;
 }
 
 .uploadArea:hover .uploadIcon {
-  transform: scale(1.1) rotate(-3deg);
-  box-shadow:
-    0 12px 32px rgba(59, 130, 246, 0.4),
-    0 6px 12px rgba(99, 102, 241, 0.25);
+  background: #e3edff;
 }
 
 .uploadPrompt h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 0.75rem;
-  letter-spacing: -0.02em;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.012em;
 }
 
 .uploadPrompt p {
-  color: #64748b;
-  margin: 0 0 1.5rem;
-  font-size: 1rem;
-  line-height: 1.6;
-  max-width: 400px;
+  color: #6b7280;
+  margin: 0 0 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  max-width: 380px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .uploadFormats {
-  font-size: 0.875rem;
-  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #6b7280;
   font-style: normal;
-  padding: 0.75rem 1.25rem;
+  padding: 0.45rem 0.8rem;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.uploadFormats::before {
-  content: '📄';
 }
 
 /* ========== UPLOAD FLOW STEPS (Premium Enterprise Design) ========== */

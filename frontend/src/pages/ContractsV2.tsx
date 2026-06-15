@@ -4884,59 +4884,23 @@ export default function Contracts() {
                       <div className={styles.uploadBand}>
                         <div className={styles.uploadBandTop}>
                           <div className={styles.uploadBandInner}>
-                            <span className={styles.uploadBandEyebrow}>Schritt 1 von 4 · Upload</span>
+                            <span className={styles.uploadBandEyebrow}>Upload</span>
                             <h2 className={styles.uploadBandTitle}>
                               {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
                             </h2>
                             <p className={styles.uploadBandDesc}>
                               {canMultiUpload
-                                ? "Lade einen oder mehrere Verträge hoch — wir prüfen sie wie ein Anwalt und behalten alle Fristen für dich im Blick."
-                                : "Lade einen Vertrag hoch — wir prüfen ihn wie ein Anwalt und behalten alle Fristen für dich im Blick."}
+                                ? "Lade einen oder mehrere Verträge hoch — geprüft wie vom Anwalt, Fristen automatisch im Blick."
+                                : "Lade einen Vertrag hoch — geprüft wie vom Anwalt, Fristen automatisch im Blick."}
                             </p>
                           </div>
                           {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
                             <span className={styles.uploadBandBadge}>
-                              <span className={styles.uploadBandBadgeDot}></span>
                               {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)} / {userInfo.analysisLimit} Analysen
                               {userInfo.subscriptionPlan === 'free' && ' · einmalig'}
                               {userInfo.subscriptionPlan === 'business' && ' · mtl.'}
                             </span>
                           )}
-                        </div>
-
-                        {/* 📋 Ablauf als flacher nummerierter Stepper (Variante E: A + C) */}
-                        <div className={styles.uploadBandSteps}>
-                          <div className={styles.uploadBandStep}>
-                            <span className={styles.uploadBandStepNum}>1</span>
-                            <div className={styles.uploadBandStepBody}>
-                              <b>Upload</b>
-                              <span>Vertrag hochladen</span>
-                            </div>
-                          </div>
-                          <div className={styles.uploadBandStepLine} />
-                          <div className={styles.uploadBandStep}>
-                            <span className={styles.uploadBandStepNum}>2</span>
-                            <div className={styles.uploadBandStepBody}>
-                              <b>Rechtsprüfung</b>
-                              <span>Analyse wie vom Anwalt</span>
-                            </div>
-                          </div>
-                          <div className={styles.uploadBandStepLine} />
-                          <div className={styles.uploadBandStep}>
-                            <span className={styles.uploadBandStepNum}>3</span>
-                            <div className={styles.uploadBandStepBody}>
-                              <b>Verwaltung</b>
-                              <span>Sicher gespeichert</span>
-                            </div>
-                          </div>
-                          <div className={styles.uploadBandStepLine} />
-                          <div className={styles.uploadBandStep}>
-                            <span className={styles.uploadBandStepNum}>4</span>
-                            <div className={styles.uploadBandStepBody}>
-                              <b>Legal Pulse</b>
-                              <span>Laufende Überwachung</span>
-                            </div>
-                          </div>
                         </div>
                       </div>
                     )}
@@ -5276,6 +5240,31 @@ export default function Contracts() {
                     </>
                     )}
                     </div>
+
+                    {/* 📋 Ablauf als dezente Fußzeile (Variante 1: Stripe Clean) */}
+                    {!allAnalyzed && uploadFiles.length === 0 && uploadTab !== 'email' && (
+                      <div className={styles.uploadFlowFooter}>
+                        <div className={styles.uploadFlowFstep}>
+                          <span className={styles.uploadFlowFnum}>1</span>
+                          <span className={styles.uploadFlowFlabel}>Upload</span>
+                        </div>
+                        <div className={styles.uploadFlowFline} />
+                        <div className={styles.uploadFlowFstep}>
+                          <span className={styles.uploadFlowFnum}>2</span>
+                          <span className={styles.uploadFlowFlabel}>Rechtsprüfung</span>
+                        </div>
+                        <div className={styles.uploadFlowFline} />
+                        <div className={styles.uploadFlowFstep}>
+                          <span className={styles.uploadFlowFnum}>3</span>
+                          <span className={styles.uploadFlowFlabel}>Verwaltung</span>
+                        </div>
+                        <div className={styles.uploadFlowFline} />
+                        <div className={styles.uploadFlowFstep}>
+                          <span className={styles.uploadFlowFnum}>4</span>
+                          <span className={styles.uploadFlowFlabel}>Legal Pulse</span>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </motion.div>
