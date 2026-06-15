@@ -7,6 +7,7 @@ const pdfExtractor = require("../services/pdfExtractor");
 const { shouldAttemptOcr } = require("../utils/ocrGate"); // 🔍 OCR-Weiche (Text-Menge + Scan-Dichte)
 const { tryParseLenient } = require("../utils/jsonRepair"); // 🩹 Tolerantes JSON-Parsen für abgeschnittene KI-Antworten
 const { shouldClearExpiry } = require("../utils/expiryPlausibility"); // 🛡️ Enddatum-Plausibilität (Vergangenheit / ==Start)
+const { isMilestoneBeforeStart } = require("../utils/milestonePlausibility"); // 🛡️ Meilenstein-Datum vor Vertragsbeginn = unmöglich
 const { sanitizeAnalysisResult } = require("../utils/textSanitizer");
 const fs = require("fs").promises;
 const fsSync = require("fs");
@@ -315,13 +316,15 @@ const validateImportantDate = (dateObj, contract, requestId) => {
     return { valid: false, reason: 'too_far_past', confidence: 0 };
   }
 
-  // 3. end_date muss nach start_date liegen (wenn beide vorhanden)
-  if (dateObj.type === 'end_date' && contract?.startDate) {
-    const startDate = new Date(contract.startDate);
-    if (date < startDate) {
-      console.log(`⚠️ [${requestId}] importantDate rejected: end_date vor start_date (${dateObj.date} < ${contract.startDate})`);
-      return { valid: false, reason: 'end_before_start', confidence: 0 };
-    }
+  // 3. 🛡️ (15.06.2026 verallgemeinert) Ende-/Frist-Meilensteine können LOGISCH nicht vor
+  //    dem Vertragsbeginn liegen. Vorher prüfte das NUR Typ 'end_date' → halluzinierte Daten
+  //    mit anderem Typ rutschten durch (z.B. 'lease_end' aus einem nachvertraglichen
+  //    Wettbewerbsverbot, das die KI ans falsche Datum hängte: Brennecke 12.02.2011).
+  //    contract_signed/start_date/service_start/payment_due sind bewusst NICHT betroffen
+  //    (dürfen am/vor Beginn liegen) — Liste in utils/milestonePlausibility.js.
+  if (isMilestoneBeforeStart({ type: dateObj.type, date, startDate: contract?.startDate })) {
+    console.log(`⚠️ [${requestId}] importantDate rejected: ${dateObj.type} vor Vertragsbeginn (${dateObj.date} < ${contract.startDate}) — logisch unmöglich, verworfen`);
+    return { valid: false, reason: 'milestone_before_start', confidence: 0 };
   }
 
   // 4. cancellation_deadline sollte vor end_date liegen
