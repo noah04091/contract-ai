@@ -2945,7 +2945,7 @@
   border-bottom: 1px solid #ececf1;
 }
 
-/* gepolsterter Arbeitsbereich unter dem Header */
+/* gepolsterter Arbeitsbereich unter dem Header (volle Breite — Analyse-Ergebnisse brauchen Platz) */
 .uploadBody {
   padding: 1.6rem 2rem;
 }
@@ -2955,6 +2955,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
+  /* zentrierte Inhaltsspalte (Modal-Charakter wie Stripe) */
+  max-width: 620px;
+  margin: 0 auto;
 }
 
 .uploadBandInner {
@@ -3001,15 +3004,14 @@
   white-space: nowrap;
 }
 
-/* Footer-Stepper: dezente Fußzeile, full-bleed unten */
+/* Footer-Stepper: dezente Fußzeile, zentrierte Spalte (mit voller Trennlinie) */
 .uploadFlowFooter {
   display: flex;
   align-items: center;
-  /* full-bleed unten + seitlich (hebt das 0.5rem-Padding der .section auf) */
-  margin: 0 -0.5rem -0.5rem;
-  padding: 1.05rem 2rem;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 1.15rem 2rem 1.35rem;
   border-top: 1px solid #ececf1;
-  background: #fcfcfd;
 }
 
 .uploadFlowFstep {
@@ -3081,9 +3083,13 @@
 
 /* ========== PREMIUM UPLOAD AREA ========== */
 .uploadArea {
+  /* zentrierte, schmale Dropzone (nicht über die volle Breite gestreckt) */
+  max-width: 620px;
+  margin-left: auto;
+  margin-right: auto;
   border: 1.5px dashed #d7dbe2;
   border-radius: 16px;
-  padding: 3rem 2rem;
+  padding: 2.75rem 2rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -3205,6 +3211,37 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Chip-Reihe (Formate + Mehrfach-Upload nebeneinander statt gestapelt) */
+.uploadMeta {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+/* neutraler "Dokument scannen"-Button (statt lila) */
+.scanButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scanButton:hover {
+  background: #f9fafb;
+  color: #374151;
+  border-color: #d1d5db;
 }
 
 /* ========== UPLOAD FLOW STEPS (Premium Enterprise Design) ========== */

@@ -5112,15 +5112,12 @@ export default function Contracts() {
                                 : "oder klicke, um eine Datei auszuwählen"
                             }
                           </p>
-                          <div className={styles.uploadFormats}>
-                            Unterstützte Formate: PDF, DOCX
+                          <div className={styles.uploadMeta}>
+                            <span className={styles.uploadFormats}>PDF, DOCX</span>
+                            {canMultiUpload && hasAnalysesLeft && (
+                              <span className={styles.uploadFormats}>Mehrfach-Upload</span>
+                            )}
                           </div>
-                          {canMultiUpload && hasAnalysesLeft && (
-                            <div className={styles.premiumFeature}>
-                              <Crown size={16} />
-                              <span>Mehrfach-Upload verfügbar</span>
-                            </div>
-                          )}
                           {/* ✨ Dezenter Enterprise-Hinweis für Business-Kunden */}
                           {userInfo.subscriptionPlan === 'business' && !canMultiUpload && hasAnalysesLeft && !enterpriseHintDismissed && (
                             <div
@@ -5186,23 +5183,8 @@ export default function Contracts() {
                     {/* 📸 Dokument scannen Button */}
                     {uploadFiles.length === 0 && (
                       <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                        <button
-                          onClick={openScanner}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            padding: "8px 16px",
-                            borderRadius: "8px",
-                            border: "1px solid rgba(99, 102, 241, 0.3)",
-                            background: "rgba(99, 102, 241, 0.1)",
-                            color: "#818cf8",
-                            fontSize: "14px",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                          }}
-                        >
-                          <Camera size={16} />
+                        <button onClick={openScanner} className={styles.scanButton}>
+                          <Camera size={15} />
                           Dokument scannen
                         </button>
                       </div>
