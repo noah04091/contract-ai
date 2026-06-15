@@ -1218,6 +1218,17 @@ async function generateEventsForContract(db, contract) {
 
         // Pfad B: EINMALIGE Frist mit Anker (anchorType + durationDays)
         } else if (frist.anchorType && frist.durationDays) {
+          // 🆕 15.06.2026: Eine KÜNDIGUNGSFRIST mit Anker am Vertrags-ENDE ("X Monate zum
+          // Laufzeitende") wird hier NICHT als eigenes Event erzeugt. Grund: (1) Der Kündigungs-
+          // Lifecycle (CANCEL_WINDOW_OPEN/CANCEL_WARNING/LAST_CANCEL_DAY = expiryDate − Kündigungsfrist)
+          // bildet genau diese Frist bereits KORREKT + mehrstufig ab. (2) Die generische
+          // "+durationDays"-Rechnung unten läge bei einer Kündigungsfrist FALSCH — die Frist liegt
+          // VOR dem Ende, nicht danach (erzeugte sonst ein Datum NACH Vertragsende, z.B.
+          // Pixelwerk 28.09.2028 statt davor). Frist bleibt als UI-Hinweis in "Wichtige Fristen".
+          if (frist.type === 'kuendigungsfrist' && frist.anchorType === 'contract_end') {
+            console.log(`  ⏭️ Kündigungsfrist (Anker=Ende) NICHT als Anker-Event — Kündigungs-Lifecycle deckt sie korrekt ab: "${frist.title}"`);
+            continue;
+          }
           let anchorDate = null;
           if (frist.anchorType === 'contract_start' && contract.startDate) {
             anchorDate = new Date(contract.startDate);
