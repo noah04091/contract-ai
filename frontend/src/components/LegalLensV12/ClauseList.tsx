@@ -122,6 +122,8 @@ const ClauseList: React.FC<ClauseListProps> = ({
   const clauseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   // Refs für Text-Elemente um Überlauf zu prüfen
   const textRefs = useRef<Map<string, HTMLParagraphElement>>(new Map());
+  // Ref auf den Listen-Container — für ResizeObserver (robuste Überlauf-Messung)
+  const clauseListRef = useRef<HTMLDivElement>(null);
 
   // ✅ Defensiver Check für undefined clauses
   const safeClauses = clauses || [];
@@ -415,26 +417,56 @@ const ClauseList: React.FC<ClauseListProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [searchQuery]);
 
-  // Prüfe welche Klauseln mehr als 3 Zeilen haben
+  // Prüfe welche Klauseln mehr als 3 Zeilen haben.
+  // Robuste Messung statt blindem 100ms-Timeout: Beim ersten Öffnen eines Vertrags
+  // kommen die Klauseln per Streaming in mehreren Schritten rein (mehrfaches setClauses),
+  // und Fonts/Layout sind nach 100ms oft noch nicht final → Messung daneben → Button fehlt.
+  // Deshalb: nach echtem Paint messen (2 rAF), nach Font-Load erneut, und bei
+  // Layout-/Breitenänderung via ResizeObserver. Steuert ausschließlich die Button-Sichtbarkeit.
   useEffect(() => {
+    let rafId = 0;
+    let cancelled = false;
+
     const checkOverflow = () => {
+      if (cancelled) return;
       const newOverflowing = new Set<string>();
       textRefs.current.forEach((el, id) => {
-        if (el) {
-          // Prüfe ob Text abgeschnitten ist (scrollHeight > clientHeight)
-          const isOverflowing = el.scrollHeight > el.clientHeight + 2; // +2 für Rundungsfehler
-          if (isOverflowing) {
-            newOverflowing.add(id);
-          }
+        if (el && el.scrollHeight > el.clientHeight + 2) { // +2 für Rundungsfehler
+          newOverflowing.add(id);
         }
       });
       setOverflowingClauses(newOverflowing);
     };
 
-    // Nach kurzem Timeout prüfen (warten auf Render)
-    const timer = setTimeout(checkOverflow, 100);
-    return () => clearTimeout(timer);
-  }, [safeClauses]);
+    // Erst messen, wenn der Browser wirklich gerendert hat (2 Frames abwarten)
+    const schedule = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        rafId = requestAnimationFrame(checkOverflow);
+      });
+    };
+
+    schedule();
+
+    // Nach Font-Load nochmal messen (kalter Font-Cache / FOUT verfälscht sonst die Höhe)
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(() => { if (!cancelled) schedule(); }).catch(() => { /* fonts API n/a */ });
+    }
+
+    // Bei Layout-/Breitenänderung neu messen (spätes Streaming-Nachsetzen, Analyse-Panel öffnet)
+    let ro: ResizeObserver | undefined;
+    const container = clauseListRef.current;
+    if (container && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => schedule());
+      ro.observe(container);
+    }
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      ro?.disconnect();
+    };
+  }, [safeClauses, compactMode]);
 
   // Auto-expand: Klauseln aufklappen wenn Suchtreffer im Text steckt
   useEffect(() => {
@@ -662,7 +694,7 @@ const ClauseList: React.FC<ClauseListProps> = ({
         )}
       </div>
 
-      <div className={styles.clauseList}>
+      <div className={styles.clauseList} ref={clauseListRef}>
         {/* Section Headers + Collapsible Sections für große Verträge */}
         {filteredClauses.map((clause, clauseIdx) => {
           // ── Section Header: Collapsible Section-Trenner ──
