@@ -49,4 +49,21 @@ function shouldClearExpiry({ expiryDate, startDate, startCandidates, now } = {})
   return { clear: false, reason: null };
 }
 
-module.exports = { shouldClearExpiry };
+// 🛡️ TÜV-Fund #1 (15.06.2026): Ein KI-Enddatum (aus extractEndDateFromImportantDates, gelesen aus
+// der ROHEN importantDates-Liste) wurde im Aufrufer DIREKT als expiryDate übernommen — der
+// shouldClearExpiry-Wächter lief aber nur im else-Zweig (wenn KEIN KI-Enddatum da war). Dadurch
+// umging ein KI-end_date ALLE Plausi-Checks. Diese Funktion wendet exakt dieselben getesteten
+// Checks auf ein KI-Enddatum an, BEVOR es übernommen wird: Ende in Vergangenheit / == einem Beginn /
+// VOR dem Beginn = immer Datenfehler (Null-/Negativlaufzeit). true → KI-Enddatum verwerfen.
+const { isMilestoneBeforeStart } = require('./milestonePlausibility');
+function isImplausibleAiEndDate(aiEndDate, startDate, importantDates) {
+  if (!aiEndDate) return false;
+  const startCandidates = (importantDates || [])
+    .filter(d => d && d.type === 'start_date' && d.date)
+    .map(d => d.date);
+  if (shouldClearExpiry({ expiryDate: aiEndDate, startDate, startCandidates }).clear) return true;
+  if (isMilestoneBeforeStart({ type: 'end_date', date: aiEndDate, startDate })) return true;
+  return false;
+}
+
+module.exports = { shouldClearExpiry, isImplausibleAiEndDate };

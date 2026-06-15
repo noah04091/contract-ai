@@ -6,7 +6,7 @@ const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = requ
 const pdfExtractor = require("../services/pdfExtractor");
 const { shouldAttemptOcr } = require("../utils/ocrGate"); // 🔍 OCR-Weiche (Text-Menge + Scan-Dichte)
 const { tryParseLenient } = require("../utils/jsonRepair"); // 🩹 Tolerantes JSON-Parsen für abgeschnittene KI-Antworten
-const { shouldClearExpiry } = require("../utils/expiryPlausibility"); // 🛡️ Enddatum-Plausibilität (Vergangenheit / ==Start)
+const { shouldClearExpiry, isImplausibleAiEndDate } = require("../utils/expiryPlausibility"); // 🛡️ Enddatum-Plausibilität (Vergangenheit / ==Start) + KI-Enddatum-Guard (TÜV-Fund #1)
 const { isMilestoneBeforeStart } = require("../utils/milestonePlausibility"); // 🛡️ Meilenstein-Datum vor Vertragsbeginn = unmöglich
 const { sanitizeAnalysisResult } = require("../utils/textSanitizer");
 const fs = require("fs").promises;
@@ -5304,7 +5304,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // 🔧 FIX: Override expiryDate from AI importantDates if available
         // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
-        const aiEndDate = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+        let aiEndDate = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+        // 🛡️ TÜV-Fund #1: KI-Enddatum vor Übernahme denselben Plausi-Checks unterziehen wie den Regex-Wert.
+        if (isImplausibleAiEndDate(aiEndDate, updateData.startDate, result.importantDates)) {
+          console.warn(`⚠️ [${requestId}] KI-Enddatum ${aiEndDate instanceof Date ? aiEndDate.toISOString() : aiEndDate} verworfen (unplausibel: Vergangenheit/==Start/vor-Start) — TÜV-Fund #1`);
+          aiEndDate = null;
+        }
         if (aiEndDate) {
           const oldExpiry = updateData.expiryDate ? (updateData.expiryDate instanceof Date ? updateData.expiryDate.toISOString() : updateData.expiryDate) : 'null';
           console.log(`🔧 [${requestId}] Updating expiryDate from AI importantDates: ${oldExpiry} → ${aiEndDate.toISOString()}`);
@@ -5576,7 +5581,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // Pfad ein falsches "Ende==Start" gespeichert wird → keine falschen Ablauf-/Verlängerungs-
         // Termine. Bewusst NACH dem Objekt-Bau (kein Eingriff in die importantDates-Filterung).
         {
-          const aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+          let aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+          // 🛡️ TÜV-Fund #1: gleiche Plausi-Checks auf das KI-Enddatum (siehe isImplausibleAiEndDate).
+          if (isImplausibleAiEndDate(aiEndDateNew, contractAnalysisData.startDate, result.importantDates)) {
+            console.warn(`⚠️ [${requestId}] (Neu-Anlage) KI-Enddatum verworfen (unplausibel: Vergangenheit/==Start/vor-Start) — TÜV-Fund #1`);
+            aiEndDateNew = null;
+          }
           if (aiEndDateNew) {
             contractAnalysisData.expiryDate = aiEndDateNew;
           } else {
@@ -5601,7 +5611,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // 🔧 FIX: Extract AI end date for new contracts too
         // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
-        const aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+        let aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+        // 🛡️ TÜV-Fund #1: gleiche Plausi-Checks auf das KI-Enddatum (siehe isImplausibleAiEndDate).
+        if (isImplausibleAiEndDate(aiEndDateNew, extractedStartDate, result.importantDates)) {
+          console.warn(`⚠️ [${requestId}] [NEW CONTRACT] KI-Enddatum verworfen (unplausibel: Vergangenheit/==Start/vor-Start) — TÜV-Fund #1`);
+          aiEndDateNew = null;
+        }
 
         // 🛡️ PLAUSIBILITY CHECK for new contracts
         let expiryDateUpdate = {};

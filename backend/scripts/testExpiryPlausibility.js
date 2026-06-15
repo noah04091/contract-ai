@@ -3,7 +3,7 @@
  * node backend/scripts/testExpiryPlausibility.js
  * Beweist: leert nur verdächtige Enddaten (Vergangenheit ODER ==Start); echte Enddaten unberührt.
  */
-const { shouldClearExpiry } = require('../utils/expiryPlausibility');
+const { shouldClearExpiry, isImplausibleAiEndDate } = require('../utils/expiryPlausibility');
 
 let pass = 0, fail = 0;
 const ok = (name, cond, info = '') => {
@@ -52,6 +52,19 @@ ok('Ende == einer von mehreren start-Kandidaten → clear', rc('2026-09-01', nul
 ok('leere startCandidates, Ende Zukunft → KEIN clear', rc('2027-01-01', null, []).clear === false);
 // Rückwärtskompatibel: ohne startCandidates verhält es sich exakt wie vorher
 ok('ohne startCandidates: Ende==Start → clear (unverändert)', r('2026-07-01','2026-07-01').clear === true);
+
+// ══════════ TÜV-Fund #1: isImplausibleAiEndDate (KI-Enddatum-Guard) ══════════
+console.log('\n════════ isImplausibleAiEndDate (TÜV-Fund #1) ════════');
+const sd = [{ type: 'start_date', date: '2026-08-01' }]; // KI-erkannter Beginn
+// Bogus KI-Enddaten, die VORHER direkt als expiryDate durchrutschten → jetzt verworfen:
+ok('KI-Ende in Vergangenheit → verwerfen', isImplausibleAiEndDate(new Date('2024-01-01'), '2026-08-01', sd) === true);
+ok('KI-Ende == Startdatum-Feld → verwerfen', isImplausibleAiEndDate(new Date('2026-08-01'), '2026-08-01', []) === true);
+ok('KI-Ende == start_date-Termin (Feld leer) → verwerfen', isImplausibleAiEndDate(new Date('2026-08-01'), null, sd) === true);
+ok('KI-Ende VOR Start (Zukunft, ≠Start) → verwerfen (war DIE Lücke)',
+   isImplausibleAiEndDate(new Date('2028-01-01'), '2030-01-01', []) === true);
+// Echtes KI-Enddatum NACH Start → NICHT verwerfen (darf nie verloren gehen):
+ok('echtes KI-Ende (nach Start) → behalten', isImplausibleAiEndDate(new Date('2028-06-30'), '2026-07-01', []) === false);
+ok('kein KI-Ende (null) → behalten (nichts zu tun)', isImplausibleAiEndDate(null, '2026-07-01', []) === false);
 
 console.log('\n════════════════════════════════════════════════');
 console.log(`ERGEBNIS: ${pass} bestanden, ${fail} fehlgeschlagen`);
