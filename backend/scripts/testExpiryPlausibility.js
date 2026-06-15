@@ -13,6 +13,7 @@ const ok = (name, cond, info = '') => {
 
 const NOW = new Date('2026-06-15T12:00:00Z'); // fixer Bezugspunkt für Determinismus
 const r = (exp, start) => shouldClearExpiry({ expiryDate: exp, startDate: start, now: NOW });
+const rc = (exp, start, cands) => shouldClearExpiry({ expiryDate: exp, startDate: start, startCandidates: cands, now: NOW });
 
 console.log('\n════════ shouldClearExpiry ════════');
 
@@ -38,6 +39,19 @@ ok('unparsebares Enddatum → KEIN clear (nicht anfassen)', r('keinDatum', '2026
 
 // Vergangenheit hat Vorrang, auch wenn == Start
 ok('Ende == Start, beide Vergangenheit → clear (past)', (() => { const x = r('2020-01-01', '2020-01-01'); return x.clear === true; })());
+
+// 🆕 TerraTech-Fall (15.06.2026): startDate-Feld LEER, aber KI erkannte Beginn als start_date-Termin.
+// Ende == dieser Beginn-Termin → leeren (equals_start), obwohl startDate null ist.
+ok('TerraTech: Ende == start_date-Termin (startDate-Feld leer) → clear equals_start',
+   (() => { const x = rc('2026-08-01', null, ['2026-08-01']); return x.clear && x.reason === 'equals_start'; })());
+// Echtes Enddatum != Beginn-Kandidaten → NICHT leeren (Pixelwerk-artig: Start 01.07., Ende 30.06.2028)
+ok('Ende ≠ start_date-Termin → KEIN clear', rc('2028-06-30', '2026-07-01', ['2026-07-01']).clear === false);
+// Mehrere Kandidaten, einer passt → clear
+ok('Ende == einer von mehreren start-Kandidaten → clear', rc('2026-09-01', null, ['2026-07-01','2026-09-01']).clear === true);
+// startCandidates leer/kein Treffer → wie bisher (kein clear)
+ok('leere startCandidates, Ende Zukunft → KEIN clear', rc('2027-01-01', null, []).clear === false);
+// Rückwärtskompatibel: ohne startCandidates verhält es sich exakt wie vorher
+ok('ohne startCandidates: Ende==Start → clear (unverändert)', r('2026-07-01','2026-07-01').clear === true);
 
 console.log('\n════════════════════════════════════════════════');
 console.log(`ERGEBNIS: ${pass} bestanden, ${fail} fehlgeschlagen`);

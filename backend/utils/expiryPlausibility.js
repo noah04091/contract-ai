@@ -4,9 +4,11 @@
  * Wird im Aufrufer NUR genutzt, wenn die KI KEIN echtes end_date geliefert hat. Dann ist
  * ein per Regex extrahiertes Enddatum verdächtig, wenn es:
  *   (a) in der Vergangenheit liegt (z.B. fälschlich ein Rechnungs-/Briefdatum), ODER
- *   (b) == Startdatum ist (Datenfehler: Pass-1-Marker-Überlappung "ab dem … bis …" →
+ *   (b) == einem BEGINN-Datum ist (Datenfehler: Pass-1-Marker-Überlappung "ab dem … bis …" →
  *       dasselbe Datum landet als Start UND Ende; ein Vertrag kann nicht am selben Tag
- *       beginnen UND enden).
+ *       beginnen UND enden). Als Beginn zählt das `startDate`-Feld UND — falls das Feld leer
+ *       ist — von der KI als `start_date` erkannte Termine (`startCandidates`); behebt den
+ *       TerraTech-Fall (Beginn nur in importantDates, startDate-Feld leer, 15.06.2026).
  * In beiden Fällen → Enddatum leeren (statt falsches zu speichern). Downstream null-safe
  * (Status-Logik prüft `expiryDate ? … : null`; Kalender-Wächter erzeugen bei leerem
  * Enddatum keine Ablauf-/Verlängerungs-Events).
@@ -22,10 +24,10 @@ function dayFloor(d) {
 }
 
 /**
- * @param {{ expiryDate: any, startDate: any, now?: any }} input
+ * @param {{ expiryDate: any, startDate: any, startCandidates?: any[], now?: any }} input
  * @returns {{ clear: boolean, reason: 'past'|'equals_start'|null }}
  */
-function shouldClearExpiry({ expiryDate, startDate, now } = {}) {
+function shouldClearExpiry({ expiryDate, startDate, startCandidates, now } = {}) {
   if (!expiryDate) return { clear: false, reason: null };
   const exp = dayFloor(expiryDate);
   if (!exp) return { clear: false, reason: null }; // unparsebar → nicht anfassen
@@ -33,9 +35,14 @@ function shouldClearExpiry({ expiryDate, startDate, now } = {}) {
   const today = dayFloor(now || new Date());
   if (exp.getTime() < today.getTime()) return { clear: true, reason: 'past' };
 
-  if (startDate) {
-    const start = dayFloor(startDate);
-    if (start && exp.getTime() === start.getTime()) {
+  // Beginn-Kandidaten: das startDate-Feld + von der KI erkannte start_date-Termine.
+  // Ein Vertrag kann nicht an seinem Beginn-Tag enden → Ende == irgendein Beginn = Datenfehler.
+  const starts = [];
+  if (startDate) starts.push(startDate);
+  if (Array.isArray(startCandidates)) starts.push(...startCandidates);
+  for (const s of starts) {
+    const sf = dayFloor(s);
+    if (sf && exp.getTime() === sf.getTime()) {
       return { clear: true, reason: 'equals_start' };
     }
   }

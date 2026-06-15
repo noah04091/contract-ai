@@ -5308,12 +5308,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           updateData.endDate = aiEndDate; // Also update endDate for consistency
           updateData.expiryDateSource = 'ai_importantDates'; // Track the source
         } else {
-          // 🛡️ PLAUSIBILITY CHECK (14.06.2026 erweitert): KI fand kein end_date → ein Regex-Enddatum
+          // 🛡️ PLAUSIBILITY CHECK (14.06.2026, 15.06. erweitert): KI fand kein end_date → ein Regex-Enddatum
           // ist verdächtig, wenn es (a) in der Vergangenheit liegt (z.B. fälschlich Rechnungs-/Briefdatum)
-          // ODER (b) == Startdatum ist (Datenfehler durch Pass-1-Marker-Überlappung "ab dem … bis …";
-          // ein Vertrag kann nicht am selben Tag beginnen UND enden). In beiden Fällen leeren →
-          // verhindert falsche "läuft ab"/"Verlängerung"-Termine + falschen Status. Downstream null-safe.
-          const decision = shouldClearExpiry({ expiryDate: updateData.expiryDate, startDate: updateData.startDate });
+          // ODER (b) == einem BEGINN ist (Datenfehler durch Pass-1-Marker-Überlappung "ab dem … bis …";
+          // ein Vertrag kann nicht am selben Tag beginnen UND enden). Beginn = startDate-Feld ODER ein von
+          // der KI als start_date erkannter Termin (fängt TerraTech: startDate-Feld leer, Beginn nur in
+          // importantDates). In beiden Fällen leeren → verhindert falsche "läuft ab"/"Verlängerung"-Termine
+          // + falschen Status. Downstream null-safe.
+          const startCandidates = (result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
+          const decision = shouldClearExpiry({ expiryDate: updateData.expiryDate, startDate: updateData.startDate, startCandidates });
           if (decision.clear) {
             console.warn(`⚠️ [${requestId}] PLAUSIBILITY CHECK: expiryDate ${updateData.expiryDate} geleert (Grund: ${decision.reason}; KI fand kein end_date) — verhindert falsche Ablauf-/Verlängerungs-Termine + falschen Status.`);
             updateData.expiryDate = null;
@@ -5573,7 +5576,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           if (aiEndDateNew) {
             contractAnalysisData.expiryDate = aiEndDateNew;
           } else {
-            const decNew = shouldClearExpiry({ expiryDate: contractAnalysisData.expiryDate, startDate: contractAnalysisData.startDate });
+            // Beginn = startDate-Feld ODER von der KI erkannter start_date-Termin (fängt TerraTech, 15.06.2026).
+            const startCandidatesNew = (result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
+            const decNew = shouldClearExpiry({ expiryDate: contractAnalysisData.expiryDate, startDate: contractAnalysisData.startDate, startCandidates: startCandidatesNew });
             if (decNew.clear) {
               console.warn(`⚠️ [${requestId}] (Neu-Anlage) expiryDate ${contractAnalysisData.expiryDate} geleert (Grund: ${decNew.reason}; KI fand kein end_date).`);
               contractAnalysisData.expiryDate = null;
