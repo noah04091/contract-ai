@@ -64,6 +64,9 @@ ok('KI-Ende VOR Start (Zukunft, ≠Start) → verwerfen (war DIE Lücke)',
    isImplausibleAiEndDate(new Date('2028-01-01'), '2030-01-01', []) === true);
 // Echtes KI-Enddatum NACH Start → NICHT verwerfen (darf nie verloren gehen):
 ok('echtes KI-Ende (nach Start) → behalten', isImplausibleAiEndDate(new Date('2028-06-30'), '2026-07-01', []) === false);
+// Edge (QC 15.06.): startDate-Feld leer, KI-Ende strikt VOR nur-in-importantDates-Beginn → verwerfen
+ok('KI-Ende < start_date-Termin (Feld leer, strikt vorher) → verwerfen', isImplausibleAiEndDate(new Date('2026-07-01'), null, sd) === true);
+ok('echtes KI-Ende NACH start_date-Termin (Feld leer) → behalten', isImplausibleAiEndDate(new Date('2027-01-01'), null, sd) === false);
 ok('kein KI-Ende (null) → behalten (nichts zu tun)', isImplausibleAiEndDate(null, '2026-07-01', []) === false);
 
 console.log('\n════════════════════════════════════════════════');

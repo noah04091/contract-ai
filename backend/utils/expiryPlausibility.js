@@ -62,7 +62,12 @@ function isImplausibleAiEndDate(aiEndDate, startDate, importantDates) {
     .filter(d => d && d.type === 'start_date' && d.date)
     .map(d => d.date);
   if (shouldClearExpiry({ expiryDate: aiEndDate, startDate, startCandidates }).clear) return true;
+  // vor-Start: gegen das startDate-Feld UND gegen KI-erkannte Beginn-Termine (schließt den Edge,
+  // dass das Feld leer ist, der Beginn aber nur als start_date-Termin existiert — 15.06.2026 QC).
   if (isMilestoneBeforeStart({ type: 'end_date', date: aiEndDate, startDate })) return true;
+  for (const c of startCandidates) {
+    if (isMilestoneBeforeStart({ type: 'end_date', date: aiEndDate, startDate: c })) return true;
+  }
   return false;
 }
 
