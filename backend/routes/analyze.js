@@ -6,6 +6,7 @@ const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = requ
 const pdfExtractor = require("../services/pdfExtractor");
 const { shouldAttemptOcr } = require("../utils/ocrGate"); // 🔍 OCR-Weiche (Text-Menge + Scan-Dichte)
 const { tryParseLenient } = require("../utils/jsonRepair"); // 🩹 Tolerantes JSON-Parsen für abgeschnittene KI-Antworten
+const { shouldClearExpiry } = require("../utils/expiryPlausibility"); // 🛡️ Enddatum-Plausibilität (Vergangenheit / ==Start)
 const { sanitizeAnalysisResult } = require("../utils/textSanitizer");
 const fs = require("fs").promises;
 const fsSync = require("fs");
@@ -5307,16 +5308,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           updateData.endDate = aiEndDate; // Also update endDate for consistency
           updateData.expiryDateSource = 'ai_importantDates'; // Track the source
         } else {
-          // 🛡️ PLAUSIBILITY CHECK: If regex date is in the past but AI found no end_date,
-          // the regex probably found the wrong date (e.g., invoice date). Clear it!
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-
-          if (updateData.expiryDate && new Date(updateData.expiryDate) < today) {
-            console.warn(`⚠️ [${requestId}] PLAUSIBILITY CHECK: Regex expiryDate ${updateData.expiryDate} is in the past, but AI found no end_date. Clearing to prevent false "Beendet" status.`);
+          // 🛡️ PLAUSIBILITY CHECK (14.06.2026 erweitert): KI fand kein end_date → ein Regex-Enddatum
+          // ist verdächtig, wenn es (a) in der Vergangenheit liegt (z.B. fälschlich Rechnungs-/Briefdatum)
+          // ODER (b) == Startdatum ist (Datenfehler durch Pass-1-Marker-Überlappung "ab dem … bis …";
+          // ein Vertrag kann nicht am selben Tag beginnen UND enden). In beiden Fällen leeren →
+          // verhindert falsche "läuft ab"/"Verlängerung"-Termine + falschen Status. Downstream null-safe.
+          const decision = shouldClearExpiry({ expiryDate: updateData.expiryDate, startDate: updateData.startDate });
+          if (decision.clear) {
+            console.warn(`⚠️ [${requestId}] PLAUSIBILITY CHECK: expiryDate ${updateData.expiryDate} geleert (Grund: ${decision.reason}; KI fand kein end_date) — verhindert falsche Ablauf-/Verlängerungs-Termine + falschen Status.`);
             updateData.expiryDate = null;
             updateData.endDate = null;
-            updateData.expiryDateSource = 'cleared_implausible';
+            updateData.expiryDateSource = decision.reason === 'past' ? 'cleared_implausible' : 'cleared_equals_start';
           }
         }
 
@@ -5560,6 +5562,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           // 🆕 A3 (29.05.2026): KI-extrahierte Zahlungs-Details für saveContractWithUpload.
           paymentTerms: extractAndValidatePaymentTerms(result.paymentTerms, requestId)
         };
+
+        // 🛡️ Enddatum-Plausibilität AUCH im Neu-Anlage-Pfad (14.06.2026, universell — identisch
+        // zum Re-Analyse-Pfad oben): echtes KI-Enddatum hat Vorrang; sonst ein verdächtiges
+        // Regex-Enddatum (Vergangenheit ODER == Startdatum) leeren. Verhindert, dass über DIESEN
+        // Pfad ein falsches "Ende==Start" gespeichert wird → keine falschen Ablauf-/Verlängerungs-
+        // Termine. Bewusst NACH dem Objekt-Bau (kein Eingriff in die importantDates-Filterung).
+        {
+          const aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+          if (aiEndDateNew) {
+            contractAnalysisData.expiryDate = aiEndDateNew;
+          } else {
+            const decNew = shouldClearExpiry({ expiryDate: contractAnalysisData.expiryDate, startDate: contractAnalysisData.startDate });
+            if (decNew.clear) {
+              console.warn(`⚠️ [${requestId}] (Neu-Anlage) expiryDate ${contractAnalysisData.expiryDate} geleert (Grund: ${decNew.reason}; KI fand kein end_date).`);
+              contractAnalysisData.expiryDate = null;
+            }
+          }
+        }
 
         const savedContract = await saveContractWithUpload(
           req.user.userId,
