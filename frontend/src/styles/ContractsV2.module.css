@@ -2934,6 +2934,13 @@
 }
 
 /* ========== UPLOAD HERO BAND (Redesign Variante C) ========== */
+/* Schmale, zentrierte Karte im Upload-Zustand (Modal-Charakter; freier Platz = Seitenhintergrund, nicht innen) */
+.uploadCardNarrow {
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* Variante 1 "Stripe Clean": ruhiger, neutraler weißer Header */
 .uploadBand {
   position: relative;
@@ -2955,9 +2962,6 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  /* zentrierte Inhaltsspalte (Modal-Charakter wie Stripe) */
-  max-width: 620px;
-  margin: 0 auto;
 }
 
 .uploadBandInner {
@@ -3004,12 +3008,10 @@
   white-space: nowrap;
 }
 
-/* Footer-Stepper: dezente Fußzeile, zentrierte Spalte (mit voller Trennlinie) */
+/* Footer-Stepper: dezente Fußzeile (füllt die schmale Karte) */
 .uploadFlowFooter {
   display: flex;
   align-items: center;
-  max-width: 620px;
-  margin: 0 auto;
   padding: 1.15rem 2rem 1.35rem;
   border-top: 1px solid #ececf1;
 }
@@ -3083,10 +3085,6 @@
 
 /* ========== PREMIUM UPLOAD AREA ========== */
 .uploadArea {
-  /* zentrierte, schmale Dropzone (nicht über die volle Breite gestreckt) */
-  max-width: 620px;
-  margin-left: auto;
-  margin-right: auto;
   border: 1.5px dashed #d7dbe2;
   border-radius: 16px;
   padding: 2.75rem 2rem;

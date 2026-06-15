@@ -4813,7 +4813,7 @@ export default function Contracts() {
                 {activeSection === 'upload' && !quickAnalysisModal.show && (
                   <motion.div
                     key="upload-section"
-                    className={styles.section}
+                    className={`${styles.section} ${uploadFiles.length === 0 ? styles.uploadCardNarrow : ''}`}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
