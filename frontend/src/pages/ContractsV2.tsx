@@ -4894,15 +4894,47 @@ export default function Contracts() {
                               ? "Lade einen oder mehrere Verträge hoch — wir prüfen sie wie ein Anwalt und behalten alle Fristen für dich im Blick."
                               : "Lade einen Vertrag hoch — wir prüfen ihn wie ein Anwalt und behalten alle Fristen für dich im Blick."}
                           </p>
+                          {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
+                            <span className={styles.uploadBandBadge}>
+                              <span className={styles.uploadBandBadgeDot}></span>
+                              {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)} / {userInfo.analysisLimit} Analysen
+                              {userInfo.subscriptionPlan === 'free' && ' · einmalig'}
+                              {userInfo.subscriptionPlan === 'business' && ' · mtl.'}
+                            </span>
+                          )}
                         </div>
-                        {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
-                          <span className={styles.uploadBandBadge}>
-                            <span className={styles.uploadBandBadgeDot}></span>
-                            {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)} / {userInfo.analysisLimit} Analysen
-                            {userInfo.subscriptionPlan === 'free' && ' · einmalig'}
-                            {userInfo.subscriptionPlan === 'business' && ' · mtl.'}
-                          </span>
-                        )}
+
+                        {/* 📋 Ablauf im Header rechts (Variante C + B kombiniert) */}
+                        <div className={styles.uploadBandSteps}>
+                          <div className={styles.uploadBandStep}>
+                            <div className={styles.uploadBandStepIcon}><FileText size={18} /></div>
+                            <div className={styles.uploadBandStepBody}>
+                              <h4>1. Upload</h4>
+                              <p>User lädt Vertrag hoch</p>
+                            </div>
+                          </div>
+                          <div className={styles.uploadBandStep}>
+                            <div className={styles.uploadBandStepIcon}><Scale size={18} /></div>
+                            <div className={styles.uploadBandStepBody}>
+                              <h4>2. Rechtsprüfung <span className={styles.uploadBandStepTag}>Analyse</span></h4>
+                              <p>Einmalige, tiefe Analyse wie vom Anwalt</p>
+                            </div>
+                          </div>
+                          <div className={styles.uploadBandStep}>
+                            <div className={styles.uploadBandStepIcon}><Folder size={18} /></div>
+                            <div className={styles.uploadBandStepBody}>
+                              <h4>3. Verwaltung</h4>
+                              <p>Vertrag wird gespeichert</p>
+                            </div>
+                          </div>
+                          <div className={styles.uploadBandStep}>
+                            <div className={styles.uploadBandStepIcon}><Radar size={18} /></div>
+                            <div className={styles.uploadBandStepBody}>
+                              <h4>4. Legal Pulse <span className={styles.uploadBandStepTag}>Monitoring</span></h4>
+                              <p>Aktiviere die laufende Überwachung – und verpasse keine Frist mehr</p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -5209,62 +5241,7 @@ export default function Contracts() {
                       </div>
                     )}
 
-                    {/* 📋 User Flow - Horizontal mit Icons wie im Mockup */}
-                    {uploadFiles.length === 0 && (
-                      <div className={styles.uploadFlowSteps}>
-                        {/* Step 1: Upload */}
-                        <div className={styles.uploadFlowStep}>
-                          <div className={styles.uploadFlowIcon}>
-                            <FileText size={28} />
-                          </div>
-                          <div className={styles.uploadFlowContent}>
-                            <h4>1. Upload</h4>
-                            <p>User lädt Vertrag hoch</p>
-                          </div>
-                        </div>
-
-                        <div className={styles.uploadFlowConnector} />
-
-                        {/* Step 2: Rechtsprüfung */}
-                        <div className={styles.uploadFlowStep}>
-                          <span className={`${styles.uploadFlowBadge} ${styles.uploadFlowBadgeBlue}`}>Rechtsprüfung</span>
-                          <div className={`${styles.uploadFlowIcon} ${styles.uploadFlowIconBlue}`}>
-                            <Scale size={28} />
-                          </div>
-                          <div className={styles.uploadFlowContent}>
-                            <h4>2. Rechtsprüfung</h4>
-                            <p>Einmalige, tiefe Analyse wie vom Anwalt</p>
-                          </div>
-                        </div>
-
-                        <div className={styles.uploadFlowConnector} />
-
-                        {/* Step 3: Verwaltung */}
-                        <div className={styles.uploadFlowStep}>
-                          <div className={`${styles.uploadFlowIcon} ${styles.uploadFlowIconYellow}`}>
-                            <Folder size={28} />
-                          </div>
-                          <div className={styles.uploadFlowContent}>
-                            <h4>3. Verwaltung</h4>
-                            <p>Vertrag wird gespeichert</p>
-                          </div>
-                        </div>
-
-                        <div className={styles.uploadFlowConnector} />
-
-                        {/* Step 4: Legal Pulse */}
-                        <div className={styles.uploadFlowStep}>
-                          <span className={`${styles.uploadFlowBadge} ${styles.uploadFlowBadgeGreen}`}>Monitoring</span>
-                          <div className={`${styles.uploadFlowIcon} ${styles.uploadFlowIconGreen}`}>
-                            <Radar size={28} />
-                          </div>
-                          <div className={styles.uploadFlowContent}>
-                            <h4>4. Legal Pulse</h4>
-                            <p>Aktiviere die laufende Überwachung – und verpasse keine Frist mehr</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    {/* 📋 User Flow → in den Header-Band (rechts) verschoben (Variante C + B) */}
 
                     {/* ✅ DEINE BESTEHENDE ANALYSE-ANZEIGE bleibt unverändert */}
                     {selectedFile && uploadFiles.length === 1 && uploadFiles[0].status === 'completed' && (
