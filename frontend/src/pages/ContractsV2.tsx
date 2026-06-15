@@ -4907,28 +4907,28 @@ export default function Contracts() {
                         {/* 📋 Ablauf im Header rechts (Variante C + B kombiniert) */}
                         <div className={styles.uploadBandSteps}>
                           <div className={styles.uploadBandStep}>
-                            <div className={styles.uploadBandStepIcon}><FileText size={18} /></div>
+                            <div className={styles.uploadBandStepIcon}><FileText size={15} /></div>
                             <div className={styles.uploadBandStepBody}>
                               <h4>1. Upload</h4>
                               <p>User lädt Vertrag hoch</p>
                             </div>
                           </div>
                           <div className={styles.uploadBandStep}>
-                            <div className={styles.uploadBandStepIcon}><Scale size={18} /></div>
+                            <div className={styles.uploadBandStepIcon}><Scale size={15} /></div>
                             <div className={styles.uploadBandStepBody}>
                               <h4>2. Rechtsprüfung <span className={styles.uploadBandStepTag}>Analyse</span></h4>
                               <p>Einmalige, tiefe Analyse wie vom Anwalt</p>
                             </div>
                           </div>
                           <div className={styles.uploadBandStep}>
-                            <div className={styles.uploadBandStepIcon}><Folder size={18} /></div>
+                            <div className={styles.uploadBandStepIcon}><Folder size={15} /></div>
                             <div className={styles.uploadBandStepBody}>
                               <h4>3. Verwaltung</h4>
                               <p>Vertrag wird gespeichert</p>
                             </div>
                           </div>
                           <div className={styles.uploadBandStep}>
-                            <div className={styles.uploadBandStepIcon}><Radar size={18} /></div>
+                            <div className={styles.uploadBandStepIcon}><Radar size={15} /></div>
                             <div className={styles.uploadBandStepBody}>
                               <h4>4. Legal Pulse <span className={styles.uploadBandStepTag}>Monitoring</span></h4>
                               <p>Aktiviere die laufende Überwachung – und verpasse keine Frist mehr</p>
