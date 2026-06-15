@@ -780,6 +780,18 @@ class ContractAnalyzer {
   extractContractDuration(text) {
     console.log('🔍 Extrahiere Vertragslaufzeit...');
 
+    // 🛡️ 15.06.2026 (D-2): "auf unbestimmte Zeit"/"unbefristet" hat VORRANG — ein unbefristeter
+    // Vertrag hat KEINE feste Laufzeit (→ null, wie "nichts gefunden"). Verhindert, dass ein
+    // "jährlich" aus einem ANDEREN Kontext (z.B. "Abrechnung jährlich", "Kündigung zum Jahresende")
+    // fälschlich als 1-Jahres-Vertragslaufzeit gelesen wird. Realfall TerraTech: § 4 "Abrechnung …
+    // jährlich" → "1 Jahr", obwohl § 6 "auf unbestimmte Zeit geschlossen". Deterministisch, kein
+    // GPT-Eingriff, additiv. Anmerkung: Bei "Mindestlaufzeit X, danach unbestimmt" gewinnt bewusst
+    // "unbefristet" (die feste Mindestlaufzeit ist ein separates Konzept).
+    if (/\b(?:auf\s+unbestimmte\s+(?:zeit|dauer)|unbefristet)\b/i.test(text)) {
+      console.log('✅ Unbefristeter Vertrag erkannt ("auf unbestimmte Zeit"/"unbefristet") — keine feste Laufzeit (NULL)');
+      return null;
+    }
+
     // Check for annual contracts first (common for insurance)
     if (text.match(/jährlich(?:e)?(?:\s+verlängerung)?/gi) ||
         text.match(/(?:verlängert\s+sich\s+)?(?:jeweils\s+)?(?:um\s+)?ein\s+jahr/gi)) {
