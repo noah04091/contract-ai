@@ -21,10 +21,18 @@
  * Pure Funktion, deterministisch, erfindet nichts — verwirft nur logisch Unmögliches.
  */
 
+// ⚠️ QUELLE DER WAHRHEIT für die Typ-Namen: dateHuntService.js DATE_SCHEMA (~Zeile 257) —
+// das ist das Vokabular, das GPT real emittiert. Diese Liste MUSS dazu passen (15.06.2026
+// per TÜV-Audit gegen die echte Liste abgeglichen; vorher 3 tote Einträge + ~7 fehlende Typen
+// → derselbe lease_end-Bypass war über andere Typen offen). Enthalten: alle Ende-/Frist-
+// Meilensteine, die LOGISCH nicht vor dem Vertragsbeginn liegen können. BEWUSST NICHT enthalten
+// (dürfen am/vor Beginn liegen): start_date, service_start, contract_signed, payment_due
+// (Anzahlung), delivery_date, other.
 const PRE_START_IMPOSSIBLE_TYPES = new Set([
-  'end_date', 'lease_end', 'license_expiry', 'insurance_end', 'loan_end',
-  'trial_end', 'contract_expiry', 'renewal_date', 'minimum_term_end',
-  'cancellation_deadline', 'notice_period'
+  'end_date', 'lease_end', 'license_expiry', 'insurance_coverage_end', 'loan_end',
+  'trial_end', 'renewal_date', 'minimum_term_end', 'cancellation_deadline',
+  'notice_period_start', 'warranty_end', 'probation_end', 'price_guarantee_end',
+  'option_deadline', 'inspection_due', 'interest_rate_change'
 ]);
 
 function dayFloor(d) {

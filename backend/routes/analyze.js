@@ -977,6 +977,7 @@ async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) 
     const completion = await openaiClient.chat.completions.create({
       model: 'gpt-4o-mini',
       temperature: 0.1,
+      seed: 42, // 🎯 Determinismus best-effort — konsistent zu Hauptanalyse (:4013) + DateHunt (dateHuntService.js:884); stabilere Typ-/Kategorie-Klassifikation bei identischem Dokument
       max_tokens: 350,
       response_format: { type: 'json_object' },
       messages: [

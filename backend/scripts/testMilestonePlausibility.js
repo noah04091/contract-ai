@@ -27,7 +27,20 @@ ok('renewal_date vor Start → verwerfen', r('renewal_date', '2020-01-01', '2026
 ok('minimum_term_end vor Start → verwerfen', r('minimum_term_end', '2026-01-01', '2026-07-01') === true);
 ok('license_expiry vor Start → verwerfen', r('license_expiry', '2024-01-01', '2026-07-01') === true);
 
+// 🆕 15.06.2026 (TÜV): korrigiertes Vokabular — diese ECHTEN Typen (vorher fehlend/fehl-benannt)
+// müssen jetzt greifen, sonst lebt der lease_end-Bypass über sie weiter:
+ok('warranty_end vor Start → verwerfen (war Bypass-Lücke)', r('warranty_end', '2025-01-01', '2026-07-01') === true);
+ok('probation_end vor Start → verwerfen', r('probation_end', '2026-01-01', '2026-07-01') === true);
+ok('price_guarantee_end vor Start → verwerfen', r('price_guarantee_end', '2025-06-01', '2026-07-01') === true);
+ok('option_deadline vor Start → verwerfen', r('option_deadline', '2024-01-01', '2026-07-01') === true);
+ok('insurance_coverage_end (korrekter Name) vor Start → verwerfen', r('insurance_coverage_end', '2020-01-01', '2026-07-01') === true);
+ok('notice_period_start (korrekter Name) vor Start → verwerfen', r('notice_period_start', '2025-01-01', '2026-07-01') === true);
+ok('inspection_due vor Start → verwerfen', r('inspection_due', '2025-01-01', '2026-07-01') === true);
+ok('interest_rate_change vor Start → verwerfen', r('interest_rate_change', '2025-01-01', '2026-07-01') === true);
+
 // 🛡️ Ausnahmen — dürfen vor/am Start liegen, NICHT verwerfen:
+ok('payment_due (Anzahlung) vor Start → behalten (nicht im Set)', r('payment_due', '2026-06-15', '2026-07-01') === false);
+ok('delivery_date vor Start → behalten (nicht im Set)', r('delivery_date', '2026-06-15', '2026-07-01') === false);
 ok('contract_signed VOR Start → behalten (Unterzeichnung legitim vor Inkrafttreten)', r('contract_signed', '2026-06-20', '2026-07-01') === false);
 ok('start_date == Start → behalten', r('start_date', '2026-07-01', '2026-07-01') === false);
 ok('service_start == Start → behalten', r('service_start', '2026-07-01', '2026-07-01') === false);
