@@ -4884,14 +4884,6 @@ export default function Contracts() {
                     {/* 🎨 GRADIENT-BAND HEADER (Redesign Variante C) */}
                     {!allAnalyzed && (
                       <div className={styles.uploadBand}>
-                        {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
-                          <span className={styles.uploadBandBadge}>
-                            <span className={styles.uploadBandBadgeDot}></span>
-                            {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)} / {userInfo.analysisLimit} Analysen
-                            {userInfo.subscriptionPlan === 'free' && ' · einmalig'}
-                            {userInfo.subscriptionPlan === 'business' && ' · mtl.'}
-                          </span>
-                        )}
                         <div className={styles.uploadBandInner}>
                           <span className={styles.uploadBandEyebrow}>Schritt 1 von 4 · Upload</span>
                           <h2 className={styles.uploadBandTitle}>
@@ -4902,36 +4894,40 @@ export default function Contracts() {
                               ? "Lade einen oder mehrere Verträge hoch — wir prüfen sie wie ein Anwalt und behalten alle Fristen für dich im Blick."
                               : "Lade einen Vertrag hoch — wir prüfen ihn wie ein Anwalt und behalten alle Fristen für dich im Blick."}
                           </p>
+                          {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
+                            <span className={styles.uploadBandBadge}>
+                              <span className={styles.uploadBandBadgeDot}></span>
+                              {Math.max(0, userInfo.analysisLimit - userInfo.analysisCount)} / {userInfo.analysisLimit} Analysen
+                              {userInfo.subscriptionPlan === 'free' && ' · einmalig'}
+                              {userInfo.subscriptionPlan === 'business' && ' · mtl.'}
+                            </span>
+                          )}
                         </div>
 
-                        {/* 📋 Ablauf als dünne horizontale Schritt-Leiste */}
+                        {/* 📋 Ablauf rechts als kompakte Schritt-Liste (Icon + Titel) */}
                         <div className={styles.uploadBandSteps}>
                           <div className={styles.uploadBandStep}>
                             <div className={styles.uploadBandStepIcon}><FileText size={15} /></div>
                             <div className={styles.uploadBandStepBody}>
                               <h4>1. Upload</h4>
-                              <p>Vertrag hochladen</p>
                             </div>
                           </div>
                           <div className={styles.uploadBandStep}>
                             <div className={styles.uploadBandStepIcon}><Scale size={15} /></div>
                             <div className={styles.uploadBandStepBody}>
                               <h4>2. Rechtsprüfung</h4>
-                              <p>Analyse wie vom Anwalt</p>
                             </div>
                           </div>
                           <div className={styles.uploadBandStep}>
                             <div className={styles.uploadBandStepIcon}><Folder size={15} /></div>
                             <div className={styles.uploadBandStepBody}>
                               <h4>3. Verwaltung</h4>
-                              <p>Sicher gespeichert</p>
                             </div>
                           </div>
                           <div className={styles.uploadBandStep}>
                             <div className={styles.uploadBandStepIcon}><Radar size={15} /></div>
                             <div className={styles.uploadBandStepBody}>
                               <h4>4. Legal Pulse</h4>
-                              <p>Keine Frist mehr verpassen</p>
                             </div>
                           </div>
                         </div>
