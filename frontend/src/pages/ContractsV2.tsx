@@ -4884,14 +4884,11 @@ export default function Contracts() {
                       <div className={styles.uploadBand}>
                         <div className={styles.uploadBandTop}>
                           <div className={styles.uploadBandInner}>
-                            <span className={styles.uploadBandEyebrow}>Upload</span>
                             <h2 className={styles.uploadBandTitle}>
                               {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
                             </h2>
                             <p className={styles.uploadBandDesc}>
-                              {canMultiUpload
-                                ? "Lade einen oder mehrere Verträge hoch — geprüft wie vom Anwalt, Fristen automatisch im Blick."
-                                : "Lade einen Vertrag hoch — geprüft wie vom Anwalt, Fristen automatisch im Blick."}
+                              Geprüft wie vom Anwalt — Fristen automatisch im Blick.
                             </p>
                           </div>
                           {(userInfo.subscriptionPlan === 'free' || userInfo.subscriptionPlan === 'business') && userInfo.analysisLimit !== Infinity && (
@@ -5094,30 +5091,43 @@ export default function Contracts() {
                       ) : (
                         <div className={styles.uploadPrompt}>
                           <div className={styles.uploadIcon}>
-                            <Upload size={40} />
+                            <Upload size={20} />
                           </div>
                           <h3>
-                            {!hasAnalysesLeft 
+                            {!hasAnalysesLeft
                               ? "Analyse-Limit erreicht"
-                              : canMultiUpload 
-                                ? "Dateien hierher ziehen" 
+                              : canMultiUpload
+                                ? "Dateien hierher ziehen"
                                 : "Datei hierher ziehen"
                             }
                           </h3>
-                          <p>
-                            {!hasAnalysesLeft 
-                              ? `Du hast ${userInfo.analysisCount} von ${userInfo.analysisLimit} Analysen verwendet`
-                              : canMultiUpload 
-                                ? "oder klicke, um eine oder mehrere Dateien auszuwählen"
-                                : "oder klicke, um eine Datei auszuwählen"
+                          <p className={styles.uploadOr}>
+                            {!hasAnalysesLeft
+                              ? `${userInfo.analysisCount} von ${userInfo.analysisLimit} Analysen verwendet`
+                              : "oder wähle sie von deinem Gerät"
                             }
                           </p>
-                          <div className={styles.uploadMeta}>
-                            <span className={styles.uploadFormats}>PDF, DOCX</span>
-                            {canMultiUpload && hasAnalysesLeft && (
-                              <span className={styles.uploadFormats}>Mehrfach-Upload</span>
-                            )}
-                          </div>
+                          {hasAnalysesLeft && (
+                            <button
+                              type="button"
+                              className={styles.dzButton}
+                              onClick={(e) => { e.stopPropagation(); activateFileInput(); }}
+                            >
+                              <Upload size={15} />
+                              {canMultiUpload ? "Dateien auswählen" : "Datei auswählen"}
+                            </button>
+                          )}
+                          {hasAnalysesLeft && (
+                            <div className={styles.uploadMeta}>
+                              <span>PDF, DOCX</span>
+                              {canMultiUpload && (
+                                <>
+                                  <span className={styles.metaDot}></span>
+                                  <span>Mehrfachauswahl</span>
+                                </>
+                              )}
+                            </div>
+                          )}
                           {/* ✨ Dezenter Enterprise-Hinweis für Business-Kunden */}
                           {userInfo.subscriptionPlan === 'business' && !canMultiUpload && hasAnalysesLeft && !enterpriseHintDismissed && (
                             <div
