@@ -215,11 +215,18 @@ async function processEmailQueue(db) {
       continue;
     }
 
-    // Markiere als "processing" um Duplikate zu vermeiden
-    await db.collection("email_queue").updateOne(
-      { _id: email._id },
+    // 🔐 ATOMARES CLAIMING: nur senden, wenn DIESE Instanz die Zeile von pending→processing holt.
+    // Filter enthält status:"pending" → bei zwei parallelen Instanzen (Deploy-Overlap) gewinnt genau
+    // eine den Claim (modifiedCount=1), die andere bekommt modifiedCount=0 und überspringt → kein Doppel-Send.
+    // (Vorher: updateOne ohne status-Guard + ohne modifiedCount-Check → beide sendeten dieselbe Zeile.)
+    const claim = await db.collection("email_queue").updateOne(
+      { _id: email._id, status: "pending" },
       { $set: { status: "processing", lastAttemptAt: new Date() } }
     );
+    if (claim.modifiedCount === 0) {
+      console.log(`⏭️ E-Mail ${email._id} bereits von anderer Instanz beansprucht — überspringe`);
+      continue;
+    }
 
     try {
       // Hole Unsubscribe-Headers fuer RFC 8058 Compliance
