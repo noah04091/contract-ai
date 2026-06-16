@@ -4813,12 +4813,14 @@ export default function Contracts() {
                 {activeSection === 'upload' && !quickAnalysisModal.show && (
                   <motion.div
                     key="upload-section"
-                    className={`${styles.section} ${uploadFiles.length === 0 ? styles.uploadCardNarrow : ''}`}
+                    className={`${styles.section} ${styles.uploadAuroraCard}`}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
                   >
+                    {/* 🔵 Aurora-Glow (Firmen-Blau) hinter dem Kopf */}
+                    <div className={styles.uploadAuroraGlow} aria-hidden="true" />
                     {/* 📱 Mobile Back-Button */}
                     <button
                       className={styles.mobileBackButton}
@@ -4955,6 +4957,8 @@ export default function Contracts() {
                     )}
                     
                     {!allAnalyzed && (
+                    <div className={`${styles.uploadSplit} ${uploadFiles.length === 0 ? styles.uploadSplitTwo : ''}`}>
+                      <div className={styles.uploadSplitMain}>
                     <div
                       className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!hasAnalysesLeft ? styles.disabledUpload : ''} ${uploadFiles.length > 0 ? styles.hasFiles : ''}`}
                       onDragEnter={handleDrag}
@@ -5188,16 +5192,37 @@ export default function Contracts() {
                         </div>
                       )}
                     </div>
-                    )}
-
-                    {/* 📸 Dokument scannen Button */}
-                    {uploadFiles.length === 0 && (
-                      <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                        <button onClick={openScanner} className={styles.scanButton}>
-                          <Camera size={15} />
-                          Dokument scannen
-                        </button>
+                        {uploadFiles.length === 0 && (
+                          <div className={styles.scanRow}>
+                            <button onClick={openScanner} className={styles.scanButton}>
+                              <Camera size={15} />
+                              Dokument scannen
+                            </button>
+                          </div>
+                        )}
                       </div>
+                      {uploadFiles.length === 0 && (
+                        <div className={styles.uploadSide}>
+                          <div className={styles.uploadSideLabel}>So geht's weiter</div>
+                          <div className={`${styles.uploadSideStep} ${styles.isActive}`}>
+                            <span className={styles.uploadSideNum}>1</span>
+                            <div className={styles.uploadSideBody}><b>Upload</b><span>Vertrag hochladen</span></div>
+                          </div>
+                          <div className={styles.uploadSideStep}>
+                            <span className={styles.uploadSideNum}>2</span>
+                            <div className={styles.uploadSideBody}><b>Rechtsprüfung</b><span>Tiefe Analyse wie vom Anwalt</span></div>
+                          </div>
+                          <div className={styles.uploadSideStep}>
+                            <span className={styles.uploadSideNum}>3</span>
+                            <div className={styles.uploadSideBody}><b>Verwaltung</b><span>Sicher gespeichert</span></div>
+                          </div>
+                          <div className={styles.uploadSideStep}>
+                            <span className={styles.uploadSideNum}>4</span>
+                            <div className={styles.uploadSideBody}><b>Legal Pulse</b><span>Laufende Überwachung</span></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     )}
 
                     {/* 📋 User Flow → in den Header-Band (rechts) verschoben (Variante C + B) */}
@@ -5233,30 +5258,6 @@ export default function Contracts() {
                     )}
                     </div>
 
-                    {/* 📋 Ablauf als dezente Fußzeile (Variante 1: Stripe Clean) */}
-                    {!allAnalyzed && uploadFiles.length === 0 && uploadTab !== 'email' && (
-                      <div className={styles.uploadFlowFooter}>
-                        <div className={styles.uploadFlowFstep}>
-                          <span className={styles.uploadFlowFnum}>1</span>
-                          <span className={styles.uploadFlowFlabel}>Upload</span>
-                        </div>
-                        <div className={styles.uploadFlowFline} />
-                        <div className={styles.uploadFlowFstep}>
-                          <span className={styles.uploadFlowFnum}>2</span>
-                          <span className={styles.uploadFlowFlabel}>Rechtsprüfung</span>
-                        </div>
-                        <div className={styles.uploadFlowFline} />
-                        <div className={styles.uploadFlowFstep}>
-                          <span className={styles.uploadFlowFnum}>3</span>
-                          <span className={styles.uploadFlowFlabel}>Verwaltung</span>
-                        </div>
-                        <div className={styles.uploadFlowFline} />
-                        <div className={styles.uploadFlowFstep}>
-                          <span className={styles.uploadFlowFnum}>4</span>
-                          <span className={styles.uploadFlowFlabel}>Legal Pulse</span>
-                        </div>
-                      </div>
-                    )}
                   </>
                 )}
               </motion.div>
