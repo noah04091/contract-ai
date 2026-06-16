@@ -4768,7 +4768,7 @@ export default function Contracts() {
             </AnimatePresence>
 
             {/* Content Area - nur dieser Bereich scrollt */}
-            <div className={`${styles.contentArea} ${(activeSection !== 'contracts' || quickAnalysisModal.show) ? styles.contentAreaNoNav : ''}`} ref={contentAreaRef} data-tour="contracts-list">
+            <div className={`${styles.contentArea} ${(activeSection !== 'contracts' || quickAnalysisModal.show) ? styles.contentAreaNoNav : ''} ${activeSection === 'upload' && uploadFiles.length === 0 && !quickAnalysisModal.show ? styles.contentAreaUploadFill : ''}`} ref={contentAreaRef} data-tour="contracts-list">
               <AnimatePresence mode="wait" initial={false}>
                 {/* ⚡ Re-Analyse-Ergebnis IN-PAGE (wie Upload→Analyse), nicht als Overlay */}
                 {quickAnalysisModal.show && quickAnalysisModal.analysisResult && (
@@ -4813,14 +4813,12 @@ export default function Contracts() {
                 {activeSection === 'upload' && !quickAnalysisModal.show && (
                   <motion.div
                     key="upload-section"
-                    className={`${styles.section} ${styles.uploadAuroraCard}`}
+                    className={`${styles.section} ${styles.uploadDocCard} ${uploadFiles.length === 0 ? styles.uploadFillHeight : ''}`}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
                   >
-                    {/* 🔵 Aurora-Glow (Firmen-Blau) hinter dem Kopf */}
-                    <div className={styles.uploadAuroraGlow} aria-hidden="true" />
                     {/* 📱 Mobile Back-Button */}
                     <button
                       className={styles.mobileBackButton}
@@ -4957,8 +4955,8 @@ export default function Contracts() {
                     )}
                     
                     {!allAnalyzed && (
-                    <div className={`${styles.uploadSplit} ${uploadFiles.length === 0 ? styles.uploadSplitTwo : ''}`}>
-                      <div className={styles.uploadSplitMain}>
+                    <div className={styles.uploadWork}>
+                      <div className={styles.uploadDzHost}>
                     <div
                       className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!hasAnalysesLeft ? styles.disabledUpload : ''} ${uploadFiles.length > 0 ? styles.hasFiles : ''}`}
                       onDragEnter={handleDrag}
@@ -5121,17 +5119,6 @@ export default function Contracts() {
                               {canMultiUpload ? "Dateien auswählen" : "Datei auswählen"}
                             </button>
                           )}
-                          {hasAnalysesLeft && (
-                            <div className={styles.uploadMeta}>
-                              <span>PDF, DOCX</span>
-                              {canMultiUpload && (
-                                <>
-                                  <span className={styles.metaDot}></span>
-                                  <span>Mehrfachauswahl</span>
-                                </>
-                              )}
-                            </div>
-                          )}
                           {/* ✨ Dezenter Enterprise-Hinweis für Business-Kunden */}
                           {userInfo.subscriptionPlan === 'business' && !canMultiUpload && hasAnalysesLeft && !enterpriseHintDismissed && (
                             <div
@@ -5192,35 +5179,20 @@ export default function Contracts() {
                         </div>
                       )}
                     </div>
-                        {uploadFiles.length === 0 && (
-                          <div className={styles.scanRow}>
+                      </div>
+                      {uploadFiles.length === 0 && (
+                        <>
+                          <div className={styles.uploadCaption}>
+                            <b>Nach dem Upload:</b> automatisch geprüft, verwaltet und auf Fristen überwacht.
+                          </div>
+                          <div className={styles.uploadFoot}>
+                            <span className={styles.uploadFmts}>PDF, DOCX · Mehrfachauswahl möglich</span>
                             <button onClick={openScanner} className={styles.scanButton}>
-                              <Camera size={15} />
+                              <Camera size={14} />
                               Dokument scannen
                             </button>
                           </div>
-                        )}
-                      </div>
-                      {uploadFiles.length === 0 && (
-                        <div className={styles.uploadSide}>
-                          <div className={styles.uploadSideLabel}>So geht's weiter</div>
-                          <div className={`${styles.uploadSideStep} ${styles.isActive}`}>
-                            <span className={styles.uploadSideNum}>1</span>
-                            <div className={styles.uploadSideBody}><b>Upload</b><span>Vertrag hochladen</span></div>
-                          </div>
-                          <div className={styles.uploadSideStep}>
-                            <span className={styles.uploadSideNum}>2</span>
-                            <div className={styles.uploadSideBody}><b>Rechtsprüfung</b><span>Tiefe Analyse wie vom Anwalt</span></div>
-                          </div>
-                          <div className={styles.uploadSideStep}>
-                            <span className={styles.uploadSideNum}>3</span>
-                            <div className={styles.uploadSideBody}><b>Verwaltung</b><span>Sicher gespeichert</span></div>
-                          </div>
-                          <div className={styles.uploadSideStep}>
-                            <span className={styles.uploadSideNum}>4</span>
-                            <div className={styles.uploadSideBody}><b>Legal Pulse</b><span>Laufende Überwachung</span></div>
-                          </div>
-                        </div>
+                        </>
                       )}
                     </div>
                     )}

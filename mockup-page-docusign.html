@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Contracts · DocuSign-Stil</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:#e9edf2;color:#1f2430;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.005em;}
+  svg{display:block;stroke:currentColor;fill:none;stroke-width:1.7;}
+
+  /* page shell (echte Maße) */
+  .navbar{height:64px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 22px;}
+  .logo{font-weight:700;font-size:16px;letter-spacing:-.02em;}
+  .logo span{color:#2563eb;}
+  .navbar .sp{flex:1;}
+  .navbar .av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#2563eb);}
+  .page{height:calc(100vh - 64px);background:#f8fafc;display:flex;overflow:hidden;}
+  .sb{width:240px;flex-shrink:0;background:#fff;border-right:1px solid #e5e7eb;box-shadow:4px 0 24px rgba(0,0,0,.03);padding:8px 0 24px;overflow-y:auto;}
+  .sb .t{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:#9ca3af;margin:8px 0 10px;padding:0 24px;}
+  .ni{display:flex;align-items:center;gap:14px;padding:11px 12px;margin:1px 12px;border-radius:8px;color:#6b7280;font-size:14px;font-weight:500;cursor:pointer;position:relative;}
+  .ni svg{width:18px;height:18px;}
+  .ni:hover{background:#f3f4f6;color:#374151;}
+  .ni.on{background:rgba(59,130,246,.08);color:#2563eb;font-weight:600;}
+  .ni.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:#3b82f6;border-radius:0 3px 3px 0;}
+  .ni .bd{margin-left:auto;font-size:12px;font-weight:600;color:#9ca3af;background:#f3f4f6;border-radius:999px;padding:1px 8px;}
+  .ca{flex:1;padding:4px;overflow-y:auto;display:flex;}
+
+  /* ===== Karte füllt Höhe; klarer Aufbau ===== */
+  .section{flex:1;background:#fff;border-radius:24px;box-shadow:0 0 0 1px rgba(0,0,0,.03),0 4px 12px rgba(0,0,0,.04),0 16px 40px rgba(0,0,0,.06);overflow:hidden;display:flex;flex-direction:column;min-height:0;}
+
+  /* Kopf */
+  .head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:22px 26px;border-bottom:1px solid #eef1f4;}
+  .head h1{font-size:18px;font-weight:600;letter-spacing:-.02em;color:#1f2430;}
+  .head .sub{font-size:13px;color:#6b7280;margin-top:3px;}
+  .head .right{display:flex;align-items:center;gap:12px;}
+  .count{font-size:12px;font-weight:500;color:#6b7280;background:#f6f7f9;border:1px solid #e5e7eb;padding:5px 11px;border-radius:7px;white-space:nowrap;}
+
+  /* Tab-Leiste */
+  .tabs{display:flex;gap:24px;padding:0 26px;border-bottom:1px solid #eef1f4;}
+  .tab{display:inline-flex;align-items:center;gap:8px;padding:13px 2px;font-size:13.5px;font-weight:500;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-1px;cursor:pointer;}
+  .tab svg{width:15px;height:15px;}
+  .tab.on{color:#2563eb;border-bottom-color:#2563eb;font-weight:600;}
+
+  /* Arbeitsbereich: Dropzone gedeckelt & vertikal zentriert */
+  .work{flex:1;display:flex;flex-direction:column;padding:20px 26px 20px;min-height:0;}
+  .dzhost{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;}
+  .dz{width:100%;height:100%;max-height:430px;border:1.5px dashed #cdd5e0;border-radius:14px;background:#fbfcfe;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;cursor:pointer;transition:.16s;min-height:240px;}
+  .dz:hover{border-color:#2563eb;background:#f5f9ff;}
+  .dzic{width:56px;height:56px;border-radius:15px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;color:#2563eb;background:#eef4ff;border:1px solid #dbe7fb;}
+  .dzic svg{width:27px;height:27px;stroke-width:1.6;}
+  .dz h3{font-size:16px;font-weight:600;color:#1f2430;letter-spacing:-.015em;}
+  .dz .or{font-size:13px;color:#8b93a1;margin-top:5px;}
+  .dzbtn{display:inline-flex;align-items:center;gap:8px;margin-top:17px;font-size:13.5px;font-weight:600;color:#fff;background:#2563eb;border:none;padding:10px 19px;border-radius:9px;cursor:pointer;box-shadow:0 1px 2px rgba(37,99,235,.3);}
+  .dzbtn:hover{background:#1d4ed8;}
+  .dzbtn svg{width:16px;height:16px;stroke-width:1.9;}
+
+  /* dezente Reassurance + schlanke Fußleiste */
+  .caption{text-align:center;font-size:12.5px;color:#9aa1ad;margin-top:16px;}
+  .caption b{color:#6b7280;font-weight:500;}
+  .foot{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding-top:14px;border-top:1px solid #f0f2f5;}
+  .fmts{font-size:12px;color:#8b93a1;font-weight:500;}
+  .scan{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:#6b7280;background:none;border:none;cursor:pointer;}
+  .scan:hover{color:#1f2430;}
+  .scan svg{width:14px;height:14px;}
+</style>
+</head>
+<body>
+<svg style="position:absolute;width:0;height:0"><defs>
+  <symbol id="up" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="cloud" viewBox="0 0 24 24"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.4 14.5A5 5 0 0 0 18 5h-1.3A8 8 0 1 0 4 15.3"/></symbol>
+  <symbol id="file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="cam" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+</defs></svg>
+
+<div class="navbar"><div class="logo">Contract<span>AI</span></div><div class="sp"></div><div class="av"></div></div>
+<div class="page">
+  <aside class="sb">
+    <div class="t">Navigation</div>
+    <div class="ni"><svg><use href="#file"/></svg><span>Alle Verträge</span><span class="bd">438</span></div>
+    <div class="ni on"><svg><use href="#up"/></svg><span>Hochladen</span></div>
+    <div class="ni"><svg><use href="#mail"/></svg><span>E-Mail-Upload</span></div>
+    <div class="t" style="margin-top:14px;">Status</div>
+    <div class="ni"><svg><use href="#clock"/></svg><span>Bald ablaufend</span><span class="bd">12</span></div>
+    <div class="ni"><svg><use href="#check"/></svg><span>Aktiv</span><span class="bd">301</span></div>
+  </aside>
+
+  <div class="ca">
+    <div class="section">
+      <div class="head">
+        <div>
+          <h1>Verträge hochladen</h1>
+          <div class="sub">Lade einen oder mehrere Verträge hoch — der Rest läuft automatisch.</div>
+        </div>
+        <div class="right"><span class="count">15 / 15 Analysen</span></div>
+      </div>
+
+      <div class="tabs">
+        <span class="tab on"><svg><use href="#file"/></svg>Datei-Upload</span>
+        <span class="tab"><svg><use href="#mail"/></svg>E-Mail-Upload</span>
+      </div>
+
+      <div class="work">
+        <div class="dzhost">
+          <div class="dz">
+            <div class="dzic"><svg><use href="#cloud"/></svg></div>
+            <h3>Dateien hierher ziehen</h3>
+            <div class="or">oder wähle sie von deinem Gerät aus</div>
+            <button class="dzbtn"><svg><use href="#up"/></svg>Dateien auswählen</button>
+          </div>
+        </div>
+        <div class="caption"><b>Nach dem Upload:</b> automatisch geprüft, verwaltet &amp; auf Fristen überwacht.</div>
+        <div class="foot">
+          <div class="fmts">PDF, DOCX · Mehrfachauswahl möglich</div>
+          <button class="scan"><svg><use href="#cam"/></svg>Dokument scannen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
