@@ -1759,13 +1759,30 @@ async function cleanAndRegenerateAIEvents(db, contract) {
   //   bei „frischem Start" alle bestehenden Reminder zerstören. Lieber
   //   „einmal bewusst gelöscht bleibt gelöscht" als „GPT-Inkonsistenz killt
   //   Termine-Liste komplett". User wird im Delete-Modal klar gewarnt.
+  // 🆕 16.06.2026 (G1): Auch die deterministisch NEU-ERZEUGBAREN Lifecycle-Events dieses Vertrags
+  // mit aufräumen. Sie tragen KEIN aiExtracted/ai_*-Kennzeichen (dataSource meist 'unknown') und
+  // wurden daher bei Re-Analyse NICHT gelöscht → bei GEÄNDERTEM Datum blieb der ALTE "läuft ab"/
+  // "LETZTER TAG kündigen" als Geister-Termin auf falschem Datum stehen (neuer kam dazu). Nur
+  // status:'scheduled' (aktiv/zukünftig) — historische completed/expired/notified bleiben unberührt.
+  // BEWUSST NICHT enthalten (werden NICHT von generateEventsForContract neu erzeugt → sonst verloren):
+  // CANCELLATION_CONFIRMATION_CHECK + SIGNATURE_* (Envelope nutzt ohnehin envelopeId, kein contractId).
+  // Manuelle (isManual) + ausgeblendete (dismissed) Events bleiben durch die Top-Level-Guards geschützt.
+  const REGENERABLE_LIFECYCLE_TYPES = [
+    'CANCEL_WINDOW_OPEN', 'LAST_CANCEL_DAY', 'CANCEL_WARNING', 'AUTO_RENEWAL',
+    'PRICE_INCREASE', 'PRICE_INCREASE_WARNING', 'REVIEW', 'CONTRACT_EXPIRY',
+    'CUSTOM_REMINDER', 'RECURRING_PAYMENT', 'PAYMENT_REMINDER',
+    'CANCELLATION_DATE', 'CANCELLATION_REMINDER',
+    'MINIMUM_TERM_END', 'MINIMUM_TERM_REMINDER', 'PROBATION_END', 'PROBATION_REMINDER',
+    'WARRANTY_END', 'WARRANTY_REMINDER', 'RENT_ANNIVERSARY', 'REMAINING_TIME_END'
+  ];
   const cleanupFilter = {
     contractId: contract._id,
     isManual: { $ne: true },
     status: { $ne: 'dismissed' },
     $or: [
       { 'metadata.aiExtracted': true },
-      { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] } }
+      { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] } },
+      { type: { $in: REGENERABLE_LIFECYCLE_TYPES }, status: 'scheduled' }
     ]
   };
 
