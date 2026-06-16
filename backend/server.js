@@ -1652,9 +1652,14 @@ const connectDB = async () => {
     // ⏰ ERWEITERTE Cron Jobs mit Calendar Integration
     try {
       // 🔐 TTL-Index für cron_locks (räumt alte Tages-Locks weg; Korrektheit hängt NICHT daran)
-      db.collection('cron_locks').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }).catch(() => {});
+      db.collection('cron_locks').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+        .catch(e => console.warn(`⚠️ cron_locks TTL-Index nicht erstellt (unkritisch): ${e.message}`));
       // ✅ BESTEHENDER Reminder-Cronjob ERWEITERT mit Calendar Notifications
-      cron.schedule("0 8 * * *", withDistributedLock('reminder-calendar', withCronLock('reminder-calendar', async () => {
+      // 🕘 16.06.2026: Reminder-Mails konstant um 09:00 DEUTSCHER Zeit (Europe/Berlin, DST-sicher).
+      // Vorher "0 8" OHNE Zeitzone = 08:00 UTC → 9 Uhr im Winter, aber 10 Uhr im Sommer (Drift).
+      // node-cron 3.x wertet { timezone } via Intl aus. Doppel-Versand am Wechsel-Tag durch den
+      // Tages-Lock (withDistributedLock, UTC-Bucket) ausgeschlossen. Nur dieser Cron geändert.
+      cron.schedule("0 9 * * *", withDistributedLock('reminder-calendar', withCronLock('reminder-calendar', async () => {
         console.log("⏰ Täglicher Reminder-Check gestartet");
         try {
           await withCronLogging('reminder-calendar', async () => {
@@ -1671,7 +1676,7 @@ const connectDB = async () => {
           console.error("❌ Reminder/Calendar Cron Error:", error);
           await captureError(error, { route: 'CRON:reminder-calendar', method: 'SCHEDULED', severity: 'high' });
         }
-      })));
+      })), { timezone: "Europe/Berlin" });
 
       // 📧 NEU: E-Mail Queue Retry (alle 15 Minuten)
       cron.schedule("*/15 * * * *", async () => {
@@ -1909,7 +1914,7 @@ const connectDB = async () => {
       }));
 
       // Legal Pulse V2 — Wöchentlicher automatischer Re-Scan (Sonntags 05:00 UTC)
-      cron.schedule("0 5 * * 0", withCronLock('pulse-v2-monitor', async () => {
+      cron.schedule("0 5 * * 0", withDistributedLock('pulse-v2-monitor', withCronLock('pulse-v2-monitor', async () => {
         console.log("[PulseV2Monitor] Starte wöchentlichen Re-Scan...");
         try {
           await withCronLogging('pulse-v2-monitor', async () => {
@@ -1922,11 +1927,11 @@ const connectDB = async () => {
           console.error("[PulseV2Monitor] Error:", error);
           await captureError(error, { route: 'CRON:pulse-v2-monitor', method: 'SCHEDULED', severity: 'high' });
         }
-      }));
+      })));
 
       // Legal Pulse V2 Radar — Täglicher Legal Source Scan (07:00 UTC)
       // Läuft NACH RSS-Sync (03:15) damit neue Laws in der DB verfügbar sind
-      cron.schedule("0 7 * * *", withCronLock('pulse-v2-radar', async () => {
+      cron.schedule("0 7 * * *", withDistributedLock('pulse-v2-radar', withCronLock('pulse-v2-radar', async () => {
         console.log("[PulseV2Radar] Starte Legal Source Scan...");
         try {
           await withCronLogging('pulse-v2-radar', async () => {
@@ -1939,10 +1944,10 @@ const connectDB = async () => {
           console.error("[PulseV2Radar] Error:", error);
           await captureError(error, { route: 'CRON:pulse-v2-radar', method: 'SCHEDULED', severity: 'high' });
         }
-      }));
+      })));
 
       // Staleness Reminder: Monday 08:00 UTC — remind users about unscanned contracts
-      cron.schedule("0 8 * * 1", withCronLock('pulse-v2-staleness', async () => {
+      cron.schedule("0 8 * * 1", withDistributedLock('pulse-v2-staleness', withCronLock('pulse-v2-staleness', async () => {
         console.log("[PulseV2Staleness] Starte Staleness-Reminder...");
         try {
           await withCronLogging('pulse-v2-staleness', async () => {
@@ -1955,7 +1960,7 @@ const connectDB = async () => {
           console.error("[PulseV2Staleness] Error:", error);
           await captureError(error, { route: 'CRON:pulse-v2-staleness', method: 'SCHEDULED', severity: 'medium' });
         }
-      }));
+      })));
 
       // 🔥 Cache-Warming: Nach den schweren Nacht-Cron-Jobs (01:00 Status, 02:00 Events, 06:00 LegalPulse)
       // WiredTiger-Cache ist danach mit Scan-Daten gefüllt — hier laden wir die user-facing Daten zurück
