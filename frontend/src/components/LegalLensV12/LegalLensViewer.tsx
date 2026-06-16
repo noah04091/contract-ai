@@ -2595,7 +2595,9 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
 
         <div className={styles.headerRight}>
           {/* Primary Action: Batch Analysis Button / Progress */}
-          {isBatchAnalyzing ? (
+          {/* Fortschrittsbalken NUR bei manuell gestartetem "Alle laden" (mode==='all').
+              Das automatische High-Risk-Vorladen läuft still — kein irreführendes "X/7 analysiert". */}
+          {isBatchAnalyzing && batchProgress.mode === 'all' ? (
             <div className={styles.batchProgress}>
               <div className={styles.batchProgressInfo}>
                 <span className={styles.batchProgressText}>
@@ -2620,8 +2622,8 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
             <button
               className={styles.batchAnalyzeButton}
               onClick={analyzeAllClauses}
-              disabled={(clauses || []).length === 0}
-              title="Alle Klauseln im Hintergrund vorab laden"
+              disabled={(clauses || []).length === 0 || isBatchAnalyzing}
+              title={isBatchAnalyzing ? 'Wichtige Klauseln werden im Hintergrund vorbereitet…' : 'Alle Klauseln im Hintergrund vorab laden'}
             >
               <Zap size={16} />
               <span>Alle laden</span>

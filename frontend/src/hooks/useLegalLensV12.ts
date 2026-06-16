@@ -20,6 +20,9 @@ interface BatchProgress {
   failed?: number;
   current: string | null;
   isRunning: boolean;
+  // Unterscheidet automatisches stilles Vorladen (High-Risk) vom manuell gestarteten "Alle laden".
+  // Nur 'all' (= User-Aktion) zeigt im Header einen Fortschrittsbalken; 'preload-highrisk' läuft still.
+  mode?: 'preload-highrisk' | 'all';
 }
 
 // Erweiterte Error-Info für bessere UX
@@ -1182,9 +1185,11 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       total: uncachedClauses.length,
       completed: 0,
       current: uncachedClauses[0]?.text.substring(0, 50) || null,
-      isRunning: true
+      isRunning: true,
+      mode: 'all'
     });
 
+    try {
     // Analysiere Klauseln nacheinander
     for (let i = 0; i < uncachedClauses.length; i++) {
       // Prüfe ob abgebrochen werden soll
@@ -1238,7 +1243,10 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       current: null,
       isRunning: false
     }));
-    setIsBatchAnalyzing(false);
+    } finally {
+      // Garantiert zurücksetzen — sonst bliebe der "Alle laden"-Button hängen.
+      setIsBatchAnalyzing(false);
+    }
 
   }, [contractId, clauses, currentPerspective, analysisCache]);
 
@@ -1310,11 +1318,13 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       total: uncachedHighRisk.length,
       completed: 0,
       current: uncachedHighRisk[0]?.text.substring(0, 50) || null,
-      isRunning: true
+      isRunning: true,
+      mode: 'preload-highrisk'
     });
 
     let completedCount = 0;
 
+    try {
     // ✅ SCHRITT 4: Queue-basierte Verarbeitung mit Priorität
     while (preloadQueueRef.current.size > 0 && !batchAbortRef.current) {
       // Prüfe ob es eine priorisierte Klausel gibt
@@ -1375,7 +1385,10 @@ export function useLegalLensV12(initialContractId?: string): UseLegalLensReturn 
       current: null,
       isRunning: false
     }));
-    setIsBatchAnalyzing(false);
+    } finally {
+      // Garantiert zurücksetzen — auch wenn das stille Vorladen unerwartet abbricht.
+      setIsBatchAnalyzing(false);
+    }
   }, [contractId, clauses, currentPerspective, analysisCache]);
 
   /**
