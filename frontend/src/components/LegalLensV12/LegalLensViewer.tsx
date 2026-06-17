@@ -2386,25 +2386,25 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       {showStreamingOverlay && (
         <div className={styles.streamingBanner}>
           <div className={styles.streamingContent}>
+            {/* Ehrliche Anzeige statt fake-Prozentbalken: Spinner + klare Ansage.
+                Während die KI den ganzen Vertrag liest (clauses noch leer) gibt es
+                technisch nichts anzuzeigen — also ehrlich sagen, dass alle Klauseln
+                gleich zusammen erscheinen. Sobald sie da sind: Risiko-Phase ehrlich benennen. */}
             <div className={styles.streamingIcon}>
-              <Zap size={20} className={styles.pulseIcon} />
+              <RefreshCw size={20} className={styles.spinning} />
             </div>
             <div className={styles.streamingInfo}>
-              <span className={styles.streamingTitle}>KI-Analyse läuft</span>
-              <span className={styles.streamingStatus}>{streamingStatus}</span>
+              <span className={styles.streamingTitle}>
+                {(clauses || []).length === 0
+                  ? 'KI liest den vollständigen Vertrag…'
+                  : `${(clauses || []).length} Klauseln gefunden — Risiko-Bewertung läuft…`}
+              </span>
+              <span className={styles.streamingStatus}>
+                {(clauses || []).length === 0
+                  ? 'Alle Klauseln erscheinen gleich. Bei langen Verträgen kann das 1–2 Minuten dauern.'
+                  : streamingStatus}
+              </span>
             </div>
-            <div className={styles.streamingProgressWrapper}>
-              <div className={styles.streamingProgressBar}>
-                <div
-                  className={styles.streamingProgressFill}
-                  style={{ width: `${streamingProgress}%` }}
-                />
-              </div>
-              <span className={styles.streamingPercent}>{streamingProgress}%</span>
-            </div>
-            <span className={styles.streamingClauseCount}>
-              {(clauses || []).length} Klauseln gefunden
-            </span>
           </div>
         </div>
       )}
