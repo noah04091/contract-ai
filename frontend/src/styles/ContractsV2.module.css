@@ -9838,6 +9838,11 @@
     display: block;
   }
 
+  /* Back-Button sitzt jetzt ÜBER der Karte → bündig zum Karten-Rand (contentArea hat 1rem Polster) */
+  .uploadBackTop {
+    margin: 0 0 0.75rem;
+  }
+
   .uploadBody .limitWarning {
     margin: 0.75rem 1rem 0;
     font-size: 0.8125rem;

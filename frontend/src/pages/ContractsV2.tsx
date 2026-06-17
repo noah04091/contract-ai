@@ -4769,6 +4769,16 @@ export default function Contracts() {
 
             {/* Content Area - nur dieser Bereich scrollt */}
             <div className={`${styles.contentArea} ${(activeSection !== 'contracts' || quickAnalysisModal.show) ? styles.contentAreaNoNav : ''} ${activeSection === 'upload' && uploadFiles.length === 0 && !quickAnalysisModal.show ? styles.contentAreaUploadFill : ''}`} ref={contentAreaRef} data-tour="contracts-list">
+              {/* 📱 Mobile Back-Button ÜBER der Karte (wie im Mockup), außerhalb der Animation */}
+              {activeSection === 'upload' && !quickAnalysisModal.show && (
+                <button
+                  className={`${styles.mobileBackButton} ${styles.uploadBackTop}`}
+                  onClick={() => setActiveSection('contracts')}
+                >
+                  <ChevronLeft size={20} />
+                  <span>Zurück zu Verträgen</span>
+                </button>
+              )}
               <AnimatePresence mode="wait" initial={false}>
                 {/* ⚡ Re-Analyse-Ergebnis IN-PAGE (wie Upload→Analyse), nicht als Overlay */}
                 {quickAnalysisModal.show && quickAnalysisModal.analysisResult && (
@@ -4819,14 +4829,6 @@ export default function Contracts() {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
                   >
-                    {/* 📱 Mobile Back-Button */}
-                    <button
-                      className={styles.mobileBackButton}
-                      onClick={() => setActiveSection('contracts')}
-                    >
-                      <ChevronLeft size={20} />
-                      <span>Zurück zu Verträgen</span>
-                    </button>
                     {/* ✅ KORRIGIERT: Free-User Upgrade-Bereich */}
                 {!canUpload ? (
                   <div className={styles.upgradeSection}>
