@@ -74,6 +74,25 @@ const day = (d) => new Date(d).toISOString().slice(0, 10);
   }));
   ok('keine Termin-Flut (monatlich = Dauerzustand → 0 Events)', s4.length === 0, `bekommen: ${types(s4).join(',') || '(0)'}`);
 
+  // ── S5: Arbeitsvertrag mit KI-Probezeit-Ende → KEINE berechnete Dopplung ──
+  console.log('\n=== S5: Probezeit-Ende (KI vorhanden → kein berechnetes Duplikat) ===');
+  const probEnd = at(150);
+  const s5 = await generateEventsForContract(mockDb, base({
+    name: 'Arbeitsvertrag_X.pdf', startDate: at(-30), expiryDate: null,
+    importantDates: [{ type: 'probation_end', label: 'Ende der Probezeit', date: probEnd.toISOString(), confidence: 100 }],
+  }));
+  const probEnds = s5.filter(e => e.type === 'PROBATION_END');
+  ok('genau EIN PROBATION_END (kein Start+6Mon-Duplikat)', probEnds.length === 1, `bekommen: ${probEnds.length} @ ${probEnds.map(e=>day(e.date)).join(',')}`);
+  ok('das bleibende PROBATION_END ist das KI-Datum', !!probEnds[0] && day(probEnds[0].date) === day(probEnd));
+  ok('kein verwaister Block-A "PROBATION_REMINDER"', !s5.some(e => e.type === 'PROBATION_REMINDER'));
+
+  // ── S6: Miet-Jubiläum zeigt NIE "0 Jahre" ──
+  console.log('\n=== S6: Miet-Jubiläum nie "0 Jahre" ===');
+  const s6 = await generateEventsForContract(mockDb, base({ name: 'Mietvertrag_Y.pdf', startDate: at(-30), expiryDate: null }));
+  ok('Normalfall: kein Titel mit "0 Jahre"', !s6.some(e => /0 Jahre/.test(e.title || '')), `Titel: ${s6.map(e=>e.title).join(' | ')}`);
+  const s6b = await generateEventsForContract(mockDb, base({ name: 'Mietvertrag_Z.pdf', startDate: at(400), expiryDate: null }));
+  ok('auch bei Zukunfts-/Fehlstart kein "0 Jahre"', !s6b.some(e => /0 Jahre/.test(e.title || '')), `Titel: ${s6b.map(e=>e.title).join(' | ')}`);
+
   console.log(`\n──────── Ergebnis: ${pass} bestanden, ${fail} fehlgeschlagen ────────`);
   process.exit(fail === 0 ? 0 : 1);
 })().catch(e => { console.error('FEHLER:', e); process.exit(1); });

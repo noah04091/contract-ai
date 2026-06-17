@@ -688,7 +688,13 @@ async function generateEventsForContract(db, contract) {
                              contract.probezeit ||
                              contract.arbeitsbeginn ||
                              (contract.name && contract.name.toLowerCase().includes('arbeitsvertrag'));
-    if (contract.startDate && isArbeitsvertrag) {
+    // 🆕 17.06.2026 (Hebel B): Diese Berechnung (Start+6 Monate) ist ein FALLBACK. Wenn die KI das
+    // echte Probezeit-Ende als importantDate (probation_end) geliefert hat, NICHT zusätzlich berechnen
+    // — sonst zwei PROBATION_END ~1 Tag auseinander (Aurelis: KI 30.04 vs berechnet 01.05) + ein
+    // verwaister "in 2 Wochen"-Vorwarner. Die KI-Variante (Block 10) ist genauer + trägt Vorwarnungen.
+    const kiHasProbationEnd = Array.isArray(contract.importantDates) &&
+      contract.importantDates.some(d => d && d.type === 'probation_end' && d.date);
+    if (contract.startDate && isArbeitsvertrag && !kiHasProbationEnd) {
       const startDate = new Date(contract.startDate);
       const probezeitEnde = new Date(startDate);
       probezeitEnde.setMonth(probezeitEnde.getMonth() + 6); // Standard: 6 Monate
@@ -754,7 +760,11 @@ async function generateEventsForContract(db, contract) {
                           contract.kaufdatum ||
                           contract.kaufpreis ||
                           (contract.name && contract.name.toLowerCase().includes('kaufvertrag'));
-    if (contract.kaufdatum || (contract.startDate && isKaufvertrag)) {
+    // 🆕 17.06.2026 (Hebel B): Fallback — nicht zusätzlich berechnen, wenn die KI das echte
+    // Gewährleistungs-Ende (warranty_end) bereits geliefert hat (analog zur Probezeit oben).
+    const kiHasWarrantyEnd = Array.isArray(contract.importantDates) &&
+      contract.importantDates.some(d => d && d.type === 'warranty_end' && d.date);
+    if ((contract.kaufdatum || (contract.startDate && isKaufvertrag)) && !kiHasWarrantyEnd) {
       const kaufDate = new Date(contract.kaufdatum || contract.startDate);
       const gewaehrleistungEnde = new Date(kaufDate);
       gewaehrleistungEnde.setFullYear(gewaehrleistungEnde.getFullYear() + 2); // 2 Jahre Gewährleistung
@@ -831,6 +841,9 @@ async function generateEventsForContract(db, contract) {
         // Nur wenn das Jubiläum in der Zukunft liegt
         if (jubilaeumDate > now) {
           const yearsRented = now.getFullYear() + i - mietbeginnDate.getFullYear();
+          // 🆕 17.06.2026 (Hebel B): nie ein "0 Jahre"-Jubiläum zeigen (entsteht z.B. wenn der
+          // Mietbeginn unzuverlässig extrahiert wurde) — nächstes echtes Jubiläum prüfen.
+          if (yearsRented < 1) continue;
           const jubiDate = createLocalDate(jubilaeumDate);
 
           events.push({
