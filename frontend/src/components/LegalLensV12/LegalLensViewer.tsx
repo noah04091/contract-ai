@@ -2594,36 +2594,45 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
         </div>
 
         <div className={styles.headerRight}>
-          {/* Primary Action: Batch Analysis Button / Progress */}
-          {/* Fortschrittsbalken NUR bei manuell gestartetem "Alle laden" (mode==='all').
-              Das automatische High-Risk-Vorladen läuft still — kein irreführendes "X/7 analysiert". */}
-          {isBatchAnalyzing && batchProgress.mode === 'all' ? (
-            <div className={styles.batchProgress}>
-              <div className={styles.batchProgressInfo}>
-                <span className={styles.batchProgressText}>
-                  {batchProgress.completed}/{batchProgress.total} analysiert
-                </span>
-                <div className={styles.batchProgressBar}>
-                  <div
-                    className={styles.batchProgressFill}
-                    style={{ width: `${(batchProgress.completed / batchProgress.total) * 100}%` }}
-                  />
+          {/* Primary Action: Batch Analysis / Vorlade-Status / Button — 3 Zustände:
+              - manuelles "Alle laden" (mode==='all') → echter Fortschritt + Abbrechen
+              - automatisches Vorladen (mode==='preload-highrisk') → ehrlicher, transienter Hinweis
+                (kein "X/7 analysiert", keine Zahl, kein toter Button) — verschwindet von selbst
+              - sonst → normaler, klickbarer "Alle laden"-Button */}
+          {isBatchAnalyzing ? (
+            batchProgress.mode === 'all' ? (
+              <div className={styles.batchProgress}>
+                <div className={styles.batchProgressInfo}>
+                  <span className={styles.batchProgressText}>
+                    {batchProgress.completed}/{batchProgress.total} analysiert
+                  </span>
+                  <div className={styles.batchProgressBar}>
+                    <div
+                      className={styles.batchProgressFill}
+                      style={{ width: `${(batchProgress.completed / batchProgress.total) * 100}%` }}
+                    />
+                  </div>
                 </div>
+                <button
+                  className={styles.batchCancelButton}
+                  onClick={cancelBatchAnalysis}
+                  title="Abbrechen"
+                >
+                  <X size={14} />
+                </button>
               </div>
-              <button
-                className={styles.batchCancelButton}
-                onClick={cancelBatchAnalysis}
-                title="Abbrechen"
-              >
-                <X size={14} />
-              </button>
-            </div>
+            ) : (
+              <div className={styles.batchProgress}>
+                <Zap size={14} />
+                <span className={styles.batchProgressText}>Risiko-Klauseln werden vorbereitet…</span>
+              </div>
+            )
           ) : (
             <button
               className={styles.batchAnalyzeButton}
               onClick={analyzeAllClauses}
-              disabled={(clauses || []).length === 0 || isBatchAnalyzing}
-              title={isBatchAnalyzing ? 'Wichtige Klauseln werden im Hintergrund vorbereitet…' : 'Alle Klauseln im Hintergrund vorab laden'}
+              disabled={(clauses || []).length === 0}
+              title="Alle Klauseln im Hintergrund vorab laden"
             >
               <Zap size={16} />
               <span>Alle laden</span>
