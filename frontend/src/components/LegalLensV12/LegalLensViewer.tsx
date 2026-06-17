@@ -2623,7 +2623,7 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
               </div>
             ) : (
               <div className={styles.batchProgress}>
-                <Zap size={14} />
+                <RefreshCw size={14} className={styles.spinning} />
                 <span className={styles.batchProgressText}>Risiko-Klauseln werden vorbereitet…</span>
               </div>
             )
