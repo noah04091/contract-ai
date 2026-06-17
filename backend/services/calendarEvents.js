@@ -1311,7 +1311,7 @@ async function generateEventsForContract(db, contract) {
 
     // 🆕 Problem B: synonyme Meilenstein-Events am selben Tag zusammenfassen (vor dem Speichern)
     {
-      const { kept, dropped } = dedupeSameDayMilestones(events);
+      const { kept, dropped } = dedupeSameDayMilestones(events, { isAutoRenewal });
       if (dropped.length > 0) {
         console.log(`🔗 Problem-B-Merge: ${dropped.length} synonyme Dopplungs-Events zusammengefasst für "${contract.name}"`);
         events.length = 0;
@@ -1841,7 +1841,7 @@ function isReminderEventB(e) {
 // ENDE-Meilensteine, die nur 1–2 Tage auseinander liegen, meinen denselben Stichtag
 // (GPT-Varianz, z.B. "Ende der festen Laufzeit" 30.06 vs abgeleitetes "Vertragsende" 01.07).
 const ENDE_WINDOW_DAYS = 2;
-function dedupeSameDayMilestones(events) {
+function dedupeSameDayMilestones(events, opts = {}) {
   const DAY_MS = 86400000;
   const dayStr = (d) => new Date(d).toISOString().slice(0, 10);
   const prio = (e) => MILESTONE_PRIORITY[e.type] || 0;
@@ -1894,6 +1894,52 @@ function dedupeSameDayMilestones(events) {
       } else { flush(); cluster = [list[i]]; }
     }
     flush();
+  }
+
+  // Pass 3 (Backstop gegen KI-Doppel-Extraktion, 17.06.2026): Same-Day-Dubletten, die NICHT in
+  // einer MILESTONE_SEM_GROUP liegen → Pass 1/2 erfassen sie nicht. Zwei Fälle aus dem Komplex-Test:
+  //   (3a) Dieselbe Klausel doppelt extrahiert → identischer Typ+Tag+Titel (z.B. Probezeit-
+  //        Kündigungsfrist 2× → NOTICE_PERIOD 2× am selben Tag). Eines bleibt.
+  //   (3b) Dieselbe Preis-/Staffel-Erhöhung von GPT doppelt klassifiziert — als payment_due
+  //        (→PAYMENT_DUE) UND renewal_date (→AUTO_RENEWAL) am selben Tag. Bei einem Vertrag OHNE
+  //        Auto-Renewal ist das renewal_date-AUTO_RENEWAL nachweislich spurious → raus, das
+  //        semantisch korrekte PAYMENT_DUE bleibt. Verwaiste Vorwarnungen putzt der Block unten mit.
+  {
+    const dropped12 = new Set(droppedMains);
+
+    // 3a — exakte Dublette (Vertrag + Tag + Typ + Titel). Titel-genau = nur echte Doppel,
+    // nie zwei wirklich verschiedene Termine gleichen Typs am selben Tag.
+    const seen3a = new Map();
+    for (const e of mains) {
+      if (dropped12.has(e)) continue;
+      const key = `${String(e.contractId)}|${dayStr(e.date)}|${e.type}|${e.title || ''}`;
+      const prev = seen3a.get(key);
+      if (!prev) { seen3a.set(key, e); continue; }
+      const winner = prio(e) > prio(prev) ? e : prev;
+      droppedMains.push(winner === e ? prev : e);
+      seen3a.set(key, winner);
+    }
+
+    // 3b — KI-Doppel-Klassifikation payment_due + renewal_date am selben Tag, NUR bei Verträgen
+    // ohne Auto-Renewal (dann ist das renewal_date provably spurious). originalType-Targeting
+    // trifft ausschließlich KI-renewal-Events, nie den echten Block-A-Lifecycle-AUTO_RENEWAL.
+    if (opts.isAutoRenewal === false) {
+      const dropped3a = new Set(droppedMains);
+      const byDay = new Map();
+      for (const m of mains) {
+        if (dropped3a.has(m)) continue;
+        const k = `${String(m.contractId)}|${dayStr(m.date)}`;
+        if (!byDay.has(k)) byDay.set(k, []);
+        byDay.get(k).push(m);
+      }
+      for (const list of byDay.values()) {
+        const hasPayment = list.some(m => m.metadata?.originalType === 'payment_due' || m.type === 'PAYMENT_DUE');
+        if (!hasPayment) continue;
+        for (const m of list) {
+          if (m.metadata?.originalType === 'renewal_date') droppedMains.push(m);
+        }
+      }
+    }
   }
 
   // Vorwarn-Kinder: jede Erinnerung gehört zum NÄCHSTGELEGENEN Main GLEICHEN Typs (Stichtag =
