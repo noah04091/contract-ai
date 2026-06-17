@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Upload · Handy 1:1</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:#c7ccd4;color:#1f2430;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.005em;padding:30px 16px 60px;}
+  svg{display:block;stroke:currentColor;fill:none;stroke-width:1.7;}
+
+  .ctl{display:flex;gap:8px;justify-content:center;margin-bottom:22px;flex-wrap:wrap;}
+  .ctl button{border:1px solid #aab1bd;background:#fff;color:#4b5563;font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:999px;cursor:pointer;}
+  .ctl button.on{background:#16181d;color:#fff;border-color:#16181d;}
+
+  .row{display:flex;gap:30px;justify-content:center;align-items:flex-start;flex-wrap:wrap;}
+  .phone{width:375px;flex-shrink:0;background:#f8fafc;border-radius:34px;box-shadow:0 18px 50px -12px rgba(16,24,40,.4);overflow:hidden;border:9px solid #0c0d12;}
+  .phone.small{width:320px;}
+  .pcap{text-align:center;font-size:12px;color:#5b6472;margin-top:10px;font-weight:600;}
+
+  /* 56px navbar */
+  .nav{height:56px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;padding:0 16px;}
+  .nav .lg{font-weight:700;font-size:15px;}
+  .nav .lg span{color:#2563eb;}
+  .nav .sp{flex:1;}
+  .nav .av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#2563eb);}
+
+  /* content (contentAreaNoNav: padding 1rem) */
+  .ca{padding:16px;min-height:560px;}
+
+  .back{display:flex;align-items:center;gap:6px;padding:10px 14px;margin:0 0 12px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px;color:#2563eb;font-size:13.5px;font-weight:500;}
+  .back svg{width:18px;height:18px;}
+
+  /* card */
+  .card{background:#fff;border:1px solid #eef1f4;border-radius:16px;box-shadow:0 1px 2px rgba(16,24,40,.04),0 10px 24px -14px rgba(16,24,40,.12);overflow:hidden;}
+
+  .head{padding:15px 16px;border-bottom:1px solid #eef1f4;}
+  .head h1{font-size:16.5px;font-weight:600;letter-spacing:-.02em;}
+  .head .sub{font-size:12.5px;color:#6b7280;margin-top:3px;line-height:1.4;}
+  .head .badge{display:inline-flex;align-items:center;margin-top:9px;font-size:11.5px;font-weight:500;color:#6b7280;background:#f6f7f9;border:1px solid #e5e7eb;padding:4px 9px;border-radius:7px;}
+
+  .tabs{display:flex;padding:0 16px;border-bottom:1px solid #eef1f4;}
+  .tab{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:11px 6px;font-size:13px;font-weight:500;color:#6b7280;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tab svg{width:15px;height:15px;}
+  .tab.on{color:#2563eb;border-bottom-color:#2563eb;font-weight:600;}
+
+  .work{padding:16px;}
+  .dz{border:1.5px dashed #cdd5e0;border-radius:12px;background:#fbfcfe;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 16px;min-height:188px;}
+  .dzic{width:50px;height:50px;border-radius:14px;margin-bottom:13px;display:flex;align-items:center;justify-content:center;color:#2563eb;background:#eef4ff;border:1px solid #dbe7fb;}
+  .dzic svg{width:24px;height:24px;stroke-width:1.6;}
+  .dz h3{font-size:15px;font-weight:600;color:#1f2430;}
+  .dz .or{font-size:12.5px;color:#8b93a1;margin-top:4px;}
+  .dzbtn{display:inline-flex;align-items:center;gap:7px;margin-top:15px;font-size:13.5px;font-weight:600;color:#fff;background:#2563eb;border:none;padding:11px 18px;border-radius:9px;width:100%;justify-content:center;max-width:240px;}
+  .dzbtn svg{width:16px;height:16px;stroke-width:1.9;}
+
+  .cap{text-align:center;font-size:12px;color:#9aa1ad;margin-top:13px;line-height:1.45;}
+  .cap b{color:#6b7280;font-weight:500;}
+  .foot{display:flex;flex-direction:column;align-items:center;gap:7px;margin-top:13px;padding-top:13px;border-top:1px solid #f0f2f5;}
+  .fmts{font-size:11.5px;font-weight:500;color:#8b93a1;}
+  .scan{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:#6b7280;background:none;border:none;}
+  .scan svg{width:14px;height:14px;}
+
+  /* ===== Dateien-Liste Zustand ===== */
+  .mfHead{display:flex;flex-direction:column;gap:11px;margin-bottom:14px;}
+  .mfInfo{display:flex;align-items:center;gap:10px;justify-content:center;text-align:center;flex-direction:column;}
+  .mfInfo .ic{color:#2563eb;}
+  .mfInfo .ic svg{width:24px;height:24px;}
+  .mfInfo h3{font-size:14.5px;font-weight:600;}
+  .mfInfo p{font-size:12px;color:#6b7280;margin-top:2px;}
+  .mfActions{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .mfBtn{min-height:44px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;gap:7px;font-size:13px;font-weight:600;cursor:pointer;}
+  .mfBtn.up{background:#2563eb;color:#fff;border:none;}
+  .mfBtn.cl{background:#fff;color:#4b5563;border:1px solid #e5e7eb;}
+  .mfBtn svg{width:15px;height:15px;}
+  .fl{display:flex;flex-direction:column;gap:8px;}
+  .fi{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid #eef1f4;border-radius:11px;background:#fff;}
+  .fiL{display:flex;align-items:center;gap:10px;min-width:0;}
+  .fiL .ico{width:30px;height:30px;border-radius:8px;background:#eef4ff;color:#2563eb;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .fiL .ico svg{width:15px;height:15px;}
+  .fiL .nm{font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fiL .sz{font-size:11px;color:#9aa1ad;}
+  .fiR{font-size:11px;color:#9aa1ad;flex-shrink:0;}
+</style>
+</head>
+<body>
+<svg style="position:absolute;width:0;height:0"><defs>
+  <symbol id="up" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="cloud" viewBox="0 0 24 24"><path d="M16 16l-4-4-4 4"/><path d="M12 12v9"/><path d="M20.4 14.5A5 5 0 0 0 18 5h-1.3A8 8 0 1 0 4 15.3"/></symbol>
+  <symbol id="file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="cam" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+</defs></svg>
+
+<div class="ctl">
+  <button class="on" data-m="empty">375px · Leer</button>
+  <button data-m="files">375px · Dateien</button>
+  <button data-m="small">320px · klein</button>
+</div>
+
+<div class="row" id="row"></div>
+
+<template id="t-empty">
+  <div class="phone">
+    <div class="nav"><div class="lg">Contract<span>AI</span></div><div class="sp"></div><div class="av"></div></div>
+    <div class="ca">
+      <div class="back"><svg><use href="#chev"/></svg>Zurück zu Verträgen</div>
+      <div class="card">
+        <div class="head">
+          <h1>Verträge hochladen</h1>
+          <div class="sub">Geprüft wie vom Anwalt — Fristen automatisch im Blick.</div>
+          <span class="badge">15 / 15 Analysen</span>
+        </div>
+        <div class="tabs">
+          <span class="tab on"><svg><use href="#file"/></svg>Datei-Upload</span>
+          <span class="tab"><svg><use href="#mail"/></svg>E-Mail-Upload</span>
+        </div>
+        <div class="work">
+          <div class="dz">
+            <div class="dzic"><svg><use href="#cloud"/></svg></div>
+            <h3>Dateien hierher ziehen</h3>
+            <div class="or">oder vom Gerät auswählen</div>
+            <button class="dzbtn"><svg><use href="#up"/></svg>Dateien auswählen</button>
+          </div>
+          <div class="cap"><b>Nach dem Upload:</b> automatisch geprüft, verwaltet und auf Fristen überwacht.</div>
+          <div class="foot">
+            <span class="fmts">PDF, DOCX · Mehrfachauswahl möglich</span>
+            <button class="scan"><svg><use href="#cam"/></svg>Dokument scannen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="t-files">
+  <div class="phone">
+    <div class="nav"><div class="lg">Contract<span>AI</span></div><div class="sp"></div><div class="av"></div></div>
+    <div class="ca">
+      <div class="back"><svg><use href="#chev"/></svg>Zurück zu Verträgen</div>
+      <div class="card">
+        <div class="head">
+          <h1>Verträge hochladen</h1>
+          <div class="sub">Geprüft wie vom Anwalt — Fristen automatisch im Blick.</div>
+        </div>
+        <div class="tabs">
+          <span class="tab on"><svg><use href="#file"/></svg>Datei-Upload</span>
+          <span class="tab"><svg><use href="#mail"/></svg>E-Mail-Upload</span>
+        </div>
+        <div class="work">
+          <div class="mfHead">
+            <div class="mfInfo"><span class="ic"><svg><use href="#file"/></svg></span><div><h3>2 Dateien ausgewählt</h3><p>0 abgeschlossen, 0 Fehler, 2 wartend</p></div></div>
+            <div class="mfActions">
+              <button class="mfBtn up"><svg><use href="#up"/></svg>Hochladen</button>
+              <button class="mfBtn cl"><svg><use href="#x"/></svg>Alle entfernen</button>
+            </div>
+          </div>
+          <div class="fl">
+            <div class="fi"><div class="fiL"><span class="ico"><svg><use href="#file"/></svg></span><div><div class="nm">Mietvertrag_Wohnung_2026.pdf</div><div class="sz">1.24 MB</div></div></div><div class="fiR">wartend</div></div>
+            <div class="fi"><div class="fiL"><span class="ico"><svg><use href="#file"/></svg></span><div><div class="nm">Arbeitsvertrag_final.docx</div><div class="sz">0.42 MB</div></div></div><div class="fiR">wartend</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  const row=document.getElementById('row');
+  function render(mode){
+    row.innerHTML='';
+    const tpl=document.getElementById(mode==='files'?'t-files':'t-empty');
+    const node=tpl.content.cloneNode(true);
+    if(mode==='small') node.querySelector('.phone').classList.add('small');
+    row.appendChild(node);
+  }
+  render('empty');
+  document.querySelectorAll('.ctl button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.ctl button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    render(b.dataset.m);
+  }));
+</script>
+</body>
+</html>

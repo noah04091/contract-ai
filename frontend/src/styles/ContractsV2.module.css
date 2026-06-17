@@ -9813,5 +9813,184 @@
   .hoverPreviewSpinner { animation: none; }
 }
 
+/* Business-Limit-Banner an den Inhalt ausrichten (uploadBody hat padding:0) */
+.uploadBody .limitWarning {
+  margin: 0.85rem 1.6rem 0;
+}
+
+/* =====================================================================
+   📱 UPLOAD — KONSOLIDIERTE HANDY-REGELN (autoritativ, am Dateiende → gewinnt)
+   Ersetzt den frueheren Mobile-Wildwuchs. Nur Optik, keine Funktionsaenderung.
+   ===================================================================== */
+@media (max-width: 768px) {
+  .uploadBody .limitWarning {
+    margin: 0.75rem 1rem 0;
+    font-size: 0.8125rem;
+  }
+
+  /* Karte etwas kompakter auf dem Handy */
+  .uploadDocCard {
+    border-radius: 18px;
+  }
+
+  /* Kopfzeile: Titel/Text gestapelt, Zähler als Chip darunter */
+  .uploadBand {
+    padding: 0.95rem 1rem;
+  }
+  .uploadBandTop {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .uploadBandTitle {
+    font-size: 1.0625rem;
+  }
+  .uploadBandDesc {
+    font-size: 0.8rem;
+    max-width: none;
+  }
+  .uploadBandBadge {
+    margin-top: 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  /* Tabs: volle Breite, Unterstrich, Labels sichtbar */
+  .uploadTabs {
+    display: flex;
+    width: auto;
+    margin: 0;
+    padding: 0 1rem;
+  }
+  .uploadTab {
+    flex: 1;
+    padding: 0.7rem 0.4rem;
+    font-size: 0.8125rem;
+  }
+
+  /* Arbeitsbereich + Dropzone */
+  .uploadBody {
+    padding: 0;
+  }
+  .uploadWork {
+    padding: 1rem;
+  }
+  .uploadArea:not(.hasFiles) {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 188px !important;
+    padding: 1.6rem 1rem !important;
+    border-radius: 12px !important;
+  }
+  .uploadIcon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    margin-bottom: 0.8rem;
+  }
+  .uploadIcon svg {
+    width: 24px;
+    height: 24px;
+  }
+  .uploadPrompt h3 {
+    font-size: 0.95rem;
+  }
+  .uploadPrompt p {
+    font-size: 0.8rem;
+  }
+  .dzButton {
+    width: 100%;
+    max-width: 240px;
+    justify-content: center;
+    margin-top: 0.95rem;
+  }
+
+  /* Info-Zeile + Fußzeile gestapelt/zentriert */
+  .uploadCaption {
+    font-size: 0.75rem;
+    margin-top: 0.85rem;
+  }
+  .uploadFoot {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+    text-align: center;
+  }
+  .uploadFmts {
+    font-size: 0.72rem;
+  }
+
+  /* Datei-Liste: Kopf gestapelt, Aktionen 2-spaltig, Tap-Targets ≥44px */
+  .multiFilePreview {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+  }
+  .multiFileHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.85rem;
+  }
+  .multiFileInfo {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+  }
+  .multiFileActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+  .multiFileActions .uploadButton,
+  .multiFileActions .clearFilesButton {
+    min-height: 44px;
+    border-radius: 12px;
+    justify-content: center;
+  }
+
+  /* Datei-Einträge: Name sauber kürzen, nicht überlaufen */
+  .fileItem {
+    padding: 0.7rem 0.8rem;
+  }
+  .fileItemLeft,
+  .fileItemInfo {
+    min-width: 0;
+  }
+  .fileItemName {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Sehr kleine Handys (≤380px): noch eine Spur kompakter */
+@media (max-width: 380px) {
+  .uploadBand {
+    padding: 0.85rem 0.85rem;
+  }
+  .uploadTabs {
+    padding: 0 0.85rem;
+  }
+  .uploadTab {
+    font-size: 0.78rem;
+    gap: 0.3rem;
+  }
+  .uploadWork {
+    padding: 0.85rem;
+  }
+  .uploadArea:not(.hasFiles) {
+    min-height: 172px !important;
+    padding: 1.35rem 0.85rem !important;
+  }
+  .uploadPrompt h3 {
+    font-size: 0.9rem;
+  }
+  .uploadFmts {
+    font-size: 0.7rem;
+  }
+}
+
 
 
