@@ -5114,6 +5114,28 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.log(`📅 [${requestId}] Date Hunt im Fallback — Hauptanalyse-importantDates bleiben, fristHinweise leer`);
     }
 
+    // 🆕 Hebel A2 (17.06.2026): Das startDate-FELD nimmt sonst IMMER den Regex-Wert — auch wenn er schwach/falsch
+    // ist (Gewerbemiete: Regex-Start 40% griff eine Staffel-Zeile statt des echten Beginns). Wenn die KI einen
+    // start_date-Termin mit MINDESTENS so hoher Konfidenz geliefert hat, diesen vorziehen (er treibt eh schon
+    // korrekt den Kalender). Korrigiert das Feld UND den Vertragsbeginn-Bezug der importantDates-Validierung
+    // (→ keine echte Frist mehr fälschlich "vor Beginn" verworfen). Konservativ: nur bei GPT-Konf ≥ Regex-Konf
+    // und nur wenn das Datum abweicht; sonst alles wie bisher. Fehler → defensiv Regex-Start behalten.
+    try {
+      const aiStart = (result.importantDates || []).find(d => d && d.type === 'start_date' && d.date);
+      if (aiStart) {
+        const aiStartConf = typeof aiStart.confidence === 'number' ? aiStart.confidence : 0;
+        const aiStartDate = new Date(aiStart.date);
+        const regexStartMs = extractedStartDate ? new Date(extractedStartDate).getTime() : NaN;
+        if (!isNaN(aiStartDate.getTime()) && aiStartConf >= (startDateConfidence || 0) && aiStartDate.getTime() !== regexStartMs) {
+          console.log(`🔧 [${requestId}] Hebel A2: Vertragsbeginn aus GPT übernommen ${extractedStartDate || 'null'} → ${aiStartDate.toISOString()} (GPT-Konf ${aiStartConf}% ≥ Regex ${startDateConfidence || 0}%)`);
+          extractedStartDate = aiStartDate.toISOString();
+          startDateConfidence = aiStartConf;
+        }
+      }
+    } catch (a2err) {
+      console.warn(`⚠️ [${requestId}] Hebel A2 übersprungen (${a2err.message}) — Regex-Start behalten`);
+    }
+
     // 🎯 ISOLIERTE Pilot-Tiefenanalyse (13.06.2026) — eigene, abgekapselte Stufe (Muster: DateHunt).
     // Erzeugt zuverlässig den strukturierten typeSpecificFindings-Block für Pilot-Typen
     // (Miet-/Arbeits-/NDA-/Kauf-/Agentur-/Aufhebungsvertrag, …). Berührt die Hauptanalyse NICHT:
@@ -5330,6 +5352,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // 🔧 FIX: Override expiryDate from AI importantDates if available
         // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
         let aiEndDate = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+        // 🆕 Hebel A1 (17.06.2026): Behielt das 70%-Gate den Regex-Wert, ist dieser aber IMPLAUSIBEL
+        // (==Start/Vergangenheit), darf er das korrekte GPT-Ende NICHT blockieren → GPT-Ende trotz Gate
+        // holen (conf=0 umgeht das Gate). Fixt NovaCloud: Regex-Ende==Start blockierte das echte Ende
+        // 31.08.2029 → expiryDate leer → fehlender Kündigungs-Reminder. Der Guard unten validiert weiter.
+        if (!aiEndDate) {
+          const scA1 = (result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
+          if (shouldClearExpiry({ expiryDate: updateData.expiryDate, startDate: updateData.startDate, startCandidates: scA1 }).clear) {
+            aiEndDate = extractEndDateFromImportantDates(result.importantDates, 0, requestId);
+            if (aiEndDate) console.log(`🔧 [${requestId}] Hebel A1: implausibles Regex-Ende → GPT-Ende ${aiEndDate.toISOString()} bevorzugt`);
+          }
+        }
         // 🛡️ TÜV-Fund #1: KI-Enddatum vor Übernahme denselben Plausi-Checks unterziehen wie den Regex-Wert.
         if (isImplausibleAiEndDate(aiEndDate, updateData.startDate, result.importantDates)) {
           console.warn(`⚠️ [${requestId}] KI-Enddatum ${aiEndDate instanceof Date ? aiEndDate.toISOString() : aiEndDate} verworfen (unplausibel: Vergangenheit/==Start/vor-Start) — TÜV-Fund #1`);
@@ -5607,6 +5640,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // Termine. Bewusst NACH dem Objekt-Bau (kein Eingriff in die importantDates-Filterung).
         {
           let aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+          // 🆕 Hebel A1 (17.06.2026): implausibles Regex-Ende darf GPT-Ende nicht blockieren (s. Re-Analyse-Pfad).
+          if (!aiEndDateNew) {
+            const scA1n = (result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
+            if (shouldClearExpiry({ expiryDate: contractAnalysisData.expiryDate, startDate: contractAnalysisData.startDate, startCandidates: scA1n }).clear) {
+              aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, 0, requestId);
+            }
+          }
           // 🛡️ TÜV-Fund #1: gleiche Plausi-Checks auf das KI-Enddatum (siehe isImplausibleAiEndDate).
           if (isImplausibleAiEndDate(aiEndDateNew, contractAnalysisData.startDate, result.importantDates)) {
             console.warn(`⚠️ [${requestId}] (Neu-Anlage) KI-Enddatum verworfen (unplausibel: Vergangenheit/==Start/vor-Start) — TÜV-Fund #1`);
@@ -5637,6 +5677,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // 🔧 FIX: Extract AI end date for new contracts too
         // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
         let aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+        // 🆕 Hebel A1 (17.06.2026): implausibles Regex-Ende darf GPT-Ende nicht blockieren (s. Re-Analyse-Pfad).
+        if (!aiEndDateNew) {
+          const scA1p = (result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
+          if (shouldClearExpiry({ expiryDate: extractedEndDate, startDate: extractedStartDate, startCandidates: scA1p }).clear) {
+            aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, 0, requestId);
+          }
+        }
         // 🛡️ TÜV-Fund #1: gleiche Plausi-Checks auf das KI-Enddatum (siehe isImplausibleAiEndDate).
         if (isImplausibleAiEndDate(aiEndDateNew, extractedStartDate, result.importantDates)) {
           console.warn(`⚠️ [${requestId}] [NEW CONTRACT] KI-Enddatum verworfen (unplausibel: Vergangenheit/==Start/vor-Start) — TÜV-Fund #1`);
