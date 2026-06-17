@@ -2946,9 +2946,15 @@
 }
 
 .uploadFillHeight {
-  min-height: calc(100vh - 80px);
   display: flex;
   flex-direction: column;
+}
+
+/* Volle Höhe nur auf Desktop/Tablet-quer; auf kleineren Screens natürliche Höhe */
+@media (min-width: 769px) {
+  .uploadFillHeight {
+    min-height: calc(100vh - 80px);
+  }
 }
 
 /* Kopfzeile mit Trennlinie */
@@ -3059,24 +3065,42 @@
 }
 
 @media (max-width: 640px) {
-  .uploadFillHeight {
-    min-height: 0;
-  }
   .uploadBand {
-    padding: 1.1rem 1.1rem;
+    padding: 1.05rem 1rem;
   }
   .uploadBandTop {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
+  .uploadBandTitle {
+    font-size: 1.0625rem;
+  }
   .uploadWork {
-    padding: 1rem 1.1rem 1.2rem;
+    padding: 1rem 1rem 1.1rem;
+  }
+  .uploadArea:not(.hasFiles) {
+    min-height: 200px;
+    padding: 1.75rem 1.25rem;
+  }
+  .uploadIcon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 0.85rem;
+  }
+  .uploadIcon svg {
+    width: 24px;
+    height: 24px;
+  }
+  .uploadCaption {
+    font-size: 0.74rem;
+    margin-top: 0.85rem;
   }
   .uploadFoot {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.55rem;
+    text-align: center;
   }
 }
 
@@ -7246,10 +7270,15 @@
     padding: 0;
   }
 
-  /* Tabs auf Mobile volle Breite (Desktop = links/kompakt) */
+  /* Header/Tabs/Work auf Mobile einheitlich 1rem Innenabstand */
+  .uploadBand {
+    padding: 1.1rem 1rem;
+  }
+
   .uploadTabs {
     display: flex;
-    margin: 0 1rem 1.1rem;
+    margin: 0;
+    padding: 0 1rem;
     width: auto;
   }
 
@@ -7257,13 +7286,8 @@
     flex: 1;
   }
 
-  .uploadArea {
-    margin: 0 1rem;
-  }
-
-  .uploadFlowSteps {
-    margin-left: 1rem;
-    margin-right: 1rem;
+  .uploadWork {
+    padding: 1rem 1rem 1.2rem;
   }
 
   .emailUploadSection {
@@ -7280,7 +7304,7 @@
   .uploadArea.hasFiles {
     border: none;
     padding: 0;
-    margin: 0 1rem;
+    margin: 0;
     background: transparent;
     border-radius: 0;
   }
@@ -7290,12 +7314,8 @@
   }
 
   .uploadTab {
-    padding: 0.625rem 0.75rem;
-    font-size: 0.875rem;
-  }
-
-  .uploadTab span {
-    display: none;
+    padding: 0.7rem 0.5rem;
+    font-size: 0.8125rem;
   }
 
   .uploadHeaderTitle h2 {

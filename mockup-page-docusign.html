@@ -64,6 +64,31 @@
   .scan{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:#6b7280;background:none;border:none;cursor:pointer;}
   .scan:hover{color:#1f2430;}
   .scan svg{width:14px;height:14px;}
+
+  /* ===== RESPONSIVE (Breakpoints wie im echten Code) ===== */
+  /* Tablet: schmaler, aber gleiches Layout */
+  @media (max-width:1024px){
+    .sb{width:200px;}
+  }
+  /* Mobile/Tablet-Hoch (≤768): Sidebar weg, volle Breite, Tabs ganz breit */
+  @media (max-width:768px){
+    .sb{display:none;}
+    .section{min-height:0;}
+    .head{padding:16px;}
+    .tabs{padding:0 16px;gap:0;}
+    .tab{flex:1;justify-content:center;padding:12px 8px;}
+    .work{padding:14px 14px 16px;}
+    .dz{max-height:none;min-height:200px;padding:24px 18px;}
+    .dzic{width:50px;height:50px;}
+    .dzic svg{width:24px;height:24px;}
+    .dz h3{font-size:15px;}
+    .foot{flex-direction:column;align-items:center;text-align:center;gap:8px;}
+  }
+  @media (max-width:420px){
+    .head h1{font-size:16px;}
+    .head .sub{font-size:12px;}
+    .count{font-size:11px;padding:4px 9px;}
+  }
 </style>
 </head>
 <body>
