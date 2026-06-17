@@ -1823,6 +1823,8 @@
   height: 0; /* ✅ Erzwingt dass flex: 1 die Höhe begrenzt */
   overflow-y: auto; /* ✅ Nur dieser Bereich scrollt */
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* sanftes Momentum-Scrolling auf iOS */
+  overscroll-behavior: contain; /* verhindert Scroll-Chaining → Navbar wandert nicht mit */
 }
 
 /* ✅ DESKTOP-ONLY: Block an die Ränder schieben */
@@ -9823,6 +9825,12 @@
    Ersetzt den frueheren Mobile-Wildwuchs. Nur Optik, keine Funktionsaenderung.
    ===================================================================== */
 @media (max-width: 768px) {
+  /* contentAreaUploadFill ist nur fürs Desktop-Fill nötig → auf Mobile neutralisieren
+     (display:flex im fixierten Scroll-Container verursacht Ruckeln/Navbar-Mitwandern) */
+  .contentAreaUploadFill {
+    display: block;
+  }
+
   .uploadBody .limitWarning {
     margin: 0.75rem 1rem 0;
     font-size: 0.8125rem;
@@ -9833,25 +9841,27 @@
     border-radius: 18px;
   }
 
-  /* Kopfzeile: Titel/Text gestapelt, Zähler als Chip darunter */
+  /* Kopfzeile: Titel + Zähler in EINER Zeile (professionell), Untertitel darunter */
   .uploadBand {
-    padding: 0.95rem 1rem;
+    padding: 1rem 1rem 0.9rem;
   }
   .uploadBandTop {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: 0;
+    justify-content: space-between;
+    gap: 0.75rem;
   }
   .uploadBandTitle {
-    font-size: 1.0625rem;
+    font-size: 1.125rem;
   }
   .uploadBandDesc {
     font-size: 0.8rem;
     max-width: none;
   }
   .uploadBandBadge {
-    margin-top: 0.55rem;
-    font-size: 0.72rem;
+    margin-top: 0.15rem;
+    font-size: 0.7rem;
+    padding: 0.28rem 0.55rem;
   }
 
   /* Tabs: volle Breite, Unterstrich, Labels sichtbar */
