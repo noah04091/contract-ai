@@ -328,6 +328,27 @@ const validateImportantDate = (dateObj, contract, requestId) => {
     return { valid: false, reason: 'milestone_before_start', confidence: 0 };
   }
 
+  // 3b. 🆕 (17.06.2026) Typ 'other' ist BEWUSST nicht in PRE_START_IMPOSSIBLE_TYPES
+  //     (Catch-all, darf legitim nahe/vor Beginn liegen — z.B. ein angekündigtes
+  //     Zukunfts-Ereignis kurz vor Inkrafttreten). ABER die KI typt gelegentlich ein
+  //     halluziniertes "Ende"-Datum als 'other': Aurelis (Re-Test 17.06.) — GPT erfand
+  //     "Ende des Wettbewerbsverbots" 31.12.2023 für einen Vertrag mit Beginn 01.11.2026
+  //     (unbefristet → kein berechenbares Ende), Konfidenz 60 %. Der Kalender filtert das
+  //     separat als "historisch"; die rohe importantDates-Box (Detail-Modal) zeigte es aber.
+  //     Eng gescopt auf die ZWEIFELSFREIE Müll-Konstellation, um ein legitimes
+  //     Zukunfts-'other' vor Beginn NICHT zu verwerfen: 'other' VOR Vertragsbeginn UND
+  //     bereits in der Vergangenheit → Halluzination, raus.
+  if (dateObj.type === 'other' && contract?.startDate) {
+    const startFloor = new Date(contract.startDate);
+    startFloor.setHours(0, 0, 0, 0);
+    const dateFloor = new Date(date);
+    dateFloor.setHours(0, 0, 0, 0);
+    if (!isNaN(startFloor.getTime()) && dateFloor < startFloor && dateFloor < today) {
+      console.log(`⚠️ [${requestId}] importantDate rejected: other vor Vertragsbeginn UND in Vergangenheit (${dateObj.date} < ${contract.startDate}) — Halluzination, verworfen`);
+      return { valid: false, reason: 'other_before_start_and_past', confidence: 0 };
+    }
+  }
+
   // 4. cancellation_deadline sollte vor end_date liegen
   if (dateObj.type === 'cancellation_deadline' && contract?.expiryDate) {
     const endDate = new Date(contract.expiryDate);
