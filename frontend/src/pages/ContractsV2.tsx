@@ -5182,26 +5182,8 @@ export default function Contracts() {
                       </div>
                       {uploadFiles.length === 0 && (
                         <>
-                          <div className={styles.uploadSteps}>
-                            <div className={`${styles.uploadStep} ${styles.isActive}`}>
-                              <span className={styles.uploadStepNum}>1</span>
-                              <span className={styles.uploadStepLabel}>Upload</span>
-                            </div>
-                            <span className={styles.uploadStepLine} />
-                            <div className={styles.uploadStep}>
-                              <span className={styles.uploadStepNum}>2</span>
-                              <span className={styles.uploadStepLabel}>Rechtsprüfung</span>
-                            </div>
-                            <span className={styles.uploadStepLine} />
-                            <div className={styles.uploadStep}>
-                              <span className={styles.uploadStepNum}>3</span>
-                              <span className={styles.uploadStepLabel}>Verwaltung</span>
-                            </div>
-                            <span className={styles.uploadStepLine} />
-                            <div className={styles.uploadStep}>
-                              <span className={styles.uploadStepNum}>4</span>
-                              <span className={styles.uploadStepLabel}>Legal Pulse</span>
-                            </div>
+                          <div className={styles.uploadCaption}>
+                            <b>Nach dem Upload:</b> automatisch geprüft, verwaltet und auf Fristen überwacht.
                           </div>
                           <div className={styles.uploadFoot}>
                             <span className={styles.uploadFmts}>PDF, DOCX · Mehrfachauswahl möglich</span>

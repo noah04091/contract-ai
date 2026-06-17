@@ -3034,54 +3034,17 @@
   min-height: 0;
 }
 
-/* dezenter 4-Schritte-Stepper (Stripe/DocuSign-Stil) */
-.uploadSteps {
-  display: flex;
-  align-items: center;
-  margin-top: 1.1rem;
-}
-
-.uploadStep {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.uploadStepNum {
-  width: 21px;
-  height: 21px;
-  border-radius: 50%;
-  border: 1.5px solid #d7dce3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.66rem;
-  font-weight: 600;
-  color: #9aa1ad;
-  background: #fff;
-}
-
-.uploadStep.isActive .uploadStepNum {
-  border-color: #2563eb;
-  color: #2563eb;
-}
-
-.uploadStepLabel {
+/* dezente Reassurance-Zeile statt großer Anleitung */
+.uploadCaption {
+  text-align: center;
   font-size: 0.78rem;
-  font-weight: 500;
   color: #9aa1ad;
+  margin-top: 1rem;
 }
 
-.uploadStep.isActive .uploadStepLabel {
-  color: #4b5563;
-}
-
-.uploadStepLine {
-  flex: 1;
-  height: 1px;
-  background: #e5e7eb;
-  margin: 0 0.7rem;
+.uploadCaption b {
+  color: #6b7280;
+  font-weight: 500;
 }
 
 /* schlanke Fußzeile: Formate links, Scannen rechts */
@@ -3129,14 +3092,9 @@
     width: 24px;
     height: 24px;
   }
-  .uploadSteps {
-    flex-wrap: wrap;
-    gap: 0.5rem 1rem;
-    justify-content: center;
-    margin-top: 0.95rem;
-  }
-  .uploadStepLine {
-    display: none;
+  .uploadCaption {
+    font-size: 0.74rem;
+    margin-top: 0.85rem;
   }
   .uploadFoot {
     flex-direction: column;
