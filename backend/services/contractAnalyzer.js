@@ -119,6 +119,10 @@ class ContractAnalyzer {
         /mindestlaufzeit[\s:]+(\d+)\s*(jahr|monat|tag)/gi,
         /erstlaufzeit[\s:]+(\d+)\s*(jahr|monat|tag)/gi,
         /für\s+(\d+|ein|zwei|drei)\s*(jahr|monat)(?:e)?/gi,
+        // 🆕 17.06.2026: "(feste) Laufzeit von X Monaten/Jahren" — die obigen Patterns matchen das "von"
+        // nicht (NovaCloud: "feste Laufzeit von 36 Monaten" → vorher 0 Treffer → jährlich-Fallback "1 Jahr").
+        // \b vor laufzeit → matcht NICHT "Mindestlaufzeit" (eigenes Pattern oben).
+        /\blaufzeit\s+von\s+(\d+)\s*(jahr|monat|tag)/gi,
         // Annual patterns for insurance
         /jährlich(?:e)?(?:\s+verlängerung)?/gi,
         /(?:verlängert\s+sich\s+)?(?:jeweils\s+)?(?:um\s+)?ein\s+jahr/gi
@@ -792,18 +796,10 @@ class ContractAnalyzer {
       return null;
     }
 
-    // Check for annual contracts first (common for insurance)
-    if (text.match(/jährlich(?:e)?(?:\s+verlängerung)?/gi) ||
-        text.match(/(?:verlängert\s+sich\s+)?(?:jeweils\s+)?(?:um\s+)?ein\s+jahr/gi)) {
-      console.log('✅ Jährliche Vertragslaufzeit erkannt');
-      return {
-        value: 1,
-        unit: 'years',
-        inMonths: 12,
-        confidence: 80
-      };
-    }
-
+    // 🆕 17.06.2026 (Laufzeit-jährlich-Falle): Der "jährlich"-Shortcut steht jetzt NACH der Pattern-
+    // Schleife (Fallback) — eine EXPLIZITE Laufzeit ("feste Laufzeit von 36 Monaten") gewinnt damit
+    // gegen ein "jährlich" aus anderem Kontext ("Abrechnung jährlich"). Realfall NovaCloud: vorher
+    // wurde "1 Jahr" gemeldet, obwohl §10 "feste Laufzeit von 36 Monaten" sagt.
     for (const pattern of this.patterns.contractDuration) {
       const matches = Array.from(text.matchAll(pattern));
 
@@ -851,6 +847,20 @@ class ContractAnalyzer {
           };
         }
       }
+    }
+
+    // 🆕 Jährliche Verträge (v.a. Versicherung) — FALLBACK, nur wenn KEINE explizite Laufzeit gefunden.
+    // Bewusst NACH der Pattern-Schleife (17.06.2026): so gewinnt eine explizite "X Monate/Jahre"-Laufzeit
+    // gegen ein "jährlich" aus anderem Kontext ("Abrechnung/Anpassung jährlich" → wäre sonst fälschlich "1 Jahr").
+    if (text.match(/jährlich(?:e)?(?:\s+verlängerung)?/gi) ||
+        text.match(/(?:verlängert\s+sich\s+)?(?:jeweils\s+)?(?:um\s+)?ein\s+jahr/gi)) {
+      console.log('✅ Jährliche Vertragslaufzeit erkannt (Fallback nach Pattern-Schleife)');
+      return {
+        value: 1,
+        unit: 'years',
+        inMonths: 12,
+        confidence: 80
+      };
     }
 
     // DEFAULT for insurance contracts

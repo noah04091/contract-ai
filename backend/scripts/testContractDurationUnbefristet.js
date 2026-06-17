@@ -49,6 +49,19 @@ ok('Versicherung ohne Dauer (kein unbefristet) → Default 1 Jahr (unverändert)
 // Kein Treffer, kein unbefristet → null (unverändert)
 ok('kein Treffer → NULL (unverändert)', dur('Irgendein Text ohne Laufzeit-Angabe.') === null);
 
+// 🆕 17.06.2026 (Laufzeit-jährlich-Falle): NovaCloud — "feste Laufzeit von 36 Monaten" + "Abrechnung … jährlich"
+// → muss 36 Monate sein (NICHT "1 Jahr"). Die explizite Laufzeit gewinnt gegen den jährlich-Fallback.
+const novacloud = 'Der Vertrag wird für eine feste Laufzeit von 36 Monaten geschlossen. Der Anbieter ist berechtigt, die Grundgebühr einmal jährlich zum 1. Januar anzupassen.';
+ok('NovaCloud: "feste Laufzeit von 36 Monaten" + "jährlich anpassen" → 36 Monate (NICHT 1 Jahr)',
+   (() => { const d = dur(novacloud); return d && d.unit === 'months' && d.value === 36; })(),
+   `bekommen: ${JSON.stringify(dur(novacloud))}`);
+// "Laufzeit von 24 Monaten" (mit "von") → 24 Monate (neues Pattern)
+ok('"feste Laufzeit von 24 Monaten" → 24 Monate (von-Pattern)',
+   (() => { const d = dur('Mietzeit: feste Laufzeit von 24 Monaten vereinbart.'); return d && d.unit === 'months' && d.value === 24; })());
+// Fallback bleibt: echter Jahresvertrag OHNE explizite Laufzeit → weiterhin 1 Jahr
+ok('echter Jahresvertrag ohne explizite Laufzeit ("verlängert sich jährlich") → 1 Jahr (Fallback)',
+   (() => { const d = dur('Der Vertrag verlängert sich jährlich automatisch.'); return d && d.unit === 'years' && d.value === 1; })());
+
 console.log('\n════════════════════════════════════════════════');
 console.log(`ERGEBNIS: ${pass} bestanden, ${fail} fehlgeschlagen`);
 console.log('════════════════════════════════════════════════\n');
