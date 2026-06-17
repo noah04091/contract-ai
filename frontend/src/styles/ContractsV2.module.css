@@ -2945,6 +2945,13 @@
 .uploadDocCard {
   position: relative;
   background: #fff;
+  /* kein Innen-Polster → Kopf-/Tab-Trennlinien bündig an der Kartenkante (wie im Mockup) */
+  padding: 0;
+}
+
+/* den dekorativen Hover-Strich oben (.section::before) auf der Upload-Karte deaktivieren */
+.uploadDocCard::before {
+  content: none;
 }
 
 .uploadFillHeight {
@@ -9836,9 +9843,11 @@
     font-size: 0.8125rem;
   }
 
-  /* Karte etwas kompakter auf dem Handy */
+  /* Karte wie im Mockup: kompakt, feiner Rand, dezenter Schatten (statt schwebend) */
   .uploadDocCard {
-    border-radius: 18px;
+    border-radius: 16px;
+    border: 1px solid #eef1f4;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 22px -14px rgba(16, 24, 40, 0.16);
   }
 
   /* Kopfzeile: Titel + Zähler in EINER Zeile (professionell), Untertitel darunter */
