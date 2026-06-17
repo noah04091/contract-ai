@@ -2386,24 +2386,28 @@ const LegalLensViewer: React.FC<LegalLensViewerProps> = ({
       {showStreamingOverlay && (
         <div className={styles.streamingBanner}>
           <div className={styles.streamingContent}>
-            {/* Ehrliche Anzeige statt fake-Prozentbalken: Spinner + klare Ansage.
-                Während die KI den ganzen Vertrag liest (clauses noch leer) gibt es
-                technisch nichts anzuzeigen — also ehrlich sagen, dass alle Klauseln
-                gleich zusammen erscheinen. Sobald sie da sind: Risiko-Phase ehrlich benennen. */}
+            {/* Sanfter "Trickle"-Fortschritt (bewegt sich, friert nie ein) statt
+                fake-Prozentbalken ODER abschreckender Zeitangabe. Gibt das beruhigende
+                Gefühl von Fortschritt, ohne ein lügendes "80%" und ohne "1-2 Minuten". */}
             <div className={styles.streamingIcon}>
               <RefreshCw size={20} className={styles.spinning} />
             </div>
             <div className={styles.streamingInfo}>
               <span className={styles.streamingTitle}>
                 {(clauses || []).length === 0
-                  ? 'KI liest den vollständigen Vertrag…'
+                  ? 'KI liest den Vertrag…'
                   : `${(clauses || []).length} Klauseln gefunden — Risiko-Bewertung läuft…`}
               </span>
               <span className={styles.streamingStatus}>
                 {(clauses || []).length === 0
-                  ? 'Alle Klauseln erscheinen gleich. Bei langen Verträgen kann das 1–2 Minuten dauern.'
+                  ? 'Die Klauseln werden vorbereitet — gleich geht es los.'
                   : streamingStatus}
               </span>
+            </div>
+            <div className={styles.streamingProgressWrapper}>
+              <div className={styles.streamingProgressBar}>
+                <div className={styles.streamingTrickleFill} />
+              </div>
             </div>
           </div>
         </div>

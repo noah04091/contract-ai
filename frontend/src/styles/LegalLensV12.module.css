@@ -3442,6 +3442,22 @@
   transition: width 0.3s ease;
 }
 
+/* "Trickle"-Balken: bewegt sich anfangs zügig, wird dann immer langsamer,
+   friert aber NIE ein (kommt nie ganz zum Stillstand). Ehrlicher Eindruck von
+   Fortschritt ohne lügende Prozentzahl. Läuft die ganze Streaming-Dauer durch. */
+.streamingTrickleFill {
+  height: 100%;
+  width: 8%;
+  background: white;
+  border-radius: 4px;
+  animation: legalLensTrickle 90s cubic-bezier(0.1, 0.85, 0.1, 1) forwards;
+}
+
+@keyframes legalLensTrickle {
+  0%   { width: 8%; }
+  100% { width: 95%; }
+}
+
 .streamingPercent {
   font-size: 0.875rem;
   font-weight: 500;
