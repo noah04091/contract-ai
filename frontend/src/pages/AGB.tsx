@@ -637,6 +637,17 @@ export default function AGB() {
                   30 Tagen vollständig gelöscht, sofern keine gesetzlichen Aufbewahrungspflichten
                   entgegenstehen.
                 </div>
+
+                <h3 className={styles.subTitle}>7.6 Auftragsverarbeitung bei gewerblicher Nutzung</h3>
+                <p>
+                  Verarbeitet der Nutzer über Contract AI personenbezogene Daten Dritter (z. B. seiner
+                  eigenen Kunden oder Beschäftigten) im Rahmen einer gewerblichen oder beruflichen
+                  Tätigkeit, ist der Nutzer insoweit datenschutzrechtlich Verantwortlicher und Contract AI
+                  Auftragsverarbeiter. In diesem Fall gilt ergänzend der Vertrag zur Auftragsverarbeitung
+                  (AVV) nach Art. 28 DSGVO, den Contract AI auf Anfrage unter{" "}
+                  <a href="mailto:info@contract-ai.de" className={styles.link}>info@contract-ai.de</a>{" "}
+                  bereitstellt und der Bestandteil dieser Bedingungen ist.
+                </p>
               </div>
             </section>
 

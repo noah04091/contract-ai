@@ -303,7 +303,7 @@ export default function Datenschutz() {
                   Speicherung hochgeladener Verträge
                 </h3>
                 <p>
-                  Für Uploads verwenden wir <strong>AWS S3</strong> (Region: Frankfurt – eu-central-1).
+                  Für Uploads verwenden wir <strong>AWS S3</strong> (Speicherort innerhalb der EU/des EWR).
                   Es werden gespeichert: Hochgeladene PDFs, Metadaten (Name, Datum, Dateigröße, Hash, Nutzer-ID).
                 </p>
 
@@ -610,7 +610,7 @@ export default function Datenschutz() {
 
                 <div className={`${styles.highlightBox} ${styles.success}`}>
                   <CheckCircle size={18} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
-                  <strong>Server-Standort:</strong> Alle Vertragsdaten werden auf EU-Servern (Frankfurt) gespeichert.
+                  <strong>Server-Standort:</strong> Alle Vertragsdaten werden auf Servern innerhalb der EU/des EWR gespeichert.
                 </div>
               </div>
             </section>
