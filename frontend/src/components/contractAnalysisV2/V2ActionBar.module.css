@@ -93,9 +93,12 @@
     margin: 24px auto 8px;
     flex-wrap: wrap;
     justify-content: center;
-    padding: 8px 6px;
+    gap: 6px 8px;
+    padding: 8px 8px;
   }
-  .primary { flex: 1; justify-content: center; min-width: 0; }
+  /* Primary nimmt eine eigene volle Zeile, Sekundär-Buttons zentriert darunter */
+  .primary { flex: 1 1 100%; justify-content: center; min-width: 0; }
+  .divider { display: none; }
 }
 @media (max-width: 480px) {
   .secondary span { display: none; }
