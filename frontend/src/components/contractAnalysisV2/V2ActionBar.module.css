@@ -90,27 +90,33 @@
 @media (max-width: 768px) {
   .actionBar {
     width: calc(100% - 24px);
-    margin: 24px auto 8px;
+    margin: 16px auto 8px;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 6px 8px;
-    padding: 8px 8px;
+    gap: 8px;
+    padding: 10px;
   }
-  /* Primary nimmt eine eigene volle Zeile, Sekundär-Buttons zentriert darunter */
-  .primary { flex: 1 1 100%; justify-content: center; min-width: 0; }
+  /* Primary = volle Breite (klare Haupt-CTA) */
+  .primary { flex: 1 1 100%; justify-content: center; min-width: 0; padding: 12px 14px; }
+  /* Trennstrich ergibt im Umbruch keinen Sinn */
   .divider { display: none; }
-}
-@media (max-width: 480px) {
-  .secondary span { display: none; }
-  .secondary { padding: 7px 9px; }
-  .primary span { font-size: 12.5px; }
+  /* Sekundär-Buttons als ordentliches 2er-Raster mit sichtbarem Rahmen (nicht nackt) */
+  .secondary {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+    min-width: 0;
+    padding: 10px 10px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    border-radius: 9px;
+  }
+  .secondary:hover { background: #eef2f7; color: #0f172a; }
 }
 @media (max-width: 380px) {
-  .actionBar { padding: 6px 5px; gap: 4px; }
-  .primary { padding: 9px 12px; gap: 5px; }
-  .primary span { font-size: 11.5px; }
-  .divider { display: none; }
-  .secondary { padding: 7px 8px; }
+  .actionBar { padding: 8px; gap: 7px; }
+  .primary { padding: 11px 12px; gap: 5px; }
+  .primary span { font-size: 12.5px; }
+  .secondary { padding: 9px 8px; font-size: 12px; }
 }
 
 /* Accessibility — prefers-reduced-motion: Loading-Spinner pausiert,
