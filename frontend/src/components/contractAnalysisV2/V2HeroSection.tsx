@@ -311,6 +311,15 @@ function pickDocTypeLabel(d: AnalysisData): string {
 
 export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset, contractId, usage, userPlan }: Props) {
   const d = data;
+  // 🛡️ Kaputte/Platzhalter-Dateinamen (z.B. "$value.pdf" aus fremden Lohn-Systemen,
+  // "undefined.pdf", leere Namen) NICHT roh anzeigen — stattdessen sinnvoller Fallback.
+  const cleanTitle = (raw: string | undefined | null, fallback: string): string => {
+    const t = (raw ?? "").trim();
+    if (!t || /[${}]/.test(t) || /^(undefined|null)(\.|$)/i.test(t) || /^\.[a-z0-9]{1,5}$/i.test(t)) {
+      return fallback || "Dokument";
+    }
+    return raw as string;
+  };
   const score = d.contractScore;
   const variant = getScoreVariant(score);
   // 🎯 DocClass für typspezifische UI (20.05.2026)
@@ -367,7 +376,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           <div className={styles.fcLeft}>
             <div className={styles.fcIcon} style={{ background: "linear-gradient(135deg,#fef2f2,#fecaca)", color: "#ef4444" }}>!</div>
             <div className={styles.fcMeta}>
-              <div className={styles.fcName}>{fileName}</div>
+              <div className={styles.fcName}>{cleanTitle(fileName, "Dokument")}</div>
               <div className={styles.fcPartners}>
                 <span className={styles.fcDoctype} style={{ background: "#fef2f2", color: "#ef4444" }}>Analyse unvollständig</span>
               </div>
@@ -498,7 +507,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         <div className={styles.fcLeft}>
           <div className={styles.fcIcon}>{fileIconText}</div>
           <div className={styles.fcMeta}>
-            <div className={styles.fcName}>{fileName}</div>
+            <div className={styles.fcName}>{cleanTitle(fileName, d.documentCharacterization?.description?.trim() || docTypeLabel)}</div>
             <div className={styles.fcPartners}>
               <span className={styles.fcDoctype} title={d.documentCharacterization?.description || docTypeLabel}>
                 <FileText size={11} />

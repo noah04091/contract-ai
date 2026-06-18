@@ -136,6 +136,13 @@ interface DuplicateResponse {
   };
 }
 
+// 🛡️ Kaputte/Platzhalter-Dateinamen (z.B. "$value.pdf" aus fremden Lohn-Systemen,
+// "undefined.pdf", leerer Name) erkennen → dann sinnvolleren Titel anzeigen.
+function isPlaceholderDocName(n: string | undefined | null): boolean {
+  const t = (n ?? "").trim();
+  return !t || /[${}]/.test(t) || /^(undefined|null)(\.|$)/i.test(t) || /^\.[a-z0-9]{1,5}$/i.test(t);
+}
+
 export default function ContractAnalysisV2({ file, contractName, contractId: propContractId, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
   // Nutze file.name oder contractName als Fallback
   const displayName = file?.name || contractName || 'Vertrag';
@@ -1039,7 +1046,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                     kein Optimize-Button (würde auf leere Analyse navigieren). */}
                 {!failed && (
                   <V2StickyMiniHeader
-                    filename={displayName}
+                    filename={isPlaceholderDocName(displayName) ? ((data as { documentCharacterization?: { description?: string } })?.documentCharacterization?.description?.trim() || 'Dokument') : displayName}
                     score={heroScore}
                     scoreColor={scoreColor}
                     onOptimize={handleOptimize}
