@@ -3828,6 +3828,33 @@ async function runPipelineInBackground(jobId, snapshot) {
 }
 
 /**
+ * 🛡️ Kaputte/Platzhalter-Dateinamen erkennen (z.B. "$value.pdf" aus fremden
+ * Lohn-/Export-Systemen, "undefined.pdf", "null.pdf", leerer Name, nur Endung).
+ * Solche Namen dürfen NICHT als Vertragsname in der DB landen.
+ */
+function isPlaceholderDocName(n) {
+  const t = String(n == null ? '' : n).trim();
+  return !t || /[${}]/.test(t) || /^(undefined|null)(\.|$)/i.test(t) || /^\.[a-z0-9]{1,5}$/i.test(t);
+}
+
+/**
+ * Liefert einen sauberen Vertragsnamen: normaler Dateiname → unverändert (nur UTF8-Fix);
+ * Platzhalter/Müll → KI-erkannter Dokumenttyp/Charakterisierung als Fallback.
+ */
+function sanitizeContractName(rawName, analysisData) {
+  const fixed = fixUtf8Filename(rawName);
+  if (fixed && !isPlaceholderDocName(fixed)) return fixed;
+  const ad = analysisData || {};
+  const fallback =
+    (ad.documentCharacterization && typeof ad.documentCharacterization.description === 'string'
+      ? ad.documentCharacterization.description.trim() : '') ||
+    pilotTypeToLabel(ad.contractType) ||
+    (typeof ad.documentType === 'string' && !/^[A-Z_]+$/.test(ad.documentType) ? ad.documentType : '') ||
+    'Dokument';
+  return fallback || 'Dokument';
+}
+
+/**
  * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - WITH PROVIDER DETECTION & AUTO-RENEWAL
  * Saves contract with appropriate upload info based on storage type
  */
@@ -3835,7 +3862,7 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
   try {
     const contract = {
       userId: new ObjectId(userId),
-      name: fixUtf8Filename(analysisData.name || fileInfo.originalname) || "Unknown",
+      name: sanitizeContractName(analysisData.name || fileInfo.originalname, analysisData),
       
       // Format Laufzeit (contract duration) - NULL if not found
       laufzeit: analysisData.contractDuration ? 
