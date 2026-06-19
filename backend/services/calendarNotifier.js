@@ -307,6 +307,11 @@ async function checkAndSendNotifications(db) {
 
       } catch (error) {
         console.error(`Fehler beim Queuing der Benachrichtigung fuer Event ${event._id}:`, error);
+        // 🛟 Loch-1a-Schutz (19.06.2026): Die Mail-Übergabe ist NACH dem "queued"-Claim
+        // fehlgeschlagen (z.B. DB-Schluckauf). Ohne Rücksetzen bliebe das Event für immer
+        // "queued" → der nächste Lauf (sucht nur "scheduled") fasst es nie wieder an →
+        // stille verlorene Erinnerung. Darum zurück auf "scheduled".
+        await requeueEventOnQueueFailure(db, event._id);
       }
     }
 
@@ -468,6 +473,35 @@ async function queueEventNotification(event, db) {
   });
 
   console.log(`E-Mail zur Queue hinzugefuegt: ${subject} fuer ${maskEmail(event.user.email)}`);
+}
+
+/**
+ * 🛟 Loch-1a-Schutz: Setzt ein nach dem "queued"-Claim hängengebliebenes Event zurück auf
+ * "scheduled" — ABER nur, wenn für das Event KEIN email_queue-Eintrag existiert. Existiert einer,
+ * kam die Mail real in die Warteschlange (wird dort versendet/retried) → Rücksetzen würde eine
+ * Doppel-Mail erzeugen. So ist der Schutz doppel-mail-sicher. Idempotent + fail-safe
+ * (ein Fehler hier darf den Cron nicht abbrechen).
+ */
+async function requeueEventOnQueueFailure(db, eventId) {
+  try {
+    const idStr = eventId.toString();
+    const mailExists = await db.collection("email_queue").findOne(
+      { eventId: idStr }, { projection: { _id: 1 } }
+    );
+    if (mailExists) return false; // Mail kam doch in die Queue → NICHT zurücksetzen
+    const res = await db.collection("contract_events").updateOne(
+      { _id: eventId, status: "queued" },
+      { $set: { status: "scheduled", updatedAt: new Date() }, $unset: { queuedAt: "" } }
+    );
+    if (res.modifiedCount > 0) {
+      console.warn(`↩️ Event ${idStr} nach Queuing-Fehler zurück auf "scheduled" (wird nächsten Lauf erneut versucht)`);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error(`⚠️ requeueEventOnQueueFailure(${eventId}) fehlgeschlagen:`, e.message);
+    return false;
+  }
 }
 
 /**
@@ -693,5 +727,6 @@ function generateCalendarEmailTemplate(params) {
 module.exports = {
   checkAndSendNotifications,
   queueEventNotification,
-  processEmailQueue
+  processEmailQueue,
+  requeueEventOnQueueFailure
 };

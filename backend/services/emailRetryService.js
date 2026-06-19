@@ -325,6 +325,13 @@ async function processEmailQueue(db) {
           await notifyAdminAboutFailure(db, email, error);
         }
 
+        // 🛟 Loch-1b-Schutz: verknüpftes Event zurück auf "scheduled" (nächster Cron stellt erneut zu).
+        // Greift NUR hier (Soft-Fail nach erschöpften Versuchen) — der Hard-Bounce-Zweig oben hat
+        // bereits per `continue` abgebrochen, setzt also bewusst NICHT zurück (tote Adresse).
+        if (email.eventId) {
+          await requeueEventAfterSoftFailure(db, email.eventId);
+        }
+
       } else {
         // Berechne nächsten Retry-Zeitpunkt (exponential backoff)
         const backoffMinutes = RETRY_CONFIG.backoffMinutes[newRetryCount] || 60;
@@ -375,6 +382,44 @@ async function markEventAsNotified(db, eventId) {
     );
   } catch (error) {
     console.error(`⚠️ Fehler beim Markieren von Event ${eventId} als notified:`, error.message);
+  }
+}
+
+/**
+ * 🛟 Loch-1b-Schutz (19.06.2026): Nach endgültigem SOFT-Fail (KEIN Hard-Bounce — der wird oben
+ * separat behandelt) das verknüpfte Event von "queued" zurück auf "scheduled" setzen, damit der
+ * nächste Cron-Lauf erneut zustellt. Ohne das bliebe das Event für immer "queued" (der Cron sucht
+ * nur "scheduled") → ein bloß transienter SMTP-Ausfall verlöre die Erinnerung dauerhaft.
+ * Doppel-Mail-sicher: die Mail ist "failed" (nachweislich NICHT zugestellt) → erneuter Versand
+ * ist korrekt, kein Duplikat. Zähler (deliveryRetryCount) verhindert Endlos-Schleifen bei
+ * dauerhaft kaputtem Versand. Fail-safe: Fehler hier dürfen die Queue-Verarbeitung nicht stoppen.
+ */
+const MAX_DELIVERY_RETRIES = 3;
+async function requeueEventAfterSoftFailure(db, eventId) {
+  try {
+    const { ObjectId } = require("mongodb");
+    const _id = new ObjectId(eventId);
+    const ev = await db.collection("contract_events").findOne(
+      { _id }, { projection: { status: 1, deliveryRetryCount: 1 } }
+    );
+    if (!ev || ev.status !== "queued") return false; // inzwischen notified/dismissed/etc. → nichts tun
+    const count = ev.deliveryRetryCount || 0;
+    if (count >= MAX_DELIVERY_RETRIES) {
+      console.warn(`⛔ Event ${eventId}: ${count} Zustell-Versuche erschöpft — bleibt liegen (Admin informiert)`);
+      return false;
+    }
+    const res = await db.collection("contract_events").updateOne(
+      { _id, status: "queued" },
+      { $set: { status: "scheduled", updatedAt: new Date() }, $unset: { queuedAt: "" }, $inc: { deliveryRetryCount: 1 } }
+    );
+    if (res.modifiedCount > 0) {
+      console.warn(`↩️ Event ${eventId} nach Soft-Fail zurück auf "scheduled" (Zustell-Versuch ${count + 1}/${MAX_DELIVERY_RETRIES})`);
+      return true;
+    }
+    return false;
+  } catch (e) {
+    console.error(`⚠️ requeueEventAfterSoftFailure(${eventId}) fehlgeschlagen:`, e.message);
+    return false;
   }
 }
 
@@ -519,5 +564,6 @@ module.exports = {
   getQueueStats,
   cleanupOldEmails,
   retryFailedEmail,
+  requeueEventAfterSoftFailure,
   RETRY_CONFIG
 };
