@@ -62,6 +62,7 @@ import { Send as SendIcon } from 'lucide-react';
 import CampaignsTab from './CampaignsTab';
 import RefundFeedbackTab from './RefundFeedbackTab';
 import styles from './AdminDashboard.module.css';
+import { formatDate, formatDateTime } from '../utils/formatters'; // 🛡️ verhindert "Invalid Date"
 
 // API URL für Backend-Calls
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
@@ -427,7 +428,10 @@ const toEuro = (usd: number): number => usd * USD_TO_EUR;
 
 // Format Euro currency
 const formatEuro = (amount: number, decimals = 2): string => {
-  return `${(amount ?? 0).toFixed(decimals).replace('.', ',')} €`;
+  // 🛡️ NaN/Infinity/ungültige Strings → 0 (statt "NaN €"). null/undefined → 0 (wie bisher).
+  const n = Number(amount);
+  const safe = Number.isFinite(n) ? n : 0;
+  return `${safe.toFixed(decimals).replace('.', ',')} €`;
 };
 
 // Helper to get device icon
@@ -1199,8 +1203,8 @@ export default function AdminDashboard() {
       suspended: user.suspended ? 'Ja' : 'Nein',
       betaTester: user.betaTester ? 'Ja' : 'Nein',
       role: user.role || 'user',
-      createdAt: user.createdAt ? new Date(user.createdAt).toLocaleDateString('de-DE') : '',
-      lastLoginAt: user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString('de-DE') : 'Nie'
+      createdAt: user.createdAt ? formatDate(user.createdAt) : '',
+      lastLoginAt: user.lastLoginAt ? formatDate(user.lastLoginAt) : 'Nie'
     }));
 
     const csv = convertToCSV(exportData, headers);
@@ -1280,8 +1284,8 @@ export default function AdminDashboard() {
       betaTester: acc.betaTester ? 'Ja' : 'Nein',
       analysisCount: acc.analysisCount,
       contractsDeleted: acc.contractsDeleted,
-      accountCreatedAt: acc.accountCreatedAt ? new Date(acc.accountCreatedAt).toLocaleDateString('de-DE') : '',
-      accountDeletedAt: acc.accountDeletedAt ? new Date(acc.accountDeletedAt).toLocaleDateString('de-DE') : '',
+      accountCreatedAt: acc.accountCreatedAt ? formatDate(acc.accountCreatedAt) : '',
+      accountDeletedAt: acc.accountDeletedAt ? formatDate(acc.accountDeletedAt) : '',
       accountAgeInDays: acc.accountAgeInDays ?? 'Unbekannt',
       deletedBy: acc.deletedBy === 'user' ? 'Selbst' : `Admin (${acc.deletedByAdmin || ''})`,
       registrationDevice: acc.registrationDevice?.device || 'Unbekannt',
@@ -1341,7 +1345,7 @@ export default function AdminDashboard() {
 
   // Format cost trend data for charts (converted to EUR)
   const dailyCostData = stats.costs.trend.map(day => ({
-    date: new Date(day.date).toLocaleDateString('de-DE'),
+    date: formatDate(day.date),
     cost: parseFloat(toEuro(day.cost).toFixed(2)),
     calls: day.calls
   }));
@@ -2498,7 +2502,7 @@ export default function AdminDashboard() {
                             <XCircle size={18} className={styles.unverifiedIcon} />
                           )}
                         </td>
-                        <td>{new Date(user.createdAt).toLocaleDateString('de-DE')}</td>
+                        <td>{formatDate(user.createdAt)}</td>
                         <td>
                           {user.role !== 'admin' && (
                             <div className={styles.actionButtons}>
@@ -2752,12 +2756,12 @@ export default function AdminDashboard() {
                             </span>
                           )}
                         </td>
-                        <td>{new Date(tester.betaRegisteredAt).toLocaleDateString('de-DE')}</td>
+                        <td>{formatDate(tester.betaRegisteredAt)}</td>
                         <td>
                           {new Date(tester.betaExpiresAt) < new Date() ? (
                             <span className={styles.expiredBadge}>Abgelaufen</span>
                           ) : (
-                            new Date(tester.betaExpiresAt).toLocaleDateString('de-DE')
+                            formatDate(tester.betaExpiresAt)
                           )}
                         </td>
                         <td>{tester.analysisCount || 0}</td>
@@ -2801,7 +2805,7 @@ export default function AdminDashboard() {
                             {'★'.repeat(feedback.rating)}{'☆'.repeat(5 - feedback.rating)}
                           </span>
                           <span className={styles.feedbackDate}>
-                            {new Date(feedback.createdAt).toLocaleDateString('de-DE')}
+                            {formatDate(feedback.createdAt)}
                           </span>
                         </div>
                       </div>
@@ -3000,7 +3004,7 @@ export default function AdminDashboard() {
                             )}
                           </td>
                           <td>
-                            {new Date(account.accountDeletedAt).toLocaleDateString('de-DE')}
+                            {formatDate(account.accountDeletedAt)}
                             <span className={styles.timeDetail}>
                               {new Date(account.accountDeletedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                             </span>
@@ -3107,7 +3111,7 @@ export default function AdminDashboard() {
                       {activityLogData.activities.map(activity => (
                         <tr key={activity._id} className={styles[`severity${activity.severity.charAt(0).toUpperCase() + activity.severity.slice(1)}`]}>
                           <td>
-                            {new Date(activity.createdAt).toLocaleDateString('de-DE')}
+                            {formatDate(activity.createdAt)}
                             <span className={styles.timeDetail}>
                               {new Date(activity.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                             </span>
@@ -3212,7 +3216,7 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td style={{ padding: '12px', color: '#6b7280', fontSize: '14px' }}>
-                            {job.startedAt ? new Date(job.startedAt).toLocaleString('de-DE') : '-'}
+                            {job.startedAt ? formatDateTime(job.startedAt) : '-'}
                           </td>
                           <td style={{ padding: '12px', color: '#6b7280', fontSize: '14px' }}>
                             {job.duration ? `${(job.duration / 1000).toFixed(1)}s` : '-'}
@@ -3269,7 +3273,7 @@ export default function AdminDashboard() {
                       errorLogs.map((log, idx) => (
                         <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
                           <td style={{ padding: '12px', fontSize: '14px', color: '#6b7280' }}>
-                            {new Date(log.timestamp).toLocaleString('de-DE')}
+                            {formatDateTime(log.timestamp)}
                           </td>
                           <td style={{ padding: '12px' }}>
                             <span style={{
@@ -3365,7 +3369,7 @@ export default function AdminDashboard() {
                     <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '16px' }}>
                       <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Letzter Run</div>
                       <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
-                        {weeklyCheckStats.lastRun ? new Date(weeklyCheckStats.lastRun).toLocaleString('de-DE') : 'Noch nie'}
+                        {weeklyCheckStats.lastRun ? formatDateTime(weeklyCheckStats.lastRun) : 'Noch nie'}
                       </div>
                       <div style={{ fontSize: '12px', color: weeklyCheckStats.lastRunStatus === 'success' ? '#16a34a' : '#dc2626', marginTop: '4px' }}>
                         Status: {weeklyCheckStats.lastRunStatus}
@@ -3374,7 +3378,7 @@ export default function AdminDashboard() {
                     <div style={{ background: '#f9fafb', borderRadius: '12px', padding: '16px' }}>
                       <div style={{ fontSize: '13px', color: '#6b7280', marginBottom: '4px' }}>Nächster Run</div>
                       <div style={{ fontSize: '16px', fontWeight: 600, color: '#111827' }}>
-                        {new Date(weeklyCheckStats.nextScheduledRun).toLocaleString('de-DE')}
+                        {formatDateTime(weeklyCheckStats.nextScheduledRun)}
                       </div>
                       <div style={{ fontSize: '12px', color: '#6b7280', fontFamily: 'monospace', marginTop: '4px' }}>
                         {weeklyCheckStats.cronExpression}
@@ -3433,7 +3437,7 @@ export default function AdminDashboard() {
                         Letzter Fehler
                       </div>
                       <div style={{ fontSize: '14px', color: '#7f1d1d' }}>
-                        {new Date(weeklyCheckStats.lastError.at).toLocaleString('de-DE')}: {weeklyCheckStats.lastError.message}
+                        {formatDateTime(weeklyCheckStats.lastError.at)}: {weeklyCheckStats.lastError.message}
                       </div>
                     </div>
                   )}
@@ -3465,7 +3469,7 @@ export default function AdminDashboard() {
                           weeklyCheckStats.healthHistory.map((h, idx) => (
                             <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
                               <td style={{ padding: '10px', fontSize: '13px' }}>
-                                {new Date(h.runAt).toLocaleString('de-DE')}
+                                {formatDateTime(h.runAt)}
                               </td>
                               <td style={{ padding: '10px' }}>
                                 <span style={{
@@ -3654,8 +3658,8 @@ export default function AdminDashboard() {
                                       <td style={{ fontWeight: 600, color: user.totalRevenue > 0 ? '#059669' : '#f59e0b' }}>
                                         {user.totalRevenue > 0 ? formatEuro(user.totalRevenue) : 'Zahlung ausstehend'}
                                       </td>
-                                      <td>{user.firstPayment ? new Date(user.firstPayment).toLocaleDateString('de-DE') : '-'}</td>
-                                      <td>{user.lastPayment ? new Date(user.lastPayment).toLocaleDateString('de-DE') : '-'}</td>
+                                      <td>{user.firstPayment ? formatDate(user.firstPayment) : '-'}</td>
+                                      <td>{user.lastPayment ? formatDate(user.lastPayment) : '-'}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -3700,9 +3704,9 @@ export default function AdminDashboard() {
                                       </td>
                                       <td style={{ textAlign: 'center' }}>{user.invoiceCount}</td>
                                       <td style={{ fontWeight: 600, color: '#94a3b8' }}>{formatEuro(user.totalRevenue)}</td>
-                                      <td>{user.firstPayment ? new Date(user.firstPayment).toLocaleDateString('de-DE') : '-'}</td>
-                                      <td>{user.lastPayment ? new Date(user.lastPayment).toLocaleDateString('de-DE') : '-'}</td>
-                                      <td style={{ color: '#dc2626' }}>{user.canceledAt ? new Date(user.canceledAt).toLocaleDateString('de-DE') : '-'}</td>
+                                      <td>{user.firstPayment ? formatDate(user.firstPayment) : '-'}</td>
+                                      <td>{user.lastPayment ? formatDate(user.lastPayment) : '-'}</td>
+                                      <td style={{ color: '#dc2626' }}>{user.canceledAt ? formatDate(user.canceledAt) : '-'}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -3828,7 +3832,7 @@ export default function AdminDashboard() {
                                   </span>
                                 </td>
                                 <td style={{ fontWeight: 600, color: '#ea580c' }}>{formatEuro(refund.refundAmount)}</td>
-                                <td>{refund.refundedAt ? new Date(refund.refundedAt).toLocaleDateString('de-DE') : '-'}</td>
+                                <td>{refund.refundedAt ? formatDate(refund.refundedAt) : '-'}</td>
                                 <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{refund.refundNote || '-'}</td>
                               </tr>
                             ))}
@@ -3961,13 +3965,13 @@ export default function AdminDashboard() {
                                 </div>
                                 {isScheduled && c.scheduledFor && (
                                   <div style={{ fontSize: '0.8rem', color: '#7c3aed', fontWeight: 500 }}>
-                                    Geplant: {new Date(c.scheduledFor).toLocaleString('de-DE')}
+                                    Geplant: {formatDateTime(c.scheduledFor)}
                                     {relTime && <span style={{ marginLeft: '0.5rem', color: '#64748b', fontWeight: 400 }}>({relTime})</span>}
                                   </div>
                                 )}
                                 {isSendingNow && c.startedAt && (
                                   <div style={{ fontSize: '0.8rem', color: '#d97706', fontWeight: 500 }}>
-                                    Läuft seit: {new Date(c.startedAt).toLocaleString('de-DE')}
+                                    Läuft seit: {formatDateTime(c.startedAt)}
                                   </div>
                                 )}
                                 {isImmediateQueued && (
@@ -4436,7 +4440,7 @@ export default function AdminDashboard() {
                         <span className={styles.detailLabel}>Registriert am</span>
                         <span className={styles.detailValue}>
                           {userDetailModal.user.createdAt
-                            ? new Date(userDetailModal.user.createdAt).toLocaleString('de-DE')
+                            ? formatDateTime(userDetailModal.user.createdAt)
                             : '—'}
                         </span>
                       </div>
@@ -4444,7 +4448,7 @@ export default function AdminDashboard() {
                         <span className={styles.detailLabel}>Letzter Login</span>
                         <span className={styles.detailValue}>
                           {userDetailModal.user.lastLoginAt
-                            ? new Date(userDetailModal.user.lastLoginAt).toLocaleString('de-DE')
+                            ? formatDateTime(userDetailModal.user.lastLoginAt)
                             : 'Nie eingeloggt'}
                         </span>
                       </div>
@@ -4452,7 +4456,7 @@ export default function AdminDashboard() {
                         <div className={styles.detailItem}>
                           <span className={styles.detailLabel}>Beta läuft ab</span>
                           <span className={styles.detailValue}>
-                            {new Date(userDetailModal.user.betaExpiresAt).toLocaleDateString('de-DE')}
+                            {formatDate(userDetailModal.user.betaExpiresAt)}
                           </span>
                         </div>
                       )}
@@ -4518,7 +4522,7 @@ export default function AdminDashboard() {
                           <span className={styles.detailValue}>
                             {userDetailModal.user.lastPlanChange.from} → {userDetailModal.user.lastPlanChange.to}
                             <span className={styles.changeDetail}>
-                              am {new Date(userDetailModal.user.lastPlanChange.changedAt).toLocaleDateString('de-DE')}
+                              am {formatDate(userDetailModal.user.lastPlanChange.changedAt)}
                               {' '}durch {userDetailModal.user.lastPlanChange.changedBy}
                             </span>
                           </span>
