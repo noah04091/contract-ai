@@ -12,6 +12,12 @@ const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const pdfParse = require('pdf-parse');
 const { clauseParser } = require('./index');
 const database = require('../../config/database');
+// 🆕 19.06.2026 (Funnel-Befund): Word-fähiger Extraktor + OCR-Fallback, konsistent zur Haupt-Analyse.
+const { extractTextFromBuffer } = require('../textExtractor');
+const pdfExtractor = require('../pdfExtractor');
+const { shouldAttemptOcr } = require('../../utils/ocrGate');
+
+const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 // S3 Client
 const s3Client = new S3Client({
@@ -38,7 +44,11 @@ async function extractContractText(contract) {
     return contract.content;
   }
 
-  // Priorität 3: S3 PDF extrahieren
+  // Priorität 3: Aus S3 extrahieren — Word-fähig + OCR-Fallback, konsistent zur Haupt-Analyse.
+  // Vorher: blank pdfParse → .docx & gescannte PDFs lieferten 0 Zeichen → preprocessStatus='failed'
+  // (Funnel-Befund 19.06.2026: 20 .docx + 16 Scan-PDFs scheiterten genau hier am Wert-Moment).
+  // Bewusst konservativ: der PDF-mit-Text-Pfad bleibt unverändert pdf-parse (bit-identisch für
+  // die funktionierende Mehrheit) — ergänzt wird NUR Word + OCR für die heute scheiternden Fälle.
   if (contract.s3Key) {
     console.log(`📄 [Preprocessor] Extrahiere aus S3: ${contract.s3Key}`);
     try {
@@ -52,11 +62,40 @@ async function extractContractText(contract) {
       for await (const chunk of s3Response.Body) {
         chunks.push(chunk);
       }
-      const pdfBuffer = Buffer.concat(chunks);
-      const pdfData = await pdfParse(pdfBuffer);
+      const fileBuffer = Buffer.concat(chunks);
+      const fname = (contract.name || contract.filename || '').toLowerCase();
 
-      console.log(`✅ [Preprocessor] PDF extrahiert: ${pdfData.text.length} Zeichen`);
-      return pdfData.text;
+      // DOCX → mammoth/ZIP-Fallback (textExtractor). PDF-Pfad unten bleibt unverändert.
+      if (fname.endsWith('.docx')) {
+        const extracted = await extractTextFromBuffer(fileBuffer, DOCX_MIME);
+        console.log(`✅ [Preprocessor] DOCX extrahiert: ${extracted.text.length} Zeichen`);
+        return extracted.text;
+      }
+
+      // PDF: pdf-parse wie bisher (bit-identisch); bei zu wenig Text (gescannt) OCR-Fallback —
+      // exakt derselbe Call wie die Haupt-Analyse (analyze.js).
+      const pdfData = await pdfParse(fileBuffer);
+      let text = pdfData.text || '';
+      if (fname.endsWith('.pdf') && shouldAttemptOcr({ text, numPages: pdfData.numpages, isPdf: true }).ocr) {
+        console.log(`🔍 [Preprocessor] Wenig Text aus pdf-parse — OCR-Fallback...`);
+        try {
+          const ocrResult = await pdfExtractor.extractTextWithOCRFallback(fileBuffer, {
+            mimetype: 'application/pdf',
+            enableOCR: true,
+            ocrThreshold: 50,
+            userId: contract.userId ? contract.userId.toString() : undefined
+          });
+          if (ocrResult && ocrResult.success && ocrResult.text && ocrResult.text.trim().length > text.trim().length) {
+            console.log(`✅ [Preprocessor] OCR-Fallback erfolgreich: ${ocrResult.text.length} Zeichen (vorher ${text.length})`);
+            text = ocrResult.text;
+          }
+        } catch (ocrErr) {
+          console.warn(`⚠️ [Preprocessor] OCR-Fallback fehlgeschlagen: ${ocrErr.message} — fahre mit pdf-parse-Text fort`);
+        }
+      }
+
+      console.log(`✅ [Preprocessor] Extrahiert: ${text.length} Zeichen`);
+      return text;
     } catch (s3Error) {
       console.error(`❌ [Preprocessor] S3-Extraktion fehlgeschlagen:`, s3Error.message);
       return null;
