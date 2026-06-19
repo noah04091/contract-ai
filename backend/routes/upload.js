@@ -16,7 +16,7 @@ const { extractTextFromBuffer } = require("../services/textExtractor");
 const router = express.Router();
 
 // ✅ Fix UTF-8 Encoding für Dateinamen mit deutschen Umlauten
-const { fixUtf8Filename } = require("../utils/fixUtf8");
+const { fixUtf8Filename, cleanFileName } = require("../utils/fixUtf8");
 
 // ✅ Crypto für File-Hash
 let crypto;
@@ -313,7 +313,9 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
     }
 
     // Erstelle Contract-Eintrag OHNE Analyse
-    const fixedFilename = fixUtf8Filename(req.file.originalname);
+    // 🛡️ cleanFileName: kaputte Platzhalter-Namen ($value.pdf, undefined, leer) → "Dokument"
+    //    (S3-Speicherung nutzt weiterhin req.file.originalname, hier nur der Anzeige-Name)
+    const fixedFilename = cleanFileName(req.file.originalname);
     const contractData = {
       name: fixedFilename,
       userId: new ObjectId(req.user.userId), // ✅ FIX: req.user.userId (von verifyToken)

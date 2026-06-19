@@ -34,7 +34,7 @@ const { pilotTypeToLabel } = require("../utils/contractTypeLabels"); // 🏷️ 
 const router = express.Router();
 
 // ✅ Fix UTF-8 Encoding für Dateinamen mit deutschen Umlauten
-const { fixUtf8Filename } = require("../utils/fixUtf8");
+const { fixUtf8Filename, isPlaceholderDocName } = require("../utils/fixUtf8");
 
 // 🚦 RATE LIMITING - Schutz vor Missbrauch und Kosten-Explosion
 const analyzeRateLimiter = rateLimit({
@@ -3828,18 +3828,8 @@ async function runPipelineInBackground(jobId, snapshot) {
 }
 
 /**
- * 🛡️ Kaputte/Platzhalter-Dateinamen erkennen (z.B. "$value.pdf" aus fremden
- * Lohn-/Export-Systemen, "undefined.pdf", "null.pdf", leerer Name, nur Endung).
- * Solche Namen dürfen NICHT als Vertragsname in der DB landen.
- */
-function isPlaceholderDocName(n) {
-  const t = String(n == null ? '' : n).trim();
-  return !t || /[${}]/.test(t) || /^(undefined|null)(\.|$)/i.test(t) || /^\.[a-z0-9]{1,5}$/i.test(t);
-}
-
-/**
  * Liefert einen sauberen Vertragsnamen: normaler Dateiname → unverändert (nur UTF8-Fix);
- * Platzhalter/Müll → KI-erkannter Dokumenttyp/Charakterisierung als Fallback.
+ * Platzhalter/Müll (via isPlaceholderDocName) → KI-erkannter Dokumenttyp/Charakterisierung.
  */
 function sanitizeContractName(rawName, analysisData) {
   const fixed = fixUtf8Filename(rawName);

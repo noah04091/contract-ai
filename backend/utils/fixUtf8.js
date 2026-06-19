@@ -31,4 +31,20 @@ function fixUtf8Filename(filename) {
   }
 }
 
-module.exports = { fixUtf8Filename };
+// 🛡️ Platzhalter-/kaputte Dateinamen erkennen (z.B. "$value.pdf" aus fremden
+// Lohn-/Export-Systemen, "undefined.pdf", "null.pdf", leerer Name, nur Endung).
+// Solche Namen dürfen NICHT als Vertragsname gespeichert werden.
+function isPlaceholderDocName(name) {
+  const t = String(name == null ? '' : name).trim();
+  return !t || /[${}]/.test(t) || /^(undefined|null)(\.|$)/i.test(t) || /^\.[a-z0-9]{1,5}$/i.test(t);
+}
+
+// Liefert einen sauberen Anzeige-/Vertragsnamen:
+// normaler Dateiname → nur UTF8-Fix; Platzhalter/Müll → Fallback (Default "Dokument").
+function cleanFileName(rawName, fallback = 'Dokument') {
+  const fixed = fixUtf8Filename(rawName);
+  if (fixed && !isPlaceholderDocName(fixed)) return fixed;
+  return fallback || 'Dokument';
+}
+
+module.exports = { fixUtf8Filename, isPlaceholderDocName, cleanFileName };
