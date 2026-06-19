@@ -1,6 +1,7 @@
 // ✨ PaymentTracker.tsx - Smart Payment Status Tracker for One-Time Contracts
 import { useState, useMemo, useEffect, useRef } from 'react';
 import styles from '../styles/PaymentTracker.module.css';
+import { formatEuro, formatDate } from '../utils/formatters'; // 🛡️ verhindert "NaN€"/"Invalid Date"
 
 interface Contract {
   _id: string;
@@ -74,10 +75,11 @@ export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTra
     }
 
     return {
-      amount: amount.toFixed(2),
-      uploadDate: uploadDate.toLocaleDateString('de-DE'),
-      dueDate: dueDate?.toLocaleDateString('de-DE'),
-      paidDate: paidDate?.toLocaleDateString('de-DE'),
+      amount: formatEuro(amount),
+      uploadDate: formatDate(uploadDate),
+      // dueDate bleibt undefined wenn keins/ungültig → der bedingte Block wird (wie bisher) ausgeblendet
+      dueDate: dueDate && !isNaN(dueDate.getTime()) ? dueDate.toLocaleDateString('de-DE') : undefined,
+      paidDate: formatDate(paidDate),
       daysSinceUpload,
       daysUntilDue,
       isOverdue,
@@ -267,7 +269,7 @@ export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTra
             </p>
             {paymentDate && (
               <p className={styles.autoPaidDate}>
-                Bezahlt am: {new Date(paymentDate).toLocaleDateString('de-DE')}
+                Bezahlt am: {formatDate(paymentDate)}
               </p>
             )}
           </div>
@@ -301,7 +303,7 @@ export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTra
           <div className={styles.warningBox}>
             <span className={styles.warningIcon}>⚠️</span>
             <div>
-              <strong>Offener Betrag: {paymentInfo.amount}€</strong>
+              <strong>Offener Betrag: {paymentInfo.amount}</strong>
               {paymentInfo.dueDate && (
                 <p className={styles.dueInfo}>
                   {paymentInfo.isOverdue ? (

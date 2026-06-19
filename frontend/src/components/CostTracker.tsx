@@ -1,6 +1,7 @@
 // ✨ CostTracker.tsx - Premium Cost Overview Component
 import { useState, useMemo, useEffect } from 'react';
 import styles from '../styles/CostTracker.module.css';
+import { formatEuro } from '../utils/formatters'; // 🛡️ verhindert "NaN€"
 
 interface Contract {
   _id: string;
@@ -263,19 +264,19 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
       <div className={styles.costGrid}>
         <div className={styles.costItem}>
           <span className={styles.costLabel}>Monatlich</span>
-          <strong className={styles.costValue}>{costs.monthly.toFixed(2)}€</strong>
+          <strong className={styles.costValue}>{formatEuro(costs.monthly)}</strong>
         </div>
 
         <div className={styles.costItem}>
           <span className={styles.costLabel}>Jährlich</span>
-          <strong className={styles.costValue}>{costs.yearly.toFixed(2)}€</strong>
+          <strong className={styles.costValue}>{formatEuro(costs.yearly)}</strong>
         </div>
 
         <div className={styles.costItem}>
           <span className={styles.costLabel}>
             {startDate ? `Seit Abo-Start (${costs.months}M)` : `Seit Upload (${costs.months}M)`}
           </span>
-          <strong className={styles.costValue}>{costs.total.toFixed(2)}€</strong>
+          <strong className={styles.costValue}>{formatEuro(costs.total)}</strong>
         </div>
       </div>
 
