@@ -847,23 +847,30 @@
 .upgradeButton {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  color: white;
-  border: none;
+  gap: 9px;
+  padding: 0.9rem 1.9rem;
+  /* Premium-Look (Stripe/DocuSign): edles dunkles Slate statt warnendes Gelb */
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 12px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.35), 0 10px 26px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Dezenter Gold-Akzent nur auf der Krone = "Premium", ohne den ganzen Button gelb zu machen */
+.upgradeButton svg {
+  color: #facc15;
 }
 
 .upgradeButton:hover {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(251, 191, 36, 0.5);
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.4), 0 14px 32px rgba(15, 23, 42, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* ✅ NEU: Disabled States */
