@@ -23,6 +23,11 @@ import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 import { WelcomePopup } from "../components/Tour";
 import { getErrorMessage } from "../utils/errorHandling";
 
+// Generate 2.0: Die einfache „Formular-Vorausfüllen"-Variante ist vorerst ausgeblendet.
+// Sie wird durch den echten Premium-Chat-Modus (Claude Opus + AVV-Design) ersetzt.
+// Code bleibt erhalten (Reaktivierung = true).
+const SHOW_BRIEF_MODE: boolean = false;
+
 // Types
 export interface FormDataType {
   title?: string;
@@ -6176,7 +6181,8 @@ export default function Generate() {
                     exit={{ opacity: 0, x: -20 }}
                     className={styles.stepContent}
                   >
-                    {/* ✨ Generate 2.0 — Modus-Umschalter (klassisch | beschreiben) */}
+                    {/* ✨ Generate 2.0 — Modus-Umschalter (vorerst ausgeblendet → Premium-Chat-Modus folgt) */}
+                    {SHOW_BRIEF_MODE && (
                     <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '26px' }}>
                       <div style={{ display: 'inline-flex', background: '#EEF1F6', borderRadius: '12px', padding: '4px', gap: '2px' }}>
                         <button type="button" onClick={() => setBriefMode(false)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer', font: 'inherit', fontWeight: 600, fontSize: '13.5px', padding: '9px 16px', borderRadius: '9px', background: !briefMode ? '#fff' : 'transparent', color: !briefMode ? '#0B1324' : '#667085', boxShadow: !briefMode ? '0 1px 2px rgba(16,30,60,.10), 0 2px 8px rgba(16,30,60,.06)' : 'none' }}>
@@ -6188,6 +6194,7 @@ export default function Generate() {
                         </button>
                       </div>
                     </div>
+                    )}
 
                     {!briefMode && (<>
                     <div className={styles.stepHeader}>
