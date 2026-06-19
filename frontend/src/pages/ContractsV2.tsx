@@ -5102,8 +5102,8 @@ export default function Contracts() {
                         </div>
                       ) : (
                         <div className={styles.uploadPrompt}>
-                          <div className={styles.uploadIcon}>
-                            <Upload size={20} />
+                          <div className={!hasAnalysesLeft ? styles.uploadIconLocked : styles.uploadIcon}>
+                            {!hasAnalysesLeft ? <Lock size={20} /> : <Upload size={20} />}
                           </div>
                           <h3>
                             {!hasAnalysesLeft
@@ -5115,7 +5115,7 @@ export default function Contracts() {
                           </h3>
                           <p className={styles.uploadOr}>
                             {!hasAnalysesLeft
-                              ? `${userInfo.analysisCount} von ${userInfo.analysisLimit} Analysen verwendet`
+                              ? `Du hast deine ${userInfo.analysisLimit} kostenlosen Analysen genutzt. Schalte mit einem Upgrade weitere frei.`
                               : "oder wähle sie von deinem Gerät"
                             }
                           </p>

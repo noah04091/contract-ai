@@ -847,20 +847,17 @@
 .upgradeButton {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  padding: 0.85rem 2rem;
-  /* Edles, sattes metallisches Gold (kein flaches Amber-Gelb) — tiefer Verlauf + Sheen */
-  background: linear-gradient(135deg, #d9b441 0%, #c2982e 50%, #9a7410 100%);
+  gap: 8px;
+  padding: 11px 24px;
+  /* Sauberer, ruhiger Blau-Button — exakt im Stil des E-Mail-Upload-Sperrzustands */
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: 999px; /* edle Pill-Form */
-  font-weight: 650;
-  font-size: 0.95rem;
-  letter-spacing: 0.01em;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
-  text-shadow: 0 1px 1px rgba(90, 60, 0, 0.4); /* Lesbarkeit der weißen Schrift auf Gold */
-  box-shadow: 0 1px 2px rgba(154, 116, 16, 0.45), 0 10px 26px rgba(194, 152, 46, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transition: all 0.15s ease;
 }
 
 .upgradeButton svg {
@@ -868,9 +865,9 @@
 }
 
 .upgradeButton:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: 0 1px 2px rgba(154, 116, 16, 0.5), 0 14px 32px rgba(194, 152, 46, 0.44), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
 /* ✅ NEU: Disabled States */
@@ -3204,6 +3201,19 @@
   border-radius: 15px;
   align-items: center;
   transition: all 0.16s ease;
+}
+
+/* Dezentes graues Schloss-Icon für den Analyse-Limit-Zustand (Stil wie E-Mail-Upload-Sperre) */
+.uploadIconLocked {
+  margin: 0 auto 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-radius: 15px;
+  color: #64748b;
 }
 
 .uploadIcon svg {
