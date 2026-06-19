@@ -26,6 +26,38 @@ const { normalizeLaufzeit, normalizeKuendigung } = require("../utils/contractFie
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness, handleEnhancedDeepLawyerAnalysisRequest } = analyzeRoute;
 const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
+const { applyAnalysisGate, effectivePlan } = require("../utils/analysisGate"); // 🔒 Freemium-Tease-Gate (Phase 2)
+
+// 🔒 Freemium-Tease-Gate — REVERSIBEL per ENV, default AUS (→ kein Verhalten ändert sich bis bewusst aktiviert).
+// Bei Aktivierung zusätzlich FREEMIUM_GATE_LAUNCH_DATE (ISO) setzen; ohne explizites Datum gilt der
+// Server-Start als Grandfather-Stichtag (alle bis dahin analysierten Free-Verträge bleiben voll sichtbar).
+const FREEMIUM_GATE_ENABLED = process.env.FREEMIUM_GATE_ENABLED === 'true';
+const FREEMIUM_GATE_LAUNCH = process.env.FREEMIUM_GATE_LAUNCH_DATE
+  ? new Date(process.env.FREEMIUM_GATE_LAUNCH_DATE)
+  : new Date();
+
+// 🔒 Middleware: PDF-/Gutachten-Export ist Business+ (sobald Flag AN). Schließt den Download-Bypass
+// der gesperrten Analyse. Default-Flag AUS → next() (kein Effekt). fail-open bei Fehler (erlaubt).
+async function gatePremiumExport(req, res, next) {
+  if (!FREEMIUM_GATE_ENABLED) return next();
+  try {
+    await ensureDb();
+    const gu = await usersCollection.findOne(
+      { _id: new ObjectId(req.user.userId) },
+      { projection: { subscriptionPlan: 1 } }
+    );
+    const membership = await OrganizationMember.findOne({ userId: new ObjectId(req.user.userId), isActive: true });
+    if (effectivePlan(gu?.subscriptionPlan, membership ? 'business' : undefined) === 'free') {
+      return res.status(403).json({
+        success: false, gated: true, feature: 'pdf-export',
+        message: 'Der PDF-/Gutachten-Export ist Teil von Business. Schalte frei, um deine Analyse als PDF zu exportieren.'
+      });
+    }
+  } catch (e) {
+    console.warn(`⚠️ [Freemium-Gate/PDF] fail-open: ${e.message}`);
+  }
+  next();
+}
 
 const router = express.Router();
 const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
@@ -1415,11 +1447,45 @@ router.get("/", async (req, res) => {
     };
     console.log('[PERF] GET /contracts:', JSON.stringify(_timing));
 
+    // 🔒 Freemium-Tease-Gate (Liste): Plan EINMAL laden (nur Flag AN), dann pro Vertrag anwenden.
+    // Default-Flag AUS → gatePlan bleibt null → kein Effekt. fail-open: bei Fehler volle Liste.
+    let gatePlan = null, gateOrgPaid = false, gateFirstId = null;
+    if (FREEMIUM_GATE_ENABLED) {
+      try {
+        const gu = await usersCollection.findOne(
+          { _id: new ObjectId(req.user.userId) }, { projection: { subscriptionPlan: 1 } });
+        gatePlan = gu?.subscriptionPlan || 'free';
+        const membership = await OrganizationMember.findOne({ userId: new ObjectId(req.user.userId), isActive: true });
+        gateOrgPaid = !!membership;
+        // früheste analysierte des Users = bleibt voll (erste Analyse gratis)
+        const earliest = await contractsCollection.findOne(
+          { userId: new ObjectId(req.user.userId), analyzed: true },
+          { sort: { analyzedAt: 1 }, projection: { _id: 1 } });
+        gateFirstId = earliest ? earliest._id.toString() : null;
+      } catch (e) {
+        console.warn(`⚠️ [Freemium-Gate/Liste] fail-open: ${e.message}`);
+        gatePlan = null;
+      }
+    }
+
     // 🎯 EINHEITLICHER STATUS: Backend hängt den berechneten Status an jeden Vertrag an,
     // damit Liste, Detail-Ansicht UND Dashboard exakt denselben Wert zeigen (eine Quelle, keine Drift).
     const contractsWithStatus = enrichedContracts.map(c => {
-      try { return { ...c, computedStatus: calculateSmartStatusBackend(c) }; }
-      catch { return { ...c, computedStatus: 'Aktiv' }; }
+      let withStatus;
+      try { withStatus = { ...c, computedStatus: calculateSmartStatusBackend(c) }; }
+      catch { withStatus = { ...c, computedStatus: 'Aktiv' }; }
+      if (FREEMIUM_GATE_ENABLED && gatePlan) {
+        try {
+          withStatus = applyAnalysisGate(withStatus, {
+            plan: gatePlan,
+            orgPlan: gateOrgPaid ? 'business' : undefined,
+            analyzedAt: c.analyzedAt || c.lastAnalyzed || null,
+            launchDate: FREEMIUM_GATE_LAUNCH,
+            isFirstAnalysis: !!gateFirstId && c._id.toString() === gateFirstId
+          });
+        } catch { /* fail-open: voller Vertrag bleibt */ }
+      }
+      return withStatus;
     });
 
     res.json({
@@ -1663,7 +1729,39 @@ router.get("/:id", verifyToken, async (req, res) => {
     let computedStatus = 'Aktiv';
     try { computedStatus = calculateSmartStatusBackend(enrichedContract); } catch (e) { /* Fallback Aktiv */ }
 
-    res.json({ ...enrichedContract, computedStatus });
+    let payload = { ...enrichedContract, computedStatus };
+
+    // 🔒 Freemium-Tease-Gate (Phase 2): nur wenn Flag AN. Free → gesperrte Felder server-seitig
+    // raus; Business/Enterprise/Org/Alt-Analysen → No-Op. fail-open: bei Gate-Fehler volle Ansicht
+    // (kein kaputter Screen für Zahler). Default-Flag AUS → dieser Block ändert heute NICHTS.
+    if (FREEMIUM_GATE_ENABLED) {
+      try {
+        const gateUser = await usersCollection.findOne(
+          { _id: new ObjectId(req.user.userId) },
+          { projection: { subscriptionPlan: 1 } }
+        );
+        // „erste Analyse des Users = voll & gratis": ist DIESER Vertrag der früheste analysierte des Owners?
+        let isFirstAnalysis = false;
+        try {
+          const earliest = await contractsCollection.findOne(
+            { userId: access.contract.userId, analyzed: true },
+            { sort: { analyzedAt: 1 }, projection: { _id: 1 } }
+          );
+          isFirstAnalysis = !!earliest && earliest._id.toString() === access.contract._id.toString();
+        } catch { /* unklar → konservativ NICHT als erste werten */ }
+        payload = applyAnalysisGate(payload, {
+          plan: gateUser?.subscriptionPlan || 'free',
+          orgPlan: access.membership ? 'business' : undefined, // aktive Org-Mitgliedschaft = zahlend
+          analyzedAt: enrichedContract.analyzedAt || enrichedContract.lastAnalyzed || null,
+          launchDate: FREEMIUM_GATE_LAUNCH,
+          isFirstAnalysis
+        });
+      } catch (gateErr) {
+        console.warn(`⚠️ [Freemium-Gate] fail-open (volle Ansicht): ${gateErr.message}`);
+      }
+    }
+
+    res.json(payload);
 
   } catch (err) {
     console.error("❌ Fehler beim Laden des Vertrags:", err.message);
@@ -2795,7 +2893,7 @@ router.patch("/:id/folder", verifyToken, async (req, res) => {
 });
 
 // ✅ NEU: GET /contracts/:id/analysis-report – Analyse als PDF herunterladen
-router.get("/:id/analysis-report", verifyToken, async (req, res) => {
+router.get("/:id/analysis-report", verifyToken, gatePremiumExport, async (req, res) => {
   try {
     await ensureDb();
     const { id } = req.params;
@@ -4033,7 +4131,7 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
  *   - ?version=v2|v3 (default: v2)
  *   - ?design=executive|modern|minimal|elegant|corporate (default: executive)
  */
-router.post('/:id/pdf', verifyToken, async (req, res) => {
+router.post('/:id/pdf', verifyToken, gatePremiumExport, async (req, res) => {
   try {
     await ensureDb();
     await loadPDFGenerators();
@@ -4144,7 +4242,7 @@ router.post('/:id/pdf', verifyToken, async (req, res) => {
  * Generiert PDF mit React-PDF (V2)
  * Query-Parameter: ?design=executive|modern|minimal|elegant|corporate (default: executive)
  */
-router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
+router.post('/:id/pdf-v2', verifyToken, gatePremiumExport, async (req, res) => {
   try {
     await ensureDb();
     await loadPDFGenerators();
@@ -4359,7 +4457,7 @@ router.post('/:id/pdf-v2', verifyToken, async (req, res) => {
  * Strikt adaptive: nur Sektionen mit echten Daten werden gerendert (Anti-Halluzination).
  * Content-Disposition: attachment — User soll bewusst herunterladen.
  */
-router.post('/:id/gutachten-pdf', verifyToken, async (req, res) => {
+router.post('/:id/gutachten-pdf', verifyToken, gatePremiumExport, async (req, res) => {
   try {
     await ensureDb();
     await loadPDFGenerators();
@@ -4482,7 +4580,7 @@ router.post('/:id/gutachten-pdf', verifyToken, async (req, res) => {
  * Generiert PDF mit Anlagen (kombiniertes PDF)
  * Anlagen werden als Base64 im Request-Body gesendet und ans Ende angehängt
  */
-router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
+router.post('/:id/pdf-combined', verifyToken, gatePremiumExport, async (req, res) => {
   try {
     await ensureDb();
     const { PDFDocument } = require('pdf-lib');
@@ -4705,7 +4803,7 @@ router.post('/:id/pdf-combined', verifyToken, async (req, res) => {
  * POST /api/contracts/:id/pdf-v3
  * Generiert PDF mit Typst (V3)
  */
-router.post('/:id/pdf-v3', verifyToken, async (req, res) => {
+router.post('/:id/pdf-v3', verifyToken, gatePremiumExport, async (req, res) => {
   try {
     await ensureDb();
     await loadPDFGenerators();

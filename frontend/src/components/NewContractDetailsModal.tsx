@@ -20,6 +20,7 @@ import V2HeroSection from "./contractAnalysisV2/V2HeroSection";
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection";
 import AnalysisImportantDates from "./AnalysisImportantDates";
 import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css";
+import LockedAnalysisUpsell, { GatedCounts } from "./LockedAnalysisUpsell"; // 🔒 Freemium-Tease
 
 // Signature-related interfaces
 interface Signer {
@@ -144,6 +145,8 @@ interface Contract {
   suggestions?: string | string[];
   comparison?: string | string[];
   detailedLegalOpinion?: string; // ✅ NEU: Ausführliches Rechtsgutachten
+  gated?: boolean; // 🔒 Freemium-Tease: Backend hat Analyse für Free-User redigiert
+  gatedCounts?: GatedCounts;
   // ✅ Strukturierte Analyse-Felder (aus Live-Analyse, Top-Level in DB persistiert)
   positiveAspects?: Array<{ title: string; description: string }>;
   criticalIssues?: Array<{ title: string; description: string; riskLevel?: 'high' | 'medium' | 'low' }>;
@@ -2363,6 +2366,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 <p>{summary}</p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* 🔒 Freemium-Tease: Upsell-Karte, wenn die Analyse für Free-User redigiert wurde.
+            Gesperrte Sektionen (Rechtl. Einordnung, Gutachten, Risiken, Empfehlungen) sind
+            server-seitig schon entfernt → blenden sich via &&-Guards selbst aus. */}
+        {contract.gated && (
+          <div className={styles.section}>
+            <LockedAnalysisUpsell counts={contract.gatedCounts} />
           </div>
         )}
 

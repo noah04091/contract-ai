@@ -167,7 +167,7 @@ const KiVertragsanalyse: React.FC = () => {
     },
     {
       question: "Ist KI-Vertragsprüfung wirklich kostenlos?",
-      answer: "Ja, Contract AI bietet einen kostenlosen Starter-Tarif mit bis zu drei vollständigen Vertragsanalysen — ohne Kreditkarte, ohne Abo-Falle. Für intensive Nutzung gibt es den Business-Tarif (19 EUR/Monat, 25 Analysen) und den Enterprise-Tarif (29 EUR/Monat, unbegrenzt). Zum Vergleich: Eine vergleichbare Vertragsprüfung beim Anwalt kostet typischerweise 100–400 EUR pro Vertrag. Sie können Contract AI also risikofrei testen und sehen, ob die KI für Ihre Bedürfnisse passt."
+      answer: "Ja — Ihre erste vollständige Vertragsanalyse ist kostenlos und ohne Kreditkarte. Bei weiteren Verträgen sehen Sie gratis den Risiko-Score und einen Überblick der gefundenen Punkte; die vollständigen Details schalten Sie im Business-Tarif (19 EUR/Monat, 25 Analysen) oder Enterprise-Tarif (29 EUR/Monat, unbegrenzt) frei. Zum Vergleich: Eine vergleichbare Vertragsprüfung beim Anwalt kostet typischerweise 100–400 EUR pro Vertrag. Sie können Contract AI also risikofrei testen und sehen, ob die KI für Ihre Bedürfnisse passt."
     }
   ];
 

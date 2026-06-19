@@ -13,6 +13,7 @@ import {
   MessageSquare // Chat Icon
 } from "lucide-react";
 import styles from "./ContractAnalysis.module.css";
+import LockedAnalysisUpsell, { GatedCounts } from "./LockedAnalysisUpsell";
 import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 import { useAuth } from "../context/AuthContext"; // 💬 User subscription check
@@ -55,6 +56,10 @@ interface AnalysisResult {
 
   // ✅ NEU: Ausführliches Rechtsgutachten
   detailedLegalOpinion?: string;
+
+  // 🔒 Freemium-Tease (19.06.2026): Backend setzt diese, wenn die Analyse für Free-User redigiert wurde.
+  gated?: boolean;
+  gatedCounts?: GatedCounts;
 
   // 🌐 Phase-1-Redesign: Recognition-Felder + holistisches Score-Reasoning.
   // Optional, da alte Analysen ohne diese Felder bestehen bleiben (render-if-present).
@@ -1367,6 +1372,12 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               </div>
             )}
           </div>
+
+          {/* 🔒 Freemium-Tease: Upsell-Karte, wenn die Analyse für Free-User redigiert wurde
+              (gesperrte Sektionen sind server-seitig schon entfernt → blenden sich via &&-Guards selbst aus) */}
+          {(result?.gated || initialResult?.gated) && (
+            <LockedAnalysisUpsell counts={result?.gatedCounts || initialResult?.gatedCounts} />
+          )}
 
           {/* 7. Handlungsempfehlungen (Volle Breite) */}
           {(result?.recommendations || initialResult?.recommendations) && (
