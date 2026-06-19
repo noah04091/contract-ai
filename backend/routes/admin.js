@@ -514,19 +514,25 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     await deletedAccountsCollection.insertOne(deletedAccountRecord);
     console.log(`   📦 Archived deleted account: ${user.email}`);
 
+    // 🆕 19.06.2026: userId in contracts/contract_events/cost_tracking ist als ObjectId gespeichert,
+    // nicht als String. Ein String-Filter ließ Verträge + Kalender-/Erinnerungs-Events als Waisen
+    // zurück. Beide Formen löschen.
+    const uidVariants = [userId];
+    try { uidVariants.push(new ObjectId(userId)); } catch (_) { /* ungültige id ignorieren */ }
+
     // Delete user's contracts
-    const contractsResult = await contractsCollection.deleteMany({ userId: userId });
+    const contractsResult = await contractsCollection.deleteMany({ userId: { $in: uidVariants } });
     console.log(`   📄 Deleted ${contractsResult.deletedCount} contracts`);
 
     // 🧹 DSGVO: Legal-Lens-Daten (Analysen + Fortschritt/Notizen) des Users mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId });
 
     // Delete user's calendar events
-    const eventsResult = await db.collection("contract_events").deleteMany({ userId: userId });
+    const eventsResult = await db.collection("contract_events").deleteMany({ userId: { $in: uidVariants } });
     console.log(`   📅 Deleted ${eventsResult.deletedCount} calendar events`);
 
     // Delete user's cost tracking entries
-    const costResult = await costTrackingCollection.deleteMany({ userId: userId });
+    const costResult = await costTrackingCollection.deleteMany({ userId: { $in: uidVariants } });
     console.log(`   💰 Deleted ${costResult.deletedCount} cost tracking entries`);
 
     // Delete the user

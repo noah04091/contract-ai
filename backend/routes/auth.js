@@ -810,8 +810,13 @@ router.delete("/delete", verifyToken, async (req, res) => {
     console.log(`📦 Gelöschter Account archiviert: ${user.email}`);
 
     // Jetzt tatsächlich löschen
-    await contractsCollection.deleteMany({ userId: req.user.userId });
-    await dbInstance.collection("contract_events").deleteMany({ userId: req.user.userId });
+    // 🆕 19.06.2026: userId in contracts/contract_events ist als ObjectId gespeichert, nicht als
+    // String aus dem JWT. Ein String-Filter traf sie NICHT → Verträge + Kalender-/Erinnerungs-
+    // Events blieben als Waisen zurück (feuerten nie, sammelten sich an). Beide Formen löschen.
+    const uidVariants = [req.user.userId];
+    try { uidVariants.push(new ObjectId(req.user.userId)); } catch (_) { /* ungültige id ignorieren */ }
+    await contractsCollection.deleteMany({ userId: { $in: uidVariants } });
+    await dbInstance.collection("contract_events").deleteMany({ userId: { $in: uidVariants } });
     // 🧹 DSGVO: Legal-Lens-Daten (Analysen + Fortschritt/Notizen) des Accounts mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId: req.user.userId });
     await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
