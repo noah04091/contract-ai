@@ -13,6 +13,7 @@ const os = require("os"); // 📄 Temp-Datei für Re-Analyse-Delegation an die U
 const crypto = require("crypto"); // 🛡️ fileHash-Sicherheitsnetz (verhindert Doppel-Vertrag bei Re-Analyse)
 const { OpenAI } = require("openai");
 const { validateAttachment, generateIdempotencyKey } = require("../utils/emailImportSecurity"); // 🔒 Security Utils
+const { isPlaceholderDocName } = require("../utils/fixUtf8"); // 🛡️ Platzhalter-Dateinamen ($value.pdf) abfangen
 const nodemailer = require("nodemailer"); // 📧 Email Service
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const contractAnalyzer = require("../services/contractAnalyzer"); // 🤖 ULTRA-INTELLIGENT Contract Analyzer v10
@@ -3289,7 +3290,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
         // Contract-Dokument erstellen
         const newContract = {
           userId: user._id,
-          name: fixUtf8Encoding(sanitizedFilename.replace('.pdf', '')),
+          name: isPlaceholderDocName(sanitizedFilename) ? 'Dokument' : fixUtf8Encoding(sanitizedFilename.replace('.pdf', '')),
           s3Key: s3Key,
           s3Bucket: process.env.S3_BUCKET_NAME,
           uploadType: 'EMAIL_IMPORT',

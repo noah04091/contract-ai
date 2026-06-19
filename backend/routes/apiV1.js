@@ -12,7 +12,7 @@ const pdfParse = require("pdf-parse");
 const { OpenAI } = require("openai");
 const verifyApiKey = require("../middleware/verifyApiKey");
 const { apiRateLimiter } = require("../middleware/apiRateLimit");
-const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
+const { fixUtf8Filename, cleanFileName } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding + Platzhalter-Schutz
 
 // Rate Limiting für alle API v1 Routes
 router.use(apiRateLimiter);
@@ -222,7 +222,7 @@ router.post("/contracts", verifyApiKey, upload.single("file"), async (req, res) 
     }
 
     const filePath = req.file.path;
-    const filename = fixUtf8Filename(req.file.originalname);
+    const filename = cleanFileName(req.file.originalname);
 
     // PDF parsen
     const dataBuffer = await fs.readFile(filePath);

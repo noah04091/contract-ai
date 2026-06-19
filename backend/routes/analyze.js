@@ -34,7 +34,7 @@ const { pilotTypeToLabel } = require("../utils/contractTypeLabels"); // 🏷️ 
 const router = express.Router();
 
 // ✅ Fix UTF-8 Encoding für Dateinamen mit deutschen Umlauten
-const { fixUtf8Filename, isPlaceholderDocName } = require("../utils/fixUtf8");
+const { fixUtf8Filename, isPlaceholderDocName, cleanFileName } = require("../utils/fixUtf8");
 
 // 🚦 RATE LIMITING - Schutz vor Missbrauch und Kosten-Explosion
 const analyzeRateLimiter = rateLimit({
@@ -3719,7 +3719,7 @@ async function dispatchAnalyzeRequest(req, res) {
       jobId,
       userId,
       requestId,
-      originalFilename: req.file.originalname,
+      originalFilename: cleanFileName(req.file.originalname),
       fileSize: req.file.size
     });
   } catch (insertErr) {
@@ -5085,7 +5085,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           metadata: {
             documentType: validationResult.documentType,
             strategy: validationResult.strategy,
-            fileName: fixUtf8Filename(req.file.originalname)
+            fileName: cleanFileName(req.file.originalname)
           }
         });
       } catch (costError) {
@@ -5211,7 +5211,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // 📋 ÄNDERUNG 3: UPDATE analysisData OBJECT WITH AUTO-RENEWAL & DURATION
     const analysisData = {
       userId: req.user.userId,
-      contractName: fixUtf8Filename(req.file.originalname),
+      contractName: cleanFileName(req.file.originalname),
       createdAt: new Date(),
       requestId,
       fullText: fullTextContent,
@@ -5621,7 +5621,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       } else {
         // 📋 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL & DURATION
         const contractAnalysisData = {
-          name: fixUtf8Filename(req.file.originalname),
+          name: cleanFileName(req.file.originalname),
 
           // Laufzeit (contract duration) - NULL if not found
           laufzeit: extractedContractDuration ?
