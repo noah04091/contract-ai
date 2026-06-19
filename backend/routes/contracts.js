@@ -35,6 +35,8 @@ const FREEMIUM_GATE_ENABLED = process.env.FREEMIUM_GATE_ENABLED === 'true';
 const FREEMIUM_GATE_LAUNCH = process.env.FREEMIUM_GATE_LAUNCH_DATE
   ? new Date(process.env.FREEMIUM_GATE_LAUNCH_DATE)
   : new Date();
+// 🔍 DIAG (temporär): zeigt beim Start eindeutig, ob das Flag als true ankommt.
+console.log(`🔍 [Freemium-Gate] Startup: FREEMIUM_GATE_ENABLED raw=${JSON.stringify(process.env.FREEMIUM_GATE_ENABLED)} → aktiv=${FREEMIUM_GATE_ENABLED} | launch=${FREEMIUM_GATE_LAUNCH.toISOString()}`);
 
 // 🔒 Middleware: PDF-/Gutachten-Export ist Business+ (sobald Flag AN). Schließt den Download-Bypass
 // der gesperrten Analyse. Default-Flag AUS → next() (kein Effekt). fail-open bei Fehler (erlaubt).
@@ -1756,6 +1758,8 @@ router.get("/:id", verifyToken, async (req, res) => {
           launchDate: FREEMIUM_GATE_LAUNCH,
           isFirstAnalysis
         });
+        // 🔍 DIAG (temporär): zeigt pro Vertrag-Öffnen, was die Sperre entschieden hat.
+        console.log(`🔍 [Freemium-Gate] GET /:id ${id} | plan=${gateUser?.subscriptionPlan || 'free'} | orgPaid=${!!access.membership} | isFirst=${isFirstAnalysis} | analyzedAt=${enrichedContract.analyzedAt || enrichedContract.lastAnalyzed} | → gated=${payload.gated === true}`);
       } catch (gateErr) {
         console.warn(`⚠️ [Freemium-Gate] fail-open (volle Ansicht): ${gateErr.message}`);
       }
