@@ -896,10 +896,14 @@
 .disabledUpload .uploadPrompt h3 {
   opacity: 1;
   color: #0f172a;
+  margin-bottom: 8px;
 }
 .disabledUpload .uploadOr {
   opacity: 1;
   color: #64748b;
+  max-width: 360px;
+  margin: 0 auto 22px;   /* klarer Abstand zum Button + zentrierte, lesbare Zeilenbreite */
+  line-height: 1.6;
 }
 .disabledUpload .uploadFormats {
   opacity: 0.55;
