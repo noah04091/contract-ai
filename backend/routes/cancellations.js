@@ -289,6 +289,7 @@ router.post("/send", verifyToken, sensitiveLimiter, async (req, res) => {
         // 14-Tage Erinnerung — Kündigungsbestätigung prüfen
         const reminderDate = new Date();
         reminderDate.setDate(reminderDate.getDate() + 14);
+        reminderDate.setUTCHours(12, 0, 0, 0); // 🆕 19.06.: auf 12:00 UTC fixieren → Erinnerung feuert am EIGENEN Tag (nicht 1 Tag früh), konsistent mit createLocalDate
         await req.db.collection("contract_events").insertOne({
           userId,
           contractId: new ObjectId(contractId),
@@ -688,6 +689,7 @@ router.post("/confirmation-response", verifyToken, sensitiveLimiter, async (req,
       // 4. Neue 14-Tage Erinnerung erstellen
       const nextReminderDate = new Date();
       nextReminderDate.setDate(nextReminderDate.getDate() + 14);
+      nextReminderDate.setUTCHours(12, 0, 0, 0); // 🆕 19.06.: auf 12:00 UTC fixieren → feuert am eigenen Tag
       await req.db.collection("contract_events").insertOne({
         userId,
         contractId: cancellation.contractId ? new ObjectId(cancellation.contractId) : null,
@@ -805,6 +807,7 @@ router.post("/send-reminder", verifyToken, sensitiveLimiter, async (req, res) =>
     // 4. Create new 14-day reminder event
     const nextReminderDate = new Date();
     nextReminderDate.setDate(nextReminderDate.getDate() + 14);
+    nextReminderDate.setUTCHours(12, 0, 0, 0); // 🆕 19.06.: auf 12:00 UTC fixieren → feuert am eigenen Tag
     await req.db.collection("contract_events").insertOne({
       userId,
       contractId: cancellation.contractId ? new ObjectId(cancellation.contractId) : null,

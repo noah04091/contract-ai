@@ -25,6 +25,67 @@ function maskEmail(email) {
  * Hauptfunktion fuer den taeglichen Notification-Check
  * Fuegt E-Mails zur Queue hinzu (statt direktem Versand)
  */
+/**
+ * Events, deren DATUM bereits der gewollte Benachrichtigungstag IST (Frist-Hinweise +
+ * alle Erinnerungs-/Vorwarn-Events): Sie dürfen NIE vorgezogen werden — die Mail kommt an
+ * ihrem eigenen Tag. Spiegelt 1:1 die Inline-Klassifikation in checkAndSendNotifications
+ * (isFristHinweisEvent + hasReminderSemantics). Modul-Ebene + exportiert, damit testbar.
+ */
+const REMINDER_SEMANTIC_TYPES_OWN_DAY = new Set([
+  "CANCELLATION_REMINDER", "MINIMUM_TERM_REMINDER", "PROBATION_REMINDER", "WARRANTY_REMINDER",
+  "PAYMENT_REMINDER", "CUSTOM_REMINDER", "CANCEL_WARNING", "PRICE_INCREASE_WARNING",
+  "CANCELLATION_CONFIRMATION_CHECK"
+]);
+function eventFiresOnlyOnOwnDay(event) {
+  const src = event?.metadata?.source;
+  const isFristHinweis = src === "fristHinweis-recurring" || src === "fristHinweis-anchor";
+  const isReminder = /_REMINDER_\d+D$/i.test(event?.type || "");
+  return isFristHinweis || isReminder ||
+    REMINDER_SEMANTIC_TYPES_OWN_DAY.has(event?.type) ||
+    event?.isManual === true || event?.manuallyCreated === true;
+}
+
+// Lifecycle-/Stichtag-Notizen, deren TEXT tagesgenau ist ("Kündigungsfenster öffnet HEUTE",
+// "letzter Tag", "verlängert sich heute", "Preis steigt heute", Jahres-Review). Sie haben i.d.R.
+// KEINE eigenen _REMINDER-Begleiter und würden sonst übers Lookahead bis zu 7 Tage zu früh
+// rausgehen → der Text würde lügen. Darum: am EIGENEN Tag feuern.
+const OWN_DAY_LIFECYCLE_TYPES = new Set([
+  "CANCEL_WINDOW_OPEN", "LAST_CANCEL_DAY", "AUTO_RENEWAL", "REVIEW", "PRICE_INCREASE"
+  // CANCEL_WARNING + PRICE_INCREASE_WARNING bereits in REMINDER_SEMANTIC_TYPES_OWN_DAY
+]);
+
+/**
+ * Gehört dieses Event auf seinen EIGENEN Tag (statt via Lookahead früh)? JA wenn:
+ *  (1) Vorwarnung/Frist-Hinweis/manuell (eventFiresOnlyOnOwnDay), ODER
+ *  (2) tagesgenaue Lifecycle-Notiz (OWN_DAY_LIFECYCLE_TYPES), ODER
+ *  (3) ein Stichtag MIT Reminder-Abdeckung (die Reminder haben vorgewarnt → der Stichtag selbst
+ *      gehört auf den Tag, nicht davor).
+ * NEIN nur für nackte Stichtage OHNE Reminder → die behalten das Lookahead-Sicherheitsnetz
+ * (frühe Warnung, sonst gäbe es gar keine). Sichere Fehlrichtung: vergessener Typ → feuert
+ * höchstens zu früh, nie "gar nicht".
+ */
+function firesOnOwnDay(event, hasReminderCoverage) {
+  return eventFiresOnlyOnOwnDay(event)
+    || OWN_DAY_LIFECYCLE_TYPES.has(event?.type)
+    || hasReminderCoverage === true;
+}
+
+/**
+ * Versand-Entscheidung: dieses Event auf seinen eigenen Tag aufschieben (statt zu früh)? JA wenn
+ *  (a) es gehört auf den eigenen Tag (firesOnOwnDay),
+ *  (b) es ist noch nicht sein Tag (daysUntilEventDay >= 1),
+ *  (c) ⏱️ ZEIT-WÄCHTER: Uhrzeit liegt NACH dem Cron-Lauf (UTC-Stunde >= 9; Cron 07:00 Sommer /
+ *      08:00 Winter UTC) → am eigenen Tag garantiert noch im `date >= now`-Fenster.
+ * Ohne (c) würde ein früh gespeichertes Event am eigenen Tag aus dem Fenster fallen und NIE
+ * gesendet (aus "zu früh" würde "gar nicht"); solche behalten ihr bisheriges Verhalten. Regulär
+ * erzeugte Events liegen auf 12:00 (createLocalDate) → (c) erfüllt. DB-Audit 19.06.: 648/648 auf 12:00.
+ */
+function shouldDeferToOwnDay(event, daysUntilEventDay, hasReminderCoverage) {
+  if (daysUntilEventDay < 1) return false;
+  if (!firesOnOwnDay(event, hasReminderCoverage)) return false;
+  return new Date(event.date).getUTCHours() >= 9;
+}
+
 async function checkAndSendNotifications(db) {
   try {
     console.log("Starte Calendar Notification Check...");
@@ -180,6 +241,19 @@ async function checkAndSendNotifications(db) {
         event.manuallyCreated === true;
       if (isUserPickedDate && daysUntilEventDay >= 1) {
         console.log(`⏸️ User-Exakt-Termin skip: ${event.type} in ${daysUntilEventDay}d — feuert am gewählten Tag`);
+        continue;
+      }
+
+      // 🆕 Bug-Fix 19.06.2026: Mails feuern am EIGENEN Tag statt zu früh — für (1) Vorwarnungen,
+      // (2) tagesgenaue Lifecycle-Notizen (Kündigungsfenster/letzter Tag/Verlängerung/Review/
+      // Preiserhöhung) UND (3) Stichtage MIT Reminder-Abdeckung. Wurzel: die "1-Tag-Toleranz" (>1)
+      // + Lookahead ließen diese 1 bis 7 Tage zu früh raus (verifiziert: PAYMENT_DUE_REMINDER_14D
+      // dat. 20.06 ging am 19.06 raus). Nackte Stichtage OHNE Reminder behalten das Lookahead-
+      // Sicherheitsnetz (frühe Warnung). Zeit-Wächter → nie verpasst. Details in shouldDeferToOwnDay.
+      const hasReminderCoverage = !!(event.contractId &&
+        remindersByContractAndBaseType.has(`${event.contractId.toString()}|${event.type}`));
+      if (shouldDeferToOwnDay(event, daysUntilEventDay, hasReminderCoverage)) {
+        console.log(`⏸️ Feuert erst am eigenen Tag: ${event.type} (in ${daysUntilEventDay}d) — skip`);
         continue;
       }
 
@@ -728,5 +802,8 @@ module.exports = {
   checkAndSendNotifications,
   queueEventNotification,
   processEmailQueue,
-  requeueEventOnQueueFailure
+  requeueEventOnQueueFailure,
+  eventFiresOnlyOnOwnDay,
+  firesOnOwnDay,
+  shouldDeferToOwnDay
 };

@@ -1674,9 +1674,13 @@ const connectDB = async () => {
         console.log("⏰ Täglicher Reminder-Check gestartet");
         try {
           await withCronLogging('reminder-calendar', async () => {
-            // Alte Reminder-Funktion
-            const { checkContractsAndSendReminders } = require("./services/cron");
-            await checkContractsAndSendReminders();
+            // ⛔ DEAKTIVIERT 19.06.2026: Alte Reminder-Funktion (services/cron.js). Sendete an die
+            // System-Adresse (process.env.EMAIL_USER, NICHT den User) UND täglich für 30 Tage statt
+            // am exakten Tag. Redundant zum sauberen calendarNotifier-System unten. Aktuell 0
+            // Verträge mit reminder:true → kein Effekt; abgeschaltet, um die latente Spam-Landmine
+            // zu entfernen.
+            // const { checkContractsAndSendReminders } = require("./services/cron");
+            // await checkContractsAndSendReminders();
 
             // ✅ CALENDAR: Neue Calendar Notifications
             console.log("📅 Calendar Notification Check gestartet");
