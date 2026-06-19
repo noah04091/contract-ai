@@ -86,6 +86,22 @@ function shouldDeferToOwnDay(event, daysUntilEventDay, hasReminderCoverage) {
   return new Date(event.date).getUTCHours() >= 9;
 }
 
+/**
+ * Abfrage-Fenster für fällige Events (Option A, 19.06.2026 — Cron-Robustheit OHNE späte Mails).
+ * Untergrenze = HEUTE 00:00 (Tagesbeginn), NICHT der exakte Jetzt-Zeitpunkt: so werden Termine,
+ * die HEUTE fällig sind, auch dann noch erfasst, wenn der Cron mal Stunden später läuft (z.B.
+ * Render-Verzögerung) — sonst fiele ein 12:00-Event bei einem 14:00-Lauf aus dem Fenster.
+ * WICHTIG: nur ab HEUTE — vergangene Tage werden NICHT nachgefasst → respektiert die Entscheidung
+ * „keine verspäteten Mails" (driver-6-fix). Obergrenze = jetzt + lookaheadDays (unverändert).
+ */
+function getSendWindow(now, lookaheadDays) {
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(now);
+  end.setDate(end.getDate() + lookaheadDays);
+  return { start, end };
+}
+
 async function checkAndSendNotifications(db) {
   try {
     console.log("Starte Calendar Notification Check...");
@@ -102,15 +118,15 @@ async function checkAndSendNotifications(db) {
     //              feuern an ihrem eigenen Datum (Fix 04.06.2026: vorher kamen
     //              "7 Tage vorher"-Mails bis zu 7 Tage zu früh = 14 Tage vor dem Termin)
     const lookaheadDays = parseInt(process.env.REMINDER_LOOKAHEAD_DAYS || "7");
-    const lookaheadDate = new Date();
-    lookaheadDate.setDate(lookaheadDate.getDate() + lookaheadDays);
+    // 🆕 Option A: Fenster ab HEUTE 00:00 (Cron-Robustheit, keine späten Mails) — siehe getSendWindow.
+    const { start: windowStart, end: lookaheadDate } = getSendWindow(now, lookaheadDays);
 
     // Hole alle anstehenden Events (nur "scheduled" Status)
     const upcomingEvents = await db.collection("contract_events")
       .aggregate([
         {
           $match: {
-            date: { $gte: now, $lte: lookaheadDate },
+            date: { $gte: windowStart, $lte: lookaheadDate },
             status: "scheduled",
             severity: { $in: ["info", "warning", "critical"] }
           }
@@ -805,5 +821,6 @@ module.exports = {
   requeueEventOnQueueFailure,
   eventFiresOnlyOnOwnDay,
   firesOnOwnDay,
-  shouldDeferToOwnDay
+  shouldDeferToOwnDay,
+  getSendWindow
 };

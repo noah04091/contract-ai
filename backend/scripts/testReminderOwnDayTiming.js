@@ -11,7 +11,7 @@
  *
  * Testet die exportierten firesOnOwnDay + shouldDeferToOwnDay (= exakt die Inline-Entscheidung).
  */
-const { firesOnOwnDay, shouldDeferToOwnDay } = require('../services/calendarNotifier');
+const { firesOnOwnDay, shouldDeferToOwnDay, getSendWindow } = require('../services/calendarNotifier');
 
 let pass = 0, fail = 0;
 const ok = (n, c, info = '') => { if (c) { pass++; console.log(`  ✅ ${n}`); } else { fail++; console.log(`  ❌ ${n} ${info}`); } };
@@ -52,6 +52,18 @@ const early = (type, extra = {}) => ({ type, date: new Date(Date.UTC(2026, 6, 20
   console.log('\n════ ⏱️ Zeit-Wächter: früh gespeichert → NICHT aufschieben (kein Miss) ════');
   ok('Reminder morgen aber 03:00 UTC → NICHT aufschieben', shouldDeferToOwnDay(early('PAYMENT_DUE_REMINDER_14D'), 1, false) === false);
   ok('LAST_CANCEL_DAY morgen aber 03:00 UTC → NICHT aufschieben', shouldDeferToOwnDay(early('LAST_CANCEL_DAY'), 1, false) === false);
+
+  console.log('\n════ Option A — Cron-Robustheit (getSendWindow): heute drin, gestern raus ════');
+  {
+    const now = new Date(Date.UTC(2026, 6, 20, 14, 30, 0)); // jetzt = 14:30 (Cron läuft mal spät)
+    const { start, end } = getSendWindow(now, 7);
+    const todayNoon = new Date(now); todayNoon.setHours(12, 0, 0, 0);   // 12:00-Event von HEUTE
+    const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1); yesterday.setHours(12, 0, 0, 0);
+    ok('Fenster-Start = Tagesbeginn (<= jetzt)', start <= now);
+    ok('heutiger 12:00-Termin bleibt im Fenster, OBWOHL jetzt schon 14:30 (Option A!)', todayNoon < now && todayNoon >= start);
+    ok('gestriger Termin ist NICHT im Fenster (keine späten Mails)', yesterday < start);
+    ok('Fenster-Ende = jetzt + 7 Tage', Math.round((end - now) / 86400000) === 7);
+  }
 
   console.log(`\n──────── Ergebnis: ${pass} bestanden, ${fail} fehlgeschlagen ────────`);
   process.exit(fail === 0 ? 0 : 1);
