@@ -198,6 +198,10 @@ interface UploadFileItem {
   file: File;
   status: 'pending' | 'uploading' | 'analyzing' | 'completed' | 'error' | 'duplicate';
   progress: number;
+  // 🛡️ Contract-ID aus der Upload-Response → robustes Wiederfinden der Datei für die Analyse.
+  // Nötig, weil das Backend kaputte Dateinamen bereinigt (z.B. "$value.pdf" → "Dokument"),
+  // wodurch ein Abgleich über den Dateinamen fehlschlägt.
+  contractId?: string;
   analyzed?: boolean; // ✅ Wurde analysiert (true) oder nur hochgeladen (false/undefined)?
   result?: AnalysisResult;
   error?: string;
@@ -2652,7 +2656,7 @@ export default function Contracts() {
           } else if (result?.success && result?.contract) {
             setUploadFiles(prev => prev.map(item =>
               item.id === fileItem.id
-                ? { ...item, status: 'completed', progress: 100 }
+                ? { ...item, status: 'completed', progress: 100, contractId: result.contract._id }
                 : item
             ));
 
@@ -2714,8 +2718,12 @@ export default function Contracts() {
       for (let i = 0; i < contractsToAnalyze.length; i++) {
         const contract = contractsToAnalyze[i];
 
-        // Finde die entsprechende Datei im uploadFiles State
-        const uploadFileItem = uploadFiles.find(item => item.file.name === contract.name);
+        // Finde die entsprechende Datei im uploadFiles State.
+        // 🛡️ Primär über die stabile Contract-ID matchen (robust gegen Backend-Bereinigung
+        // kaputter Dateinamen wie "$value.pdf" → "Dokument"); Dateiname nur noch als Fallback.
+        const uploadFileItem =
+          uploadFiles.find(item => item.contractId === contract._id) ||
+          uploadFiles.find(item => item.file.name === contract.name);
 
         if (!uploadFileItem) {
           console.error(`❌ File not found in uploadFiles for: ${contract.name}`);
