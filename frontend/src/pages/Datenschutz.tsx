@@ -321,6 +321,21 @@ export default function Datenschutz() {
                     <li>Daten werden bei OpenAI nach max. 30 Tagen gelöscht</li>
                   </ul>
                 </div>
+
+                <h3 className={styles.textStrong} style={{ marginBottom: '12px', marginTop: '24px', fontSize: '1rem' }}>
+                  KI-Verarbeitung (Anthropic Claude)
+                </h3>
+                <p>
+                  Für die KI-gestützte Erstellung und Vorbereitung von Verträgen übermitteln wir Eingaben
+                  kurzfristig an die <strong>Anthropic API (Claude)</strong>, Anthropic PBC, USA.
+                </p>
+                <div className={`${styles.highlightBox} ${styles.success}`}>
+                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                    <li>Daten werden <strong>nicht</strong> zum Training der Modelle verwendet</li>
+                    <li>Verschlüsselte Übertragung (HTTPS)</li>
+                    <li>Übermittlung in die USA auf Basis der <strong>EU-Standardvertragsklauseln (SCC)</strong></li>
+                  </ul>
+                </div>
               </div>
             </section>
 

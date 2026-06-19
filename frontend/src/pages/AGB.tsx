@@ -616,6 +616,7 @@ export default function AGB() {
                 <ul className={styles.list}>
                   <li><strong>AWS S3:</strong> Speicherung hochgeladener Vertragsdokumente</li>
                   <li><strong>OpenAI:</strong> KI-Analyse der Vertragsinhalte mittels GPT-Modellen</li>
+                  <li><strong>Anthropic (Claude):</strong> KI-gestützte Vertragserstellung und Formular-Vorbereitung</li>
                   <li><strong>Stripe:</strong> Zahlungsabwicklung für kostenpflichtige Tarife</li>
                   <li><strong>MongoDB Atlas:</strong> Datenbank für Nutzerdaten und Vertragsmetadaten</li>
                 </ul>
@@ -675,7 +676,7 @@ export default function AGB() {
 
                 <h3 className={styles.subTitle}>8.2 KI-Technologie und Fehlerpotential</h3>
                 <p>
-                  Die Plattform nutzt künstliche Intelligenz (OpenAI GPT) zur Analyse von Verträgen.
+                  Die Plattform nutzt künstliche Intelligenz (u. a. OpenAI GPT und Anthropic Claude) zur Analyse und Erstellung von Verträgen.
                   Trotz modernster Technologie können KI-Systeme Fehler machen, Inhalte falsch
                   interpretieren oder wichtige Klauseln übersehen. Der Nutzer ist verpflichtet,
                   alle KI-generierten Inhalte eigenverantwortlich zu prüfen und zu bewerten.

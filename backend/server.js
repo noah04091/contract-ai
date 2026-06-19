@@ -864,6 +864,17 @@ const connectDB = async () => {
       });
     }
 
+    // ✅ 8.1 GENERATE 2.0 - Brief → vorausgefülltes Formular (additiv, isoliert)
+    //    Muss VOR den allgemeinen /api/contracts-Mounts stehen (kein Shadowing).
+    //    Bei Ladefehler: Route fehlt einfach (Frontend faellt aufs Formular zurueck) – kein Crash.
+    try {
+      const briefToFormRouter = require("./routes/briefToForm").router;
+      app.use("/api/contracts/brief-to-form", verifyToken, briefToFormRouter);
+      console.log("✅ Generate-2.0 Route geladen unter /api/contracts/brief-to-form");
+    } catch (err) {
+      console.error("⚠️ Brief-to-Form-Route nicht geladen (Feature optional, nicht kritisch):", err.message);
+    }
+
     // ✅ 8.5 EXCEL EXPORT - Portfolio als Excel-Datei exportieren
     try {
       const exportContractsRouter = require("./routes/exportContracts");

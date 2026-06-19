@@ -8,7 +8,7 @@ import {
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
   Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown, FolderPlus,
-  Scale
+  Scale, Lock, Briefcase, Home, Shield, ShoppingCart
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -3519,6 +3519,10 @@ export default function Generate() {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedType, setSelectedType] = useState<ContractType | null>(null);
   const [inputMode, setInputMode] = useState<'detailed' | 'guided'>('detailed');
+  // ✨ Generate 2.0 — „Einfach beschreiben"-Modus (Step 1)
+  const [briefMode, setBriefMode] = useState<boolean>(false);
+  const [briefText, setBriefText] = useState<string>("");
+  const [isBriefProcessing, setIsBriefProcessing] = useState<boolean>(false);
 
   // Usage tracking for Business plan
   const [usageData, setUsageData] = useState<{
@@ -4217,6 +4221,60 @@ export default function Generate() {
   };
 
   // 📂 Initialisiere erste Gruppe als offen wenn Vertragstyp gewählt wird
+  // ✨ Generate 2.0 — Brief → Typ erkennen → Formular vorausfüllen → Review (Step 2)
+  const handleBriefSubmit = async () => {
+    if (userPlan === 'free') {
+      toast.info('🔒 Vertragserstellung nur mit Business/Enterprise verfügbar');
+      return;
+    }
+    const brief = briefText.trim();
+    if (brief.length < 10) return;
+    setIsBriefProcessing(true);
+    try {
+      const res = await fetch("/api/contracts/brief-to-form", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          brief,
+          contractTypes: CONTRACT_TYPES.map((t) => ({
+            id: t.id, name: t.name, description: t.description, fields: t.fields,
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        toast.info(data?.message || 'Automatisches Ausfüllen nicht möglich — bitte Vertrag manuell wählen.');
+        setBriefMode(false);
+        return;
+      }
+      const detected = CONTRACT_TYPES.find((t) => t.id === data.typeId);
+      if (!detected) {
+        toast.info('Vertragstyp nicht erkannt — bitte manuell wählen.');
+        setBriefMode(false);
+        return;
+      }
+      // 1) Bestehende Auswahl-Logik (Reset + Firmen-Vorbefüllung + Step 2 + Accordion)
+      handleTypeSelect(detected);
+      // 2) KI-Werte NUR nicht-leer drüberlegen → Firmen-Vorbefüllung bleibt erhalten
+      const ai = (data.formData || {}) as Record<string, unknown>;
+      setFormData((prev) => {
+        const merged: FormDataType = { ...prev };
+        Object.keys(ai).forEach((k) => {
+          const v = ai[k];
+          if (typeof v === 'string' && v.trim()) merged[k] = v;
+        });
+        return merged;
+      });
+      toast.success(`✨ ${detected.name} erkannt — bitte Angaben prüfen und ergänzen.`);
+    } catch {
+      toast.info('Automatisches Ausfüllen nicht möglich — bitte Vertrag manuell wählen.');
+      setBriefMode(false);
+    } finally {
+      setIsBriefProcessing(false);
+    }
+  };
+
   const initializeAccordion = (type: ContractType) => {
     const groupedFields = type.fields.reduce((groups, field) => {
       const group = field.group || 'Allgemeine Angaben';
@@ -6118,6 +6176,20 @@ export default function Generate() {
                     exit={{ opacity: 0, x: -20 }}
                     className={styles.stepContent}
                   >
+                    {/* ✨ Generate 2.0 — Modus-Umschalter (klassisch | beschreiben) */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '26px' }}>
+                      <div style={{ display: 'inline-flex', background: '#EEF1F6', borderRadius: '12px', padding: '4px', gap: '2px' }}>
+                        <button type="button" onClick={() => setBriefMode(false)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer', font: 'inherit', fontWeight: 600, fontSize: '13.5px', padding: '9px 16px', borderRadius: '9px', background: !briefMode ? '#fff' : 'transparent', color: !briefMode ? '#0B1324' : '#667085', boxShadow: !briefMode ? '0 1px 2px rgba(16,30,60,.10), 0 2px 8px rgba(16,30,60,.06)' : 'none' }}>
+                          <FileText size={16} /> Vertrag wählen
+                        </button>
+                        <button type="button" onClick={() => setBriefMode(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', border: 'none', cursor: 'pointer', font: 'inherit', fontWeight: 600, fontSize: '13.5px', padding: '9px 16px', borderRadius: '9px', background: briefMode ? '#fff' : 'transparent', color: briefMode ? '#0B1324' : '#667085', boxShadow: briefMode ? '0 1px 2px rgba(16,30,60,.10), 0 2px 8px rgba(16,30,60,.06)' : 'none' }}>
+                          <Sparkles size={16} color={briefMode ? '#2E6CF6' : '#667085'} /> Einfach beschreiben
+                          <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '.04em', color: '#2E6CF6', background: 'rgba(46,108,246,.10)', padding: '2px 7px', borderRadius: '6px' }}>NEU</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {!briefMode && (<>
                     <div className={styles.stepHeader}>
                       <div className={styles.stepHeaderContent}>
                         <div>
@@ -6177,6 +6249,52 @@ export default function Generate() {
                         </motion.button>
                       ))}
                     </div>
+                    </>)}
+
+                    {briefMode && (
+                      <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+                        <h2 style={{ fontSize: '25px', fontWeight: 700, letterSpacing: '-.022em', textAlign: 'center', marginBottom: '9px' }}>Beschreiben Sie Ihren Vertrag</h2>
+                        <p style={{ color: '#667085', fontSize: '14.5px', textAlign: 'center', maxWidth: '520px', margin: '0 auto 26px', lineHeight: 1.55 }}>
+                          Die KI erkennt den passenden Vertragstyp und füllt das Formular für Sie vor. Sie prüfen am Ende und passen bei Bedarf an.
+                        </p>
+
+                        <div style={{ background: '#fff', border: '1px solid #E7EAF0', borderRadius: '16px', padding: '8px', boxShadow: '0 1px 2px rgba(16,30,60,.05)' }}>
+                          <div style={{ position: 'relative' }}>
+                            <span style={{ position: 'absolute', top: '14px', left: '16px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 600, color: '#2E6CF6' }}>
+                              <Sparkles size={13} /> Ihre Beschreibung
+                            </span>
+                            <textarea
+                              value={briefText}
+                              onChange={(e) => setBriefText(e.target.value)}
+                              placeholder={'In ein, zwei Sätzen — Stichworte reichen.\n\nBeispiel: „Freelancer-Vertrag, ich entwickle als Webentwickler eine Website für einen Kunden, 80 €/Stunde, Projekt über 3 Monate, Nutzungsrechte erst nach voller Zahlung."'}
+                              style={{ width: '100%', minHeight: '148px', resize: 'none', font: 'inherit', fontSize: '14.5px', color: '#0B1324', border: 'none', borderRadius: '12px', padding: '38px 16px 16px', background: 'transparent', lineHeight: 1.6, outline: 'none' }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', padding: '4px 10px 12px' }}>
+                            {[
+                              { Icon: Briefcase, label: 'Freelancer-Projekt', text: 'Freelancer-Vertrag: ' },
+                              { Icon: Home, label: 'Wohnung vermieten', text: 'Mietvertrag für eine Wohnung: ' },
+                              { Icon: Shield, label: 'Geheimhaltung (NDA)', text: 'Geheimhaltungsvereinbarung (NDA) zwischen ' },
+                              { Icon: ShoppingCart, label: 'Etwas verkaufen', text: 'Kaufvertrag: ' },
+                            ].map(({ Icon, label, text }) => (
+                              <button key={label} type="button" onClick={() => setBriefText((p) => (p && p.trim() ? p : text))}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: '#41506b', background: '#fff', border: '1px solid #E7EAF0', borderRadius: '8px', padding: '6px 11px', cursor: 'pointer', font: 'inherit' }}>
+                                <Icon size={13} color="#8a94a6" /> {label}
+                              </button>
+                            ))}
+                          </div>
+                          <div style={{ padding: '4px 6px 6px' }}>
+                            <button type="button" onClick={handleBriefSubmit} disabled={isBriefProcessing || briefText.trim().length < 10}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '9px', width: '100%', padding: '14px 20px', border: 'none', borderRadius: '12px', cursor: (isBriefProcessing || briefText.trim().length < 10) ? 'not-allowed' : 'pointer', background: 'linear-gradient(135deg,#2E6CF6,#1E53D8)', color: '#fff', font: 'inherit', fontWeight: 600, fontSize: '15px', boxShadow: '0 6px 16px -4px rgba(46,108,246,.45)', opacity: (isBriefProcessing || briefText.trim().length < 10) ? 0.6 : 1 }}>
+                              {isBriefProcessing ? 'Wird erkannt…' : (<>Vertrag erkennen &amp; Formular vorausfüllen <ArrowRight size={18} /></>)}
+                            </button>
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', justifyContent: 'center', color: '#8a94a6', fontSize: '12.5px', marginTop: '16px' }}>
+                          <Lock size={14} /> Es wird nichts automatisch erstellt — Sie behalten die volle Kontrolle.
+                        </div>
+                      </div>
+                    )}
 
                   </motion.div>
                 )}

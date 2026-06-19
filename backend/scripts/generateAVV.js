@@ -715,6 +715,7 @@ table(
   [
     ["Amazon Web Services (AWS S3)", "Speicherung hochgeladener Vertragsdokumente (Objektspeicher)", "EU/EWR (AWS)", "EU/EWR; ergänzend DPF / SCC"],
     ["OpenAI, L.L.C.", "KI-gestützte Vertragsanalyse und -verarbeitung (kein Training, Löschung max. 30 Tage)", "USA", "EU-US Data Privacy Framework + SCC"],
+    ["Anthropic, PBC", "KI-gestützte Vertragserstellung und Formular-Vorbereitung (kein Training der Modelle)", "USA", "EU-Standardvertragsklauseln (SCC)"],
     ["Stripe Payments Europe, Ltd.", "Zahlungs- und Abonnementabwicklung", "EU — Dublin, Irland", "EU/EWR"],
     ["Vercel Inc.", "Hosting/Auslieferung der Web-Anwendung (Frontend)", "USA", "EU-US Data Privacy Framework"],
     ["Render Services, Inc.", "Hosting der Backend-/API-Anwendung", "EU — Frankfurt", "EU/EWR"],
