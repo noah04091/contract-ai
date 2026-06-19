@@ -891,12 +891,18 @@
   pointer-events: none;
 }
 
-/* Nur Texte und Icons verblassen, nicht den Button */
-.disabledUpload .uploadPrompt h3,
-.disabledUpload .uploadPrompt p,
-.disabledUpload .uploadIcon,
+/* Limit-Zustand = Upgrade-Hinweis → soll AUFFALLEN: Titel kräftig dunkel, Text gut lesbar
+   (NICHT verblassen — wie in der E-Mail-Upload-Referenz). Nur der Format-Hinweis bleibt dezent. */
+.disabledUpload .uploadPrompt h3 {
+  opacity: 1;
+  color: #0f172a;
+}
+.disabledUpload .uploadOr {
+  opacity: 1;
+  color: #64748b;
+}
 .disabledUpload .uploadFormats {
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
 .lockIcon {
