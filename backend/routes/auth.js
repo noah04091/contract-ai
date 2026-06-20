@@ -817,6 +817,9 @@ router.delete("/delete", verifyToken, async (req, res) => {
     try { uidVariants.push(new ObjectId(req.user.userId)); } catch (_) { /* ungültige id ignorieren */ }
     await contractsCollection.deleteMany({ userId: { $in: uidVariants } });
     await dbInstance.collection("contract_events").deleteMany({ userId: { $in: uidVariants } });
+    // 🆕 19.06.2026 (DSGVO-Lückenschluss): interne Kosten-Tracking-Einträge mitlöschen — der
+    // Admin-Lösch-Pfad tat das schon, die Selbst-Löschung hatte es vergessen → Waisen blieben.
+    await dbInstance.collection("cost_tracking").deleteMany({ userId: { $in: uidVariants } });
     // 🧹 DSGVO: Legal-Lens-Daten (Analysen + Fortschritt/Notizen) des Accounts mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId: req.user.userId });
     await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
