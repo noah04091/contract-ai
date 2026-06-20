@@ -1,8 +1,31 @@
 # Generate 2.0 — Plan & Fahrplan (lebendes Dokument)
 
 **Letzte Aktualisierung:** 2026-06-19
-**Status:** Audit abgeschlossen, grünes Licht → bereit für Schritt 2 (Backend-Endpoint)
+**Status:** 🔁 PIVOT auf **Premium-Chat-Modus** (Claude Opus + AVV-Design). Frühere Form-Fill-Variante gebaut & live, aber **ausgeblendet** (`SHOW_BRIEF_MODE=false`). Neuer Bau startet beim „Motor". (Siehe Pivot-Abschnitt direkt unten.)
 **Eigentümer:** Noah Liebold (Contract AI) · umgesetzt mit Claude
+
+---
+
+## 🔁 WICHTIGER PIVOT (19.06.2026) — Premium-Chat-Modus statt Form-Fill
+**Missverständnis geklärt:** Die zuerst gebaute Variante („KI füllt nur das bestehende Formular vor → danach erzeugt die ALTE GPT-4o-Pipeline den Vertrag im alten Design") entspricht NICHT der User-Vision. Der User will das **AVV-Erlebnis**.
+
+**Neue Zielvision (verbindlich):**
+> Neuer **Premium-Modus** neben dem klassischen Generator. Ablauf: **beschreiben → intelligente, adaptive Rückfragen** (System erkennt, was zur guten Vertragserstellung noch fehlt, und fragt nur das — chat-artig, so einfach wie möglich) → **Claude Opus** schreibt den **vollständigen Top-Vertrag** (Klauseln/Substanz) → **AVV-Premium-Design (PDF)** → danach **offener Chat zum Nachschärfen** (wie ChatGPT).
+
+**Status Form-Fill-Variante:** Endpoint `/api/contracts/brief-to-form` live; Frontend-Toggle **per `SHOW_BRIEF_MODE=false` ausgeblendet** (Code bleibt, reaktivierbar). Nichts verschwendet.
+
+**Wiederverwendbar (großer Vorsprung):**
+- `backend/scripts/generateV2Prototype.js` = der **Motor** (Claude Opus: beschreiben→Fragen→Vertrag, erzeugt `GenerateV2_Demo.pdf`).
+- `backend/scripts/generateAVV.js` = der **Premium-Renderer** (AVV-Layout) → zu generischem Vertrags→PDF verallgemeinern.
+- Anthropic-Integration, Render-`ANTHROPIC_API_KEY`, Compliance (Datenschutz/AVV/AGB) = **schon erledigt**.
+
+**Neuer Bau-Plan (Premium-Modus), jeweils Detektiv→Konzern→Grün-Licht→TÜV + Tests:**
+1. ✅ **Motor** — GEBAUT & getestet (`backend/scripts/generateV2Motor.js`). Vager Brief „Kaufvertrag" → erkennt „reicht nicht" → 5 kluge Rückfragen → nach Antworten vollständiger Kfz-Kaufvertrag (AVV-Qualität) → Premium-PDF (`GenerateV2_Motor_Demo.pdf`, 3 S.). **Tuning ✅ erledigt:** Bewertungs-Prompt kalibriert (zentrale Eckpunkte da → ready=true, höchstens 1 Frage-Runde). Re-Test: Runde 1 NEIN→fragt, Runde 2 JA→generiert. Kein Über-Fragen mehr.
+2. ✅ **Backend-Endpoints** — `backend/routes/premiumGenerate.js` (additiv, isoliert): `POST /api/contracts/premium/chat` (assess/Rückfragen), `/generate` (Limit-Check 1:1 wie generate.js + Opus-Generierung + Speicherung in `contracts` als `premium_opus_v1`, zählt aufs Limit), `/pdf` (AVV-Premium-Layout aus gespeichertem Text). DB via `config/database`-Singleton. Eigener IPv6-sicherer Limiter. **In server.js gemountet** (8.2, vor generischen /api/contracts, try/catch). Core-Test 8/8 grün (`testPremiumCore.js`, kein Prod-Write). Syntax server.js+Route OK. **Nicht deployt.**
+3. ⬜ **Chat-Oberfläche** (neuer Premium-Modus, Stripe/DocuSign-Niveau) — erst Mockup, dann live.
+4. ⬜ **Nachschärfen-im-Chat** + koordinierter Go-Live (Preview→Prod).
+
+⚠️ Die Abschnitte 1–9 unten beschreiben die ALTE Form-Fill-Variante (Referenz/Reaktivierung).
 
 ---
 

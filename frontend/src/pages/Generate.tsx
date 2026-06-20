@@ -17,6 +17,7 @@ import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import CreateTemplateModal, { TemplateFormData } from "../components/CreateTemplateModal";
 import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
 import GuidedContractWizard from "../components/GuidedContractWizard";
+import PremiumChat from "../components/PremiumChat";
 import EnhancedSignatureModal from "../components/EnhancedSignatureModal";
 import Step3ClauseSidebar from "../components/Step3ClauseSidebar";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
@@ -27,6 +28,10 @@ import { getErrorMessage } from "../utils/errorHandling";
 // Sie wird durch den echten Premium-Chat-Modus (Claude Opus + AVV-Design) ersetzt.
 // Code bleibt erhalten (Reaktivierung = true).
 const SHOW_BRIEF_MODE: boolean = false;
+
+// Generate 2.0 Premium-Einstieg: standardmäßig versteckt (für alle Nutzer).
+// Zum Testen auf der echten Seite via ?premium=1 erreichbar. Freischalten für alle = true.
+const SHOW_PREMIUM_ENTRY: boolean = false;
 
 // Types
 export interface FormDataType {
@@ -3528,6 +3533,12 @@ export default function Generate() {
   const [briefMode, setBriefMode] = useState<boolean>(false);
   const [briefText, setBriefText] = useState<string>("");
   const [isBriefProcessing, setIsBriefProcessing] = useState<boolean>(false);
+  // ✨ Generate 2.0 Premium-Modus (KI-Chat-Assistent)
+  const [premiumMode, setPremiumMode] = useState<boolean>(false);
+  const premiumEntryVisible = useMemo(
+    () => SHOW_PREMIUM_ENTRY || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("premium")),
+    []
+  );
 
   // Usage tracking for Business plan
   const [usageData, setUsageData] = useState<{
@@ -5964,6 +5975,14 @@ export default function Generate() {
   // Main Render
   return (
     <>
+      {/* ✨ Generate 2.0 Premium-Modus (KI-Chat) — Overlay, fasst die bestehende Oberfläche nicht an */}
+      {premiumMode && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(11,19,36,.45)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
+          <div style={{ width: "100%", maxWidth: 860 }}>
+            <PremiumChat onClose={() => setPremiumMode(false)} />
+          </div>
+        </div>
+      )}
       <WelcomePopup
         featureId="generator"
         icon={<FileText size={32} />}
@@ -6219,6 +6238,28 @@ export default function Generate() {
                         </motion.button>
                       </div>
                     </div>
+
+                    {/* ✨ Generate 2.0 Premium-Einstieg (KI-Chat-Assistent) — versteckt bis Freigabe */}
+                    {premiumEntryVisible && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (userPlan === 'free') { toast.info('🔒 Vertragserstellung nur mit Business/Enterprise verfügbar'); return; }
+                        setPremiumMode(true);
+                      }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', marginBottom: 22, padding: '16px 20px', borderRadius: 16, border: '1px solid #d6e2fb', background: 'linear-gradient(135deg, rgba(46,108,246,.07), rgba(30,83,216,.04))', font: 'inherit' }}
+                    >
+                      <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#2E6CF6,#1E53D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flex: 'none' }}><Sparkles size={22} /></div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15, color: '#0B1324', display: 'flex', alignItems: 'center', gap: 8 }}>
+                          Lieber im Gespräch erstellen?
+                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: '#2E6CF6', background: 'rgba(46,108,246,.12)', padding: '2px 7px', borderRadius: 6 }}>NEU</span>
+                        </div>
+                        <div style={{ fontSize: 13, color: '#667085', marginTop: 2 }}>Beschreib einfach, was du brauchst — der KI-Assistent fragt nach und schreibt deinen Vertrag.</div>
+                      </div>
+                      <ArrowRight size={20} color="#2E6CF6" />
+                    </button>
+                    )}
 
                     <div className={styles.contractTypesGrid}>
                       {CONTRACT_TYPES.map((type) => (

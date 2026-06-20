@@ -875,6 +875,16 @@ const connectDB = async () => {
       console.error("⚠️ Brief-to-Form-Route nicht geladen (Feature optional, nicht kritisch):", err.message);
     }
 
+    // ✅ 8.2 GENERATE 2.0 PREMIUM - Chat → Claude Opus → Top-Vertrag (additiv, isoliert)
+    //    Ebenfalls VOR den allgemeinen /api/contracts-Mounts. try/catch: kein Crash bei Ladefehler.
+    try {
+      const premiumRouter = require("./routes/premiumGenerate").router;
+      app.use("/api/contracts/premium", verifyToken, premiumRouter);
+      console.log("✅ Generate-2.0 Premium-Route geladen unter /api/contracts/premium");
+    } catch (err) {
+      console.error("⚠️ Premium-Route nicht geladen (Feature optional, nicht kritisch):", err.message);
+    }
+
     // ✅ 8.5 EXCEL EXPORT - Portfolio als Excel-Datei exportieren
     try {
       const exportContractsRouter = require("./routes/exportContracts");
