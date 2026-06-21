@@ -16,6 +16,12 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const database = require("../config/database");
+// 🔒 Freemium-Tease: Job-Ergebnis (Anzeige direkt nach dem Analysieren) genauso gaten wie GET /:id.
+const { applyAnalysisGate, effectivePlan } = require("../utils/analysisGate");
+const FREEMIUM_GATE_ENABLED = process.env.FREEMIUM_GATE_ENABLED === 'true';
+const FREEMIUM_GATE_LAUNCH = process.env.FREEMIUM_GATE_LAUNCH_DATE
+  ? new Date(process.env.FREEMIUM_GATE_LAUNCH_DATE)
+  : null;
 const path = require("path");
 const rateLimit = require("express-rate-limit"); // 🚦 Rate Limiting
 const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provider Detection Import
@@ -4177,7 +4183,28 @@ router.get('/job/:jobId', verifyToken, async (req, res) => {
       completedAt: job.completedAt
     };
     if (job.status === 'done' && job.result) {
-      response.result = job.result;
+      let result = job.result;
+      // 🔒 Freemium-Tease: Job-Ergebnis ebenso gaten wie GET /:id — sonst sähe der Free-User
+      // DIREKT nach dem Analysieren die volle Analyse (ungesperrter Pfad). Free + nicht-erste
+      // Analyse → redigieren. fail-open: bei Fehler volle Ansicht.
+      if (FREEMIUM_GATE_ENABLED) {
+        try {
+          const plan = result?.usage?.plan || 'free';
+          const contractId = result?.originalContractId;
+          if (effectivePlan(plan) === 'free' && contractId) {
+            const earliest = await db.collection('contracts').findOne(
+              { userId: new ObjectId(req.user.userId), analyzed: true },
+              { sort: { analyzedAt: 1 }, projection: { _id: 1 } }
+            );
+            const isFirstAnalysis = !!earliest && earliest._id.toString() === contractId.toString();
+            result = applyAnalysisGate(result, { plan, isFirstAnalysis, launchDate: FREEMIUM_GATE_LAUNCH, analyzedAt: new Date() });
+            console.log(`🔍 [Gate-DIAG] job-result contractId=${contractId} isFirst=${isFirstAnalysis} → gated=${result.gated === true}`);
+          }
+        } catch (gateErr) {
+          console.warn(`⚠️ [Freemium-Gate/Job] fail-open: ${gateErr.message}`);
+        }
+      }
+      response.result = result;
     }
     if (job.status === 'failed' && job.error) {
       response.error = job.error;
