@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import styles from "./V2TabsSection.module.css";
 import LegalRefPill from "../LegalRefPill";
+import LockedAnalysisUpsell, { GatedCounts } from "../LockedAnalysisUpsell";
 import { classifyDocType, getTabLabels, showMarketTab, getEmptyState, getVisibleTabs } from "./v2TabLabels";
 
 type Severity = "high" | "medium" | "low" | string;
@@ -74,6 +75,10 @@ interface AnalysisData {
   // 🎯 Typspezifische Tab-Labels + Empty-States (20.05.2026)
   documentType?: string | null;
   contractType?: string | null;
+  // 🔒 Freemium-Tease (21.06.2026): Backend hat die Analyse für Free-User redigiert.
+  // Gesperrte Felder sind server-seitig ENTFERNT — hier nur das Signal + Zähler für den Teaser.
+  gated?: boolean;
+  gatedCounts?: GatedCounts;
 }
 
 interface Props {
@@ -219,9 +224,12 @@ export default function V2TabsSection({ data }: Props) {
     if (sugs.length > 0) base.add("suggestions");
     if (cmpArr.length > 0 && marketVisible) base.add("market");
     if (recos.length > 0) base.add("recos");
+    // 🔒 Bei redigierter Free-Analyse den Empfehlungen-Tab erzwingen, damit das
+    // Schloss sichtbar wird (recos.length ist hier 0, weil server-seitig entfernt).
+    if (d.gated) base.add("recos");
     // pilot/market werden zusätzlich konditional in tabs-Array
     return base;
-  }, [docClass, positives.length, sugs.length, cmpArr.length, recos.length, marketVisible]);
+  }, [docClass, positives.length, sugs.length, cmpArr.length, recos.length, marketVisible, d.gated]);
 
   // Wenn Daten sich ändern und der active Tab nicht mehr Sinn macht, fallback auf summary
   useEffect(() => {
@@ -367,6 +375,12 @@ export default function V2TabsSection({ data }: Props) {
             })}
           </div>
         )}
+        {/* 🔒 Free-Tease: weitere Risiken sind server-seitig gesperrt */}
+        {d.gated && (
+          <div style={{ marginTop: criticals.length ? 16 : 0 }}>
+            <LockedAnalysisUpsell counts={d.gatedCounts} />
+          </div>
+        )}
       </div>
 
       {/* STRENGTHS — konditional je nach DocClass (ARIA-Korrektheit) */}
@@ -414,12 +428,16 @@ export default function V2TabsSection({ data }: Props) {
         className={`${styles.tabContent} ${active === "recos" ? styles.tabContentActive : ""}`}
       >
         {recos.length === 0 ? (
-          <EmptyState
-            icon="✓"
-            iconCls={styles.esIconSuccess}
-            title={getEmptyState(docClass, "recos").title}
-            text={getEmptyState(docClass, "recos").text}
-          />
+          d.gated ? (
+            <LockedAnalysisUpsell counts={d.gatedCounts} />
+          ) : (
+            <EmptyState
+              icon="✓"
+              iconCls={styles.esIconSuccess}
+              title={getEmptyState(docClass, "recos").title}
+              text={getEmptyState(docClass, "recos").text}
+            />
+          )
         ) : (
           <>
             <div className={styles.tabHelpText}>Konkrete Schritte mit Priorität — was du jetzt tun solltest</div>
@@ -495,12 +513,16 @@ export default function V2TabsSection({ data }: Props) {
         className={`${styles.tabContent} ${active === "suggestions" ? styles.tabContentActive : ""}`}
       >
         {sugs.length === 0 ? (
-          <EmptyState
-            icon="💡"
-            iconCls={styles.esIconPrimary}
-            title={getEmptyState(docClass, "suggestions").title}
-            text={getEmptyState(docClass, "suggestions").text}
-          />
+          d.gated ? (
+            <LockedAnalysisUpsell counts={d.gatedCounts} />
+          ) : (
+            <EmptyState
+              icon="💡"
+              iconCls={styles.esIconPrimary}
+              title={getEmptyState(docClass, "suggestions").title}
+              text={getEmptyState(docClass, "suggestions").text}
+            />
+          )
         ) : (
           <>
             <div className={styles.tabHelpText}>Konkrete Klausel-Vorschläge für die Verhandlung</div>
@@ -519,12 +541,16 @@ export default function V2TabsSection({ data }: Props) {
         className={`${styles.tabContent} ${active === "market" ? styles.tabContentActive : ""}`}
       >
         {cmpArr.length === 0 ? (
-          <EmptyState
-            icon="📊"
-            iconCls={styles.esIconAmber}
-            title={getEmptyState(docClass, "market").title}
-            text={getEmptyState(docClass, "market").text}
-          />
+          d.gated ? (
+            <LockedAnalysisUpsell counts={d.gatedCounts} />
+          ) : (
+            <EmptyState
+              icon="📊"
+              iconCls={styles.esIconAmber}
+              title={getEmptyState(docClass, "market").title}
+              text={getEmptyState(docClass, "market").text}
+            />
+          )
         ) : (
           <div className={styles.textBlock}>
             <div className={styles.tbTitle}>📊 Branchenvergleich</div>
@@ -542,12 +568,16 @@ export default function V2TabsSection({ data }: Props) {
         className={`${styles.tabContent} ${active === "opinion" ? styles.tabContentActive : ""}`}
       >
         {opinion.length === 0 ? (
-          <EmptyState
-            icon="⚖️"
-            iconCls=""
-            title={getEmptyState(docClass, "opinion").title}
-            text={getEmptyState(docClass, "opinion").text}
-          />
+          d.gated ? (
+            <LockedAnalysisUpsell counts={d.gatedCounts} />
+          ) : (
+            <EmptyState
+              icon="⚖️"
+              iconCls=""
+              title={getEmptyState(docClass, "opinion").title}
+              text={getEmptyState(docClass, "opinion").text}
+            />
+          )
         ) : (
           <div className={styles.opinionContainer}>
             <div className={opinion.length > 1500 ? styles.opinionScroll : ""}>
