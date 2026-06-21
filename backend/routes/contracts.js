@@ -2752,12 +2752,44 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       };
     }
 
+    // 🔒 Freemium-Tease-Gate (Phase 2): Dieser Endpoint speist den Sofort-Ergebnis-Screen
+    // (quickAnalysisModal) NACH der (Re-)Analyse. Ohne Gate zeigt er die volle Analyse ab #2.
+    // Gleiche Entscheidung wie GET /:id; fail-open (volle Ansicht bei Fehler). Flag AUS = No-Op.
+    let gatedFinal = finalContract;
+    if (FREEMIUM_GATE_ENABLED && finalContract) {
+      try {
+        const gateUser = await usersCollection.findOne(
+          { _id: new ObjectId(req.user.userId) },
+          { projection: { subscriptionPlan: 1 } }
+        );
+        const membership = await OrganizationMember.findOne({ userId: new ObjectId(req.user.userId), isActive: true });
+        let isFirstAnalysis = false;
+        try {
+          const earliest = await contractsCollection.findOne(
+            { userId: finalContract.userId, analyzed: true },
+            { sort: { analyzedAt: 1 }, projection: { _id: 1 } }
+          );
+          isFirstAnalysis = !!earliest && earliest._id.toString() === id.toString();
+        } catch { /* unklar → konservativ NICHT als erste werten */ }
+        gatedFinal = applyAnalysisGate(finalContract, {
+          plan: gateUser?.subscriptionPlan || 'free',
+          orgPlan: membership ? 'business' : undefined,
+          analyzedAt: finalContract.analyzedAt || finalContract.lastAnalyzed || new Date(),
+          launchDate: FREEMIUM_GATE_LAUNCH,
+          isFirstAnalysis
+        });
+        console.log(`🔍 [Gate-DIAG-REANALYZE] id=${id} plan=${gateUser?.subscriptionPlan || 'free'} isFirst=${isFirstAnalysis} → gated=${gatedFinal.gated === true}`);
+      } catch (gateErr) {
+        console.warn(`⚠️ [Freemium-Gate] reanalyze fail-open (volle Ansicht): ${gateErr.message}`);
+      }
+    }
+
     res.json({
       success: true,
       message: 'Analyse erfolgreich abgeschlossen',
       contractId: id,
-      analysis: finalContract?.analysis || fakeRes._body,
-      contract: finalContract
+      analysis: gatedFinal?.analysis || fakeRes._body,
+      contract: gatedFinal
     });
 
   } catch (error) {

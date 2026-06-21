@@ -2999,7 +2999,11 @@ export default function Contracts() {
           kuendigung: updatedContract.kuendigung,
           laufzeit: updatedContract.laufzeit,
           risiken: updatedContract.risiken,
-          optimierungen: updatedContract.optimierungen
+          optimierungen: updatedContract.optimierungen,
+          // 🔒 Freemium-Tease: Marker durchreichen, sonst zeigt der Sofort-Ergebnis-Screen
+          // (ContractAnalysisV2 → V2TabsSection) kein Schloss. Daten sind server-seitig schon redigiert.
+          gated: (updatedContract as { gated?: boolean }).gated,
+          gatedCounts: (updatedContract as { gatedCounts?: unknown }).gatedCounts
         };
 
         setQuickAnalysisModal({
@@ -3160,6 +3164,9 @@ export default function Contracts() {
             laufzeit: fresh.laufzeit,
             risiken: fresh.risiken,
             optimierungen: fresh.optimierungen,
+            // 🔒 Freemium-Tease durchreichen (siehe oben)
+            gated: (fresh as { gated?: boolean }).gated,
+            gatedCounts: (fresh as { gatedCounts?: unknown }).gatedCounts,
           };
 
           setQuickAnalysisModal({

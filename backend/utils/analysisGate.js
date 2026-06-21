@@ -69,10 +69,17 @@ function redactAnalysisForFree(contract) {
   if (!contract || typeof contract !== 'object') return contract;
   const out = { ...contract };
 
-  const risksRaw = Array.isArray(out.risiken) ? out.risiken
-    : (Array.isArray(out.criticalIssues) ? out.criticalIssues : []);
-  const recsRaw = Array.isArray(out.recommendations) ? out.recommendations : [];
-  const sugsRaw = Array.isArray(out.suggestions) ? out.suggestions : [];
+  // Zähler aus Top-Level ODER (Fallback) aus dem nested analysis-Objekt — je nachdem
+  // wo die Daten liegen. So stimmt die "X weitere"-Anzeige im Teaser in beiden Formen.
+  const a = (out.analysis && typeof out.analysis === 'object') ? out.analysis : {};
+  const pickArr = (top, nested) => Array.isArray(top) && top.length ? top
+    : (Array.isArray(nested) && nested.length ? nested : (Array.isArray(top) ? top : []));
+  const risksRaw = pickArr(
+    Array.isArray(out.risiken) ? out.risiken : out.criticalIssues,
+    Array.isArray(a.risiken) ? a.risiken : a.criticalIssues
+  );
+  const recsRaw = pickArr(out.recommendations, a.recommendations);
+  const sugsRaw = pickArr(out.suggestions, a.suggestions);
 
   // 1 Top-Risiko als Kostprobe behalten, Rest sperren
   const teaser = risksRaw.length > 0 ? [risksRaw[0]] : [];
@@ -84,10 +91,18 @@ function redactAnalysisForFree(contract) {
     if (f in out) out[f] = null;
   }
 
-  // Auch das verschachtelte analysis-Sub-Objekt säubern
+  // Auch das verschachtelte analysis-Sub-Objekt säubern.
+  // WICHTIG: Das Frontend liest nach (Re-)Analyse BEVORZUGT aus contract.analysis.*
+  // (siehe ContractsV2 quickAnalysisModal) — deshalb muss das nested-Objekt GENAU
+  // wie die Top-Level-Felder redigiert werden, sonst leakt die volle Analyse.
   if (out.analysis && typeof out.analysis === 'object') {
     out.analysis = { ...out.analysis };
-    for (const f of ['legalAssessment', 'suggestions', 'comparison']) {
+    const nestedRisksRaw = Array.isArray(out.analysis.risiken) ? out.analysis.risiken
+      : (Array.isArray(out.analysis.criticalIssues) ? out.analysis.criticalIssues : []);
+    const nestedTeaser = nestedRisksRaw.length > 0 ? [nestedRisksRaw[0]] : teaser;
+    out.analysis.risiken = nestedTeaser;
+    out.analysis.criticalIssues = nestedTeaser;
+    for (const f of ['legalAssessment', 'suggestions', 'comparison', 'recommendations', 'detailedLegalOpinion', 'typeSpecificFindings']) {
       if (f in out.analysis) out.analysis[f] = null;
     }
   }
