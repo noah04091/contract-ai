@@ -91,7 +91,8 @@ async function generateContractText(messages) {
     "- Vollständiger Vertrag mit klarer §-Struktur (i. d. R. 8–14 Paragraphen). Reiner Text, kein Markdown/HTML.\n" +
     "- KEINE Platzhalter in eckigen Klammern — nutze die Angaben aus dem Gespräch. Wo eine Angabe fehlt, wähle eine marktübliche, faire Standardregelung und formuliere sie aus.\n" +
     "- Präzise, aber verständliche juristische Sprache. Deutsches Recht.\n" +
-    "- Beginne mit dem Vertragstitel (Großbuchstaben), dann Parteien ('zwischen … und …'), dann die Paragraphen, am Ende Ort/Datum- und Unterschriftszeilen für beide Parteien.\n" +
+    "- Beginne mit dem Vertragstitel (Großbuchstaben), dann Parteien ('zwischen … und …'), dann die Paragraphen.\n" +
+    "- Füge am Ende KEINE Unterschriften- oder Ort/Datum-Zeilen ein — den Unterschriftsbereich ergänzt die Plattform automatisch.\n" +
     "- KEINE dekorativen Linien, Rahmen, ASCII-Kunst oder Trennzeichen-Ketten (z. B. ─────, =====, *****, ####). Nur sauberer Fließtext.\n" +
     "- Das visuelle DESIGN (Schrift/Layout/Farben) wählt der Nutzer separate über Buttons unter dem Vertrag — ändere bei Design-Wünschen NICHT den Text, sondern weise freundlich auf die Design-Auswahl hin und lass den Vertragstext unverändert.";
   const stream = client().messages.stream({
@@ -127,7 +128,7 @@ function textToBasicHtml(text, title) {
 function sanitizeForPdf(s) {
   return String(s)
     .replace(/ /g, " ")
-    .replace(/[^\t\n\r\x20-\x7E¡-ÿ€§„""‚''‹›«»–—…•·°²³µ]/g, "");
+    .replace(/[^\t\n\r\x20-\x7E\u00A1-\u00FF\u2013\u2014\u2018\u2019\u201A\u201C\u201D\u201E\u2020\u2021\u2022\u2026\u2030\u2039\u203A\u20AC]/g, "");
 }
 
 // Echte Design-Varianten (pdfkit-Standardschriften → laufen auch auf Render/Linux)
@@ -137,7 +138,7 @@ const DESIGNS = {
   modern: { body: "Helvetica", bold: "Helvetica-Bold", accent: "#0ea5e9", title: "#0b1324", rule: "#0ea5e9" },
 };
 
-function renderPremiumPdfBuffer(text, design = "klassisch") {
+function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = null) {
   const d = DESIGNS[design] || DESIGNS.klassisch;
   const clean = sanitizeForPdf(text);
   return new Promise((resolve, reject) => {
@@ -162,6 +163,31 @@ function renderPremiumPdfBuffer(text, design = "klassisch") {
       else if (isHead && !line.startsWith("(")) { doc.font(d.bold).fontSize(doc.y < 110 ? 16 : 11).fillColor(d.title).text(line.trim(), M, doc.y + 4, { width: W }); doc.y += 2; }
       else { doc.font(d.body).fontSize(10).fillColor("#1a2230").text(line, M, doc.y + 2, { width: W, align: "justify", lineGap: 2.4 }); }
     }
+
+    // Unterschriftsbereich (KI lässt ihn im Text weg → hier sauber, mit gezeichneter Unterschrift)
+    {
+      const roles = [...clean.matchAll(/nachfolgend\s+[\u201E\u201C\u201D"]?\s*([A-Za-z\u00C0-\u017F .\/-]{2,40}?)\s*[\u201C\u201D\u201E"]?\s*genannt/g)].map((x) => x[1].trim());
+      const left = roles[0] || "Partei 1";
+      const right = roles[1] || "Partei 2";
+      if (doc.y > doc.page.height - M - 140) doc.addPage();
+      const y0 = doc.y + 34;
+      const colW = (W - 40) / 2;
+      const xL = M, xR = M + colW + 40;
+      doc.font(d.body).fontSize(8.5).fillColor("#5b6573");
+      doc.text("Ort, Datum: ______________________", xL, y0, { width: colW, lineBreak: false });
+      doc.text("Ort, Datum: ______________________", xR, y0, { width: colW, lineBreak: false });
+      const sigLineY = y0 + 58;
+      if (signatureDataUrl && /^data:image\//.test(signatureDataUrl)) {
+        try { doc.image(Buffer.from(signatureDataUrl.split(",")[1], "base64"), xL + 4, sigLineY - 42, { fit: [colW - 8, 40] }); } catch (_) { /* ignore */ }
+      }
+      doc.lineWidth(0.8).strokeColor("#1a2230");
+      doc.moveTo(xL, sigLineY).lineTo(xL + colW, sigLineY).stroke();
+      doc.moveTo(xR, sigLineY).lineTo(xR + colW, sigLineY).stroke();
+      doc.font(d.body).fontSize(9).fillColor("#1a2230");
+      doc.text(left, xL, sigLineY + 5, { width: colW, lineBreak: false });
+      doc.text(right, xR, sigLineY + 5, { width: colW, lineBreak: false });
+    }
+
     // Neutrale Fußzeile: nur Seitenzahl (kein „Contract AI")
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
@@ -244,7 +270,7 @@ router.post("/generate", aiLimiter, async (req, res) => {
 // POST /pdf — Premium-PDF (AVV-Stil) aus gespeichertem Vertrag
 router.post("/pdf", async (req, res) => {
   try {
-    const { contractId, design } = req.body || {};
+    const { contractId, design, signature } = req.body || {};
     if (!contractId) return res.status(400).json({ success: false, error: "NO_ID" });
     await ensureDb();
     const c = await contractsCollection.findOne({
@@ -252,7 +278,8 @@ router.post("/pdf", async (req, res) => {
       $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }],
     });
     if (!c) return res.status(404).json({ success: false, error: "NOT_FOUND" });
-    const pdf = await renderPremiumPdfBuffer(c.content || "", design);
+    const sig = typeof signature === "string" && signature.startsWith("data:image/") && signature.length < 600000 ? signature : null;
+    const pdf = await renderPremiumPdfBuffer(c.content || "", design, sig);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${(c.name || "Vertrag").replace(/[^a-zA-Z0-9 _.-]/g, "_")}.pdf"`);
     return res.end(pdf, "binary");

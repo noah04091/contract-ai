@@ -11,8 +11,8 @@
  *   POST /api/contracts/premium/generate  (Vertrag erzeugen + speichern)
  *   POST /api/contracts/premium/pdf        (Premium-PDF, AVV-Stil)
  */
-import { useState, useRef, useEffect, type CSSProperties } from "react";
-import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
+import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine } from "lucide-react";
 import { toast } from "react-toastify";
 
 type Kind = "text" | "questions" | "contract" | "generating";
@@ -94,9 +94,9 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     }
   }
 
-  async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: string) {
+  async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) {
     try {
-      const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design }) });
+      const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null }) });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -151,7 +151,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string) => void }) {
+function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
   const isUser = m.role === "user";
   const AiAvatar = (
     <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Sparkles size={16} /></div>
@@ -205,8 +205,10 @@ function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<Cha
   );
 }
 
-function ContractCard({ c, onDownload }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string) => void }) {
+function ContractCard({ c, onDownload }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
   const [design, setDesign] = useState("klassisch");
+  const [signature, setSignature] = useState<string | null>(null);
+  const [showPad, setShowPad] = useState(false);
   const lines = c.contractText.split("\n").filter((l) => l.trim()).slice(0, 8);
   const sectionCount = (c.contractText.match(/^§\s*\d/gm) || []).length;
   const designs = [
@@ -237,8 +239,25 @@ function ContractCard({ c, onDownload }: { c: NonNullable<ChatMsg["contract"]>; 
           </button>
         ))}
       </div>
+      {/* Unterschrift direkt auf den Vertrag */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 15px 0", flexWrap: "wrap" }}>
+        <span style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>Unterschrift:</span>
+        {signature ? (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "#0a8a4a", fontWeight: 600 }}>
+            <Check size={14} /> unterschrieben
+            <button type="button" onClick={() => setShowPad(true)} style={{ font: "inherit", fontSize: 12, color: C.blue, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0, marginLeft: 4 }}>neu</button>
+            <button type="button" onClick={() => setSignature(null)} style={{ font: "inherit", fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", padding: 0 }}>entfernen</button>
+          </span>
+        ) : (
+          <button type="button" onClick={() => setShowPad(true)} style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "5px 11px", border: `1px solid ${C.border}`, background: "#fff", color: "#41506b" }}>
+            <PenLine size={14} /> Unterschreiben
+          </button>
+        )}
+      </div>
+      {showPad && <SignaturePad onSave={(d) => { setSignature(d); setShowPad(false); }} onCancel={() => setShowPad(false)} />}
+
       <div style={{ display: "flex", gap: 9, padding: "12px 15px 14px", alignItems: "center" }}>
-        <button onClick={() => onDownload(c, design)} style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
+        <button onClick={() => onDownload(c, design, signature)} style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
           <Download size={16} /> PDF herunterladen
         </button>
         <span style={{ marginLeft: "auto", fontSize: 11, color: C.muted2, display: "flex", alignItems: "center", gap: 5 }}><ShieldCheck size={13} /> {sectionCount || ""} §§ · gespeichert</span>
@@ -255,5 +274,80 @@ function Dots() {
       ))}
       <style>{`@keyframes pchatpulse{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:.9;transform:translateY(-2px)}}`}</style>
     </span>
+  );
+}
+
+// Unterschrift-Zeichenfeld (Maus/Touch) → liefert PNG-DataURL
+function SignaturePad({ onSave, onCancel }: { onSave: (dataUrl: string) => void; onCancel: () => void }) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const drawing = useRef(false);
+  const hasInk = useRef(false);
+
+  useEffect(() => {
+    const cv = canvasRef.current;
+    if (!cv) return;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.strokeStyle = "#0B1324";
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+  }, []);
+
+  const pos = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    const cv = canvasRef.current!;
+    const r = cv.getBoundingClientRect();
+    return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) };
+  };
+  const down = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    drawing.current = true;
+    const ctx = canvasRef.current!.getContext("2d")!;
+    const p = pos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+  };
+  const move = (e: ReactPointerEvent<HTMLCanvasElement>) => {
+    if (!drawing.current) return;
+    const ctx = canvasRef.current!.getContext("2d")!;
+    const p = pos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    hasInk.current = true;
+  };
+  const up = () => { drawing.current = false; };
+  const clear = () => {
+    const cv = canvasRef.current!;
+    const ctx = cv.getContext("2d")!;
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    hasInk.current = false;
+  };
+  const save = () => {
+    if (!hasInk.current) { onCancel(); return; }
+    onSave(canvasRef.current!.toDataURL("image/png"));
+  };
+
+  return (
+    <div style={{ padding: "10px 15px 2px" }}>
+      <canvas
+        ref={canvasRef}
+        width={760}
+        height={200}
+        onPointerDown={down}
+        onPointerMove={move}
+        onPointerUp={up}
+        onPointerLeave={up}
+        style={{ width: "100%", height: 120, border: `1.5px dashed ${C.border}`, borderRadius: 10, background: "#fff", touchAction: "none", cursor: "crosshair", display: "block" }}
+      />
+      <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
+        <span style={{ fontSize: 11.5, color: C.muted2, marginRight: "auto" }}>Mit Maus oder Finger im Feld unterschreiben</span>
+        <button type="button" onClick={clear} style={{ font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 12px", border: `1px solid ${C.border}`, background: "#fff", color: "#41506b" }}>Löschen</button>
+        <button type="button" onClick={onCancel} style={{ font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 12px", border: `1px solid ${C.border}`, background: "#fff", color: "#41506b" }}>Abbrechen</button>
+        <button type="button" onClick={save} style={{ font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 14px", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})` }}>Übernehmen</button>
+      </div>
+    </div>
   );
 }
