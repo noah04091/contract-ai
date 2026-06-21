@@ -1481,6 +1481,9 @@ router.get("/", async (req, res) => {
       catch { withStatus = { ...c, computedStatus: 'Aktiv' }; }
       if (FREEMIUM_GATE_ENABLED && gatePlan) {
         try {
+          const hadCriticals = Array.isArray(c.criticalIssues) ? c.criticalIssues.length
+            : (Array.isArray(c.risiken) ? c.risiken.length : 'none');
+          const hadOpinion = typeof c.detailedLegalOpinion === 'string' && c.detailedLegalOpinion.length > 0;
           withStatus = applyAnalysisGate(withStatus, {
             plan: gatePlan,
             orgPlan: gateOrgPaid ? 'business' : undefined,
@@ -1488,6 +1491,7 @@ router.get("/", async (req, res) => {
             launchDate: FREEMIUM_GATE_LAUNCH,
             isFirstAnalysis: !!gateFirstId && c._id.toString() === gateFirstId
           });
+          console.log(`🔍 [Gate-DIAG-LIST] id=${c._id} plan=${gatePlan} isFirst=${!!gateFirstId && c._id.toString() === gateFirstId} hadCriticals=${hadCriticals} hadOpinion=${hadOpinion} → gated=${withStatus.gated === true}`);
         } catch { /* fail-open: voller Vertrag bleibt */ }
       }
       return withStatus;
