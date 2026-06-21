@@ -37,7 +37,7 @@ const AutoPlayVideo = ({ src, poster, alt, className = '' }: AutoPlayVideoProps)
       },
       {
         threshold: 0.3, // Video muss 30% sichtbar sein
-        rootMargin: '50px', // Starte etwas früher
+        rootMargin: '300px', // Lädt/startet kurz bevor es sichtbar wird (kein Vorabladen aller Videos beim Seitenaufruf)
       }
     );
 
@@ -99,7 +99,7 @@ const AutoPlayVideo = ({ src, poster, alt, className = '' }: AutoPlayVideoProps)
       muted
       loop
       playsInline
-      preload="auto"
+      preload="metadata"
       onError={handleError}
       onLoadedData={handleLoadedData}
       aria-label={alt}
