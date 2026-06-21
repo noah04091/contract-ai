@@ -12,7 +12,7 @@
  *   POST /api/contracts/premium/pdf        (Premium-PDF, AVV-Stil)
  */
 import { useState, useRef, useEffect, type CSSProperties } from "react";
-import { Sparkles, Send, Download, Edit3, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck } from "lucide-react";
 import { toast } from "react-toastify";
 
 type Kind = "text" | "questions" | "contract" | "generating";
@@ -94,9 +94,9 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     }
   }
 
-  async function downloadPdf(c: NonNullable<ChatMsg["contract"]>) {
+  async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: string) {
     try {
-      const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId }) });
+      const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design }) });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -151,7 +151,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>) => void }) {
+function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string) => void }) {
   const isUser = m.role === "user";
   const AiAvatar = (
     <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Sparkles size={16} /></div>
@@ -205,26 +205,42 @@ function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<Cha
   );
 }
 
-function ContractCard({ c, onDownload }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>) => void }) {
+function ContractCard({ c, onDownload }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string) => void }) {
+  const [design, setDesign] = useState("klassisch");
   const lines = c.contractText.split("\n").filter((l) => l.trim()).slice(0, 8);
   const sectionCount = (c.contractText.match(/^§\s*\d/gm) || []).length;
+  const designs = [
+    { id: "klassisch", label: "Klassisch" },
+    { id: "elegant", label: "Elegant" },
+    { id: "modern", label: "Modern" },
+  ];
+  const accent = design === "modern" ? "#0ea5e9" : "#1f4e8c";
   return (
     <div style={{ border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden", background: "#fff", maxWidth: 460 }}>
-      <div style={{ padding: "16px 18px", background: "linear-gradient(180deg,#fff,#fcfdff)", fontFamily: "Georgia,'Times New Roman',serif", borderBottom: `1px solid ${C.border}`, maxHeight: 190, overflow: "hidden", position: "relative" }}>
+      <div style={{ padding: "16px 18px", background: "linear-gradient(180deg,#fff,#fcfdff)", fontFamily: design === "elegant" ? "Georgia,'Times New Roman',serif" : "'Inter',sans-serif", borderBottom: `1px solid ${C.border}`, maxHeight: 190, overflow: "hidden", position: "relative" }}>
         {lines.map((l, i) => {
           const isPar = /^§\s*\d/.test(l.trim());
           const isHead = i === 0;
           return (
-            <div key={i} style={{ fontSize: isHead ? 13 : 11, fontWeight: isHead || isPar ? 700 : 400, color: isPar ? "#1f4e8c" : "#43506a", textAlign: isHead ? "center" : "left", margin: isHead ? "0 0 9px" : isPar ? "8px 0 2px" : "2px 0", lineHeight: 1.5 }}>{l.trim()}</div>
+            <div key={i} style={{ fontSize: isHead ? 13 : 11, fontWeight: isHead || isPar ? 700 : 400, color: isPar ? accent : "#43506a", textAlign: isHead ? "center" : "left", margin: isHead ? "0 0 9px" : isPar ? "8px 0 2px" : "2px 0", lineHeight: 1.5 }}>{l.trim()}</div>
           );
         })}
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 40, background: "linear-gradient(180deg,rgba(255,255,255,0),#fff)" }} />
       </div>
-      <div style={{ display: "flex", gap: 9, padding: "13px 15px", alignItems: "center" }}>
-        <button onClick={() => onDownload(c)} style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
+      {/* Design-Auswahl (ändert die Optik, nicht den Inhalt) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 15px 0", flexWrap: "wrap" }}>
+        <span style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>Design:</span>
+        {designs.map((dd) => (
+          <button key={dd.id} type="button" onClick={() => setDesign(dd.id)}
+            style={{ font: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "5px 11px", border: `1px solid ${design === dd.id ? C.blue : C.border}`, background: design === dd.id ? "rgba(46,108,246,.08)" : "#fff", color: design === dd.id ? C.blue : "#41506b" }}>
+            {dd.label}
+          </button>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: 9, padding: "12px 15px 14px", alignItems: "center" }}>
+        <button onClick={() => onDownload(c, design)} style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
           <Download size={16} /> PDF herunterladen
         </button>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: C.muted, padding: "0 4px" }}><Edit3 size={14} /> Im Chat anpassen</span>
         <span style={{ marginLeft: "auto", fontSize: 11, color: C.muted2, display: "flex", alignItems: "center", gap: 5 }}><ShieldCheck size={13} /> {sectionCount || ""} §§ · gespeichert</span>
       </div>
     </div>

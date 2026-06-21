@@ -91,7 +91,9 @@ async function generateContractText(messages) {
     "- Vollständiger Vertrag mit klarer §-Struktur (i. d. R. 8–14 Paragraphen). Reiner Text, kein Markdown/HTML.\n" +
     "- KEINE Platzhalter in eckigen Klammern — nutze die Angaben aus dem Gespräch. Wo eine Angabe fehlt, wähle eine marktübliche, faire Standardregelung und formuliere sie aus.\n" +
     "- Präzise, aber verständliche juristische Sprache. Deutsches Recht.\n" +
-    "- Beginne mit dem Vertragstitel (Großbuchstaben), dann Parteien ('zwischen … und …'), dann die Paragraphen, am Ende Ort/Datum- und Unterschriftszeilen für beide Parteien.";
+    "- Beginne mit dem Vertragstitel (Großbuchstaben), dann Parteien ('zwischen … und …'), dann die Paragraphen, am Ende Ort/Datum- und Unterschriftszeilen für beide Parteien.\n" +
+    "- KEINE dekorativen Linien, Rahmen, ASCII-Kunst oder Trennzeichen-Ketten (z. B. ─────, =====, *****, ####). Nur sauberer Fließtext.\n" +
+    "- Das visuelle DESIGN (Schrift/Layout/Farben) wählt der Nutzer separate über Buttons unter dem Vertrag — ändere bei Design-Wünschen NICHT den Text, sondern weise freundlich auf die Design-Auswahl hin und lass den Vertragstext unverändert.";
   const stream = client().messages.stream({
     model: MODEL, max_tokens: 16000,
     thinking: { type: "adaptive" }, output_config: { effort: "high" },
@@ -120,7 +122,24 @@ function textToBasicHtml(text, title) {
   return `<div style="font-family:Georgia,'Times New Roman',serif;color:#1a2230;max-width:720px;margin:0 auto">${lines.join("")}</div>`;
 }
 
-function renderPremiumPdfBuffer(text) {
+// Entfernt Zeichen, die die PDF-Standardschrift (WinAnsi) nicht darstellen kann
+// (z. B. dekorative Linien ─/═/█, Emojis) → kein Zeichensalat im PDF.
+function sanitizeForPdf(s) {
+  return String(s)
+    .replace(/ /g, " ")
+    .replace(/[^\t\n\r\x20-\x7E¡-ÿ€§„""‚''‹›«»–—…•·°²³µ]/g, "");
+}
+
+// Echte Design-Varianten (pdfkit-Standardschriften → laufen auch auf Render/Linux)
+const DESIGNS = {
+  klassisch: { body: "Helvetica", bold: "Helvetica-Bold", accent: "#1f4e8c", title: "#1a2230", rule: "#1f4e8c" },
+  elegant: { body: "Times-Roman", bold: "Times-Bold", accent: "#1a2230", title: "#1a2230", rule: "#9aa3af" },
+  modern: { body: "Helvetica", bold: "Helvetica-Bold", accent: "#0ea5e9", title: "#0b1324", rule: "#0ea5e9" },
+};
+
+function renderPremiumPdfBuffer(text, design = "klassisch") {
+  const d = DESIGNS[design] || DESIGNS.klassisch;
+  const clean = sanitizeForPdf(text);
   return new Promise((resolve, reject) => {
     const M = 64;
     const doc = new PDFDocument({ size: "A4", margins: { top: M, bottom: M + 10, left: M, right: M }, bufferPages: true });
@@ -130,26 +149,25 @@ function renderPremiumPdfBuffer(text) {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    doc.font("Helvetica-Bold").fontSize(9).fillColor("#1f4e8c").text("CONTRACT AI", M, M, { characterSpacing: 1.5 });
-    doc.font("Helvetica").fontSize(8).fillColor("#5b6573").text("KI-gestützter Vertrag · Entwurf", M, doc.y + 1);
-    doc.moveTo(M, doc.y + 8).lineTo(M + W, doc.y + 8).lineWidth(1.2).strokeColor("#1f4e8c").stroke();
-    doc.y += 22;
-    for (const raw of text.split("\n")) {
+    // Dezente Akzentlinie oben – KEIN Plattform-Branding im Dokument des Nutzers
+    doc.moveTo(M, M).lineTo(M + W, M).lineWidth(1.4).strokeColor(d.rule).stroke();
+    doc.y = M + 14;
+    for (const raw of clean.split("\n")) {
       const line = raw.replace(/\s+$/g, "");
       if (!line.trim()) { doc.y += 5; continue; }
       if (doc.y > doc.page.height - M - 40) doc.addPage();
       const isPar = /^§\s*\d/.test(line.trim());
       const isHead = /^[A-ZÄÖÜ0-9 .,„""\-()]+$/.test(line.trim()) && line.trim().length < 70 && line.trim().length > 2;
-      if (isPar) { doc.font("Helvetica-Bold").fontSize(11).fillColor("#1f4e8c").text(line.trim(), M, doc.y + 6, { width: W }); doc.y += 2; }
-      else if (isHead && !line.startsWith("(")) { doc.font("Helvetica-Bold").fontSize(doc.y < 130 ? 16 : 11).fillColor("#1a2230").text(line.trim(), M, doc.y + 4, { width: W }); doc.y += 2; }
-      else { doc.font("Helvetica").fontSize(9.5).fillColor("#1a2230").text(line, M, doc.y + 2, { width: W, align: "justify", lineGap: 2 }); }
+      if (isPar) { doc.font(d.bold).fontSize(11).fillColor(d.accent).text(line.trim(), M, doc.y + 6, { width: W }); doc.y += 2; }
+      else if (isHead && !line.startsWith("(")) { doc.font(d.bold).fontSize(doc.y < 110 ? 16 : 11).fillColor(d.title).text(line.trim(), M, doc.y + 4, { width: W }); doc.y += 2; }
+      else { doc.font(d.body).fontSize(10).fillColor("#1a2230").text(line, M, doc.y + 2, { width: W, align: "justify", lineGap: 2.4 }); }
     }
+    // Neutrale Fußzeile: nur Seitenzahl (kein „Contract AI")
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i); doc.page.margins.bottom = 0;
-      doc.font("Helvetica").fontSize(7.5).fillColor("#9aa3af")
-        .text("Mit Contract AI (Generate 2.0) erstellter Entwurf · keine Rechtsberatung · Seite " + (i + 1) + "/" + range.count,
-          M, doc.page.height - M + 24, { width: W, align: "center", lineBreak: false });
+      doc.font(d.body).fontSize(7.5).fillColor("#9aa3af")
+        .text("Seite " + (i + 1) + " von " + range.count, M, doc.page.height - M + 24, { width: W, align: "center", lineBreak: false });
     }
     doc.end();
   });
@@ -226,7 +244,7 @@ router.post("/generate", aiLimiter, async (req, res) => {
 // POST /pdf — Premium-PDF (AVV-Stil) aus gespeichertem Vertrag
 router.post("/pdf", async (req, res) => {
   try {
-    const { contractId } = req.body || {};
+    const { contractId, design } = req.body || {};
     if (!contractId) return res.status(400).json({ success: false, error: "NO_ID" });
     await ensureDb();
     const c = await contractsCollection.findOne({
@@ -234,7 +252,7 @@ router.post("/pdf", async (req, res) => {
       $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }],
     });
     if (!c) return res.status(404).json({ success: false, error: "NOT_FOUND" });
-    const pdf = await renderPremiumPdfBuffer(c.content || "");
+    const pdf = await renderPremiumPdfBuffer(c.content || "", design);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${(c.name || "Vertrag").replace(/[^a-zA-Z0-9 _.-]/g, "_")}.pdf"`);
     return res.end(pdf, "binary");
