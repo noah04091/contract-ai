@@ -137,12 +137,12 @@ const Features: React.FC = () => {
       id: 'create',
       label: 'Erstellen',
       title: 'Professionelle Verträge in Minuten',
-      description: 'Erstellen Sie rechtssichere Verträge mit intelligenten Vorlagen oder bauen Sie sie visuell zusammen.',
+      description: 'Erstellen Sie rechtssichere Verträge – einfach im Chat beschreiben, aus intelligenten Vorlagen oder visuell zusammengebaut.',
       features: [
         {
           icon: <FileText size={22} />,
           name: 'Vertragsgenerator',
-          desc: '50+ Vorlagen für jeden Anwendungsfall',
+          desc: 'Im Chat beschreiben oder aus 50+ Vorlagen – KI schreibt & prüft',
           link: '/features/generator'
         },
         {
