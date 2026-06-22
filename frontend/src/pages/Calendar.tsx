@@ -693,12 +693,14 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
     onClose();
   };
 
-  // 🖋️ Signatur-Events: Titel/Beschreibung enthalten relative Zeit ("läuft heute/morgen/bald ab"),
-  // die nur am Feuer-Tag stimmt. Im Popup (Tage vorher) neutralisieren, damit kein Widerspruch
-  // zum echten Ablaufdatum entsteht. Reine Anzeige — Daten/Backend unverändert.
-  const isSignatureEvent = currentEvent.type?.startsWith('SIGNATURE_') || !!currentEvent.metadata?.envelopeId;
-  const neutralizeSig = (s: string | undefined): string =>
-    isSignatureEvent ? (s || '').replace(/läuft\s+(?:heute|morgen|bald|in\s+\d+\s+Tagen?)\s+ab/gi, 'läuft ab') : (s || '');
+  // 🕐 Relative Zeit-Phrasen in Titel/Beschreibung ("läuft heute/morgen/bald/in N Tagen ab",
+  // "verlängert sich heute automatisch") für die Popup-Anzeige neutralisieren — sie stimmen nur am
+  // Ereignis-Tag, wirken aber Tage vorher falsch. Datum/Verbleibend zeigen die Lage ohnehin korrekt.
+  // Reine Anzeige — Daten/Backend unverändert.
+  const neutralizeRelativeTime = (s: string | undefined): string =>
+    (s || '')
+      .replace(/läuft\s+(?:heute|morgen|bald|in\s+\d+\s+Tagen?)\s+ab/gi, 'läuft ab')
+      .replace(/verlängert sich\s+heute\s+automatisch/gi, 'verlängert sich automatisch');
 
   const formatDate = () => {
     // Für Signaturen das echte Ablaufdatum (expiresAt) zeigen — konsistent mit "Verbleibend".
@@ -836,7 +838,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
             <div className="modal-header-text">
               <h3>{isManualEvent ? currentEvent.title : formatContractName(currentEvent.contractName)}</h3>
-              <p>{isManualEvent ? 'Manuelles Ereignis' : neutralizeSig(stripFileName(currentEvent.title))}</p>
+              <p>{isManualEvent ? 'Manuelles Ereignis' : neutralizeRelativeTime(stripFileName(currentEvent.title))}</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
@@ -911,7 +913,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
           {currentEvent.description && (
           <div className="event-description-premium">
             <Sparkles size={16} className="description-icon" />
-            <p>{neutralizeSig(currentEvent.description)}</p>
+            <p>{neutralizeRelativeTime(currentEvent.description)}</p>
           </div>
           )}
 
