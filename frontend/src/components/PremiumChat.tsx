@@ -246,7 +246,31 @@ export default function PremiumChat({ onClose, demo = false }: { onClose: () => 
   async function handleSend(override?: string, displayOverride?: string) {
     const text = (typeof override === "string" ? override : input).trim();
     if (!text || busy) return;
-    if (demo) { setInput(""); return runDemo(text); }
+    if (demo) {
+      // 🔓 Free-Tease: 1 ECHTE Gratis-Generierung des tatsächlich beschriebenen Vertrags
+      // (deckt alle 16 Typen + Freitext ab). Ohne Rückfragen-Runde (spart 2. KI-Lauf).
+      setInput("");
+      const typeHint = pickDemo(text).title; // grobe Typ-Erkennung als contractType-Hinweis
+      const base = [...messages, { role: "user", kind: "text", content: text } as ChatMsg];
+      setMessages(base);
+      setBusy(true);
+      setMessages((m) => [...m, { role: "assistant", kind: "generating", content: "" }]);
+      try {
+        await streamGenerate(base, typeHint, undefined, true); // free=true
+      } catch (e: any) {
+        setMessages((m) => m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"));
+        if (e?.status === 403 || e?.data?.upgradeRequired || e?.data?.freeUsed) {
+          // Gratis-Generierung aufgebraucht → Upsell-Karte
+          setMessages((m) => [...m, { role: "assistant", kind: "demolock", uiOnly: true, content: "__used__" }]);
+        } else {
+          // Anderer Fehler (z.B. KI down) → als Fallback die kostenlose Beispiel-Demo zeigen
+          await runDemo(text);
+        }
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     const base = [...messages, { role: "user", kind: "text", content: text, display: displayOverride } as ChatMsg];
     setMessages(base);
     setInput("");
@@ -280,7 +304,7 @@ export default function PremiumChat({ onClose, demo = false }: { onClose: () => 
   }
 
   // Streamt den Vertrag live (ndjson) und ersetzt am Ende durch die Vertrags-Karte
-  async function streamGenerate(base: ChatMsg[], contractType: string, existingContractId?: string) {
+  async function streamGenerate(base: ChatMsg[], contractType: string, existingContractId?: string, free = false) {
     let acc = "";
     setMessages((m) => [...m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"), { role: "assistant", kind: "streaming", content: "", uiOnly: true }]);
     const res = await fetch("/api/contracts/premium/generate-stream", {
@@ -289,7 +313,7 @@ export default function PremiumChat({ onClose, demo = false }: { onClose: () => 
     });
     if (!res.ok || !res.body) {
       const data = await res.json().catch(() => ({}));
-      const e: any = new Error(data.message || "Fehler"); e.data = data; throw e;
+      const e: any = new Error(data.message || "Fehler"); e.data = data; e.status = res.status; throw e;
     }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -311,11 +335,20 @@ export default function PremiumChat({ onClose, demo = false }: { onClose: () => 
           setMessages((m) => m.map((x) => (x.kind === "streaming" ? { ...x, content: acc } : x)));
         } else if (evt.type === "done") {
           done = evt;
-          const c = { contractId: evt.contractId, contractText: evt.contractText, contractType: evt.contractType, title: evt.title };
-          setContract(c);
-          setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "contract", content: evt.contractText, contract: c }]);
+          if (free) {
+            // Free-Tease: echten Vertrag sichtbar lassen (Wow) + Sperr-Karte für die Aktionen
+            // (PDF/Signatur/Rechts-Check/Fristen sind bezahlt). Kein Speichern in State/Aktionen.
+            setMessages((m) => [...m.filter((x) => x.kind !== "streaming"),
+              { role: "assistant", kind: "text", content: evt.contractText },
+              { role: "assistant", kind: "demolock", uiOnly: true, content: evt.title || evt.contractType || "Vertrag" },
+            ]);
+          } else {
+            const c = { contractId: evt.contractId, contractText: evt.contractText, contractType: evt.contractType, title: evt.title };
+            setContract(c);
+            setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "contract", content: evt.contractText, contract: c }]);
+          }
         } else if (evt.type === "events") {
-          if (evt.count > 0) {
+          if (!free && evt.count > 0) {
             setMessages((m) => [...m, { role: "assistant", kind: "events", uiOnly: true, content: `${evt.count} Fristen`, calItems: Array.isArray(evt.items) ? evt.items : [] }]);
           }
         } else if (evt.type === "error") {
@@ -578,7 +611,7 @@ function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend
       ) : m.kind === "explain" ? (
         <ExplainCard explain={m.explainData!} />
       ) : m.kind === "demolock" ? (
-        <LockCard title={m.content} />
+        <LockCard title={m.content === "__used__" ? undefined : m.content} used={m.content === "__used__"} />
       ) : (
         <div style={bubbleStyle}>{m.display ?? m.content}</div>
       )}
@@ -762,10 +795,13 @@ function ExplainCard({ explain }: { explain: ExplainData }) {
   );
 }
 
-function LockCard({ title }: { title?: string }) {
+function LockCard({ title, used = false }: { title?: string; used?: boolean }) {
   // Optik bewusst an die Analyse-Sperre (LockedAnalysisUpsell) angeglichen:
   // quadratisches Schloss-Badge, gleiche „Jetzt freischalten"-CTA + „ab Business"-Hinweis.
-  const vertragLabel = title && title !== "lock" ? `Dein ${title} ist fertig!` : "Dein Vertrag ist fertig!";
+  // used=true → die kostenlose Probe-Generierung ist aufgebraucht.
+  const vertragLabel = used
+    ? "Kostenlose Probe genutzt"
+    : (title && title !== "lock" ? `Dein ${title} ist fertig!` : "Dein Vertrag ist fertig!");
   return (
     <div style={{ display: "flex", gap: 11, maxWidth: "90%" }}>
       <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Lock size={15} /></div>
@@ -775,7 +811,11 @@ function LockCard({ title }: { title?: string }) {
           <div style={{ width: 48, height: 48, borderRadius: 13, display: "grid", placeItems: "center", background: "linear-gradient(135deg,#eff4ff 0%,#e0e9fb 100%)", color: "#2563eb", marginBottom: 12, boxShadow: "0 1px 2px rgba(37,99,235,.12)" }}><Lock size={20} /></div>
           <div style={{ fontWeight: 700, fontSize: 17, color: "#0f172a", marginBottom: 6 }}>{vertragLabel}</div>
           <div style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.55, marginBottom: 16, maxWidth: 360 }}>
-            Schalte frei, um ihn als <b>PDF herunterzuladen</b>, auf <b>Rechtssicherheit zu prüfen</b>, dir <b>jede Klausel erklären</b> zu lassen, <b>Fristen in den Kalender</b> zu übernehmen und <b>direkt unterschreiben</b> zu lassen.
+            {used ? (
+              <>Du hast deine <b>kostenlose Probe-Generierung</b> bereits genutzt. Schalte frei, um <b>unbegrenzt Verträge zu erstellen</b> — inkl. PDF, Rechts-Check, Klausel-Erklärung, Fristen & Unterschrift.</>
+            ) : (
+              <>Schalte frei, um ihn als <b>PDF herunterzuladen</b>, auf <b>Rechtssicherheit zu prüfen</b>, dir <b>jede Klausel erklären</b> zu lassen, <b>Fristen in den Kalender</b> zu übernehmen und <b>direkt unterschreiben</b> zu lassen.</>
+            )}
           </div>
           <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "inherit", fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
             Jetzt freischalten <ArrowRight size={17} />

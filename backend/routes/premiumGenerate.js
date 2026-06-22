@@ -466,19 +466,40 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
   const { messages, contractType, existingContractId } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ success: false, error: "NO_MESSAGES" });
 
+  let freeClaimed = false; // 🔓 Free-Tease: wurde die 1 Gratis-Generierung „geclaimt"? (für Refund bei Fehler)
+
   // Usage-Limit-Prüfung VOR dem Streamen (noch als normaler JSON-Fehler möglich)
   try {
     await ensureDb();
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) return res.status(401).json({ success: false, message: "Benutzer nicht gefunden." });
     const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
-    if (plan === 'free') return res.status(403).json({ success: false, message: "Die KI-Vertragserstellung ist in den bezahlten Plänen verfügbar.", upgradeRequired: true });
-    const { checkContractLimit } = require('../services/contractUsage');
-    const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
-    if (!allowed) return res.status(403).json({ success: false, message: `Monatliches Generierungslimit erreicht (${limit}).`, limitReached: true, currentUsage: count, limit });
+    if (plan === 'free') {
+      // Free-Tease: 1 ECHTE Gratis-Generierung pro Account. Atomar claimen (gegen Parallel-/
+      // Skript-Missbrauch: nur EIN Request bekommt modifiedCount=1). Bei Fehler unten Refund.
+      const claim = await usersCollection.updateOne(
+        { _id: new ObjectId(req.user.userId), $or: [{ freeGenerateCount: { $exists: false } }, { freeGenerateCount: { $lt: 1 } }] },
+        { $inc: { freeGenerateCount: 1 }, $set: { freeGenerateAt: new Date() } }
+      );
+      if (claim.modifiedCount === 0) {
+        return res.status(403).json({ success: false, message: "Deine kostenlose Probe-Generierung ist aufgebraucht. Schalte frei, um weitere Verträge zu erstellen.", upgradeRequired: true, freeUsed: true });
+      }
+      freeClaimed = true;
+    } else {
+      const { checkContractLimit } = require('../services/contractUsage');
+      const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
+      if (!allowed) return res.status(403).json({ success: false, message: `Monatliches Generierungslimit erreicht (${limit}).`, limitReached: true, currentUsage: count, limit });
+    }
   } catch (limitErr) {
     console.error("[Premium] Limit-Check Fehler (fail-open):", limitErr.message);
   }
+
+  // Bei Generierungs-Fehler die geclaimte Gratis-Generierung zurückbuchen (User bekam ja nichts).
+  const refundFreeIfNeeded = async () => {
+    if (!freeClaimed) return;
+    freeClaimed = false;
+    try { await usersCollection.updateOne({ _id: new ObjectId(req.user.userId) }, { $inc: { freeGenerateCount: -1 } }); } catch (_) {}
+  };
 
   // ab hier: ndjson-Stream (eine JSON-Zeile pro Ereignis)
   res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
@@ -487,7 +508,7 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
   const send = (obj) => { try { res.write(JSON.stringify(obj) + "\n"); } catch (_) {} };
   try {
     const text = await generateContractText(messages, (t) => send({ type: "delta", text: t }));
-    if (!text || text.length < 200) { send({ type: "error", message: "Vertrag konnte nicht erstellt werden." }); return res.end(); }
+    if (!text || text.length < 200) { await refundFreeIfNeeded(); send({ type: "error", message: "Vertrag konnte nicht erstellt werden." }); return res.end(); }
     const saved = await persistContract(req.user.userId, text, contractType, existingContractId);
     send({ type: "done", contractText: text, ...saved });
 
@@ -514,6 +535,7 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
     }
     res.end();
   } catch (e) {
+    await refundFreeIfNeeded();
     send({ type: "error", message: e.code === "NO_AI_KEY" ? "KI-Dienst nicht verfügbar." : "Erstellung gerade nicht möglich — bitte erneut versuchen." });
     res.end();
   }
