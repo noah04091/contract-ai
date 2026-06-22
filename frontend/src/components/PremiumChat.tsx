@@ -15,12 +15,13 @@ import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as R
 import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X } from "lucide-react";
 import { toast } from "react-toastify";
 
-type Kind = "text" | "questions" | "contract" | "generating" | "review";
+type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming";
 interface ReviewData { verdict: string; summary: string; checks: { klausel: string; status: string; hinweis: string }[]; empfehlungen: string[] }
 interface ChatMsg {
   role: "user" | "assistant";
   kind: Kind;
   content: string;          // an die API gesendeter Text
+  display?: string;         // optionaler kurzer Anzeigetext (statt content) in der Blase
   uiOnly?: boolean;         // z.B. Begrüßung – nicht an die API
   questions?: { id: string; frage: string; warum: string }[];
   contract?: { contractId: string; contractText: string; contractType: string; title?: string };
@@ -55,35 +56,29 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     return data;
   }
 
-  async function handleSend(override?: string) {
+  async function handleSend(override?: string, displayOverride?: string) {
     const text = (typeof override === "string" ? override : input).trim();
     if (!text || busy) return;
-    const base = [...messages, { role: "user", kind: "text", content: text } as ChatMsg];
+    const base = [...messages, { role: "user", kind: "text", content: text, display: displayOverride } as ChatMsg];
     setMessages(base);
     setInput("");
     setBusy(true);
     setMessages((m) => [...m, { role: "assistant", kind: "generating", content: "" }]);
 
-    const finish = (msg: ChatMsg) => setMessages((m) => [...m.filter((x) => x.kind !== "generating"), msg]);
+    const finish = (msg: ChatMsg) => setMessages((m) => [...m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"), msg]);
 
     try {
       if (!contract) {
-        // Phase 1: bewerten — Rückfragen oder generieren
+        // Phase 1: bewerten — Rückfragen oder live schreiben
         const a = await postJson("/api/contracts/premium/chat", { messages: toApi(base) });
         if (a.ready) {
-          const g = await postJson("/api/contracts/premium/generate", { messages: toApi(base), contractType: a.contractType });
-          const c = { contractId: g.contractId, contractText: g.contractText, contractType: g.contractType, title: g.title };
-          setContract(c);
-          finish({ role: "assistant", kind: "contract", content: g.contractText, contract: c });
+          await streamGenerate(base, a.contractType);
         } else {
           finish({ role: "assistant", kind: "questions", content: "Rückfragen: " + a.questions.map((q: any) => q.frage).join(" "), questions: a.questions });
         }
       } else {
-        // Phase 2: Verfeinern — neuer Vertrag aus vollem Verlauf
-        const g = await postJson("/api/contracts/premium/generate", { messages: toApi(base), contractType: contract.contractType });
-        const c = { contractId: g.contractId, contractText: g.contractText, contractType: g.contractType, title: g.title };
-        setContract(c);
-        finish({ role: "assistant", kind: "contract", content: g.contractText, contract: c });
+        // Phase 2: Verfeinern — neuer Vertrag aus vollem Verlauf (live)
+        await streamGenerate(base, contract.contractType);
       }
     } catch (e: any) {
       const msg = e?.data?.limitReached
@@ -94,6 +89,49 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  // Streamt den Vertrag live (ndjson) und ersetzt am Ende durch die Vertrags-Karte
+  async function streamGenerate(base: ChatMsg[], contractType: string) {
+    let acc = "";
+    setMessages((m) => [...m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"), { role: "assistant", kind: "streaming", content: "", uiOnly: true }]);
+    const res = await fetch("/api/contracts/premium/generate-stream", {
+      method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: toApi(base), contractType }),
+    });
+    if (!res.ok || !res.body) {
+      const data = await res.json().catch(() => ({}));
+      const e: any = new Error(data.message || "Fehler"); e.data = data; throw e;
+    }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let done: any = null;
+    for (;;) {
+      const { value, done: rdone } = await reader.read();
+      if (rdone) break;
+      buf += decoder.decode(value, { stream: true });
+      let nl: number;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line) continue;
+        let evt: any;
+        try { evt = JSON.parse(line); } catch { continue; }
+        if (evt.type === "delta") {
+          acc += evt.text;
+          setMessages((m) => m.map((x) => (x.kind === "streaming" ? { ...x, content: acc } : x)));
+        } else if (evt.type === "done") {
+          done = evt;
+        } else if (evt.type === "error") {
+          throw new Error(evt.message || "Fehler");
+        }
+      }
+    }
+    if (!done) throw new Error("Stream unvollständig.");
+    const c = { contractId: done.contractId, contractText: done.contractText, contractType: done.contractType, title: done.title };
+    setContract(c);
+    setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "contract", content: done.contractText, contract: c }]);
   }
 
   async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) {
@@ -129,7 +167,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     if (busy || !review.empfehlungen.length) return;
     const text = "Bitte arbeite folgende Empfehlungen aus dem Rechts-Check in den Vertrag ein:\n" +
       review.empfehlungen.map((e, i) => `${i + 1}. ${e}`).join("\n");
-    handleSend(text);
+    handleSend(text, "→ Empfehlungen aus dem Rechts-Check werden übernommen");
   }
 
   return (
@@ -204,7 +242,14 @@ function Bubble({ m, onDownload, onReview, onApplyRec }: { m: ChatMsg; onDownloa
   return (
     <div style={{ display: "flex", gap: 11, justifyContent: isUser ? "flex-end" : "flex-start" }}>
       {!isUser && AiAvatar}
-      {m.kind === "questions" ? (
+      {m.kind === "streaming" ? (
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: "88%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13, color: C.muted }}><Dots /> schreibt deinen Vertrag …</div>
+          <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 14, borderTopLeftRadius: 4, padding: "14px 16px", fontFamily: "Georgia,'Times New Roman',serif", fontSize: 12.5, color: "#43506a", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>
+            {m.content || "…"}<span style={{ color: C.blue, fontWeight: 700 }}>▍</span>
+          </div>
+        </div>
+      ) : m.kind === "questions" ? (
         <div style={bubbleStyle}>
           Damit der Vertrag wirklich passt, brauche ich noch ein paar Angaben:
           <div style={{ marginTop: 8 }}>
@@ -227,7 +272,7 @@ function Bubble({ m, onDownload, onReview, onApplyRec }: { m: ChatMsg; onDownloa
       ) : m.kind === "review" ? (
         <ReviewCard review={m.review!} onApply={() => onApplyRec(m.review!)} />
       ) : (
-        <div style={bubbleStyle}>{m.content}</div>
+        <div style={bubbleStyle}>{m.display ?? m.content}</div>
       )}
     </div>
   );

@@ -84,7 +84,7 @@ async function assess(messages) {
 // =========================================================================
 // 2) Vollständigen Vertrag schreiben (server-seitig gestreamt → finalMessage)
 // =========================================================================
-async function generateContractText(messages) {
+async function generateContractText(messages, onDelta) {
   const system =
     "Du bist ein erfahrener deutscher Vertragsanwalt und erstellst professionelle, rechtssichere Verträge.\n\n" +
     "REGELN:\n" +
@@ -100,6 +100,7 @@ async function generateContractText(messages) {
     thinking: { type: "adaptive" }, output_config: { effort: "high" },
     system, messages: messages.concat([{ role: "user", content: "Erstelle jetzt den vollständigen Vertrag." }]),
   });
+  if (typeof onDelta === "function") stream.on("text", (t) => onDelta(t));
   const final = await stream.finalMessage();
   return (final.content.find((b) => b.type === "text")?.text || "").trim();
 }
@@ -242,6 +243,27 @@ async function reviewContract(text) {
   return JSON.parse(res.content.find((b) => b.type === "text").text);
 }
 
+// Speichert einen erzeugten Vertrag in `contracts` (gemeinsam für /generate-stream)
+async function persistContract(userId, text, contractType) {
+  const typeLabel = (contractType || "Vertrag").toString().slice(0, 80);
+  const title = `${typeLabel} – ${new Date().toLocaleDateString("de-DE")}`;
+  await ensureDb();
+  const contract = {
+    userId: new ObjectId(userId),
+    name: title,
+    content: text,
+    contractHTML: textToBasicHtml(text, title),
+    status: "Aktiv",
+    uploadedAt: new Date(),
+    createdAt: new Date(),
+    isGenerated: true,
+    contractType: typeLabel,
+    metadata: { version: "premium_opus_v1", generatedBy: "Claude Opus 4.8", premium: true },
+  };
+  const ins = await contractsCollection.insertOne(contract);
+  return { contractId: ins.insertedId, contractType: typeLabel, title };
+}
+
 // =========================================================================
 // Router
 // =========================================================================
@@ -307,6 +329,41 @@ router.post("/generate", aiLimiter, async (req, res) => {
   } catch (e) {
     const status = e.code === "NO_AI_KEY" ? 503 : 502;
     return res.status(status).json({ success: false, error: e.code || "AI_ERROR", message: "Erstellung gerade nicht möglich — bitte erneut versuchen." });
+  }
+});
+
+// POST /generate-stream — wie /generate, streamt aber den Vertrag live (ndjson-Zeilen)
+router.post("/generate-stream", aiLimiter, async (req, res) => {
+  const { messages, contractType } = req.body || {};
+  if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ success: false, error: "NO_MESSAGES" });
+
+  // Usage-Limit-Prüfung VOR dem Streamen (noch als normaler JSON-Fehler möglich)
+  try {
+    await ensureDb();
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) return res.status(401).json({ success: false, message: "Benutzer nicht gefunden." });
+    const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
+    const { checkContractLimit } = require('../services/contractUsage');
+    const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
+    if (!allowed) return res.status(403).json({ success: false, message: `Monatliches Generierungslimit erreicht (${limit}).`, limitReached: true, currentUsage: count, limit });
+  } catch (limitErr) {
+    console.error("[Premium] Limit-Check Fehler (fail-open):", limitErr.message);
+  }
+
+  // ab hier: ndjson-Stream (eine JSON-Zeile pro Ereignis)
+  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("X-Accel-Buffering", "no");
+  const send = (obj) => { try { res.write(JSON.stringify(obj) + "\n"); } catch (_) {} };
+  try {
+    const text = await generateContractText(messages, (t) => send({ type: "delta", text: t }));
+    if (!text || text.length < 200) { send({ type: "error", message: "Vertrag konnte nicht erstellt werden." }); return res.end(); }
+    const saved = await persistContract(req.user.userId, text, contractType);
+    send({ type: "done", contractText: text, ...saved });
+    res.end();
+  } catch (e) {
+    send({ type: "error", message: e.code === "NO_AI_KEY" ? "KI-Dienst nicht verfügbar." : "Erstellung gerade nicht möglich — bitte erneut versuchen." });
+    res.end();
   }
 });
 
