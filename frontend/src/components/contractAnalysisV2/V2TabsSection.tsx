@@ -378,7 +378,7 @@ export default function V2TabsSection({ data }: Props) {
         {/* 🔒 Free-Tease: weitere Risiken sind server-seitig gesperrt */}
         {d.gated && (
           <div style={{ marginTop: criticals.length ? 16 : 0 }}>
-            <LockedAnalysisUpsell counts={d.gatedCounts} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="risks" />
           </div>
         )}
       </div>
@@ -429,7 +429,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {recos.length === 0 ? (
           d.gated ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="recommendations" />
           ) : (
             <EmptyState
               icon="✓"
@@ -514,7 +514,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {sugs.length === 0 ? (
           d.gated ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="suggestions" />
           ) : (
             <EmptyState
               icon="💡"
@@ -542,7 +542,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {cmpArr.length === 0 ? (
           d.gated ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="market" />
           ) : (
             <EmptyState
               icon="📊"
@@ -569,7 +569,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {opinion.length === 0 ? (
           d.gated ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="opinion" />
           ) : (
             <EmptyState
               icon="⚖️"
