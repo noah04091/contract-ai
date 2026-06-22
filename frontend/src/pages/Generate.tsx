@@ -5979,7 +5979,7 @@ export default function Generate() {
       {premiumMode && (
         <div style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(11,19,36,.45)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
           <div style={{ width: "100%", maxWidth: 860 }}>
-            <PremiumChat onClose={() => setPremiumMode(false)} />
+            <PremiumChat onClose={() => setPremiumMode(false)} demo={userPlan === 'free'} />
           </div>
         </div>
       )}
@@ -6244,13 +6244,10 @@ export default function Generate() {
                       {premiumEntryVisible && (
                         <motion.button
                           type="button"
-                          className={`${styles.contractTypeCard} ${userPlan === 'free' ? styles.locked : ''}`}
-                          onClick={() => {
-                            if (userPlan === 'free') { toast.info('🔒 Vertragserstellung nur mit Business/Enterprise verfügbar'); return; }
-                            setPremiumMode(true);
-                          }}
-                          whileHover={userPlan !== 'free' ? { scale: 1.02, y: -4 } : { scale: 1.01 }}
-                          whileTap={userPlan !== 'free' ? { scale: 0.98 } : {}}
+                          className={styles.contractTypeCard}
+                          onClick={() => { setPremiumMode(true); }}
+                          whileHover={{ scale: 1.02, y: -4 }}
+                          whileTap={{ scale: 0.98 }}
                           transition={{ duration: 0.2 }}
                           style={{ border: '1.5px solid #2E6CF6', background: 'linear-gradient(135deg, rgba(46,108,246,.07), rgba(30,83,216,.03))' }}
                         >

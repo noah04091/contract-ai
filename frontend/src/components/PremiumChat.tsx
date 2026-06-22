@@ -12,12 +12,12 @@
  *   POST /api/contracts/premium/pdf        (Premium-PDF, AVV-Stil)
  */
 import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown, BookOpen } from "lucide-react";
+import { Sparkles, Send, Download, Lock, ArrowLeft, ArrowRight, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown, BookOpen } from "lucide-react";
 import { toast } from "react-toastify";
 import EnhancedSignatureModal from "./EnhancedSignatureModal";
 import { useAuth } from "../hooks/useAuth";
 
-type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events" | "explain";
+type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events" | "explain" | "demolock";
 interface CalItem { title: string; date: string; severity?: string }
 interface ExplainData { summary: string; items: { titel: string; erklaerung: string; rechtsgrundlage: string }[] }
 interface ReviewData { verdict: string; summary: string; checks: { klausel: string; status: string; hinweis: string }[]; empfehlungen: string[] }
@@ -50,7 +50,17 @@ const QUICK_STARTS = [
   { emoji: "🎯", label: "Beratervertrag", prompt: "Ich möchte einen Beratervertrag erstellen." },
 ];
 
-export default function PremiumChat({ onClose }: { onClose: () => void }) {
+// Beispiel-Vertrag für die Free-Demo (kein KI-Lauf, reine Vorschau → Upsell)
+const DEMO_CONTRACT =
+  "FREELANCER-VERTRAG (WEBENTWICKLUNG)\n\n" +
+  "zwischen\nHerrn Max Beispiel, Musterstraße 1, 10115 Berlin\n– nachfolgend „Auftragnehmer" + "“ genannt –\n\n" +
+  "und\nder Beispiel GmbH, Hauptstraße 5, 20095 Hamburg\n– nachfolgend „Auftraggeber" + "“ genannt –\n\n" +
+  "§ 1 Vertragsgegenstand\n(1) Der Auftragnehmer erbringt für den Auftraggeber Leistungen der Webentwicklung gemäß Anlage 1.\n\n" +
+  "§ 2 Vergütung\n(1) Die Vergütung beträgt 80,00 € netto je geleisteter Stunde zzgl. der gesetzlichen Umsatzsteuer.\n(2) Die Abrechnung erfolgt monatlich nach Stundennachweis.\n\n" +
+  "§ 3 Laufzeit & Kündigung\n(1) Der Vertrag läuft auf unbestimmte Zeit und kann mit einer Frist von 14 Tagen gekündigt werden.\n\n" +
+  "§ 4 Nutzungsrechte\n(1) Die Rechte an den Arbeitsergebnissen gehen erst mit vollständiger Bezahlung auf den Auftraggeber über.\n";
+
+export default function PremiumChat({ onClose, demo = false }: { onClose: () => void; demo?: boolean }) {
   const { user } = useAuth();
   const firstName = (user?.name || "").trim().split(/\s+/)[0] || "";
   const greeting = `Hi${firstName ? " " + firstName : ""}! Beschreib mir einfach in eigenen Worten, welchen Vertrag du brauchst — Stichworte reichen völlig.`;
@@ -80,6 +90,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
   async function handleSend(override?: string, displayOverride?: string) {
     const text = (typeof override === "string" ? override : input).trim();
     if (!text || busy) return;
+    if (demo) { setInput(""); return runDemo(text); }
     const base = [...messages, { role: "user", kind: "text", content: text, display: displayOverride } as ChatMsg];
     setMessages(base);
     setInput("");
@@ -175,6 +186,22 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  // Free-Demo: Beispiel-Vertrag „tippen" lassen, dann Sperr-Karte (kein KI-Lauf)
+  async function runDemo(userText: string) {
+    if (busy) return;
+    setBusy(true);
+    setMessages((m) => [...m, { role: "user", kind: "text", content: userText }, { role: "assistant", kind: "streaming", content: "", uiOnly: true }]);
+    const chunks = DEMO_CONTRACT.match(/[\s\S]{1,28}/g) || [DEMO_CONTRACT];
+    let acc = "";
+    for (const ch of chunks) {
+      acc += ch;
+      setMessages((m) => m.map((x) => (x.kind === "streaming" ? { ...x, content: acc } : x)));
+      await new Promise((r) => setTimeout(r, 70));
+    }
+    setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "demolock", uiOnly: true, content: "lock" }]);
+    setBusy(false);
   }
 
   async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) {
@@ -393,6 +420,8 @@ function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend
         <EventsCard items={m.calItems || []} />
       ) : m.kind === "explain" ? (
         <ExplainCard explain={m.explainData!} />
+      ) : m.kind === "demolock" ? (
+        <LockCard />
       ) : (
         <div style={bubbleStyle}>{m.display ?? m.content}</div>
       )}
@@ -571,6 +600,25 @@ function ExplainCard({ explain }: { explain: ExplainData }) {
             <div style={{ fontSize: 11, color: C.muted2, marginTop: 12 }}>Erläuterung zur Orientierung – keine Rechtsberatung.</div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function LockCard() {
+  return (
+    <div style={{ display: "flex", gap: 11, maxWidth: "90%" }}>
+      <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Lock size={15} /></div>
+      <div style={{ border: `1.5px solid #d6e2fb`, borderRadius: 14, borderTopLeftRadius: 4, overflow: "hidden", flex: 1, background: "linear-gradient(135deg, rgba(46,108,246,.06), rgba(30,83,216,.03))" }}>
+        <div style={{ padding: "16px 18px" }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: C.ink, marginBottom: 6, display: "flex", alignItems: "center", gap: 7 }}><Lock size={16} color={C.blue} /> Dein Vertrag ist fertig!</div>
+          <div style={{ fontSize: 13.5, color: "#41506b", lineHeight: 1.55, marginBottom: 14 }}>
+            Mit einem bezahlten Plan kannst du ihn als <b>PDF herunterladen</b>, auf <b>Rechtssicherheit prüfen</b> lassen, dir <b>jede Klausel erklären</b> lassen, <b>Fristen in deinen Kalender</b> übernehmen und <b>direkt unterschreiben lassen</b>.
+          </div>
+          <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13.5, borderRadius: 10, padding: "10px 16px", textDecoration: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
+            Jetzt freischalten <ArrowRight size={16} />
+          </a>
+        </div>
       </div>
     </div>
   );
