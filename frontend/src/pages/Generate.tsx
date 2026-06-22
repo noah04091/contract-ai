@@ -31,7 +31,7 @@ const SHOW_BRIEF_MODE: boolean = false;
 
 // Generate 2.0 Premium-Einstieg: standardmäßig versteckt (für alle Nutzer).
 // Zum Testen auf der echten Seite via ?premium=1 erreichbar. Freischalten für alle = true.
-const SHOW_PREMIUM_ENTRY: boolean = false;
+const SHOW_PREMIUM_ENTRY: boolean = true;
 
 // Types
 export interface FormDataType {

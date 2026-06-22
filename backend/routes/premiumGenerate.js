@@ -388,6 +388,7 @@ router.post("/generate", aiLimiter, async (req, res) => {
       const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
       if (!user) return res.status(401).json({ success: false, message: "Benutzer nicht gefunden." });
       const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
+      if (plan === 'free') return res.status(403).json({ success: false, message: "Die KI-Vertragserstellung ist in den bezahlten Plänen verfügbar.", upgradeRequired: true });
       const { checkContractLimit } = require('../services/contractUsage');
       const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
       if (!allowed) return res.status(403).json({ success: false, message: `Monatliches Generierungslimit erreicht (${limit}).`, limitReached: true, currentUsage: count, limit });
@@ -433,6 +434,7 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) return res.status(401).json({ success: false, message: "Benutzer nicht gefunden." });
     const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
+    if (plan === 'free') return res.status(403).json({ success: false, message: "Die KI-Vertragserstellung ist in den bezahlten Plänen verfügbar.", upgradeRequired: true });
     const { checkContractLimit } = require('../services/contractUsage');
     const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
     if (!allowed) return res.status(403).json({ success: false, message: `Monatliches Generierungslimit erreicht (${limit}).`, limitReached: true, currentUsage: count, limit });
