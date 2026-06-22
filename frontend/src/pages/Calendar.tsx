@@ -692,8 +692,16 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
     onClose();
   };
 
+  // 🖋️ Signatur-Events: Titel/Beschreibung enthalten relative Zeit ("läuft heute/morgen/bald ab"),
+  // die nur am Feuer-Tag stimmt. Im Popup (Tage vorher) neutralisieren, damit kein Widerspruch
+  // zum echten Ablaufdatum entsteht. Reine Anzeige — Daten/Backend unverändert.
+  const isSignatureEvent = currentEvent.type?.startsWith('SIGNATURE_') || !!currentEvent.metadata?.envelopeId;
+  const neutralizeSig = (s: string | undefined): string =>
+    isSignatureEvent ? (s || '').replace(/läuft\s+(?:heute|morgen|bald|in\s+\d+\s+Tagen?)\s+ab/gi, 'läuft ab') : (s || '');
+
   const formatDate = () => {
-    return new Date(currentEvent.date).toLocaleDateString('de-DE', {
+    // Für Signaturen das echte Ablaufdatum (expiresAt) zeigen — konsistent mit "Verbleibend".
+    return new Date(getEventDisplayDate(currentEvent)).toLocaleDateString('de-DE', {
       weekday: 'long',
       day: '2-digit',
       month: 'long',
@@ -815,7 +823,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
             <div className="modal-header-text">
               <h3>{isManualEvent ? currentEvent.title : formatContractName(currentEvent.contractName)}</h3>
-              <p>{isManualEvent ? 'Manuelles Ereignis' : stripFileName(currentEvent.title)}</p>
+              <p>{isManualEvent ? 'Manuelles Ereignis' : neutralizeSig(stripFileName(currentEvent.title))}</p>
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
@@ -890,7 +898,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
           {currentEvent.description && (
           <div className="event-description-premium">
             <Sparkles size={16} className="description-icon" />
-            <p>{currentEvent.description}</p>
+            <p>{neutralizeSig(currentEvent.description)}</p>
           </div>
           )}
 
