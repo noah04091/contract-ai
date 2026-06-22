@@ -221,6 +221,8 @@ router.post("/create-unlock-session", verifyToken, async (req, res) => {
     });
 
     console.log(`✅ [STRIPE] Unlock-Session erstellt: ${session.id} (contract ${contractId})`);
+    // 📊 Conversion-Tracking: Kauf-Absicht (Klick auf „Jetzt freischalten")
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_checkout_started' }).catch(() => {});
     res.json({ url: session.url });
   } catch (err) {
     console.error("❌ Stripe Unlock-Session Fehler:", err);
@@ -255,11 +257,14 @@ router.get("/verify-unlock", verifyToken, async (req, res) => {
         const okContract = s?.metadata?.contractId === String(contractId);
         const okKind = s?.metadata?.kind === "analysis_unlock";
         if (s && s.payment_status === "paid" && okOwner && okContract && okKind) {
-          await contractsCollection.updateOne(
-            { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId) },
+          const r = await contractsCollection.updateOne(
+            { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId), "unlock.paid": { $ne: true } },
             { $set: { "unlock.paid": true, "unlock.unlockedAt": new Date(), "unlock.stripeSessionId": s.id, "unlock.paymentIntentId": s.payment_intent || null, "unlock.source": "verify-session" } }
           );
-          console.log(`🔓 [verify-session] Analyse freigeschaltet (contract ${contractId})`);
+          if (r.modifiedCount > 0) {
+            console.log(`🔓 [verify-session] Analyse freigeschaltet (contract ${contractId})`);
+            require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_purchased' }).catch(() => {});
+          }
           return res.json({ unlocked: true });
         }
       } catch (e) {
@@ -278,10 +283,13 @@ router.get("/verify-unlock", verifyToken, async (req, res) => {
         s.metadata.contractId === String(contractId)
       );
       if (paid) {
-        await contractsCollection.updateOne(
-          { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId) },
+        const r = await contractsCollection.updateOne(
+          { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId), "unlock.paid": { $ne: true } },
           { $set: { "unlock.paid": true, "unlock.unlockedAt": new Date(), "unlock.stripeSessionId": paid.id, "unlock.source": "verify" } }
         );
+        if (r.modifiedCount > 0) {
+          require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_purchased' }).catch(() => {});
+        }
         return res.json({ unlocked: true });
       }
     }

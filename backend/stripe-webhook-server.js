@@ -395,7 +395,7 @@ async function handleStripeEvent(event) {
             const db = await database.connect();
             const contractsCollection = db.collection("contracts");
             const r = await contractsCollection.updateOne(
-              { _id: new ObjectId(contractId), userId: new ObjectId(userId) },
+              { _id: new ObjectId(contractId), userId: new ObjectId(userId), "unlock.paid": { $ne: true } },
               { $set: {
                 "unlock.paid": true,
                 "unlock.unlockedAt": new Date(),
@@ -404,7 +404,11 @@ async function handleStripeEvent(event) {
                 "unlock.source": "webhook"
               } }
             );
-            console.log(`🔓 Analyse einmalig freigeschaltet (contract ${contractId}, user ${userId}) — matched ${r.matchedCount}`);
+            console.log(`🔓 Analyse einmalig freigeschaltet (contract ${contractId}, user ${userId}) — modified ${r.modifiedCount}`);
+            // 📊 Conversion-Tracking nur beim ERSTEN Setzen (Dedup ggü. verify-on-return)
+            if (r.modifiedCount > 0) {
+              try { require('./services/featureUsage').getInstance().trackFeatureUsage({ userId, feature: 'unlock_purchased' }).catch(() => {}); } catch { /* tracking optional */ }
+            }
           } catch (e) {
             console.error(`❌ Unlock-Update fehlgeschlagen (contract ${contractId}):`, e.message);
           }
