@@ -3535,6 +3535,8 @@ export default function Generate() {
   const [isBriefProcessing, setIsBriefProcessing] = useState<boolean>(false);
   // ✨ Generate 2.0 Premium-Modus (KI-Chat-Assistent)
   const [premiumMode, setPremiumMode] = useState<boolean>(false);
+  // 🔓 Vorbefüllung für den Generate-2.0-Tease, wenn Free-User auf einen Vertragstyp klickt
+  const [premiumSeed, setPremiumSeed] = useState<string>("");
   const premiumEntryVisible = useMemo(
     () => SHOW_PREMIUM_ENTRY || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("premium")),
     []
@@ -4240,7 +4242,10 @@ export default function Generate() {
   // ✨ Generate 2.0 — Brief → Typ erkennen → Formular vorausfüllen → Review (Step 2)
   const handleBriefSubmit = async () => {
     if (userPlan === 'free') {
-      toast.info('🔒 Vertragserstellung nur mit Business/Enterprise verfügbar');
+      // 🔓 Free: Beschreibung in den Generate-2.0-Tease übernehmen (1 echte Gratis-Generierung)
+      const brief = briefText.trim();
+      setPremiumSeed(brief.length >= 10 ? brief : "");
+      setPremiumMode(true);
       return;
     }
     const brief = briefText.trim();
@@ -5979,7 +5984,7 @@ export default function Generate() {
       {premiumMode && (
         <div style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(11,19,36,.45)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
           <div style={{ width: "100%", maxWidth: 860 }}>
-            <PremiumChat onClose={() => setPremiumMode(false)} demo={userPlan === 'free'} />
+            <PremiumChat onClose={() => { setPremiumMode(false); setPremiumSeed(""); }} demo={userPlan === 'free'} initialPrompt={premiumSeed} />
           </div>
         </div>
       )}
@@ -6261,18 +6266,20 @@ export default function Generate() {
                       {CONTRACT_TYPES.map((type) => (
                         <motion.button
                           key={type.id}
-                          className={`${styles.contractTypeCard} ${selectedType?.id === type.id ? styles.selected : ''} ${userPlan === 'free' ? styles.locked : ''}`}
+                          className={`${styles.contractTypeCard} ${selectedType?.id === type.id ? styles.selected : ''}`}
                           onClick={() => {
                             if (userPlan === 'free') {
-                              // Free users: show upgrade notice
-                              toast.info('🔒 Vertragserstellung nur mit Business/Enterprise verfügbar');
+                              // 🔓 Free: in den Generate-2.0-Tease leiten (1 echte Gratis-Generierung
+                              // dieses Typs) statt harter Sperre. Vorbefüllt, Nutzer kann ergänzen.
+                              setPremiumSeed(`Ich möchte einen ${type.name} erstellen.`);
+                              setPremiumMode(true);
                               return;
                             }
                             handleTypeSelect(type);
                           }}
-                          disabled={false} // Allow clicks for toast messages
-                          whileHover={userPlan !== 'free' ? { scale: 1.02, y: -4 } : { scale: 1.01 }}
-                          whileTap={userPlan !== 'free' ? { scale: 0.98 } : {}}
+                          disabled={false}
+                          whileHover={{ scale: 1.02, y: -4 }}
+                          whileTap={{ scale: 0.98 }}
                           transition={{ duration: 0.2 }}
                         >
                           {type.isNew && (

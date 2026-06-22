@@ -216,7 +216,7 @@ function pickDemo(userText: string): { title: string; text: string } {
   return DEMO_CONTRACTS.freelancer; // Default (auch Freelancer/Dienstleistung)
 }
 
-export default function PremiumChat({ onClose, demo = false }: { onClose: () => void; demo?: boolean }) {
+export default function PremiumChat({ onClose, demo = false, initialPrompt = "" }: { onClose: () => void; demo?: boolean; initialPrompt?: string }) {
   const { user } = useAuth();
   const firstName = (user?.name || "").trim().split(/\s+/)[0] || "";
   const greeting = `Hi${firstName ? " " + firstName : ""}! Beschreib mir einfach in eigenen Worten, welchen Vertrag du brauchst — Stichworte reichen völlig.`;
@@ -230,6 +230,12 @@ export default function PremiumChat({ onClose, demo = false }: { onClose: () => 
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [messages, busy]);
+
+  // Vorbefüllung aus der Vertragstyp-Auswahl (Generate-Seite) — Nutzer kann ergänzen, dann senden.
+  useEffect(() => {
+    if (initialPrompt && initialPrompt.trim()) setInput(initialPrompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const toApi = (msgs: ChatMsg[]) =>
     msgs.filter((m) => !m.uiOnly && m.kind !== "generating").map((m) => ({ role: m.role, content: m.content }));
