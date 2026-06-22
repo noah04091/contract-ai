@@ -948,34 +948,45 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
           )}
 
-          {/* 🔔 Deine Erinnerungen — Vorwarnungen DIESER Frist, direkt sichtbar (reine Anzeige) */}
+          {/* 🔔 Erinnerungen DIESER Frist — vollständig & ehrlich, direkt sichtbar (reine Anzeige) */}
           {hasContract && !isReminderEntry(currentEvent) && (
-            <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', fontSize: '13px', fontWeight: 700, color: '#374151' }}>
+            <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', padding: '16px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', fontSize: '14px', fontWeight: 700, color: '#374151' }}>
                 <Bell size={16} style={{ color: '#2563eb', flexShrink: 0 }} />
-                <span>Erinnerungen zu dieser Frist</span>
+                <span>So wirst du an diese Frist erinnert</span>
               </div>
               {remindersLoading ? (
-                <div style={{ fontSize: '13px', color: '#9ca3af' }}>Lädt …</div>
+                <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '10px' }}>Lädt …</div>
               ) : deadlineReminders.length > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {deadlineReminders.map(r => (
-                    <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', color: '#374151' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#2563eb' }}>🔔</span>{r.label}</span>
-                      <span style={{ color: '#9ca3af', fontSize: '12px' }}>{r.dateStr}</span>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div style={{ fontSize: '12.5px', color: '#6b7280', margin: '3px 0 13px 25px', lineHeight: 1.4 }}>
+                    Wir mailen dich automatisch rechtzeitig vorher.
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {deadlineReminders.map(r => (
+                      <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '11px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '11px 12px' }}>
+                        <span style={{ width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0, background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🔔</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#111827' }}>{r.label}</div>
+                          <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '1px' }}>{r.dateStr}</div>
+                        </div>
+                        <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#2563eb', background: '#eff6ff', borderRadius: '999px', padding: '3px 9px', whiteSpace: 'nowrap' }}>✉️ E-Mail</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
-                <div style={{ fontSize: '13px', color: '#9ca3af' }}>Keine Vorwarnung für diese Frist — unten kannst du eine hinzufügen.</div>
+                <div style={{ fontSize: '13px', color: '#6b7280', margin: '8px 0 2px', lineHeight: 1.5 }}>
+                  Für diese Frist ist aktuell keine Erinnerung aktiv. Über „verwalten" kannst du eine eigene Erinnerung (z.&nbsp;B. 1&nbsp;Monat vorher) hinzufügen.
+                </div>
               )}
               {onManageReminders && (
                 <button
                   onClick={() => onManageReminders(currentEvent)}
-                  style={{ marginTop: '12px', background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
+                  style={{ marginTop: '13px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#fff', border: '1px solid #bfdbfe', color: '#2563eb', borderRadius: '10px', padding: '11px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                 >
                   <SlidersHorizontal size={14} style={{ flexShrink: 0 }} />
-                  Erinnerung hinzufügen / verwalten
+                  Alle Erinnerungen dieses Vertrags verwalten
                 </button>
               )}
             </div>
