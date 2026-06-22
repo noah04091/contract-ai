@@ -14,6 +14,7 @@
 import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
+import EnhancedSignatureModal from "./EnhancedSignatureModal";
 
 type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events";
 interface CalItem { title: string; date: string; severity?: string }
@@ -43,6 +44,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [contract, setContract] = useState<ChatMsg["contract"] | null>(null);
+  const [sigModal, setSigModal] = useState<{ contractId: string; contractName: string; s3Key: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [messages, busy]);
@@ -171,6 +173,36 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     } catch { toast.error("PDF konnte nicht erstellt werden."); }
   }
 
+  // Zur Unterschrift senden: Premium-PDF → S3 → bestehenden Envelope-Dialog öffnen
+  async function sendForSignature(c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) {
+    const t = toast.loading("Vertrag wird für die Unterschrift vorbereitet …");
+    try {
+      const pdfRes = await fetch("/api/contracts/premium/pdf", {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null }),
+      });
+      if (!pdfRes.ok) throw new Error("PDF");
+      const blob = await pdfRes.blob();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onloadend = () => resolve((r.result as string).split(",")[1]);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+      const upRes = await fetch(`/api/contracts/${c.contractId}/upload-pdf`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pdfBase64: base64 }),
+      });
+      const upData = await upRes.json().catch(() => ({}));
+      if (!upRes.ok || !upData.s3Key) throw new Error(upData.error || "Upload");
+      toast.dismiss(t);
+      setSigModal({ contractId: c.contractId, contractName: c.title || "Vertrag", s3Key: upData.s3Key });
+    } catch {
+      toast.dismiss(t);
+      toast.error("Konnte den Vertrag nicht zur Unterschrift vorbereiten. Bitte erneut versuchen.");
+    }
+  }
+
   async function runReview(c: NonNullable<ChatMsg["contract"]>) {
     if (busy) return;
     setBusy(true);
@@ -211,7 +243,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
       {/* Chat */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", background: C.bg, padding: "22px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
         {messages.map((m, i) => (
-          <Bubble key={i} m={m} onDownload={downloadPdf} onReview={runReview} onApplyRec={applyRecommendations} onSkip={skipQuestions} busy={busy} />
+          <Bubble key={i} m={m} onDownload={downloadPdf} onReview={runReview} onApplyRec={applyRecommendations} onSkip={skipQuestions} onSend={sendForSignature} busy={busy} />
         ))}
       </div>
 
@@ -236,11 +268,21 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
           <Lock size={13} /> Kein Ersatz für Rechtsberatung · deine Eingaben bleiben vertraulich
         </div>
       </div>
+
+      {sigModal && (
+        <EnhancedSignatureModal
+          show={true}
+          onClose={() => setSigModal(null)}
+          contractId={sigModal.contractId}
+          contractName={sigModal.contractName}
+          contractS3Key={sigModal.s3Key}
+        />
+      )}
     </div>
   );
 }
 
-function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; busy: boolean }) {
+function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, onSend, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; busy: boolean }) {
   const isUser = m.role === "user";
   const AiAvatar = (
     <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Sparkles size={16} /></div>
@@ -296,7 +338,7 @@ function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, busy }: { m: Chat
       ) : m.kind === "contract" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: "88%" }}>
           <div style={bubbleStyle}>Fertig — hier ist dein Vertrag:</div>
-          <ContractCard c={m.contract!} onDownload={onDownload} onReview={onReview} />
+          <ContractCard c={m.contract!} onDownload={onDownload} onReview={onReview} onSend={onSend} />
           <div style={{ ...bubbleStyle, maxWidth: "100%", fontSize: 13, color: "#41506b" }}>
             Du kannst unten weiter mit mir chatten, um Klauseln zu ändern — z. B. „Laufzeit auf 6 Monate“ oder „Wettbewerbsverbot ergänzen“.
           </div>
@@ -312,7 +354,7 @@ function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, busy }: { m: Chat
   );
 }
 
-function ContractCard({ c, onDownload, onReview }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void }) {
+function ContractCard({ c, onDownload, onReview, onSend }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
   const [design, setDesign] = useState("klassisch");
   const [signature, setSignature] = useState<string | null>(null);
   const [showPad, setShowPad] = useState(false);
@@ -363,9 +405,12 @@ function ContractCard({ c, onDownload, onReview }: { c: NonNullable<ChatMsg["con
       </div>
       {showPad && <SignaturePad onSave={(d) => { setSignature(d); setShowPad(false); }} onCancel={() => setShowPad(false)} />}
 
-      <div style={{ display: "flex", gap: 9, padding: "12px 15px 14px", alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 9, padding: "12px 15px 14px", alignItems: "center", flexWrap: "wrap" }}>
         <button onClick={() => onDownload(c, design, signature)} style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
           <Download size={16} /> PDF herunterladen
+        </button>
+        <button onClick={() => onSend(c, design, signature)} title="Vertrag an die andere Partei zum Unterschreiben senden" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 13px", cursor: "pointer", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
+          <Send size={15} /> Zur Unterschrift senden
         </button>
         <button onClick={() => onReview(c)} title="Vertrag von der KI auf Rechtssicherheit prüfen lassen" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 13px", cursor: "pointer", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
           <ShieldCheck size={15} /> Rechts-Check
