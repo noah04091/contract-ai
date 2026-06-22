@@ -6239,29 +6239,28 @@ export default function Generate() {
                       </div>
                     </div>
 
-                    {/* ✨ Generate 2.0 Premium-Einstieg (KI-Chat-Assistent) — versteckt bis Freigabe */}
-                    {premiumEntryVisible && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (userPlan === 'free') { toast.info('🔒 Vertragserstellung nur mit Business/Enterprise verfügbar'); return; }
-                        setPremiumMode(true);
-                      }}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer', marginBottom: 22, padding: '16px 20px', borderRadius: 16, border: '1px solid #d6e2fb', background: 'linear-gradient(135deg, rgba(46,108,246,.07), rgba(30,83,216,.04))', font: 'inherit' }}
-                    >
-                      <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#2E6CF6,#1E53D8)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flex: 'none' }}><Sparkles size={22} /></div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 700, fontSize: 15, color: '#0B1324', display: 'flex', alignItems: 'center', gap: 8 }}>
-                          Lieber im Gespräch erstellen?
-                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: '#2E6CF6', background: 'rgba(46,108,246,.12)', padding: '2px 7px', borderRadius: 6 }}>NEU</span>
-                        </div>
-                        <div style={{ fontSize: 13, color: '#667085', marginTop: 2 }}>Beschreib einfach, was du brauchst — der KI-Assistent fragt nach und schreibt deinen Vertrag.</div>
-                      </div>
-                      <ArrowRight size={20} color="#2E6CF6" />
-                    </button>
-                    )}
-
                     <div className={styles.contractTypesGrid}>
+                      {/* ✨ Generate 2.0 Premium-Einstieg als erste Karte (KI-Chat-Assistent) */}
+                      {premiumEntryVisible && (
+                        <motion.button
+                          type="button"
+                          className={`${styles.contractTypeCard} ${userPlan === 'free' ? styles.locked : ''}`}
+                          onClick={() => {
+                            if (userPlan === 'free') { toast.info('🔒 Vertragserstellung nur mit Business/Enterprise verfügbar'); return; }
+                            setPremiumMode(true);
+                          }}
+                          whileHover={userPlan !== 'free' ? { scale: 1.02, y: -4 } : { scale: 1.01 }}
+                          whileTap={userPlan !== 'free' ? { scale: 0.98 } : {}}
+                          transition={{ duration: 0.2 }}
+                          style={{ border: '1.5px solid #2E6CF6', background: 'linear-gradient(135deg, rgba(46,108,246,.07), rgba(30,83,216,.03))' }}
+                        >
+                          <div className={styles.newBadge} style={{ background: 'linear-gradient(135deg,#2E6CF6,#1E53D8)' }}>✨ PREMIUM</div>
+                          <div className={styles.cardIcon}>✨</div>
+                          <h3>Im Gespräch erstellen</h3>
+                          <p>KI-Assistent: beschreiben → Rückfragen → fertiger Top-Vertrag, inkl. Rechts-Check, Fristen & Signatur.</p>
+                          <div className={styles.cardArrow}><ArrowRight size={16} /></div>
+                        </motion.button>
+                      )}
                       {CONTRACT_TYPES.map((type) => (
                         <motion.button
                           key={type.id}
