@@ -632,9 +632,10 @@ interface QuickActionsModalProps {
   onEventChange?: (event: CalendarEvent) => void; // Callback when navigating to different event
   onEdit?: (event: CalendarEvent) => void; // Callback to open edit modal
   onManageReminders?: (event: CalendarEvent) => void; // 3c: Erinnerungen des Vertrags verwalten
+  noEmailReminders?: boolean; // true = Free-Plan → keine Erinnerungs-Mails (Upgrade-Hinweis)
 }
 
-function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit, onManageReminders }: QuickActionsModalProps) {
+function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit, onManageReminders, noEmailReminders }: QuickActionsModalProps) {
   useEscapeKey(onClose);
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -972,13 +973,24 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 <Bell size={16} style={{ color: '#2563eb', flexShrink: 0 }} />
                 <span>So wirst du an diese Frist erinnert</span>
               </div>
+              {noEmailReminders && (
+                <div style={{ display: 'flex', gap: '9px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '10px 12px', margin: '10px 0 2px' }}>
+                  <span style={{ fontSize: '15px', flexShrink: 0 }}>🔒</span>
+                  <div style={{ fontSize: '12.5px', color: '#374151', lineHeight: 1.45 }}>
+                    Im kostenlosen Plan werden <b>keine Erinnerungs-Mails</b> verschickt.{' '}
+                    <a href="/pricing" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>Jetzt upgraden →</a>
+                  </div>
+                </div>
+              )}
               {remindersLoading ? (
                 <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '10px' }}>Lädt …</div>
               ) : deadlineReminders.length > 0 ? (
                 <>
-                  <div style={{ fontSize: '12.5px', color: '#6b7280', margin: '3px 0 13px 25px', lineHeight: 1.4 }}>
-                    Wir mailen dich automatisch an diesen Tagen:
-                  </div>
+                  {!noEmailReminders && (
+                    <div style={{ fontSize: '12.5px', color: '#6b7280', margin: '3px 0 13px 25px', lineHeight: 1.4 }}>
+                      Wir mailen dich automatisch an diesen Tagen:
+                    </div>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {deadlineReminders.map(r => (
                       <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '11px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '11px 12px' }}>
@@ -4250,6 +4262,7 @@ export default function CalendarPage() {
         {showQuickActions && selectedEvent && (
           <QuickActionsModal
             event={selectedEvent}
+            noEmailReminders={access?.plan === 'free'}
             allEvents={allDayEventsForPagination.length > 1 ? allDayEventsForPagination : undefined}
             onAction={handleQuickAction}
             onClose={() => {
@@ -4277,6 +4290,7 @@ export default function CalendarPage() {
           <ReminderSettingsModal
             contractId={reminderSettingsData.contractId}
             contractName={reminderSettingsData.contractName}
+            noEmailReminders={access?.plan === 'free'}
             currentReminderSettings={reminderSettingsData.reminderSettings}
             currentReminderDays={reminderSettingsData.reminderDays}
             expiryDate={reminderSettingsData.expiryDate}

@@ -31,6 +31,7 @@ interface ReminderSettingsModalProps {
   currentReminderDays?: number[];
   expiryDate?: string;
   kuendigung?: string;
+  noEmailReminders?: boolean; // true = Free-Plan → bekommt keine Erinnerungs-Mails (Upgrade-Hinweis)
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -69,6 +70,7 @@ export default function ReminderSettingsModal({
   currentReminderDays = [],
   expiryDate,
   kuendigung,
+  noEmailReminders = false,
   onClose,
   onSuccess
 }: ReminderSettingsModalProps) {
@@ -421,6 +423,17 @@ export default function ReminderSettingsModal({
 
           {/* Content */}
           <div className={styles.content}>
+            {/* 🔒 Free-Plan: bekommt KEINE Erinnerungs-Mails (calendarNotifier überspringt free) → ehrlicher Upgrade-Hinweis */}
+            {noEmailReminders && (
+              <div style={{ display: 'flex', gap: '10px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 14px', marginBottom: '16px' }}>
+                <span style={{ fontSize: '16px', flexShrink: 0 }}>🔒</span>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#b45309' }}>Im kostenlosen Plan werden keine Erinnerungs-Mails verschickt.</div>
+                  <div style={{ fontSize: '12.5px', color: '#374151', margin: '3px 0 9px' }}>Mit einem Upgrade wirst du vor jeder Frist automatisch per E-Mail erinnert.</div>
+                  <a href="/pricing" style={{ display: 'inline-block', fontSize: '12.5px', fontWeight: 700, color: '#fff', background: '#2563eb', borderRadius: '9px', padding: '8px 14px', textDecoration: 'none' }}>Jetzt upgraden →</a>
+                </div>
+              </div>
+            )}
             {/* Step 1: Choose Occasion */}
             {step === 1 && (
               <>
