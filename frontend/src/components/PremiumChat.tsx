@@ -12,13 +12,14 @@
  *   POST /api/contracts/premium/pdf        (Premium-PDF, AVV-Stil)
  */
 import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown } from "lucide-react";
+import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown, BookOpen } from "lucide-react";
 import { toast } from "react-toastify";
 import EnhancedSignatureModal from "./EnhancedSignatureModal";
 import { useAuth } from "../hooks/useAuth";
 
-type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events";
+type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events" | "explain";
 interface CalItem { title: string; date: string; severity?: string }
+interface ExplainData { summary: string; items: { titel: string; erklaerung: string; rechtsgrundlage: string }[] }
 interface ReviewData { verdict: string; summary: string; checks: { klausel: string; status: string; hinweis: string }[]; empfehlungen: string[] }
 interface ChatMsg {
   role: "user" | "assistant";
@@ -31,6 +32,7 @@ interface ChatMsg {
   contract?: { contractId: string; contractText: string; contractType: string; title?: string };
   review?: ReviewData;
   calItems?: CalItem[];
+  explainData?: ExplainData;
 }
 
 const C = {
@@ -234,6 +236,23 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     }
   }
 
+  async function runExplain(c: NonNullable<ChatMsg["contract"]>) {
+    if (busy) return;
+    setBusy(true);
+    setMessages((m) => [...m, { role: "assistant", kind: "generating", content: "" }]);
+    try {
+      const r = await postJson("/api/contracts/premium/explain", { contractId: c.contractId });
+      setMessages((m) => [...m.filter((x) => x.kind !== "generating"), {
+        role: "assistant", kind: "explain", uiOnly: true, content: "Erklärung",
+        explainData: { summary: r.summary, items: r.items || [] },
+      }]);
+    } catch {
+      setMessages((m) => [...m.filter((x) => x.kind !== "generating"), { role: "assistant", kind: "text", content: "Die Erklärung ist gerade nicht möglich — bitte versuch es nochmal." }]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function applyRecommendations(review: ReviewData) {
     if (busy || !review.empfehlungen.length) return;
     const text = "Bitte arbeite folgende Empfehlungen aus dem Rechts-Check in den Vertrag ein:\n" +
@@ -257,7 +276,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
       {/* Chat */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", background: C.bg, padding: "22px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
         {messages.map((m, i) => (
-          <Bubble key={i} m={m} onDownload={downloadPdf} onReview={runReview} onApplyRec={applyRecommendations} onSkip={skipQuestions} onSend={sendForSignature} busy={busy} />
+          <Bubble key={i} m={m} onDownload={downloadPdf} onReview={runReview} onExplain={runExplain} onApplyRec={applyRecommendations} onSkip={skipQuestions} onSend={sendForSignature} busy={busy} />
         ))}
         {messages.length === 1 && !busy && (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingLeft: 41, marginTop: -4 }}>
@@ -307,7 +326,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, onSend, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; busy: boolean }) {
+function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; busy: boolean }) {
   const isUser = m.role === "user";
   const AiAvatar = (
     <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Sparkles size={16} /></div>
@@ -363,7 +382,7 @@ function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, onSend, busy }: {
       ) : m.kind === "contract" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: "88%" }}>
           <div style={bubbleStyle}>Fertig — hier ist dein Vertrag:</div>
-          <ContractCard c={m.contract!} onDownload={onDownload} onReview={onReview} onSend={onSend} />
+          <ContractCard c={m.contract!} onDownload={onDownload} onReview={onReview} onExplain={onExplain} onSend={onSend} />
           <div style={{ ...bubbleStyle, maxWidth: "100%", fontSize: 13, color: "#41506b" }}>
             Du kannst unten weiter mit mir chatten, um Klauseln zu ändern — z. B. „Laufzeit auf 6 Monate“ oder „Wettbewerbsverbot ergänzen“.
           </div>
@@ -372,6 +391,8 @@ function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, onSend, busy }: {
         <ReviewCard review={m.review!} onApply={() => onApplyRec(m.review!)} />
       ) : m.kind === "events" ? (
         <EventsCard items={m.calItems || []} />
+      ) : m.kind === "explain" ? (
+        <ExplainCard explain={m.explainData!} />
       ) : (
         <div style={bubbleStyle}>{m.display ?? m.content}</div>
       )}
@@ -379,7 +400,7 @@ function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, onSend, busy }: {
   );
 }
 
-function ContractCard({ c, onDownload, onReview, onSend }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
+function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
   const [design, setDesign] = useState("klassisch");
   const [signature, setSignature] = useState<string | null>(null);
   const [showPad, setShowPad] = useState(false);
@@ -439,6 +460,9 @@ function ContractCard({ c, onDownload, onReview, onSend }: { c: NonNullable<Chat
         </button>
         <button onClick={() => onReview(c)} title="Vertrag von der KI auf Rechtssicherheit prüfen lassen" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 13px", cursor: "pointer", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
           <ShieldCheck size={15} /> Rechts-Check
+        </button>
+        <button onClick={() => onExplain(c)} title="Jede Klausel in einfachen Worten erklären lassen" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 13px", cursor: "pointer", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
+          <BookOpen size={15} /> Erklären
         </button>
         <span style={{ marginLeft: "auto", fontSize: 11, color: C.muted2, display: "flex", alignItems: "center", gap: 5 }}>{sectionCount || ""} §§ · gespeichert</span>
       </div>
@@ -512,6 +536,39 @@ function EventsCard({ items }: { items: CalItem[] }) {
               </div>
             ))}
             <div style={{ fontSize: 11, color: C.muted2, marginTop: 4 }}>Alle Termine findest du auch in deinem Kalender.</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ExplainCard({ explain }: { explain: ExplainData }) {
+  const [open, setOpen] = useState(true);
+  return (
+    <div style={{ display: "flex", gap: 11, maxWidth: "90%" }}>
+      <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><BookOpen size={15} /></div>
+      <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 14, borderTopLeftRadius: 4, overflow: "hidden", flex: 1 }}>
+        <button type="button" onClick={() => setOpen((o) => !o)} style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 9, padding: "12px 15px", background: "rgba(46,108,246,.06)", border: "none", cursor: "pointer", font: "inherit" }}>
+          <BookOpen size={16} color={C.blue} />
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#1f4e8c" }}>Verständlich erklärt</span>
+          <ChevronDown size={16} color={C.muted} style={{ marginLeft: "auto", transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+        </button>
+        {open && (
+          <div style={{ padding: "12px 15px" }}>
+            <div style={{ fontSize: 13, color: "#41506b", marginBottom: 12, lineHeight: 1.5 }}>{explain.summary}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {explain.items.map((it, i) => (
+                <div key={i}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 2 }}>{it.titel}</div>
+                  <div style={{ fontSize: 12.5, color: "#41506b", lineHeight: 1.5 }}>{it.erklaerung}</div>
+                  {it.rechtsgrundlage && it.rechtsgrundlage !== "–" && (
+                    <div style={{ fontSize: 11.5, color: C.blue, fontWeight: 600, marginTop: 3 }}>{it.rechtsgrundlage}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: C.muted2, marginTop: 12 }}>Erläuterung zur Orientierung – keine Rechtsberatung.</div>
           </div>
         )}
       </div>

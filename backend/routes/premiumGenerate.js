@@ -248,6 +248,44 @@ async function reviewContract(text) {
   return JSON.parse(res.content.find((b) => b.type === "text").text);
 }
 
+// Klausel-Erklärung: jeden Abschnitt in einfachen Worten + (vorsichtige) Rechtsgrundlage
+const EXPLAIN_SCHEMA = {
+  type: "object", additionalProperties: false,
+  properties: {
+    summary: { type: "string" },
+    items: {
+      type: "array",
+      items: {
+        type: "object", additionalProperties: false,
+        properties: {
+          titel: { type: "string" },
+          erklaerung: { type: "string" },
+          rechtsgrundlage: { type: "string" },
+        },
+        required: ["titel", "erklaerung", "rechtsgrundlage"],
+      },
+    },
+  },
+  required: ["summary", "items"],
+};
+
+async function explainContract(text) {
+  const system =
+    "Du bist ein Anwalt, der einem Laien seinen eigenen Vertrag verständlich erklärt — Abschnitt für Abschnitt.\n" +
+    "Für jeden wesentlichen Paragraphen/Abschnitt:\n" +
+    "- titel: kurze Bezeichnung (z. B. '§ 3 Zahlung').\n" +
+    "- erklaerung: was das KONKRET für den Nutzer bedeutet — einfache, klare Worte, 1–2 Sätze, KEIN Juristen-Deutsch.\n" +
+    "- rechtsgrundlage: die einschlägige gesetzliche Grundlage NUR wenn du sie sicher kennst (z. B. '§ 433 BGB', 'Art. 28 DSGVO'). Im Zweifel '–'. ERFINDE KEINE Paragraphen-Nummern.\n" +
+    "summary = 1 Satz, worum es im Vertrag insgesamt geht. Beziehe dich ausschließlich auf den tatsächlichen Vertragstext.";
+  const res = await client().messages.create({
+    model: MODEL, max_tokens: 5000,
+    thinking: { type: "adaptive" },
+    output_config: { effort: "high", format: { type: "json_schema", schema: EXPLAIN_SCHEMA } },
+    system, messages: [{ role: "user", content: "Erkläre diesen Vertrag:\n\n" + text }],
+  });
+  return JSON.parse(res.content.find((b) => b.type === "text").text);
+}
+
 // =========================================================================
 // 5) Fristen-Extraktion (grounded) für den Kalender — nur was WIRKLICH im Text steht
 // =========================================================================
@@ -521,4 +559,23 @@ router.post("/review", aiLimiter, async (req, res) => {
   }
 });
 
-module.exports = { router, assess, generateContractText, reviewContract, extractContractDates, datesToContractFields, renderPremiumPdfBuffer, textToBasicHtml };
+// POST /explain — Klausel-Erklärung in einfachen Worten + Rechtsgrundlage
+router.post("/explain", aiLimiter, async (req, res) => {
+  try {
+    const { contractId } = req.body || {};
+    if (!contractId) return res.status(400).json({ success: false, error: "NO_ID" });
+    await ensureDb();
+    const c = await contractsCollection.findOne({
+      _id: new ObjectId(contractId),
+      $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }],
+    });
+    if (!c) return res.status(404).json({ success: false, error: "NOT_FOUND" });
+    const explanation = await explainContract(c.content || "");
+    return res.json({ success: true, ...explanation });
+  } catch (e) {
+    const status = e.code === "NO_AI_KEY" ? 503 : 502;
+    return res.status(status).json({ success: false, error: e.code || "AI_ERROR", message: "Erklärung gerade nicht möglich — bitte erneut versuchen." });
+  }
+});
+
+module.exports = { router, assess, generateContractText, reviewContract, explainContract, extractContractDates, datesToContractFields, renderPremiumPdfBuffer, textToBasicHtml };
