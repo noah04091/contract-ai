@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import styles from './ReminderSettingsModal.module.css';
@@ -6,7 +6,6 @@ import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } 
 import {
   X,
   Bell,
-  BellOff,
   Check,
   AlertTriangle,
   Calendar,
@@ -15,10 +14,7 @@ import {
   CalendarX2,
   Scale,
   CalendarPlus,
-  ArrowLeft,
-  ChevronDown,
-  ChevronUp,
-  Zap
+  ArrowLeft
 } from 'lucide-react';
 
 interface ReminderSetting {
@@ -92,7 +88,6 @@ export default function ReminderSettingsModal({
   const [error, setError] = useState<string | null>(null);
   const [autoEvents, setAutoEvents] = useState<AutoEvent[]>([]);
   const [autoEventsLoading, setAutoEventsLoading] = useState(true);
-  const [autoEventsExpanded, setAutoEventsExpanded] = useState(false);
   // Pro Frist: ob die zusammengefasste Wiederhol-Liste ("🔁 N Termine") aufgeklappt ist (reine Anzeige)
   const [expandedRecurring, setExpandedRecurring] = useState<Record<string, boolean>>({});
 
@@ -112,9 +107,6 @@ export default function ReminderSettingsModal({
               .filter((e: AutoEvent) => e.type !== 'CUSTOM_REMINDER' && new Date(e.date) > now)
               .sort((a: AutoEvent, b: AutoEvent) => new Date(a.date).getTime() - new Date(b.date).getTime());
             setAutoEvents(filtered);
-            // Immer direkt offen — kein "N Erinnerungen anzeigen"-Klick mehr (Wiederhol-Flut
-            // wird stattdessen pro Frist zu einer Zeile gefaltet, siehe Render).
-            setAutoEventsExpanded(true);
           }
         }
       } catch (err) {
@@ -299,14 +291,7 @@ export default function ReminderSettingsModal({
     return null;
   };
 
-  // Get severity CSS class for auto events
-  const getSeverityClass = (severity: string): string => {
-    switch (severity) {
-      case 'critical': return styles.autoEventCritical;
-      case 'warning': return styles.autoEventWarning;
-      default: return styles.autoEventInfoSeverity;
-    }
-  };
+  // (getSeverityClass entfernt — Auto-Sektion in die neue Übersicht überführt)
 
   // Format auto-event date for display
   const formatAutoEventDate = (dateStr: string) => {
@@ -336,6 +321,28 @@ export default function ReminderSettingsModal({
     return reminders.some(r => r.type === selectedType && r.days === days);
   };
 
+  // Lesbarer Vertragsname (Dateiendung + Unterstriche raus) — reine Darstellung.
+  const displayName = (contractName || 'Vertrag')
+    .replace(/\.[a-z0-9]{2,4}$/i, '')
+    .replace(/[_]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim() || 'Vertrag';
+
+  // Inline-Styles für die neue Übersicht (Look wie das Event-Popup).
+  const sectionTitle: CSSProperties = { fontSize: '12.5px', fontWeight: 700, letterSpacing: '0.3px', textTransform: 'uppercase', color: '#6b7280', margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: '8px' };
+  const fristCard: CSSProperties = { background: '#f9fafb', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '12px', padding: '12px 14px', marginBottom: '10px' };
+  const fristTop: CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' };
+  const fristNameStyle: CSSProperties = { fontSize: '13.5px', fontWeight: 700, color: '#111827' };
+  const fristDateStyle: CSSProperties = { fontSize: '12px', fontWeight: 600, color: '#6b7280', whiteSpace: 'nowrap' };
+  const remRow: CSSProperties = { display: 'flex', alignItems: 'center', gap: '9px', padding: '5px 0' };
+  const remIc: CSSProperties = { width: '26px', height: '26px', borderRadius: '7px', flexShrink: 0, background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' };
+  const remWhen: CSSProperties = { flex: 1, fontSize: '13px', fontWeight: 600, color: '#374151' };
+  const tagAuto: CSSProperties = { fontSize: '10px', fontWeight: 600, color: '#2563eb', background: '#eff6ff', borderRadius: '999px', padding: '2px 8px', whiteSpace: 'nowrap' };
+  const tagOwn: CSSProperties = { fontSize: '10px', fontWeight: 600, color: '#15803d', background: '#f0fdf4', borderRadius: '999px', padding: '2px 8px', whiteSpace: 'nowrap' };
+  const delBtn: CSSProperties = { width: '26px', height: '26px', border: 'none', background: 'none', color: '#9ca3af', cursor: 'pointer', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' };
+  const foldBtn: CSSProperties = { fontSize: '11px', fontWeight: 600, color: '#2563eb', background: '#eff6ff', border: 'none', borderRadius: '999px', padding: '4px 10px', cursor: 'pointer', marginTop: '4px' };
+  const addSubStyle: CSSProperties = { fontSize: '12.5px', color: '#6b7280', margin: '-4px 0 13px', lineHeight: 1.45 };
+
   return (
     <AnimatePresence>
       <div className={styles.overlay} onClick={onClose}>
@@ -353,8 +360,8 @@ export default function ReminderSettingsModal({
               <Bell size={24} />
             </div>
             <div className={styles.headerContent}>
-              <h2>Erinnerungen verwalten</h2>
-              <p>{contractName}</p>
+              <h2>Erinnerungen</h2>
+              <p>{displayName}</p>
             </div>
             <button className={styles.closeButton} onClick={onClose}>
               <X size={20} />
@@ -373,49 +380,146 @@ export default function ReminderSettingsModal({
           <div className={styles.content}>
             {/* Step 1: Choose Occasion */}
             {step === 1 && (
-              <div className={styles.section}>
-                <div className={styles.stepHeader}>
-                  <span className={styles.stepLabel}>Schritt 1 von 2</span>
-                  <h3>Woran möchtest du erinnert werden?</h3>
-                </div>
-                <div className={styles.occasionGrid}>
-                  {/* Vertragsende */}
-                  <button
-                    className={`${styles.occasionCard} ${styles.occasionCardExpiry} ${!hasExpiry ? styles.occasionCardDisabled : ''}`}
-                    onClick={() => hasExpiry && handleSelectOccasion('expiry')}
-                    disabled={!hasExpiry}
-                  >
-                    <CalendarX2 size={28} />
-                    <span className={styles.occasionTitle}>Vor Vertragsende</span>
-                    <span className={styles.occasionSubtitle}>
-                      {hasExpiry ? formatDate(expiryDate!) : 'Kein Datum vorhanden'}
-                    </span>
-                  </button>
+              <>
+                {/* ===== Übersicht: So wirst du erinnert ===== */}
+                <div className={styles.section}>
+                  <div style={sectionTitle}><span style={{ color: '#2563eb' }}>📨</span> So wirst du bei diesem Vertrag erinnert</div>
 
-                  {/* Kündigungsfrist */}
-                  <button
-                    className={`${styles.occasionCard} ${styles.occasionCardCancellation} ${!hasKuendigung ? styles.occasionCardDisabled : ''}`}
-                    onClick={() => hasKuendigung && handleSelectOccasion('cancellation')}
-                    disabled={!hasKuendigung}
-                  >
-                    <Scale size={28} />
-                    <span className={styles.occasionTitle}>Vor Kündigungsfrist</span>
-                    <span className={styles.occasionSubtitle}>
-                      {hasKuendigung ? kuendigung : 'Keine Frist vorhanden'}
-                    </span>
-                  </button>
+                  {autoEventsLoading ? (
+                    <div className={styles.autoEventsLoading}>
+                      <motion.div
+                        className={styles.autoEventsLoadingSpinner}
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                      >
+                        <Clock size={16} />
+                      </motion.div>
+                      <span>Erinnerungen werden geladen...</span>
+                    </div>
+                  ) : (autoEventGroups.length > 0 || reminders.length > 0) ? (
+                    <>
+                      {/* Automatische Erinnerungen pro Frist */}
+                      {autoEventGroups.map((group) => {
+                        const labeled = group.reminders.filter((r) => reminderLeadLabel(r.title));
+                        const dateOnly = group.reminders.filter((r) => !reminderLeadLabel(r.title));
+                        const isOpen = !!expandedRecurring[group.name];
+                        const fold = dateOnly.length > 3 && !isOpen;
+                        return (
+                          <div key={group.name} style={fristCard}>
+                            <div style={fristTop}>
+                              <span style={fristNameStyle}>{stripFileName(group.name)}</span>
+                              {group.main && <span style={fristDateStyle}>{formatAutoEventDate(group.main.date)}</span>}
+                            </div>
+                            {group.reminders.length > 0 ? (
+                              <>
+                                {labeled.map((r) => (
+                                  <div key={r.id} style={remRow}>
+                                    <span style={remIc}>🔔</span>
+                                    <span style={remWhen}>{reminderLeadLabel(r.title)}</span>
+                                    <span style={tagAuto}>✉️ automatisch</span>
+                                  </div>
+                                ))}
+                                {fold ? (
+                                  <button type="button" style={foldBtn} onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: true }))}>
+                                    🔁 {dateOnly.length} weitere Termine anzeigen
+                                  </button>
+                                ) : (
+                                  <>
+                                    {dateOnly.map((r) => (
+                                      <div key={r.id} style={remRow}>
+                                        <span style={remIc}>🔔</span>
+                                        <span style={remWhen}>{formatAutoEventDate(r.date)}</span>
+                                        <span style={tagAuto}>✉️ automatisch</span>
+                                      </div>
+                                    ))}
+                                    {dateOnly.length > 3 && isOpen && (
+                                      <button type="button" style={foldBtn} onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: false }))}>
+                                        weniger
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              <div style={{ fontSize: '12.5px', color: '#9ca3af', padding: '2px 0' }}>Nur am Stichtag</div>
+                            )}
+                          </div>
+                        );
+                      })}
 
-                  {/* Eigenes Datum */}
-                  <button
-                    className={`${styles.occasionCard} ${styles.occasionCardCustom}`}
-                    onClick={() => handleSelectOccasion('custom')}
-                  >
-                    <CalendarPlus size={28} />
-                    <span className={styles.occasionTitle}>Eigenes Datum</span>
-                    <span className={styles.occasionSubtitle}>Beliebiges Datum</span>
-                  </button>
+                      {/* Eigene Erinnerungen */}
+                      {reminders.map((r, i) => {
+                        const dateStr = getReminderDate(r);
+                        return (
+                          <div key={`own-${i}`} style={fristCard}>
+                            <div style={fristTop}>
+                              <span style={fristNameStyle}>{TYPE_CONFIG[r.type].label}</span>
+                              {dateStr && <span style={fristDateStyle}>{dateStr}</span>}
+                            </div>
+                            <div style={remRow}>
+                              <span style={remIc}>🔔</span>
+                              <span style={remWhen}>{getReminderDisplay(r)}</span>
+                              <span style={tagOwn}>✓ eigene</span>
+                              <button style={delBtn} onClick={() => removeReminder(i)} title="Eigene Erinnerung entfernen">
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <div style={{ fontSize: '13px', color: '#6b7280', padding: '4px 2px 2px', lineHeight: 1.5 }}>
+                      Für diesen Vertrag ist aktuell keine Erinnerung aktiv. Füge unten eine eigene hinzu.
+                    </div>
+                  )}
                 </div>
-              </div>
+
+                <div className={styles.sectionDivider} />
+
+                {/* ===== Eigene Erinnerung hinzufügen ===== */}
+                <div className={styles.section}>
+                  <div style={sectionTitle}><span style={{ color: '#2563eb' }}>＋</span> Eigene Erinnerung hinzufügen</div>
+                  <div style={addSubStyle}>Zusätzlich zu den automatischen — für Vertragsende, Kündigungsfrist oder ein eigenes Datum.</div>
+                  <div className={styles.occasionGrid}>
+                    {/* Vertragsende */}
+                    <button
+                      className={`${styles.occasionCard} ${styles.occasionCardExpiry} ${!hasExpiry ? styles.occasionCardDisabled : ''}`}
+                      onClick={() => hasExpiry && handleSelectOccasion('expiry')}
+                      disabled={!hasExpiry}
+                    >
+                      <CalendarX2 size={28} />
+                      <span className={styles.occasionTitle}>Vor Vertragsende</span>
+                      <span className={styles.occasionSubtitle}>
+                        {hasExpiry ? formatDate(expiryDate!) : 'Kein Datum vorhanden'}
+                      </span>
+                    </button>
+
+                    {/* Kündigungsfrist */}
+                    <button
+                      className={`${styles.occasionCard} ${styles.occasionCardCancellation} ${!hasKuendigung ? styles.occasionCardDisabled : ''}`}
+                      onClick={() => hasKuendigung && handleSelectOccasion('cancellation')}
+                      disabled={!hasKuendigung}
+                    >
+                      <Scale size={28} />
+                      <span className={styles.occasionTitle}>Vor Kündigungsfrist</span>
+                      <span className={styles.occasionSubtitle}>
+                        {hasKuendigung ? kuendigung : 'Keine Frist vorhanden'}
+                      </span>
+                    </button>
+
+                    {/* Eigenes Datum */}
+                    <button
+                      className={`${styles.occasionCard} ${styles.occasionCardCustom}`}
+                      onClick={() => handleSelectOccasion('custom')}
+                    >
+                      <CalendarPlus size={28} />
+                      <span className={styles.occasionTitle}>Eigenes Datum</span>
+                      <span className={styles.occasionSubtitle}>Beliebiges Datum</span>
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
 
             {/* Step 2: Choose Lead Time / Date */}
@@ -529,170 +633,7 @@ export default function ReminderSettingsModal({
               </div>
             )}
 
-            {/* Auto Events Loading State */}
-            {step === 1 && autoEventsLoading && (
-              <div className={styles.autoEventsLoading}>
-                <motion.div
-                  className={styles.autoEventsLoadingSpinner}
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                >
-                  <Clock size={16} />
-                </motion.div>
-                <span>Automatische Erinnerungen werden geladen...</span>
-              </div>
-            )}
-
-            {/* Auto Events Section — shown in Step 1 */}
-            {step === 1 && !autoEventsLoading && autoEvents.length > 0 && (
-              <div className={styles.autoEventsSection}>
-                <div
-                  className={styles.autoEventsHeader}
-                  onClick={() => setAutoEventsExpanded(!autoEventsExpanded)}
-                >
-                  <div className={styles.autoEventsHeaderLeft}>
-                    <Zap size={16} />
-                    <h3>Automatische Erinnerungen ({autoEvents.length})</h3>
-                  </div>
-                  <button className={styles.autoEventsToggle}>
-                    {autoEventsExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </button>
-                </div>
-                {autoEventsExpanded && (
-                  <div className={styles.autoEventsList}>
-                    {autoEventGroups.map((group) => {
-                      const headSeverity = group.main?.severity || group.reminders[0]?.severity || 'info';
-                      return (
-                        <div
-                          key={group.name}
-                          className={`${styles.autoEventItem} ${getSeverityClass(headSeverity)}`}
-                          style={{ flexDirection: 'column', alignItems: 'stretch', gap: '6px' }}
-                        >
-                          {/* Frist-Kopf — reine Übersicht, keine Weiterleitung */}
-                          <div
-                            className={styles.autoEventInfo}
-                            style={{ justifyContent: 'space-between', width: '100%' }}
-                          >
-                            <span className={styles.autoEventTitle} style={{ fontWeight: 600 }}>{stripFileName(group.name)}</span>
-                            {group.main && <span className={styles.autoEventDate}>{formatAutoEventDate(group.main.date)}</span>}
-                          </div>
-                          {/* Vorwarnungen als Chips. Echte "X vorher"-Vorwarnungen bleiben als Chips;
-                              reine Datums-Wiederholungen (z.B. monatliche Frist) werden ab >3 zu EINER
-                              "🔁 N Termine"-Zeile gefaltet — reine Anzeige, alle Termine bleiben erhalten. */}
-                          {group.reminders.length > 0 && (() => {
-                            const labeled = group.reminders.filter((r) => reminderLeadLabel(r.title));
-                            const dateOnly = group.reminders.filter((r) => !reminderLeadLabel(r.title));
-                            const isOpen = !!expandedRecurring[group.name];
-                            const fold = dateOnly.length > 3 && !isOpen;
-                            const chip = { fontSize: '11px', color: '#475569', background: '#f1f5f9', borderRadius: '999px', padding: '2px 9px', whiteSpace: 'nowrap' as const };
-                            const toggle = { ...chip, color: '#2563eb', background: '#eff6ff', border: 'none', cursor: 'pointer', fontWeight: 600 };
-                            return (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                {labeled.map((r) => (
-                                  <span key={r.id} style={chip}>🔔 {reminderLeadLabel(r.title)}</span>
-                                ))}
-                                {fold ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: true }))}
-                                    style={toggle}
-                                  >
-                                    🔁 {dateOnly.length} Termine anzeigen
-                                  </button>
-                                ) : (
-                                  <>
-                                    {dateOnly.map((r) => (
-                                      <span key={r.id} style={chip}>🔔 {formatAutoEventDate(r.date)}</span>
-                                    ))}
-                                    {dateOnly.length > 3 && isOpen && (
-                                      <button
-                                        type="button"
-                                        onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: false }))}
-                                        style={toggle}
-                                      >
-                                        weniger
-                                      </button>
-                                    )}
-                                  </>
-                                )}
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                {!autoEventsExpanded && autoEvents.length > 3 && (
-                  <button
-                    className={styles.autoEventsShowMore}
-                    onClick={() => setAutoEventsExpanded(true)}
-                  >
-                    {autoEvents.length} Erinnerungen anzeigen
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Divider between auto and manual */}
-            {step === 1 && !autoEventsLoading && autoEvents.length > 0 && (
-              <div className={styles.sectionDivider} />
-            )}
-
-            {/* Active Reminders — always visible */}
-            {reminders.length > 0 && (
-              <div className={styles.section}>
-                <h3>Eigene Erinnerungen ({reminders.length})</h3>
-                <div className={styles.activeReminders}>
-                  {reminders.map((r, i) => {
-                    const dateStr = getReminderDate(r);
-                    return (
-                      <div key={i} className={styles.reminderItem}>
-                        <div className={`${styles.reminderIcon} ${styles[`reminderIcon${TYPE_CONFIG[r.type].color}`]}`}>
-                          <Clock size={16} />
-                        </div>
-                        <div className={styles.reminderInfo}>
-                          <div className={styles.reminderTop}>
-                            <span className={`${styles.typeBadge} ${styles[`typeBadge${TYPE_CONFIG[r.type].color}`]}`}>
-                              {TYPE_CONFIG[r.type].label}
-                            </span>
-                          </div>
-                          <span className={styles.reminderDays}>{getReminderDisplay(r)}</span>
-                          {dateStr && (
-                            <span className={styles.reminderDate}>{dateStr}</span>
-                          )}
-                        </div>
-                        <button
-                          className={styles.removeButton}
-                          onClick={() => removeReminder(i)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Empty State — only when no manual reminders */}
-            {reminders.length === 0 && step === 1 && (
-              <div className={styles.emptyState}>
-                {autoEvents.length > 0 ? (
-                  <>
-                    <Bell size={48} />
-                    <p>Keine eigenen Erinnerungen</p>
-                    <span>Dieser Vertrag hat bereits automatische Erinnerungen. Du kannst zusätzlich eigene hinzufügen.</span>
-                  </>
-                ) : (
-                  <>
-                    <BellOff size={48} />
-                    <p>Keine Erinnerungen eingerichtet</p>
-                    <span>Wähle einen Anlass, um eine Erinnerung hinzuzufügen</span>
-                  </>
-                )}
-              </div>
-            )}
+            {/* (Erinnerungs-Übersicht + Eigene + Hinzufügen sind oben in Schritt 1 integriert) */}
           </div>
 
           {/* Footer */}
