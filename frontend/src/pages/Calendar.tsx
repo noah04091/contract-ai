@@ -978,7 +978,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   <span style={{ fontSize: '15px', flexShrink: 0 }}>🔒</span>
                   <div style={{ fontSize: '12.5px', color: '#374151', lineHeight: 1.45 }}>
                     Im kostenlosen Plan werden <b>keine Erinnerungs-Mails</b> verschickt.{' '}
-                    <a href="/pricing" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>Jetzt upgraden →</a>
+                    <a href="/pricing" style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap' }}>Jetzt upgraden&nbsp;→</a>
                   </div>
                 </div>
               )}
