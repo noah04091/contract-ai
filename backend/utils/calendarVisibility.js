@@ -13,7 +13,7 @@
 //   - Haupt-Frist-Events am Stichtag (CONTRACT_EXPIRY, LAST_CANCEL_DAY, … — keine Vorwarner)
 //   - vom User selbst gesetzte Exakt-Datum-Erinnerungen (metadata.reminderType === "custom")
 //   - manuell angelegte Termine (isManual / manuallyCreated)
-//   - Signatur-Erinnerungen (sourceType === "ENVELOPE")
+//   - Signatur-Haupt-Events (sourceType === "ENVELOPE"), aber OHNE die 3-/1-Tag-Vorwarner (gebündelt)
 //   - der "Kündigungsbestätigung erhalten?"-Follow-up (CANCELLATION_CONFIRMATION_CHECK,
 //     bewusst NICHT in der Ausblend-Liste — eigener actionabler Hinweis)
 //
@@ -31,7 +31,11 @@ const HIDE_REMINDER_TYPES = [
   "WARRANTY_REMINDER",
   "PRICE_INCREASE_WARNING",
   "PAYMENT_REMINDER",
-  "CUSTOM_REMINDER"
+  "CUSTOM_REMINDER",
+  // Signatur-Vorwarner bündeln: pro Anfrage nur 1 Eintrag (Ablauf-/Abschluss-Event) sichtbar.
+  // Diese Typen enden auf "DAY" und matchen das _REMINDER_\d+D$-Muster NICHT → hier explizit listen.
+  "SIGNATURE_REMINDER_3DAY",
+  "SIGNATURE_REMINDER_1DAY"
 ];
 
 // MongoDB-$match-Fragment, das NUR sichtbare Events durchlässt.
@@ -41,7 +45,8 @@ const VISIBLE_EVENT_MATCH = {
   $or: [
     { isManual: true },
     { manuallyCreated: true },
-    { sourceType: "ENVELOPE" },
+    // Envelope-Events sichtbar — AUSSER den Signatur-Vorwarnern (3-/1-Tag), die gebündelt werden.
+    { $and: [{ sourceType: "ENVELOPE" }, { type: { $nin: HIDE_REMINDER_TYPES } }] },
     { "metadata.reminderType": "custom" },
     {
       $and: [
