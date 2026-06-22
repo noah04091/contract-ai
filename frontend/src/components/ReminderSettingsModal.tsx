@@ -90,6 +90,8 @@ export default function ReminderSettingsModal({
   const [autoEventsLoading, setAutoEventsLoading] = useState(true);
   // Pro Frist: ob die zusammengefasste Wiederhol-Liste ("🔁 N Termine") aufgeklappt ist (reine Anzeige)
   const [expandedRecurring, setExpandedRecurring] = useState<Record<string, boolean>>({});
+  // 🗑 Vorgemerkte automatische Vorwarnungen zum einmaligen Ausblenden (erst bei "Speichern" endgültig).
+  const [pendingDismiss, setPendingDismiss] = useState<string[]>([]);
 
   // Fetch automatic calendar events for this contract
   useEffect(() => {
@@ -252,6 +254,18 @@ export default function ReminderSettingsModal({
       setError(null);
 
       const token = localStorage.getItem('token');
+
+      // Vorgemerkte automatische Erinnerungen einmalig ausblenden (status='dismissed' → stoppt die
+      // Mail, bleibt auch nach Re-Analyse weg, siehe calendarEvents.js:1768). "Am Tag selbst" ist nie
+      // dabei (das ist der Termin selbst). Dieselbe bewährte Operation wie der "Ausblenden"-Button.
+      for (const id of pendingDismiss) {
+        await axios.post(
+          '/api/calendar/quick-action',
+          { eventId: id, action: 'dismiss' },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
       const response = await axios.patch<{ success: boolean; message?: string }>(
         `/api/contracts/${contractId}/reminder-settings`,
         { reminderSettings: reminders },
@@ -342,6 +356,32 @@ export default function ReminderSettingsModal({
   const delBtn: CSSProperties = { width: '26px', height: '26px', border: 'none', background: 'none', color: '#9ca3af', cursor: 'pointer', borderRadius: '6px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' };
   const foldBtn: CSSProperties = { fontSize: '11px', fontWeight: 600, color: '#2563eb', background: '#eff6ff', border: 'none', borderRadius: '999px', padding: '4px 10px', cursor: 'pointer', marginTop: '4px' };
   const addSubStyle: CSSProperties = { fontSize: '12.5px', color: '#6b7280', margin: '-4px 0 13px', lineHeight: 1.45 };
+  const pendingTag: CSSProperties = { fontSize: '10px', fontWeight: 600, color: '#9ca3af', background: '#f3f4f6', borderRadius: '999px', padding: '2px 8px', whiteSpace: 'nowrap' };
+  const undoBtn: CSSProperties = { fontSize: '12px', fontWeight: 700, color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', flexShrink: 0, whiteSpace: 'nowrap' };
+
+  // Eine automatische Vorwarn-Zeile mit 🗑 (vormerken) bzw. ↩ (zurücknehmen). "Am Tag selbst" nutzt das NICHT.
+  const autoRow = (id: string, label: string) => {
+    const pending = pendingDismiss.includes(id);
+    return (
+      <div key={id} style={remRow}>
+        <span style={remIc}>🔔</span>
+        <span style={{ ...remWhen, ...(pending ? { textDecoration: 'line-through', color: '#9ca3af', fontWeight: 500 } : {}) }}>{label}</span>
+        {pending ? (
+          <>
+            <span style={pendingTag}>wird entfernt</span>
+            <button type="button" style={undoBtn} onClick={() => setPendingDismiss((p) => p.filter((x) => x !== id))} title="Doch behalten">↩</button>
+          </>
+        ) : (
+          <>
+            <span style={tagAuto}>✉️ automatisch</span>
+            <button type="button" style={delBtn} onClick={() => setPendingDismiss((p) => [...p, id])} title="Diese Erinnerung einmalig entfernen">
+              <Trash2 size={13} />
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <AnimatePresence>
@@ -412,26 +452,14 @@ export default function ReminderSettingsModal({
                             </div>
                             {group.reminders.length > 0 && (
                               <>
-                                {labeled.map((r) => (
-                                  <div key={r.id} style={remRow}>
-                                    <span style={remIc}>🔔</span>
-                                    <span style={remWhen}>{reminderLeadLabel(r.title)}</span>
-                                    <span style={tagAuto}>✉️ automatisch</span>
-                                  </div>
-                                ))}
+                                {labeled.map((r) => autoRow(r.id, reminderLeadLabel(r.title) || 'Erinnerung'))}
                                 {fold ? (
                                   <button type="button" style={foldBtn} onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: true }))}>
                                     🔁 {dateOnly.length} weitere Termine anzeigen
                                   </button>
                                 ) : (
                                   <>
-                                    {dateOnly.map((r) => (
-                                      <div key={r.id} style={remRow}>
-                                        <span style={remIc}>🔔</span>
-                                        <span style={remWhen}>{formatAutoEventDate(r.date)}</span>
-                                        <span style={tagAuto}>✉️ automatisch</span>
-                                      </div>
-                                    ))}
+                                    {dateOnly.map((r) => autoRow(r.id, formatAutoEventDate(r.date)))}
                                     {dateOnly.length > 3 && isOpen && (
                                       <button type="button" style={foldBtn} onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: false }))}>
                                         weniger
@@ -477,6 +505,11 @@ export default function ReminderSettingsModal({
                   ) : (
                     <div style={{ fontSize: '13px', color: '#6b7280', padding: '4px 2px 2px', lineHeight: 1.5 }}>
                       Für diesen Vertrag ist aktuell keine Erinnerung aktiv. Füge unten eine eigene hinzu.
+                    </div>
+                  )}
+                  {pendingDismiss.length > 0 && (
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#b45309', fontWeight: 600 }}>
+                      Mit „Speichern" {pendingDismiss.length === 1 ? 'wird 1 Erinnerung' : `werden ${pendingDismiss.length} Erinnerungen`} einmalig entfernt.
                     </div>
                   )}
                 </div>
