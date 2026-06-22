@@ -81,6 +81,14 @@ const DigitaleSignatur: React.FC = () => {
       },
       {
         "@type": "Question",
+        "name": "Kann ich mit KI erstellte Verträge direkt zur Unterschrift senden?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja. Mit dem Vertragsgenerator erstellte Verträge können Sie mit einem Klick zur Unterschrift an die andere Partei senden. Die Gegenseite signiert per Link ohne eigenes Konto, Sie erhalten das signierte PDF mit Audit Trail zurück."
+        }
+      },
+      {
+        "@type": "Question",
         "name": "Was ist ein Audit Trail?",
         "acceptedAnswer": {
           "@type": "Answer",
@@ -607,6 +615,19 @@ const DigitaleSignatur: React.FC = () => {
                   Ja, digitale Signaturen mit Contract AI entsprechen der eIDAS-Verordnung
                   und sind in Deutschland und der gesamten EU rechtlich bindend. Jeder
                   Signiervorgang wird mit vollständigem Audit Trail dokumentiert.
+                </p>
+              </details>
+
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Kann ich mit KI erstellte Verträge direkt zur Unterschrift senden?
+                  <ChevronDown size={20} className={styles.faqIcon} />
+                </summary>
+                <p className={styles.faqAnswer}>
+                  Ja. Verträge, die Sie mit dem Vertragsgenerator erstellen, können Sie mit einem
+                  Klick zur Unterschrift an die andere Partei senden – ganz ohne Medienbruch.
+                  Die Gegenseite signiert per Link (ohne eigenes Konto), Sie erhalten das fertig
+                  signierte PDF mit Audit Trail zurück.
                 </p>
               </details>
 
