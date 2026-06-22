@@ -50,15 +50,171 @@ const QUICK_STARTS = [
   { emoji: "🎯", label: "Beratervertrag", prompt: "Ich möchte einen Beratervertrag erstellen." },
 ];
 
-// Beispiel-Vertrag für die Free-Demo (kein KI-Lauf, reine Vorschau → Upsell)
-const DEMO_CONTRACT =
-  "FREELANCER-VERTRAG (WEBENTWICKLUNG)\n\n" +
-  "zwischen\nHerrn Max Beispiel, Musterstraße 1, 10115 Berlin\n– nachfolgend „Auftragnehmer" + "“ genannt –\n\n" +
-  "und\nder Beispiel GmbH, Hauptstraße 5, 20095 Hamburg\n– nachfolgend „Auftraggeber" + "“ genannt –\n\n" +
-  "§ 1 Vertragsgegenstand\n(1) Der Auftragnehmer erbringt für den Auftraggeber Leistungen der Webentwicklung gemäß Anlage 1.\n\n" +
-  "§ 2 Vergütung\n(1) Die Vergütung beträgt 80,00 € netto je geleisteter Stunde zzgl. der gesetzlichen Umsatzsteuer.\n(2) Die Abrechnung erfolgt monatlich nach Stundennachweis.\n\n" +
-  "§ 3 Laufzeit & Kündigung\n(1) Der Vertrag läuft auf unbestimmte Zeit und kann mit einer Frist von 14 Tagen gekündigt werden.\n\n" +
-  "§ 4 Nutzungsrechte\n(1) Die Rechte an den Arbeitsergebnissen gehen erst mit vollständiger Bezahlung auf den Auftraggeber über.\n";
+// Beispiel-Verträge für die Free-Demo (kein KI-Lauf, reine Vorschau → Upsell).
+// Pro Vertragstyp ein passendes Beispiel, damit die Demo zu dem passt, was der/die
+// Nutzer:in beschreibt (statt immer ein Freelancer-Vertrag).
+const DEMO_CONTRACTS: Record<string, { title: string; text: string }> = {
+  freelancer: {
+    title: "Freelancer-Vertrag",
+    text: `FREELANCER-VERTRAG (WEBENTWICKLUNG)
+
+zwischen
+Herrn Max Beispiel, Musterstraße 1, 10115 Berlin – nachfolgend „Auftragnehmer" –
+und
+der Beispiel GmbH, Hauptstraße 5, 20095 Hamburg – nachfolgend „Auftraggeber" –
+
+§ 1 Vertragsgegenstand
+(1) Der Auftragnehmer erbringt Leistungen der Webentwicklung gemäß Anlage 1.
+
+§ 2 Vergütung
+(1) Die Vergütung beträgt 80,00 € netto je Stunde zzgl. Umsatzsteuer.
+(2) Die Abrechnung erfolgt monatlich nach Stundennachweis.
+
+§ 3 Laufzeit & Kündigung
+(1) Der Vertrag läuft auf unbestimmte Zeit, kündbar mit einer Frist von 14 Tagen.
+
+§ 4 Nutzungsrechte
+(1) Die Rechte an den Arbeitsergebnissen gehen erst mit vollständiger Bezahlung über.
+`,
+  },
+  miete: {
+    title: "Mietvertrag",
+    text: `MIETVERTRAG (WOHNRAUM)
+
+zwischen
+Herrn Max Beispiel, Musterstraße 1, 10115 Berlin – nachfolgend „Vermieter" –
+und
+Frau Erika Muster, Hauptstraße 5, 20095 Hamburg – nachfolgend „Mieter" –
+
+§ 1 Mietobjekt
+(1) 3-Zimmer-Wohnung, 78 m², Beispielweg 12, 3. OG, nebst Kellerabteil.
+
+§ 2 Mietzeit
+(1) Das Mietverhältnis beginnt am 01.08.2026 und läuft auf unbestimmte Zeit.
+
+§ 3 Miete
+(1) Die Kaltmiete beträgt 950,00 €, die Nebenkostenvorauszahlung 220,00 €.
+(2) Die Gesamtmiete von 1.170,00 € ist monatlich im Voraus zu zahlen.
+
+§ 4 Kaution
+(1) Der Mieter leistet eine Kaution in Höhe von drei Kaltmieten (2.850,00 €).
+
+§ 5 Kündigung
+(1) Es gelten die gesetzlichen Kündigungsfristen gemäß § 573c BGB.
+`,
+  },
+  kauf: {
+    title: "Kaufvertrag",
+    text: `KAUFVERTRAG
+
+zwischen
+Herrn Max Beispiel, Musterstraße 1, 10115 Berlin – nachfolgend „Verkäufer" –
+und
+Frau Erika Muster, Hauptstraße 5, 20095 Hamburg – nachfolgend „Käufer" –
+
+§ 1 Kaufgegenstand
+(1) Gebrauchter Pkw, Marke Beispiel, Erstzulassung 2021, ca. 45.000 km.
+
+§ 2 Kaufpreis
+(1) Der Kaufpreis beträgt 18.500,00 € inkl. Umsatzsteuer.
+
+§ 3 Übergabe
+(1) Übergabe und Zahlung erfolgen Zug um Zug am 15.08.2026.
+
+§ 4 Gewährleistung
+(1) Der Verkauf erfolgt unter Ausschluss der Sachmängelhaftung, soweit zulässig.
+
+§ 5 Eigentumsvorbehalt
+(1) Das Eigentum geht erst mit vollständiger Kaufpreiszahlung auf den Käufer über.
+`,
+  },
+  nda: {
+    title: "Geheimhaltungsvereinbarung (NDA)",
+    text: `GEHEIMHALTUNGSVEREINBARUNG (NDA)
+
+zwischen
+der Beispiel GmbH, Hauptstraße 5, 20095 Hamburg – nachfolgend „Partei A" –
+und
+Herrn Max Beispiel, Musterstraße 1, 10115 Berlin – nachfolgend „Partei B" –
+
+§ 1 Gegenstand
+(1) Schutz vertraulicher Informationen im Rahmen einer geplanten Zusammenarbeit.
+
+§ 2 Vertraulichkeit
+(1) Beide Parteien halten erhaltene Informationen geheim und nutzen sie nur zum vereinbarten Zweck.
+
+§ 3 Ausnahmen
+(1) Ausgenommen sind öffentlich bekannte oder rechtmäßig von Dritten erlangte Informationen.
+
+§ 4 Dauer
+(1) Die Pflichten gelten für 3 Jahre nach Beendigung der Zusammenarbeit.
+
+§ 5 Vertragsstrafe
+(1) Bei schuldhaftem Verstoß wird eine Vertragsstrafe von 5.000,00 € je Fall fällig.
+`,
+  },
+  arbeit: {
+    title: "Arbeitsvertrag",
+    text: `ARBEITSVERTRAG
+
+zwischen
+der Beispiel GmbH, Hauptstraße 5, 20095 Hamburg – nachfolgend „Arbeitgeber" –
+und
+Frau Erika Muster, Musterstraße 1, 10115 Berlin – nachfolgend „Arbeitnehmer" –
+
+§ 1 Tätigkeit
+(1) Anstellung als Software-Entwickler:in ab dem 01.09.2026.
+
+§ 2 Arbeitszeit
+(1) Die regelmäßige Arbeitszeit beträgt 40 Stunden pro Woche.
+
+§ 3 Vergütung
+(1) Das Bruttogehalt beträgt 4.500,00 € monatlich.
+
+§ 4 Urlaub
+(1) Der Urlaubsanspruch beträgt 28 Arbeitstage pro Kalenderjahr.
+
+§ 5 Probezeit
+(1) Die ersten 6 Monate gelten als Probezeit mit einer Kündigungsfrist von 2 Wochen.
+`,
+  },
+  berater: {
+    title: "Beratervertrag",
+    text: `BERATERVERTRAG
+
+zwischen
+Herrn Max Beispiel, Musterstraße 1, 10115 Berlin – nachfolgend „Berater" –
+und
+der Beispiel GmbH, Hauptstraße 5, 20095 Hamburg – nachfolgend „Auftraggeber" –
+
+§ 1 Gegenstand
+(1) Strategische Unternehmensberatung gemäß Leistungsbeschreibung in Anlage 1.
+
+§ 2 Vergütung
+(1) Der Tagessatz beträgt 1.200,00 € netto zzgl. Umsatzsteuer.
+
+§ 3 Laufzeit
+(1) Der Vertrag läuft 6 Monate ab Vertragsschluss.
+
+§ 4 Vertraulichkeit
+(1) Der Berater behandelt alle ihm bekannt werdenden Informationen streng vertraulich.
+
+§ 5 Haftung
+(1) Die Haftung ist auf Vorsatz und grobe Fahrlässigkeit beschränkt.
+`,
+  },
+};
+
+// Erkennt den Vertragstyp aus dem Beschreibungstext → passendes Demo-Beispiel.
+function pickDemo(userText: string): { title: string; text: string } {
+  const t = (userText || "").toLowerCase();
+  if (/\bnda\b|geheim|vertraulich|verschwiegen/.test(t)) return DEMO_CONTRACTS.nda;
+  if (/miet|wohnung|vermiet|wohnraum/.test(t)) return DEMO_CONTRACTS.miete;
+  if (/arbeitsvertrag|anstellung|arbeitnehmer|gehalt|angestellt/.test(t)) return DEMO_CONTRACTS.arbeit;
+  if (/berat/.test(t)) return DEMO_CONTRACTS.berater;
+  if (/kauf|verkauf|erwerb|kaufvertrag/.test(t)) return DEMO_CONTRACTS.kauf;
+  return DEMO_CONTRACTS.freelancer; // Default (auch Freelancer/Dienstleistung)
+}
 
 export default function PremiumChat({ onClose, demo = false }: { onClose: () => void; demo?: boolean }) {
   const { user } = useAuth();
@@ -192,15 +348,16 @@ export default function PremiumChat({ onClose, demo = false }: { onClose: () => 
   async function runDemo(userText: string) {
     if (busy) return;
     setBusy(true);
+    const demo = pickDemo(userText); // passendes Beispiel je nach beschriebenem Typ
     setMessages((m) => [...m, { role: "user", kind: "text", content: userText }, { role: "assistant", kind: "streaming", content: "", uiOnly: true }]);
-    const chunks = DEMO_CONTRACT.match(/[\s\S]{1,28}/g) || [DEMO_CONTRACT];
+    const chunks = demo.text.match(/[\s\S]{1,28}/g) || [demo.text];
     let acc = "";
     for (const ch of chunks) {
       acc += ch;
       setMessages((m) => m.map((x) => (x.kind === "streaming" ? { ...x, content: acc } : x)));
       await new Promise((r) => setTimeout(r, 70));
     }
-    setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "demolock", uiOnly: true, content: "lock" }]);
+    setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "demolock", uiOnly: true, content: demo.title }]);
     setBusy(false);
   }
 
@@ -421,7 +578,7 @@ function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend
       ) : m.kind === "explain" ? (
         <ExplainCard explain={m.explainData!} />
       ) : m.kind === "demolock" ? (
-        <LockCard />
+        <LockCard title={m.content} />
       ) : (
         <div style={bubbleStyle}>{m.display ?? m.content}</div>
       )}
@@ -605,19 +762,25 @@ function ExplainCard({ explain }: { explain: ExplainData }) {
   );
 }
 
-function LockCard() {
+function LockCard({ title }: { title?: string }) {
+  // Optik bewusst an die Analyse-Sperre (LockedAnalysisUpsell) angeglichen:
+  // quadratisches Schloss-Badge, gleiche „Jetzt freischalten"-CTA + „ab Business"-Hinweis.
+  const vertragLabel = title && title !== "lock" ? `Dein ${title} ist fertig!` : "Dein Vertrag ist fertig!";
   return (
     <div style={{ display: "flex", gap: 11, maxWidth: "90%" }}>
       <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Lock size={15} /></div>
       <div style={{ border: `1.5px solid #d6e2fb`, borderRadius: 14, borderTopLeftRadius: 4, overflow: "hidden", flex: 1, background: "linear-gradient(135deg, rgba(46,108,246,.06), rgba(30,83,216,.03))" }}>
-        <div style={{ padding: "16px 18px" }}>
-          <div style={{ fontWeight: 700, fontSize: 15, color: C.ink, marginBottom: 6, display: "flex", alignItems: "center", gap: 7 }}><Lock size={16} color={C.blue} /> Dein Vertrag ist fertig!</div>
-          <div style={{ fontSize: 13.5, color: "#41506b", lineHeight: 1.55, marginBottom: 14 }}>
-            Mit einem bezahlten Plan kannst du ihn als <b>PDF herunterladen</b>, auf <b>Rechtssicherheit prüfen</b> lassen, dir <b>jede Klausel erklären</b> lassen, <b>Fristen in deinen Kalender</b> übernehmen und <b>direkt unterschreiben lassen</b>.
+        <div style={{ padding: "18px 18px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          {/* quadratisches Schloss-Badge wie bei der Analyse-Sperre */}
+          <div style={{ width: 48, height: 48, borderRadius: 13, display: "grid", placeItems: "center", background: "linear-gradient(135deg,#eff4ff 0%,#e0e9fb 100%)", color: "#2563eb", marginBottom: 12, boxShadow: "0 1px 2px rgba(37,99,235,.12)" }}><Lock size={20} /></div>
+          <div style={{ fontWeight: 700, fontSize: 17, color: "#0f172a", marginBottom: 6 }}>{vertragLabel}</div>
+          <div style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.55, marginBottom: 16, maxWidth: 360 }}>
+            Schalte frei, um ihn als <b>PDF herunterzuladen</b>, auf <b>Rechtssicherheit zu prüfen</b>, dir <b>jede Klausel erklären</b> zu lassen, <b>Fristen in den Kalender</b> zu übernehmen und <b>direkt unterschreiben</b> zu lassen.
           </div>
-          <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13.5, borderRadius: 10, padding: "10px 16px", textDecoration: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
-            Jetzt freischalten <ArrowRight size={16} />
+          <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "inherit", fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+            Jetzt freischalten <ArrowRight size={17} />
           </a>
+          <div style={{ fontSize: 12, color: "#64748b", marginTop: 10 }}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
         </div>
       </div>
     </div>
