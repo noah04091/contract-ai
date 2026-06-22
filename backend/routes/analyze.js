@@ -4198,7 +4198,6 @@ router.get('/job/:jobId', verifyToken, async (req, res) => {
             );
             const isFirstAnalysis = !!earliest && earliest._id.toString() === contractId.toString();
             result = applyAnalysisGate(result, { plan, isFirstAnalysis, launchDate: FREEMIUM_GATE_LAUNCH, analyzedAt: new Date() });
-            console.log(`🔍 [Gate-DIAG] job-result contractId=${contractId} isFirst=${isFirstAnalysis} → gated=${result.gated === true}`);
           }
         } catch (gateErr) {
           console.warn(`⚠️ [Freemium-Gate/Job] fail-open: ${gateErr.message}`);

@@ -38,8 +38,6 @@ const FREEMIUM_GATE_ENABLED = process.env.FREEMIUM_GATE_ENABLED === 'true';
 const FREEMIUM_GATE_LAUNCH = process.env.FREEMIUM_GATE_LAUNCH_DATE
   ? new Date(process.env.FREEMIUM_GATE_LAUNCH_DATE)
   : null;
-// 🔍 DIAG (temporär): bestätigt beim Start, ob Flag + Stichtag auf DIESEM Deploy ankommen.
-console.log(`🔍 [Gate-DIAG] Startup: flag raw=${JSON.stringify(process.env.FREEMIUM_GATE_ENABLED)} aktiv=${FREEMIUM_GATE_ENABLED} | launchEnv=${JSON.stringify(process.env.FREEMIUM_GATE_LAUNCH_DATE)} launch=${FREEMIUM_GATE_LAUNCH ? FREEMIUM_GATE_LAUNCH.toISOString() : 'null'}`);
 
 // 🔒 Middleware: PDF-/Gutachten-Export ist Business+ (sobald Flag AN). Schließt den Download-Bypass
 // der gesperrten Analyse. Default-Flag AUS → next() (kein Effekt). fail-open bei Fehler (erlaubt).
@@ -1481,9 +1479,6 @@ router.get("/", async (req, res) => {
       catch { withStatus = { ...c, computedStatus: 'Aktiv' }; }
       if (FREEMIUM_GATE_ENABLED && gatePlan) {
         try {
-          const hadCriticals = Array.isArray(c.criticalIssues) ? c.criticalIssues.length
-            : (Array.isArray(c.risiken) ? c.risiken.length : 'none');
-          const hadOpinion = typeof c.detailedLegalOpinion === 'string' && c.detailedLegalOpinion.length > 0;
           withStatus = applyAnalysisGate(withStatus, {
             plan: gatePlan,
             orgPlan: gateOrgPaid ? 'business' : undefined,
@@ -1491,7 +1486,6 @@ router.get("/", async (req, res) => {
             launchDate: FREEMIUM_GATE_LAUNCH,
             isFirstAnalysis: !!gateFirstId && c._id.toString() === gateFirstId
           });
-          console.log(`🔍 [Gate-DIAG-LIST] id=${c._id} plan=${gatePlan} isFirst=${!!gateFirstId && c._id.toString() === gateFirstId} hadCriticals=${hadCriticals} hadOpinion=${hadOpinion} → gated=${withStatus.gated === true}`);
         } catch { /* fail-open: voller Vertrag bleibt */ }
       }
       return withStatus;
@@ -1751,13 +1745,11 @@ router.get("/:id", verifyToken, async (req, res) => {
         );
         // „erste Analyse des Users = voll & gratis": ist DIESER Vertrag der früheste analysierte des Owners?
         let isFirstAnalysis = false;
-        let earliestId = null;
         try {
           const earliest = await contractsCollection.findOne(
             { userId: access.contract.userId, analyzed: true },
             { sort: { analyzedAt: 1 }, projection: { _id: 1 } }
           );
-          earliestId = earliest ? earliest._id.toString() : null;
           isFirstAnalysis = !!earliest && earliest._id.toString() === access.contract._id.toString();
         } catch { /* unklar → konservativ NICHT als erste werten */ }
         payload = applyAnalysisGate(payload, {
@@ -1767,13 +1759,9 @@ router.get("/:id", verifyToken, async (req, res) => {
           launchDate: FREEMIUM_GATE_LAUNCH,
           isFirstAnalysis
         });
-        // 🔍 DIAG (temporär): exakte Gate-Entscheidung pro Vertrag-Öffnen
-        console.log(`🔍 [Gate-DIAG] id=${id} plan=${gateUser?.subscriptionPlan || 'free'} orgPaid=${!!access.membership} isFirst=${isFirstAnalysis} thisId=${access.contract._id} earliestId=${earliestId} analyzedAt=${enrichedContract.analyzedAt || enrichedContract.lastAnalyzed} launch=${FREEMIUM_GATE_LAUNCH ? FREEMIUM_GATE_LAUNCH.toISOString() : 'null'} → gated=${payload.gated === true}`);
       } catch (gateErr) {
         console.warn(`⚠️ [Freemium-Gate] fail-open (volle Ansicht): ${gateErr.message}`);
       }
-    } else {
-      console.log(`🔍 [Gate-DIAG] id=${id} → FLAG AUS (FREEMIUM_GATE_ENABLED ist nicht 'true')`);
     }
 
     res.json(payload);
@@ -2778,7 +2766,6 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
           launchDate: FREEMIUM_GATE_LAUNCH,
           isFirstAnalysis
         });
-        console.log(`🔍 [Gate-DIAG-REANALYZE] id=${id} plan=${gateUser?.subscriptionPlan || 'free'} isFirst=${isFirstAnalysis} → gated=${gatedFinal.gated === true}`);
       } catch (gateErr) {
         console.warn(`⚠️ [Freemium-Gate] reanalyze fail-open (volle Ansicht): ${gateErr.message}`);
       }
