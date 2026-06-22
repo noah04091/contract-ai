@@ -216,7 +216,7 @@ function pickDemo(userText: string): { title: string; text: string } {
   return DEMO_CONTRACTS.freelancer; // Default (auch Freelancer/Dienstleistung)
 }
 
-export default function PremiumChat({ onClose, demo = false, initialPrompt = "" }: { onClose: () => void; demo?: boolean; initialPrompt?: string }) {
+export default function PremiumChat({ onClose, demo = false, initialPrompt = "", autoSend = false }: { onClose: () => void; demo?: boolean; initialPrompt?: string; autoSend?: boolean }) {
   const { user } = useAuth();
   const firstName = (user?.name || "").trim().split(/\s+/)[0] || "";
   const greeting = `Hi${firstName ? " " + firstName : ""}! Beschreib mir einfach in eigenen Worten, welchen Vertrag du brauchst — Stichworte reichen völlig.`;
@@ -231,9 +231,13 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "" 
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [messages, busy]);
 
-  // Vorbefüllung aus der Vertragstyp-Auswahl (Generate-Seite) — Nutzer kann ergänzen, dann senden.
+  // Vorbefüllung aus dem Generate-Formular: autoSend=true (Free klickte „Erstellen" → direkt
+  // generieren) ODER nur vorbefüllen (Nutzer kann ergänzen, dann senden).
   useEffect(() => {
-    if (initialPrompt && initialPrompt.trim()) setInput(initialPrompt);
+    if (initialPrompt && initialPrompt.trim()) {
+      if (autoSend) handleSend(initialPrompt);
+      else setInput(initialPrompt);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

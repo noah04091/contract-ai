@@ -13,7 +13,6 @@ import {
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
 import { useAuth } from "../context/AuthContext";
-import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import CreateTemplateModal, { TemplateFormData } from "../components/CreateTemplateModal";
 import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
 import GuidedContractWizard from "../components/GuidedContractWizard";
@@ -3535,8 +3534,9 @@ export default function Generate() {
   const [isBriefProcessing, setIsBriefProcessing] = useState<boolean>(false);
   // ✨ Generate 2.0 Premium-Modus (KI-Chat-Assistent)
   const [premiumMode, setPremiumMode] = useState<boolean>(false);
-  // 🔓 Vorbefüllung für den Generate-2.0-Tease, wenn Free-User auf einen Vertragstyp klickt
+  // 🔓 Vorbefüllung für den Generate-2.0-Tease (Free): Formulardaten → Beschreibung; autoSend = sofort generieren
   const [premiumSeed, setPremiumSeed] = useState<string>("");
+  const [premiumAutoSend, setPremiumAutoSend] = useState<boolean>(false);
   const premiumEntryVisible = useMemo(
     () => SHOW_PREMIUM_ENTRY || (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("premium")),
     []
@@ -4241,13 +4241,7 @@ export default function Generate() {
   // 📂 Initialisiere erste Gruppe als offen wenn Vertragstyp gewählt wird
   // ✨ Generate 2.0 — Brief → Typ erkennen → Formular vorausfüllen → Review (Step 2)
   const handleBriefSubmit = async () => {
-    if (userPlan === 'free') {
-      // 🔓 Free: Beschreibung in den Generate-2.0-Tease übernehmen (1 echte Gratis-Generierung)
-      const brief = briefText.trim();
-      setPremiumSeed(brief.length >= 10 ? brief : "");
-      setPremiumMode(true);
-      return;
-    }
+    // Free wie Paid: Brief → Typ erkennen → Formular vorausfüllen. Der Tease kommt beim „Erstellen".
     const brief = briefText.trim();
     if (brief.length < 10) return;
     setIsBriefProcessing(true);
@@ -4520,7 +4514,21 @@ export default function Generate() {
   };
 
   const handleGenerate = async () => {
-    if (!selectedType || userPlan === 'free') return;
+    if (!selectedType) return;
+
+    // 🔓 Free: ausgefülltes Formular → Beschreibung → 1 echte Gratis-Generierung im Tease (+ Sperr-Karte).
+    // Nutzt die bereits gebaute, gedeckelte Premium-Generierung (premiumGenerate). Paid-Pfad unten unverändert.
+    if (userPlan === 'free') {
+      const fields = (selectedType.fields || []) as Array<{ name: string; label?: string }>;
+      const lines = fields
+        .map((f) => (formData[f.name] ? `${f.label || f.name}: ${formData[f.name]}` : null))
+        .filter(Boolean);
+      const desc = `Bitte erstelle einen ${selectedType.name}.` + (lines.length ? `\n${lines.join("\n")}` : "");
+      setPremiumSeed(desc.trim());
+      setPremiumAutoSend(true);
+      setPremiumMode(true);
+      return;
+    }
 
     // Check Business plan limits
     if (userPlan === 'business' && usageData) {
@@ -5984,7 +5992,7 @@ export default function Generate() {
       {premiumMode && (
         <div style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(11,19,36,.45)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "20px" }}>
           <div style={{ width: "100%", maxWidth: 860 }}>
-            <PremiumChat onClose={() => { setPremiumMode(false); setPremiumSeed(""); }} demo={userPlan === 'free'} initialPrompt={premiumSeed} />
+            <PremiumChat onClose={() => { setPremiumMode(false); setPremiumSeed(""); setPremiumAutoSend(false); }} demo={userPlan === 'free'} initialPrompt={premiumSeed} autoSend={premiumAutoSend} />
           </div>
         </div>
       )}
@@ -6088,12 +6096,7 @@ export default function Generate() {
         </motion.header>
 
         <div className={`${styles.generatorContent} ${currentStep === 3 ? styles.step3Wide : ''}`}>
-          {/* Premium Notice for Free Users */}
-          {userPlan === 'free' && (
-            <UnifiedPremiumNotice
-              featureName="Die KI-Vertragserstellung"
-            />
-          )}
+          {/* Free-User dürfen das Formular ausfüllen; der Tease/die Sperre kommt beim „Erstellen". */}
 
           {/* Company Profile Tip Banner - only show if no profile exists and not dismissed */}
           {shouldShowProfileTip && (
@@ -6234,9 +6237,9 @@ export default function Generate() {
                               setCurrentStep(2);
                             }
                           }}
-                          disabled={!selectedType || userPlan === 'free'}
-                          whileHover={selectedType && userPlan !== 'free' ? { scale: 1.02 } : {}}
-                          whileTap={selectedType && userPlan !== 'free' ? { scale: 0.98 } : {}}
+                          disabled={!selectedType}
+                          whileHover={selectedType ? { scale: 1.02 } : {}}
+                          whileTap={selectedType ? { scale: 0.98 } : {}}
                         >
                           <span>Weiter</span>
                           <ArrowRight size={18} />
@@ -6268,13 +6271,8 @@ export default function Generate() {
                           key={type.id}
                           className={`${styles.contractTypeCard} ${selectedType?.id === type.id ? styles.selected : ''}`}
                           onClick={() => {
-                            if (userPlan === 'free') {
-                              // 🔓 Free: in den Generate-2.0-Tease leiten (1 echte Gratis-Generierung
-                              // dieses Typs) statt harter Sperre. Vorbefüllt, Nutzer kann ergänzen.
-                              setPremiumSeed(`Ich möchte einen ${type.name} erstellen.`);
-                              setPremiumMode(true);
-                              return;
-                            }
+                            // Free wie Paid: Vertragstyp wählen → normales Formular ausfüllen.
+                            // Der Tease (1 Gratis-Generierung + Sperre) kommt erst beim „Erstellen".
                             handleTypeSelect(type);
                           }}
                           disabled={false}
@@ -6437,7 +6435,7 @@ export default function Generate() {
                             value={formData.title || ''}
                             onChange={(e) => handleInputChange('title', e.target.value)}
                             placeholder="z.B. Freelancer-Vertrag für Webentwicklung"
-                            disabled={userPlan === 'free'}
+                            disabled={false}
                           />
                         </div>
 
@@ -6507,7 +6505,7 @@ export default function Generate() {
                                             value={formData[field.name] || ''}
                                             onChange={(e) => handleInputChange(field.name, e.target.value)}
                                             placeholder={field.placeholder}
-                                            disabled={userPlan === 'free'}
+                                            disabled={false}
                                             className={
                                               field.validation && formData[field.name] && !validateField(field, formData[field.name] || '')
                                                 ? styles.inputError
@@ -6522,7 +6520,7 @@ export default function Generate() {
                                             value={formData[field.name] || ''}
                                             onChange={(e) => handleInputChange(field.name, e.target.value)}
                                             onKeyDown={(e) => handleKeyDown(e, field.name)}
-                                            disabled={userPlan === 'free'}
+                                            disabled={false}
                                             className={`${!formData[field.name] ? styles.placeholder : ''} ${
                                               field.validation && formData[field.name] && !validateField(field, formData[field.name] || '')
                                                 ? styles.inputError
@@ -6547,7 +6545,7 @@ export default function Generate() {
                                               onChange={(e) => handleInputChange(field.name, e.target.value)}
                                               onKeyDown={(e) => handleKeyDown(e, field.name)}
                                               placeholder={field.placeholder}
-                                              disabled={userPlan === 'free'}
+                                              disabled={false}
                                               className={`${styles.inputWithSuffixField} ${
                                                 field.validation && formData[field.name] && !validateField(field, formData[field.name] || '')
                                                   ? styles.inputError
@@ -6566,7 +6564,7 @@ export default function Generate() {
                                             onChange={(e) => handleInputChange(field.name, e.target.value)}
                                             onKeyDown={(e) => handleKeyDown(e, field.name)}
                                             placeholder={field.placeholder}
-                                            disabled={userPlan === 'free'}
+                                            disabled={false}
                                             className={
                                               formData[field.name] && !validateField(field, formData[field.name] || '')
                                                 ? styles.inputError
@@ -6610,7 +6608,7 @@ export default function Generate() {
                             value={formData.customRequirements || ''}
                             onChange={(e) => handleInputChange('customRequirements', e.target.value)}
                             placeholder="Geben Sie hier zusätzliche Anforderungen, besondere Vereinbarungen oder individuelle Klauseln für Ihren Vertrag ein..."
-                            disabled={userPlan === 'free'}
+                            disabled={false}
                             className={styles.customRequirementsTextarea}
                           />
                           <span className={styles.fieldHint}>
@@ -6691,9 +6689,9 @@ export default function Generate() {
                           type="button"
                           className={`${styles.generateButton} ${(!isStepComplete(2) || loading) ? styles.disabled : ''}`}
                           onClick={handleGenerate}
-                          disabled={loading || userPlan === 'free' || !isStepComplete(2)}
-                          whileHover={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 1.02 } : {}}
-                          whileTap={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 0.98 } : {}}
+                          disabled={loading || !isStepComplete(2)}
+                          whileHover={isStepComplete(2) && !loading ? { scale: 1.02 } : {}}
+                          whileTap={isStepComplete(2) && !loading ? { scale: 0.98 } : {}}
                         >
                           {loading ? (
                             <>
