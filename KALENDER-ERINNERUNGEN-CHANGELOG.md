@@ -74,6 +74,22 @@
 
 ---
 
+| 15 | **Erinnerungs-Mail-CTA „Jetzt kündigen"** (statt „Vertrag/Details ansehen") bei den 4 Kündigungs-Events | Aktions-Loop war komplett, aber der Knopf versteckte die Aktion | `da033358` |
+
+---
+
+## ⚡ Der Aktions-Loop (Erinnerung → 1-Klick-Kündigung) — IST KOMPLETT GEBAUT
+
+**Tiefen-Analyse (22.06.2026): nichts neu zu bauen, nur CTA geschärft.** So läuft's end-to-end:
+- **3 Einstiegspunkte, alle → SELBES Modal** (keine Redundanz): (1) Kalender-Popup „Jetzt kündigen" bei kündbaren Events → `quick-action` → `triggerCancellation` (`calendar.js:~1183`) → `/cancel/{id}`; (2) Erinnerungs-Mail-CTA → `/cancel/{id}?action=cancel`; (3) direkt `/cancel/{id}`.
+- **Flow** = `frontend/src/components/OneClickCancelModal.tsx` (Formular → Vorschau → Senden → Erfolg). **Füllt Name/Adresse/Mail/Tel automatisch** aus localStorage `userData` + Auth-Profil vor (`:130-166`) und merkt sie beim Senden (`:312-316`) → Reibung schon gelöst.
+- **Backend** `backend/routes/cancellations.js` `POST /send` (`:124-361`): erzeugt DIN-5008-PDF (`services/cancellationPdfGenerator.js`), mailt an Anbieter + Kopie an User, S3-Upload, Vertrag→„gekündigt", legt 14-Tage-`CANCELLATION_CONFIRMATION_CHECK` an. Weitere Endpoints: resend, confirmation-response (Ja/Nein-Nachfass), reactivate, confirm (Beleg-Upload), archive/unarchive/delete.
+- **Mail-CTAs** stehen in `calendarNotifier.js:~436-538` (pro Event-Typ). Kündigungs-Events (`CANCEL_WINDOW_OPEN`/`LAST_CANCEL_DAY`/`CANCEL_WARNING`/`AUTO_RENEWAL`) → jetzt „Jetzt kündigen" → `/cancel/{id}?action=cancel`.
+- **Kein Auto-Senden:** „Jetzt kündigen" öffnet immer den Prüf-/Bestätigen-Schritt.
+- Mini-offen: `CANCEL_REMINDER`-Mail-CTA (`:441`) führt zu `/contracts?view`, nicht in den Kündigungs-Flow (Inkonsistenz, bewusst gelassen).
+
+---
+
 ## 🔎 Geprüft, bewusst NICHT geändert (sensible Extraktions-Ebene)
 
 - **Auto-Verlängerung & Kündigungs-Warnung:** Kein Bug. `calendarEvents.js:152–249` erzeugt gestaffelte Warnungen (Kündigungsfenster/„nur noch 7 Tage"/letzter Tag) — aber **nur wenn in der Zukunft** (`> now`). Verträge mit bereits **vergangenem** Kündigungsfenster zeigen daher nur „am Tag selbst" (korrekt — man kann nicht vor einem vergangenen Datum warnen).
