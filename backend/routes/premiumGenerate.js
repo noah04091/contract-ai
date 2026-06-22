@@ -200,6 +200,49 @@ function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = n
 }
 
 // =========================================================================
+// 4) Rechts-Check: zweite Opus-Runde als kritischer Gegenanwalt
+// =========================================================================
+const REVIEW_SCHEMA = {
+  type: "object", additionalProperties: false,
+  properties: {
+    verdict: { type: "string", enum: ["gut", "mit_empfehlungen", "luecken"] },
+    summary: { type: "string" },
+    checks: {
+      type: "array",
+      items: {
+        type: "object", additionalProperties: false,
+        properties: {
+          klausel: { type: "string" },
+          status: { type: "string", enum: ["vorhanden", "schwach", "fehlt"] },
+          hinweis: { type: "string" },
+        },
+        required: ["klausel", "status", "hinweis"],
+      },
+    },
+    empfehlungen: { type: "array", items: { type: "string" } },
+  },
+  required: ["verdict", "summary", "checks", "empfehlungen"],
+};
+
+async function reviewContract(text) {
+  const system =
+    "Du bist ein erfahrener deutscher Vertragsanwalt und prüfst einen FERTIGEN Vertrag als kritischer Gegenanwalt auf Rechtssicherheit und Vollständigkeit.\n" +
+    "Prüfe, ob die je nach Vertragstyp üblichen Schutz- und Standardklauseln vorhanden, schwach oder fehlend sind — u. a.: Vertragsgegenstand, Vergütung/Zahlung, Laufzeit & Kündigung, Haftung/Haftungsbegrenzung, Gewährleistung, Geheimhaltung, Datenschutz (falls relevant), anwendbares Recht & Gerichtsstand, Schriftform, Salvatorische Klausel.\n" +
+    "Sei konkret, streng, aber fair und praxisnah. Beziehe dich auf den tatsächlichen Vertragstext.\n" +
+    "- verdict: 'gut' = alles Wesentliche da; 'mit_empfehlungen' = kleinere Verbesserungen sinnvoll; 'luecken' = echte, wichtige Lücken.\n" +
+    "- checks: die 8–14 wichtigsten Punkte mit Status (vorhanden/schwach/fehlt) und kurzem, konkretem Hinweis.\n" +
+    "- empfehlungen: 1–5 konkrete, sofort umsetzbare Verbesserungsvorschläge (jeweils 1 Satz).\n" +
+    "- summary: 1 Satz Gesamteinschätzung.";
+  const res = await client().messages.create({
+    model: MODEL, max_tokens: 4000,
+    thinking: { type: "adaptive" },
+    output_config: { effort: "high", format: { type: "json_schema", schema: REVIEW_SCHEMA } },
+    system, messages: [{ role: "user", content: "Prüfe diesen Vertrag:\n\n" + text }],
+  });
+  return JSON.parse(res.content.find((b) => b.type === "text").text);
+}
+
+// =========================================================================
 // Router
 // =========================================================================
 const router = express.Router();
@@ -288,4 +331,23 @@ router.post("/pdf", async (req, res) => {
   }
 });
 
-module.exports = { router, assess, generateContractText, renderPremiumPdfBuffer, textToBasicHtml };
+// POST /review — Rechts-Check eines gespeicherten Vertrags (KI-Gegenanwalt)
+router.post("/review", aiLimiter, async (req, res) => {
+  try {
+    const { contractId } = req.body || {};
+    if (!contractId) return res.status(400).json({ success: false, error: "NO_ID" });
+    await ensureDb();
+    const c = await contractsCollection.findOne({
+      _id: new ObjectId(contractId),
+      $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }],
+    });
+    if (!c) return res.status(404).json({ success: false, error: "NOT_FOUND" });
+    const review = await reviewContract(c.content || "");
+    return res.json({ success: true, ...review });
+  } catch (e) {
+    const status = e.code === "NO_AI_KEY" ? 503 : 502;
+    return res.status(status).json({ success: false, error: e.code || "AI_ERROR", message: "Rechts-Check gerade nicht möglich — bitte erneut versuchen." });
+  }
+});
+
+module.exports = { router, assess, generateContractText, reviewContract, renderPremiumPdfBuffer, textToBasicHtml };

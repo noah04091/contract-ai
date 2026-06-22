@@ -1,6 +1,6 @@
 # Generate 2.0 — Plan & Fahrplan (lebendes Dokument)
 
-**Letzte Aktualisierung:** 2026-06-19
+**Letzte Aktualisierung:** 2026-06-21 — Test-Feedback umgesetzt: Design-Varianten (Klassisch/Elegant/Modern), kein „Contract AI" im Dokument, Zeichen-Bereinigung, **Unterschrift direkt auf den Vertrag** (Zeichenfeld → ins PDF auf die erkannte Partei-Linie). Alles deployt, Premium weiter via `?premium=1` testbar.
 **Status:** 🔁 PIVOT auf **Premium-Chat-Modus** (Claude Opus + AVV-Design). Frühere Form-Fill-Variante gebaut & live, aber **ausgeblendet** (`SHOW_BRIEF_MODE=false`). Neuer Bau startet beim „Motor". (Siehe Pivot-Abschnitt direkt unten.)
 **Eigentümer:** Noah Liebold (Contract AI) · umgesetzt mit Claude
 
@@ -22,8 +22,10 @@
 **Neuer Bau-Plan (Premium-Modus), jeweils Detektiv→Konzern→Grün-Licht→TÜV + Tests:**
 1. ✅ **Motor** — GEBAUT & getestet (`backend/scripts/generateV2Motor.js`). Vager Brief „Kaufvertrag" → erkennt „reicht nicht" → 5 kluge Rückfragen → nach Antworten vollständiger Kfz-Kaufvertrag (AVV-Qualität) → Premium-PDF (`GenerateV2_Motor_Demo.pdf`, 3 S.). **Tuning ✅ erledigt:** Bewertungs-Prompt kalibriert (zentrale Eckpunkte da → ready=true, höchstens 1 Frage-Runde). Re-Test: Runde 1 NEIN→fragt, Runde 2 JA→generiert. Kein Über-Fragen mehr.
 2. ✅ **Backend-Endpoints** — `backend/routes/premiumGenerate.js` (additiv, isoliert): `POST /api/contracts/premium/chat` (assess/Rückfragen), `/generate` (Limit-Check 1:1 wie generate.js + Opus-Generierung + Speicherung in `contracts` als `premium_opus_v1`, zählt aufs Limit), `/pdf` (AVV-Premium-Layout aus gespeichertem Text). DB via `config/database`-Singleton. Eigener IPv6-sicherer Limiter. **In server.js gemountet** (8.2, vor generischen /api/contracts, try/catch). Core-Test 8/8 grün (`testPremiumCore.js`, kein Prod-Write). Syntax server.js+Route OK. **Nicht deployt.**
-3. ⬜ **Chat-Oberfläche** (neuer Premium-Modus, Stripe/DocuSign-Niveau) — erst Mockup, dann live.
-4. ⬜ **Nachschärfen-im-Chat** + koordinierter Go-Live (Preview→Prod).
+3. ✅ **Chat-Oberfläche** — `frontend/src/components/PremiumChat.tsx` (ChatGPT-artig, gebrandet; Mockups v1+v2 freigegeben). Einstieg auf Step 1 in `Generate.tsx` (Overlay, klassischer Flow unberührt). Build grün. Nachschärfen-Loop drin (voller Verlauf → Opus regeneriert).
+4a. ✅ **Test-Feedback-Fixes (21.06.):** Chat „bombe", aber: „Design ändern" erzeugte Zeichen-Müll (`─══█` = nicht-darstellbare Glyphen) + „Contract AI" stand im Nutzer-Dokument. Behoben: PDF-Renderer mit **3 echten Design-Varianten** (Klassisch/Elegant/Modern, Umschalter in der Chat-Karte), **`sanitizeForPdf`** (entfernt Deko-/Sonderzeichen), **kein Branding** mehr (neutrale Fußzeile), Prompt verbietet ASCII-Deko. Verifiziert (Elegant=Serif, Müll weg, €§äöüß ok). Deployt.
+
+4. 🟡 **Go-Live LÄUFT** — Backend (premium-Routen) + Frontend **deployt auf Produktion**, Premium-Einstieg aber **VERSTECKT** (`SHOW_PREMIUM_ENTRY=false`), für Test erreichbar via **`contract-ai.de/generate?premium=1`**. Compliance (Anthropic in Datenschutz/AVV/AGB) bereits live, `ANTHROPIC_API_KEY` in Render gesetzt. **Offen: User testet auf echter Seite → dann `SHOW_PREMIUM_ENTRY=true` + Redeploy = für alle frei.** (Alter Anthropic-Key noch zu löschen.)
 
 ⚠️ Die Abschnitte 1–9 unten beschreiben die ALTE Form-Fill-Variante (Referenz/Reaktivierung).
 

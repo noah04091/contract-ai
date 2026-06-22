@@ -12,10 +12,11 @@
  *   POST /api/contracts/premium/pdf        (Premium-PDF, AVV-Stil)
  */
 import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine } from "lucide-react";
+import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X } from "lucide-react";
 import { toast } from "react-toastify";
 
-type Kind = "text" | "questions" | "contract" | "generating";
+type Kind = "text" | "questions" | "contract" | "generating" | "review";
+interface ReviewData { verdict: string; summary: string; checks: { klausel: string; status: string; hinweis: string }[]; empfehlungen: string[] }
 interface ChatMsg {
   role: "user" | "assistant";
   kind: Kind;
@@ -23,6 +24,7 @@ interface ChatMsg {
   uiOnly?: boolean;         // z.B. Begrüßung – nicht an die API
   questions?: { id: string; frage: string; warum: string }[];
   contract?: { contractId: string; contractText: string; contractType: string; title?: string };
+  review?: ReviewData;
 }
 
 const C = {
@@ -53,8 +55,8 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     return data;
   }
 
-  async function handleSend() {
-    const text = input.trim();
+  async function handleSend(override?: string) {
+    const text = (typeof override === "string" ? override : input).trim();
     if (!text || busy) return;
     const base = [...messages, { role: "user", kind: "text", content: text } as ChatMsg];
     setMessages(base);
@@ -106,6 +108,30 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     } catch { toast.error("PDF konnte nicht erstellt werden."); }
   }
 
+  async function runReview(c: NonNullable<ChatMsg["contract"]>) {
+    if (busy) return;
+    setBusy(true);
+    setMessages((m) => [...m, { role: "assistant", kind: "generating", content: "" }]);
+    try {
+      const r = await postJson("/api/contracts/premium/review", { contractId: c.contractId });
+      setMessages((m) => [...m.filter((x) => x.kind !== "generating"), {
+        role: "assistant", kind: "review", uiOnly: true, content: "Rechts-Check",
+        review: { verdict: r.verdict, summary: r.summary, checks: r.checks || [], empfehlungen: r.empfehlungen || [] },
+      }]);
+    } catch {
+      setMessages((m) => [...m.filter((x) => x.kind !== "generating"), { role: "assistant", kind: "text", content: "Der Rechts-Check ist gerade nicht möglich — bitte versuch es nochmal." }]);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function applyRecommendations(review: ReviewData) {
+    if (busy || !review.empfehlungen.length) return;
+    const text = "Bitte arbeite folgende Empfehlungen aus dem Rechts-Check in den Vertrag ein:\n" +
+      review.empfehlungen.map((e, i) => `${i + 1}. ${e}`).join("\n");
+    handleSend(text);
+  }
+
   return (
     <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 18, boxShadow: "0 1px 2px rgba(16,30,60,.04), 0 24px 60px -24px rgba(16,30,60,.22)", overflow: "hidden", display: "flex", flexDirection: "column", height: "78vh", minHeight: 560, maxWidth: 820, margin: "0 auto" }}>
       {/* Header */}
@@ -122,7 +148,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
       {/* Chat */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", background: C.bg, padding: "22px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
         {messages.map((m, i) => (
-          <Bubble key={i} m={m} onDownload={downloadPdf} />
+          <Bubble key={i} m={m} onDownload={downloadPdf} onReview={runReview} onApplyRec={applyRecommendations} />
         ))}
       </div>
 
@@ -138,7 +164,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
             disabled={busy}
             style={{ flex: 1, resize: "none", border: "none", outline: "none", font: "inherit", fontSize: 14, color: C.ink, padding: "6px 0", maxHeight: 120, background: "transparent" }}
           />
-          <button onClick={handleSend} disabled={busy || !input.trim()} title="Senden"
+          <button onClick={() => handleSend()} disabled={busy || !input.trim()} title="Senden"
             style={{ width: 38, height: 38, borderRadius: 10, border: "none", background: busy || !input.trim() ? "#c7d4ee" : `linear-gradient(135deg,${C.blue},${C.blue2})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: busy || !input.trim() ? "default" : "pointer", flex: "none" }}>
             <Send size={18} />
           </button>
@@ -151,7 +177,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
+function Bubble({ m, onDownload, onReview, onApplyRec }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void }) {
   const isUser = m.role === "user";
   const AiAvatar = (
     <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Sparkles size={16} /></div>
@@ -193,11 +219,13 @@ function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<Cha
       ) : m.kind === "contract" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: "88%" }}>
           <div style={bubbleStyle}>Fertig — hier ist dein Vertrag:</div>
-          <ContractCard c={m.contract!} onDownload={onDownload} />
+          <ContractCard c={m.contract!} onDownload={onDownload} onReview={onReview} />
           <div style={{ ...bubbleStyle, maxWidth: "100%", fontSize: 13, color: "#41506b" }}>
             Du kannst unten weiter mit mir chatten, um Klauseln zu ändern — z. B. „Laufzeit auf 6 Monate“ oder „Wettbewerbsverbot ergänzen“.
           </div>
         </div>
+      ) : m.kind === "review" ? (
+        <ReviewCard review={m.review!} onApply={() => onApplyRec(m.review!)} />
       ) : (
         <div style={bubbleStyle}>{m.content}</div>
       )}
@@ -205,7 +233,7 @@ function Bubble({ m, onDownload }: { m: ChatMsg; onDownload: (c: NonNullable<Cha
   );
 }
 
-function ContractCard({ c, onDownload }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
+function ContractCard({ c, onDownload, onReview }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void }) {
   const [design, setDesign] = useState("klassisch");
   const [signature, setSignature] = useState<string | null>(null);
   const [showPad, setShowPad] = useState(false);
@@ -260,7 +288,50 @@ function ContractCard({ c, onDownload }: { c: NonNullable<ChatMsg["contract"]>; 
         <button onClick={() => onDownload(c, design, signature)} style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
           <Download size={16} /> PDF herunterladen
         </button>
-        <span style={{ marginLeft: "auto", fontSize: 11, color: C.muted2, display: "flex", alignItems: "center", gap: 5 }}><ShieldCheck size={13} /> {sectionCount || ""} §§ · gespeichert</span>
+        <button onClick={() => onReview(c)} title="Vertrag von der KI auf Rechtssicherheit prüfen lassen" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 13px", cursor: "pointer", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
+          <ShieldCheck size={15} /> Rechts-Check
+        </button>
+        <span style={{ marginLeft: "auto", fontSize: 11, color: C.muted2, display: "flex", alignItems: "center", gap: 5 }}>{sectionCount || ""} §§ · gespeichert</span>
+      </div>
+    </div>
+  );
+}
+
+function ReviewCard({ review, onApply }: { review: ReviewData; onApply: () => void }) {
+  const v = review.verdict;
+  const theme = v === "gut"
+    ? { bg: "rgba(10,138,74,.08)", border: "#bfe6cf", color: "#0a8a4a", label: "Rechts-Check bestanden" }
+    : v === "mit_empfehlungen"
+    ? { bg: "rgba(184,134,11,.08)", border: "#f0dcb0", color: "#b8860b", label: "Gut — mit Empfehlungen" }
+    : { bg: "rgba(192,57,43,.07)", border: "#f0c4c4", color: "#c0392b", label: "Lücken gefunden" };
+  const icon = (status: string) =>
+    status === "vorhanden" ? <Check size={14} color="#0a8a4a" /> : status === "schwach" ? <AlertTriangle size={14} color="#b8860b" /> : <X size={14} color="#c0392b" />;
+  const okCount = review.checks.filter((c) => c.status === "vorhanden").length;
+  return (
+    <div style={{ display: "flex", gap: 11, maxWidth: "90%" }}>
+      <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><ShieldCheck size={16} /></div>
+      <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 14, borderTopLeftRadius: 4, overflow: "hidden", flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 15px", background: theme.bg, borderBottom: `1px solid ${theme.border}` }}>
+          <ShieldCheck size={16} color={theme.color} />
+          <span style={{ fontWeight: 700, fontSize: 14, color: theme.color }}>{theme.label}</span>
+          <span style={{ marginLeft: "auto", fontSize: 11.5, color: C.muted, fontWeight: 600 }}>{okCount}/{review.checks.length} ok</span>
+        </div>
+        <div style={{ padding: "12px 15px" }}>
+          <div style={{ fontSize: 13, color: "#41506b", marginBottom: 11, lineHeight: 1.5 }}>{review.summary}</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            {review.checks.map((ch, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <span style={{ marginTop: 1, flex: "none" }}>{icon(ch.status)}</span>
+                <span style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.45 }}><b style={{ fontWeight: 600 }}>{ch.klausel}</b><span style={{ color: C.muted }}> — {ch.hinweis}</span></span>
+              </div>
+            ))}
+          </div>
+          {review.empfehlungen.length > 0 && (
+            <button onClick={onApply} style={{ marginTop: 13, display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})` }}>
+              <Sparkles size={15} /> Empfehlungen übernehmen
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
