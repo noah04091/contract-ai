@@ -24,6 +24,7 @@ interface ChatMsg {
   display?: string;         // optionaler kurzer Anzeigetext (statt content) in der Blase
   uiOnly?: boolean;         // z.B. Begrüßung – nicht an die API
   questions?: { id: string; frage: string; warum: string }[];
+  contractType?: string;    // bei Frage-Nachrichten: erkannter Typ (für „Überspringen")
   contract?: { contractId: string; contractText: string; contractType: string; title?: string };
   review?: ReviewData;
 }
@@ -74,7 +75,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
         if (a.ready) {
           await streamGenerate(base, a.contractType);
         } else {
-          finish({ role: "assistant", kind: "questions", content: "Rückfragen: " + a.questions.map((q: any) => q.frage).join(" "), questions: a.questions });
+          finish({ role: "assistant", kind: "questions", content: "Rückfragen: " + a.questions.map((q: any) => q.frage).join(" "), questions: a.questions, contractType: a.contractType });
         }
       } else {
         // Phase 2: Verfeinern — neuer Vertrag aus vollem Verlauf (live)
@@ -134,6 +135,24 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
     setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "contract", content: done.contractText, contract: c }]);
   }
 
+  // „Überspringen": ohne Antworten generieren — fehlende Fakten werden zu Ausfüllfeldern
+  async function skipQuestions(contractType?: string) {
+    if (busy) return;
+    const directive = "Bitte erstelle den Vertrag jetzt mit den bereits genannten Angaben. Lass alle nicht ausdrücklich genannten konkreten Fakten als klar markierte Ausfüllfelder ('____') und erfinde nichts.";
+    const base = [...messages, { role: "user", kind: "text", content: directive, display: "Überspringen — fehlende Angaben als Ausfüllfelder lassen" } as ChatMsg];
+    setMessages(base);
+    setBusy(true);
+    try {
+      await streamGenerate(base, contractType || "Vertrag");
+    } catch (e: any) {
+      const msg = e?.data?.limitReached ? "Du hast dein monatliches Limit erreicht. Bitte Plan upgraden." : "Da ist gerade etwas schiefgelaufen — bitte versuch es nochmal.";
+      setMessages((m) => [...m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"), { role: "assistant", kind: "text", content: msg }]);
+      toast.info(msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) {
     try {
       const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null }) });
@@ -186,7 +205,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
       {/* Chat */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", background: C.bg, padding: "22px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
         {messages.map((m, i) => (
-          <Bubble key={i} m={m} onDownload={downloadPdf} onReview={runReview} onApplyRec={applyRecommendations} />
+          <Bubble key={i} m={m} onDownload={downloadPdf} onReview={runReview} onApplyRec={applyRecommendations} onSkip={skipQuestions} busy={busy} />
         ))}
       </div>
 
@@ -215,7 +234,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
   );
 }
 
-function Bubble({ m, onDownload, onReview, onApplyRec }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void }) {
+function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; busy: boolean }) {
   const isUser = m.role === "user";
   const AiAvatar = (
     <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Sparkles size={16} /></div>
@@ -259,6 +278,13 @@ function Bubble({ m, onDownload, onReview, onApplyRec }: { m: ChatMsg; onDownloa
                 <span style={{ fontSize: 13.5 }}>{q.frage}</span>
               </div>
             ))}
+          </div>
+          <div style={{ marginTop: 13, display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, color: C.muted2 }}>Antworte einfach unten — oder:</span>
+            <button type="button" disabled={busy} onClick={() => onSkip(m.contractType)}
+              style={{ font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: busy ? "default" : "pointer", borderRadius: 8, padding: "6px 12px", border: `1px solid ${C.border}`, background: "#fff", color: "#41506b", opacity: busy ? 0.6 : 1 }}>
+              Überspringen → Ausfüllfelder
+            </button>
           </div>
         </div>
       ) : m.kind === "contract" ? (
