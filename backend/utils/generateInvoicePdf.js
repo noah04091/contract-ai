@@ -20,7 +20,9 @@ function generateInvoicePdf({
   customLogoBase64 = null,  // ✨ NEU: White-Label Logo (Enterprise)
   periodStart = null,       // Stripe current_period_start (Unix timestamp)
   periodEnd = null,         // Stripe current_period_end (Unix timestamp)
-  paymentMethod = null      // Stripe payment method type (card, paypal, sepa_debit, etc.)
+  paymentMethod = null,     // Stripe payment method type (card, paypal, sepa_debit, etc.)
+  itemLabel = null,         // 🔓 Einmalkauf: überschreibt die "Abo"-Positionsbezeichnung
+  oneTime = false           // 🔓 Einmalkauf: kein Abrechnungszeitraum, einmalige Leistung
 }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
@@ -230,12 +232,16 @@ function generateInvoicePdf({
       steuer = amount - netto;
     }
 
-    const planDisplayName = plan.charAt(0).toUpperCase() + plan.slice(1);
+    const planSafe = plan || '';
+    const planDisplayName = planSafe.charAt(0).toUpperCase() + planSafe.slice(1);
     const dateFormat = { day: '2-digit', month: '2-digit', year: 'numeric' };
 
     // Leistungszeitraum aus Stripe-Subscription (echte Abrechnungsperiode)
     let periodText;
-    if (periodStart && periodEnd) {
+    if (oneTime) {
+      // 🔓 Einmalkauf: kein Zeitraum, sondern Leistungsdatum
+      periodText = invoiceDate || new Date().toLocaleDateString('de-DE', dateFormat);
+    } else if (periodStart && periodEnd) {
       const start = new Date(periodStart * 1000);
       const end = new Date(periodEnd * 1000);
       periodText = `${start.toLocaleDateString('de-DE', dateFormat)} – ${end.toLocaleDateString('de-DE', dateFormat)}`;
@@ -250,7 +256,7 @@ function generateInvoicePdf({
     doc.fillColor(darkGray)
        .fontSize(11)
        .font('Helvetica-Bold')
-       .text(`${planDisplayName}-Abo – SaaS Lizenz`, tableLeft + 15, itemTop + 20);
+       .text(itemLabel || `${planDisplayName}-Abo – SaaS Lizenz`, tableLeft + 15, itemTop + 20);
 
     doc.fillColor(darkGray)
        .fontSize(11)

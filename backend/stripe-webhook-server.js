@@ -405,9 +405,60 @@ async function handleStripeEvent(event) {
               } }
             );
             console.log(`🔓 Analyse einmalig freigeschaltet (contract ${contractId}, user ${userId}) — modified ${r.modifiedCount}`);
-            // 📊 Conversion-Tracking nur beim ERSTEN Setzen (Dedup ggü. verify-on-return)
+            // Nur beim ERSTEN Setzen: Tracking + Rechnung (Dedup ggü. verify-on-return / Stripe-Retries)
             if (r.modifiedCount > 0) {
               try { require('./services/featureUsage').getInstance().trackFeatureUsage({ userId, feature: 'unlock_purchased' }).catch(() => {}); } catch { /* tracking optional */ }
+
+              // 📄 Rechnung von UNS — exakt wie beim Abo (eigene PDF + Mail + invoices-Collection).
+              // Fail-safe: Rechnungsfehler darf den (bereits gültigen) Unlock NIE kippen.
+              try {
+                const usersCol = db.collection("users");
+                const invoicesCol = db.collection("invoices");
+                const buyer = await usersCol.findOne({ _id: new ObjectId(userId) });
+                const email = buyer?.email || session.customer_details?.email || session.customer_email || null;
+                if (email) {
+                  // Vollständige Session für Rechnungsadresse + Firmenname/USt-ID (Custom Fields)
+                  let fs = session;
+                  try { fs = await stripe.checkout.sessions.retrieve(session.id, { expand: ['customer_details'] }); } catch { /* Fallback: Event-Session */ }
+                  const customerAddress = fs.customer_details?.address || null;
+                  let companyName = null, taxId = null;
+                  (fs.custom_fields || []).forEach(f => {
+                    if (f.key === 'company_name' && f.text?.value) companyName = f.text.value;
+                    if (f.key === 'tax_id' && f.text?.value) taxId = f.text.value;
+                  });
+                  const latest = await invoicesCol.find({}).sort({ createdAt: -1 }).limit(1).toArray();
+                  const latestNumber = latest.length && typeof latest[0].invoiceNumber === 'string'
+                    ? (parseInt(latest[0].invoiceNumber.split('-')[2]) || 0) : 0;
+                  const invoiceNumber = generateInvoiceNumber(latestNumber);
+                  const amount = session.amount_total ? session.amount_total / 100 : 0;
+                  const invoiceDate = new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                  const customerName = fs.customer_details?.name || buyer?.name || email;
+                  const pdfBuffer = await generateInvoicePdf({
+                    customerName, email, plan: '', amount, invoiceDate, invoiceNumber,
+                    customerAddress, companyName, taxId,
+                    itemLabel: 'Analyse-Freischaltung (einmalig)', oneTime: true, paymentMethod: 'card'
+                  });
+                  await sendEmail({
+                    to: email,
+                    subject: 'Contract AI – Deine Rechnung',
+                    html: generateEmailTemplate({
+                      title: 'Deine Rechnung',
+                      body: '<p>Vielen Dank für deinen Kauf!</p><p>Im Anhang findest du die Rechnung zu deiner einmaligen Analyse-Freischaltung.</p><p>📋 Alle Rechnungen findest du auch in deinem Profil unter „Rechnungen".</p>',
+                      preheader: 'Hier ist deine Rechnung von Contract AI.'
+                    }),
+                    attachments: [{ filename: `Rechnung-${invoiceNumber}.pdf`, content: pdfBuffer }]
+                  });
+                  await invoicesCol.insertOne({
+                    invoiceNumber, stripeInvoiceNumber: null, customerEmail: email, customerName,
+                    plan: 'analysis_unlock', amount, date: invoiceDate, file: pdfBuffer, createdAt: new Date()
+                  });
+                  console.log(`📄 Unlock-Rechnung ${invoiceNumber} an ${email} gesendet`);
+                } else {
+                  console.warn(`⚠️ Unlock-Rechnung übersprungen — keine E-Mail (user ${userId})`);
+                }
+              } catch (invErr) {
+                console.error(`⚠️ Unlock-Rechnung fehlgeschlagen (Unlock bleibt gültig): ${invErr.message}`);
+              }
             }
           } catch (e) {
             console.error(`❌ Unlock-Update fehlgeschlagen (contract ${contractId}):`, e.message);
