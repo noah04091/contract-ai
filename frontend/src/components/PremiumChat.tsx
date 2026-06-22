@@ -78,8 +78,8 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
           finish({ role: "assistant", kind: "questions", content: "Rückfragen: " + a.questions.map((q: any) => q.frage).join(" "), questions: a.questions, contractType: a.contractType });
         }
       } else {
-        // Phase 2: Verfeinern — neuer Vertrag aus vollem Verlauf (live)
-        await streamGenerate(base, contract.contractType);
+        // Phase 2: Verfeinern — DENSELBEN Vertrag aktualisieren (keine Dubletten)
+        await streamGenerate(base, contract.contractType, contract.contractId);
       }
     } catch (e: any) {
       const msg = e?.data?.limitReached
@@ -93,12 +93,12 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
   }
 
   // Streamt den Vertrag live (ndjson) und ersetzt am Ende durch die Vertrags-Karte
-  async function streamGenerate(base: ChatMsg[], contractType: string) {
+  async function streamGenerate(base: ChatMsg[], contractType: string, existingContractId?: string) {
     let acc = "";
     setMessages((m) => [...m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"), { role: "assistant", kind: "streaming", content: "", uiOnly: true }]);
     const res = await fetch("/api/contracts/premium/generate-stream", {
       method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: toApi(base), contractType }),
+      body: JSON.stringify({ messages: toApi(base), contractType, existingContractId: existingContractId || null }),
     });
     if (!res.ok || !res.body) {
       const data = await res.json().catch(() => ({}));

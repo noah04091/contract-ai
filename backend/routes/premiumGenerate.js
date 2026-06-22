@@ -259,6 +259,7 @@ const DATES_SCHEMA = {
   properties: {
     startDate: { type: ["string", "null"] },
     endDate: { type: ["string", "null"] },
+    term: { type: ["string", "null"] },
     noticePeriod: { type: ["string", "null"] },
     isAutoRenewal: { type: "boolean" },
     autoRenewMonths: { type: ["number", "null"] },
@@ -271,7 +272,7 @@ const DATES_SCHEMA = {
       },
     },
   },
-  required: ["startDate", "endDate", "noticePeriod", "isAutoRenewal", "autoRenewMonths", "importantDates"],
+  required: ["startDate", "endDate", "term", "noticePeriod", "isAutoRenewal", "autoRenewMonths", "importantDates"],
 };
 
 async function extractContractDates(text) {
@@ -280,6 +281,7 @@ async function extractContractDates(text) {
     "STRENG: Erfinde NICHTS. Übernimm nur konkrete Daten, die eindeutig im Text stehen. Leere Ausfüllfelder ('____'), Platzhalter oder nicht genannte Daten → weglassen bzw. null.\n" +
     "- startDate: Vertragsbeginn (YYYY-MM-DD) oder null.\n" +
     "- endDate: Vertragsende/Ablauf (YYYY-MM-DD) oder null.\n" +
+    "- term: Laufzeit als kurzer Text (z. B. '2 Jahre', 'befristet bis 30.09.2028', 'unbefristet') oder null.\n" +
     "- noticePeriod: Kündigungsfrist als kurzer Text (z. B. '3 Monate') oder null.\n" +
     "- isAutoRenewal: true, wenn sich der Vertrag laut Text automatisch verlängert.\n" +
     "- autoRenewMonths: Verlängerungsdauer in Monaten oder null.\n" +
@@ -294,18 +296,24 @@ async function extractContractDates(text) {
   return JSON.parse(res.content.find((b) => b.type === "text").text);
 }
 
-// Wandelt Extraktions-Ergebnis in die Felder, die generateEventsForContract liest
+// Lifecycle-Typen, die bereits aus startDate/expiryDate/kuendigung erzeugt werden →
+// NICHT zusätzlich in importantDates (sonst doppelte Kalender-Events + Doppel-Anzeige im Modal).
+const LIFECYCLE_EXCLUDE = ["start_date", "end_date", "lease_end", "cancellation_deadline", "renewal_date"];
+
+// Wandelt Extraktions-Ergebnis in EXAKT die Felder, die analysierte Verträge haben
+// (Modal liest laufzeit/kuendigung/expiryDate/importantDates; Kalender liest start-/expiryDate + kuendigung).
 function datesToContractFields(d) {
   const toDate = (s) => { const t = Date.parse(s); return Number.isNaN(t) ? null : new Date(t); };
   const importantDates = (Array.isArray(d.importantDates) ? d.importantDates : [])
-    .filter((x) => x && x.date && toDate(x.date))
+    .filter((x) => x && x.date && toDate(x.date) && !LIFECYCLE_EXCLUDE.includes(x.type))
     .map((x) => ({ type: DATE_TYPES.includes(x.type) ? x.type : "other", date: x.date, label: x.label || x.type, confidence: 90, source: "KI-Analyse" }));
   return {
     startDate: toDate(d.startDate),
     expiryDate: toDate(d.endDate),
     startDateConfidence: toDate(d.startDate) ? 90 : 0,
     endDateConfidence: toDate(d.endDate) ? 90 : 0,
-    cancellationPeriod: d.noticePeriod || null,
+    laufzeit: d.term || null,            // Modal-Anzeige „Laufzeit"
+    kuendigung: d.noticePeriod || null,  // Modal-Anzeige „Kündigungsfrist" + Kalender-Notice-Period
     isAutoRenewal: !!d.isAutoRenewal,
     autoRenewMonths: typeof d.autoRenewMonths === "number" ? d.autoRenewMonths : null,
     importantDates,
@@ -313,11 +321,20 @@ function datesToContractFields(d) {
   };
 }
 
-// Speichert einen erzeugten Vertrag in `contracts` (gemeinsam für /generate-stream)
-async function persistContract(userId, text, contractType) {
+// Speichert/aktualisiert einen erzeugten Vertrag in `contracts`.
+// existingContractId gesetzt → Verfeinern: denselben Vertrag UPDATEN (keine Dubletten).
+async function persistContract(userId, text, contractType, existingContractId) {
   const typeLabel = (contractType || "Vertrag").toString().slice(0, 80);
   const title = `${typeLabel} – ${new Date().toLocaleDateString("de-DE")}`;
   await ensureDb();
+  if (existingContractId && ObjectId.isValid(existingContractId)) {
+    const _id = new ObjectId(existingContractId);
+    const r = await contractsCollection.updateOne(
+      { _id, $or: [{ userId }, { userId: new ObjectId(userId) }] },
+      { $set: { name: title, content: text, contractHTML: textToBasicHtml(text, title), contractType: typeLabel, updatedAt: new Date() } }
+    );
+    if (r.matchedCount > 0) return { contractId: _id, contractType: typeLabel, title, updated: true };
+  }
   const contract = {
     userId: new ObjectId(userId),
     name: title,
@@ -331,7 +348,7 @@ async function persistContract(userId, text, contractType) {
     metadata: { version: "premium_opus_v1", generatedBy: "Claude Opus 4.8", premium: true },
   };
   const ins = await contractsCollection.insertOne(contract);
-  return { contractId: ins.insertedId, contractType: typeLabel, title };
+  return { contractId: ins.insertedId, contractType: typeLabel, title, updated: false };
 }
 
 // =========================================================================
@@ -404,7 +421,7 @@ router.post("/generate", aiLimiter, async (req, res) => {
 
 // POST /generate-stream — wie /generate, streamt aber den Vertrag live (ndjson-Zeilen)
 router.post("/generate-stream", aiLimiter, async (req, res) => {
-  const { messages, contractType } = req.body || {};
+  const { messages, contractType, existingContractId } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ success: false, error: "NO_MESSAGES" });
 
   // Usage-Limit-Prüfung VOR dem Streamen (noch als normaler JSON-Fehler möglich)
@@ -428,24 +445,21 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
   try {
     const text = await generateContractText(messages, (t) => send({ type: "delta", text: t }));
     if (!text || text.length < 200) { send({ type: "error", message: "Vertrag konnte nicht erstellt werden." }); return res.end(); }
-    const saved = await persistContract(req.user.userId, text, contractType);
+    const saved = await persistContract(req.user.userId, text, contractType, existingContractId);
     send({ type: "done", contractText: text, ...saved });
 
-    // 🔔 Fristen → Kalender (additiv, non-fatal): nutzt den bestehenden Mechanismus
+    // 🔔 Fristen → Kalender (additiv, non-fatal): grounded extrahieren, Felder wie bei der
+    // Analyse setzen, dann den BESTEHENDEN Mechanismus aufrufen. cleanAndRegenerateAIEvents
+    // räumt beim Verfeinern alte (geänderte) KI-/Lifecycle-Events sauber auf → keine Geister.
     try {
       const dates = await extractContractDates(text);
       const fields = datesToContractFields(dates);
-      const hasDates = !!fields.expiryDate || !!fields.startDate || (fields.importantDates && fields.importantDates.length > 0);
-      if (hasDates) {
-        await contractsCollection.updateOne({ _id: saved.contractId }, { $set: fields });
-        const dbConn = await database.connect();
-        const { generateEventsForContract } = require("../services/calendarEvents");
-        const enriched = { _id: saved.contractId, userId: new ObjectId(req.user.userId), name: saved.title, status: "Aktiv", createdAt: new Date(), ...fields };
-        const events = await generateEventsForContract(dbConn, enriched);
-        send({ type: "events", count: Array.isArray(events) ? events.length : 0 });
-      } else {
-        send({ type: "events", count: 0 });
-      }
+      await contractsCollection.updateOne({ _id: saved.contractId }, { $set: fields });
+      const dbConn = await database.connect();
+      const { cleanAndRegenerateAIEvents } = require("../services/calendarEvents");
+      const enriched = { _id: saved.contractId, userId: new ObjectId(req.user.userId), name: saved.title, status: "Aktiv", createdAt: new Date(), ...fields };
+      const result = await cleanAndRegenerateAIEvents(dbConn, enriched);
+      send({ type: "events", count: result && typeof result.generated === "number" ? result.generated : 0 });
     } catch (calErr) {
       console.warn("[Premium] Fristen-Übernahme fehlgeschlagen (non-fatal):", calErr.message);
     }
