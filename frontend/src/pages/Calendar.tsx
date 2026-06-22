@@ -3727,7 +3727,11 @@ export default function CalendarPage() {
                 )}
                 {/* Row 2: View Switcher */}
                 <div className="view-switcher">
-                  {(['month', 'week', 'day', 'overview'] as const).map(view => (
+                  {/* "overview" (Überblick) vorerst ausgeblendet: die breite Event-Liste
+                      enthält die Vorwarn-Erinnerungen nicht (Backend-Filter), daher konnte
+                      der Überblick die Abdeckung nicht zuverlässig anzeigen. Komponente +
+                      Wiring bleiben erhalten — reaktivierbar, sobald Erinnerungs-Daten sauber. */}
+                  {(['month', 'week', 'day'] as const).map(view => (
                     <button
                       key={view}
                       className={`view-btn ${currentView === view ? 'active' : ''}`}
@@ -3735,7 +3739,7 @@ export default function CalendarPage() {
                         setCurrentView(view);
                       }}
                     >
-                      {view === 'month' ? 'Monat' : view === 'week' ? 'Woche' : view === 'day' ? 'Tag' : 'Überblick'}
+                      {view === 'month' ? 'Monat' : view === 'week' ? 'Woche' : 'Tag'}
                     </button>
                   ))}
                 </div>
