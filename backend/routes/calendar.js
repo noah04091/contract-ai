@@ -127,7 +127,7 @@ function generateRecurrenceInstances(masterEvent, fromDate, toDate) {
 // GET /api/calendar/events - Alle Events im Zeitraum abrufen
 router.get("/events", verifyToken, async (req, res) => {
   try {
-    const { from, to, type, severity, status, contractId } = req.query;
+    const { from, to, type, severity, status, contractId, envelopeId } = req.query;
     const userId = new ObjectId(req.user.userId);
     
     // Build filter
@@ -154,6 +154,13 @@ router.get("/events", verifyToken, async (req, res) => {
       filter.contractId = validContractId;
     }
 
+    // Filter by envelopeId (Signatur-Anfragen) — liefert wie contractId AUCH die gebündelten Vorwarner.
+    if (envelopeId) {
+      const validEnvelopeId = safeObjectId(envelopeId);
+      if (!validEnvelopeId) return res.status(400).json({ success: false, error: "Ungültige Envelope-ID" });
+      filter.envelopeId = validEnvelopeId;
+    }
+
     // 3b: Auto-Vorwarnungen ("X Tage vorher"-Staffel + benannte Vorwarner) aus der
     // BREITEN Kalender-Anzeige ausblenden — pro Frist nur 1 Eintrag. Reiner Anzeige-Filter;
     // Events bleiben in der DB + mailen weiter. Sichtbar bleiben Haupt-Termine,
@@ -161,7 +168,7 @@ router.get("/events", verifyToken, async (req, res) => {
     // WICHTIG: NUR ausblenden, wenn nicht nach einem einzelnen Vertrag gefragt wird.
     // Bei ?contractId=… (Vertrags-Detail-/Reminder-Verwaltungs-Modal) zeigen wir ALLE
     // Events inkl. Vorwarnungen — dort werden sie verwaltet, nicht nur angezeigt.
-    if (!contractId) {
+    if (!contractId && !envelopeId) {
       filter.$and = [...(filter.$and || []), VISIBLE_EVENT_MATCH];
     }
 

@@ -743,6 +743,8 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
   // Show "Vertrag anzeigen" if: has contractId AND (isManual is false OR contractName is not 'Manuelles Ereignis')
   const hasContract = !!currentEvent.contractId && currentEvent.contractId !== '';
   const isManualEvent = currentEvent.isManual === true && !hasContract;
+  // 🖋️ Signatur-Ablauf: keine contractId, aber envelopeId → Erinnerungen per envelopeId laden (wie Verträge).
+  const isSignatureExpiry = currentEvent.type === 'SIGNATURE_EXPIRING' && !!currentEvent.metadata?.envelopeId;
 
   // 🔔 Erinnerungen DIESER Frist laden (reine Anzeige). ?contractId liefert auch die in 3b
   // ausgeblendeten Vorwarnungen; Zuordnung über cleanDeadlineName + isReminderEntry.
@@ -750,38 +752,48 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
   const [remindersLoading, setRemindersLoading] = useState(false);
   useEffect(() => {
     const cid = currentEvent.contractId;
-    if (!cid || isReminderEntry(currentEvent)) { setDeadlineReminders([]); return; }
+    const envId = currentEvent.metadata?.envelopeId;
+    const sigExpiry = currentEvent.type === 'SIGNATURE_EXPIRING' && !!envId;
+    if (isReminderEntry(currentEvent) || (!cid && !sigExpiry)) { setDeadlineReminders([]); return; }
     let cancelled = false;
     setRemindersLoading(true);
     const token = localStorage.getItem('token');
-    const deadlineKey = cleanDeadlineName(currentEvent.title);
     const now = new Date();
-    axios.get<{ events?: CalendarEvent[] }>(`/api/calendar/events?contractId=${cid}`, { headers: { Authorization: `Bearer ${token}` } })
+    const fmt = (d: string) => new Date(d).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' });
+    // Verträge per contractId, Signaturen per envelopeId — beide liefern AUCH die gebündelten Vorwarner.
+    const query = cid ? `contractId=${cid}` : `envelopeId=${envId}`;
+    axios.get<{ events?: CalendarEvent[] }>(`/api/calendar/events?${query}`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         if (cancelled) return;
         const evs = res.data?.events || [];
-        const list = evs
-          .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && new Date(e.date) > now)
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .map(e => ({
-            id: e.id,
-            label: reminderLeadLabel(e.title) || 'Erinnerung',
-            dateStr: new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
-          }));
-        // 🔔 Stichtag selbst: Das Haupt-Ereignis feuert am Frist-Tag (Schalter daysSame, Default an).
-        // Mitzeigen, sonst wirkt eine Frist ohne offene Vorwarnung fälschlich als "keine Erinnerung".
-        const fristDay = new Date(currentEvent.date);
+        let list: { id: string; label: string; dateStr: string }[];
+        if (sigExpiry) {
+          // Signatur-Vorwarner (3-/1-Tag) auflisten — Label aus dem Event-Typ.
+          const sigLabel = (t: string) => /_3DAY$/i.test(t) ? '3 Tage vorher' : /_1DAY$/i.test(t) ? '1 Tag vorher' : 'Erinnerung';
+          list = evs
+            .filter(e => /^SIGNATURE_REMINDER_/i.test(e.type) && new Date(e.date) > now)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map(e => ({ id: e.id, label: sigLabel(e.type), dateStr: fmt(e.date) }));
+        } else {
+          const deadlineKey = cleanDeadlineName(currentEvent.title);
+          list = evs
+            .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && new Date(e.date) > now)
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .map(e => ({ id: e.id, label: reminderLeadLabel(e.title) || 'Erinnerung', dateStr: fmt(e.date) }));
+        }
+        // 🔔 Stichtag/Ablauftag selbst (Haupt-Ereignis feuert dann) — mitzeigen, wenn heute/zukünftig.
+        const anchor = getEventDisplayDate(currentEvent);
         const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-        const fristStart = new Date(fristDay); fristStart.setHours(0, 0, 0, 0);
-        if (!isNaN(fristStart.getTime()) && fristStart >= todayStart) {
-          list.push({ id: 'same-day', label: 'Am Tag selbst', dateStr: fristDay.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) });
+        const anchorStart = new Date(anchor); anchorStart.setHours(0, 0, 0, 0);
+        if (!isNaN(anchorStart.getTime()) && anchorStart >= todayStart) {
+          list.push({ id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor) });
         }
         setDeadlineReminders(list);
         setRemindersLoading(false);
       })
       .catch(() => { if (!cancelled) { setDeadlineReminders([]); setRemindersLoading(false); } });
     return () => { cancelled = true; };
-  }, [currentEvent.id, currentEvent.contractId, currentEvent.title]);
+  }, [currentEvent.id, currentEvent.contractId, currentEvent.title, currentEvent.type, currentEvent.metadata?.envelopeId]);
 
   return (
     <motion.div
@@ -966,12 +978,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
           )}
 
-          {/* 🔔 Erinnerungen DIESER Frist — vollständig & ehrlich, direkt sichtbar (reine Anzeige) */}
-          {hasContract && !isReminderEntry(currentEvent) && (
+          {/* 🔔 Erinnerungen — Verträge (Frist) ODER Signatur-Ablauf, gleiche Karte (reine Anzeige) */}
+          {((hasContract && !isReminderEntry(currentEvent)) || isSignatureExpiry) && (
             <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', padding: '16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '9px', fontSize: '14px', fontWeight: 700, color: '#374151' }}>
                 <Bell size={16} style={{ color: '#2563eb', flexShrink: 0 }} />
-                <span>So wirst du an diese Frist erinnert</span>
+                <span>{isSignatureExpiry ? 'So wirst du erinnert' : 'So wirst du an diese Frist erinnert'}</span>
               </div>
               {noEmailReminders && (
                 <div style={{ display: 'flex', gap: '9px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '10px 12px', margin: '10px 0 2px' }}>
@@ -1006,10 +1018,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 </>
               ) : (
                 <div style={{ fontSize: '13px', color: '#6b7280', margin: '8px 0 2px', lineHeight: 1.5 }}>
-                  Für diese Frist ist aktuell keine Erinnerung aktiv. Über „verwalten" kannst du eine eigene Erinnerung (z.&nbsp;B. 1&nbsp;Monat vorher) hinzufügen.
+                  {isSignatureExpiry
+                    ? 'Aktuell sind keine weiteren Erinnerungen offen.'
+                    : 'Für diese Frist ist aktuell keine Erinnerung aktiv. Über „verwalten" kannst du eine eigene Erinnerung (z. B. 1 Monat vorher) hinzufügen.'}
                 </div>
               )}
-              {onManageReminders && (
+              {hasContract && onManageReminders && (
                 <button
                   onClick={() => onManageReminders(currentEvent)}
                   style={{ marginTop: '13px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: '#fff', border: '1px solid #bfdbfe', color: '#2563eb', borderRadius: '10px', padding: '11px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
@@ -1023,7 +1037,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
 
           {/* 🔔 Signatur-Anfragen haben keine contractId (eigene Envelope-Pipeline) →
               ehrliche eigene Erinnerungs-Notiz statt gar nichts (Konsistenz). */}
-          {!hasContract && (currentEvent.type?.startsWith('SIGNATURE_') || !!currentEvent.metadata?.envelopeId) && (
+          {!hasContract && !isSignatureExpiry && (currentEvent.type?.startsWith('SIGNATURE_') || !!currentEvent.metadata?.envelopeId) && (
             <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', padding: '14px 16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '9px', fontSize: '14px', fontWeight: 700, color: '#374151' }}>
                 <Bell size={16} style={{ color: '#2563eb', flexShrink: 0 }} />
