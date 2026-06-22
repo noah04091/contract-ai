@@ -15,6 +15,7 @@ import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as R
 import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
 import EnhancedSignatureModal from "./EnhancedSignatureModal";
+import { useAuth } from "../hooks/useAuth";
 
 type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events";
 interface CalItem { title: string; date: string; severity?: string }
@@ -38,8 +39,11 @@ const C = {
 };
 
 export default function PremiumChat({ onClose }: { onClose: () => void }) {
+  const { user } = useAuth();
+  const firstName = (user?.name || "").trim().split(/\s+/)[0] || "";
+  const greeting = `Hi${firstName ? " " + firstName : ""}! Beschreib mir einfach in eigenen Worten, welchen Vertrag du brauchst — Stichworte reichen völlig.`;
   const [messages, setMessages] = useState<ChatMsg[]>([
-    { role: "assistant", kind: "text", uiOnly: true, content: "Hi! Beschreib mir einfach in eigenen Worten, welchen Vertrag du brauchst — Stichworte reichen völlig." },
+    { role: "assistant", kind: "text", uiOnly: true, content: greeting },
   ]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
