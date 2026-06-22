@@ -214,7 +214,9 @@ router.post("/create-unlock-session", verifyToken, async (req, res) => {
       // Metadaten auch ans PaymentIntent hängen (doppelt sicher fürs spätere Zuordnen)
       payment_intent_data: { metadata: unlockMeta },
       billing_address_collection: "required",
-      success_url: `https://contract-ai.de/contracts?view=${contractId}&unlocked=1`,
+      // {CHECKOUT_SESSION_ID} ersetzt Stripe automatisch → verify-unlock kann GENAU diese
+      // Session direkt abrufen (bombensicher, unabhängig von Webhook/Kundenliste).
+      success_url: `https://contract-ai.de/contracts?view=${contractId}&unlocked=1&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `https://contract-ai.de/contracts?view=${contractId}&unlock_canceled=1`,
     });
 
@@ -231,7 +233,7 @@ router.post("/create-unlock-session", verifyToken, async (req, res) => {
 // dass für diesen Vertrag eine bezahlte Unlock-Session existiert, und setzt das Flag.
 router.get("/verify-unlock", verifyToken, async (req, res) => {
   await ensureDb();
-  const { contractId } = req.query || {};
+  const { contractId, session_id } = req.query || {};
   if (!contractId || !ObjectId.isValid(contractId)) {
     return res.status(400).json({ message: "Ungültige Vertrags-ID." });
   }
@@ -245,7 +247,27 @@ router.get("/verify-unlock", verifyToken, async (req, res) => {
       return res.json({ unlocked: true });
     }
 
-    // Noch nicht gesetzt → bei Stripe nach bezahlter Session für genau diesen Vertrag suchen
+    // 🥇 Bevorzugt: GENAU die zurückgegebene Checkout-Session abrufen (bombensicher).
+    if (session_id && typeof session_id === "string" && session_id.startsWith("cs_")) {
+      try {
+        const s = await stripe.checkout.sessions.retrieve(session_id);
+        const okOwner = s?.metadata?.userId === String(req.user.userId);
+        const okContract = s?.metadata?.contractId === String(contractId);
+        const okKind = s?.metadata?.kind === "analysis_unlock";
+        if (s && s.payment_status === "paid" && okOwner && okContract && okKind) {
+          await contractsCollection.updateOne(
+            { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId) },
+            { $set: { "unlock.paid": true, "unlock.unlockedAt": new Date(), "unlock.stripeSessionId": s.id, "unlock.paymentIntentId": s.payment_intent || null, "unlock.source": "verify-session" } }
+          );
+          console.log(`🔓 [verify-session] Analyse freigeschaltet (contract ${contractId})`);
+          return res.json({ unlocked: true });
+        }
+      } catch (e) {
+        console.warn(`⚠️ verify-unlock session retrieve fehlgeschlagen: ${e.message}`);
+      }
+    }
+
+    // Fallback: bei Stripe nach bezahlter Session für genau diesen Vertrag suchen
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) }, { projection: { stripeCustomerId: 1 } });
     if (user?.stripeCustomerId) {
       const sessions = await stripe.checkout.sessions.list({ customer: user.stripeCustomerId, limit: 20 });

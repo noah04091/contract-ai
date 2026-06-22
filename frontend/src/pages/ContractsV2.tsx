@@ -947,11 +947,13 @@ export default function Contracts() {
     if (params.get('unlocked') !== '1' || unlockVerifiedRef.current) return;
     const cid = params.get('view');
     if (!cid) return;
+    const sid = params.get('session_id'); // von Stripe success_url ({CHECKOUT_SESSION_ID})
     unlockVerifiedRef.current = true;
     (async () => {
       try {
         const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-        await fetch(`/api/stripe/verify-unlock?contractId=${encodeURIComponent(cid)}`, {
+        const q = `contractId=${encodeURIComponent(cid)}${sid ? `&session_id=${encodeURIComponent(sid)}` : ''}`;
+        await fetch(`/api/stripe/verify-unlock?${q}`, {
           headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
           credentials: 'include',
         });
