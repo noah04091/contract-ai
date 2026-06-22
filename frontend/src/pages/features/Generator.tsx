@@ -76,6 +76,14 @@ const Generator: React.FC = () => {
       },
       {
         "@type": "Question",
+        "name": "Was ist der neue Premium-Modus „Im Gespräch erstellen\"?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sie beschreiben Ihren Vertrag in eigenen Worten. Die KI stellt gezielte Rückfragen, schreibt einen vollständigen Vertrag, prüft ihn auf fehlende Schutzklauseln (Rechts-Check), trägt erkannte Fristen in Ihren Kalender ein und kann ihn direkt zur Unterschrift an die andere Partei senden."
+        }
+      },
+      {
+        "@type": "Question",
         "name": "Sind die generierten Verträge rechtssicher?",
         "acceptedAnswer": {
           "@type": "Answer",
@@ -150,8 +158,9 @@ const Generator: React.FC = () => {
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Von der leeren Vorlage zum unterschriftsfertigen Vertrag: Der Generator
-                baut aus erprobten Klauseln genau den Vertrag, den Sie brauchen.
+                Beschreiben Sie Ihren Vertrag einfach im Chat – die KI schreibt ihn,
+                prüft ihn auf Rechtssicherheit, trägt Fristen in Ihren Kalender ein und
+                holt die Unterschrift ein. Oder bauen Sie ihn klassisch aus erprobten Klauseln.
               </p>
 
               <div className={styles.heroCta}>
@@ -599,6 +608,19 @@ const Generator: React.FC = () => {
                 <p className={styles.faqAnswer}>
                   Freelancer-Verträge, NDAs, Mietverträge, Kooperationsverträge, Lizenzverträge,
                   Service-Agreements und individuelle Zusammenstellungen aus unserer Klausel-Bibliothek.
+                </p>
+              </details>
+
+              <details className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  Was ist der neue Premium-Modus „Im Gespräch erstellen"?
+                  <ChevronDown size={20} className={styles.faqIcon} />
+                </summary>
+                <p className={styles.faqAnswer}>
+                  Sie beschreiben Ihren Vertrag einfach in eigenen Worten. Die KI stellt gezielte
+                  Rückfragen, schreibt anschließend einen vollständigen Vertrag, prüft ihn auf fehlende
+                  Schutzklauseln (Rechts-Check), trägt erkannte Fristen in Ihren Kalender ein und kann
+                  ihn direkt zur Unterschrift an die andere Partei senden.
                 </p>
               </details>
 
