@@ -260,12 +260,16 @@ export default function ReminderSettingsModal({
       // Vorgemerkte automatische Erinnerungen einmalig ausblenden (status='dismissed' → stoppt die
       // Mail, bleibt auch nach Re-Analyse weg, siehe calendarEvents.js:1768). "Am Tag selbst" ist nie
       // dabei (das ist der Termin selbst). Dieselbe bewährte Operation wie der "Ausblenden"-Button.
-      for (const id of pendingDismiss) {
-        await axios.post(
-          '/api/calendar/quick-action',
-          { eventId: id, action: 'dismiss' },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+      // allSettled: ein einzelner Fehlschlag darf das Speichern der reminderSettings nicht blockieren;
+      // dismiss ist idempotent, der echte Stand erscheint ohnehin beim nächsten Laden.
+      if (pendingDismiss.length > 0) {
+        await Promise.allSettled(pendingDismiss.map(id =>
+          axios.post(
+            '/api/calendar/quick-action',
+            { eventId: id, action: 'dismiss' },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+        ));
       }
 
       const response = await axios.patch<{ success: boolean; message?: string }>(

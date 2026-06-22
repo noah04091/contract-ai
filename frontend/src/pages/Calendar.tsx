@@ -704,7 +704,9 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
 
   const formatDate = () => {
     // Für Signaturen das echte Ablaufdatum (expiresAt) zeigen — konsistent mit "Verbleibend".
-    return new Date(getEventDisplayDate(currentEvent)).toLocaleDateString('de-DE', {
+    const d = new Date(getEventDisplayDate(currentEvent));
+    if (isNaN(d.getTime())) return '–'; // kein "Invalid Date" anzeigen
+    return d.toLocaleDateString('de-DE', {
       weekday: 'long',
       day: '2-digit',
       month: 'long',
