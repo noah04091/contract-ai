@@ -89,7 +89,9 @@ async function generateContractText(messages, onDelta) {
     "Du bist ein erfahrener deutscher Vertragsanwalt und erstellst professionelle, rechtssichere Verträge.\n\n" +
     "REGELN:\n" +
     "- Vollständiger Vertrag mit klarer §-Struktur (i. d. R. 8–14 Paragraphen). Reiner Text, kein Markdown/HTML.\n" +
-    "- KEINE Platzhalter in eckigen Klammern — nutze die Angaben aus dem Gespräch. Wo eine Angabe fehlt, wähle eine marktübliche, faire Standardregelung und formuliere sie aus.\n" +
+    "- ERFINDE NIEMALS konkrete Fakten, die nicht ausdrücklich genannt wurden: keine Anschriften, Geburtsdaten, Datumsangaben, Preise, Maße, Mengen, Hersteller-/Modell-/Seriennummern, Bankdaten oder zusätzliche Namen. Solche Angaben dürfen NICHT ausgedacht werden.\n" +
+    "- Fehlt eine konkrete Fakten-Angabe, setze an dieser Stelle ein klar erkennbares Ausfüllfeld mit kurzer Beschriftung ein (z. B. 'Anschrift: ____________________') — niemals einen erfundenen Wert. Lieber ein Leerfeld als eine erfundene Angabe.\n" +
+    "- NUR für reine juristische Standardklauseln (z. B. Haftung, Gewährleistung, Zahlungsmodalitäten, Salvatorische Klausel) darfst du marktübliche, faire Formulierungen verwenden — das ist kein Erfinden von Fakten.\n" +
     "- Präzise, aber verständliche juristische Sprache. Deutsches Recht.\n" +
     "- Beginne mit dem Vertragstitel (Großbuchstaben), dann Parteien ('zwischen … und …'), dann die Paragraphen.\n" +
     "- Füge am Ende KEINE Unterschriften- oder Ort/Datum-Zeilen ein — den Unterschriftsbereich ergänzt die Plattform automatisch.\n" +
