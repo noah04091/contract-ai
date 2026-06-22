@@ -19,6 +19,7 @@ import {
 import styles from "./V2TabsSection.module.css";
 import LegalRefPill from "../LegalRefPill";
 import LockedAnalysisUpsell, { GatedCounts } from "../LockedAnalysisUpsell";
+import { startAnalysisUnlock } from "../../utils/startAnalysisUnlock";
 import { classifyDocType, getTabLabels, showMarketTab, getEmptyState, getVisibleTabs } from "./v2TabLabels";
 
 type Severity = "high" | "medium" | "low" | string;
@@ -181,6 +182,12 @@ function EmptyState({ icon, iconCls, title, text }: EmptyProps) {
 
 export default function V2TabsSection({ data }: Props) {
   const d = data;
+
+  // 🔓 Stufe 2: Vertrags-ID für die Einmal-Freischaltung (aus contract._id ODER
+  // analysisResultData.originalContractId, je nach Aufrufpfad).
+  const dIds = d as { _id?: unknown; originalContractId?: unknown };
+  const unlockId = String(dIds._id ?? dIds.originalContractId ?? "") || undefined;
+  const handleUnlock = unlockId ? () => startAnalysisUnlock(unlockId) : undefined;
 
   // Counts für Tab-Badges
   const summaryArr = useMemo(() => asArray<string>(d.summary), [d.summary]);
@@ -378,7 +385,7 @@ export default function V2TabsSection({ data }: Props) {
         {/* 🔒 Free-Tease: weitere Risiken sind server-seitig gesperrt */}
         {d.gated && (
           <div style={{ marginTop: criticals.length ? 16 : 0 }}>
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="risks" />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="risks" onUnlock={handleUnlock} />
           </div>
         )}
       </div>
@@ -429,7 +436,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {recos.length === 0 ? (
           d.gated ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="recommendations" />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="recommendations" onUnlock={handleUnlock} />
           ) : (
             <EmptyState
               icon="✓"
@@ -514,7 +521,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {sugs.length === 0 ? (
           d.gated ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="suggestions" />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="suggestions" onUnlock={handleUnlock} />
           ) : (
             <EmptyState
               icon="💡"
@@ -542,7 +549,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {cmpArr.length === 0 ? (
           d.gated ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="market" />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="market" onUnlock={handleUnlock} />
           ) : (
             <EmptyState
               icon="📊"
@@ -569,7 +576,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {opinion.length === 0 ? (
           d.gated ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="opinion" />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="opinion" onUnlock={handleUnlock} />
           ) : (
             <EmptyState
               icon="⚖️"

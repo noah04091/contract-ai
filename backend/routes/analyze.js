@@ -17,7 +17,7 @@ const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const database = require("../config/database");
 // 🔒 Freemium-Tease: Job-Ergebnis (Anzeige direkt nach dem Analysieren) genauso gaten wie GET /:id.
-const { applyAnalysisGate, effectivePlan } = require("../utils/analysisGate");
+const { applyAnalysisGate, effectivePlan, isContractUnlocked } = require("../utils/analysisGate");
 const FREEMIUM_GATE_ENABLED = process.env.FREEMIUM_GATE_ENABLED === 'true';
 const FREEMIUM_GATE_LAUNCH = process.env.FREEMIUM_GATE_LAUNCH_DATE
   ? new Date(process.env.FREEMIUM_GATE_LAUNCH_DATE)
@@ -4197,7 +4197,16 @@ router.get('/job/:jobId', verifyToken, async (req, res) => {
               { sort: { analyzedAt: 1 }, projection: { _id: 1 } }
             );
             const isFirstAnalysis = !!earliest && earliest._id.toString() === contractId.toString();
-            result = applyAnalysisGate(result, { plan, isFirstAnalysis, launchDate: FREEMIUM_GATE_LAUNCH, analyzedAt: new Date() });
+            // Stufe 2: wurde GENAU diese Analyse einmalig freigekauft? → nicht gaten
+            let isUnlocked = false;
+            try {
+              const cdoc = await db.collection('contracts').findOne(
+                { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId) },
+                { projection: { 'unlock.paid': 1 } }
+              );
+              isUnlocked = isContractUnlocked(cdoc);
+            } catch { /* im Zweifel nicht freigeschaltet */ }
+            result = applyAnalysisGate(result, { plan, isFirstAnalysis, isUnlocked, launchDate: FREEMIUM_GATE_LAUNCH, analyzedAt: new Date() });
           }
         } catch (gateErr) {
           console.warn(`⚠️ [Freemium-Gate/Job] fail-open: ${gateErr.message}`);

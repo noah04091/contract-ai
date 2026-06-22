@@ -136,7 +136,11 @@ const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, variant = "default
         <button className={styles.cta} onClick={handle}>
           Jetzt freischalten <ArrowRight size={17} />
         </button>
-        <div className={styles.note}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+        <div className={styles.note}>
+          {onUnlock
+            ? "Diese Analyse einmalig freischalten — oder mit Business alle"
+            : "Schon ab dem Business-Tarif · jederzeit kündbar"}
+        </div>
       </div>
     </div>
   );

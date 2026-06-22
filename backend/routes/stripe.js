@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
+const { ObjectId } = require("mongodb");
 const database = require("../config/database");
 const verifyToken = require("../middleware/verifyToken");
 require("dotenv").config();
@@ -8,11 +9,13 @@ require("dotenv").config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 let usersCollection;
+let contractsCollection;
 
 async function ensureDb() {
-  if (usersCollection) return;
+  if (usersCollection && contractsCollection) return;
   const db = await database.connect();
   usersCollection = db.collection("users");
+  contractsCollection = db.collection("contracts");
 }
 
 ensureDb().catch(err => console.error("❌ Stripe-Route: MongoDB Fehler:", err.message));
@@ -149,6 +152,121 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("❌ Stripe Checkout Fehler:", err);
     res.status(500).json({ message: "Fehler bei Stripe Checkout", details: err.message });
+  }
+});
+
+// ============================================
+// 🔓 STUFE 2 — Einmal-Freischaltung EINER Analyse (One-time payment, kein Abo)
+// Erstellt eine Stripe-Checkout-Session mit mode:"payment". Die Zuordnung
+// (welcher Vertrag, welcher User) reist als metadata mit; der Webhook setzt nach
+// erfolgreicher Zahlung contract.unlock.paid=true. Inert, solange STRIPE_UNLOCK_PRICE_ID
+// nicht gesetzt ist (= Feature aus). Reversibel: Env entfernen.
+router.post("/create-unlock-session", verifyToken, async (req, res) => {
+  await ensureDb();
+  const { contractId } = req.body || {};
+  const unlockPriceId = process.env.STRIPE_UNLOCK_PRICE_ID;
+
+  if (!unlockPriceId) {
+    return res.status(503).json({ message: "Einmal-Freischaltung ist derzeit nicht verfügbar." });
+  }
+  if (!contractId || !ObjectId.isValid(contractId)) {
+    return res.status(400).json({ message: "Ungültige Vertrags-ID." });
+  }
+
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) return res.status(404).json({ message: "Benutzer nicht gefunden." });
+
+    // 🔒 Sicherheit: Vertrag muss DEM User gehören (sonst könnte man fremde IDs freikaufen)
+    const contract = await contractsCollection.findOne(
+      { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId) },
+      { projection: { _id: 1, name: 1, unlock: 1 } }
+    );
+    if (!contract) return res.status(404).json({ message: "Vertrag nicht gefunden." });
+
+    // Schon freigeschaltet? Dann kein erneuter Kauf nötig.
+    if (contract.unlock && contract.unlock.paid === true) {
+      return res.status(409).json({ message: "Diese Analyse ist bereits freigeschaltet.", alreadyUnlocked: true });
+    }
+
+    // Stripe-Kunde wiederverwenden/anlegen (wie beim Abo)
+    let customerId = user.stripeCustomerId;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email,
+        metadata: { userId: user._id.toString() },
+      });
+      customerId = customer.id;
+      await usersCollection.updateOne({ _id: user._id }, { $set: { stripeCustomerId: customerId } });
+    }
+
+    const unlockMeta = {
+      kind: "analysis_unlock",
+      contractId: contractId,
+      userId: user._id.toString(),
+    };
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer: customerId,
+      line_items: [{ price: unlockPriceId, quantity: 1 }],
+      metadata: unlockMeta,
+      // Metadaten auch ans PaymentIntent hängen (doppelt sicher fürs spätere Zuordnen)
+      payment_intent_data: { metadata: unlockMeta },
+      billing_address_collection: "required",
+      success_url: `https://contract-ai.de/contracts?view=${contractId}&unlocked=1`,
+      cancel_url: `https://contract-ai.de/contracts?view=${contractId}&unlock_canceled=1`,
+    });
+
+    console.log(`✅ [STRIPE] Unlock-Session erstellt: ${session.id} (contract ${contractId})`);
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error("❌ Stripe Unlock-Session Fehler:", err);
+    res.status(500).json({ message: "Fehler bei der Freischaltung", details: err.message });
+  }
+});
+
+// ============================================
+// 🔓 Fallback-Verifikation (falls der Webhook verzögert): bestätigt direkt bei Stripe,
+// dass für diesen Vertrag eine bezahlte Unlock-Session existiert, und setzt das Flag.
+router.get("/verify-unlock", verifyToken, async (req, res) => {
+  await ensureDb();
+  const { contractId } = req.query || {};
+  if (!contractId || !ObjectId.isValid(contractId)) {
+    return res.status(400).json({ message: "Ungültige Vertrags-ID." });
+  }
+  try {
+    const contract = await contractsCollection.findOne(
+      { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId) },
+      { projection: { unlock: 1 } }
+    );
+    if (!contract) return res.status(404).json({ message: "Vertrag nicht gefunden." });
+    if (contract.unlock && contract.unlock.paid === true) {
+      return res.json({ unlocked: true });
+    }
+
+    // Noch nicht gesetzt → bei Stripe nach bezahlter Session für genau diesen Vertrag suchen
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) }, { projection: { stripeCustomerId: 1 } });
+    if (user?.stripeCustomerId) {
+      const sessions = await stripe.checkout.sessions.list({ customer: user.stripeCustomerId, limit: 20 });
+      const paid = sessions.data.find(s =>
+        s.mode === "payment" &&
+        s.payment_status === "paid" &&
+        s.metadata && s.metadata.kind === "analysis_unlock" &&
+        s.metadata.contractId === String(contractId)
+      );
+      if (paid) {
+        await contractsCollection.updateOne(
+          { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId) },
+          { $set: { "unlock.paid": true, "unlock.unlockedAt": new Date(), "unlock.stripeSessionId": paid.id, "unlock.source": "verify" } }
+        );
+        return res.json({ unlocked: true });
+      }
+    }
+    res.json({ unlocked: false });
+  } catch (err) {
+    console.error("❌ verify-unlock Fehler:", err);
+    res.status(500).json({ message: "Fehler bei der Verifikation", details: err.message });
   }
 });
 

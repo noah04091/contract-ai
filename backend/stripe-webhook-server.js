@@ -384,7 +384,37 @@ async function handleStripeEvent(event) {
     }
 
     case "checkout.session.completed": {
-      // Weiterhin die bestehende Welcome + Invoice Logik nutzen
+      const session = event.data.object;
+
+      // 🔓 STUFE 2: Einmal-Freischaltung (mode:"payment") — MUSS vor der Abo-Logik abgefangen
+      // werden, sonst erwartet processStripeEvent eine Subscription und scheitert.
+      if (session.mode === "payment" && session.metadata && session.metadata.kind === "analysis_unlock") {
+        const { contractId, userId } = session.metadata;
+        if (session.payment_status === "paid" && contractId && userId && ObjectId.isValid(contractId) && ObjectId.isValid(userId)) {
+          try {
+            const db = await database.connect();
+            const contractsCollection = db.collection("contracts");
+            const r = await contractsCollection.updateOne(
+              { _id: new ObjectId(contractId), userId: new ObjectId(userId) },
+              { $set: {
+                "unlock.paid": true,
+                "unlock.unlockedAt": new Date(),
+                "unlock.stripeSessionId": session.id,
+                "unlock.paymentIntentId": session.payment_intent || null,
+                "unlock.source": "webhook"
+              } }
+            );
+            console.log(`🔓 Analyse einmalig freigeschaltet (contract ${contractId}, user ${userId}) — matched ${r.matchedCount}`);
+          } catch (e) {
+            console.error(`❌ Unlock-Update fehlgeschlagen (contract ${contractId}):`, e.message);
+          }
+        } else {
+          console.warn(`⚠️ Unlock-Session unvollständig: status=${session.payment_status} contractId=${contractId} userId=${userId}`);
+        }
+        return;
+      }
+
+      // Abo-Pfad (unverändert): Welcome + Invoice Logik
       const db = await database.connect();
       const usersCollection = db.collection("users");
       const invoicesCollection = db.collection("invoices");

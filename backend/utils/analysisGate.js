@@ -45,11 +45,21 @@ function effectivePlan(plan, orgPlan) {
  * Soll für diesen Aufruf gesperrt werden?
  * Modell (19.06.2026, mit User fixiert): Free-User bekommt seine ERSTE Analyse VOLL & gratis
  * (ehrlich zu „erste vollständige Analyse kostenlos" + SEO); ab der 2. Analyse → Tease.
- * @param {{plan?:string, orgPlan?:string, analyzedAt?:Date|string|null, launchDate?:Date|string|null, isFirstAnalysis?:boolean}} o
+ * @param {{plan?:string, orgPlan?:string, analyzedAt?:Date|string|null, launchDate?:Date|string|null, isFirstAnalysis?:boolean, isUnlocked?:boolean}} o
  * @returns {boolean} true = redigieren
  */
-function shouldGateAnalysis({ plan, orgPlan, analyzedAt, launchDate, isFirstAnalysis } = {}) {
+/**
+ * Stufe 2: Wurde DIESE Analyse einmalig freigekauft? Liest den Unlock-Marker, den der
+ * Stripe-Webhook nach erfolgreichem Einmalkauf am Vertrag setzt (contract.unlock.paid).
+ * Defensiv: nimmt das (angereicherte) Contract-Objekt; null/undefined → false.
+ */
+function isContractUnlocked(contract) {
+  return !!(contract && contract.unlock && contract.unlock.paid === true);
+}
+
+function shouldGateAnalysis({ plan, orgPlan, analyzedAt, launchDate, isFirstAnalysis, isUnlocked } = {}) {
   if (effectivePlan(plan, orgPlan) !== 'free') return false; // Zahler/Org → nie sperren
+  if (isUnlocked === true) return false;                     // Stufe 2: diese Analyse wurde einmalig freigekauft → voll
   if (isFirstAnalysis === true) return false;                // erste Analyse des Free-Users → voll & gratis
   // Grandfathering: vor dem Launch analysierte Verträge bleiben voll sichtbar (kein Wegnehmen).
   if (analyzedAt && launchDate) {
@@ -142,5 +152,5 @@ function applyAnalysisGate(contract, opts = {}) {
 
 module.exports = {
   PAID_PLANS, LOCKED_FIELDS,
-  effectivePlan, shouldGateAnalysis, redactAnalysisForFree, applyAnalysisGate
+  effectivePlan, shouldGateAnalysis, redactAnalysisForFree, applyAnalysisGate, isContractUnlocked
 };

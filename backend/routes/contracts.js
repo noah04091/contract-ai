@@ -26,7 +26,7 @@ const { normalizeLaufzeit, normalizeKuendigung } = require("../utils/contractFie
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness, handleEnhancedDeepLawyerAnalysisRequest } = analyzeRoute;
 const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
-const { applyAnalysisGate, effectivePlan } = require("../utils/analysisGate"); // 🔒 Freemium-Tease-Gate (Phase 2)
+const { applyAnalysisGate, effectivePlan, isContractUnlocked } = require("../utils/analysisGate"); // 🔒 Freemium-Tease-Gate (Phase 2) + Einmal-Freischaltung (Stufe 2)
 
 // 🔒 Freemium-Tease-Gate — REVERSIBEL per ENV, default AUS (→ kein Verhalten ändert sich bis bewusst aktiviert).
 // Bei Aktivierung zusätzlich FREEMIUM_GATE_LAUNCH_DATE (ISO) setzen; ohne explizites Datum gilt der
@@ -51,10 +51,24 @@ async function gatePremiumExport(req, res, next) {
     );
     const membership = await OrganizationMember.findOne({ userId: new ObjectId(req.user.userId), isActive: true });
     if (effectivePlan(gu?.subscriptionPlan, membership ? 'business' : undefined) === 'free') {
-      return res.status(403).json({
-        success: false, gated: true, feature: 'pdf-export',
-        message: 'Der PDF-/Gutachten-Export ist Teil von Business. Schalte frei, um deine Analyse als PDF zu exportieren.'
-      });
+      // Stufe 2: Wurde GENAU dieser Vertrag einmalig freigekauft? Dann Export erlauben.
+      let unlocked = false;
+      try {
+        const cid = req.params.id || req.params.contractId;
+        if (cid && ObjectId.isValid(cid)) {
+          const cdoc = await contractsCollection.findOne(
+            { _id: new ObjectId(cid), userId: new ObjectId(req.user.userId) },
+            { projection: { 'unlock.paid': 1 } }
+          );
+          unlocked = isContractUnlocked(cdoc);
+        }
+      } catch { /* im Zweifel: nicht freigeschaltet (Free bleibt gesperrt) */ }
+      if (!unlocked) {
+        return res.status(403).json({
+          success: false, gated: true, feature: 'pdf-export',
+          message: 'Der PDF-/Gutachten-Export ist Teil von Business. Schalte frei, um deine Analyse als PDF zu exportieren.'
+        });
+      }
     }
   } catch (e) {
     console.warn(`⚠️ [Freemium-Gate/PDF] fail-open: ${e.message}`);
@@ -1484,7 +1498,8 @@ router.get("/", async (req, res) => {
             orgPlan: gateOrgPaid ? 'business' : undefined,
             analyzedAt: c.analyzedAt || c.lastAnalyzed || null,
             launchDate: FREEMIUM_GATE_LAUNCH,
-            isFirstAnalysis: !!gateFirstId && c._id.toString() === gateFirstId
+            isFirstAnalysis: !!gateFirstId && c._id.toString() === gateFirstId,
+            isUnlocked: isContractUnlocked(c) // Stufe 2: einmalig freigekaufte Analyse bleibt voll
           });
         } catch { /* fail-open: voller Vertrag bleibt */ }
       }
@@ -1757,7 +1772,8 @@ router.get("/:id", verifyToken, async (req, res) => {
           orgPlan: access.membership ? 'business' : undefined, // aktive Org-Mitgliedschaft = zahlend
           analyzedAt: enrichedContract.analyzedAt || enrichedContract.lastAnalyzed || null,
           launchDate: FREEMIUM_GATE_LAUNCH,
-          isFirstAnalysis
+          isFirstAnalysis,
+          isUnlocked: isContractUnlocked(access.contract) // Stufe 2: einmalig freigekaufte Analyse bleibt voll
         });
       } catch (gateErr) {
         console.warn(`⚠️ [Freemium-Gate] fail-open (volle Ansicht): ${gateErr.message}`);
@@ -2764,7 +2780,8 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
           orgPlan: membership ? 'business' : undefined,
           analyzedAt: finalContract.analyzedAt || finalContract.lastAnalyzed || new Date(),
           launchDate: FREEMIUM_GATE_LAUNCH,
-          isFirstAnalysis
+          isFirstAnalysis,
+          isUnlocked: isContractUnlocked(finalContract) // Stufe 2: einmalig freigekaufte Analyse bleibt voll
         });
       } catch (gateErr) {
         console.warn(`⚠️ [Freemium-Gate] reanalyze fail-open (volle Ansicht): ${gateErr.message}`);

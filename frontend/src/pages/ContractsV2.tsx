@@ -938,6 +938,30 @@ export default function Contracts() {
     }
   }, [showDetails, selectedContract, location.search, navigate]);
 
+  // 🔓 Stufe 2: Rückkehr von Stripe nach Einmal-Freischaltung (?unlocked=1).
+  // Verifiziert die Zahlung (Fallback, falls Webhook verzögert) und lädt die Liste
+  // neu, damit die jetzt freigeschaltete (volle) Analyse erscheint. Läuft nur einmal.
+  const unlockVerifiedRef = useRef(false);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('unlocked') !== '1' || unlockVerifiedRef.current) return;
+    const cid = params.get('view');
+    if (!cid) return;
+    unlockVerifiedRef.current = true;
+    (async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+        await fetch(`/api/stripe/verify-unlock?contractId=${encodeURIComponent(cid)}`, {
+          headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          credentials: 'include',
+        });
+      } catch { /* Webhook setzt es ohnehin — dies ist nur ein Fallback */ }
+      try { toast.success('Analyse freigeschaltet — viel Erfolg!'); } catch { /* ignore */ }
+      await fetchContracts();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
   // 📁 Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {
