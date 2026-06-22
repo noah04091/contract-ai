@@ -410,7 +410,7 @@ export default function ReminderSettingsModal({
                               <span style={fristNameStyle}>{stripFileName(group.name)}</span>
                               {group.main && <span style={fristDateStyle}>{formatAutoEventDate(group.main.date)}</span>}
                             </div>
-                            {group.reminders.length > 0 ? (
+                            {group.reminders.length > 0 && (
                               <>
                                 {labeled.map((r) => (
                                   <div key={r.id} style={remRow}>
@@ -440,8 +440,14 @@ export default function ReminderSettingsModal({
                                   </>
                                 )}
                               </>
-                            ) : (
-                              <div style={{ fontSize: '12.5px', color: '#9ca3af', padding: '2px 0' }}>Nur am Stichtag</div>
+                            )}
+                            {/* Stichtag selbst: Haupt-Ereignis feuert am Frist-Tag (daysSame, Default an) */}
+                            {group.main && (
+                              <div style={remRow}>
+                                <span style={remIc}>🔔</span>
+                                <span style={remWhen}>Am Tag selbst</span>
+                                <span style={tagAuto}>✉️ automatisch</span>
+                              </div>
                             )}
                           </div>
                         );

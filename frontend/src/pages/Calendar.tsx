@@ -749,16 +749,23 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
       .then(res => {
         if (cancelled) return;
         const evs = res.data?.events || [];
-        setDeadlineReminders(
-          evs
-            .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && new Date(e.date) > now)
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .map(e => ({
-              id: e.id,
-              label: reminderLeadLabel(e.title) || 'Erinnerung',
-              dateStr: new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
-            }))
-        );
+        const list = evs
+          .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && new Date(e.date) > now)
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .map(e => ({
+            id: e.id,
+            label: reminderLeadLabel(e.title) || 'Erinnerung',
+            dateStr: new Date(e.date).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })
+          }));
+        // 🔔 Stichtag selbst: Das Haupt-Ereignis feuert am Frist-Tag (Schalter daysSame, Default an).
+        // Mitzeigen, sonst wirkt eine Frist ohne offene Vorwarnung fälschlich als "keine Erinnerung".
+        const fristDay = new Date(currentEvent.date);
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+        const fristStart = new Date(fristDay); fristStart.setHours(0, 0, 0, 0);
+        if (!isNaN(fristStart.getTime()) && fristStart >= todayStart) {
+          list.push({ id: 'same-day', label: 'Am Tag selbst', dateStr: fristDay.toLocaleDateString('de-DE', { day: '2-digit', month: 'short' }) });
+        }
+        setDeadlineReminders(list);
         setRemindersLoading(false);
       })
       .catch(() => { if (!cancelled) { setDeadlineReminders([]); setRemindersLoading(false); } });
@@ -960,7 +967,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               ) : deadlineReminders.length > 0 ? (
                 <>
                   <div style={{ fontSize: '12.5px', color: '#6b7280', margin: '3px 0 13px 25px', lineHeight: 1.4 }}>
-                    Wir mailen dich automatisch rechtzeitig vorher.
+                    Wir mailen dich automatisch an diesen Tagen:
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {deadlineReminders.map(r => (
