@@ -270,12 +270,12 @@
 }
 
 .occasionCardCustom {
-  border-color: #ddd6fe;
-  color: #7c3aed;
+  border-color: #bfdbfe;
+  color: #2563eb;
 }
 .occasionCardCustom:hover:not(.occasionCardDisabled) {
-  border-color: #8b5cf6;
-  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
 }
 
 /* Preset Grid (Step 2) */
@@ -429,7 +429,7 @@
   justify-content: center;
   gap: 8px;
   padding: 14px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border: none;
   border-radius: 12px;
   color: white;
@@ -490,8 +490,8 @@
 }
 
 .reminderIconCustom {
-  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
-  color: #7c3aed;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #2563eb;
 }
 
 .reminderInfo {
@@ -540,8 +540,8 @@
 }
 
 .typeBadgeCustom {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .removeButton {

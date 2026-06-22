@@ -585,7 +585,7 @@ export default function ReminderSettingsModal({
                             const isOpen = !!expandedRecurring[group.name];
                             const fold = dateOnly.length > 3 && !isOpen;
                             const chip = { fontSize: '11px', color: '#475569', background: '#f1f5f9', borderRadius: '999px', padding: '2px 9px', whiteSpace: 'nowrap' as const };
-                            const toggle = { ...chip, color: '#4f46e5', background: '#eef2ff', border: 'none', cursor: 'pointer', fontWeight: 600 };
+                            const toggle = { ...chip, color: '#2563eb', background: '#eff6ff', border: 'none', cursor: 'pointer', fontWeight: 600 };
                             return (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                                 {labeled.map((r) => (

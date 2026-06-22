@@ -1,0 +1,282 @@
+/* CalendarOverview — neue "Überblick"-Ansicht des Kalenders.
+   Isoliertes CSS-Modul: berührt KEINE bestehenden Kalender-Styles.
+   Reine Anzeige aus vorhandenen Events (kein Eingriff in Versand/Backend). */
+
+.wrap {
+  --blue: #2563eb;
+  --blue-dark: #1e40af;
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --ink: #111827;
+  --g700: #374151;
+  --g500: #6b7280;
+  --g400: #9ca3af;
+  --line: #e5e7eb;
+  --green: #15803d;
+  --green-50: #f0fdf4;
+  --green-200: #bbf7d0;
+  --amber: #b45309;
+  --amber-50: #fffbeb;
+  --amber-200: #fde68a;
+  --red: #dc2626;
+  --red-50: #fef2f2;
+
+  width: 100%;
+}
+
+/* ---------- Schutz-Status ---------- */
+.status {
+  background: linear-gradient(135deg, #eff6ff, #f5f9ff);
+  border: 1px solid var(--blue-100);
+  border-radius: 16px;
+  padding: 18px 20px;
+  margin-bottom: 24px;
+}
+.statusTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.statusTop .shield { font-size: 20px; line-height: 1; }
+.statusTop h2 {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--blue-dark);
+  margin: 0;
+}
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.schip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--g700);
+}
+.schip .n { font-size: 16px; font-weight: 800; }
+.schip.neutral .n { color: var(--blue); }
+.schip.ok { border-color: var(--green-200); background: var(--green-50); }
+.schip.ok .n { color: var(--green); }
+.schip.warn {
+  border-color: var(--amber-200);
+  background: var(--amber-50);
+  cursor: pointer;
+}
+.schip.warn .n { color: var(--amber); }
+.schip.warn:hover { filter: brightness(0.98); }
+
+/* ---------- Sektionen ---------- */
+.sec { margin-bottom: 26px; }
+.secHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 11px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--g500);
+  text-transform: uppercase;
+}
+.secHead.attn { color: var(--amber); }
+
+/* ---------- Frist-Karte ---------- */
+.card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 15px 17px 15px 19px;
+  margin-bottom: 11px;
+  overflow: hidden;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: var(--blue);
+}
+.card.crit::before { background: var(--red); }
+.card.warn::before { background: #f59e0b; }
+.card.info::before { background: var(--blue); }
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+.evIc {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  background: var(--blue-50);
+}
+.evMain { flex: 1; min-width: 0; }
+.evContract {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.evTitle {
+  font-size: 13px;
+  color: var(--g500);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.evRight { text-align: right; flex-shrink: 0; }
+.evDate { font-size: 13px; font-weight: 600; color: var(--g700); white-space: nowrap; }
+.evBadge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--blue-50);
+  color: var(--blue);
+  white-space: nowrap;
+}
+.evBadge.crit { background: var(--red-50); color: var(--red); }
+.evBadge.warn { background: var(--amber-50); color: var(--amber); }
+
+/* ---------- Erinnerungs-Zeitleiste ---------- */
+.strip {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px dashed var(--line);
+}
+.tl { position: relative; height: 26px; margin: 2px 4px 13px; }
+.tlAxis {
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 2px;
+  background: var(--blue-100);
+  border-radius: 2px;
+}
+.tlPt {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 13px;
+  line-height: 1;
+}
+.tlNow {
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--g400);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--g400);
+}
+.tlDeadline { font-size: 14px; }
+.tlLbl {
+  position: absolute;
+  top: calc(50% + 10px);
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  color: var(--g400);
+  white-space: nowrap;
+}
+.legend {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.legendTxt {
+  font-size: 12.5px;
+  color: var(--g700);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.legendTxt .mail { color: var(--blue); flex-shrink: 0; }
+.legendTxt span.ellip {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.manageBtn {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 4px 2px;
+}
+.manageBtn:hover { text-decoration: underline; }
+
+/* ---------- ohne Erinnerung (Nudge) ---------- */
+.nudge {
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px dashed var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.nudgeTxt {
+  font-size: 12.5px;
+  color: var(--amber);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.nudgeTxt span.ellip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.addBtn {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--blue);
+  border: none;
+  border-radius: 9px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.addBtn:hover { background: var(--blue-dark); }
+
+/* ---------- Leer-Zustand ---------- */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--g500);
+}
+.empty .eIc { font-size: 40px; margin-bottom: 12px; }
+.empty .eT { font-size: 16px; font-weight: 700; color: var(--g700); margin-bottom: 6px; }
+.empty .eS { font-size: 13.5px; }
+
+/* ---------- Mobile ---------- */
+@media (max-width: 640px) {
+  .status { padding: 15px 16px; border-radius: 14px; }
+  .chips { gap: 8px; }
+  .schip { padding: 8px 11px; font-size: 12.5px; }
+  .card { padding: 14px 14px 14px 16px; }
+  .evContract { font-size: 14px; }
+  .tlLbl { font-size: 9px; }
+}

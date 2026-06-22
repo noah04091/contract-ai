@@ -45,6 +45,7 @@ import "../styles/AppleCalendar.css";
 import CalendarSyncModal from "../components/CalendarSyncModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 3c: Erinnerungen vom Kalender aus verwalten
+import CalendarOverview from "../components/CalendarOverview"; // 🗓️ Ansicht "Überblick": Fristen + Erinnerungen auf einen Blick
 import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from "../utils/reminderGrouping"; // 🔔 Erinnerungen dieser Frist
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
@@ -951,7 +952,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
           {hasContract && !isReminderEntry(currentEvent) && (
             <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', fontSize: '13px', fontWeight: 700, color: '#374151' }}>
-                <Bell size={16} style={{ color: '#4f46e5', flexShrink: 0 }} />
+                <Bell size={16} style={{ color: '#2563eb', flexShrink: 0 }} />
                 <span>Erinnerungen zu dieser Frist</span>
               </div>
               {remindersLoading ? (
@@ -960,7 +961,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {deadlineReminders.map(r => (
                     <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', color: '#374151' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#4f46e5' }}>🔔</span>{r.label}</span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ color: '#2563eb' }}>🔔</span>{r.label}</span>
                       <span style={{ color: '#9ca3af', fontSize: '12px' }}>{r.dateStr}</span>
                     </div>
                   ))}
@@ -971,7 +972,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               {onManageReminders && (
                 <button
                   onClick={() => onManageReminders(currentEvent)}
-                  style={{ marginTop: '12px', background: 'none', border: 'none', color: '#4f46e5', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
+                  style={{ marginTop: '12px', background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
                   <SlidersHorizontal size={14} style={{ flexShrink: 0 }} />
                   Erinnerung hinzufügen / verwalten
@@ -1132,7 +1133,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
 
                   <motion.button
                     onClick={() => onAction("optimize", currentEvent.id)}
-                    whileHover={{ scale: 1.02, background: '#eef2ff', borderColor: '#3b82f6' }}
+                    whileHover={{ scale: 1.02, background: '#eff6ff', borderColor: '#3b82f6' }}
                     whileTap={{ scale: 0.98 }}
                     style={{
                       background: '#f9fafb',
@@ -3201,7 +3202,7 @@ export default function CalendarPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
-  const [currentView, setCurrentView] = useState<'month' | 'week' | 'day'>('month');
+  const [currentView, setCurrentView] = useState<'month' | 'week' | 'day' | 'overview'>('month');
   const [urgentPage, setUrgentPage] = useState(0);
   const [dayEventsModal, setDayEventsModal] = useState<{ date: Date; events: CalendarEvent[] } | null>(null);
   const [showStatsModal, setShowStatsModal] = useState(false);
@@ -3702,14 +3703,15 @@ export default function CalendarPage() {
           {/* Main Content Grid */}
           <div className="content-grid" style={{
             display: 'grid',
-            gridTemplateColumns: '1fr 340px',
+            gridTemplateColumns: currentView === 'overview' ? '1fr' : '1fr 340px',
             gap: '24px'
           }}>
             {/* Calendar Container - with Swipe Support */}
             <div className="calendar-container" style={{ gridColumn: '1' }} {...swipeHandlers}>
               {/* Calendar Header */}
               <div className="calendar-header">
-                {/* Row 1: [<] [Monat Jahr] [>] [Heute] */}
+                {/* Row 1: [<] [Monat Jahr] [>] [Heute] — im Überblick ausgeblendet */}
+                {currentView !== 'overview' && (
                 <div className="calendar-nav-row">
                   <button className="nav-btn" onClick={() => navigateMonth('prev')}>
                     <ChevronLeft size={20} />
@@ -3722,9 +3724,10 @@ export default function CalendarPage() {
                   </button>
                   <button className="today-btn" onClick={goToToday}>Heute</button>
                 </div>
+                )}
                 {/* Row 2: View Switcher */}
                 <div className="view-switcher">
-                  {(['month', 'week', 'day'] as const).map(view => (
+                  {(['month', 'week', 'day', 'overview'] as const).map(view => (
                     <button
                       key={view}
                       className={`view-btn ${currentView === view ? 'active' : ''}`}
@@ -3732,7 +3735,7 @@ export default function CalendarPage() {
                         setCurrentView(view);
                       }}
                     >
-                      {view === 'month' ? 'Monat' : view === 'week' ? 'Woche' : 'Tag'}
+                      {view === 'month' ? 'Monat' : view === 'week' ? 'Woche' : view === 'day' ? 'Tag' : 'Überblick'}
                     </button>
                   ))}
                 </div>
@@ -3744,6 +3747,17 @@ export default function CalendarPage() {
                   <div className="loading-spinner"></div>
                   <p>Lade Kalender...</p>
                 </div>
+              ) : currentView === 'overview' ? (
+                <CalendarOverview
+                  events={events}
+                  onEventClick={(event) => {
+                    setAllDayEventsForPagination([]);
+                    setSelectedEvent(event);
+                    setShowQuickActions(true);
+                  }}
+                  onManageReminders={handleManageReminders}
+                  formatContractName={formatContractName}
+                />
               ) : (
                 <CustomCalendarGrid
                   currentDate={currentDate}
@@ -3794,7 +3808,8 @@ export default function CalendarPage() {
                 />
               )}
 
-              {/* Legend - klickbar als Filter */}
+              {/* Legend - klickbar als Filter — im Überblick ausgeblendet */}
+              {currentView !== 'overview' && (
               <div className="calendar-legend">
                 {([
                   { severity: 'critical', label: 'Kritisch' },
@@ -3835,9 +3850,11 @@ export default function CalendarPage() {
                   </div>
                 )}
               </div>
+              )}
             </div>
 
-            {/* Sidebar */}
+            {/* Sidebar — im Überblick ausgeblendet (Vollbreite) */}
+            {currentView !== 'overview' && (
             <aside className="calendar-sidebar" style={{ gridColumn: '2' }}>
               {/* Stats Card */}
               <div className="sidebar-card" data-tour="calendar-stats">
@@ -4014,6 +4031,7 @@ export default function CalendarPage() {
                 )}
               </div>
             </aside>
+            )}
           </div>
         </div>
 
