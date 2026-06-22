@@ -6,12 +6,15 @@
  * schreibt dann einen vollständigen Top-Vertrag; Ausgabe als Premium-PDF (AVV-Stil).
  * Gespeichert wird in `contracts` (Verwaltung + geteilter Usage-Zähler).
  *
- * Endpoints (Mount: /api/contracts/premium, mit verifyToken davor):
- *   POST /chat      { messages }                  -> { contractType, ready, summary, questions }
- *   POST /generate  { messages, contractType }    -> { contractId, contractType, title, contractText }
- *   POST /pdf       { contractId }                -> application/pdf (AVV-Premium-Layout)
+ * Endpoints (Mount: /api/contracts/premium, mit verifyToken davor; KI-Routen rate-limitiert):
+ *   POST /chat            { messages }                              -> { contractType, ready, summary, questions }
+ *   POST /generate        { messages, contractType }                -> { contractId, title, contractText }   (Fallback, nicht-stream)
+ *   POST /generate-stream { messages, contractType, existingContractId? } -> ndjson (delta/done/events/error)
+ *                         + Fristen->Kalender (grounded extractContractDates -> cleanAndRegenerateAIEvents)
+ *   POST /pdf             { contractId, design?, signature? }       -> application/pdf (AVV-Layout, 3 Designs)
+ *   POST /review          { contractId }                            -> Rechts-Check (verdict/checks/empfehlungen)
  *
- * NOCH NICHT in server.js gemountet — erst nach grünem TÜV + Frontend.
+ * Gemountet in server.js (8.2). Frontend: PremiumChat.tsx, versteckt hinter SHOW_PREMIUM_ENTRY/?premium=1.
  */
 
 const express = require("express");
