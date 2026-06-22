@@ -38,7 +38,8 @@ import {
   XCircle,
   CheckCircle,
   RotateCcw,
-  Send
+  Send,
+  HelpCircle
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -46,6 +47,7 @@ import CalendarSyncModal from "../components/CalendarSyncModal";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 3c: Erinnerungen vom Kalender aus verwalten
 import CalendarOverview from "../components/CalendarOverview"; // 🗓️ Ansicht "Überblick": Fristen + Erinnerungen auf einen Blick
+import ReminderHelpModal from "../components/ReminderHelpModal"; // ❓ Hilfe-Popup: Erinnerungs-Prozess in einfachen Worten
 import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from "../utils/reminderGrouping"; // 🔔 Erinnerungen dieser Frist
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
@@ -3235,6 +3237,7 @@ export default function CalendarPage() {
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [currentView, setCurrentView] = useState<'month' | 'week' | 'day' | 'overview'>('month');
+  const [showReminderHelp, setShowReminderHelp] = useState(false); // ❓ Hilfe-Popup Erinnerungen
   const [urgentPage, setUrgentPage] = useState(0);
   const [dayEventsModal, setDayEventsModal] = useState<{ date: Date; events: CalendarEvent[] } | null>(null);
   const [showStatsModal, setShowStatsModal] = useState(false);
@@ -3728,6 +3731,13 @@ export default function CalendarPage() {
                 title="Aktualisieren"
               >
                 <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowReminderHelp(true)}
+                title="Wie funktionieren Erinnerungen?"
+              >
+                <HelpCircle size={18} />
               </button>
             </div>
           </header>
@@ -4343,6 +4353,10 @@ export default function CalendarPage() {
         defaultTab="schedule"
         onSaved={() => toast.success('Erinnerungseinstellungen gespeichert')}
       />
+
+      {showReminderHelp && (
+        <ReminderHelpModal onClose={() => setShowReminderHelp(false)} />
+      )}
 
       {/* Stats Detail Modal - wrapped in AnimatePresence */}
       <AnimatePresence>
