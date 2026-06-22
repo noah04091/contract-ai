@@ -91,6 +91,18 @@ function redactAnalysisForFree(contract) {
   const recsRaw = pickArr(out.recommendations, a.recommendations);
   const sugsRaw = pickArr(out.suggestions, a.suggestions);
 
+  // 🔎 Welche GESPERRTEN Felder hatten ÜBERHAUPT Inhalt (vor dem Redigieren)? Nur dann
+  // darf das Frontend dort einen Blur-/Schloss-Teaser zeigen — sonst zahlt der User für
+  // eine leere Hülle ("noch nicht verfügbar"). Top-Level ODER nested zählt.
+  const has = (top, nested) => {
+    const pick = (x) => Array.isArray(x) ? x.length > 0 : (typeof x === 'string' ? x.trim().length > 0 : !!x);
+    return pick(top) || pick(nested);
+  };
+  const hadComparison = has(out.comparison, a.comparison);
+  const hadOpinion = has(out.detailedLegalOpinion, a.detailedLegalOpinion);
+  const hadLegalAssessment = has(out.legalAssessment, a.legalAssessment);
+  const hadTypeSpecific = has(out.typeSpecificFindings, a.typeSpecificFindings);
+
   // 1 Top-Risiko als Kostprobe behalten, Rest sperren
   const teaser = risksRaw.length > 0 ? [risksRaw[0]] : [];
   out.risiken = teaser;
@@ -134,7 +146,12 @@ function redactAnalysisForFree(contract) {
     risksShown: teaser.length,
     recommendations: recsRaw.length,
     suggestions: sugsRaw.length,
-    clauses: clauseCount
+    clauses: clauseCount,
+    // Teaser pro Tab nur zeigen, wenn dort echter Inhalt gesperrt wurde:
+    hadComparison,
+    hadOpinion,
+    hadLegalAssessment,
+    hadTypeSpecific
   };
 
   return out;

@@ -189,6 +189,15 @@ export default function V2TabsSection({ data }: Props) {
   const unlockId = String(dIds._id ?? dIds.originalContractId ?? "") || undefined;
   const handleUnlock = unlockId ? () => startAnalysisUnlock(unlockId) : undefined;
 
+  // 🔓 Teaser pro Tab NUR zeigen, wenn dort echter Inhalt gesperrt wurde (sonst zahlt
+  // der User für eine leere Hülle). Basiert auf gatedCounts vom Backend.
+  const gc = d.gatedCounts || {};
+  const teaseRisks = !!d.gated && (gc.risks || 0) > (gc.risksShown || 0);
+  const teaseRecos = !!d.gated && (gc.recommendations || 0) > 0;
+  const teaseSugs = !!d.gated && (gc.suggestions || 0) > 0;
+  const teaseMarket = !!d.gated && gc.hadComparison === true;
+  const teaseOpinion = !!d.gated && gc.hadOpinion === true;
+
   // Counts für Tab-Badges
   const summaryArr = useMemo(() => asArray<string>(d.summary), [d.summary]);
   const legalArr = useMemo(() => asArray<string>(d.legalAssessment), [d.legalAssessment]);
@@ -231,12 +240,12 @@ export default function V2TabsSection({ data }: Props) {
     if (sugs.length > 0) base.add("suggestions");
     if (cmpArr.length > 0 && marketVisible) base.add("market");
     if (recos.length > 0) base.add("recos");
-    // 🔒 Bei redigierter Free-Analyse den Empfehlungen-Tab erzwingen, damit das
-    // Schloss sichtbar wird (recos.length ist hier 0, weil server-seitig entfernt).
-    if (d.gated) base.add("recos");
+    // 🔒 Bei redigierter Free-Analyse den Empfehlungen-Tab erzwingen — aber NUR wenn dort
+    // echte Empfehlungen gesperrt wurden (sonst kein Schloss für ein leeres Feld).
+    if (d.gated && (d.gatedCounts?.recommendations || 0) > 0) base.add("recos");
     // pilot/market werden zusätzlich konditional in tabs-Array
     return base;
-  }, [docClass, positives.length, sugs.length, cmpArr.length, recos.length, marketVisible, d.gated]);
+  }, [docClass, positives.length, sugs.length, cmpArr.length, recos.length, marketVisible, d.gated, d.gatedCounts]);
 
   // Wenn Daten sich ändern und der active Tab nicht mehr Sinn macht, fallback auf summary
   useEffect(() => {
@@ -382,8 +391,8 @@ export default function V2TabsSection({ data }: Props) {
             })}
           </div>
         )}
-        {/* 🔒 Free-Tease: weitere Risiken sind server-seitig gesperrt */}
-        {d.gated && (
+        {/* 🔒 Free-Tease: NUR wenn es wirklich weitere (gesperrte) Risiken gibt */}
+        {teaseRisks && (
           <div style={{ marginTop: criticals.length ? 16 : 0 }}>
             <LockedAnalysisUpsell counts={d.gatedCounts} variant="risks" onUnlock={handleUnlock} />
           </div>
@@ -435,7 +444,7 @@ export default function V2TabsSection({ data }: Props) {
         className={`${styles.tabContent} ${active === "recos" ? styles.tabContentActive : ""}`}
       >
         {recos.length === 0 ? (
-          d.gated ? (
+          teaseRecos ? (
             <LockedAnalysisUpsell counts={d.gatedCounts} variant="recommendations" onUnlock={handleUnlock} />
           ) : (
             <EmptyState
@@ -520,7 +529,7 @@ export default function V2TabsSection({ data }: Props) {
         className={`${styles.tabContent} ${active === "suggestions" ? styles.tabContentActive : ""}`}
       >
         {sugs.length === 0 ? (
-          d.gated ? (
+          teaseSugs ? (
             <LockedAnalysisUpsell counts={d.gatedCounts} variant="suggestions" onUnlock={handleUnlock} />
           ) : (
             <EmptyState
@@ -548,7 +557,7 @@ export default function V2TabsSection({ data }: Props) {
         className={`${styles.tabContent} ${active === "market" ? styles.tabContentActive : ""}`}
       >
         {cmpArr.length === 0 ? (
-          d.gated ? (
+          teaseMarket ? (
             <LockedAnalysisUpsell counts={d.gatedCounts} variant="market" onUnlock={handleUnlock} />
           ) : (
             <EmptyState
@@ -575,7 +584,7 @@ export default function V2TabsSection({ data }: Props) {
         className={`${styles.tabContent} ${active === "opinion" ? styles.tabContentActive : ""}`}
       >
         {opinion.length === 0 ? (
-          d.gated ? (
+          teaseOpinion ? (
             <LockedAnalysisUpsell counts={d.gatedCounts} variant="opinion" onUnlock={handleUnlock} />
           ) : (
             <EmptyState

@@ -24,6 +24,11 @@ export interface GatedCounts {
   recommendations?: number;
   suggestions?: number;
   clauses?: number;
+  // Hatte das jeweilige GESPERRTE Feld überhaupt Inhalt? Nur dann Teaser zeigen.
+  hadComparison?: boolean;
+  hadOpinion?: boolean;
+  hadLegalAssessment?: boolean;
+  hadTypeSpecific?: boolean;
 }
 
 export type TeaserVariant = "risks" | "recommendations" | "suggestions" | "market" | "opinion" | "default";
@@ -94,13 +99,16 @@ const paraStyle: React.CSSProperties = { ...lineStyle, fontSize: 14 };
 const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, variant = "default", onUnlock }) => {
   const moreRisks = Math.max(0, (counts.risks || 0) - (counts.risksShown || 0));
 
+  // Zusammenfassungszeile NUR aus tatsächlich gesperrtem Inhalt bauen (ehrlich —
+  // nichts versprechen, was nicht da ist).
   const parts: string[] = [];
   if (moreRisks > 0) parts.push(`${moreRisks} ${moreRisks === 1 ? "weitere kritische Klausel" : "weitere kritische Klauseln"}`);
   if ((counts.recommendations || 0) > 0) parts.push(`${counts.recommendations} Empfehlungen`);
+  if ((counts.suggestions || 0) > 0) parts.push(`${counts.suggestions} Verbesserungsideen`);
+  if (counts.hadComparison) parts.push("Marktvergleich");
   if ((counts.clauses || 0) > 0) parts.push(`${counts.clauses} Klauseln`);
-  const summaryLine = parts.length
-    ? `${parts.join(" · ")} · ausführliches Gutachten`
-    : "Alle Risiken im Detail, Empfehlungen & ausführliches Gutachten";
+  if (counts.hadOpinion) parts.push("ausführliches Gutachten");
+  const summaryLine = parts.length ? parts.join(" · ") : "die vollständige Analyse";
 
   const handle = () => {
     if (onUnlock) return onUnlock();
