@@ -447,7 +447,7 @@ async function queueEventNotification(event, db) {
       subject = `${event.metadata.contractName} - Vertragsinformation`;
       emailContent = generateCancelWindowEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Vertrag ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
+        { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
         { text: "Alternativen ansehen", url: `${baseUrl}/compare?contractId=${event.contractId}`, style: "secondary" }
       ];
       break;
@@ -456,7 +456,7 @@ async function queueEventNotification(event, db) {
       subject = `${event.metadata.contractName} - Frist heute`;
       emailContent = generateLastCancelDayEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Vertrag ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" }
+        { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" }
       ];
       break;
 
@@ -464,7 +464,7 @@ async function queueEventNotification(event, db) {
       subject = `${event.metadata.contractName} - Frist in ${event.metadata.daysLeft} Tagen`;
       emailContent = generateCancelWarningEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Vertrag ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
+        { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
         { text: "Optimieren", url: `${baseUrl}/optimize/${event.contractId}`, style: "secondary" }
       ];
       break;
@@ -482,7 +482,7 @@ async function queueEventNotification(event, db) {
       subject = `${event.metadata.contractName} - Vertragsverlaengerung`;
       emailContent = generateAutoRenewalEmail(event, actionToken, baseUrl);
       ctaButtons = [
-        { text: "Details ansehen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
+        { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
         { text: "Vertrag ansehen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "secondary" }
       ];
       break;
