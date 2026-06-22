@@ -374,9 +374,12 @@ export default function ReminderSettingsModal({
         ) : (
           <>
             <span style={tagAuto}>✉️ automatisch</span>
-            <button type="button" style={delBtn} onClick={() => setPendingDismiss((p) => [...p, id])} title="Diese Erinnerung einmalig entfernen">
-              <Trash2 size={13} />
-            </button>
+            {/* Nur echte DB-Events (24-stellige ObjectId) entfernbar — NIE virtuelle Recurrence-Instanzen */}
+            {/^[a-f0-9]{24}$/i.test(id) && (
+              <button type="button" style={delBtn} onClick={() => setPendingDismiss((p) => [...p, id])} title="Diese Erinnerung einmalig entfernen">
+                <Trash2 size={13} />
+              </button>
+            )}
           </>
         )}
       </div>
@@ -459,7 +462,13 @@ export default function ReminderSettingsModal({
                                   </button>
                                 ) : (
                                   <>
-                                    {dateOnly.map((r) => autoRow(r.id, formatAutoEventDate(r.date)))}
+                                    {dateOnly.map((r) => (
+                                      <div key={r.id} style={remRow}>
+                                        <span style={remIc}>🔔</span>
+                                        <span style={remWhen}>{formatAutoEventDate(r.date)}</span>
+                                        <span style={tagAuto}>✉️ automatisch</span>
+                                      </div>
+                                    ))}
                                     {dateOnly.length > 3 && isOpen && (
                                       <button type="button" style={foldBtn} onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: false }))}>
                                         weniger
