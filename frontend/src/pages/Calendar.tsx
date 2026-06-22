@@ -999,6 +999,20 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             </div>
           )}
 
+          {/* 🔔 Signatur-Anfragen haben keine contractId (eigene Envelope-Pipeline) →
+              ehrliche eigene Erinnerungs-Notiz statt gar nichts (Konsistenz). */}
+          {!hasContract && (currentEvent.type?.startsWith('SIGNATURE_') || !!currentEvent.metadata?.envelopeId) && (
+            <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', padding: '14px 16px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', fontSize: '14px', fontWeight: 700, color: '#374151' }}>
+                <Bell size={16} style={{ color: '#2563eb', flexShrink: 0 }} />
+                <span>So wirst du erinnert</span>
+              </div>
+              <div style={{ fontSize: '13px', color: '#6b7280', margin: '8px 0 0 25px', lineHeight: 1.5 }}>
+                Wir erinnern dich automatisch per E-Mail, bevor die Signatur abläuft.
+              </div>
+            </div>
+          )}
+
           <div className="modal-actions-grid">
             {/* Show "Vertrag anzeigen" if contract is associated */}
             {hasContract && (
