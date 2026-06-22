@@ -38,6 +38,16 @@ const C = {
   muted2: "#8a94a6", border: "#E7EAF0", track: "#EEF1F6", bg: "#F7F9FC",
 };
 
+// Schnellstart-Vorschläge (nur solange der Chat frisch ist)
+const QUICK_STARTS = [
+  { emoji: "💼", label: "Freelancer-Vertrag", prompt: "Ich möchte einen Freelancer-Vertrag erstellen." },
+  { emoji: "🏠", label: "Mietvertrag", prompt: "Ich möchte einen Mietvertrag erstellen." },
+  { emoji: "🛒", label: "Kaufvertrag", prompt: "Ich möchte einen Kaufvertrag erstellen." },
+  { emoji: "🔒", label: "NDA", prompt: "Ich möchte eine Geheimhaltungsvereinbarung (NDA) erstellen." },
+  { emoji: "💻", label: "Arbeitsvertrag", prompt: "Ich möchte einen Arbeitsvertrag erstellen." },
+  { emoji: "🎯", label: "Beratervertrag", prompt: "Ich möchte einen Beratervertrag erstellen." },
+];
+
 export default function PremiumChat({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
   const firstName = (user?.name || "").trim().split(/\s+/)[0] || "";
@@ -249,6 +259,17 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
         {messages.map((m, i) => (
           <Bubble key={i} m={m} onDownload={downloadPdf} onReview={runReview} onApplyRec={applyRecommendations} onSkip={skipQuestions} onSend={sendForSignature} busy={busy} />
         ))}
+        {messages.length === 1 && !busy && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, paddingLeft: 41, marginTop: -4 }}>
+            <span style={{ width: "100%", fontSize: 12, color: C.muted2, marginBottom: 2 }}>Oder schnell starten:</span>
+            {QUICK_STARTS.map((q) => (
+              <button key={q.label} type="button" onClick={() => handleSend(q.prompt)}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", borderRadius: 999, padding: "7px 13px", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
+                <span>{q.emoji}</span> {q.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Input */}
