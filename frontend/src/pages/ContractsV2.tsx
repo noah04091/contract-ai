@@ -2631,8 +2631,9 @@ export default function Contracts() {
     });
   };
 
-  // ✅ NEU: Two-Step Upload Flow - Upload OHNE Analyse
-  const handleUploadOnly = async () => {
+  // ✅ Upload-Flow. autoAnalyze=true → Default: direkt analysieren (Absicht der Besucher).
+  // autoAnalyze=false → "Nur speichern" (Erfolgs-Modal mit Analysieren/Überspringen-Wahl).
+  const handleUploadOnly = async (autoAnalyze = false) => {
 
     const filesToUpload = uploadFiles.filter(f => f.status === 'pending');
 
@@ -2699,7 +2700,6 @@ export default function Contracts() {
         }
       }
 
-      // Zeige Success Modal
       if (uploadedContracts.length > 0) {
         // 🎉 Celebration NUR beim ERSTEN Upload! (nicht bei jedem)
         if (!onboardingState?.checklist?.firstContractUploaded) {
@@ -2709,10 +2709,17 @@ export default function Contracts() {
         // 🎓 Onboarding: Sync triggern um Checklist zu aktualisieren
         triggerOnboardingSync();
 
-        setUploadSuccessModal({
-          show: true,
-          uploadedContracts
-        });
+        if (autoAnalyze) {
+          // 🚀 Default-Pfad: direkt analysieren (kein Zwischen-Modal) — exakt dieselbe
+          // bewährte Sequenz wie "Analysieren" im Erfolgs-Modal. Schließt das Aktivierungs-Leck.
+          await analyzeUploadedContracts(uploadedContracts);
+        } else {
+          // "Nur speichern": Erfolgs-Modal mit Analysieren/Überspringen-Wahl
+          setUploadSuccessModal({
+            show: true,
+            uploadedContracts
+          });
+        }
       }
 
     } finally {
@@ -2722,10 +2729,14 @@ export default function Contracts() {
 
   // ✅ FIXED: Analyse-Aktion aus Success Modal - NUTZT NEUE /api/analyze ROUTE!
   const handleAnalyzeFromModal = async () => {
-
     const contractsToAnalyze = uploadSuccessModal.uploadedContracts;
     setUploadSuccessModal({ show: false, uploadedContracts: [] });
+    await analyzeUploadedContracts(contractsToAnalyze);
+  };
 
+  // 🚀 Analysiert frisch hochgeladene Verträge über den bewährten uploadAndAnalyze-Pfad.
+  // Wird genutzt vom Erfolgs-Modal ("Analysieren") UND vom Default-Upload ("Hochladen & analysieren").
+  const analyzeUploadedContracts = async (contractsToAnalyze: Array<{ _id: string; name: string }>) => {
     if (contractsToAnalyze.length === 0) {
       return;
     }
@@ -5030,20 +5041,34 @@ export default function Contracts() {
                               </div>
                             </div>
                             <div className={styles.multiFileActions}>
-                              {/* ✅ Vereinfachter Upload Button - Modal entscheidet über Analyse */}
+                              {/* ✅ Analyse als Default (Absicht der Besucher); "Nur speichern" als Sekundär-Option */}
                               {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && (
-                                <button
-                                  type="button"
-                                  className={styles.uploadButton}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    handleUploadOnly();
-                                  }}
-                                >
-                                  <Upload size={16} />
-                                  Hochladen
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    className={styles.uploadButton}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleUploadOnly(true);
+                                    }}
+                                  >
+                                    <Upload size={16} />
+                                    Hochladen & analysieren
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.clearFilesButton}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleUploadOnly(false);
+                                    }}
+                                    title="Nur speichern, ohne eine Analyse zu verbrauchen"
+                                  >
+                                    Nur speichern
+                                  </button>
+                                </>
                               )}
                               <button
                                 type="button"
