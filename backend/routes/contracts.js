@@ -872,7 +872,10 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     // wurden die Felder bei analysierten Verträgen nie an die Liste gesendet -> Spalte zeigte "—".
     contractNumber: 1, kundennummer: 1,
     // Sort-Felder (auch wenn nicht angezeigt, für Sortierung nötig)
-    'legalPulse.riskScore': 1
+    'legalPulse.riskScore': 1,
+    // 🔓 Stufe 2: Unlock-Marker MUSS in die Liste, sonst sieht der Gate die bezahlte
+    // Einmal-Freischaltung nicht (isContractUnlocked) und sperrt trotz Zahlung weiter.
+    unlock: 1
   };
 
   const [countResult, contracts] = await Promise.all([
