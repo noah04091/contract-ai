@@ -124,15 +124,19 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
           setMessages((m) => m.map((x) => (x.kind === "streaming" ? { ...x, content: acc } : x)));
         } else if (evt.type === "done") {
           done = evt;
+          const c = { contractId: evt.contractId, contractText: evt.contractText, contractType: evt.contractType, title: evt.title };
+          setContract(c);
+          setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "contract", content: evt.contractText, contract: c }]);
+        } else if (evt.type === "events") {
+          if (evt.count > 0) {
+            setMessages((m) => [...m, { role: "assistant", kind: "text", uiOnly: true, content: `🔔 ${evt.count === 1 ? "1 Frist wurde" : evt.count + " Fristen wurden"} in deinen Kalender übernommen — du wirst rechtzeitig erinnert.` }]);
+          }
         } else if (evt.type === "error") {
           throw new Error(evt.message || "Fehler");
         }
       }
     }
     if (!done) throw new Error("Stream unvollständig.");
-    const c = { contractId: done.contractId, contractText: done.contractText, contractType: done.contractType, title: done.title };
-    setContract(c);
-    setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "contract", content: done.contractText, contract: c }]);
   }
 
   // „Überspringen": ohne Antworten generieren — fehlende Fakten werden zu Ausfüllfeldern

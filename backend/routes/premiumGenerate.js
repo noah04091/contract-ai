@@ -245,6 +245,74 @@ async function reviewContract(text) {
   return JSON.parse(res.content.find((b) => b.type === "text").text);
 }
 
+// =========================================================================
+// 5) Fristen-Extraktion (grounded) für den Kalender — nur was WIRKLICH im Text steht
+// =========================================================================
+const DATE_TYPES = [
+  "start_date", "end_date", "cancellation_deadline", "minimum_term_end", "probation_end",
+  "warranty_end", "renewal_date", "payment_due", "notice_period_start", "contract_signed",
+  "service_start", "insurance_coverage_end", "trial_end", "license_expiry", "price_guarantee_end",
+  "inspection_due", "lease_end", "option_deadline", "loan_end", "interest_rate_change", "delivery_date", "other",
+];
+const DATES_SCHEMA = {
+  type: "object", additionalProperties: false,
+  properties: {
+    startDate: { type: ["string", "null"] },
+    endDate: { type: ["string", "null"] },
+    noticePeriod: { type: ["string", "null"] },
+    isAutoRenewal: { type: "boolean" },
+    autoRenewMonths: { type: ["number", "null"] },
+    importantDates: {
+      type: "array",
+      items: {
+        type: "object", additionalProperties: false,
+        properties: { type: { type: "string", enum: DATE_TYPES }, date: { type: "string" }, label: { type: "string" } },
+        required: ["type", "date", "label"],
+      },
+    },
+  },
+  required: ["startDate", "endDate", "noticePeriod", "isAutoRenewal", "autoRenewMonths", "importantDates"],
+};
+
+async function extractContractDates(text) {
+  const system =
+    "Du extrahierst aus einem fertigen deutschen Vertragstext NUR die TATSÄCHLICH darin genannten Termine und Fristen — für einen Erinnerungskalender.\n" +
+    "STRENG: Erfinde NICHTS. Übernimm nur konkrete Daten, die eindeutig im Text stehen. Leere Ausfüllfelder ('____'), Platzhalter oder nicht genannte Daten → weglassen bzw. null.\n" +
+    "- startDate: Vertragsbeginn (YYYY-MM-DD) oder null.\n" +
+    "- endDate: Vertragsende/Ablauf (YYYY-MM-DD) oder null.\n" +
+    "- noticePeriod: Kündigungsfrist als kurzer Text (z. B. '3 Monate') oder null.\n" +
+    "- isAutoRenewal: true, wenn sich der Vertrag laut Text automatisch verlängert.\n" +
+    "- autoRenewMonths: Verlängerungsdauer in Monaten oder null.\n" +
+    "- importantDates: weitere konkrete Termine mit Datum (YYYY-MM-DD). 'type' aus der vorgegebenen Liste (sonst 'other'); 'label' = kurze deutsche Bezeichnung.\n" +
+    "Gibt es keine konkreten Termine, gib null/false/leere Liste zurück.";
+  const res = await client().messages.create({
+    model: MODEL, max_tokens: 1500,
+    thinking: { type: "adaptive" },
+    output_config: { effort: "low", format: { type: "json_schema", schema: DATES_SCHEMA } },
+    system, messages: [{ role: "user", content: text }],
+  });
+  return JSON.parse(res.content.find((b) => b.type === "text").text);
+}
+
+// Wandelt Extraktions-Ergebnis in die Felder, die generateEventsForContract liest
+function datesToContractFields(d) {
+  const toDate = (s) => { const t = Date.parse(s); return Number.isNaN(t) ? null : new Date(t); };
+  const importantDates = (Array.isArray(d.importantDates) ? d.importantDates : [])
+    .filter((x) => x && x.date && toDate(x.date))
+    .map((x) => ({ type: DATE_TYPES.includes(x.type) ? x.type : "other", date: x.date, label: x.label || x.type, confidence: 90, source: "KI-Analyse" }));
+  return {
+    startDate: toDate(d.startDate),
+    expiryDate: toDate(d.endDate),
+    startDateConfidence: toDate(d.startDate) ? 90 : 0,
+    endDateConfidence: toDate(d.endDate) ? 90 : 0,
+    cancellationPeriod: d.noticePeriod || null,
+    isAutoRenewal: !!d.isAutoRenewal,
+    autoRenewMonths: typeof d.autoRenewMonths === "number" ? d.autoRenewMonths : null,
+    importantDates,
+    dataSource: "ai_extracted",
+  };
+}
+
 // Speichert einen erzeugten Vertrag in `contracts` (gemeinsam für /generate-stream)
 async function persistContract(userId, text, contractType) {
   const typeLabel = (contractType || "Vertrag").toString().slice(0, 80);
@@ -362,6 +430,25 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
     if (!text || text.length < 200) { send({ type: "error", message: "Vertrag konnte nicht erstellt werden." }); return res.end(); }
     const saved = await persistContract(req.user.userId, text, contractType);
     send({ type: "done", contractText: text, ...saved });
+
+    // 🔔 Fristen → Kalender (additiv, non-fatal): nutzt den bestehenden Mechanismus
+    try {
+      const dates = await extractContractDates(text);
+      const fields = datesToContractFields(dates);
+      const hasDates = !!fields.expiryDate || !!fields.startDate || (fields.importantDates && fields.importantDates.length > 0);
+      if (hasDates) {
+        await contractsCollection.updateOne({ _id: saved.contractId }, { $set: fields });
+        const dbConn = await database.connect();
+        const { generateEventsForContract } = require("../services/calendarEvents");
+        const enriched = { _id: saved.contractId, userId: new ObjectId(req.user.userId), name: saved.title, status: "Aktiv", createdAt: new Date(), ...fields };
+        const events = await generateEventsForContract(dbConn, enriched);
+        send({ type: "events", count: Array.isArray(events) ? events.length : 0 });
+      } else {
+        send({ type: "events", count: 0 });
+      }
+    } catch (calErr) {
+      console.warn("[Premium] Fristen-Übernahme fehlgeschlagen (non-fatal):", calErr.message);
+    }
     res.end();
   } catch (e) {
     send({ type: "error", message: e.code === "NO_AI_KEY" ? "KI-Dienst nicht verfügbar." : "Erstellung gerade nicht möglich — bitte erneut versuchen." });
@@ -409,4 +496,4 @@ router.post("/review", aiLimiter, async (req, res) => {
   }
 });
 
-module.exports = { router, assess, generateContractText, reviewContract, renderPremiumPdfBuffer, textToBasicHtml };
+module.exports = { router, assess, generateContractText, reviewContract, extractContractDates, datesToContractFields, renderPremiumPdfBuffer, textToBasicHtml };

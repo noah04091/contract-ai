@@ -1,6 +1,6 @@
 # Generate 2.0 — Plan & Fahrplan (lebendes Dokument)
 
-**Letzte Aktualisierung:** 2026-06-21 — Test-Feedback umgesetzt: Design-Varianten (Klassisch/Elegant/Modern), kein „Contract AI" im Dokument, Zeichen-Bereinigung, **Unterschrift direkt auf den Vertrag** (Zeichenfeld → ins PDF auf die erkannte Partei-Linie). Alles deployt, Premium weiter via `?premium=1` testbar.
+**Letzte Aktualisierung:** 2026-06-22 — **Geheimwaffen-Roadmap (4 Features, vom User freigegeben, in Reihenfolge aufsteigendes Risiko):** ① 🛡️ Rechts-Check (KI-Gegenanwalt) ✅ **LIVE** (additiv: `reviewContract`+`POST /premium/review`, ReviewCard mit Badge/Checkliste/„Empfehlungen übernehmen"); ② ⚡ Live-Schreiben (Streaming) ✅ **LIVE** (additive Route `POST /premium/generate-stream` ndjson; `generateContractText(onDelta)`; Frontend `streamGenerate` lässt Vertrag live wachsen; alte `/generate` bleibt Fallback; + Politur: kompakte „Empfehlungen übernehmen"-Blase via `display`); ③ 🔔 Fristen→Kalender (Moat, sensibles System, vorsichtig); ④ ✍️ Gegenseite signieren (größter Brocken, zuletzt). Davor (21.06.): Design-Varianten, kein „Contract AI" im Dokument, Zeichen-Bereinigung, Unterschrift-Zeichenfeld→PDF. Alles deployt, Premium via `?premium=1` testbar.
 **Status:** 🔁 PIVOT auf **Premium-Chat-Modus** (Claude Opus + AVV-Design). Frühere Form-Fill-Variante gebaut & live, aber **ausgeblendet** (`SHOW_BRIEF_MODE=false`). Neuer Bau startet beim „Motor". (Siehe Pivot-Abschnitt direkt unten.)
 **Eigentümer:** Noah Liebold (Contract AI) · umgesetzt mit Claude
 
