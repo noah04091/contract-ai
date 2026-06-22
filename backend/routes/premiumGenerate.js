@@ -458,8 +458,14 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
       const dbConn = await database.connect();
       const { cleanAndRegenerateAIEvents } = require("../services/calendarEvents");
       const enriched = { _id: saved.contractId, userId: new ObjectId(req.user.userId), name: saved.title, status: "Aktiv", createdAt: new Date(), ...fields };
-      const result = await cleanAndRegenerateAIEvents(dbConn, enriched);
-      send({ type: "events", count: result && typeof result.generated === "number" ? result.generated : 0 });
+      await cleanAndRegenerateAIEvents(dbConn, enriched);
+      // Die WIRKLICH gespeicherten, geplanten Kalender-Einträge zurücklesen (Beweis + Anzeige)
+      const items = await dbConn.collection("contract_events")
+        .find({ contractId: saved.contractId, status: "scheduled" })
+        .sort({ date: 1 })
+        .project({ title: 1, date: 1, severity: 1, _id: 0 })
+        .toArray();
+      send({ type: "events", count: items.length, items: items.map((e) => ({ title: e.title, date: e.date, severity: e.severity || "info" })) });
     } catch (calErr) {
       console.warn("[Premium] Fristen-Übernahme fehlgeschlagen (non-fatal):", calErr.message);
     }

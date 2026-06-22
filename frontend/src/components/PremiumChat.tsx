@@ -12,10 +12,11 @@
  *   POST /api/contracts/premium/pdf        (Premium-PDF, AVV-Stil)
  */
 import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X } from "lucide-react";
+import { Sparkles, Send, Download, Lock, ArrowLeft, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown } from "lucide-react";
 import { toast } from "react-toastify";
 
-type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming";
+type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events";
+interface CalItem { title: string; date: string; severity?: string }
 interface ReviewData { verdict: string; summary: string; checks: { klausel: string; status: string; hinweis: string }[]; empfehlungen: string[] }
 interface ChatMsg {
   role: "user" | "assistant";
@@ -27,6 +28,7 @@ interface ChatMsg {
   contractType?: string;    // bei Frage-Nachrichten: erkannter Typ (für „Überspringen")
   contract?: { contractId: string; contractText: string; contractType: string; title?: string };
   review?: ReviewData;
+  calItems?: CalItem[];
 }
 
 const C = {
@@ -129,7 +131,7 @@ export default function PremiumChat({ onClose }: { onClose: () => void }) {
           setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "contract", content: evt.contractText, contract: c }]);
         } else if (evt.type === "events") {
           if (evt.count > 0) {
-            setMessages((m) => [...m, { role: "assistant", kind: "text", uiOnly: true, content: `🔔 ${evt.count === 1 ? "1 Frist wurde" : evt.count + " Fristen wurden"} in deinen Kalender übernommen — du wirst rechtzeitig erinnert.` }]);
+            setMessages((m) => [...m, { role: "assistant", kind: "events", uiOnly: true, content: `${evt.count} Fristen`, calItems: Array.isArray(evt.items) ? evt.items : [] }]);
           }
         } else if (evt.type === "error") {
           throw new Error(evt.message || "Fehler");
@@ -301,6 +303,8 @@ function Bubble({ m, onDownload, onReview, onApplyRec, onSkip, busy }: { m: Chat
         </div>
       ) : m.kind === "review" ? (
         <ReviewCard review={m.review!} onApply={() => onApplyRec(m.review!)} />
+      ) : m.kind === "events" ? (
+        <EventsCard items={m.calItems || []} />
       ) : (
         <div style={bubbleStyle}>{m.display ?? m.content}</div>
       )}
@@ -407,6 +411,39 @@ function ReviewCard({ review, onApply }: { review: ReviewData; onApply: () => vo
             </button>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function EventsCard({ items }: { items: CalItem[] }) {
+  const [open, setOpen] = useState(false);
+  const fmt = (d: string) => { try { return new Date(d).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric" }); } catch { return d; } };
+  const sevColor = (s?: string) => (s === "critical" ? "#c0392b" : s === "warning" ? "#b8860b" : "#2E6CF6");
+  return (
+    <div style={{ display: "flex", gap: 11, maxWidth: "90%" }}>
+      <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Bell size={15} /></div>
+      <div style={{ background: "#fff", border: `1px solid ${C.border}`, borderRadius: 14, borderTopLeftRadius: 4, overflow: "hidden", flex: 1 }}>
+        <button type="button" onClick={() => setOpen((o) => !o)} style={{ width: "100%", textAlign: "left", display: "flex", alignItems: "center", gap: 9, padding: "12px 15px", background: "rgba(46,108,246,.06)", border: "none", cursor: "pointer", font: "inherit" }}>
+          <Calendar size={16} color={C.blue} />
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#1f4e8c" }}>{items.length} {items.length === 1 ? "Frist" : "Fristen"} im Kalender</span>
+          <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>· du wirst erinnert</span>
+          <ChevronDown size={16} color={C.muted} style={{ marginLeft: "auto", transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
+        </button>
+        {open && (
+          <div style={{ padding: "10px 15px 13px", display: "flex", flexDirection: "column", gap: 9 }}>
+            {items.length === 0 ? (
+              <span style={{ fontSize: 12.5, color: C.muted }}>Keine Termine.</span>
+            ) : items.map((it, i) => (
+              <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
+                <span style={{ width: 7, height: 7, borderRadius: "50%", background: sevColor(it.severity), flex: "none", marginTop: 5 }} />
+                <span style={{ fontSize: 12.5, color: C.ink, lineHeight: 1.45, flex: 1 }}>{it.title}</span>
+                <span style={{ fontSize: 12, color: C.muted, fontWeight: 600, flex: "none", whiteSpace: "nowrap" }}>{fmt(it.date)}</span>
+              </div>
+            ))}
+            <div style={{ fontSize: 11, color: C.muted2, marginTop: 4 }}>Alle Termine findest du auch in deinem Kalender.</div>
+          </div>
+        )}
       </div>
     </div>
   );
