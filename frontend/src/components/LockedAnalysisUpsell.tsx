@@ -9,8 +9,11 @@ import styles from "./LockedAnalysisUpsell.module.css";
  *
  * 🔒 SICHERHEIT: Der verschwommene Text ist GENERISCHER Demo-Platzhalter (keine
  * echten Vertragsdaten) — echter Inhalt verlässt den Server nie. Kein Bypass.
- * Optik: stark verschwommener "da-steckt-mehr-drin"-Hintergrund, Schloss + CTA
- * liegen DIREKT darüber (keine zweite Box).
+ *
+ * ⚙️ Die visuell kritischen Eigenschaften des Demo-Hintergrunds (Farbe, Blur,
+ * Sichtbarkeit) werden BEWUSST inline gesetzt, damit KEINE übergeordnete/globale
+ * CSS-Regel sie überschreiben oder ausblenden kann (22.06. — Demo-Text war live
+ * unsichtbar trotz korrektem DOM; Inline-Styles schlagen jede Stylesheet-Regel).
  */
 export interface GatedCounts {
   risks?: number;
@@ -26,7 +29,7 @@ interface Props {
 }
 
 // Generische, plausibel klingende Demo-Zeilen — NICHT der echte (server-seitig
-// entfernte) Analysetext. Nur als stark verschwommene Andeutung im Hintergrund.
+// entfernte) Analysetext. Nur als verschwommene Andeutung im Hintergrund.
 const DEMO_ITEMS: { dot: string; title: string; lines: string[] }[] = [
   {
     dot: "#ef4444",
@@ -62,6 +65,28 @@ const DEMO_ITEMS: { dot: string; title: string; lines: string[] }[] = [
   },
 ];
 
+// Inline-Styles (überschreiben jede Stylesheet-Regel) für den Demo-Hintergrund.
+const blurStyle: React.CSSProperties = {
+  filter: "blur(3.5px)",
+  opacity: 1,
+  padding: "22px 22px 28px",
+  display: "flex",
+  flexDirection: "column",
+  gap: 16,
+  userSelect: "none",
+  pointerEvents: "none",
+};
+const dotStyle = (bg: string): React.CSSProperties => ({
+  width: 11,
+  height: 11,
+  borderRadius: "50%",
+  marginTop: 5,
+  flex: "none",
+  background: bg,
+});
+const titleStyle: React.CSSProperties = { fontSize: 15, fontWeight: 700, color: "#0f172a", WebkitTextFillColor: "#0f172a" };
+const lineStyle: React.CSSProperties = { fontSize: 13.5, lineHeight: 1.55, color: "#334155", WebkitTextFillColor: "#334155" };
+
 const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, onUnlock }) => {
   const moreRisks = Math.max(0, (counts.risks || 0) - (counts.risksShown || 0));
 
@@ -80,22 +105,22 @@ const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, onUnlock }) => {
 
   return (
     <div className={styles.wrap}>
-      {/* Stark verschwommener Demo-Text (aria-hidden, generisch, kein echter Inhalt) */}
-      <div className={styles.blur} aria-hidden={true}>
+      {/* Verschwommener Demo-Text — visuell kritische Props inline (siehe Kommentar oben) */}
+      <div className={styles.blur} style={blurStyle}>
         {DEMO_ITEMS.map((it, i) => (
-          <div key={i} className={styles.demoRow}>
-            <span className={styles.demoDot} style={{ background: it.dot }} />
-            <div className={styles.demoBody}>
-              <div className={styles.demoTitle}>{it.title}</div>
+          <div key={i} style={{ display: "flex", gap: 12 }}>
+            <span style={dotStyle(it.dot)} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <div style={titleStyle}>{it.title}</div>
               {it.lines.map((l, j) => (
-                <div key={j} className={styles.demoLine}>{l}</div>
+                <div key={j} style={lineStyle}>{l}</div>
               ))}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Schloss + CTA DIREKT über dem Blur — keine zweite Box */}
+      {/* Schloss + CTA direkt über dem Blur */}
       <div className={styles.overlay}>
         <div className={styles.lockBadge}><Lock size={22} /></div>
         <h3 className={styles.title}>Vollständige Analyse freischalten</h3>
