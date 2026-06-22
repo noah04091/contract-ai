@@ -1,4 +1,6 @@
-/* Freemium-Tease — Frosted-Glass-Teaser. Verschwommene Deko-Platzhalter + scharfes Schloss-Overlay. */
+/* Freemium-Tease — Frosted-Glass-Teaser.
+   Verschwommener, echt aussehender Demo-Text + scharfe, lesbare Unlock-Karte darüber.
+   Der Text unten ist GENERISCH (kein echter Inhalt) — siehe LockedAnalysisUpsell.tsx. */
 .wrap {
   position: relative;
   border: 1px solid #e6ecf6;
@@ -6,13 +8,13 @@
   overflow: hidden;
   margin: 18px 0;
   background: #ffffff;
-  min-height: 290px;
+  min-height: 330px;
 }
 
-/* Verschwommene Dummy-„Risiko-Karten" im Hintergrund (rein dekorativ, kein echter Text) */
+/* Verschwommener Demo-Hintergrund — sieht aus wie echte Analyse-Karten, ist aber Platzhalter */
 .blur {
   filter: blur(5px);
-  opacity: 0.45;
+  opacity: 0.6;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -21,64 +23,75 @@
   pointer-events: none;
 }
 
-.ghostCard {
+.demoCard {
+  display: flex;
+  gap: 12px;
   border: 1px solid #eef2f8;
   border-radius: 10px;
   padding: 14px 16px;
   background: #fafbfd;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
 }
 
-.ghostHeadRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.ghostDot {
+.demoDot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #cbd5e1;
+  margin-top: 5px;
   flex: none;
 }
 
-.ghostBar {
-  height: 11px;
-  border-radius: 6px;
-  background: #d7dee8;
+.demoBody {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.ghostLine {
-  height: 9px;
-  border-radius: 5px;
-  background: #e6ebf2;
+.demoTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
 }
 
-/* Scharfes, lesbares Overlay über dem Blur */
+.demoLine {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+/* Leichter Schleier, damit der Demo-Text durchscheint, aber die Unlock-Karte trotzdem trägt */
 .overlay {
   position: absolute;
   inset: 0;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
   padding: 24px;
-  background: radial-gradient(120% 75% at 50% 50%, rgba(255, 255, 255, 0.93) 38%, rgba(255, 255, 255, 0.8) 100%);
+  background: linear-gradient(to bottom, rgba(248, 250, 252, 0.45) 0%, rgba(248, 250, 252, 0.8) 100%);
+}
+
+/* Scharfe weiße Karte — hier ist alles gestochen lesbar */
+.lockCard {
+  background: #ffffff;
+  border: 1px solid #e6ecf6;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.13);
+  padding: 22px 26px;
+  max-width: 380px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .lockBadge {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, #eff4ff 0%, #e0e9fb 100%);
   color: #2563eb;
-  margin-bottom: 14px;
+  margin-bottom: 13px;
   box-shadow: 0 1px 2px rgba(37, 99, 235, 0.12);
 }
 
@@ -93,7 +106,7 @@
   font-size: 13.5px;
   color: #64748b;
   margin: 0 0 18px;
-  max-width: 380px;
+  max-width: 320px;
   line-height: 1.55;
 }
 
@@ -125,6 +138,8 @@
 }
 
 @media (max-width: 640px) {
-  .wrap { min-height: 250px; }
+  .wrap { min-height: 300px; }
+  .overlay { padding: 16px; }
+  .lockCard { padding: 20px; }
   .cta { width: 100%; justify-content: center; }
 }

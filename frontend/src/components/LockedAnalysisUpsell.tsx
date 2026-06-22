@@ -3,12 +3,13 @@ import { Lock, ArrowRight } from "lucide-react";
 import styles from "./LockedAnalysisUpsell.module.css";
 
 /**
- * Freemium-Tease — Frosted-Glass-Teaser (Phase 3, 20.06.2026).
+ * Freemium-Tease — Frosted-Glass-Teaser (Phase 3, 20.06.2026; Optik 22.06.2026).
  * Wird angezeigt, wenn das Backend die Analyse für einen Free-User redigiert hat
- * (contract.gated === true). Die echten Inhalte sind server-seitig ENTFERNT — hier
- * liegen nur DEKORATIVE, verschwommene Platzhalter (kein echter Text → kein Bypass),
- * darüber ein scharfes Schloss-Overlay mit "Jetzt freischalten"-CTA.
- * Stil: ruhig, blau, professionell (Stripe/DocuSign-Niveau).
+ * (contract.gated === true). Die echten Inhalte sind server-seitig ENTFERNT.
+ *
+ * 🔒 SICHERHEIT: Der verschwommene Text unten ist GENERISCHER Demo-Platzhalter
+ * (keine echten Vertragsdaten) — er deutet nur "da ist mehr" an und macht neugierig.
+ * Echter Inhalt verlässt den Server nie → kein CSS-/Quelltext-Bypass.
  */
 export interface GatedCounts {
   risks?: number;
@@ -22,6 +23,35 @@ interface Props {
   counts?: GatedCounts;
   onUnlock?: () => void;
 }
+
+// Generische, plausibel klingende Demo-Zeilen — NICHT der echte (server-seitig
+// entfernte) Analysetext. Nur verschwommene "da-steckt-mehr-drin"-Andeutung.
+const DEMO_ITEMS: { dot: string; title: string; lines: string[] }[] = [
+  {
+    dot: "#ef4444",
+    title: "Weitreichende Haftungsbegrenzung zu Ihren Lasten",
+    lines: [
+      "Die Klausel schließt die Haftung des Anbieters bis auf grobe Fahrlässigkeit aus — im Streitfall ein erhebliches wirtschaftliches Risiko für Sie.",
+      "Eine Nachverhandlung dieser Passage wird dringend empfohlen.",
+    ],
+  },
+  {
+    dot: "#f59e0b",
+    title: "Automatische Verlängerung um jeweils 12 Monate",
+    lines: [
+      "Ohne fristgerechte Kündigung verlängert sich der Vertrag stillschweigend.",
+      "Eine kürzere Verlängerungsperiode wäre für Sie deutlich vorteilhafter.",
+    ],
+  },
+  {
+    dot: "#8b5cf6",
+    title: "Empfehlung: Zahlungsziele und Fristen anpassen",
+    lines: [
+      "Die vereinbarten Zahlungsziele sind knapp bemessen und einseitig ausgestaltet.",
+      "Mehr Spielraum verschafft Ihnen spürbar bessere Liquidität.",
+    ],
+  },
+];
 
 const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, onUnlock }) => {
   const moreRisks = Math.max(0, (counts.risks || 0) - (counts.risksShown || 0));
@@ -41,32 +71,32 @@ const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, onUnlock }) => {
 
   return (
     <div className={styles.wrap}>
-      {/* Dekorativer, verschwommener Platzhalter — KEIN echter Inhalt (server-seitig gesperrt) */}
+      {/* Verschwommener Demo-Text (aria-hidden, generisch, kein echter Inhalt) */}
       <div className={styles.blur} aria-hidden={true}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className={styles.ghostCard}>
-            <div className={styles.ghostHeadRow}>
-              <span className={styles.ghostDot} />
-              <span
-                className={styles.ghostBar}
-                style={{ width: i === 0 ? "55%" : i === 1 ? "44%" : "62%" }}
-              />
+        {DEMO_ITEMS.map((it, i) => (
+          <div key={i} className={styles.demoCard}>
+            <span className={styles.demoDot} style={{ background: it.dot }} />
+            <div className={styles.demoBody}>
+              <div className={styles.demoTitle}>{it.title}</div>
+              {it.lines.map((l, j) => (
+                <div key={j} className={styles.demoLine}>{l}</div>
+              ))}
             </div>
-            <span className={styles.ghostLine} style={{ width: "94%" }} />
-            <span className={styles.ghostLine} style={{ width: "80%" }} />
           </div>
         ))}
       </div>
 
-      {/* Scharfes Overlay mit Schloss + CTA */}
+      {/* Scharfe, lesbare Unlock-Karte über dem Blur */}
       <div className={styles.overlay}>
-        <div className={styles.lockBadge}><Lock size={22} /></div>
-        <h3 className={styles.title}>Vollständige Analyse freischalten</h3>
-        <p className={styles.sub}>{summaryLine}</p>
-        <button className={styles.cta} onClick={handle}>
-          Jetzt freischalten <ArrowRight size={17} />
-        </button>
-        <div className={styles.note}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+        <div className={styles.lockCard}>
+          <div className={styles.lockBadge}><Lock size={20} /></div>
+          <h3 className={styles.title}>Vollständige Analyse freischalten</h3>
+          <p className={styles.sub}>{summaryLine}</p>
+          <button className={styles.cta} onClick={handle}>
+            Jetzt freischalten <ArrowRight size={17} />
+          </button>
+          <div className={styles.note}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+        </div>
       </div>
     </div>
   );
