@@ -486,7 +486,7 @@ const HomeRedesign = () => {
         {/* ===== HERO ===== */}
         <section id="top" style={s("position:relative;padding:84px 24px 72px")}>
           <div style={s("position:absolute;inset:0;pointer-events:none;background:radial-gradient(620px 420px at 18% 2%,rgba(99,102,241,0.16),transparent 60%),radial-gradient(560px 420px at 88% 8%,rgba(139,92,246,0.14),transparent 60%),radial-gradient(560px 460px at 64% 96%,rgba(6,182,212,0.10),transparent 62%)")}></div>
-          <div style={s("position:relative;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:52px;align-items:center")}>
+          <div style={s("position:relative;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:52px;align-items:center")}>
             <div>
               <div style={s("display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border:1px solid rgba(37,99,235,0.2);background:rgba(37,99,235,0.06);border-radius:999px;margin-bottom:24px")}>
                 <span style={s("display:inline-flex;align-items:center;gap:5px;background:#2563eb;color:#fff;font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px")}>Neu</span>
@@ -576,7 +576,7 @@ const HomeRedesign = () => {
         {/* ===== TRUSTBAR ===== */}
         <section style={s("padding:8px 24px 56px")}>
           <div style={s("max-width:1100px;margin:0 auto")} className="ca-lp-reveal">
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px")}>
+            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:14px")}>
               {[
                 { c: "#10b981", t: "DSGVO-konform", icon: <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></> },
                 { c: "#2563eb", t: "Serverstandort Frankfurt", icon: <><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M2 9h20"></path></> },
@@ -594,7 +594,7 @@ const HomeRedesign = () => {
 
         {/* ===== STATS ===== */}
         <section style={s("padding:56px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 28%,#eef3ff 72%,#ffffff)")}>
-          <div style={s("max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px")} className="ca-lp-stagger">
+          <div style={s("max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:18px")} className="ca-lp-stagger">
             {[
               { to: 500, suffix: "+", txt: "500+", label: "Zufriedene Kunden" },
               { to: 1500, suffix: "+", txt: "1.500+", label: "Verträge analysiert" },
@@ -620,7 +620,7 @@ const HomeRedesign = () => {
               <h2 style={s("font-size:clamp(32px,4vw,50px);font-weight:600;letter-spacing:-0.03em;line-height:1.04;margin:14px 0 0;color:#0c0c10")}>Unsere KI-Tools für<br /><span style={s(GRAD)}>Ihre Verträge</span></h2>
               <p style={s("font-size:18px;line-height:1.6;color:#52525b;margin:16px 0 0")}>Erleben Sie die Zukunft des Vertragsmanagements.</p>
             </div>
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:18px;margin-top:48px")} className="ca-lp-stagger">
+            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(258px,100%),1fr));gap:18px;margin-top:48px")} className="ca-lp-stagger">
               {featureCards.map((f, i) => (
                 <Link key={i} to={f.to} className="ca-lp-card" style={s("text-decoration:none;background:#fff;border:1px solid rgba(17,17,20,0.08);border-radius:16px;padding:26px;display:block")}>
                   <div style={s(`width:44px;height:44px;border-radius:11px;background:${f.bg};color:${f.color};display:flex;align-items:center;justify-content:center;margin-bottom:18px`)}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{f.icon}</svg></div>
@@ -661,7 +661,7 @@ const HomeRedesign = () => {
         {/* ===== VERTRAGSVERWALTUNG (01) ===== */}
         <section style={s("padding:80px 24px 28px;background:linear-gradient(180deg,#ffffff,#eef3ff 15%)")}>
           <div style={s("max-width:1140px;margin:0 auto")} className="ca-lp-reveal">
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
+            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
               <div>
                 <span style={s("display:inline-flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#eef3ff;border:1px solid rgba(37,99,235,0.2);padding:6px 13px;border-radius:999px")}><span style={s("font-weight:700;color:#2563eb")}>01</span><span style={s("width:1px;height:11px;background:rgba(37,99,235,0.3)")}></span>Vertragsverwaltung</span>
                 <h2 style={s("font-size:clamp(26px,3vw,38px);font-weight:600;letter-spacing:-0.025em;line-height:1.08;margin:16px 0 0;color:#0c0c10")}>Ihre Verträge.<br /><span style={s(GRAD)}>Perfekt organisiert.</span></h2>
@@ -708,7 +708,7 @@ const HomeRedesign = () => {
         {/* ===== E-MAIL UPLOAD (02) ===== */}
         <section style={s("padding:28px 24px 88px;background:linear-gradient(180deg,#eef3ff 80%,#ffffff)")}>
           <div style={s("max-width:1140px;margin:0 auto")} className="ca-lp-reveal">
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
+            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
               <div style={s("order:1;display:flex;flex-direction:column;align-items:center;gap:18px")}>
                 <div style={s("width:100%;max-width:330px;background:#fff;border:1px solid rgba(17,17,20,0.07);border-radius:13px;padding:16px")}>
                   <div style={s("display:flex;align-items:center;gap:9px;margin-bottom:13px")}><span style={s("width:30px;height:30px;border-radius:8px;background:#2563eb;display:flex;align-items:center;justify-content:center")}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></span><div><div style={s("font-size:12.5px;font-weight:600;color:#0c0c10")}>Neue E-Mail</div><div style={s("font-size:11px;color:#9a9aa3;font-family:'Geist Mono',monospace")}>an: upload@contract-ai.de</div></div></div>
@@ -747,7 +747,7 @@ const HomeRedesign = () => {
             </div>
 
             {showcase.map((row, i) => (
-              <div key={i} style={s(`display:grid;grid-template-columns:repeat(auto-fit,minmax(440px,1fr));gap:48px;align-items:center;margin-top:${i === 0 ? "64px" : "72px"}`)} className="ca-lp-reveal">
+              <div key={i} style={s(`display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:48px;align-items:center;margin-top:${i === 0 ? "64px" : "72px"}`)} className="ca-lp-reveal">
                 <div style={s(row.reverse ? "order:2" : "")}>
                   <div style={s(`display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:${row.eyebrowColor};background:${row.eyebrowBg};border:1px solid ${row.eyebrowBorder};padding:5px 10px;border-radius:999px`)}>{row.eyIcon}{row.eyebrow}</div>
                   <h3 style={s("font-size:28px;font-weight:600;letter-spacing:-0.02em;color:#0c0c10;margin:18px 0 0")}>{row.titlePre}<span style={s(GRAD)}>{row.titleAccent}</span></h3>
@@ -775,7 +775,7 @@ const HomeRedesign = () => {
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Und vieles mehr</span>
               <h2 style={s("font-size:clamp(26px,3vw,38px);font-weight:600;letter-spacing:-0.02em;line-height:1.08;margin:14px 0 0;color:#0c0c10")}>Weitere <span style={s(GRAD)}>leistungsstarke Tools</span></h2>
             </div>
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:40px")} className="ca-lp-stagger">
+            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px;margin-top:40px")} className="ca-lp-stagger">
               {tools.map((t, i) => (
                 <Link key={i} to={t.to} className="ca-lp-toolcard" style={s("display:flex;align-items:center;gap:14px;background:#fff;border:1px solid rgba(17,17,20,0.08);border-radius:14px;padding:18px;text-decoration:none")}>
                   <span style={s("width:40px;height:40px;border-radius:10px;background:rgba(37,99,235,0.08);color:#2563eb;display:flex;align-items:center;justify-content:center;flex:none")}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{t.icon}</svg></span>
@@ -797,7 +797,7 @@ const HomeRedesign = () => {
               <h2 style={s("font-size:clamp(28px,3.4vw,44px);font-weight:600;letter-spacing:-0.025em;line-height:1.06;margin:14px 0 0;color:#0c0c10")}>Beliebte <span style={s(GRAD)}>Vertrags-Prüfungen</span></h2>
               <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Spezialisierte Analysen für die wichtigsten deutschen Vertragstypen — auf Basis aktueller BGH- und BAG-Rechtsprechung.</p>
             </div>
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px;margin-top:44px")} className="ca-lp-stagger">
+            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(250px,100%),1fr));gap:18px;margin-top:44px")} className="ca-lp-stagger">
               {types.map((t, i) => (
                 <Link key={i} to={t.to} className="ca-lp-card ca-lp-card-type" style={s("display:block;padding:28px;background:#fff;border:1px solid rgba(17,17,20,0.08);border-radius:18px;text-decoration:none")}>
                   <div style={s(`width:46px;height:46px;border-radius:12px;background:${t.bg};color:${t.color};display:flex;align-items:center;justify-content:center;margin-bottom:16px`)}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{t.icon}</svg></div>
@@ -905,7 +905,7 @@ const HomeRedesign = () => {
                 <span style={s("margin-left:8px;margin-right:6px;display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#059669;background:#ecfdf3;border:1px solid #c8f0d8;border-radius:999px;padding:4px 10px")}>2 Monate gratis</span>
               </div>
             </div>
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:20px;margin-top:48px;align-items:stretch")} className="ca-lp-stagger">
+            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr));gap:20px;margin-top:48px;align-items:stretch")} className="ca-lp-stagger">
               {/* Starter */}
               <div className="ca-lp-pricecard" style={s("background:#fff;border:1px solid rgba(17,17,20,0.1);border-radius:20px;padding:32px;display:flex;flex-direction:column")}>
                 <h3 style={s("font-size:17px;font-weight:600;color:#0c0c10;margin:0")}>Starter</h3>
