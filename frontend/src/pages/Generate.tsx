@@ -3551,6 +3551,9 @@ export default function Generate() {
   const [formData, setFormData] = useState<FormDataType>({});
   const [contractText, setContractText] = useState<string>("");
   const [generatedHTML, setGeneratedHTML] = useState<string>("");
+  // 🔒 Free-Tease beim Formular-Generieren: Vertrag wird erstellt, aber Volltext/Download gesperrt.
+  const [gatedResult, setGatedResult] = useState<boolean>(false);
+  const [freeUsed, setFreeUsed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
@@ -3890,7 +3893,7 @@ export default function Generate() {
 
   // 📄 Auto-load PDF preview when Step 3 is reached
   useEffect(() => {
-    if (currentStep === 3 && contractText && !pdfPreviewUrl && !isGeneratingPreview) {
+    if (currentStep === 3 && contractText && !gatedResult && !pdfPreviewUrl && !isGeneratingPreview) {
       console.log('✅ Step 3 reached - auto-loading PDF preview');
       // ⏳ Bei wiederhergestelltem Draft mit savedContractId: PDF existiert bereits → sofort laden
       // ⏳ Bei neuem Vertrag: Warte 8 Sekunden damit Auto-PDF im Backend sicher fertig wird
@@ -4313,6 +4316,8 @@ export default function Generate() {
     setSaved(false);
     setSavedContractId(null);
     setShowPreview(false);
+    setGatedResult(false);
+    setFreeUsed(false);
 
     setSelectedType(type);
     setContractData((prev: any) => ({
@@ -4516,17 +4521,42 @@ export default function Generate() {
   const handleGenerate = async () => {
     if (!selectedType) return;
 
-    // 🔓 Free: ausgefülltes Formular → Beschreibung → 1 echte Gratis-Generierung im Tease (+ Sperr-Karte).
-    // Nutzt die bereits gebaute, gedeckelte Premium-Generierung (premiumGenerate). Paid-Pfad unten unverändert.
+    // 🔒 Free: Vertrag wird NORMAL erstellt (echte Daten), aber gesperrt angezeigt — Volltext/
+    // Download/Vollansicht erst nach Freischaltung. KEIN Chat. 1 echte Gratis-Generierung (server-
+    // gedeckelt). Nutzt premiumGenerate /generate (gibt für Free nur eine Vorschau zurück).
     if (userPlan === 'free') {
       const fields = (selectedType.fields || []) as Array<{ name: string; label?: string }>;
       const lines = fields
         .map((f) => (formData[f.name] ? `${f.label || f.name}: ${formData[f.name]}` : null))
         .filter(Boolean);
       const desc = `Bitte erstelle einen ${selectedType.name}.` + (lines.length ? `\n${lines.join("\n")}` : "");
-      setPremiumSeed(desc.trim());
-      setPremiumAutoSend(true);
-      setPremiumMode(true);
+      setLoading(true);
+      setGatedResult(false);
+      setFreeUsed(false);
+      try {
+        const res = await fetch("/api/contracts/premium/generate", {
+          method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: [{ role: "user", content: desc }], contractType: selectedType.name }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 403 && (data.freeUsed || data.upgradeRequired)) {
+          setFreeUsed(true);
+          setContractText("");
+          setGatedResult(true);
+          setCurrentStep(3);
+          return;
+        }
+        if (!res.ok || !data.success) throw new Error(data.message || "Erstellung fehlgeschlagen");
+        // Vorschau anzeigen (Volltext kommt server-seitig NICHT) + Sperr-Karte
+        setContractText(data.previewText || "");
+        setSavedContractId(data.contractId || null);
+        setGatedResult(true);
+        setCurrentStep(3);
+      } catch (e) {
+        toast.error("Erstellung gerade nicht möglich — bitte erneut versuchen.");
+      } finally {
+        setLoading(false);
+      }
       return;
     }
 
@@ -6874,7 +6904,43 @@ export default function Generate() {
                 )}
 
                 {/* Step 3: Generated Contract - PROFESSIONAL REDESIGN */}
-                {currentStep === 3 && (
+                {/* 🔒 Free-Tease: Vertrag erstellt, aber gesperrt (Volltext/Download erst nach Freischaltung) */}
+                {currentStep === 3 && gatedResult && (
+                  <motion.div
+                    key="step3gated"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={styles.step3ContainerNew}
+                  >
+                    <div style={{ maxWidth: 760, margin: "0 auto", width: "100%" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                        <CheckCircle size={22} color="#16a34a" />
+                        <h2 style={{ margin: 0, fontSize: 18, color: "#0f172a" }}>Dein {selectedType?.name || "Vertrag"} ist fertig!</h2>
+                      </div>
+                      <div style={{ position: "relative", border: "1px solid #e6ecf6", borderRadius: 14, overflow: "hidden", background: "#fff", minHeight: 340 }}>
+                        <div style={{ filter: "blur(4px)", opacity: 0.75, padding: 22, whiteSpace: "pre-wrap", fontSize: 13.5, lineHeight: 1.6, color: "#334155", userSelect: "none", pointerEvents: "none", maxHeight: 320, overflow: "hidden" }}>
+                          {freeUsed ? "" : (contractText || "")}
+                        </div>
+                        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24, background: "radial-gradient(120% 70% at 50% 50%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.35) 55%, rgba(255,255,255,0.08) 100%)" }}>
+                          <div style={{ width: 52, height: 52, borderRadius: 14, display: "grid", placeItems: "center", background: "linear-gradient(135deg,#eff4ff,#e0e9fb)", color: "#2563eb", marginBottom: 13, fontSize: 24 }}>🔒</div>
+                          <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: "0 0 6px", textShadow: "0 0 8px #fff" }}>
+                            {freeUsed ? "Kostenlose Probe genutzt" : "Vertrag fertig — jetzt freischalten"}
+                          </h3>
+                          <p style={{ fontSize: 13.5, color: "#334155", margin: "0 0 18px", maxWidth: 380, lineHeight: 1.55, textShadow: "0 0 8px #fff" }}>
+                            {freeUsed
+                              ? "Du hast deine kostenlose Probe-Generierung bereits genutzt. Schalte frei, um unbegrenzt Verträge zu erstellen, vollständig zu sehen & herunterzuladen."
+                              : "Dein Vertrag wurde erstellt. Schalte frei, um ihn vollständig zu sehen, als PDF herunterzuladen und unterschreiben zu lassen."}
+                          </p>
+                          <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+                            Jetzt freischalten →
+                          </a>
+                          <div style={{ fontSize: 12, color: "#64748b", marginTop: 10, textShadow: "0 0 8px #fff" }}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+                {currentStep === 3 && !gatedResult && (
                   <motion.div
                     key="step3"
                     initial={{ opacity: 0, y: 20 }}

@@ -162,9 +162,13 @@ function resolveDesign(design) {
   return DESIGNS[design] || DESIGNS.klassisch;
 }
 
-function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = null) {
+function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = null, logoDataUrl = null) {
   const d = resolveDesign(design);
   const clean = sanitizeForPdf(text);
+  let logoBuf = null;
+  if (logoDataUrl && /^data:image\/(png|jpe?g);base64,/.test(logoDataUrl)) {
+    try { logoBuf = Buffer.from(logoDataUrl.split(",")[1], "base64"); } catch (_) { logoBuf = null; }
+  }
   return new Promise((resolve, reject) => {
     const M = 64;
     const doc = new PDFDocument({ size: "A4", margins: { top: M, bottom: M + 10, left: M, right: M }, bufferPages: true });
@@ -187,13 +191,17 @@ function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = n
       }
       doc.rect(0, 0, doc.page.width, 110).fill(d.bandDark);
       doc.rect(0, 110, doc.page.width, 3).fill(d.accent);
-      doc.font("Helvetica").fontSize(8).fillColor(d.eyebrow || "#b9c6db").text("VERTRAGSDOKUMENT", M, 36, { width: W, characterSpacing: 3 });
-      doc.font("Helvetica-Bold").fontSize(16).fillColor("#ffffff").text(title, M, 54, { width: W });
+      const titleW = logoBuf ? W - 60 : W;
+      if (logoBuf) { try { doc.image(logoBuf, doc.page.width - M - 46, 32, { fit: [46, 46] }); } catch (_) { /* ignore */ } }
+      doc.font("Helvetica").fontSize(8).fillColor(d.eyebrow || "#b9c6db").text("VERTRAGSDOKUMENT", M, 36, { width: titleW, characterSpacing: 3 });
+      doc.font("Helvetica-Bold").fontSize(16).fillColor("#ffffff").text(title, M, 54, { width: titleW });
       doc.y = 132;
     } else {
-      // Dezente Akzentlinie oben – KEIN Plattform-Branding im Dokument des Nutzers
-      doc.moveTo(M, M).lineTo(M + W, M).lineWidth(1.4).strokeColor(d.rule || d.accent).stroke();
-      doc.y = M + 14;
+      // Optionales Logo oben links, dann dezente Akzentlinie – KEIN Plattform-Branding
+      let topY = M;
+      if (logoBuf) { try { doc.image(logoBuf, M, M, { fit: [48, 48] }); } catch (_) { /* ignore */ } topY = M + 58; }
+      doc.moveTo(M, topY).lineTo(M + W, topY).lineWidth(1.4).strokeColor(d.rule || d.accent).stroke();
+      doc.y = topY + 14;
     }
     for (let i = startIdx; i < lines.length; i++) {
       const line = lines[i].replace(/\s+$/g, "");
@@ -606,7 +614,7 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
 // POST /pdf — Premium-PDF (AVV-Stil) aus gespeichertem Vertrag
 router.post("/pdf", async (req, res) => {
   try {
-    const { contractId, design, signature } = req.body || {};
+    const { contractId, design, signature, logo } = req.body || {};
     if (!contractId) return res.status(400).json({ success: false, error: "NO_ID" });
     await ensureDb();
     const c = await contractsCollection.findOne({
@@ -615,7 +623,8 @@ router.post("/pdf", async (req, res) => {
     });
     if (!c) return res.status(404).json({ success: false, error: "NOT_FOUND" });
     const sig = typeof signature === "string" && signature.startsWith("data:image/") && signature.length < 600000 ? signature : null;
-    const pdf = await renderPremiumPdfBuffer(c.content || "", design, sig);
+    const logoVal = typeof logo === "string" && /^data:image\/(png|jpe?g);base64,/.test(logo) && logo.length < 800000 ? logo : null;
+    const pdf = await renderPremiumPdfBuffer(c.content || "", design, sig, logoVal);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="${(c.name || "Vertrag").replace(/[^a-zA-Z0-9 _.-]/g, "_")}.pdf"`);
     return res.end(pdf, "binary");
