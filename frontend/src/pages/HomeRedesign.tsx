@@ -596,7 +596,7 @@ const HomeRedesign = () => {
         <section style={s("padding:56px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 28%,#eef3ff 72%,#ffffff)")}>
           <div style={s("max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px")} className="ca-lp-stagger">
             {[
-              { to: 200, suffix: "+", txt: "200+", label: "Zufriedene Kunden" },
+              { to: 500, suffix: "+", txt: "500+", label: "Zufriedene Kunden" },
               { to: 1500, suffix: "+", txt: "1.500+", label: "Verträge analysiert" },
               { to: 75000, suffix: "€+", txt: "75.000€+", label: "Eingespart durch Optimierung" },
               { to: 99, suffix: "%", txt: "99%", label: "Kundenzufriedenheit" },
