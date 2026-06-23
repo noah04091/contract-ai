@@ -1,0 +1,90 @@
+/* ============================================================
+   Landing-Redesign — STRIKT gescopet unter .ca-lp-page
+   Kein einziger globaler/Element-/Root-Selektor (außer @font-face
+   und @keyframes, die per Definition nur bei Nutzung wirken).
+   Lehre aus dem CSS-Leck am 23.06.2026.
+   ============================================================ */
+
+/* --- Geist (self-hosted, public/fonts) --- */
+@font-face{font-family:'Geist';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/geist-400.woff2') format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/geist-500.woff2') format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/geist-600.woff2') format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/geist-700.woff2') format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/geist-800.woff2') format('woff2')}
+
+/* --- Wrapper: Font + Basis nur hier --- */
+.ca-lp-page{font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;color:#111114;background:#ffffff;overflow-x:hidden}
+.ca-lp-page *{box-sizing:border-box}
+.ca-lp-page ::selection{background:rgba(37,99,235,0.18)}
+
+/* --- Keyframes (Namen ca-* ; global per Natur, aber nur referenziert in .ca-lp-page) --- */
+@keyframes caHeroUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+@keyframes caMarquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes caMarqueeRev{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes caFloatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes caPulseDot{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes caSigDraw{to{stroke-dashoffset:0}}
+@keyframes caSigDot{to{opacity:1;transform:scale(1)}}
+@keyframes caScan{0%{top:-12%}100%{top:108%}}
+@keyframes caFloatSlow{0%,100%{transform:translate(0,0)}50%{transform:translate(0,-18px)}}
+@keyframes caDriftA{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(12px,-20px) rotate(7deg)}}
+@keyframes caDriftB{0%,100%{transform:translate(0,0) rotate(0deg)}50%{transform:translate(-14px,16px) rotate(-6deg)}}
+
+/* --- Scroll-Reveal (nur aktiv wenn JS .ca-lp-anim gesetzt hat → fail-safe sichtbar) --- */
+.ca-lp-page.ca-lp-anim .ca-lp-reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
+.ca-lp-page.ca-lp-anim .ca-lp-reveal.ca-in{opacity:1;transform:none}
+.ca-lp-page.ca-lp-anim .ca-lp-stagger>*{opacity:0;transform:translateY(22px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1)}
+.ca-lp-page.ca-lp-anim .ca-lp-stagger.ca-in>*{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.ca-lp-page.ca-lp-anim .ca-lp-reveal,.ca-lp-page.ca-lp-anim .ca-lp-stagger>*{opacity:1 !important;transform:none !important;transition:none}}
+
+/* --- Link-Mikrointeraktion: Pfeil wandert --- */
+.ca-lp-page a:hover .ca-lp-arrow{transform:translateX(4px)}
+.ca-lp-page .ca-lp-arrow{transition:transform .2s ease}
+
+/* --- Buttons --- */
+.ca-lp-page .ca-lp-btn-primary{transition:background .2s,transform .2s,box-shadow .2s}
+.ca-lp-page .ca-lp-btn-primary:hover{background:#1d4ed8 !important;transform:translateY(-2px);box-shadow:0 14px 34px rgba(37,99,235,0.34)}
+.ca-lp-page .ca-lp-btn-secondary{transition:border-color .2s,background .2s}
+.ca-lp-page .ca-lp-btn-secondary:hover{border-color:#c7c8d0 !important;background:#fafafa !important}
+
+/* --- Karten (Features, Vertragstypen) --- */
+.ca-lp-page .ca-lp-card{transition:transform .25s,box-shadow .25s,border-color .25s}
+.ca-lp-page .ca-lp-card:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(17,17,20,0.08);border-color:rgba(37,99,235,0.28)}
+.ca-lp-page .ca-lp-card-type:hover{transform:translateY(-4px);box-shadow:0 18px 40px rgba(37,99,235,0.12);border-color:rgba(37,99,235,0.28)}
+.ca-lp-page .ca-lp-toolcard{transition:border-color .2s,box-shadow .2s,transform .2s}
+.ca-lp-page .ca-lp-toolcard:hover{border-color:rgba(37,99,235,0.28);box-shadow:0 12px 28px rgba(17,17,20,0.07);transform:translateY(-2px)}
+
+/* --- Preis-Karten --- */
+.ca-lp-page .ca-lp-pricecard{transition:transform .25s,box-shadow .25s,border-color .25s}
+.ca-lp-page .ca-lp-pricecard:hover{transform:translateY(-6px);box-shadow:0 26px 52px -30px rgba(17,17,20,0.22);border-color:rgba(37,99,235,0.25)}
+.ca-lp-page .ca-lp-pricecard-pop{transition:transform .25s,box-shadow .25s}
+.ca-lp-page .ca-lp-pricecard-pop:hover{transform:translateY(-8px);box-shadow:0 44px 84px -30px rgba(37,99,235,0.55)}
+.ca-lp-page .ca-lp-toggle-btn{font-family:inherit;border:none;cursor:pointer;font-size:14px;font-weight:500;padding:9px 18px;border-radius:9px;background:transparent;color:#52525b;transition:background .2s,color .2s,box-shadow .2s}
+.ca-lp-page .ca-lp-toggle-btn.ca-active{background:#fff;color:#0c0c10;box-shadow:0 1px 3px rgba(17,17,20,0.12)}
+
+/* --- FAQ --- */
+.ca-lp-page details.ca-lp-faq summary{list-style:none}
+.ca-lp-page details.ca-lp-faq summary::-webkit-details-marker{display:none}
+.ca-lp-page details.ca-lp-faq .ca-lp-faq-chev{transition:transform .28s ease}
+.ca-lp-page details.ca-lp-faq[open] .ca-lp-faq-chev{transform:rotate(180deg)}
+.ca-lp-page details.ca-lp-faq[open]{border-color:rgba(37,99,235,0.3) !important;box-shadow:0 14px 34px -22px rgba(37,99,235,0.4)}
+.ca-lp-page details.ca-lp-faq summary:hover .ca-lp-faq-q{color:#2563eb}
+
+/* --- Footer-Links / Social --- */
+.ca-lp-page .ca-lp-footer-link{transition:color .15s}
+.ca-lp-page .ca-lp-footer-link:hover{color:#2563eb !important}
+.ca-lp-page .ca-lp-social{transition:color .15s,background .15s,border-color .15s,transform .15s}
+.ca-lp-page .ca-lp-social:hover{color:#fff !important;background:#2563eb !important;border-color:#2563eb !important;transform:translateY(-2px)}
+
+/* --- Text-Link deepen --- */
+.ca-lp-page .ca-lp-textlink{transition:gap .2s,color .2s}
+.ca-lp-page .ca-lp-textlink:hover{color:#1d4ed8}
+
+/* --- Sticky Floating CTA --- */
+.ca-lp-page .ca-lp-floatcta{transition:opacity .3s ease,transform .3s ease,background .2s}
+.ca-lp-page .ca-lp-floatcta.ca-in{opacity:1 !important;transform:translateY(0) !important;pointer-events:auto !important}
+.ca-lp-page .ca-lp-floatcta:hover{background:#1d4ed8}
+
+/* Showcase-Video-Rahmen: Video/Poster füllt den 16:9-Rahmen sauber (kein Kollaps vor dem Laden) */
+.ca-lp-page .ca-lp-video-frame video,
+.ca-lp-page .ca-lp-video-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
