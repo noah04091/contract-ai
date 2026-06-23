@@ -659,14 +659,14 @@ export default function Navbar() {
                         exit={{ opacity: 0, y: 10, scale: 0.98 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
                       >
-                        <div className={styles.megaMenuContent}>
+                        <div className={styles.megaMenuContentSingle}>
                           {contractTypeCategories.map((category, catIndex) => (
                             <div key={catIndex} className={styles.megaMenuCategory}>
                               <div className={styles.megaMenuCategoryHeader}>
                                 <h3 className={styles.megaMenuCategoryTitle}>{category.title}</h3>
                                 <span className={styles.megaMenuCategoryDesc}>{category.description}</span>
                               </div>
-                              <div className={styles.megaMenuFeatures}>
+                              <div className={styles.megaMenuFeaturesGrid}>
                                 {category.features.map((feature, featIndex) => (
                                   <Link
                                     key={featIndex}
@@ -685,7 +685,8 @@ export default function Navbar() {
                             </div>
                           ))}
                         </div>
-                        <div className={styles.megaMenuFooter}>
+                        <div className={`${styles.megaMenuFooter} ${styles.megaMenuFooterSplit}`}>
+                          <span className={styles.megaMenuNote}>Ihr Vertragstyp ist nicht dabei? <strong>Contract&nbsp;AI prüft jeden Vertrag.</strong></span>
                           <Link to="/rechtslexikon" className={styles.megaMenuFooterLink} onClick={() => setTypesMenuOpen(false)}>
                             <span>Rechtslexikon durchsuchen</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1438,6 +1439,7 @@ export default function Navbar() {
                             ))}
                           </div>
                         ))}
+                        <span className={styles.mobileNavNote}>Ihr Vertragstyp ist nicht dabei? Contract&nbsp;AI prüft jeden Vertrag.</span>
                         <Link
                           to="/rechtslexikon"
                           className={styles.mobileNavAllFeatures}
