@@ -147,8 +147,23 @@ const DESIGNS = {
   royal: { style: "executive", body: "Helvetica", bold: "Helvetica-Bold", accent: "#60a5fa", title: "#1e3a8a", bandDark: "#1e3a8a", eyebrow: "#b6c8f0" },
 };
 
+const HEX = /^#[0-9a-fA-F]{3,8}$/;
+// Löst `design` auf: entweder Preset-String ODER frei konfigurierbares Objekt {style, accent, bandDark?, serif?}
+function resolveDesign(design) {
+  if (design && typeof design === "object" && design.style) {
+    const accent = HEX.test(design.accent || "") ? design.accent : "#1f4e8c";
+    if (design.style === "executive") {
+      const bandDark = HEX.test(design.bandDark || "") ? design.bandDark : "#0f2747";
+      return { style: "executive", body: "Helvetica", bold: "Helvetica-Bold", accent, title: bandDark, bandDark, eyebrow: "#cdd9ec" };
+    }
+    const serif = design.style === "kanzlei" || design.serif === true;
+    return { style: "line", body: serif ? "Times-Roman" : "Helvetica", bold: serif ? "Times-Bold" : "Helvetica-Bold", accent, title: "#1a2230", rule: accent };
+  }
+  return DESIGNS[design] || DESIGNS.klassisch;
+}
+
 function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = null) {
-  const d = DESIGNS[design] || DESIGNS.klassisch;
+  const d = resolveDesign(design);
   const clean = sanitizeForPdf(text);
   return new Promise((resolve, reject) => {
     const M = 64;
@@ -447,22 +462,36 @@ router.post("/generate", aiLimiter, async (req, res) => {
     const { messages, contractType } = req.body || {};
     if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ success: false, error: "NO_MESSAGES" });
 
-    // Usage-Limit-Prüfung (1:1 wie generate.js)
+    // Usage-Limit-Prüfung. Free: 1 ECHTE Gratis-Generierung (atomar geclaimt, Refund bei Fehler).
+    let isFree = false, freeClaimed = false;
     try {
       await ensureDb();
       const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
       if (!user) return res.status(401).json({ success: false, message: "Benutzer nicht gefunden." });
       const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
-      if (plan === 'free') return res.status(403).json({ success: false, message: "Die KI-Vertragserstellung ist in den bezahlten Plänen verfügbar.", upgradeRequired: true });
-      const { checkContractLimit } = require('../services/contractUsage');
-      const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
-      if (!allowed) return res.status(403).json({ success: false, message: `Monatliches Generierungslimit erreicht (${limit}).`, limitReached: true, currentUsage: count, limit });
+      if (plan === 'free') {
+        isFree = true;
+        const claim = await usersCollection.updateOne(
+          { _id: new ObjectId(req.user.userId), $or: [{ freeGenerateCount: { $exists: false } }, { freeGenerateCount: { $lt: 1 } }] },
+          { $inc: { freeGenerateCount: 1 }, $set: { freeGenerateAt: new Date() } }
+        );
+        if (claim.modifiedCount === 0) {
+          return res.status(403).json({ success: false, message: "Deine kostenlose Probe-Generierung ist aufgebraucht. Schalte frei, um weitere Verträge zu erstellen.", upgradeRequired: true, freeUsed: true });
+        }
+        freeClaimed = true;
+      } else {
+        const { checkContractLimit } = require('../services/contractUsage');
+        const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
+        if (!allowed) return res.status(403).json({ success: false, message: `Monatliches Generierungslimit erreicht (${limit}).`, limitReached: true, currentUsage: count, limit });
+      }
     } catch (limitErr) {
       console.error("[Premium] Limit-Check Fehler (fail-open):", limitErr.message);
     }
 
+    const refundFree = async () => { if (freeClaimed) { freeClaimed = false; try { await usersCollection.updateOne({ _id: new ObjectId(req.user.userId) }, { $inc: { freeGenerateCount: -1 } }); } catch (_) {} } };
+
     const text = await generateContractText(messages);
-    if (!text || text.length < 200) return res.status(502).json({ success: false, error: "EMPTY", message: "Vertrag konnte nicht erstellt werden." });
+    if (!text || text.length < 200) { await refundFree(); return res.status(502).json({ success: false, error: "EMPTY", message: "Vertrag konnte nicht erstellt werden." }); }
 
     const typeLabel = (contractType || "Vertrag").toString().slice(0, 80);
     const title = `${typeLabel} – ${new Date().toLocaleDateString("de-DE")}`;
@@ -481,6 +510,12 @@ router.post("/generate", aiLimiter, async (req, res) => {
       metadata: { version: "premium_opus_v1", generatedBy: "Claude Opus 4.8", premium: true },
     };
     const ins = await contractsCollection.insertOne(contract);
+    if (isFree) {
+      // 🔒 Free: Vertrag ist gespeichert, aber Volltext + Download erst nach Freischaltung.
+      // Nur eine kurze Vorschau zurückgeben — der VOLLTEXT verlässt den Server NICHT (kein Bypass).
+      const previewText = text.split("\n").slice(0, 14).join("\n");
+      return res.json({ success: true, contractId: ins.insertedId, contractType: typeLabel, title, gated: true, previewText });
+    }
     return res.json({ success: true, contractId: ins.insertedId, contractType: typeLabel, title, contractText: text });
   } catch (e) {
     const status = e.code === "NO_AI_KEY" ? 503 : 502;

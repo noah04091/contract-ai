@@ -19,6 +19,7 @@ import { useAuth } from "../hooks/useAuth";
 
 type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events" | "explain" | "demolock";
 interface CalItem { title: string; date: string; severity?: string }
+type DesignCfg = string | { style: string; accent: string };
 interface ExplainData { summary: string; items: { titel: string; erklaerung: string; rechtsgrundlage: string }[] }
 interface ReviewData { verdict: string; summary: string; checks: { klausel: string; status: string; hinweis: string }[]; empfehlungen: string[] }
 interface ChatMsg {
@@ -404,7 +405,7 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
     setBusy(false);
   }
 
-  async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) {
+  async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) {
     try {
       const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null }) });
       if (!res.ok) throw new Error();
@@ -417,7 +418,7 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
   }
 
   // Zur Unterschrift senden: Premium-PDF → S3 → bestehenden Envelope-Dialog öffnen
-  async function sendForSignature(c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) {
+  async function sendForSignature(c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) {
     const t = toast.loading("Vertrag wird für die Unterschrift vorbereitet …");
     try {
       const pdfRes = await fetch("/api/contracts/premium/pdf", {
@@ -553,7 +554,7 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
   );
 }
 
-function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; busy: boolean }) {
+function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) => void; busy: boolean }) {
   const isUser = m.role === "user";
   const AiAvatar = (
     <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Sparkles size={16} /></div>
@@ -629,8 +630,8 @@ function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend
   );
 }
 
-function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
-  const [design, setDesign] = useState("royal");
+function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) => void }) {
+  const [design, setDesign] = useState<string | { style: string; accent: string }>("royal");
   const [signature, setSignature] = useState<string | null>(null);
   const [showPad, setShowPad] = useState(false);
   const lines = c.contractText.split("\n").filter((l) => l.trim()).slice(0, 8);
@@ -642,7 +643,8 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
     { id: "elegant", label: "Elegant" },
     { id: "modern", label: "Modern" },
   ];
-  const accent = design === "gold" ? "#c9a961" : design === "royal" ? "#1e3a8a" : design === "modern" ? "#0ea5e9" : "#1f4e8c";
+  const accent = typeof design === "object" ? design.accent : design === "gold" ? "#c9a961" : design === "royal" ? "#1e3a8a" : design === "modern" ? "#0ea5e9" : "#1f4e8c";
+  const isCustom = typeof design === "object";
   return (
     <div style={{ border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden", background: "#fff", maxWidth: 460 }}>
       <div style={{ padding: "16px 18px", background: "linear-gradient(180deg,#fff,#fcfdff)", fontFamily: design === "elegant" ? "Georgia,'Times New Roman',serif" : "'Inter',sans-serif", borderBottom: `1px solid ${C.border}`, maxHeight: 190, overflow: "hidden", position: "relative" }}>
@@ -664,6 +666,11 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
             {dd.label}
           </button>
         ))}
+        <label title="Eigene Akzentfarbe wählen" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "5px 10px", border: `1px solid ${isCustom ? C.blue : C.border}`, background: isCustom ? "rgba(46,108,246,.08)" : "#fff", color: isCustom ? C.blue : "#41506b", position: "relative" }}>
+          <span style={{ width: 13, height: 13, borderRadius: "50%", background: accent, border: "1px solid rgba(0,0,0,.2)", flex: "none" }} />
+          Eigene Farbe
+          <input type="color" value={accent} onChange={(e) => setDesign({ style: "executive", accent: e.target.value })} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
+        </label>
       </div>
       {/* Unterschrift direkt auf den Vertrag */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 15px 0", flexWrap: "wrap" }}>
