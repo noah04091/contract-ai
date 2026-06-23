@@ -4552,7 +4552,7 @@ export default function Generate() {
         setSavedContractId(data.contractId || null);
         setGatedResult(true);
         setCurrentStep(3);
-      } catch (e) {
+      } catch {
         toast.error("Erstellung gerade nicht möglich — bitte erneut versuchen.");
       } finally {
         setLoading(false);
