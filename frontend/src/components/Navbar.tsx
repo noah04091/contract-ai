@@ -70,20 +70,39 @@ const featureCategories = [
   }
 ];
 
+const contractTypeCategories = [
+  {
+    title: "Verträge prüfen",
+    description: "Spezialisierte KI-Analyse je Vertragstyp",
+    features: [
+      { name: "Arbeitsvertrag prüfen", description: "Probezeit, Überstunden, Kündigung", icon: "💼", path: "/arbeitsvertrag-pruefen" },
+      { name: "Mietvertrag prüfen", description: "Kaution, Schönheitsreparaturen", icon: "🏠", path: "/mietvertrag-pruefen" },
+      { name: "NDA prüfen", description: "Geheimhaltung & Vertragsstrafe", icon: "🔒", path: "/nda-pruefen" },
+      { name: "Kaufvertrag prüfen", description: "Gewährleistung & Stornogebühren", icon: "🛒", path: "/kaufvertrag-pruefen" },
+      { name: "Aufhebungsvertrag prüfen", description: "Abfindung & Sperrzeit", icon: "📄", path: "/aufhebungsvertrag-pruefen" },
+      { name: "Agenturvertrag prüfen", description: "Laufzeit & Leistungsumfang", icon: "🤝", path: "/agenturvertrag-pruefen" },
+    ]
+  }
+];
+
 export default function Navbar() {
   const { user, setUser } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
+  const [typesMenuOpen, setTypesMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [mobileFeaturesOpen, setMobileFeaturesOpen] = useState(false);
+  const [mobileTypesOpen, setMobileTypesOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   const megaMenuRef = useRef<HTMLDivElement>(null);
   const megaMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typesMenuRef = useRef<HTMLDivElement>(null);
+  const typesMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const location = useLocation();
 
@@ -166,6 +185,11 @@ export default function Navbar() {
         setMegaMenuOpen(false);
       }
 
+      // Schließe das Vertragstypen-Menü bei Klick außerhalb
+      if (typesMenuOpen && typesMenuRef.current && !typesMenuRef.current.contains(e.target as Node)) {
+        setTypesMenuOpen(false);
+      }
+
       // Schließe das mobile Menü bei Klick außerhalb, aber nicht beim Hamburger-Button
       if (
         !isHomePage &&
@@ -188,7 +212,7 @@ export default function Navbar() {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [mobileMenuOpen, isHomePage, sidebarOpen, megaMenuOpen]);
+  }, [mobileMenuOpen, isHomePage, sidebarOpen, megaMenuOpen, typesMenuOpen]);
 
   // Scroll-Handler für Glasmorphismus-Effekt
   useEffect(() => {
@@ -215,6 +239,7 @@ export default function Navbar() {
         setMobileMenuOpen(false);
         setSidebarOpen(false);
         setMegaMenuOpen(false);
+        setTypesMenuOpen(false);
       }
     };
 
@@ -233,6 +258,20 @@ export default function Navbar() {
   const handleMegaMenuLeave = () => {
     megaMenuTimeoutRef.current = setTimeout(() => {
       setMegaMenuOpen(false);
+    }, 150);
+  };
+
+  // Vertragstypen-Menu Hover Handler mit Delay (spiegelt Mega-Menu)
+  const handleTypesMenuEnter = () => {
+    if (typesMenuTimeoutRef.current) {
+      clearTimeout(typesMenuTimeoutRef.current);
+    }
+    setTypesMenuOpen(true);
+  };
+
+  const handleTypesMenuLeave = () => {
+    typesMenuTimeoutRef.current = setTimeout(() => {
+      setTypesMenuOpen(false);
     }, 150);
   };
 
@@ -576,6 +615,79 @@ export default function Navbar() {
                         <div className={styles.megaMenuFooter}>
                           <Link to="/features" className={styles.megaMenuFooterLink} onClick={() => setMegaMenuOpen(false)}>
                             <span>Alle Funktionen ansehen</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Vertragstypen mit Mega-Menü */}
+                <div
+                  className={styles.megaMenuWrapper}
+                  ref={typesMenuRef}
+                  onMouseEnter={handleTypesMenuEnter}
+                  onMouseLeave={handleTypesMenuLeave}
+                >
+                  <motion.button
+                    className={`${styles.navLink} ${styles.megaMenuTrigger} ${typesMenuOpen ? styles.activeNavLink : ""}`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setTypesMenuOpen(!typesMenuOpen)}
+                  >
+                    <span className={styles.navLinkText}>Vertragstypen</span>
+                    <motion.span
+                      className={styles.megaMenuArrow}
+                      animate={{ rotate: typesMenuOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <svg width="10" height="6" viewBox="0 0 10 6" fill="none">
+                        <path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </motion.span>
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {typesMenuOpen && (
+                      <motion.div
+                        className={styles.megaMenu}
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                      >
+                        <div className={styles.megaMenuContent}>
+                          {contractTypeCategories.map((category, catIndex) => (
+                            <div key={catIndex} className={styles.megaMenuCategory}>
+                              <div className={styles.megaMenuCategoryHeader}>
+                                <h3 className={styles.megaMenuCategoryTitle}>{category.title}</h3>
+                                <span className={styles.megaMenuCategoryDesc}>{category.description}</span>
+                              </div>
+                              <div className={styles.megaMenuFeatures}>
+                                {category.features.map((feature, featIndex) => (
+                                  <Link
+                                    key={featIndex}
+                                    to={feature.path}
+                                    className={styles.megaMenuFeature}
+                                    onClick={() => setTypesMenuOpen(false)}
+                                  >
+                                    <span className={styles.megaMenuFeatureIcon}>{feature.icon}</span>
+                                    <div className={styles.megaMenuFeatureText}>
+                                      <span className={styles.megaMenuFeatureName}>{feature.name}</span>
+                                      <span className={styles.megaMenuFeatureDesc}>{feature.description}</span>
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className={styles.megaMenuFooter}>
+                          <Link to="/rechtslexikon" className={styles.megaMenuFooterLink} onClick={() => setTypesMenuOpen(false)}>
+                            <span>Rechtslexikon durchsuchen</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M5 12h14M12 5l7 7-7 7"/>
                             </svg>
@@ -1269,6 +1381,72 @@ export default function Navbar() {
                           }}
                         >
                           <span>Alle Funktionen ansehen</span>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                          </svg>
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* Vertragstypen mit Aufklapp-Menü */}
+                <div className={styles.mobileNavSection}>
+                  <motion.button
+                    className={styles.mobileNavLinkWithArrow}
+                    onClick={() => setMobileTypesOpen(!mobileTypesOpen)}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <span className={styles.mobileNavLinkIcon}>📑</span>
+                    <span className={styles.mobileNavLinkText}>Vertragstypen</span>
+                    <motion.span
+                      className={styles.mobileNavArrow}
+                      animate={{ rotate: mobileTypesOpen ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </motion.span>
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {mobileTypesOpen && (
+                      <motion.div
+                        className={styles.mobileNavSubmenu}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {contractTypeCategories.map((category, catIndex) => (
+                          <div key={catIndex} className={styles.mobileNavCategory}>
+                            <span className={styles.mobileNavCategoryTitle}>{category.title}</span>
+                            {category.features.map((feature, featIndex) => (
+                              <Link
+                                key={featIndex}
+                                to={feature.path}
+                                className={styles.mobileNavFeature}
+                                onClick={() => {
+                                  setMobileNavOpen(false);
+                                  setMobileTypesOpen(false);
+                                }}
+                              >
+                                <span className={styles.mobileNavFeatureIcon}>{feature.icon}</span>
+                                <span className={styles.mobileNavFeatureName}>{feature.name}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        ))}
+                        <Link
+                          to="/rechtslexikon"
+                          className={styles.mobileNavAllFeatures}
+                          onClick={() => {
+                            setMobileNavOpen(false);
+                            setMobileTypesOpen(false);
+                          }}
+                        >
+                          <span>Rechtslexikon durchsuchen</span>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M5 12h14M12 5l7 7-7 7"/>
                           </svg>
