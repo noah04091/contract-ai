@@ -88,3 +88,10 @@
 /* Showcase-Video-Rahmen: Video/Poster füllt den 16:9-Rahmen sauber (kein Kollaps vor dem Laden) */
 .ca-lp-page .ca-lp-video-frame video,
 .ca-lp-page .ca-lp-video-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* === Endlos-Marquee (Zwei-Gruppen-Verfahren: nahtlos & immer bildschirmfüllend) === */
+.ca-lp-page .ca-lp-mq { display: flex; gap: var(--ca-mq-gap, 18px); }
+.ca-lp-page .ca-lp-mq-group { flex-shrink: 0; display: flex; align-items: center; gap: var(--ca-mq-gap, 18px); will-change: transform; animation: caMarqueeX var(--ca-mq-dur, 90s) linear infinite; }
+.ca-lp-page .ca-lp-mq-rev .ca-lp-mq-group { animation-name: caMarqueeXRev; }
+@keyframes caMarqueeX { to { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } }
+@keyframes caMarqueeXRev { from { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } to { transform: translateX(0); } }

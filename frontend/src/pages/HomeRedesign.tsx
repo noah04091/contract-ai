@@ -647,10 +647,13 @@ const HomeRedesign = () => {
             </div>
           </div>
           <div style={s("position:relative;margin-top:44px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)")}>
-            <div style={s("display:flex;gap:16px;width:max-content;animation:caMarquee 60s linear infinite")}>
-              {integrations.map((it, i) => <IntPill key={"a" + i} {...it} />)}
-              {integrations.map((it, i) => <div key={"b" + i} aria-hidden="true"><IntPill {...it} /></div>)}
-              {integrations.map((it, i) => <div key={"c" + i} aria-hidden="true"><IntPill {...it} /></div>)}
+            <div className="ca-lp-mq" style={{ "--ca-mq-gap": "16px", "--ca-mq-dur": "100s" } as React.CSSProperties}>
+              <div className="ca-lp-mq-group">
+                {[0, 1, 2].flatMap((r) => integrations.map((it, i) => <IntPill key={`ig-a-${r}-${i}`} {...it} />))}
+              </div>
+              <div className="ca-lp-mq-group" aria-hidden="true">
+                {[0, 1, 2].flatMap((r) => integrations.map((it, i) => <IntPill key={`ig-b-${r}-${i}`} {...it} />))}
+              </div>
             </div>
           </div>
         </section>
@@ -822,13 +825,21 @@ const HomeRedesign = () => {
             </div>
           </div>
           <div style={s("max-width:1180px;margin:40px auto 0;display:flex;flex-direction:column;gap:18px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 13%,#000 87%,transparent);mask-image:linear-gradient(90deg,transparent,#000 13%,#000 87%,transparent)")}>
-            <div style={s("display:flex;gap:18px;width:max-content;animation:caMarquee 56s linear infinite")}>
-              {voicesRow1.map((v, i) => <VoiceCard key={"r1" + i} v={v} />)}
-              {voicesRow1.map((v, i) => <div key={"r1b" + i} aria-hidden="true"><VoiceCard v={{ ...v, verified: false }} /></div>)}
+            <div className="ca-lp-mq" style={{ "--ca-mq-gap": "18px", "--ca-mq-dur": "95s" } as React.CSSProperties}>
+              <div className="ca-lp-mq-group">
+                {[0, 1].flatMap((r) => voicesRow1.map((v, i) => <VoiceCard key={`v1a-${r}-${i}`} v={v} />))}
+              </div>
+              <div className="ca-lp-mq-group" aria-hidden="true">
+                {[0, 1].flatMap((r) => voicesRow1.map((v, i) => <VoiceCard key={`v1b-${r}-${i}`} v={{ ...v, verified: false }} />))}
+              </div>
             </div>
-            <div style={s("display:flex;gap:18px;width:max-content;animation:caMarqueeRev 56s linear infinite")}>
-              {voicesRow2.map((v, i) => <VoiceCard key={"r2" + i} v={v} />)}
-              {voicesRow2.map((v, i) => <div key={"r2b" + i} aria-hidden="true"><VoiceCard v={{ ...v, verified: false }} /></div>)}
+            <div className="ca-lp-mq ca-lp-mq-rev" style={{ "--ca-mq-gap": "18px", "--ca-mq-dur": "95s" } as React.CSSProperties}>
+              <div className="ca-lp-mq-group">
+                {[0, 1].flatMap((r) => voicesRow2.map((v, i) => <VoiceCard key={`v2a-${r}-${i}`} v={v} />))}
+              </div>
+              <div className="ca-lp-mq-group" aria-hidden="true">
+                {[0, 1].flatMap((r) => voicesRow2.map((v, i) => <VoiceCard key={`v2b-${r}-${i}`} v={{ ...v, verified: false }} />))}
+              </div>
             </div>
           </div>
         </section>
