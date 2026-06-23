@@ -630,17 +630,19 @@ function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend
 }
 
 function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: string, signature?: string | null) => void }) {
-  const [design, setDesign] = useState("klassisch");
+  const [design, setDesign] = useState("royal");
   const [signature, setSignature] = useState<string | null>(null);
   const [showPad, setShowPad] = useState(false);
   const lines = c.contractText.split("\n").filter((l) => l.trim()).slice(0, 8);
   const sectionCount = (c.contractText.match(/^§\s*\d/gm) || []).length;
   const designs = [
+    { id: "royal", label: "Royal" },
+    { id: "gold", label: "Gold" },
     { id: "klassisch", label: "Klassisch" },
     { id: "elegant", label: "Elegant" },
     { id: "modern", label: "Modern" },
   ];
-  const accent = design === "modern" ? "#0ea5e9" : "#1f4e8c";
+  const accent = design === "gold" ? "#c9a961" : design === "royal" ? "#1e3a8a" : design === "modern" ? "#0ea5e9" : "#1f4e8c";
   return (
     <div style={{ border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden", background: "#fff", maxWidth: 460 }}>
       <div style={{ padding: "16px 18px", background: "linear-gradient(180deg,#fff,#fcfdff)", fontFamily: design === "elegant" ? "Georgia,'Times New Roman',serif" : "'Inter',sans-serif", borderBottom: `1px solid ${C.border}`, maxHeight: 190, overflow: "hidden", position: "relative" }}>

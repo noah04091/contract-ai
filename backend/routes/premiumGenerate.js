@@ -139,9 +139,12 @@ function sanitizeForPdf(s) {
 
 // Echte Design-Varianten (pdfkit-Standardschriften → laufen auch auf Render/Linux)
 const DESIGNS = {
-  klassisch: { body: "Helvetica", bold: "Helvetica-Bold", accent: "#1f4e8c", title: "#1a2230", rule: "#1f4e8c" },
-  elegant: { body: "Times-Roman", bold: "Times-Bold", accent: "#1a2230", title: "#1a2230", rule: "#9aa3af" },
-  modern: { body: "Helvetica", bold: "Helvetica-Bold", accent: "#0ea5e9", title: "#0b1324", rule: "#0ea5e9" },
+  klassisch: { style: "line", body: "Helvetica", bold: "Helvetica-Bold", accent: "#1f4e8c", title: "#1a2230", rule: "#1f4e8c" },
+  elegant: { style: "line", body: "Times-Roman", bold: "Times-Bold", accent: "#1a2230", title: "#1a2230", rule: "#9aa3af" },
+  modern: { style: "line", body: "Helvetica", bold: "Helvetica-Bold", accent: "#0ea5e9", title: "#0b1324", rule: "#0ea5e9" },
+  // Executive-Linie (User-Favoriten): dunkles Kopf-/Fußband + Akzentlinie
+  gold: { style: "executive", body: "Helvetica", bold: "Helvetica-Bold", accent: "#c9a961", title: "#0f2747", bandDark: "#0f2747", eyebrow: "#b9c6db" },
+  royal: { style: "executive", body: "Helvetica", bold: "Helvetica-Bold", accent: "#60a5fa", title: "#1e3a8a", bandDark: "#1e3a8a", eyebrow: "#b6c8f0" },
 };
 
 function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = null) {
@@ -156,17 +159,35 @@ function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = n
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    // Dezente Akzentlinie oben – KEIN Plattform-Branding im Dokument des Nutzers
-    doc.moveTo(M, M).lineTo(M + W, M).lineWidth(1.4).strokeColor(d.rule).stroke();
-    doc.y = M + 14;
-    for (const raw of clean.split("\n")) {
-      const line = raw.replace(/\s+$/g, "");
+    const lines = clean.split("\n");
+    let startIdx = 0;
+    const isExec = d.style === "executive";
+    if (isExec) {
+      // Titel (erste nicht-leere Zeile) fürs Kopfband abgreifen → im Loop überspringen
+      let title = "";
+      for (let i = 0; i < lines.length; i++) {
+        const t = lines[i].trim();
+        if (!t) continue;
+        title = t; startIdx = i + 1; break;
+      }
+      doc.rect(0, 0, doc.page.width, 110).fill(d.bandDark);
+      doc.rect(0, 110, doc.page.width, 3).fill(d.accent);
+      doc.font("Helvetica").fontSize(8).fillColor(d.eyebrow || "#b9c6db").text("VERTRAGSDOKUMENT", M, 36, { width: W, characterSpacing: 3 });
+      doc.font("Helvetica-Bold").fontSize(16).fillColor("#ffffff").text(title, M, 54, { width: W });
+      doc.y = 132;
+    } else {
+      // Dezente Akzentlinie oben – KEIN Plattform-Branding im Dokument des Nutzers
+      doc.moveTo(M, M).lineTo(M + W, M).lineWidth(1.4).strokeColor(d.rule || d.accent).stroke();
+      doc.y = M + 14;
+    }
+    for (let i = startIdx; i < lines.length; i++) {
+      const line = lines[i].replace(/\s+$/g, "");
       if (!line.trim()) { doc.y += 5; continue; }
       if (doc.y > doc.page.height - M - 40) doc.addPage();
       const isPar = /^§\s*\d/.test(line.trim());
       const isHead = /^[A-ZÄÖÜ0-9 .,„""\-()]+$/.test(line.trim()) && line.trim().length < 70 && line.trim().length > 2;
       if (isPar) { doc.font(d.bold).fontSize(11).fillColor(d.accent).text(line.trim(), M, doc.y + 6, { width: W }); doc.y += 2; }
-      else if (isHead && !line.startsWith("(")) { doc.font(d.bold).fontSize(doc.y < 110 ? 16 : 11).fillColor(d.title).text(line.trim(), M, doc.y + 4, { width: W }); doc.y += 2; }
+      else if (isHead && !line.startsWith("(")) { doc.font(d.bold).fontSize(isExec ? 11 : (doc.y < 110 ? 16 : 11)).fillColor(d.title).text(line.trim(), M, doc.y + 4, { width: W }); doc.y += 2; }
       else { doc.font(d.body).fontSize(10).fillColor("#1a2230").text(line, M, doc.y + 2, { width: W, align: "justify", lineGap: 2.4 }); }
     }
 
@@ -194,12 +215,18 @@ function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = n
       doc.text(right, xR, sigLineY + 5, { width: colW, lineBreak: false });
     }
 
-    // Neutrale Fußzeile: nur Seitenzahl (kein „Contract AI")
+    // Fußzeile: Executive = Fußband, sonst neutrale Seitenzahl (kein „Contract AI")
     const range = doc.bufferedPageRange();
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i); doc.page.margins.bottom = 0;
-      doc.font(d.body).fontSize(7.5).fillColor("#9aa3af")
-        .text("Seite " + (i + 1) + " von " + range.count, M, doc.page.height - M + 24, { width: W, align: "center", lineBreak: false });
+      if (isExec) {
+        doc.rect(0, doc.page.height - 26, doc.page.width, 26).fill(d.bandDark);
+        doc.font(d.body).fontSize(8).fillColor(d.eyebrow || "#b9c6db")
+          .text("Seite " + (i + 1) + " / " + range.count, M, doc.page.height - 18, { width: W, align: "center", lineBreak: false });
+      } else {
+        doc.font(d.body).fontSize(7.5).fillColor("#9aa3af")
+          .text("Seite " + (i + 1) + " von " + range.count, M, doc.page.height - M + 24, { width: W, align: "center", lineBreak: false });
+      }
     }
     doc.end();
   });
