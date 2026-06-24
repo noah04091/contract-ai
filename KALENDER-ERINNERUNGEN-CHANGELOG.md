@@ -90,6 +90,14 @@
 
 ---
 
+## 📧 E-Mail-Optimierung (23.–24.06.2026) — Frist-Mails auf Stripe/DocuSign-Niveau
+
+- **Schritt 1 — Responsive-Rahmen (`9c1546c0`, GLOBAL):** `backend/utils/emailTemplate.js:45` — `<table width="600">` → zusätzlich `max-width:600px; width:100%` (exakt das Muster, das `generateCampaignTemplate:324` schon nutzte). → **ALLE** Mails handytauglich, Desktop unverändert. Kein Inhalt/Aufrufer betroffen.
+- **Schritt 2 — Frist-Mails v2 (`8fa64b15`, `backend/services/calendarNotifier.js`):** `generateCalendarEmailTemplate` neu = **eigene responsive v2-Hülle** (NICHT mehr die geteilte Basis): persönliche Anrede „Hallo {Vorname}," (aus `event.user.name`), linksbündig, **EIN** primärer Button + dezenter Sekundär-Link, ruhige Schnellaktionen, sauberer Footer, kein Farb-Lärm. Alle Inhalts-Generatoren auf **„du"** + angereichert (Hairline-Karte via neuer Helper `calDetail`); die früher 1-zeiligen (Auto-Verlängerung/Preiserhöhung/Warnung/Review) haben jetzt Eckdaten + Handlungssatz. `__render`-Export für Vorschau/Tests (keine Seiteneffekte).
+- **Bewusst NICHT angefasst:** Auth-, Kündigungs-Versand-, Signatur-Einladungs-, Rechnungs-, Onboarding-Mails (eigener/förmlicher Stil) — die kriegen nur den globalen Responsive-Rahmen.
+- **Verifikation:** node --check; **echte** Probe-Mails aus dem neuen Code an den User (Auto-Verlängerung/letzter Tag/Bestätigungs-Check) — abgenommen. Deploy: **Backend → Render** (kein Vercel).
+- **GOTCHA:** `event.user` enthält den vollen User (Name verfügbar). Signatur-Reminder gehen an den Envelope-BESITZER (unseren User) → „du" korrekt. v2-Stil scoped via eigene Hülle, nicht über die geteilte Basis.
+
 ## 🔎 Geprüft, bewusst NICHT geändert (sensible Extraktions-Ebene)
 
 - **Auto-Verlängerung & Kündigungs-Warnung:** Kein Bug. `calendarEvents.js:152–249` erzeugt gestaffelte Warnungen (Kündigungsfenster/„nur noch 7 Tage"/letzter Tag) — aber **nur wenn in der Zukunft** (`> now`). Verträge mit bereits **vergangenem** Kündigungsfenster zeigen daher nur „am Tag selbst" (korrekt — man kann nicht vor einem vergangenen Datum warnen).
