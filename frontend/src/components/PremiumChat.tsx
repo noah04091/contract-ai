@@ -653,7 +653,10 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
   ];
   const accent = typeof design === "object" ? design.accent : design === "gold" ? "#c9a961" : design === "royal" ? "#1e3a8a" : design === "modern" ? "#0ea5e9" : "#1f4e8c";
   const isCustom = typeof design === "object";
-  const currentLabel = isCustom ? "Eigene Farbe" : (designs.find((d) => d.id === design)?.label || "Royal");
+  const [customStyle, setCustomStyle] = useState("executive");
+  const currentStyle = typeof design === "object" ? design.style : customStyle;
+  const styleLabel = (s: string) => (s === "executive" ? "Executive" : s === "kanzlei" ? "Kanzlei" : s === "modern" ? "Modern" : s === "minimal" ? "Minimal" : s);
+  const currentLabel = isCustom ? `${styleLabel(currentStyle)} · eigene Farbe` : (designs.find((d) => d.id === design)?.label || "Royal");
   const swatchColor = (id: string) => (id === "gold" ? "#c9a961" : id === "royal" ? "#1e3a8a" : id === "modern" ? "#0ea5e9" : id === "elegant" ? "#1a2230" : "#1f4e8c");
   const onLogoFile = (e: any) => {
     const f = e.target.files && e.target.files[0];
@@ -719,6 +722,18 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
           </button>
         </div>
         {designOpen && (
+          <>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 10, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>Stil:</span>
+            <select value={currentStyle} onChange={(e) => { const st = e.target.value; setCustomStyle(st); setDesign({ style: st, accent }); }}
+              style={{ font: "inherit", fontSize: 12.5, fontWeight: 600, color: "#33415c", borderRadius: 8, padding: "5px 9px", border: `1px solid ${C.border}`, background: "#fff", cursor: "pointer" }}>
+              <option value="executive">Executive (Kopfband)</option>
+              <option value="kanzlei">Kanzlei (Serif, klassisch)</option>
+              <option value="modern">Modern (Akzentbalken)</option>
+              <option value="minimal">Minimal (reduziert)</option>
+            </select>
+            <span style={{ fontSize: 11, color: C.muted2 }}>+ Farbe & Logo unten</span>
+          </div>
           <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingTop: 9, paddingBottom: 4 }}>
             {designs.map((dd) => {
               const active = design === dd.id;
@@ -732,7 +747,7 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
             <label title="Eigene Akzentfarbe wählen" style={{ flex: "none", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 11px", border: `1px solid ${isCustom ? C.blue : C.border}`, background: isCustom ? "rgba(46,108,246,.08)" : "#fff", color: isCustom ? C.blue : "#41506b", position: "relative", whiteSpace: "nowrap" }}>
               <span style={{ width: 11, height: 11, borderRadius: "50%", background: isCustom ? accent : "conic-gradient(from 0deg,#ef4444,#f59e0b,#10b981,#3b82f6,#a855f7,#ef4444)", border: "1px solid rgba(0,0,0,.18)", flex: "none" }} />
               Eigene Farbe
-              <input type="color" value={accent} onChange={(e) => setDesign({ style: "executive", accent: e.target.value })} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
+              <input type="color" value={accent} onChange={(e) => setDesign({ style: customStyle, accent: e.target.value })} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
             </label>
             <label title="Eigenes Logo hochladen (PNG/JPG, max. 500 KB)" style={{ flex: "none", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 11px", border: `1px solid ${logo ? C.blue : C.border}`, background: logo ? "rgba(46,108,246,.08)" : "#fff", color: logo ? C.blue : "#41506b", position: "relative", whiteSpace: "nowrap" }}>
               <ImageIcon size={13} /> {logo ? "Logo ✓" : "Logo"}
@@ -742,6 +757,7 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
               <button type="button" onClick={() => setLogo(null)} style={{ flex: "none", font: "inherit", fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", whiteSpace: "nowrap" }}>Logo entfernen</button>
             )}
           </div>
+          </>
         )}
       </div>
       {/* Unterschrift direkt auf den Vertrag */}

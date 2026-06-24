@@ -156,8 +156,9 @@ function resolveDesign(design) {
       const bandDark = HEX.test(design.bandDark || "") ? design.bandDark : "#0f2747";
       return { style: "executive", body: "Helvetica", bold: "Helvetica-Bold", accent, title: bandDark, bandDark, eyebrow: "#cdd9ec" };
     }
-    const serif = design.style === "kanzlei" || design.serif === true;
-    return { style: "line", body: serif ? "Times-Roman" : "Helvetica", bold: serif ? "Times-Bold" : "Helvetica-Bold", accent, title: "#1a2230", rule: accent };
+    const s = (design.style === "kanzlei" || design.style === "modern" || design.style === "minimal") ? design.style : "line";
+    const serif = s === "kanzlei";
+    return { style: s, body: serif ? "Times-Roman" : "Helvetica", bold: serif ? "Times-Bold" : "Helvetica-Bold", accent, title: "#1a2230", rule: accent };
   }
   return DESIGNS[design] || DESIGNS.klassisch;
 }
@@ -181,6 +182,7 @@ function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = n
     const lines = clean.split("\n");
     let startIdx = 0;
     const isExec = d.style === "executive";
+    const styledHead = d.style === "kanzlei" || d.style === "modern" || d.style === "minimal";
     if (isExec) {
       // Titel (erste nicht-leere Zeile) fürs Kopfband abgreifen → im Loop überspringen
       let title = "";
@@ -196,8 +198,32 @@ function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = n
       doc.font("Helvetica").fontSize(8).fillColor(d.eyebrow || "#b9c6db").text("VERTRAGSDOKUMENT", M, 36, { width: titleW, characterSpacing: 3 });
       doc.font("Helvetica-Bold").fontSize(16).fillColor("#ffffff").text(title, M, 54, { width: titleW });
       doc.y = 132;
+    } else if (styledHead) {
+      // Titel abgreifen → pro Stil im Header rendern, im Loop überspringen
+      let title = "";
+      for (let i = 0; i < lines.length; i++) { const t = lines[i].trim(); if (!t) continue; title = t; startIdx = i + 1; break; }
+      let topY = M;
+      if (d.style === "kanzlei") {
+        if (logoBuf) { try { doc.image(logoBuf, M + W / 2 - 24, M, { fit: [48, 48] }); } catch (_) { /* ignore */ } topY = M + 56; }
+        doc.font(d.bold).fontSize(16).fillColor(d.title).text(title, M, topY, { width: W, align: "center" });
+        const ry = doc.y + 6;
+        doc.moveTo(M + W / 2 - 46, ry).lineTo(M + W / 2 + 46, ry).lineWidth(1).strokeColor(d.accent).stroke();
+        doc.y = ry + 14;
+      } else if (d.style === "modern") {
+        if (logoBuf) { try { doc.image(logoBuf, M, M, { fit: [48, 48] }); } catch (_) { /* ignore */ } topY = M + 56; }
+        doc.font("Helvetica").fontSize(8).fillColor("#94a3b8").text("VERTRAG", M, topY, { width: W, characterSpacing: 2 });
+        doc.font(d.bold).fontSize(18).fillColor(d.title).text(title, M, doc.y + 4, { width: W });
+        doc.rect(M, doc.y + 8, 52, 4).fill(d.accent);
+        doc.y = doc.y + 24;
+      } else { // minimal
+        if (logoBuf) { try { doc.image(logoBuf, M, M, { fit: [48, 48] }); } catch (_) { /* ignore */ } topY = M + 56; }
+        doc.font("Helvetica-Bold").fontSize(13).fillColor(d.title).text(title.toUpperCase(), M, topY, { width: W, characterSpacing: 0.5 });
+        const ry = doc.y + 8;
+        doc.moveTo(M, ry).lineTo(M + W, ry).lineWidth(0.5).strokeColor(d.accent).stroke();
+        doc.y = ry + 12;
+      }
     } else {
-      // Optionales Logo oben links, dann dezente Akzentlinie – KEIN Plattform-Branding
+      // Presets/Standard: optionales Logo oben links + dezente Akzentlinie – KEIN Branding
       let topY = M;
       if (logoBuf) { try { doc.image(logoBuf, M, M, { fit: [48, 48] }); } catch (_) { /* ignore */ } topY = M + 58; }
       doc.moveTo(M, topY).lineTo(M + W, topY).lineWidth(1.4).strokeColor(d.rule || d.accent).stroke();
@@ -210,7 +236,7 @@ function renderPremiumPdfBuffer(text, design = "klassisch", signatureDataUrl = n
       const isPar = /^§\s*\d/.test(line.trim());
       const isHead = /^[A-ZÄÖÜ0-9 .,„""\-()]+$/.test(line.trim()) && line.trim().length < 70 && line.trim().length > 2;
       if (isPar) { doc.font(d.bold).fontSize(11).fillColor(d.accent).text(line.trim(), M, doc.y + 6, { width: W }); doc.y += 2; }
-      else if (isHead && !line.startsWith("(")) { doc.font(d.bold).fontSize(isExec ? 11 : (doc.y < 110 ? 16 : 11)).fillColor(d.title).text(line.trim(), M, doc.y + 4, { width: W }); doc.y += 2; }
+      else if (isHead && !line.startsWith("(")) { doc.font(d.bold).fontSize((isExec || styledHead) ? 11 : (doc.y < 110 ? 16 : 11)).fillColor(d.title).text(line.trim(), M, doc.y + 4, { width: W }); doc.y += 2; }
       else { doc.font(d.body).fontSize(10).fillColor("#1a2230").text(line, M, doc.y + 2, { width: W, align: "justify", lineGap: 2.4 }); }
     }
 
