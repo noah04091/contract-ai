@@ -486,8 +486,8 @@ const HomeRedesign = () => {
         {/* ===== HERO ===== */}
         <section id="top" style={s("position:relative;padding:84px 24px 72px")}>
           <div style={s("position:absolute;inset:0;pointer-events:none;background:radial-gradient(620px 420px at 18% 2%,rgba(99,102,241,0.16),transparent 60%),radial-gradient(560px 420px at 88% 8%,rgba(139,92,246,0.14),transparent 60%),radial-gradient(560px 460px at 64% 96%,rgba(6,182,212,0.10),transparent 62%)")}></div>
-          <div style={s("position:relative;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:52px;align-items:center")}>
-            <div>
+          <div className="ca-lp-2col" style={s("position:relative;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:52px;align-items:center")}>
+            <div className="ca-lp-hero-col">
               <div style={s("display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border:1px solid rgba(37,99,235,0.2);background:rgba(37,99,235,0.06);border-radius:999px;margin-bottom:24px")}>
                 <span style={s("display:inline-flex;align-items:center;gap:5px;background:#2563eb;color:#fff;font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px")}>Neu</span>
                 <span style={s("font-size:13px;color:#3f3f46;font-weight:500")}>KI-Vertragsanalyse in 60&nbsp;Sekunden</span>
@@ -504,7 +504,7 @@ const HomeRedesign = () => {
                 </svg>
               </div>
               <p style={s("font-size:19px;line-height:1.6;color:#52525b;margin:20px 0 0;max-width:524px")}>Contract&nbsp;AI erkennt versteckte Risiken, erinnert an Fristen und behält alle Verträge im Blick – damit Sie es nicht müssen.</p>
-              <div style={s("display:flex;flex-wrap:wrap;gap:13px;margin-top:34px")}>
+              <div className="ca-lp-hero-cta" style={s("display:flex;flex-wrap:wrap;gap:13px;margin-top:34px")}>
                 <Link to={heroPrimaryTo} className="ca-lp-btn-primary" style={s("display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-size:16px;font-weight:500;padding:15px 26px;border-radius:11px;text-decoration:none;box-shadow:0 1px 2px rgba(17,17,20,0.12)")}>{heroPrimaryLabel}<Arrow w={17} /></Link>
                 <Link to="/pricing" className="ca-lp-btn-secondary" style={s("display:inline-flex;align-items:center;gap:8px;background:#fff;color:#111114;font-size:16px;font-weight:500;padding:15px 24px;border-radius:11px;text-decoration:none;border:1px solid #e3e4e9")}>Kostenlos testen</Link>
               </div>
@@ -512,7 +512,7 @@ const HomeRedesign = () => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 <span style={s("font-size:13.5px;color:#3f3f46;font-weight:500")}>Deutsche Server. Maximaler Schutz. Ihre Daten bleiben Ihre Daten.</span>
               </div>
-              <div style={s("display:flex;align-items:center;gap:14px;margin-top:26px;flex-wrap:wrap")}>
+              <div className="ca-lp-hero-social" style={s("display:flex;align-items:center;gap:14px;margin-top:26px;flex-wrap:wrap")}>
                 <div style={{ display: 'flex' }}>
                   <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face" width="36" height="36" style={s("border-radius:50%;border:2.5px solid #fff;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.12)")} alt="" loading="lazy" />
                   <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face" width="36" height="36" style={s("border-radius:50%;border:2.5px solid #fff;object-fit:cover;margin-left:-11px;box-shadow:0 2px 6px rgba(0,0,0,0.12)")} alt="" loading="lazy" />
@@ -661,8 +661,8 @@ const HomeRedesign = () => {
         {/* ===== VERTRAGSVERWALTUNG (01) ===== */}
         <section style={s("padding:80px 24px 28px;background:linear-gradient(180deg,#ffffff,#eef3ff 15%)")}>
           <div style={s("max-width:1140px;margin:0 auto")} className="ca-lp-reveal">
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
-              <div>
+            <div className="ca-lp-2col" style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
+              <div className="ca-lp-rowtext">
                 <span style={s("display:inline-flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#eef3ff;border:1px solid rgba(37,99,235,0.2);padding:6px 13px;border-radius:999px")}><span style={s("font-weight:700;color:#2563eb")}>01</span><span style={s("width:1px;height:11px;background:rgba(37,99,235,0.3)")}></span>Vertragsverwaltung</span>
                 <h2 style={s("font-size:clamp(26px,3vw,38px);font-weight:600;letter-spacing:-0.025em;line-height:1.08;margin:16px 0 0;color:#0c0c10")}>Ihre Verträge.<br /><span style={s(GRAD)}>Perfekt organisiert.</span></h2>
                 <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Speichern, organisieren und verwalten Sie all Ihre Verträge sicher in der Contract&nbsp;AI Cloud – mit automatischen Erinnerungen, schneller Suche und DSGVO-konformer Speicherung.</p>
@@ -678,7 +678,7 @@ const HomeRedesign = () => {
                 </ul>
                 <Link to={!user ? "/register" : "/dashboard"} className="ca-lp-btn-primary" style={s("display:inline-flex;align-items:center;gap:8px;margin-top:26px;background:#2563eb;color:#fff;font-size:15px;font-weight:500;padding:13px 22px;border-radius:11px;text-decoration:none")}>Jetzt Verträge hochladen<Arrow /></Link>
               </div>
-              <div>
+              <div className="ca-lp-rowgfx">
                 <div style={s("background:#fff;border:1px solid rgba(17,17,20,0.08);border-radius:16px;box-shadow:0 34px 70px -34px rgba(37,99,235,0.32);overflow:hidden")}>
                   <div style={s("display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 17px;border-bottom:1px solid rgba(17,17,20,0.06);background:#fbfbfd")}>
                     <div style={s("display:flex;align-items:center;gap:9px")}><span style={s("width:30px;height:30px;border-radius:8px;background:#2563eb;display:flex;align-items:center;justify-content:center")}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></span><span style={s("font-size:14px;font-weight:600;color:#0c0c10")}>Meine Verträge</span></div>
@@ -708,8 +708,8 @@ const HomeRedesign = () => {
         {/* ===== E-MAIL UPLOAD (02) ===== */}
         <section style={s("padding:28px 24px 88px;background:linear-gradient(180deg,#eef3ff 80%,#ffffff)")}>
           <div style={s("max-width:1140px;margin:0 auto")} className="ca-lp-reveal">
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
-              <div style={s("order:1;display:flex;flex-direction:column;align-items:center;gap:18px")}>
+            <div className="ca-lp-2col" style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
+              <div className="ca-lp-rowgfx" style={s("order:1;display:flex;flex-direction:column;align-items:center;gap:18px")}>
                 <div style={s("width:100%;max-width:330px;background:#fff;border:1px solid rgba(17,17,20,0.07);border-radius:13px;padding:16px")}>
                   <div style={s("display:flex;align-items:center;gap:9px;margin-bottom:13px")}><span style={s("width:30px;height:30px;border-radius:8px;background:#2563eb;display:flex;align-items:center;justify-content:center")}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg></span><div><div style={s("font-size:12.5px;font-weight:600;color:#0c0c10")}>Neue E-Mail</div><div style={s("font-size:11px;color:#9a9aa3;font-family:'Geist Mono',monospace")}>an: upload@contract-ai.de</div></div></div>
                   <div style={s("display:flex;align-items:center;gap:9px;background:#f6f6fa;border:1px dashed rgba(37,99,235,0.3);border-radius:9px;padding:10px 12px")}><span style={s("width:26px;height:26px;border-radius:6px;background:#fef2f2;display:flex;align-items:center;justify-content:center;color:#dc2626;flex:none")}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></span><span style={s("font-size:12.5px;color:#27272a;font-weight:500")}>arbeitsvertrag.pdf</span></div>
@@ -717,7 +717,7 @@ const HomeRedesign = () => {
                 <span style={s("width:34px;height:34px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(37,99,235,0.4)")}><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></svg></span>
                 <div style={s("width:100%;max-width:330px;display:flex;align-items:center;gap:11px;background:#fff;border:1px solid rgba(16,185,129,0.3);border-radius:11px;padding:13px")}><span style={s("width:34px;height:34px;border-radius:50%;background:#ecfdf3;display:flex;align-items:center;justify-content:center;flex:none")}><Check stroke="#10b981" w={18} /></span><div><div style={s("font-size:13.5px;font-weight:600;color:#0c0c10")}>Automatisch erfasst &amp; analysiert</div><div style={s("font-size:11.5px;color:#059669;font-weight:500")}>Jetzt im Dashboard verfügbar</div></div></div>
               </div>
-              <div style={s("order:2")}>
+              <div className="ca-lp-rowtext" style={s("order:2")}>
                 <span style={s("display:inline-flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#eef3ff;border:1px solid rgba(37,99,235,0.2);padding:6px 13px;border-radius:999px")}><span style={s("font-weight:700;color:#2563eb")}>02</span><span style={s("width:1px;height:11px;background:rgba(37,99,235,0.3)")}></span>E-Mail Upload</span>
                 <h2 style={s("font-size:clamp(26px,3vw,38px);font-weight:600;letter-spacing:-0.025em;line-height:1.08;margin:16px 0 0;color:#0c0c10")}>Verträge per E-Mail.<br /><span style={s(GRAD)}>Automatisch erfasst.</span></h2>
                 <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract&nbsp;AI Adresse weiter. PDFs werden automatisch erkannt, hochgeladen und analysiert.</p>
@@ -747,8 +747,8 @@ const HomeRedesign = () => {
             </div>
 
             {showcase.map((row, i) => (
-              <div key={i} style={s(`display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:48px;align-items:center;margin-top:${i === 0 ? "64px" : "72px"}`)} className="ca-lp-reveal">
-                <div style={s(row.reverse ? "order:2" : "")}>
+              <div key={i} style={s(`display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:48px;align-items:center;margin-top:${i === 0 ? "64px" : "72px"}`)} className="ca-lp-reveal ca-lp-2col">
+                <div className="ca-lp-rowtext" style={s(row.reverse ? "order:2" : "")}>
                   <div style={s(`display:inline-flex;align-items:center;gap:7px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:${row.eyebrowColor};background:${row.eyebrowBg};border:1px solid ${row.eyebrowBorder};padding:5px 10px;border-radius:999px`)}>{row.eyIcon}{row.eyebrow}</div>
                   <h3 style={s("font-size:28px;font-weight:600;letter-spacing:-0.02em;color:#0c0c10;margin:18px 0 0")}>{row.titlePre}<span style={s(GRAD)}>{row.titleAccent}</span></h3>
                   <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>{row.text}</p>
@@ -757,7 +757,7 @@ const HomeRedesign = () => {
                   </ul>
                   <Link to={row.to} className="ca-lp-textlink" style={s(`display:inline-flex;align-items:center;gap:7px;margin-top:24px;font-size:15px;font-weight:500;color:${row.linkColor};text-decoration:none`)}>{row.linkLabel}<Arrow /></Link>
                 </div>
-                <div style={s(`${row.reverse ? "order:1;" : ""}background:#fff;border:1px solid rgba(17,17,20,0.09);border-radius:16px;box-shadow:0 30px 60px -26px rgba(17,17,20,0.24);overflow:hidden`)}>
+                <div className="ca-lp-rowgfx" style={s(`${row.reverse ? "order:1;" : ""}background:#fff;border:1px solid rgba(17,17,20,0.09);border-radius:16px;box-shadow:0 30px 60px -26px rgba(17,17,20,0.24);overflow:hidden`)}>
                   <div style={s("height:40px;display:flex;align-items:center;gap:7px;padding:0 14px;border-bottom:1px solid rgba(17,17,20,0.06);background:#fbfbfd")}><span style={s("font-size:12px;color:#8a8a93;font-family:'Geist Mono',monospace")}>{row.label}</span></div>
                   <div className="ca-lp-video-frame" style={{ background: '#0f172a', display: 'block', lineHeight: 0, aspectRatio: '16 / 9' }}>
                     <AutoPlayVideo src={row.video} poster={row.poster} alt={row.linkLabel} />
@@ -1001,7 +1001,7 @@ const HomeRedesign = () => {
 
         {/* ===== FINAL CTA ===== */}
         <section style={s("padding:24px 24px 88px")}>
-          <div style={s("max-width:1080px;margin:0 auto;background:linear-gradient(135deg,#1e40af,#2563eb 42%,#06b6d4);border-radius:32px;padding:clamp(40px,5vw,76px) clamp(28px,4vw,64px);text-align:center;position:relative;overflow:hidden")} className="ca-lp-reveal">
+          <div style={s("max-width:1080px;margin:0 auto;background:linear-gradient(135deg,#1e40af,#2563eb 42%,#06b6d4);border-radius:32px;padding:clamp(40px,5vw,76px) clamp(28px,4vw,64px);text-align:center;position:relative;overflow:hidden")} className="ca-lp-reveal ca-lp-finalcta">
             <div style={s("position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.16),transparent 70%);top:-140px;right:-80px;pointer-events:none;animation:caFloatSlow 9s ease-in-out infinite")}></div>
             <div style={s("position:relative")}>
               <div style={s("display:inline-flex;align-items:center;gap:11px;background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.28);border-radius:999px;padding:6px 15px 6px 7px;margin-bottom:24px")}>

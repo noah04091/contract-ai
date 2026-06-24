@@ -96,15 +96,48 @@
 @keyframes caMarqueeX { to { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } }
 @keyframes caMarqueeXRev { from { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } to { transform: translateX(0); } }
 
-/* === Vergleichstabelle: auf Handy alle 4 Spalten passend (kein Wischen nötig) === */
+/* === Vergleichstabelle: auf Handy alle 4 Spalten sauber & lesbar === */
 @media (max-width: 600px) {
   .ca-lp-page .ca-lp-cmp { min-width: 0 !important; }
-  .ca-lp-page .ca-lp-cmp > div > div { padding: 12px 6px !important; }
-  .ca-lp-page .ca-lp-cmp > div > div:first-child { padding-left: 12px !important; font-size: 12px !important; line-height: 1.3 !important; }
-  .ca-lp-page .ca-lp-cmp span { font-size: 11.5px !important; gap: 4px !important; }
+  .ca-lp-page .ca-lp-cmp > div { grid-template-columns: 1.35fr 1fr 1fr 1fr !important; }
+  .ca-lp-page .ca-lp-cmp > div > div { padding: 13px 5px !important; }
+  .ca-lp-page .ca-lp-cmp > div > div:first-child { padding-left: 12px !important; font-size: 12px !important; line-height: 1.3 !important; text-align: left !important; }
+  .ca-lp-page .ca-lp-cmp span { font-size: 11px !important; gap: 3px !important; }
 }
-@media (max-width: 380px) {
-  .ca-lp-page .ca-lp-cmp > div > div { padding: 10px 4px !important; }
-  .ca-lp-page .ca-lp-cmp span { font-size: 10.5px !important; }
+@media (max-width: 360px) {
+  .ca-lp-page .ca-lp-cmp span { font-size: 10px !important; }
   .ca-lp-page .ca-lp-cmp > div > div:first-child { font-size: 11px !important; }
+}
+
+/* ============================================================
+   === Mobile-Feinschliff (24.06.) — alle unter .ca-lp-page ===
+   ============================================================ */
+
+/* 2-Spalten-Reihen: unter 900px stapeln, Text IMMER vor Grafik (Hero/Showcase/Verwaltung/E-Mail) */
+@media (max-width: 900px) {
+  .ca-lp-page .ca-lp-2col { grid-template-columns: 1fr !important; }
+  .ca-lp-page .ca-lp-rowtext { order: 1 !important; }
+  .ca-lp-page .ca-lp-rowgfx  { order: 2 !important; }
+}
+
+/* Hero auf Handy mittig (Text, Signatur, Badges, Buttons, Social-Proof) */
+@media (max-width: 600px) {
+  .ca-lp-page .ca-lp-hero-col { text-align: center; }
+  .ca-lp-page .ca-lp-hero-col > p { margin-left: auto; margin-right: auto; }
+  .ca-lp-page .ca-lp-hero-cta { justify-content: center; }
+  .ca-lp-page .ca-lp-hero-social { justify-content: center; }
+}
+
+/* Floating-CTA auf Handy aus (überlagerte sonst Inhalte) */
+@media (max-width: 768px) {
+  .ca-lp-page .ca-lp-floatcta { display: none !important; }
+}
+
+/* Preiskarten & Final-CTA kompakter auf Handy */
+@media (max-width: 600px) {
+  .ca-lp-page .ca-lp-pricecard,
+  .ca-lp-page .ca-lp-pricecard-pop { padding: 24px 20px !important; }
+  .ca-lp-page .ca-lp-finalcta { padding: 38px 22px !important; border-radius: 24px !important; }
+  .ca-lp-page .ca-lp-finalcta h2 { font-size: 27px !important; }
+  .ca-lp-page .ca-lp-finalcta a { padding: 15px 22px !important; font-size: 16px !important; }
 }
