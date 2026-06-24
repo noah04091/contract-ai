@@ -26,7 +26,7 @@ const { normalizeLaufzeit, normalizeKuendigung } = require("../utils/contractFie
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness, handleEnhancedDeepLawyerAnalysisRequest } = analyzeRoute;
 const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
-const { applyAnalysisGate, effectivePlan, isContractUnlocked } = require("../utils/analysisGate"); // 🔒 Freemium-Tease-Gate (Phase 2) + Einmal-Freischaltung (Stufe 2)
+const { applyAnalysisGate, effectivePlan, isContractUnlocked, applyGeneratedContentGate } = require("../utils/analysisGate"); // 🔒 Freemium-Tease-Gate (Phase 2) + Einmal-Freischaltung (Stufe 2) + Generierte-Volltext-Sperre
 
 // 🔒 Freemium-Tease-Gate — REVERSIBEL per ENV, default AUS (→ kein Verhalten ändert sich bis bewusst aktiviert).
 // Bei Aktivierung zusätzlich FREEMIUM_GATE_LAUNCH_DATE (ISO) setzen; ohne explizites Datum gilt der
@@ -42,6 +42,32 @@ const FREEMIUM_GATE_LAUNCH = process.env.FREEMIUM_GATE_LAUNCH_DATE
 // 🔒 Middleware: PDF-/Gutachten-Export ist Business+ (sobald Flag AN). Schließt den Download-Bypass
 // der gesperrten Analyse. Default-Flag AUS → next() (kein Effekt). fail-open bei Fehler (erlaubt).
 async function gatePremiumExport(req, res, next) {
+  // 🔒 IMMER aktiv (flag-unabhängig): generierter Vertrag (isGenerated) für Free+nicht-freigekauft
+  // → kein PDF-Export. Die Gratis-Generierung ist ebenfalls immer aktiv, deshalb darf dieser
+  // Schutz NICHT am Analyse-Flag (FREEMIUM_GATE_ENABLED) hängen. fail-open: Fehler → durchlassen.
+  try {
+    await ensureDb();
+    const cid = req.params.id || req.params.contractId;
+    if (cid && ObjectId.isValid(cid)) {
+      const cdoc = await contractsCollection.findOne(
+        { _id: new ObjectId(cid), userId: new ObjectId(req.user.userId) },
+        { projection: { isGenerated: 1, 'unlock.paid': 1 } }
+      );
+      if (cdoc && cdoc.isGenerated === true && !isContractUnlocked(cdoc)) {
+        const gu0 = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) }, { projection: { subscriptionPlan: 1 } });
+        const mem0 = await OrganizationMember.findOne({ userId: new ObjectId(req.user.userId), isActive: true });
+        if (effectivePlan(gu0?.subscriptionPlan, mem0 ? 'business' : undefined) === 'free') {
+          return res.status(403).json({
+            success: false, gated: true, feature: 'generated-pdf',
+            message: 'Dieser Vertrag ist gesperrt. Schalte ihn frei, um ihn als PDF zu exportieren.'
+          });
+        }
+      }
+    }
+  } catch (e) {
+    console.warn(`⚠️ [Generated-Gate/PDF] fail-open: ${e.message}`);
+  }
+
   if (!FREEMIUM_GATE_ENABLED) return next();
   try {
     await ensureDb();
@@ -1781,6 +1807,26 @@ router.get("/:id", verifyToken, async (req, res) => {
       } catch (gateErr) {
         console.warn(`⚠️ [Freemium-Gate] fail-open (volle Ansicht): ${gateErr.message}`);
       }
+    }
+
+    // 🔒 Generierter Vertrag (Generate 2.0): Volltext für Free erst nach Freischaltung/Abo.
+    // IMMER aktiv (unabhängig vom Analyse-Flag), da die Gratis-Generierung selbst immer aktiv ist.
+    // Greift NUR bei isGenerated===true → hochgeladene Dokumente (eigene) bleiben unberührt.
+    // fail-open: bei Fehler volle Ansicht (kein kaputter Screen für Zahler).
+    try {
+      if (payload && payload.isGenerated === true) {
+        const gu2 = await usersCollection.findOne(
+          { _id: new ObjectId(req.user.userId) },
+          { projection: { subscriptionPlan: 1 } }
+        );
+        payload = applyGeneratedContentGate(payload, {
+          plan: gu2?.subscriptionPlan || 'free',
+          orgPlan: access.membership ? 'business' : undefined, // aktive Org-Mitgliedschaft = zahlend
+          isUnlocked: isContractUnlocked(access.contract),      // einmalig freigekaufter Vertrag bleibt voll
+        });
+      }
+    } catch (genGateErr) {
+      console.warn(`⚠️ [Generated-Gate] fail-open (volle Ansicht): ${genGateErr.message}`);
     }
 
     res.json(payload);

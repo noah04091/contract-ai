@@ -537,6 +537,7 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
   if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ success: false, error: "NO_MESSAGES" });
 
   let freeClaimed = false; // 🔓 Free-Tease: wurde die 1 Gratis-Generierung „geclaimt"? (für Refund bei Fehler)
+  let isFree = false;      // 🔒 Free → Volltext NICHT streamen/zurückgeben (nur Vorschau + Sperre)
 
   // Usage-Limit-Prüfung VOR dem Streamen (noch als normaler JSON-Fehler möglich)
   try {
@@ -545,6 +546,7 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
     if (!user) return res.status(401).json({ success: false, message: "Benutzer nicht gefunden." });
     const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || 'free').toLowerCase();
     if (plan === 'free') {
+      isFree = true;
       // Free-Tease: 1 ECHTE Gratis-Generierung pro Account. Atomar claimen (gegen Parallel-/
       // Skript-Missbrauch: nur EIN Request bekommt modifiedCount=1). Bei Fehler unten Refund.
       const claim = await usersCollection.updateOne(
@@ -577,10 +579,16 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
   res.setHeader("X-Accel-Buffering", "no");
   const send = (obj) => { try { res.write(JSON.stringify(obj) + "\n"); } catch (_) {} };
   try {
-    const text = await generateContractText(messages, (t) => send({ type: "delta", text: t }));
+    // 🔒 Free: KEINE Live-Deltas (der Volltext darf den Server nicht erreichen) — nur paid streamt mit.
+    const text = await generateContractText(messages, isFree ? undefined : (t) => send({ type: "delta", text: t }));
     if (!text || text.length < 200) { await refundFreeIfNeeded(); send({ type: "error", message: "Vertrag konnte nicht erstellt werden." }); return res.end(); }
     const saved = await persistContract(req.user.userId, text, contractType, existingContractId);
-    send({ type: "done", contractText: text, ...saved });
+    if (isFree) {
+      // 🔒 Free: NUR Vorschau (14 Zeilen) + contractId zurück — Volltext bleibt auf dem Server (kein Bypass).
+      send({ type: "done", gated: true, previewText: text.split("\n").slice(0, 14).join("\n"), contractId: saved.contractId, title: saved.title, contractType: saved.contractType });
+    } else {
+      send({ type: "done", contractText: text, ...saved });
+    }
 
     // 🔔 Fristen → Kalender (additiv, non-fatal): grounded extrahieren, Felder wie bei der
     // Analyse setzen, dann den BESTEHENDEN Mechanismus aufrufen. cleanAndRegenerateAIEvents
@@ -611,6 +619,28 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
   }
 });
 
+// 🔒 Ist dieser GENERIERTE Vertrag für den aufrufenden User gesperrt?
+// true ⇔ Vertrag ist generiert UND User ist (effektiv) Free UND nicht einmalig freigekauft.
+// Hochgeladene Verträge + Zahler + freigekaufte → false (nie gesperrt). fail-open: Fehler → false
+// (Zahler nie fälschlich blockieren — konsistent mit gatePremiumExport).
+async function isGeneratedLockedFor(userId, contract) {
+  try {
+    if (!contract || contract.isGenerated !== true) return false; // nur generierte Verträge
+    const { effectivePlan, isContractUnlocked } = require("../utils/analysisGate");
+    if (isContractUnlocked(contract)) return false;               // einmalig freigekauft → frei
+    const u = await usersCollection.findOne({ _id: new ObjectId(userId) }, { projection: { subscriptionPlan: 1 } });
+    let orgPlan;
+    try {
+      const OrganizationMember = require("../models/OrganizationMember");
+      const m = await OrganizationMember.findOne({ userId: new ObjectId(userId), isActive: true });
+      orgPlan = m ? "business" : undefined;
+    } catch (_) {}
+    return effectivePlan(u?.subscriptionPlan, orgPlan) === "free";
+  } catch (_) {
+    return false; // fail-open
+  }
+}
+
 // POST /pdf — Premium-PDF (AVV-Stil) aus gespeichertem Vertrag
 router.post("/pdf", async (req, res) => {
   try {
@@ -622,6 +652,10 @@ router.post("/pdf", async (req, res) => {
       $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }],
     });
     if (!c) return res.status(404).json({ success: false, error: "NOT_FOUND" });
+    // 🔒 Free + generiert + nicht freigekauft → kein PDF (Volltext-Schutz). Zahler/Uploads/freigekauft passieren.
+    if (await isGeneratedLockedFor(req.user.userId, c)) {
+      return res.status(403).json({ success: false, gated: true, error: "GATED", message: "Dieser Vertrag ist gesperrt. Schalte ihn frei, um das PDF herunterzuladen." });
+    }
     const sig = typeof signature === "string" && signature.startsWith("data:image/") && signature.length < 600000 ? signature : null;
     const logoVal = typeof logo === "string" && /^data:image\/(png|jpe?g);base64,/.test(logo) && logo.length < 800000 ? logo : null;
     const pdf = await renderPremiumPdfBuffer(c.content || "", design, sig, logoVal);
@@ -644,6 +678,10 @@ router.post("/review", aiLimiter, async (req, res) => {
       $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }],
     });
     if (!c) return res.status(404).json({ success: false, error: "NOT_FOUND" });
+    // 🔒 Free + generiert + nicht freigekauft → kein Rechts-Check (bezahltes Feature). Freigekauft/Zahler passieren.
+    if (await isGeneratedLockedFor(req.user.userId, c)) {
+      return res.status(403).json({ success: false, gated: true, error: "GATED", message: "Dieser Vertrag ist gesperrt. Schalte ihn frei, um den Rechts-Check zu nutzen." });
+    }
     const review = await reviewContract(c.content || "");
     return res.json({ success: true, ...review });
   } catch (e) {
@@ -663,6 +701,10 @@ router.post("/explain", aiLimiter, async (req, res) => {
       $or: [{ userId: req.user.userId }, { userId: new ObjectId(req.user.userId) }],
     });
     if (!c) return res.status(404).json({ success: false, error: "NOT_FOUND" });
+    // 🔒 Free + generiert + nicht freigekauft → keine Klausel-Erklärung (bezahltes Feature).
+    if (await isGeneratedLockedFor(req.user.userId, c)) {
+      return res.status(403).json({ success: false, gated: true, error: "GATED", message: "Dieser Vertrag ist gesperrt. Schalte ihn frei, um die Klausel-Erklärung zu nutzen." });
+    }
     const explanation = await explainContract(c.content || "");
     return res.json({ success: true, ...explanation });
   } catch (e) {

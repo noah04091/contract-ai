@@ -16,6 +16,7 @@ import { Sparkles, Send, Download, Lock, ArrowLeft, ArrowRight, ShieldCheck, Che
 import { toast } from "react-toastify";
 import EnhancedSignatureModal from "./EnhancedSignatureModal";
 import { useAuth } from "../hooks/useAuth";
+import { startGenerateUnlock } from "../utils/startAnalysisUnlock";
 
 type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events" | "explain" | "demolock";
 interface CalItem { title: string; date: string; severity?: string }
@@ -34,6 +35,8 @@ interface ChatMsg {
   review?: ReviewData;
   calItems?: CalItem[];
   explainData?: ExplainData;
+  lockPreview?: string;          // 🔒 Free: kurze (geblurrte) Vorschau hinter der Sperr-Karte
+  lockContractId?: string | null; // 🔒 Free: ID des gesperrten Vertrags → Einmal-Freischaltung (9,90 €)
 }
 
 const C = {
@@ -342,16 +345,16 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
         let evt: any;
         try { evt = JSON.parse(line); } catch { continue; }
         if (evt.type === "delta") {
+          if (free) continue; // 🔒 Free bekommt keine Volltext-Deltas (Server sendet auch keine) — doppelt sicher
           acc += evt.text;
           setMessages((m) => m.map((x) => (x.kind === "streaming" ? { ...x, content: acc } : x)));
         } else if (evt.type === "done") {
           done = evt;
           if (free) {
-            // Free-Tease: echten Vertrag sichtbar lassen (Wow) + Sperr-Karte für die Aktionen
-            // (PDF/Signatur/Rechts-Check/Fristen sind bezahlt). Kein Speichern in State/Aktionen.
-            setMessages((m) => [...m.filter((x) => x.kind !== "streaming"),
-              { role: "assistant", kind: "text", content: evt.contractText },
-              { role: "assistant", kind: "demolock", uiOnly: true, content: evt.title || evt.contractType || "Vertrag" },
+            // 🔒 Free-Tease: KEIN Volltext (kommt nicht mehr vom Server) — nur Vorschau + Sperr-Karte
+            // mit Einmal-Freischaltung (9,90 €). Volltext/Download/Rechts-Check erst nach Kauf/Abo.
+            setMessages((m) => [...m.filter((x) => x.kind !== "streaming" && x.kind !== "generating"),
+              { role: "assistant", kind: "demolock", uiOnly: true, content: evt.title || evt.contractType || "Vertrag", lockPreview: evt.previewText || "", lockContractId: evt.contractId || null },
             ]);
           } else {
             const c = { contractId: evt.contractId, contractText: evt.contractText, contractType: evt.contractType, title: evt.title };
@@ -622,7 +625,7 @@ function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend
       ) : m.kind === "explain" ? (
         <ExplainCard explain={m.explainData!} />
       ) : m.kind === "demolock" ? (
-        <LockCard title={m.content === "__used__" ? undefined : m.content} used={m.content === "__used__"} />
+        <LockCard title={m.content === "__used__" ? undefined : m.content} used={m.content === "__used__"} preview={m.lockPreview} contractId={m.lockContractId} />
       ) : (
         <div style={bubbleStyle}>{m.display ?? m.content}</div>
       )}
@@ -814,17 +817,24 @@ function ExplainCard({ explain }: { explain: ExplainData }) {
   );
 }
 
-function LockCard({ title, used = false }: { title?: string; used?: boolean }) {
-  // Optik bewusst an die Analyse-Sperre (LockedAnalysisUpsell) angeglichen:
-  // quadratisches Schloss-Badge, gleiche „Jetzt freischalten"-CTA + „ab Business"-Hinweis.
-  // used=true → die kostenlose Probe-Generierung ist aufgebraucht.
+function LockCard({ title, used = false, preview, contractId }: { title?: string; used?: boolean; preview?: string; contractId?: string | null }) {
+  // Optik bewusst an die Analyse-Sperre (LockedAnalysisUpsell) angeglichen.
+  // used=true → die kostenlose Probe-Generierung ist aufgebraucht (kein konkreter Vertrag zum Freikaufen).
+  // contractId vorhanden → Einmal-Freischaltung (9,90 €) DIESES Vertrags möglich.
   const vertragLabel = used
     ? "Kostenlose Probe genutzt"
     : (title && title !== "lock" ? `Dein ${title} ist fertig!` : "Dein Vertrag ist fertig!");
+  const canUnlock = !used && !!contractId;
   return (
     <div style={{ display: "flex", gap: 11, maxWidth: "90%" }}>
       <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Lock size={15} /></div>
       <div style={{ border: `1.5px solid #d6e2fb`, borderRadius: 14, borderTopLeftRadius: 4, overflow: "hidden", flex: 1, background: "linear-gradient(135deg, rgba(46,108,246,.06), rgba(30,83,216,.03))" }}>
+        {/* 🔒 Geblurrte Vorschau — vermittelt „der echte Vertrag steht dahinter" (Volltext ist NICHT im DOM) */}
+        {canUnlock && preview ? (
+          <div style={{ filter: "blur(4px)", opacity: 0.55, padding: "14px 18px 0", whiteSpace: "pre-wrap", fontFamily: "Georgia,'Times New Roman',serif", fontSize: 11.5, lineHeight: 1.5, color: "#43506a", maxHeight: 116, overflow: "hidden", userSelect: "none", pointerEvents: "none" }}>
+            {preview}
+          </div>
+        ) : null}
         <div style={{ padding: "18px 18px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
           {/* quadratisches Schloss-Badge wie bei der Analyse-Sperre */}
           <div style={{ width: 48, height: 48, borderRadius: 13, display: "grid", placeItems: "center", background: "linear-gradient(135deg,#eff4ff 0%,#e0e9fb 100%)", color: "#2563eb", marginBottom: 12, boxShadow: "0 1px 2px rgba(37,99,235,.12)" }}><Lock size={20} /></div>
@@ -833,13 +843,25 @@ function LockCard({ title, used = false }: { title?: string; used?: boolean }) {
             {used ? (
               <>Du hast deine <b>kostenlose Probe-Generierung</b> bereits genutzt. Schalte frei, um <b>unbegrenzt Verträge zu erstellen</b> — inkl. PDF, Rechts-Check, Klausel-Erklärung, Fristen & Unterschrift.</>
             ) : (
-              <>Schalte frei, um ihn als <b>PDF herunterzuladen</b>, auf <b>Rechtssicherheit zu prüfen</b>, dir <b>jede Klausel erklären</b> zu lassen, <b>Fristen in den Kalender</b> zu übernehmen und <b>direkt unterschreiben</b> zu lassen.</>
+              <>Schalte ihn frei, um den <b>Volltext zu sehen</b>, als <b>PDF herunterzuladen</b>, auf <b>Rechtssicherheit zu prüfen</b> und <b>direkt unterschreiben</b> zu lassen.</>
             )}
           </div>
-          <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "inherit", fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
-            Jetzt freischalten <ArrowRight size={17} />
-          </a>
-          <div style={{ fontSize: 12, color: "#64748b", marginTop: 10 }}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+          {canUnlock ? (
+            <>
+              <button type="button" onClick={() => startGenerateUnlock(contractId)} style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "inherit", fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+                Diesen Vertrag freischalten – 9,90 € <ArrowRight size={17} />
+              </button>
+              <div style={{ fontSize: 12, color: "#475569", marginTop: 10 }}>Einmalig, kein Abo</div>
+              <a href="/pricing" style={{ fontSize: 12.5, color: "#2563eb", marginTop: 8, textDecoration: "none", fontWeight: 600 }}>oder unbegrenzt mit Business →</a>
+            </>
+          ) : (
+            <>
+              <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "inherit", fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+                Jetzt freischalten <ArrowRight size={17} />
+              </a>
+              <div style={{ fontSize: 12, color: "#64748b", marginTop: 10 }}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -22,6 +22,7 @@ import Step3ClauseSidebar from "../components/Step3ClauseSidebar";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 import { WelcomePopup } from "../components/Tour";
 import { getErrorMessage } from "../utils/errorHandling";
+import { startGenerateUnlock } from "../utils/startAnalysisUnlock";
 
 // Generate 2.0: Die einfache „Formular-Vorausfüllen"-Variante ist vorerst ausgeblendet.
 // Sie wird durch den echten Premium-Chat-Modus (Claude Opus + AVV-Design) ersetzt.
@@ -6931,10 +6932,22 @@ export default function Generate() {
                               ? "Du hast deine kostenlose Probe-Generierung bereits genutzt. Schalte frei, um unbegrenzt Verträge zu erstellen, vollständig zu sehen & herunterzuladen."
                               : "Dein Vertrag wurde erstellt. Schalte frei, um ihn vollständig zu sehen, als PDF herunterzuladen und unterschreiben zu lassen."}
                           </p>
-                          <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
-                            Jetzt freischalten →
-                          </a>
-                          <div style={{ fontSize: 12, color: "#64748b", marginTop: 10, textShadow: "0 0 8px #fff" }}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+                          {!freeUsed && savedContractId ? (
+                            <>
+                              <button type="button" onClick={() => startGenerateUnlock(savedContractId)} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+                                Diesen Vertrag freischalten – 9,90 €
+                              </button>
+                              <div style={{ fontSize: 12.5, color: "#475569", marginTop: 12, textShadow: "0 0 8px #fff" }}>Einmalig, kein Abo · inkl. Volltext, PDF &amp; Unterschrift</div>
+                              <a href="/pricing" style={{ fontSize: 12.5, color: "#2563eb", marginTop: 8, textDecoration: "none", fontWeight: 600 }}>oder unbegrenzt mit Business →</a>
+                            </>
+                          ) : (
+                            <>
+                              <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+                                Jetzt freischalten →
+                              </a>
+                              <div style={{ fontSize: 12, color: "#64748b", marginTop: 10, textShadow: "0 0 8px #fff" }}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>

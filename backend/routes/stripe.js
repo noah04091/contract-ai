@@ -163,10 +163,16 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
 // nicht gesetzt ist (= Feature aus). Reversibel: Env entfernen.
 router.post("/create-unlock-session", verifyToken, async (req, res) => {
   await ensureDb();
-  const { contractId } = req.body || {};
-  const unlockPriceId = process.env.STRIPE_UNLOCK_PRICE_ID;
+  const { contractId, kind: rawKind } = req.body || {};
+  // 🔓 Zwei Einmalkauf-Arten: Analyse-Freischaltung (4,90 €) und generierter Vertrag (9,90 €).
+  // Jede hat einen EIGENEN Stripe-Preis (Env). Default = analysis_unlock (rückwärtskompatibel).
+  const kind = rawKind === "generate_unlock" ? "generate_unlock" : "analysis_unlock";
+  const unlockPriceId = kind === "generate_unlock"
+    ? process.env.STRIPE_GENERATE_UNLOCK_PRICE_ID
+    : process.env.STRIPE_UNLOCK_PRICE_ID;
 
   if (!unlockPriceId) {
+    // Preis (noch) nicht hinterlegt → Feature inert; Frontend fällt sanft auf /pricing zurück.
     return res.status(503).json({ message: "Einmal-Freischaltung ist derzeit nicht verfügbar." });
   }
   if (!contractId || !ObjectId.isValid(contractId)) {
@@ -201,7 +207,7 @@ router.post("/create-unlock-session", verifyToken, async (req, res) => {
     }
 
     const unlockMeta = {
-      kind: "analysis_unlock",
+      kind: kind,
       contractId: contractId,
       userId: user._id.toString(),
     };
@@ -255,7 +261,7 @@ router.get("/verify-unlock", verifyToken, async (req, res) => {
         const s = await stripe.checkout.sessions.retrieve(session_id);
         const okOwner = s?.metadata?.userId === String(req.user.userId);
         const okContract = s?.metadata?.contractId === String(contractId);
-        const okKind = s?.metadata?.kind === "analysis_unlock";
+        const okKind = s?.metadata?.kind === "analysis_unlock" || s?.metadata?.kind === "generate_unlock";
         if (s && s.payment_status === "paid" && okOwner && okContract && okKind) {
           const r = await contractsCollection.updateOne(
             { _id: new ObjectId(contractId), userId: new ObjectId(req.user.userId), "unlock.paid": { $ne: true } },
@@ -279,7 +285,7 @@ router.get("/verify-unlock", verifyToken, async (req, res) => {
       const paid = sessions.data.find(s =>
         s.mode === "payment" &&
         s.payment_status === "paid" &&
-        s.metadata && s.metadata.kind === "analysis_unlock" &&
+        s.metadata && (s.metadata.kind === "analysis_unlock" || s.metadata.kind === "generate_unlock") &&
         s.metadata.contractId === String(contractId)
       );
       if (paid) {

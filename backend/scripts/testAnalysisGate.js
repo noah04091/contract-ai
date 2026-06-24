@@ -101,6 +101,59 @@ ok('applyAnalysisGate reicht isFirstAnalysis durch → erste Analyse UNBERÜHRT'
 const secondViaWrapper = applyAnalysisGate(makeContract(), { plan: 'free', isFirstAnalysis: false, analyzedAt: '2026-06-25', launchDate: LAUNCH });
 ok('applyAnalysisGate: zweite Analyse → GESPERRT', secondViaWrapper.gated === true && secondViaWrapper.risiken.length === 1);
 
+// ════════════════════════════════════════════════════════════════════════
+// 🔒 GENERIERTE VERTRÄGE — Volltext-Sperre (Generate 2.0, 23.06.2026)
+// ════════════════════════════════════════════════════════════════════════
+const { shouldGateGeneratedContent, redactGeneratedContentForFree, applyGeneratedContentGate } = require('../utils/analysisGate');
+
+const makeGenerated = () => ({
+  _id: 'g1', name: 'Kaufvertrag – 23.06.2026', isGenerated: true,
+  content: 'KAUFVERTRAG\n\nzwischen A und B\n\n§ 1 Kaufgegenstand\n(1) Zeile\n§ 2 Preis\n(1) 1000 EUR\n§ 3 Zeile\n§ 4 Zeile\n§ 5 Zeile\n§ 6 Zeile\n§ 7 Zeile\n§ 8 Zeile\n§ 9 Zeile\n§ 10 Zeile\n§ 11 Zeile\n§ 12 GEHEIM-UNTEN',
+  contractHTML: '<p>KAUFVERTRAG ... GEHEIM-UNTEN</p>', status: 'Aktiv', contractType: 'Kaufvertrag',
+});
+const makeUploaded = () => ({
+  _id: 'u1', name: 'MeinEigenerVertrag.pdf', isGenerated: false,
+  content: 'EIGENES HOCHGELADENES DOKUMENT — gehört dem User, NIE sperren.',
+  fullText: 'EIGENES HOCHGELADENES DOKUMENT — gehört dem User, NIE sperren.', extractedText: 'x',
+});
+
+console.log('\n════════ shouldGateGeneratedContent — wer wird gesperrt? ════════');
+ok('Free + generiert → GESPERRT', shouldGateGeneratedContent({ plan: 'free', isGenerated: true }) === true);
+ok('Free + generiert + freigekauft → NICHT gesperrt', shouldGateGeneratedContent({ plan: 'free', isGenerated: true, isUnlocked: true }) === false);
+ok('Free + HOCHGELADEN (isGenerated=false) → NIE gesperrt', shouldGateGeneratedContent({ plan: 'free', isGenerated: false }) === false);
+ok('Free + isGenerated undefined → NIE gesperrt', shouldGateGeneratedContent({ plan: 'free' }) === false);
+ok('Business + generiert → NIE gesperrt', shouldGateGeneratedContent({ plan: 'business', isGenerated: true }) === false);
+ok('Enterprise + generiert → NIE gesperrt', shouldGateGeneratedContent({ plan: 'enterprise', isGenerated: true }) === false);
+ok('Free in Business-Org + generiert → NIE gesperrt', shouldGateGeneratedContent({ plan: 'free', orgPlan: 'business', isGenerated: true }) === false);
+ok('default Plan + generiert → GESPERRT (free default)', shouldGateGeneratedContent({ isGenerated: true }) === true);
+
+console.log('\n════════ redactGeneratedContentForFree — Volltext raus, Vorschau bleibt ════════');
+const og = makeGenerated();
+const rg = redactGeneratedContentForFree(og);
+ok('content === null (Volltext weg)', rg.content === null);
+ok('fullText === null', rg.fullText === null);
+ok('contractHTML === null', rg.contractHTML === null);
+ok('extractedText === null', rg.extractedText === null);
+ok('generatedLocked === true', rg.generatedLocked === true);
+ok('generatedPreview vorhanden (max 14 Zeilen)', typeof rg.generatedPreview === 'string' && rg.generatedPreview.split('\n').length <= 14);
+ok('Vorschau enthält KEIN "GEHEIM-UNTEN" (nur Kopf)', !rg.generatedPreview.includes('GEHEIM-UNTEN'));
+ok('Name bleibt (für die Liste/Anzeige)', rg.name === 'Kaufvertrag – 23.06.2026');
+ok('ORIGINAL unberührt (content noch da)', typeof og.content === 'string' && og.content.includes('GEHEIM-UNTEN'));
+
+console.log('\n════════ applyGeneratedContentGate — No-Op für Uploads & Zahler ════════');
+const uploadedFree = applyGeneratedContentGate(makeUploaded(), { plan: 'free' });
+ok('HOCHGELADEN + Free: content KOMPLETT UNBERÜHRT', uploadedFree.content && uploadedFree.content.includes('NIE sperren') && uploadedFree.generatedLocked === undefined);
+ok('HOCHGELADEN + Free: fullText UNBERÜHRT', uploadedFree.fullText && uploadedFree.fullText.includes('NIE sperren'));
+const genBusiness = applyGeneratedContentGate(makeGenerated(), { plan: 'business' });
+ok('GENERIERT + Business: content UNBERÜHRT', typeof genBusiness.content === 'string' && genBusiness.content.includes('GEHEIM-UNTEN') && genBusiness.generatedLocked === undefined);
+const genUnlocked = applyGeneratedContentGate(makeGenerated(), { plan: 'free', isUnlocked: true });
+ok('GENERIERT + Free + freigekauft: content UNBERÜHRT', typeof genUnlocked.content === 'string' && genUnlocked.content.includes('GEHEIM-UNTEN'));
+const genFree = applyGeneratedContentGate(makeGenerated(), { plan: 'free' });
+ok('GENERIERT + Free: content GESPERRT', genFree.content === null && genFree.generatedLocked === true);
+ok('GENERIERT + Free (Org Business): content UNBERÜHRT', applyGeneratedContentGate(makeGenerated(), { plan: 'free', orgPlan: 'business' }).content !== null);
+// Defensiv: null/leeres Objekt dürfen nicht crashen
+ok('null → null (kein Crash)', applyGeneratedContentGate(null, { plan: 'free' }) === null);
+
 console.log('\n════════════════════════════════════════════════');
 console.log(`ERGEBNIS: ${pass} bestanden, ${fail} fehlgeschlagen`);
 console.log('════════════════════════════════════════════════\n');
