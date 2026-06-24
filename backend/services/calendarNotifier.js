@@ -548,7 +548,8 @@ async function queueEventNotification(event, db) {
     content: emailContent,
     ctaButtons: ctaButtons,
     quickActions: generateQuickActionLinks(event, actionToken, baseUrl),
-    recipientEmail: event.user.email  // Fuer personalisierte Unsubscribe-Links
+    recipientEmail: event.user.email,  // Fuer personalisierte Unsubscribe-Links
+    recipientName: event.user?.name || ''  // v2: persönliche Anrede
   });
 
   // Zur Queue hinzufuegen (mit Retry-Mechanismus)
@@ -612,101 +613,110 @@ async function generateActionToken(eventId, userId) {
 /**
  * Email-Content-Generatoren
  */
-function generateCancelReminderEmail(event, token, baseUrl) {
-  const daysUntilWindow = event.metadata?.daysUntilWindow || 30;
+// Hairline-Detail-Karte (v2) — rows: [[label, value], …]; leere Werte werden ausgelassen.
+function calDetail(rows) {
+  const items = (rows || []).filter(r => r && r[1] != null && r[1] !== '');
+  if (!items.length) return '';
+  const trs = items.map((r, i) =>
+    `<tr><td style="padding:13px 18px;${i < items.length - 1 ? ' border-bottom:1px solid #f1f3f5;' : ''}"><span style="font-size:13px; color:#8a94a6;">${r[0]}</span><br><span style="font-size:14.5px; color:#0f172a;">${r[1]}</span></td></tr>`
+  ).join('');
+  return `<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eaecef; border-radius:10px; margin:0 0 22px 0;">${trs}</table>`;
+}
+
+function generateCancelReminderEmail(event) {
+  const m = event.metadata || {};
+  const days = m.daysUntilWindow || 30;
   return `
-    <h2 style="color: #3b82f6; text-align: center;">Erinnerung: Kündigungsfrist naht</h2>
-    <p style="text-align: center;">In ca. <strong>${daysUntilWindow} Tagen</strong> öffnet sich das Kündigungsfenster für <strong>${event.metadata.contractName}</strong>.</p>
-    <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
-      <h3>Details:</h3>
-      <ul style="list-style: none; padding: 0;">
-        <li><strong>Vertrag:</strong> ${event.metadata.contractName}</li>
-        ${event.metadata?.provider ? `<li><strong>Anbieter:</strong> ${event.metadata.provider}</li>` : ''}
-        ${event.metadata?.isAutoRenewal ? '<li><strong>Hinweis:</strong> Dieser Vertrag verlängert sich automatisch!</li>' : ''}
-      </ul>
-    </div>
-    <p style="text-align: center;">Jetzt ist ein guter Zeitpunkt, Ihre Optionen zu prüfen.</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Bald kannst du kündigen</h1>
+    <p style="margin:0 0 22px 0;">In etwa <strong style="color:#0f172a;">${days} Tagen</strong> öffnet sich das Kündigungsfenster für <strong style="color:#0f172a;">${m.contractName || 'deinen Vertrag'}</strong>. Ein guter Moment, deine Optionen zu prüfen.</p>
+    ${calDetail([['Vertrag', m.contractName], ['Anbieter', m.provider], m.isAutoRenewal ? ['Hinweis', 'Verlängert sich automatisch'] : null].filter(Boolean))}
   `;
 }
 
-function generateCancelWindowEmail(event, token, baseUrl) {
-  const daysUntilExpiry = Math.ceil((new Date(event.metadata.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+function generateCancelWindowEmail(event) {
+  const m = event.metadata || {};
+  const expiry = m.expiryDate ? new Date(m.expiryDate) : null;
+  const daysLeft = expiry ? Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24)) : null;
   return `
-    <h2 style="color: #34c759; text-align: center;">Gute Nachrichten!</h2>
-    <p style="text-align: center;">Das Kündigungsfenster für <strong>${event.metadata.contractName}</strong> ist jetzt geöffnet.</p>
-    <div style="background: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0;">
-      <h3>Wichtige Informationen:</h3>
-      <ul style="list-style: none; padding: 0;">
-        <li><strong>Vertragsende:</strong> ${new Date(event.metadata.expiryDate).toLocaleDateString('de-DE')}</li>
-        <li><strong>Kündigungsfrist:</strong> ${event.metadata.noticePeriodDays} Tage</li>
-        <li><strong>Anbieter:</strong> ${event.metadata.provider || 'Unbekannt'}</li>
-        <li><strong>Verbleibende Zeit:</strong> ${daysUntilExpiry} Tage</li>
-      </ul>
-    </div>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Du kannst ${m.contractName || 'deinen Vertrag'} jetzt kündigen</h1>
+    <p style="margin:0 0 22px 0;">Das Kündigungsfenster ist ab jetzt offen. Wenn du wechseln oder beenden möchtest, ist jetzt der richtige Zeitpunkt.</p>
+    ${calDetail([
+      ['Anbieter', m.provider],
+      expiry ? ['Vertragsende', expiry.toLocaleDateString('de-DE')] : null,
+      m.noticePeriodDays ? ['Kündigungsfrist', `${m.noticePeriodDays} Tage`] : null,
+      daysLeft != null ? ['Verbleibend', `${daysLeft} Tage`] : null
+    ].filter(Boolean))}
+    <p style="margin:0 0 4px 0;">Kündige rechtzeitig — wir erstellen dein Kündigungsschreiben mit einem Klick.</p>
   `;
 }
 
-function generateLastCancelDayEmail(event, token, baseUrl) {
+function generateLastCancelDayEmail(event) {
+  const m = event.metadata || {};
+  const months = m.autoRenewMonths || 12;
   return `
-    <h2 style="color: #991b1b; text-align: center;">Wichtige Erinnerung</h2>
-    <p style="font-size: 15px; line-height: 1.7; color: #334155; text-align: center;">
-      Heute ist der letzte Tag, um <strong>"${event.metadata.contractName}"</strong> zu kündigen.
-    </p>
-    <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-      <p style="color: #991b1b; margin: 0; font-weight: 600;">Was passiert ohne Kündigung:</p>
-      <ul style="color: #991b1b; margin: 12px 0 0 0; padding-left: 20px;">
-        <li>Automatische Verlängerung um ${event.metadata.autoRenewMonths || 12} Monate</li>
-        <li>Bindung für weitere ${event.metadata.autoRenewMonths || 12} Monate</li>
-      </ul>
-    </div>
+    <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#dc2626; letter-spacing:.3px; text-transform:uppercase;">Heute ist der letzte Tag</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Vertrag'} jetzt kündigen</h1>
+    <p style="margin:0 0 22px 0;">Heute ist die letzte Möglichkeit, fristgerecht zu kündigen. Danach verlängert sich der Vertrag automatisch um <strong style="color:#0f172a;">${months} Monate</strong>.</p>
+    ${calDetail([['Anbieter', m.provider], ['Letzter Kündigungstag', 'Heute'], ['Ohne Kündigung', `Verlängerung um ${months} Monate`]].filter(Boolean))}
   `;
 }
 
-function generateCancelWarningEmail(event, token, baseUrl) {
+function generateCancelWarningEmail(event) {
+  const m = event.metadata || {};
+  const days = m.daysLeft != null ? m.daysLeft : 7;
   return `
-    <h2 style="color: #ff9500; text-align: center;">Wichtige Erinnerung</h2>
-    <p style="text-align: center;">In <strong>${event.metadata.daysLeft} Tagen</strong> endet die Kündigungsfrist für "${event.metadata.contractName}".</p>
+    <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#b45309; letter-spacing:.3px; text-transform:uppercase;">Frist in ${days} Tagen</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Vertrag'} rechtzeitig kündigen</h1>
+    <p style="margin:0 0 22px 0;">In <strong style="color:#0f172a;">${days} Tagen</strong> endet die Kündigungsfrist. Danach ist eine fristgerechte Kündigung nicht mehr möglich.</p>
+    ${calDetail([['Anbieter', m.provider], ['Frist endet in', `${days} Tagen`]].filter(Boolean))}
   `;
 }
 
-function generatePriceIncreaseEmail(event, token, baseUrl) {
+function generatePriceIncreaseEmail(event) {
+  const m = event.metadata || {};
+  const effDate = event.date ? new Date(event.date).toLocaleDateString('de-DE') : null;
   return `
-    <h2 style="color: #ff6b35; text-align: center;">Preiserhöhung angekündigt</h2>
-    <p style="text-align: center;">Der Preis für "${event.metadata.contractName}" wird erhöht.</p>
+    <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#b45309; letter-spacing:.3px; text-transform:uppercase;">Preisanpassung</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Der Preis für ${m.contractName || 'deinen Vertrag'} steigt</h1>
+    <p style="margin:0 0 22px 0;">Dein Anbieter hat eine Preiserhöhung angekündigt. Ein guter Moment, Alternativen zu vergleichen oder zu kündigen.</p>
+    ${calDetail([['Vertrag', m.contractName], ['Anbieter', m.provider], m.newPrice ? ['Neuer Preis', m.newPrice] : null, effDate ? ['Gültig ab', effDate] : null].filter(Boolean))}
   `;
 }
 
-function generateAutoRenewalEmail(event, token, baseUrl) {
+function generateAutoRenewalEmail(event) {
+  const m = event.metadata || {};
+  const months = m.autoRenewMonths || 12;
+  const renewDate = event.date ? new Date(event.date).toLocaleDateString('de-DE') : null;
   return `
-    <h2 style="color: #5c7cfa; text-align: center;">Automatische Verlängerung steht bevor</h2>
-    <p style="text-align: center;">"${event.metadata.contractName}" verlängert sich automatisch.</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Dein Vertrag'} verlängert sich bald automatisch</h1>
+    <p style="margin:0 0 22px 0;">Ohne Kündigung verlängert sich der Vertrag automatisch um <strong style="color:#0f172a;">${months} Monate</strong>. Wenn du das nicht möchtest, kündige rechtzeitig — wir erstellen dein Schreiben mit einem Klick.</p>
+    ${calDetail([['Anbieter', m.provider], renewDate ? ['Verlängert sich am', renewDate] : null, ['Verlängerung', `um ${months} Monate`]].filter(Boolean))}
   `;
 }
 
-function generateReviewEmail(event, token, baseUrl) {
+function generateReviewEmail(event) {
+  const m = event.metadata || {};
   return `
-    <h2 style="color: #10b981; text-align: center;">Zeit für einen Vertrags-Check!</h2>
-    <p style="text-align: center;">Ihr Vertrag "${event.metadata.contractName}" läuft seit längerer Zeit.</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Zeit für einen Vertrags-Check</h1>
+    <p style="margin:0 0 22px 0;">Dein Vertrag <strong style="color:#0f172a;">${m.contractName || ''}</strong> läuft schon eine Weile. Vielleicht gibt es inzwischen ein besseres oder günstigeres Angebot — ein kurzer Vergleich lohnt sich oft.</p>
+    ${calDetail([['Vertrag', m.contractName], ['Anbieter', m.provider]].filter(Boolean))}
   `;
 }
 
-function generateCancellationConfirmationCheckEmail(event, token, baseUrl) {
-  const contractName = event.metadata?.contractName || event.contractName || "Vertrag";
-  const provider = event.metadata?.provider || "Anbieter";
-  const isFollowUp = event.metadata?.isFollowUp;
+function generateCancellationConfirmationCheckEmail(event) {
+  const m = event.metadata || {};
+  const contractName = m.contractName || event.contractName || "deinen Vertrag";
+  const provider = m.provider || "";
+  const isFollowUp = m.isFollowUp;
   return `
-    <h2 style="color: #f59e0b; text-align: center;">Kündigungsbestätigung prüfen</h2>
-    <p style="text-align: center;">Haben Sie bereits eine <strong>Bestätigung</strong> für die Kündigung von <strong>${contractName}</strong> ${provider ? `bei ${provider}` : ''} erhalten?</p>
-    <div style="background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
-      <h3 style="margin: 0 0 8px; font-size: 15px;">Was Sie jetzt tun sollten:</h3>
-      <ul style="padding-left: 18px; margin: 0;">
-        <li><strong>Bestätigung erhalten?</strong> — Im Kalender auf "Ja, erhalten" klicken</li>
-        <li><strong>Keine Bestätigung?</strong> — Erinnern Sie den Anbieter mit einem Klick</li>
-        <li><strong>Kündigung doch nicht gewünscht?</strong> — Vertrag reaktivieren</li>
-      </ul>
-    </div>
-    ${isFollowUp ? '<p style="color: #92400e; font-size: 13px;">Dies ist eine Folge-Erinnerung. Sie haben zuvor angegeben, keine Bestätigung erhalten zu haben.</p>' : ''}
-    <p style="text-align: center;">Öffnen Sie Ihren Kalender in Contract AI, um direkt zu reagieren.</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Kündigungsbestätigung erhalten?</h1>
+    <p style="margin:0 0 18px 0;">Hast du schon eine <strong style="color:#0f172a;">Bestätigung</strong> für die Kündigung von <strong style="color:#0f172a;">${contractName}</strong>${provider ? ` bei ${provider}` : ''} bekommen?</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eaecef; border-radius:10px; margin:0 0 20px 0;">
+      <tr><td style="padding:13px 18px; border-bottom:1px solid #f1f3f5; font-size:14px; color:#475569;"><strong style="color:#0f172a;">Bestätigung erhalten?</strong> Im Kalender auf „Ja, erhalten" klicken.</td></tr>
+      <tr><td style="padding:13px 18px; border-bottom:1px solid #f1f3f5; font-size:14px; color:#475569;"><strong style="color:#0f172a;">Keine Bestätigung?</strong> Erinnere den Anbieter mit einem Klick.</td></tr>
+      <tr><td style="padding:13px 18px; font-size:14px; color:#475569;"><strong style="color:#0f172a;">Doch nicht gewünscht?</strong> Du kannst den Vertrag reaktivieren.</td></tr>
+    </table>
+    ${isFollowUp ? '<p style="margin:0 0 4px 0; font-size:13px; color:#b45309;">Das ist eine Folge-Erinnerung — du hattest zuvor angegeben, noch keine Bestätigung erhalten zu haben.</p>' : ''}
   `;
 }
 
@@ -733,28 +743,19 @@ function generateSignatureReminderEmail(event, daysUntilExpiry) {
     urgencyBg = '#eff6ff';
   }
 
+  const eyebrow = daysUntilExpiry === 0 ? 'Läuft heute ab' : daysUntilExpiry === 1 ? 'Läuft morgen ab' : `Läuft in ${daysUntilExpiry} Tagen ab`;
   return `
-    <h2 style="color: ${urgencyColor}; text-align: center;">Signaturanfrage: ${urgencyText}</h2>
-    <div style="background: ${urgencyBg}; border-left: 4px solid ${urgencyColor}; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0;">
-      <ul style="list-style: none; padding: 0; margin: 0;">
-        <li style="margin-bottom: 8px;"><strong>Dokument:</strong> ${envelopeTitle}</li>
-        <li style="margin-bottom: 8px;"><strong>Ablaufdatum:</strong> ${expiresAtFormatted}</li>
-        <li><strong>Ausstehende Signaturen:</strong> ${pendingSigners} von ${totalSigners}</li>
-      </ul>
-    </div>
-    <p style="text-align: center; color: #4b5563;">
-      ${daysUntilExpiry === 0
-        ? 'Bitte prüfen Sie den Status der Signaturanfrage umgehend.'
-        : `Noch ${daysUntilExpiry} Tag${daysUntilExpiry > 1 ? 'e' : ''} bis zum Ablauf. Erinnern Sie ausstehende Unterzeichner rechtzeitig.`
-      }
-    </p>
+    <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:${urgencyColor}; letter-spacing:.3px; text-transform:uppercase;">${eyebrow}</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Deine Signaturanfrage läuft ab</h1>
+    <p style="margin:0 0 22px 0;">${daysUntilExpiry === 0 ? 'Die Signaturanfrage läuft heute ab.' : `Noch ${daysUntilExpiry} Tag${daysUntilExpiry > 1 ? 'e' : ''} bis zum Ablauf.`} Erinnere ausstehende Unterzeichner rechtzeitig.</p>
+    ${calDetail([['Dokument', envelopeTitle], expiresAtFormatted && expiresAtFormatted !== 'Unbekannt' ? ['Ablaufdatum', expiresAtFormatted] : null, ['Ausstehende Signaturen', `${pendingSigners} von ${totalSigners}`]].filter(Boolean))}
   `;
 }
 
-function generateGenericEmail(event, token, baseUrl) {
+function generateGenericEmail(event) {
   return `
-    <h2>${event.title}</h2>
-    <p>${event.description}</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${event.title || 'Vertragsinformation'}</h1>
+    <p style="margin:0 0 8px 0;">${event.description || ''}</p>
   `;
 }
 
@@ -766,52 +767,59 @@ function generateQuickActionLinks(event, token, baseUrl) {
   ];
 }
 
+// v2-Hülle (Stripe/DocuSign-Stil): eigene, responsive Vorlage — Anrede, linksbündig,
+// EIN primärer Button + dezenter Sekundär-Link, ruhige Schnellaktionen, sauberer Footer.
+// Bewusst NICHT die geteilte Basis (generateEmailTemplate) — der v2-Look gilt nur für Kalender-Mails.
 function generateCalendarEmailTemplate(params) {
-  const { title, preheader, eventType, severity, content, ctaButtons, quickActions, recipientEmail } = params;
-  const severityColors = { info: "#3b82f6", warning: "#ff9500", critical: "#ff3b30" };
-  const primaryColor = severityColors[severity] || "#3b82f6";
+  const { title, preheader, content, ctaButtons = [], quickActions = [], recipientEmail, recipientName } = params;
+  const FRONTEND = process.env.FRONTEND_URL || "https://www.contract-ai.de";
+  const logoUrl = `${FRONTEND}/logo.png`;
+  const firstName = (recipientName && String(recipientName).trim().split(/\s+/)[0]) || "";
+  const greeting = firstName ? `Hallo ${firstName},` : "Hallo,";
 
-  const ctaHtml = ctaButtons.map(button => {
-    const buttonColors = {
-      primary: { bg: primaryColor, text: "#ffffff" },
-      secondary: { bg: "#f3f4f6", text: "#1f2937" },
-      warning: { bg: "#ff9500", text: "#ffffff" },
-      urgent: { bg: "#ff3b30", text: "#ffffff" }
-    };
-    const colors = buttonColors[button.style] || buttonColors.primary;
-    return `
-      <table border="0" cellpadding="0" cellspacing="0" style="margin: 10px auto;">
-        <tr>
-          <td align="center">
-            <a href="${button.url}" target="_blank" style="display: inline-block; padding: 14px 28px; font-size: 16px; font-weight: 600; color: ${colors.text}; text-decoration: none; background: ${colors.bg}; border-radius: 25px;">${button.text}</a>
-          </td>
-        </tr>
-      </table>
-    `;
-  }).join('');
+  const primary = ctaButtons.find(b => b.style === "primary") || ctaButtons[0] || null;
+  const secondaries = ctaButtons.filter(b => b !== primary);
+  const primaryHtml = primary ? `
+        <table cellpadding="0" cellspacing="0" style="margin:0 0 12px 0;"><tr><td style="border-radius:8px; background-color:#3b82f6;">
+          <a href="${primary.url}" target="_blank" style="display:inline-block; padding:13px 26px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:8px;">${primary.text}</a>
+        </td></tr></table>` : "";
+  const secondaryHtml = secondaries.length ? `
+        <p style="margin:0; font-size:14px; color:#8a94a6;">${secondaries.map(s => `oder <a href="${s.url}" target="_blank" style="color:#3b82f6; text-decoration:none;">${s.text}</a>`).join(" &nbsp;·&nbsp; ")}</p>` : "";
 
-  const quickActionsHtml = quickActions.map(action =>
-    `<a href="${action.url}" style="display: inline-block; margin: 0 10px; color: #6b7280; text-decoration: none; font-size: 14px;">${action.text}</a>`
-  ).join(' | ');
+  const quickHtml = quickActions.length ? `
+    <tr><td class="cal-pad" style="padding:22px 44px 0 44px;">
+      <p style="margin:0; font-size:13px; color:#9aa3b2;">${quickActions.map(a => `<a href="${a.url}" target="_blank" style="color:#9aa3b2; text-decoration:none;">${a.text}</a>`).join(" &nbsp;·&nbsp; ")}</p>
+    </td></tr>` : "";
 
-  const baseUrlForUnsub = process.env.FRONTEND_URL || "https://contract-ai.de";
-  const unsubscribeUrl = `${baseUrlForUnsub}/api/email/unsubscribe?email=${encodeURIComponent(recipientEmail)}&category=CALENDAR`;
+  const unsubscribeUrl = `${FRONTEND}/api/email/unsubscribe?email=${encodeURIComponent(recipientEmail)}&category=CALENDAR`;
+  const preheaderHtml = preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${preheader}</div>` : "";
 
-  return generateEmailTemplate({
-    title: title,
-    preheader: preheader,
-    body: `
-      <div style="margin-bottom: 30px;">${content}</div>
-      <div style="text-align: center; margin: 30px 0;">${ctaHtml}</div>
-      <div style="border-top: 1px solid #e5e7eb; margin-top: 40px; padding-top: 20px; text-align: center; font-size: 14px; color: #6b7280;">
-        <p><strong>Quick Actions:</strong></p>
-        <div style="margin: 15px 0;">${quickActionsHtml}</div>
-      </div>
-    `,
-    recipientEmail: recipientEmail,
-    emailCategory: 'calendar',
-    unsubscribeUrl: unsubscribeUrl
-  });
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>@media only screen and (max-width:480px){ .cal-pad{ padding-left:24px !important; padding-right:24px !important; } }</style></head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
+${preheaderHtml}
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f6f8; padding:32px 12px;"><tr><td align="center">
+  <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background-color:#ffffff; border:1px solid #e6e9ec; border-radius:12px; overflow:hidden;">
+    <tr><td class="cal-pad" style="padding:32px 44px 0 44px;"><img src="${logoUrl}" alt="Contract AI" style="height:26px; max-width:160px;"></td></tr>
+    <tr><td class="cal-pad" style="padding:24px 44px 8px 44px;">
+      <p style="margin:0 0 18px 0; font-size:15px; color:#475569;">${greeting}</p>
+      <div style="font-size:15px; line-height:1.65; color:#475569;">${content}</div>
+      <div style="margin-top:26px;">${primaryHtml}${secondaryHtml}</div>
+    </td></tr>
+    ${quickHtml}
+    <tr><td class="cal-pad" style="padding:26px 44px 30px 44px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #eaecef; padding-top:18px;">
+        <p style="margin:0 0 6px 0; font-size:12.5px; color:#9aa3b2;">© ${new Date().getFullYear()} Contract AI</p>
+        <p style="margin:0; font-size:12px;">
+          <a href="${FRONTEND}" target="_blank" style="color:#9aa3b2; text-decoration:none;">Website</a> <span style="color:#d7dbe0; margin:0 8px;">·</span>
+          <a href="${FRONTEND}/datenschutz" target="_blank" style="color:#9aa3b2; text-decoration:none;">Datenschutz</a> <span style="color:#d7dbe0; margin:0 8px;">·</span>
+          <a href="${FRONTEND}/impressum" target="_blank" style="color:#9aa3b2; text-decoration:none;">Impressum</a> <span style="color:#d7dbe0; margin:0 8px;">·</span>
+          <a href="${unsubscribeUrl}" target="_blank" style="color:#9aa3b2; text-decoration:none;">Abmelden</a>
+        </p>
+      </td></tr></table>
+    </td></tr>
+  </table>
+</td></tr></table></body></html>`;
 }
 
 module.exports = {
@@ -822,5 +830,19 @@ module.exports = {
   eventFiresOnlyOnOwnDay,
   firesOnOwnDay,
   shouldDeferToOwnDay,
-  getSendWindow
+  getSendWindow,
+  // Reine Render-Funktionen (für Vorschau/Tests; keine Seiteneffekte)
+  __render: {
+    generateCalendarEmailTemplate,
+    generateCancelReminderEmail,
+    generateCancelWindowEmail,
+    generateLastCancelDayEmail,
+    generateCancelWarningEmail,
+    generatePriceIncreaseEmail,
+    generateAutoRenewalEmail,
+    generateReviewEmail,
+    generateCancellationConfirmationCheckEmail,
+    generateSignatureReminderEmail,
+    generateGenericEmail
+  }
 };
