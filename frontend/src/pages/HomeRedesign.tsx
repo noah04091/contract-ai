@@ -874,7 +874,7 @@ const HomeRedesign = () => {
               <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Dieselbe Sicherheit wie beim Anwalt – in Sekunden statt Tagen, zum Bruchteil der Kosten.</p>
             </div>
             <div style={s("margin-top:44px;overflow-x:auto")} className="ca-lp-reveal">
-              <div style={s("min-width:640px;border:1px solid rgba(17,17,20,0.08);border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 30px 60px -40px rgba(17,17,20,0.2)")}>
+              <div className="ca-lp-cmp" style={s("min-width:640px;border:1px solid rgba(17,17,20,0.08);border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 30px 60px -40px rgba(17,17,20,0.2)")}>
                 <div style={s("display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;background:#fafafb;border-bottom:1px solid rgba(17,17,20,0.08)")}>
                   <div style={s("padding:18px 20px")}>&nbsp;</div>
                   <div style={s("padding:18px 14px;text-align:center;background:linear-gradient(180deg,rgba(37,99,235,0.1),rgba(37,99,235,0.04));border-left:1px solid rgba(37,99,235,0.18);border-right:1px solid rgba(37,99,235,0.18)")}><span style={s("display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:700;color:#2563eb")}><svg width="15" height="15" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#2563eb"></rect><path d="M8 14.4l3.8 3.8L20 9.2" stroke="#fff" strokeWidth="2.6" fill="none" strokeLinecap="round" strokeLinejoin="round"></path></svg>Contract&nbsp;AI</span></div>

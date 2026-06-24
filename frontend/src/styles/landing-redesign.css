@@ -95,3 +95,16 @@
 .ca-lp-page .ca-lp-mq-rev .ca-lp-mq-group { animation-name: caMarqueeXRev; }
 @keyframes caMarqueeX { to { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } }
 @keyframes caMarqueeXRev { from { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } to { transform: translateX(0); } }
+
+/* === Vergleichstabelle: auf Handy alle 4 Spalten passend (kein Wischen nötig) === */
+@media (max-width: 600px) {
+  .ca-lp-page .ca-lp-cmp { min-width: 0 !important; }
+  .ca-lp-page .ca-lp-cmp > div > div { padding: 12px 6px !important; }
+  .ca-lp-page .ca-lp-cmp > div > div:first-child { padding-left: 12px !important; font-size: 12px !important; line-height: 1.3 !important; }
+  .ca-lp-page .ca-lp-cmp span { font-size: 11.5px !important; gap: 4px !important; }
+}
+@media (max-width: 380px) {
+  .ca-lp-page .ca-lp-cmp > div > div { padding: 10px 4px !important; }
+  .ca-lp-page .ca-lp-cmp span { font-size: 10.5px !important; }
+  .ca-lp-page .ca-lp-cmp > div > div:first-child { font-size: 11px !important; }
+}
