@@ -873,7 +873,7 @@ const HomeRedesign = () => {
               <h2 style={s("font-size:clamp(28px,3.4vw,44px);font-weight:600;letter-spacing:-0.025em;line-height:1.06;margin:14px 0 0;color:#0c0c10")}>Warum <span style={s(GRAD)}>Contract&nbsp;AI</span>?</h2>
               <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Dieselbe Sicherheit wie beim Anwalt – in Sekunden statt Tagen, zum Bruchteil der Kosten.</p>
             </div>
-            <div style={s("margin-top:44px;overflow-x:auto")} className="ca-lp-reveal">
+            <div style={s("margin-top:44px;overflow-x:auto")} className="ca-lp-reveal ca-lp-cmp-desktop">
               <div className="ca-lp-cmp" style={s("min-width:640px;border:1px solid rgba(17,17,20,0.08);border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 30px 60px -40px rgba(17,17,20,0.2)")}>
                 <div style={s("display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;background:#fafafb;border-bottom:1px solid rgba(17,17,20,0.08)")}>
                   <div style={s("padding:18px 20px")}>&nbsp;</div>
@@ -890,6 +890,36 @@ const HomeRedesign = () => {
                   </div>
                 ))}
               </div>
+            </div>
+            {/* Mobile: Vergleich als Swipe-Karten (Desktop-Tabelle oben wird ≤600px ausgeblendet) */}
+            <div className="ca-lp-cmp-mobile" style={s("display:none")}>
+              {[
+                { name: "Contract AI", key: "ca", pop: true },
+                { name: "Anwalt", key: "anwalt", pop: false },
+                { name: "ChatGPT", key: "gpt", pop: false },
+              ].map((prov, pi) => (
+                <div key={pi} className="ca-lp-cmp-mcard" style={s(`background:#fff;border:${prov.pop ? "2px solid #2563eb" : "1px solid rgba(17,17,20,0.1)"};border-radius:18px;padding:22px;${prov.pop ? "box-shadow:0 24px 50px -24px rgba(37,99,235,0.35);" : ""}`)}>
+                  <div style={s("display:flex;align-items:center;justify-content:space-between;gap:8px")}>
+                    <span style={s(`font-size:18px;font-weight:700;color:${prov.pop ? "#2563eb" : "#0c0c10"}`)}>{prov.name}</span>
+                    {prov.pop && <span style={s("display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#fff;background:#2563eb;border-radius:999px;padding:4px 10px")}><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"></polygon></svg>Empfohlen</span>}
+                  </div>
+                  <ul style={s("list-style:none;padding:0;margin:16px 0 0;display:flex;flex-direction:column")}>
+                    {compRows.map((r, ri) => {
+                      const v = (r as unknown as Record<string, string>)[prov.key];
+                      return (
+                        <li key={ri} style={s(`display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0;${ri < compRows.length - 1 ? "border-bottom:1px solid rgba(17,17,20,0.06);" : ""}`)}>
+                          <span style={s("font-size:14px;color:#27272a;line-height:1.3")}>{r.label}</span>
+                          <span style={s("flex:none;display:inline-flex")}>{
+                            v === "check" ? <Check stroke="#10b981" w={20} sw="2.6" />
+                            : v === "x" ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4d4d8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                            : <span style={s(`font-size:13.5px;font-weight:600;color:${v === "teils" ? "#f59e0b" : (prov.pop ? "#2563eb" : "#71717a")}`)}>{v}</span>
+                          }</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
             </div>
           </div>
         </section>

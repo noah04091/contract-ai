@@ -96,18 +96,23 @@
 @keyframes caMarqueeX { to { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } }
 @keyframes caMarqueeXRev { from { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } to { transform: translateX(0); } }
 
-/* === Vergleichstabelle: sauberes Mobile-Layout — Merkmal als Zeile, darunter die 3 Werte === */
+/* === Vergleich: Desktop = Tabelle, Handy = Swipe-Karten je Anbieter === */
 @media (max-width: 600px) {
-  .ca-lp-page .ca-lp-cmp { min-width: 0 !important; }
-  .ca-lp-page .ca-lp-cmp > div { display: flex !important; flex-wrap: wrap; align-items: stretch; }
-  /* Merkmal-Spalte = volle Zeile, fett */
-  .ca-lp-page .ca-lp-cmp > div > div:first-child { flex: 0 0 100%; padding: 13px 16px 5px !important; font-size: 13.5px !important; font-weight: 600 !important; line-height: 1.3 !important; text-align: left !important; }
-  /* die 3 Wert-Zellen teilen sich eine Zeile darunter */
-  .ca-lp-page .ca-lp-cmp > div > div:not(:first-child) { flex: 1 1 0; min-width: 0; padding: 8px 4px 13px !important; }
-  /* leere Header-Zelle ausblenden → Header zeigt nur Contract AI / Anwalt / ChatGPT */
-  .ca-lp-page .ca-lp-cmp > div:first-child > div:first-child { display: none !important; }
-  .ca-lp-page .ca-lp-cmp > div:first-child > div:not(:first-child) { padding-top: 14px !important; padding-bottom: 14px !important; }
-  .ca-lp-page .ca-lp-cmp span { font-size: 12.5px !important; }
+  .ca-lp-page .ca-lp-cmp-desktop { display: none !important; }
+  .ca-lp-page .ca-lp-cmp-mobile {
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    margin: 32px -24px 0 !important;
+    padding: 4px 24px 14px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .ca-lp-page .ca-lp-cmp-mobile::-webkit-scrollbar { display: none; }
+  .ca-lp-page .ca-lp-cmp-mcard { flex: 0 0 84%; max-width: 330px; scroll-snap-align: center; }
 }
 
 /* ============================================================
