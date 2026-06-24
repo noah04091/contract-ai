@@ -909,7 +909,7 @@ const HomeRedesign = () => {
                 <span style={s("margin-left:8px;margin-right:6px;display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;color:#059669;background:#ecfdf3;border:1px solid #c8f0d8;border-radius:999px;padding:4px 10px")}>2 Monate gratis</span>
               </div>
             </div>
-            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr));gap:20px;margin-top:48px;align-items:stretch")} className="ca-lp-stagger">
+            <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(290px,100%),1fr));gap:20px;margin-top:48px;align-items:stretch")} className="ca-lp-stagger ca-lp-pricegrid">
               {/* Starter */}
               <div className="ca-lp-pricecard" style={s("background:#fff;border:1px solid rgba(17,17,20,0.1);border-radius:20px;padding:32px;display:flex;flex-direction:column")}>
                 <h3 style={s("font-size:17px;font-weight:600;color:#0c0c10;margin:0")}>Starter</h3>
