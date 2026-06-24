@@ -42,11 +42,16 @@ const generateSignedUrl = async (key) => {
 // Setzt Content-Disposition: inline statt default attachment, damit Browser
 // das PDF inline rendert statt Download triggert (31.05.2026, fuer Hover-Preview)
 const generateInlineSignedUrl = async (key, filename = 'document.pdf') => {
-  const safeFilename = String(filename).replace(/["\r\n]/g, '');
+  // RFC 5987: Content-Disposition muss ISO-8859-1 sein (S3-Anforderung) — sonst lehnt S3
+  // Namen mit Zeichen > U+00FF ab (z.B. Gedankenstrich "–", den der Generator anhängt).
+  // ASCII-Fallback + filename* — gleiches Muster wie buildContentDisposition() in routes/contracts.js
+  const safe = String(filename || 'document.pdf');
+  const ascii = safe.replace(/[^\x20-\x7E]/g, '_').replace(/"/g, '');
+  const utf8 = encodeURIComponent(safe);
   const command = new GetObjectCommand({
     Bucket: process.env.S3_BUCKET_NAME,
     Key: key,
-    ResponseContentDisposition: `inline; filename="${safeFilename}"`,
+    ResponseContentDisposition: `inline; filename="${ascii}"; filename*=UTF-8''${utf8}`,
     ResponseContentType: 'application/pdf',
   });
 
