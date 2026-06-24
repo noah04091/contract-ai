@@ -85,6 +85,32 @@ async function assess(messages) {
 }
 
 // =========================================================================
+// 1b) Verfeinern-Intent: will der Nutzer wirklich den VERTRAG ändern, oder ist es
+//     eine Frage/Smalltalk/Off-Topic? (verhindert versehentliches Neu-Generieren)
+// =========================================================================
+const REFINE_INTENT_SCHEMA = {
+  type: "object", additionalProperties: false,
+  properties: { isChange: { type: "boolean" }, reply: { type: "string" } },
+  required: ["isChange", "reply"],
+};
+async function classifyRefineIntent(messages) {
+  const lastUser = [...messages].reverse().find((m) => m && m.role === "user");
+  const userText = (lastUser && typeof lastUser.content === "string") ? lastUser.content : "";
+  const system =
+    "Es wurde bereits ein vollständiger Vertrag erstellt. Beurteile die LETZTE Nachricht des Nutzers:\n" +
+    "- isChange=true NUR, wenn sie eine konkrete Änderung/Ergänzung/Korrektur AM VERTRAG verlangt (z. B. „Laufzeit auf 6 Monate“, „Wettbewerbsverbot ergänzen“, „Namen ändern“, „Klausel zu Haftung strenger“).\n" +
+    "- isChange=false bei allem anderen: Fragen ohne Vertragsbezug (z. B. Wetter), Smalltalk, Dank, Begrüßung, allgemeine Fragen, unverständliche/sinnlose Eingaben.\n" +
+    "- reply: NUR wenn isChange=false — eine kurze, freundliche deutsche Antwort (1–2 Sätze) in der DU-Form (duzen, niemals siezen), die den Nutzer sanft zurück zum Vertrag führt (z. B. kurz auf die Frage eingehen, dann auf Änderungswünsche/Download hinweisen). Wenn isChange=true → reply=\"\".\n" +
+    "Antworte ausschließlich über das Schema.";
+  const res = await client().messages.create({
+    model: MODEL, max_tokens: 400,
+    output_config: { effort: "low", format: { type: "json_schema", schema: REFINE_INTENT_SCHEMA } },
+    system, messages: [{ role: "user", content: "Letzte Nachricht des Nutzers:\n" + userText }],
+  });
+  return JSON.parse(res.content.find((b) => b.type === "text").text);
+}
+
+// =========================================================================
 // 2) Vollständigen Vertrag schreiben (server-seitig gestreamt → finalMessage)
 // =========================================================================
 async function generateContractText(messages, onDelta) {
@@ -562,6 +588,23 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
   const { messages, contractType, existingContractId } = req.body || {};
   if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ success: false, error: "NO_MESSAGES" });
 
+  // 🛑 Verfeinern-Intent-Gate: bei BESTEHENDEM Vertrag nur neu generieren, wenn der Nutzer
+  // wirklich eine Vertrags-Änderung will. Sonst (Frage/Smalltalk/Off-Topic) freundlich im Chat
+  // antworten — kein (oft kaputter) Neu-Vertrag, kein Limit-/Gratis-Verbrauch. fail-open.
+  if (existingContractId) {
+    try {
+      const intent = await classifyRefineIntent(messages);
+      if (intent && intent.isChange === false) {
+        res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+        res.setHeader("Cache-Control", "no-cache, no-transform");
+        res.write(JSON.stringify({ type: "chat", reply: intent.reply || "Ich helfe dir hier nur rund um deinen Vertrag — sag mir z. B. „Laufzeit auf 6 Monate ändern“ oder lade ihn als PDF herunter." }) + "\n");
+        return res.end();
+      }
+    } catch (intentErr) {
+      console.warn("[Premium] Refine-Intent-Check fehlgeschlagen (fail-open):", intentErr.message);
+    }
+  }
+
   let freeClaimed = false; // 🔓 Free-Tease: wurde die 1 Gratis-Generierung „geclaimt"? (für Refund bei Fehler)
   let isFree = false;      // 🔒 Free → Volltext NICHT streamen/zurückgeben (nur Vorschau + Sperre)
 
@@ -739,4 +782,4 @@ router.post("/explain", aiLimiter, async (req, res) => {
   }
 });
 
-module.exports = { router, assess, generateContractText, reviewContract, explainContract, extractContractDates, datesToContractFields, renderPremiumPdfBuffer, textToBasicHtml };
+module.exports = { router, assess, classifyRefineIntent, generateContractText, reviewContract, explainContract, extractContractDates, datesToContractFields, renderPremiumPdfBuffer, textToBasicHtml };

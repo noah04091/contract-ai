@@ -361,6 +361,10 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
             setContract(c);
             setMessages((m) => [...m.filter((x) => x.kind !== "streaming"), { role: "assistant", kind: "contract", content: evt.contractText, contract: c }]);
           }
+        } else if (evt.type === "chat") {
+          // Verfeinern-Gate: keine Vertragsänderung (Frage/Smalltalk) → freundliche Antwort, Vertrag bleibt bestehen
+          done = evt;
+          setMessages((m) => [...m.filter((x) => x.kind !== "streaming" && x.kind !== "generating"), { role: "assistant", kind: "text", content: evt.reply || "Ich helfe dir hier nur rund um deinen Vertrag." }]);
         } else if (evt.type === "events") {
           if (!free && evt.count > 0) {
             setMessages((m) => [...m, { role: "assistant", kind: "events", uiOnly: true, content: `${evt.count} Fristen`, calItems: Array.isArray(evt.items) ? evt.items : [] }]);
