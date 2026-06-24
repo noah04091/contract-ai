@@ -96,25 +96,10 @@
 @keyframes caMarqueeX { to { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } }
 @keyframes caMarqueeXRev { from { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } to { transform: translateX(0); } }
 
-/* === Vergleichstabelle: auf Handy komfortabel + horizontal wischbar (Merkmal-Spalte fixiert) === */
+/* === Vergleichstabelle: exakt die Design-Tabelle, auf Handy horizontal scrollbar (wie im Design) === */
 @media (max-width: 600px) {
-  .ca-lp-page .ca-lp-cmp-desktop {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    /* dezenter Verlauf am rechten Rand → signalisiert "mehr durch Wischen" */
-    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
-    mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
-  }
+  .ca-lp-page .ca-lp-cmp-desktop { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .ca-lp-page .ca-lp-cmp-desktop::-webkit-scrollbar { display: none; }
-  /* komfortable Spalten → nichts gequetscht; Tabelle breiter als Schirm → wischbar */
-  .ca-lp-page .ca-lp-cmp { min-width: 600px !important; overflow: visible !important; }
-  /* Merkmal-Spalte bleibt beim Wischen stehen (Kontext immer sichtbar) */
-  .ca-lp-page .ca-lp-cmp > div > div:first-child {
-    position: sticky; left: 0; z-index: 2; background: #fff;
-    box-shadow: 8px 0 10px -8px rgba(17,17,20,0.15);
-  }
-  .ca-lp-page .ca-lp-cmp > div:first-child > div:first-child { background: #fafafb; }
 }
 
 /* ============================================================
