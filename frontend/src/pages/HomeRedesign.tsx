@@ -784,6 +784,9 @@ const HomeRedesign = () => {
                 </Link>
               ))}
             </div>
+            <div style={s("text-align:center;margin-top:30px")} className="ca-lp-reveal">
+              <Link to="/features" className="ca-lp-textlink" style={s("display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:500;color:#2563eb;text-decoration:none")}>Alle Funktionen ansehen<Arrow w={15} /></Link>
+            </div>
           </div>
         </section>
 
@@ -807,6 +810,7 @@ const HomeRedesign = () => {
                 </Link>
               ))}
             </div>
+            <p style={s("text-align:center;font-size:15px;line-height:1.6;color:#52525b;margin:34px auto 0;max-width:660px")} className="ca-lp-reveal">Ihr Vertrags- oder Dokumententyp ist nicht dabei? <strong style={s("color:#0c0c10;font-weight:600")}>Kein Problem</strong> – Contract&nbsp;AI analysiert jeden Vertrag tiefgründig, ganz gleich welcher Typ.</p>
           </div>
         </section>
 
