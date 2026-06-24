@@ -96,22 +96,25 @@
 @keyframes caMarqueeX { to { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } }
 @keyframes caMarqueeXRev { from { transform: translateX(calc(-100% - var(--ca-mq-gap, 18px))); } to { transform: translateX(0); } }
 
-/* === Vergleichstabelle: echte 4-Spalten-Tabelle, kompakt & sauber auf Handy === */
+/* === Vergleichstabelle: auf Handy komfortabel + horizontal wischbar (Merkmal-Spalte fixiert) === */
 @media (max-width: 600px) {
-  /* Tabelle bricht zum Bildschirmrand aus → mehr Platz für die Spalten */
-  .ca-lp-page .ca-lp-cmp-desktop { margin-left: -16px !important; margin-right: -16px !important; }
-  .ca-lp-page .ca-lp-cmp { min-width: 0 !important; }
-  /* minmax(0,...) → jede Zeile EXAKT gleiche Spaltenbreiten (Inhalt verschiebt nichts mehr) */
-  .ca-lp-page .ca-lp-cmp > div { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) !important; }
-  .ca-lp-page .ca-lp-cmp > div > div { padding: 13px 5px !important; min-width: 0 !important; }
-  .ca-lp-page .ca-lp-cmp > div > div:first-child { padding-left: 14px !important; font-size: 12.5px !important; line-height: 1.3 !important; text-align: left !important; overflow-wrap: break-word; hyphens: auto; }
-  /* Contract-AI-Spalte: durchgehend sauber (keine zerklüfteten Zell-Rahmen) */
-  .ca-lp-page .ca-lp-cmp > div > div:nth-child(2) { border-left: none !important; border-right: none !important; background: rgba(37,99,235,0.05) !important; }
-  .ca-lp-page .ca-lp-cmp span { font-size: 11.5px !important; }
-}
-@media (max-width: 360px) {
-  .ca-lp-page .ca-lp-cmp span { font-size: 10.5px !important; }
-  .ca-lp-page .ca-lp-cmp > div > div:first-child { font-size: 11.5px !important; }
+  .ca-lp-page .ca-lp-cmp-desktop {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* dezenter Verlauf am rechten Rand → signalisiert "mehr durch Wischen" */
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 26px), transparent);
+  }
+  .ca-lp-page .ca-lp-cmp-desktop::-webkit-scrollbar { display: none; }
+  /* komfortable Spalten → nichts gequetscht; Tabelle breiter als Schirm → wischbar */
+  .ca-lp-page .ca-lp-cmp { min-width: 600px !important; overflow: visible !important; }
+  /* Merkmal-Spalte bleibt beim Wischen stehen (Kontext immer sichtbar) */
+  .ca-lp-page .ca-lp-cmp > div > div:first-child {
+    position: sticky; left: 0; z-index: 2; background: #fff;
+    box-shadow: 8px 0 10px -8px rgba(17,17,20,0.15);
+  }
+  .ca-lp-page .ca-lp-cmp > div:first-child > div:first-child { background: #fafafb; }
 }
 
 /* ============================================================
