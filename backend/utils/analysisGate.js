@@ -167,7 +167,69 @@ function applyAnalysisGate(contract, opts = {}) {
   return redactAnalysisForFree(contract);
 }
 
+// ============================================================================
+// 🔒 GENERIERTE VERTRÄGE (Generate 2.0) — Volltext-Sperre für Free (23.06.2026)
+// ----------------------------------------------------------------------------
+// Modell (mit User fixiert): Ein KI-GENERIERTER Vertrag (isGenerated===true) ist für
+// Free-User gesperrt — sie sehen nur eine Vorschau + Schloss; den VOLLTEXT + PDF +
+// Download gibt es erst nach Einmal-Freischaltung (9,90 €) ODER Abo.
+//
+// ⚠️ ABGRENZUNG (kritische Sicherheit): Das gilt AUSSCHLIESSLICH für isGenerated===true.
+//   - HOCHGELADENE Verträge (eigene Dokumente des Users) → NIE angefasst.
+//   - Zahler (Business/Enterprise/Org) → NIE angefasst.
+//   - Einmalig freigekauft (unlock.paid) → voll.
+// Diese Sperre ist bewusst IMMER aktiv (nicht hinter FREEMIUM_GATE_ENABLED), weil die
+// Gratis-Generierung selbst (1 echte Probe) ebenfalls immer aktiv ist — sonst leakt der
+// Volltext. Reversibel via git revert.
+// ----------------------------------------------------------------------------
+
+/**
+ * Soll der VOLLTEXT eines generierten Vertrags für diesen User gesperrt werden?
+ * @param {{plan?:string, orgPlan?:string, isGenerated?:boolean, isUnlocked?:boolean}} o
+ * @returns {boolean} true = Volltext redigieren
+ */
+function shouldGateGeneratedContent({ plan, orgPlan, isGenerated, isUnlocked } = {}) {
+  if (isGenerated !== true) return false;                    // NUR generierte Verträge — Uploads nie
+  if (effectivePlan(plan, orgPlan) !== 'free') return false; // Zahler/Org → nie sperren
+  if (isUnlocked === true) return false;                     // einmalig freigekauft → voll
+  return true;
+}
+
+/**
+ * Entfernt den Volltext (content/fullText/contractHTML/extractedText) aus einem
+ * generierten Vertrag und ersetzt ihn durch eine kurze Vorschau + Marker.
+ * FLACHE KOPIE (Original unberührt). Der Volltext verlässt damit den Server nicht.
+ */
+function redactGeneratedContentForFree(contract) {
+  if (!contract || typeof contract !== 'object') return contract;
+  const out = { ...contract };
+  const full = (typeof out.content === 'string' && out.content)
+    || (typeof out.fullText === 'string' && out.fullText)
+    || (typeof out.extractedText === 'string' && out.extractedText)
+    || '';
+  out.generatedPreview = full ? full.split('\n').slice(0, 14).join('\n') : '';
+  out.content = null;
+  out.fullText = null;
+  out.contractHTML = null;
+  out.extractedText = null;
+  out.generatedLocked = true; // Frontend zeigt Schloss statt Volltext
+  return out;
+}
+
+/**
+ * Bequemer Wrapper für generierten Volltext: gated-Kopie wenn nötig, sonst Original.
+ * Liest isGenerated aus dem Contract (opts.isGenerated übersteuert, falls gesetzt).
+ */
+function applyGeneratedContentGate(contract, opts = {}) {
+  const isGenerated = (opts.isGenerated !== undefined)
+    ? opts.isGenerated
+    : !!(contract && contract.isGenerated);
+  if (!shouldGateGeneratedContent({ ...opts, isGenerated })) return contract;
+  return redactGeneratedContentForFree(contract);
+}
+
 module.exports = {
   PAID_PLANS, LOCKED_FIELDS,
-  effectivePlan, shouldGateAnalysis, redactAnalysisForFree, applyAnalysisGate, isContractUnlocked
+  effectivePlan, shouldGateAnalysis, redactAnalysisForFree, applyAnalysisGate, isContractUnlocked,
+  shouldGateGeneratedContent, redactGeneratedContentForFree, applyGeneratedContentGate
 };

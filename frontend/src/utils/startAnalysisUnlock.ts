@@ -1,10 +1,15 @@
-// Stufe 2 — Einmal-Freischaltung EINER Analyse.
-// Startet den Stripe-Einmalkauf (mode:"payment") für genau diesen Vertrag und
-// leitet zur Stripe-Checkout-Seite weiter. Nach Erfolg landet der User wieder bei
-// /contracts?view=<id>&unlocked=1 (siehe success_url im Backend).
-export async function startAnalysisUnlock(contractId?: string | null): Promise<void> {
+// Stufe 2 — Einmal-Freischaltung (mode:"payment", kein Abo).
+// Startet den Stripe-Einmalkauf für genau diesen Vertrag und leitet zur Checkout-Seite.
+// Nach Erfolg landet der User wieder bei /contracts?view=<id>&unlocked=1 (success_url im Backend).
+//
+// Zwei Arten (kind):
+//   - "analysis_unlock"  → Analyse-Freischaltung (4,90 €)
+//   - "generate_unlock"  → generierter Vertrag freischalten (9,90 €)
+type UnlockKind = "analysis_unlock" | "generate_unlock";
+
+export async function startUnlock(contractId?: string | null, kind: UnlockKind = "analysis_unlock"): Promise<void> {
   if (!contractId) {
-    alert("Diese Analyse kann gerade nicht freigeschaltet werden (keine Vertrags-ID).");
+    alert("Das kann gerade nicht freigeschaltet werden (keine Vertrags-ID).");
     return;
   }
   try {
@@ -16,7 +21,7 @@ export async function startAnalysisUnlock(contractId?: string | null): Promise<v
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       credentials: "include",
-      body: JSON.stringify({ contractId }),
+      body: JSON.stringify({ contractId, kind }),
     });
     const data = await res.json().catch(() => ({}));
 
@@ -25,7 +30,7 @@ export async function startAnalysisUnlock(contractId?: string | null): Promise<v
       return;
     }
     if (data?.alreadyUnlocked) {
-      // Schon bezahlt → einfach neu laden, damit die volle Analyse erscheint
+      // Schon bezahlt → einfach neu laden, damit der volle Inhalt erscheint
       window.location.reload();
       return;
     }
@@ -39,4 +44,14 @@ export async function startAnalysisUnlock(contractId?: string | null): Promise<v
     console.error("[Unlock] Fehler beim Start der Freischaltung:", err);
     alert("Die Freischaltung konnte nicht gestartet werden. Bitte später erneut versuchen.");
   }
+}
+
+// Bestehender Aufruf (Analyse) — unverändert kompatibel.
+export function startAnalysisUnlock(contractId?: string | null): Promise<void> {
+  return startUnlock(contractId, "analysis_unlock");
+}
+
+// Neu: generierten Vertrag einmalig freischalten (9,90 €).
+export function startGenerateUnlock(contractId?: string | null): Promise<void> {
+  return startUnlock(contractId, "generate_unlock");
 }

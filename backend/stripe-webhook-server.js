@@ -388,8 +388,14 @@ async function handleStripeEvent(event) {
 
       // 🔓 STUFE 2: Einmal-Freischaltung (mode:"payment") — MUSS vor der Abo-Logik abgefangen
       // werden, sonst erwartet processStripeEvent eine Subscription und scheitert.
-      if (session.mode === "payment" && session.metadata && session.metadata.kind === "analysis_unlock") {
+      if (session.mode === "payment" && session.metadata && (session.metadata.kind === "analysis_unlock" || session.metadata.kind === "generate_unlock")) {
         const { contractId, userId } = session.metadata;
+        const unlockKind = session.metadata.kind;                 // analysis_unlock | generate_unlock
+        const isGenerateUnlock = unlockKind === "generate_unlock"; // generierter Vertrag (9,90 €)
+        const unlockItemLabel = isGenerateUnlock ? "Vertrags-Freischaltung (einmalig)" : "Analyse-Freischaltung (einmalig)";
+        const unlockMailText = isGenerateUnlock
+          ? "Im Anhang findest du die Rechnung zur einmaligen Freischaltung deines erstellten Vertrags."
+          : "Im Anhang findest du die Rechnung zu deiner einmaligen Analyse-Freischaltung.";
         if (session.payment_status === "paid" && contractId && userId && ObjectId.isValid(contractId) && ObjectId.isValid(userId)) {
           try {
             const db = await database.connect();
@@ -404,7 +410,7 @@ async function handleStripeEvent(event) {
                 "unlock.source": "webhook"
               } }
             );
-            console.log(`🔓 Analyse einmalig freigeschaltet (contract ${contractId}, user ${userId}) — modified ${r.modifiedCount}`);
+            console.log(`🔓 Einmal-Freischaltung (${unlockKind}) gesetzt (contract ${contractId}, user ${userId}) — modified ${r.modifiedCount}`);
             // Nur beim ERSTEN Setzen: Tracking + Rechnung (Dedup ggü. verify-on-return / Stripe-Retries)
             if (r.modifiedCount > 0) {
               try { require('./services/featureUsage').getInstance().trackFeatureUsage({ userId, feature: 'unlock_purchased' }).catch(() => {}); } catch { /* tracking optional */ }
@@ -436,21 +442,21 @@ async function handleStripeEvent(event) {
                   const pdfBuffer = await generateInvoicePdf({
                     customerName, email, plan: '', amount, invoiceDate, invoiceNumber,
                     customerAddress, companyName, taxId,
-                    itemLabel: 'Analyse-Freischaltung (einmalig)', oneTime: true, paymentMethod: 'card'
+                    itemLabel: unlockItemLabel, oneTime: true, paymentMethod: 'card'
                   });
                   await sendEmail({
                     to: email,
                     subject: 'Contract AI – Deine Rechnung',
                     html: generateEmailTemplate({
                       title: 'Deine Rechnung',
-                      body: '<p>Vielen Dank für deinen Kauf!</p><p>Im Anhang findest du die Rechnung zu deiner einmaligen Analyse-Freischaltung.</p><p>📋 Alle Rechnungen findest du auch in deinem Profil unter „Rechnungen".</p>',
+                      body: `<p>Vielen Dank für deinen Kauf!</p><p>${unlockMailText}</p><p>📋 Alle Rechnungen findest du auch in deinem Profil unter „Rechnungen".</p>`,
                       preheader: 'Hier ist deine Rechnung von Contract AI.'
                     }),
                     attachments: [{ filename: `Rechnung-${invoiceNumber}.pdf`, content: pdfBuffer }]
                   });
                   await invoicesCol.insertOne({
                     invoiceNumber, stripeInvoiceNumber: null, customerEmail: email, customerName,
-                    plan: 'analysis_unlock', amount, date: invoiceDate, file: pdfBuffer, createdAt: new Date()
+                    plan: unlockKind, amount, date: invoiceDate, file: pdfBuffer, createdAt: new Date()
                   });
                   console.log(`📄 Unlock-Rechnung ${invoiceNumber} an ${email} gesendet`);
                 } else {

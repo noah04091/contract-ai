@@ -1,6 +1,7 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect, useRef } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail, Bell, Scale, Lightbulb, AlertTriangle, Users, Sparkles, Info, Star, Search } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail, Bell, Scale, Lightbulb, AlertTriangle, Users, Sparkles, Info, Star, Search, Lock } from 'lucide-react';
+import { startGenerateUnlock } from '../utils/startAnalysisUnlock';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -147,6 +148,8 @@ interface Contract {
   detailedLegalOpinion?: string; // ✅ NEU: Ausführliches Rechtsgutachten
   gated?: boolean; // 🔒 Freemium-Tease: Backend hat Analyse für Free-User redigiert
   gatedCounts?: GatedCounts;
+  generatedLocked?: boolean;  // 🔒 Generierter Vertrag: Volltext für Free gesperrt (erst nach Freischaltung/Abo)
+  generatedPreview?: string;  // 🔒 kurze Vorschau, wenn generatedLocked
   // ✅ Strukturierte Analyse-Felder (aus Live-Analyse, Top-Level in DB persistiert)
   positiveAspects?: Array<{ title: string; description: string }>;
   criticalIssues?: Array<{ title: string; description: string; riskLevel?: 'high' | 'medium' | 'low' }>;
@@ -696,7 +699,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const isDocx = !!(contract.s3Key?.toLowerCase().endsWith('.docx') || (!contract.s3Key && contract.name?.toLowerCase().endsWith('.docx')));
 
   // Load PDF URL when PDF tab is opened
-  const hasPdfSource = !!(contract.s3Key || contract.content || contract.contractHTML || contract.isGenerated);
+  const hasPdfSource = !contract.generatedLocked && !!(contract.s3Key || contract.content || contract.contractHTML || contract.isGenerated);
 
   // 🖥️ Split-View nur bei Desktop-Breite + echtem PDF-Dokument (kein DOCX, kein Reupload-Fall).
   // Sonst greift überall das bewährte gestapelte Layout.
@@ -1940,8 +1943,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </div>
       )}
 
+      {/* 🔒 Generierter Vertrag (Free, nicht freigekauft): Volltext gesperrt → Sperr-Karte statt Inhalt */}
+      {contract.generatedLocked && renderGeneratedLock()}
+
       {/* Content */}
-      {(contract.extractedText || contract.fullText || contract.content) && (
+      {!contract.generatedLocked && (contract.extractedText || contract.fullText || contract.content) && (
         <div className={styles.section}>
           <div className={styles.contentSectionHeader}>
             <h3><FileText size={17} style={{ verticalAlign: '-3px', marginRight: 7 }} />Vertragsinhalt</h3>
@@ -2044,8 +2050,34 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     }
   };
 
+  // 🔒 Sperr-Karte für generierte Verträge (Free, nicht freigekauft) — Volltext kommt nicht vom Server.
+  const renderGeneratedLock = () => (
+    <div className={styles.section}>
+      <div style={{ position: 'relative', border: '1px solid #e6ecf6', borderRadius: 14, overflow: 'hidden', background: '#fff', minHeight: 280 }}>
+        {contract.generatedPreview ? (
+          <div style={{ filter: 'blur(4px)', opacity: 0.6, padding: 20, whiteSpace: 'pre-wrap', fontSize: 12.5, lineHeight: 1.6, color: '#334155', maxHeight: 280, overflow: 'hidden', userSelect: 'none', pointerEvents: 'none' }}>
+            {contract.generatedPreview}
+          </div>
+        ) : <div style={{ minHeight: 280 }} />}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24, background: 'radial-gradient(120% 70% at 50% 50%, rgba(255,255,255,0.72) 0%, rgba(255,255,255,0.42) 55%, rgba(255,255,255,0.1) 100%)' }}>
+          <div style={{ width: 52, height: 52, borderRadius: 14, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg,#eff4ff,#e0e9fb)', color: '#2563eb', marginBottom: 13 }}><Lock size={22} /></div>
+          <h3 style={{ fontSize: 17, fontWeight: 700, color: '#0f172a', margin: '0 0 6px', textShadow: '0 0 8px #fff' }}>Vertrag gesperrt</h3>
+          <p style={{ fontSize: 13.5, color: '#334155', margin: '0 0 18px', maxWidth: 380, lineHeight: 1.55, textShadow: '0 0 8px #fff' }}>
+            Dieser Vertrag wurde mit der KI erstellt. Schalte ihn frei, um den Volltext zu sehen, als PDF herunterzuladen und unterschreiben zu lassen.
+          </p>
+          <button type="button" onClick={() => startGenerateUnlock(contract._id)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 14, borderRadius: 10, padding: '11px 24px', border: 'none', cursor: 'pointer', color: '#fff', background: 'linear-gradient(135deg,#3b82f6,#2563eb)', boxShadow: '0 4px 14px rgba(37,99,235,.25)' }}>
+            Diesen Vertrag freischalten – 9,90 €
+          </button>
+          <div style={{ fontSize: 12.5, color: '#475569', marginTop: 12, textShadow: '0 0 8px #fff' }}>Einmalig, kein Abo</div>
+          <a href="/pricing" style={{ fontSize: 12.5, color: '#2563eb', marginTop: 8, textDecoration: 'none', fontWeight: 600 }}>oder unbegrenzt mit Business →</a>
+        </div>
+      </div>
+    </div>
+  );
+
   // Render PDF Tab
   const renderPdfTab = () => {
+    if (contract.generatedLocked) return renderGeneratedLock(); // 🔒 kein PDF-Versuch (Endpoint 403)
     if (contract.needsReupload) {
       return (
         <div className={styles.tabContent}>
