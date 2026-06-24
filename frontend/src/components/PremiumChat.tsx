@@ -12,7 +12,7 @@
  *   POST /api/contracts/premium/pdf        (Premium-PDF, AVV-Stil)
  */
 import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { Sparkles, Send, Download, Lock, ArrowLeft, ArrowRight, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown, BookOpen } from "lucide-react";
+import { Sparkles, Send, Download, Lock, ArrowLeft, ArrowRight, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown, BookOpen, Eye } from "lucide-react";
 import { toast } from "react-toastify";
 import EnhancedSignatureModal from "./EnhancedSignatureModal";
 import { useAuth } from "../hooks/useAuth";
@@ -634,6 +634,9 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
   const [design, setDesign] = useState<string | { style: string; accent: string }>("royal");
   const [signature, setSignature] = useState<string | null>(null);
   const [showPad, setShowPad] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const lines = c.contractText.split("\n").filter((l) => l.trim()).slice(0, 8);
   const sectionCount = (c.contractText.match(/^§\s*\d/gm) || []).length;
   const designs = [
@@ -645,9 +648,37 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
   ];
   const accent = typeof design === "object" ? design.accent : design === "gold" ? "#c9a961" : design === "royal" ? "#1e3a8a" : design === "modern" ? "#0ea5e9" : "#1f4e8c";
   const isCustom = typeof design === "object";
+  // Live-Vorschau: bei offener Vorschau + Design-/Farbwechsel debounced das echte PDF holen
+  useEffect(() => {
+    if (!previewOpen) return;
+    let cancelled = false;
+    setPreviewLoading(true);
+    const h = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null }) });
+        if (!res.ok) throw new Error();
+        const blob = await res.blob();
+        if (cancelled) return;
+        const url = URL.createObjectURL(blob);
+        setPreviewUrl((old) => { if (old) URL.revokeObjectURL(old); return url; });
+      } catch { /* ignore */ }
+      finally { if (!cancelled) setPreviewLoading(false); }
+    }, 400);
+    return () => { cancelled = true; clearTimeout(h); };
+  }, [previewOpen, design, signature, c.contractId]);
   return (
     <div style={{ border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden", background: "#fff", maxWidth: 460 }}>
-      <div style={{ padding: "16px 18px", background: "linear-gradient(180deg,#fff,#fcfdff)", fontFamily: design === "elegant" ? "Georgia,'Times New Roman',serif" : "'Inter',sans-serif", borderBottom: `1px solid ${C.border}`, maxHeight: 190, overflow: "hidden", position: "relative" }}>
+      {previewOpen ? (
+        <div style={{ position: "relative", height: 440, background: "#eef1f6", borderBottom: `1px solid ${C.border}` }}>
+          {previewUrl ? (
+            <iframe title="Live-Vorschau" src={previewUrl + "#toolbar=0&navpanes=0&view=FitH"} style={{ width: "100%", height: "100%", border: 0 }} />
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: C.muted, fontSize: 13, gap: 9 }}><Dots /> Vorschau wird erstellt …</div>
+          )}
+          {previewLoading && previewUrl && <div style={{ position: "absolute", top: 8, right: 10, fontSize: 11, fontWeight: 600, color: C.muted, background: "rgba(255,255,255,.85)", padding: "3px 9px", borderRadius: 6, boxShadow: "0 1px 3px rgba(0,0,0,.08)" }}>aktualisiert …</div>}
+        </div>
+      ) : (
+        <div style={{ padding: "16px 18px", background: "linear-gradient(180deg,#fff,#fcfdff)", fontFamily: design === "elegant" ? "Georgia,'Times New Roman',serif" : "'Inter',sans-serif", borderBottom: `1px solid ${C.border}`, maxHeight: 190, overflow: "hidden", position: "relative" }}>
         {lines.map((l, i) => {
           const isPar = /^§\s*\d/.test(l.trim());
           const isHead = i === 0;
@@ -656,7 +687,8 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
           );
         })}
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 40, background: "linear-gradient(180deg,rgba(255,255,255,0),#fff)" }} />
-      </div>
+        </div>
+      )}
       {/* Design-Auswahl (ändert die Optik, nicht den Inhalt) */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 15px 0", flexWrap: "wrap" }}>
         <span style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>Design:</span>
@@ -671,6 +703,10 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
           Eigene Farbe
           <input type="color" value={accent} onChange={(e) => setDesign({ style: "executive", accent: e.target.value })} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
         </label>
+        <button type="button" onClick={() => setPreviewOpen((o) => !o)} title="Echte PDF-Vorschau ein-/ausblenden"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "5px 10px", border: `1px solid ${previewOpen ? C.blue : C.border}`, background: previewOpen ? "rgba(46,108,246,.08)" : "#fff", color: previewOpen ? C.blue : "#41506b", marginLeft: "auto" }}>
+          <Eye size={13} /> {previewOpen ? "Vorschau aus" : "Live-Vorschau"}
+        </button>
       </div>
       {/* Unterschrift direkt auf den Vertrag */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 15px 0", flexWrap: "wrap" }}>
