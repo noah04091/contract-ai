@@ -12,7 +12,7 @@
  *   POST /api/contracts/premium/pdf        (Premium-PDF, AVV-Stil)
  */
 import { useState, useRef, useEffect, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
-import { Sparkles, Send, Download, Lock, ArrowLeft, ArrowRight, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown, BookOpen, Eye } from "lucide-react";
+import { Sparkles, Send, Download, Lock, ArrowLeft, ArrowRight, ShieldCheck, Check, PenLine, AlertTriangle, X, Bell, Calendar, ChevronDown, BookOpen, Eye, Palette, Image as ImageIcon } from "lucide-react";
 import { toast } from "react-toastify";
 import EnhancedSignatureModal from "./EnhancedSignatureModal";
 import { useAuth } from "../hooks/useAuth";
@@ -408,9 +408,9 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
     setBusy(false);
   }
 
-  async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) {
+  async function downloadPdf(c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null, logo?: string | null) {
     try {
-      const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null }) });
+      const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null, logo: logo || null }) });
       if (!res.ok) throw new Error();
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -421,12 +421,12 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
   }
 
   // Zur Unterschrift senden: Premium-PDF → S3 → bestehenden Envelope-Dialog öffnen
-  async function sendForSignature(c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) {
+  async function sendForSignature(c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null, logo?: string | null) {
     const t = toast.loading("Vertrag wird für die Unterschrift vorbereitet …");
     try {
       const pdfRes = await fetch("/api/contracts/premium/pdf", {
         method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null }),
+        body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null, logo: logo || null }),
       });
       if (!pdfRes.ok) throw new Error("PDF");
       const blob = await pdfRes.blob();
@@ -557,7 +557,7 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
   );
 }
 
-function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) => void; busy: boolean }) {
+function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend, busy }: { m: ChatMsg; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null, logo?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onApplyRec: (r: ReviewData) => void; onSkip: (contractType?: string) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null, logo?: string | null) => void; busy: boolean }) {
   const isUser = m.role === "user";
   const AiAvatar = (
     <div style={{ width: 30, height: 30, borderRadius: "50%", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flex: "none" }}><Sparkles size={16} /></div>
@@ -633,13 +633,15 @@ function Bubble({ m, onDownload, onReview, onExplain, onApplyRec, onSkip, onSend
   );
 }
 
-function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null) => void }) {
+function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNullable<ChatMsg["contract"]>; onDownload: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null, logo?: string | null) => void; onReview: (c: NonNullable<ChatMsg["contract"]>) => void; onExplain: (c: NonNullable<ChatMsg["contract"]>) => void; onSend: (c: NonNullable<ChatMsg["contract"]>, design: DesignCfg, signature?: string | null, logo?: string | null) => void }) {
   const [design, setDesign] = useState<string | { style: string; accent: string }>("royal");
   const [signature, setSignature] = useState<string | null>(null);
   const [showPad, setShowPad] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [designOpen, setDesignOpen] = useState(false);
+  const [logo, setLogo] = useState<string | null>(null);
   const lines = c.contractText.split("\n").filter((l) => l.trim()).slice(0, 8);
   const sectionCount = (c.contractText.match(/^§\s*\d/gm) || []).length;
   const designs = [
@@ -651,6 +653,16 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
   ];
   const accent = typeof design === "object" ? design.accent : design === "gold" ? "#c9a961" : design === "royal" ? "#1e3a8a" : design === "modern" ? "#0ea5e9" : "#1f4e8c";
   const isCustom = typeof design === "object";
+  const currentLabel = isCustom ? "Eigene Farbe" : (designs.find((d) => d.id === design)?.label || "Royal");
+  const swatchColor = (id: string) => (id === "gold" ? "#c9a961" : id === "royal" ? "#1e3a8a" : id === "modern" ? "#0ea5e9" : id === "elegant" ? "#1a2230" : "#1f4e8c");
+  const onLogoFile = (e: any) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.size > 500 * 1024) { toast.info("Logo bitte unter 500 KB (PNG/JPG)."); return; }
+    const r = new FileReader();
+    r.onload = () => setLogo(typeof r.result === "string" ? r.result : null);
+    r.readAsDataURL(f);
+  };
   // Live-Vorschau: bei offener Vorschau + Design-/Farbwechsel debounced das echte PDF holen
   useEffect(() => {
     if (!previewOpen) return;
@@ -658,7 +670,7 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
     setPreviewLoading(true);
     const h = setTimeout(async () => {
       try {
-        const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null }) });
+        const res = await fetch("/api/contracts/premium/pdf", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contractId: c.contractId, design, signature: signature || null, logo: logo || null }) });
         if (!res.ok) throw new Error();
         const blob = await res.blob();
         if (cancelled) return;
@@ -668,7 +680,7 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
       finally { if (!cancelled) setPreviewLoading(false); }
     }, 400);
     return () => { cancelled = true; clearTimeout(h); };
-  }, [previewOpen, design, signature, c.contractId]);
+  }, [previewOpen, design, signature, logo, c.contractId]);
   return (
     <div style={{ border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden", background: "#fff", maxWidth: 460 }}>
       {previewOpen ? (
@@ -692,24 +704,45 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 40, background: "linear-gradient(180deg,rgba(255,255,255,0),#fff)" }} />
         </div>
       )}
-      {/* Design-Auswahl (ändert die Optik, nicht den Inhalt) */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 15px 0", flexWrap: "wrap" }}>
-        <span style={{ fontSize: 12, color: C.muted, fontWeight: 600 }}>Design:</span>
-        {designs.map((dd) => (
-          <button key={dd.id} type="button" onClick={() => setDesign(dd.id)}
-            style={{ font: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "5px 11px", border: `1px solid ${design === dd.id ? C.blue : C.border}`, background: design === dd.id ? "rgba(46,108,246,.08)" : "#fff", color: design === dd.id ? C.blue : "#41506b" }}>
-            {dd.label}
+      {/* Design & Vorschau — kompakt, aufklappbar, horizontal scrollbar */}
+      <div style={{ padding: "12px 15px 2px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button type="button" onClick={() => setDesignOpen((o) => !o)} style={{ flex: 1, minWidth: 0, display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "7px 11px", border: `1px solid ${designOpen ? C.blue : C.border}`, background: designOpen ? "rgba(46,108,246,.06)" : "#fff", color: "#33415c", textAlign: "left" }}>
+            <Palette size={14} color={accent} />
+            <span style={{ flex: "none" }}>Design</span>
+            <span style={{ width: 11, height: 11, borderRadius: "50%", background: accent, border: "1px solid rgba(0,0,0,.18)", flex: "none" }} />
+            <span style={{ color: C.muted2, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{currentLabel}{logo ? " · Logo" : ""}</span>
+            <ChevronDown size={15} color={C.muted} style={{ marginLeft: "auto", flex: "none", transform: designOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
           </button>
-        ))}
-        <label title="Eigene Akzentfarbe wählen" style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "5px 10px", border: `1px solid ${isCustom ? C.blue : C.border}`, background: isCustom ? "rgba(46,108,246,.08)" : "#fff", color: isCustom ? C.blue : "#41506b", position: "relative" }}>
-          <span style={{ width: 13, height: 13, borderRadius: "50%", background: accent, border: "1px solid rgba(0,0,0,.2)", flex: "none" }} />
-          Eigene Farbe
-          <input type="color" value={accent} onChange={(e) => setDesign({ style: "executive", accent: e.target.value })} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
-        </label>
-        <button type="button" onClick={() => setPreviewOpen((o) => !o)} title="Echte PDF-Vorschau ein-/ausblenden"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "5px 10px", border: `1px solid ${previewOpen ? C.blue : C.border}`, background: previewOpen ? "rgba(46,108,246,.08)" : "#fff", color: previewOpen ? C.blue : "#41506b", marginLeft: "auto" }}>
-          <Eye size={13} /> {previewOpen ? "Vorschau aus" : "Live-Vorschau"}
-        </button>
+          <button type="button" onClick={() => setPreviewOpen((o) => !o)} title="Echte PDF-Vorschau ein-/ausblenden" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontSize: 12.5, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "7px 11px", border: `1px solid ${previewOpen ? C.blue : C.border}`, background: previewOpen ? "rgba(46,108,246,.08)" : "#fff", color: previewOpen ? C.blue : "#41506b", flex: "none" }}>
+            <Eye size={14} /> {previewOpen ? "Aus" : "Vorschau"}
+          </button>
+        </div>
+        {designOpen && (
+          <div style={{ display: "flex", gap: 7, overflowX: "auto", paddingTop: 9, paddingBottom: 4 }}>
+            {designs.map((dd) => {
+              const active = design === dd.id;
+              return (
+                <button key={dd.id} type="button" onClick={() => setDesign(dd.id)} style={{ flex: "none", display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 11px", border: `1px solid ${active ? C.blue : C.border}`, background: active ? "rgba(46,108,246,.08)" : "#fff", color: active ? C.blue : "#41506b", whiteSpace: "nowrap" }}>
+                  <span style={{ width: 11, height: 11, borderRadius: "50%", background: swatchColor(dd.id), border: "1px solid rgba(0,0,0,.18)", flex: "none" }} />
+                  {dd.label}
+                </button>
+              );
+            })}
+            <label title="Eigene Akzentfarbe wählen" style={{ flex: "none", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 11px", border: `1px solid ${isCustom ? C.blue : C.border}`, background: isCustom ? "rgba(46,108,246,.08)" : "#fff", color: isCustom ? C.blue : "#41506b", position: "relative", whiteSpace: "nowrap" }}>
+              <span style={{ width: 11, height: 11, borderRadius: "50%", background: isCustom ? accent : "conic-gradient(from 0deg,#ef4444,#f59e0b,#10b981,#3b82f6,#a855f7,#ef4444)", border: "1px solid rgba(0,0,0,.18)", flex: "none" }} />
+              Eigene Farbe
+              <input type="color" value={accent} onChange={(e) => setDesign({ style: "executive", accent: e.target.value })} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} />
+            </label>
+            <label title="Eigenes Logo hochladen (PNG/JPG, max. 500 KB)" style={{ flex: "none", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 600, cursor: "pointer", borderRadius: 8, padding: "6px 11px", border: `1px solid ${logo ? C.blue : C.border}`, background: logo ? "rgba(46,108,246,.08)" : "#fff", color: logo ? C.blue : "#41506b", position: "relative", whiteSpace: "nowrap" }}>
+              <ImageIcon size={13} /> {logo ? "Logo ✓" : "Logo"}
+              <input type="file" accept="image/png,image/jpeg" onChange={onLogoFile} style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer", width: "100%" }} />
+            </label>
+            {logo && (
+              <button type="button" onClick={() => setLogo(null)} style={{ flex: "none", font: "inherit", fontSize: 12, color: C.muted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline", whiteSpace: "nowrap" }}>Logo entfernen</button>
+            )}
+          </div>
+        )}
       </div>
       {/* Unterschrift direkt auf den Vertrag */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 15px 0", flexWrap: "wrap" }}>
@@ -729,10 +762,10 @@ function ContractCard({ c, onDownload, onReview, onExplain, onSend }: { c: NonNu
       {showPad && <SignaturePad onSave={(d) => { setSignature(d); setShowPad(false); }} onCancel={() => setShowPad(false)} />}
 
       <div style={{ display: "flex", gap: 9, padding: "12px 15px 14px", alignItems: "center", flexWrap: "wrap" }}>
-        <button onClick={() => onDownload(c, design, signature)} style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
+        <button onClick={() => onDownload(c, design, signature, logo)} style={{ display: "inline-flex", alignItems: "center", gap: 7, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 14px", cursor: "pointer", border: "none", color: "#fff", background: `linear-gradient(135deg,${C.blue},${C.blue2})`, boxShadow: "0 6px 14px -4px rgba(46,108,246,.45)" }}>
           <Download size={16} /> PDF herunterladen
         </button>
-        <button onClick={() => onSend(c, design, signature)} title="Vertrag an die andere Partei zum Unterschreiben senden" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 13px", cursor: "pointer", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
+        <button onClick={() => onSend(c, design, signature, logo)} title="Vertrag an die andere Partei zum Unterschreiben senden" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 13px", cursor: "pointer", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
           <Send size={15} /> Zur Unterschrift senden
         </button>
         <button onClick={() => onReview(c)} title="Vertrag von der KI auf Rechtssicherheit prüfen lassen" style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "inherit", fontWeight: 600, fontSize: 13, borderRadius: 10, padding: "9px 13px", cursor: "pointer", border: `1px solid ${C.border}`, background: "#fff", color: "#33415c" }}>
