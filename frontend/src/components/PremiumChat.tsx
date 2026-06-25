@@ -261,16 +261,28 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
     const text = (typeof override === "string" ? override : input).trim();
     if (!text || busy) return;
     if (demo) {
-      // 🔓 Free-Tease: 1 ECHTE Gratis-Generierung des tatsächlich beschriebenen Vertrags
-      // (deckt alle 16 Typen + Freitext ab). Ohne Rückfragen-Runde (spart 2. KI-Lauf).
+      // 🔓 Free-Tease: Free durchläuft DENSELBEN Prozess wie Zahler (beschreiben → Rückfragen
+      // beantworten → Vertrag wird live geschrieben). Die Sperre kommt erst am FERTIGEN Vertrag
+      // — so investiert sich der/die Nutzer:in erst und sieht den Wert (bessere Conversion).
       setInput("");
-      const typeHint = pickDemo(text).title; // grobe Typ-Erkennung als contractType-Hinweis
       const base = [...messages, { role: "user", kind: "text", content: text } as ChatMsg];
       setMessages(base);
       setBusy(true);
       setMessages((m) => [...m, { role: "assistant", kind: "generating", content: "" }]);
       try {
-        await streamGenerate(base, typeHint, undefined, true); // free=true
+        if (!contract) {
+          // Phase 1: bewerten — Rückfragen ODER (wenn genug Infos) gated generieren
+          const a = await postJson("/api/contracts/premium/chat", { messages: toApi(base) });
+          if (a.ready) {
+            await streamGenerate(base, a.contractType, undefined, true); // free=true → Ergebnis gesperrt
+          } else {
+            setMessages((m) => [...m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"),
+              { role: "assistant", kind: "questions", content: "Rückfragen: " + a.questions.map((q: any) => q.frage).join(" "), questions: a.questions, contractType: a.contractType }]);
+          }
+        } else {
+          // Phase 2: Verfeinern — denselben Vertrag (bleibt gated)
+          await streamGenerate(base, contract.contractType, contract.contractId, true);
+        }
       } catch (e: any) {
         setMessages((m) => m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"));
         if (e?.status === 403 || e?.data?.upgradeRequired || e?.data?.freeUsed) {
@@ -385,11 +397,17 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
     setMessages(base);
     setBusy(true);
     try {
-      await streamGenerate(base, contractType || "Vertrag");
+      await streamGenerate(base, contractType || "Vertrag", undefined, demo); // Free → Ergebnis gesperrt
     } catch (e: any) {
-      const msg = e?.data?.limitReached ? "Du hast dein monatliches Limit erreicht. Bitte Plan upgraden." : "Da ist gerade etwas schiefgelaufen — bitte versuch es nochmal.";
-      setMessages((m) => [...m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"), { role: "assistant", kind: "text", content: msg }]);
-      toast.info(msg);
+      setMessages((m) => m.filter((x) => x.kind !== "generating" && x.kind !== "streaming"));
+      if (demo && (e?.status === 403 || e?.data?.upgradeRequired || e?.data?.freeUsed)) {
+        // Free-Gratis-Generierung aufgebraucht → Upsell-Karte (statt Fehlertext)
+        setMessages((m) => [...m, { role: "assistant", kind: "demolock", uiOnly: true, content: "__used__" }]);
+      } else {
+        const msg = e?.data?.limitReached ? "Du hast dein monatliches Limit erreicht. Bitte Plan upgraden." : "Da ist gerade etwas schiefgelaufen — bitte versuch es nochmal.";
+        setMessages((m) => [...m, { role: "assistant", kind: "text", content: msg }]);
+        toast.info(msg);
+      }
     } finally {
       setBusy(false);
     }
