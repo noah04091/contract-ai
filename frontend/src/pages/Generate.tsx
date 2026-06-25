@@ -6915,8 +6915,8 @@ export default function Generate() {
                   >
                     <div style={{ maxWidth: 760, margin: "0 auto", width: "100%" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                        <CheckCircle size={22} color="#16a34a" />
-                        <h2 style={{ margin: 0, fontSize: 18, color: "#0f172a" }}>Dein {selectedType?.name || "Vertrag"} ist fertig!</h2>
+                        {!freeUsed && <CheckCircle size={22} color="#16a34a" />}
+                        <h2 style={{ margin: 0, fontSize: 18, color: "#0f172a" }}>{freeUsed ? "Kostenlose Generierungen aufgebraucht" : `Dein ${selectedType?.name || "Vertrag"} ist fertig!`}</h2>
                       </div>
                       <div style={{ position: "relative", border: "1px solid #e6ecf6", borderRadius: 14, overflow: "hidden", background: "#fff", minHeight: 340 }}>
                         <div style={{ filter: "blur(4px)", opacity: 0.75, padding: 22, whiteSpace: "pre-wrap", fontSize: 13.5, lineHeight: 1.6, color: "#334155", userSelect: "none", pointerEvents: "none", maxHeight: 320, overflow: "hidden" }}>
@@ -6925,11 +6925,11 @@ export default function Generate() {
                         <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24, background: "radial-gradient(120% 70% at 50% 50%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.35) 55%, rgba(255,255,255,0.08) 100%)" }}>
                           <div style={{ width: 52, height: 52, borderRadius: 14, display: "grid", placeItems: "center", background: "linear-gradient(135deg,#eff4ff,#e0e9fb)", color: "#2563eb", marginBottom: 13, fontSize: 24 }}>🔒</div>
                           <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: "0 0 6px", textShadow: "0 0 8px #fff" }}>
-                            {freeUsed ? "Kostenlose Probe genutzt" : "Vertrag fertig — jetzt freischalten"}
+                            {freeUsed ? "Kostenlose Generierungen aufgebraucht" : "Vertrag fertig — jetzt freischalten"}
                           </h3>
                           <p style={{ fontSize: 13.5, color: "#334155", margin: "0 0 18px", maxWidth: 380, lineHeight: 1.55, textShadow: "0 0 8px #fff" }}>
                             {freeUsed
-                              ? "Du hast deine kostenlose Probe-Generierung bereits genutzt. Schalte frei, um unbegrenzt Verträge zu erstellen, vollständig zu sehen & herunterzuladen."
+                              ? "Du hast deine kostenlosen Vertrags-Generierungen aufgebraucht. Schalte frei, um unbegrenzt Verträge zu erstellen, vollständig zu sehen & herunterzuladen."
                               : "Dein Vertrag wurde erstellt. Schalte frei, um ihn vollständig zu sehen, als PDF herunterzuladen und unterschreiben zu lassen."}
                           </p>
                           {!freeUsed && savedContractId ? (

@@ -929,7 +929,7 @@ function LockCard({ title, used = false, preview, contractId }: { title?: string
   // used=true → die kostenlose Probe-Generierung ist aufgebraucht (kein konkreter Vertrag zum Freikaufen).
   // contractId vorhanden → Einmal-Freischaltung (9,90 €) DIESES Vertrags möglich.
   const vertragLabel = used
-    ? "Kostenlose Probe genutzt"
+    ? "Kostenlose Generierungen aufgebraucht"
     : (title && title !== "lock" ? `Dein ${title} ist fertig!` : "Dein Vertrag ist fertig!");
   const canUnlock = !used && !!contractId;
   return (
@@ -948,7 +948,7 @@ function LockCard({ title, used = false, preview, contractId }: { title?: string
           <div style={{ fontWeight: 700, fontSize: 17, color: "#0f172a", marginBottom: 6 }}>{vertragLabel}</div>
           <div style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.55, marginBottom: 16, maxWidth: 360 }}>
             {used ? (
-              <>Du hast deine <b>kostenlose Probe-Generierung</b> bereits genutzt. Schalte frei, um <b>unbegrenzt Verträge zu erstellen</b> — inkl. PDF, Rechts-Check, Klausel-Erklärung, Fristen & Unterschrift.</>
+              <>Du hast deine <b>kostenlosen Vertrags-Generierungen</b> aufgebraucht. Schalte frei, um <b>unbegrenzt Verträge zu erstellen</b> — inkl. PDF, Rechts-Check, Klausel-Erklärung, Fristen & Unterschrift.</>
             ) : (
               <>Schalte ihn frei, um den <b>Volltext zu sehen</b>, als <b>PDF herunterzuladen</b>, auf <b>Rechtssicherheit zu prüfen</b> und <b>direkt unterschreiben</b> zu lassen.</>
             )}
