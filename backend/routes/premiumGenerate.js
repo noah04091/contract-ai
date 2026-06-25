@@ -670,6 +670,14 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
       const { cleanAndRegenerateAIEvents } = require("../services/calendarEvents");
       const enriched = { _id: saved.contractId, userId: new ObjectId(req.user.userId), name: saved.title, status: "Aktiv", createdAt: new Date(), ...fields };
       await cleanAndRegenerateAIEvents(dbConn, enriched);
+      // 🔇 Generierte Verträge mit EIGENEN Terminen: den generischen „Jahres-Review" (type REVIEW,
+      // Erstell-Tag+1J, willkürliches Datum) entfernen — er doppelt sich gefühlt mit den echten
+      // Stichtagen. Verträge OHNE eigene Termine behalten ihn als sinnvollen Fallback. NUR hier
+      // im Generate-Pfad (Analyse-Pipeline bleibt unberührt).
+      const hasOwnDates = !!fields.expiryDate || (Array.isArray(fields.importantDates) && fields.importantDates.length > 0);
+      if (hasOwnDates) {
+        try { await dbConn.collection("contract_events").deleteMany({ contractId: saved.contractId, type: "REVIEW" }); } catch (_) {}
+      }
       // Die WIRKLICH gespeicherten, geplanten Kalender-Einträge zurücklesen (Beweis + Anzeige)
       const items = await dbConn.collection("contract_events")
         .find({ contractId: saved.contractId, status: "scheduled" })
