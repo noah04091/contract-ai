@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, ArrowRight, ChevronDown, Shield, ShieldCheck, Lock, Clock, TrendingUp } from "lucide-react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import Footer from "../components/Footer";
+import LandingFooter from "../components/LandingFooter";
 import TrustBadgeRow from "../components/TrustBadgeRow";
 import styles from "../styles/Pricing.module.css";
 import "../styles/landing.css";
@@ -925,7 +925,7 @@ export default function Pricing() {
         </section>
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 }

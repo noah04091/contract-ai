@@ -1,0 +1,17 @@
+/* LandingFooter — eigenständiger, voll gescopeter Footer (Landing + Pricing).
+   Alle Regeln unter .lp-footer → KEIN globales Leck.
+   Geist (self-hosted) wird hier ebenfalls deklariert, damit der Footer auch auf
+   Routen ohne landing-redesign.css (z. B. /pricing) in Geist rendert. */
+
+/* --- Geist (self-hosted, public/fonts) — identisch zur Landing --- */
+@font-face{font-family:'Geist';font-style:normal;font-weight:400;font-display:swap;src:url('/fonts/geist-400.woff2') format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:500;font-display:swap;src:url('/fonts/geist-500.woff2') format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/geist-600.woff2') format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/geist-700.woff2') format('woff2')}
+@font-face{font-family:'Geist';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/geist-800.woff2') format('woff2')}
+
+.lp-footer{font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.lp-footer .ca-lp-footer-link{transition:color .15s}
+.lp-footer .ca-lp-footer-link:hover{color:#2563eb !important}
+.lp-footer .ca-lp-social{transition:color .15s,background .15s,border-color .15s,transform .15s}
+.lp-footer .ca-lp-social:hover{color:#fff !important;background:#2563eb !important;border-color:#2563eb !important;transform:translateY(-2px)}
