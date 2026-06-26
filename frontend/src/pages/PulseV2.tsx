@@ -700,7 +700,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [actions, setActions] = useState<PulseV2Action[]>([]);
   const [legalAlerts, setLegalAlerts] = useState<PulseV2LegalAlert[]>([]);
   const [portfolioSummary, setPortfolioSummary] = useState<{ hasData: boolean; avgScoreNow: number | null; avgScorePrevious: number | null; delta: number; contractsAnalyzed: number; contractsImproved: number; contractsWorsened: number; actionsTotal: number; actionsCompleted: number; criticalNow: number; criticalResolved: number; topImprovement: { contractId: string; name: string; delta: number; scoreNow: number } | null; topDecline: { contractId: string; name: string; delta: number; scoreNow: number } | null; improvedContracts?: { contractId: string; name: string; delta: number; scoreNow: number }[]; worsenedContracts?: { contractId: string; name: string; delta: number; scoreNow: number }[]; actionsByContract?: { contractId: string; name: string; actions: { title: string; priority: string; status: string }[]; total: number; completed: number }[] } | null>(null);
-  const [monitoringStatus, setMonitoringStatus] = useState<{ status: 'green' | 'yellow' | 'red' | 'neutral'; statusLabel: string; contractsMonitored: number; lastScan: string | null; lastScheduledScan: string | null; lastRadarScan: string | null; nextMonitorScan: string; nextRadarScan: string; alertsTotal: number; severityCounts: { critical: number; high: number; medium: number; low: number }; recentAlertsCount: number } | null>(null);
+  const [monitoringStatus, setMonitoringStatus] = useState<{ status: 'green' | 'yellow' | 'red' | 'neutral'; statusLabel: string; contractsMonitored: number; lastScan: string | null; lastScheduledScan: string | null; lastRadarScan: string | null; lastRadarRun: string | null; nextMonitorScan: string; nextRadarScan: string; alertsTotal: number; severityCounts: { critical: number; high: number; medium: number; low: number }; recentAlertsCount: number } | null>(null);
   const [filter, setFilter] = useState<DashboardFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -977,10 +977,15 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               </span>
             </div>
             <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
-              Kontinuierliche Überwachung aller Verträge auf rechtliche Risiken, Gesetzesänderungen und Optimierungspotenzial.
+              Kontinuierliche Überwachung Ihrer analysierten Verträge auf rechtliche Risiken, Gesetzesänderungen und Optimierungspotenzial.
             </p>
             <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
               <span><strong style={{ color: '#0f172a', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
+              {stats.total > stats.analyzed && (
+                <span style={{ color: '#2563eb' }}>
+                  {stats.total - stats.analyzed} noch nicht aufgenommen — einmal analysieren, um sie zu überwachen
+                </span>
+              )}
               {alertStats.criticalContracts.length > 0 && (
                 <span><strong style={{ color: '#dc2626', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
               )}
@@ -1071,6 +1076,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         radarData={radarData ?? null}
         lastScan={monitoringStatus?.lastScheduledScan ?? monitoringStatus?.lastScan ?? null}
         lastRadarScan={monitoringStatus?.lastRadarScan ?? null}
+        lastRadarRun={monitoringStatus?.lastRadarRun ?? null}
         nextRadarScan={monitoringStatus?.nextRadarScan ?? null}
         onAnalyzeFirst={() => {
           const firstUnanalyzed = items.find(i => !i.hasV2Result);
