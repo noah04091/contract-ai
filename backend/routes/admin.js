@@ -1836,6 +1836,80 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
 });
 
 // ==================================
+// 🔓 EINMALKÄUFE (Freischaltungen) — Analyse 4,90 € + Generate 9,90 €
+// ==================================
+// GET /api/admin/unlock-stats — Käufe + Umsatz aus UNSERER invoices-Collection (Source of Truth
+// für Einmalkäufe; Stripe.invoices.list erfasst die mode:payment-Käufe NICHT) + Funnel aus
+// feature_usage (unlock_checkout_started). Read-only, fasst nichts an.
+router.get("/unlock-stats", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    const db = await database.connect();
+    const invoicesCol = db.collection("invoices");
+    const featureUsage = db.collection("feature_usage");
+    const now = new Date();
+    const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const KINDS = ["analysis_unlock", "generate_unlock"];
+    const LABELS = {
+      analysis_unlock: { label: "Analyse-Freischaltung", price: 4.90 },
+      generate_unlock: { label: "Vertrags-Freischaltung", price: 9.90 },
+    };
+
+    // Käufe + Umsatz pro Art (invoices.amount ist in EUR)
+    const byKindAgg = await invoicesCol.aggregate([
+      { $match: { plan: { $in: KINDS } } },
+      { $group: {
+        _id: "$plan",
+        purchased: { $sum: 1 },
+        revenue: { $sum: { $ifNull: ["$amount", 0] } },
+        purchased30: { $sum: { $cond: [{ $gte: ["$createdAt", d30] }, 1, 0] } },
+        revenue30: { $sum: { $cond: [{ $gte: ["$createdAt", d30] }, { $ifNull: ["$amount", 0] }, 0] } },
+      } },
+    ]).toArray();
+
+    // Checkout-Starts (Funnel) — split nach metadata.kind (alte Events ohne kind → 'unknown')
+    const startedAgg = await featureUsage.aggregate([
+      { $match: { feature: "unlock_checkout_started" } },
+      { $group: { _id: "$metadata.kind", count: { $sum: 1 } } },
+    ]).toArray();
+    const startedByKind = {};
+    let startedTotal = 0;
+    for (const s of startedAgg) { startedByKind[s._id || "unknown"] = s.count; startedTotal += s.count; }
+
+    const round2 = (n) => Math.round((n || 0) * 100) / 100;
+    const byKind = {};
+    let purchased = 0, revenue = 0, purchased30 = 0, revenue30 = 0;
+    for (const k of KINDS) {
+      const row = byKindAgg.find((r) => r._id === k) || {};
+      const entry = {
+        label: LABELS[k].label,
+        price: LABELS[k].price,
+        purchased: row.purchased || 0,
+        revenue: round2(row.revenue),
+        purchased30: row.purchased30 || 0,
+        revenue30: round2(row.revenue30),
+        checkoutsStarted: startedByKind[k] || 0,
+      };
+      byKind[k] = entry;
+      purchased += entry.purchased; revenue += entry.revenue;
+      purchased30 += entry.purchased30; revenue30 += entry.revenue30;
+    }
+    const conversionRate = startedTotal > 0 ? Math.round((purchased / startedTotal) * 1000) / 10 : null;
+
+    res.json({
+      success: true,
+      totals: {
+        purchased, revenue: round2(revenue), purchased30, revenue30: round2(revenue30),
+        checkoutsStarted: startedTotal, conversionRate,
+      },
+      byKind,
+    });
+  } catch (error) {
+    console.error("❌ [ADMIN] unlock-stats Fehler:", error.message);
+    res.status(500).json({ success: false, message: "Fehler beim Laden der Einmalkauf-Statistik", error: error.message });
+  }
+});
+
+// ==================================
 // 📧 EMAIL LOGS (Versendete Mails)
 // ==================================
 

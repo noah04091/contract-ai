@@ -240,7 +240,7 @@ router.post("/create-unlock-session", verifyToken, async (req, res) => {
 
     console.log(`✅ [STRIPE] Unlock-Session erstellt: ${session.id} (contract ${contractId})`);
     // 📊 Conversion-Tracking: Kauf-Absicht (Klick auf „Jetzt freischalten")
-    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_checkout_started' }).catch(() => {});
+    require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_checkout_started', metadata: { kind } }).catch(() => {});
     res.json({ url: session.url });
   } catch (err) {
     console.error("❌ Stripe Unlock-Session Fehler:", err);
@@ -280,8 +280,8 @@ router.get("/verify-unlock", verifyToken, async (req, res) => {
             { $set: { "unlock.paid": true, "unlock.unlockedAt": new Date(), "unlock.stripeSessionId": s.id, "unlock.paymentIntentId": s.payment_intent || null, "unlock.source": "verify-session" } }
           );
           if (r.modifiedCount > 0) {
-            console.log(`🔓 [verify-session] Analyse freigeschaltet (contract ${contractId})`);
-            require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_purchased' }).catch(() => {});
+            console.log(`🔓 [verify-session] Freigeschaltet (${s.metadata.kind}, contract ${contractId})`);
+            require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_purchased', metadata: { kind: s.metadata && s.metadata.kind } }).catch(() => {});
           }
           return res.json({ unlocked: true });
         }
@@ -306,7 +306,7 @@ router.get("/verify-unlock", verifyToken, async (req, res) => {
           { $set: { "unlock.paid": true, "unlock.unlockedAt": new Date(), "unlock.stripeSessionId": paid.id, "unlock.source": "verify" } }
         );
         if (r.modifiedCount > 0) {
-          require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_purchased' }).catch(() => {});
+          require('../services/featureUsage').getInstance().trackFeatureUsage({ userId: req.user.userId, feature: 'unlock_purchased', metadata: { kind: paid.metadata && paid.metadata.kind } }).catch(() => {});
         }
         return res.json({ unlocked: true });
       }
