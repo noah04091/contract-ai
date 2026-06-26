@@ -75,6 +75,18 @@ const AutoPlayVideo = ({ src, poster, alt, className = '' }: AutoPlayVideoProps)
     setIsLoaded(true);
   };
 
+  // Sobald das Video abspielbereit ist UND im Sichtfeld: zuverlässig starten.
+  // Schließt die Lücke, wenn isVisible true wurde, bevor genug Daten da waren
+  // (sonst blieb das Video auf dem Poster „hängen").
+  const handleCanPlay = () => {
+    setIsLoaded(true);
+    const video = videoRef.current;
+    if (video && isVisible && !hasError) {
+      const p = video.play();
+      if (p !== undefined) p.catch(() => {});
+    }
+  };
+
   // Bei Fehler: Fallback zu Poster-Bild oder Platzhalter
   if (hasError) {
     return (
@@ -102,6 +114,7 @@ const AutoPlayVideo = ({ src, poster, alt, className = '' }: AutoPlayVideoProps)
       preload="metadata"
       onError={handleError}
       onLoadedData={handleLoadedData}
+      onCanPlay={handleCanPlay}
       aria-label={alt}
       // Bessere Qualität
       disablePictureInPicture

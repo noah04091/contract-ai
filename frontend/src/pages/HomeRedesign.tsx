@@ -931,7 +931,7 @@ const HomeRedesign = () => {
                   <span style={s("font-size:12.5px;color:#9a9aa3")}>{biz.note}</span>
                   {biz.save && <span style={s("display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;color:#059669;background:#ecfdf3;border:1px solid #c8f0d8;border-radius:999px;padding:3px 9px")}>{biz.save}</span>}
                 </div>
-                <Link to="/pricing" className="ca-lp-btn-secondary" style={s("display:flex;align-items:center;justify-content:center;gap:7px;margin:24px 0 0;background:#fff;color:#111114;border:1px solid #e3e4e9;font-size:15px;font-weight:500;padding:13px;border-radius:11px;text-decoration:none")}>Business wählen<Arrow /></Link>
+                <Link to={user ? "/pricing" : "/register?from=pricing&plan=business"} className="ca-lp-btn-secondary" style={s("display:flex;align-items:center;justify-content:center;gap:7px;margin:24px 0 0;background:#fff;color:#111114;border:1px solid #e3e4e9;font-size:15px;font-weight:500;padding:13px;border-radius:11px;text-decoration:none")}>Business wählen<Arrow /></Link>
                 <p style={s("font-size:11.5px;color:#9a9aa3;text-align:center;margin:9px 0 0")}>Keine Kreditkarte nötig</p>
                 <div style={s("height:1px;background:rgba(17,17,20,0.07);margin:24px 0")}></div>
                 <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px")}>
@@ -954,7 +954,7 @@ const HomeRedesign = () => {
                   <span style={s("font-size:12.5px;color:#9a9aa3")}>{ent.note}</span>
                   {ent.save && <span style={s("display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;color:#059669;background:#ecfdf3;border:1px solid #c8f0d8;border-radius:999px;padding:3px 9px")}>{ent.save}</span>}
                 </div>
-                <Link to="/pricing" className="ca-lp-btn-primary" style={s("display:flex;align-items:center;justify-content:center;gap:7px;margin:24px 0 0;background:#2563eb;color:#fff;font-size:15px;font-weight:500;padding:13px;border-radius:11px;text-decoration:none")}>Enterprise wählen<Arrow /></Link>
+                <Link to={user ? "/pricing" : "/register?from=pricing&plan=premium"} className="ca-lp-btn-primary" style={s("display:flex;align-items:center;justify-content:center;gap:7px;margin:24px 0 0;background:#2563eb;color:#fff;font-size:15px;font-weight:500;padding:13px;border-radius:11px;text-decoration:none")}>Enterprise wählen<Arrow /></Link>
                 <p style={s("font-size:11.5px;color:#2563eb;text-align:center;margin:9px 0 0;font-weight:500")}>14 Tage Geld-zurück-Garantie</p>
                 <div style={s("height:1px;background:rgba(17,17,20,0.07);margin:24px 0")}></div>
                 <div style={s("font-size:12px;font-weight:600;color:#2563eb;margin:0 0 12px")}>Alles aus Business, plus:</div>
