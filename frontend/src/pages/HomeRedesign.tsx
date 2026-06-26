@@ -844,8 +844,8 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== CHATGPT-EINWAND ===== */}
-        <section style={s("padding:64px 24px")}>
-          <div style={s("max-width:880px;margin:0 auto;background:#f4f4f7;border:1px solid rgba(17,17,20,0.07);border-radius:26px;padding:clamp(36px,5vw,64px);position:relative;overflow:hidden")} className="ca-lp-reveal">
+        <section style={s("padding:64px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 16%,#eef3ff 84%,#ffffff)")}>
+          <div style={s("max-width:880px;margin:0 auto;background:#ffffff;border:1px solid rgba(17,17,20,0.07);border-radius:26px;padding:clamp(36px,5vw,64px);position:relative;overflow:hidden")} className="ca-lp-reveal">
             <div style={s("position:absolute;inset:0;pointer-events:none;background:radial-gradient(420px 280px at 85% 0%,rgba(37,99,235,0.10),transparent 60%),radial-gradient(420px 300px at 8% 100%,rgba(6,182,212,0.10),transparent 60%)")}></div>
             <div style={s("position:relative;text-align:center")}>
               <h2 style={s("font-size:clamp(24px,3vw,36px);font-weight:600;letter-spacing:-0.02em;line-height:1.2;color:#0c0c10;margin:0")}>„Kann ich nicht einfach <span style={s(GRAD)}>ChatGPT</span> benutzen?“</h2>
@@ -974,7 +974,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== FAQ ===== */}
-        <section style={s("padding:72px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 14%,#eef3ff 86%,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
+        <section style={s("padding:72px 24px;background:linear-gradient(180deg,#f7f8fa,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
           <span style={s("position:absolute;z-index:-1;top:50px;left:6%;font-weight:700;font-size:120px;line-height:1;color:rgba(37,99,235,0.05);pointer-events:none;user-select:none;animation:caDriftA 18s ease-in-out infinite")}>?</span>
           <span style={s("position:absolute;z-index:-1;bottom:40px;right:7%;font-weight:700;font-size:90px;line-height:1;color:rgba(37,99,235,0.045);pointer-events:none;user-select:none;animation:caDriftB 16s ease-in-out infinite")}>?</span>
           <div style={s("max-width:780px;margin:0 auto")}>
@@ -1034,7 +1034,7 @@ const HomeRedesign = () => {
         <LandingFooter />
 
         {/* ===== Sticky Floating CTA ===== */}
-        <Link to={!user ? "/register" : "/dashboard"} className={"ca-lp-floatcta" + (showFloat ? " ca-in" : "")} style={s("position:fixed;right:22px;bottom:22px;z-index:90;display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;padding:14px 22px;border-radius:999px;text-decoration:none;box-shadow:0 14px 34px rgba(37,99,235,0.45);opacity:0;transform:translateY(20px);pointer-events:none")}>Kostenlos starten<Arrow /></Link>
+        <Link to={!user ? "/register" : "/dashboard"} className={"ca-lp-floatcta" + (showFloat ? " ca-in" : "")} style={s("position:fixed;right:24px;bottom:130px;z-index:9997;display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;padding:14px 22px;border-radius:999px;text-decoration:none;box-shadow:0 14px 34px rgba(37,99,235,0.45);opacity:0;transform:translateY(20px);pointer-events:none")}>Kostenlos starten<Arrow /></Link>
 
       </div>
     </>
