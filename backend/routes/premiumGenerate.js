@@ -35,6 +35,11 @@ function client() {
   return _client;
 }
 
+// 🔓 Free-Tease: So viele Verträge darf ein Free-Account erstellen (alle GESPERRT, je 9,90 €
+// freischaltbar). Danach → Upsell. Bewusst > 1, damit Nutzer:innen mehrfach den „investieren →
+// Sperre"-Moment erleben (Conversion), aber gedeckelt gegen KI-Kosten-Missbrauch.
+const FREE_GENERATE_LIMIT = 5;
+
 // ---- DB (gleiches Singleton-Muster wie generate.js) ----------------------
 let db, usersCollection, contractsCollection;
 async function ensureDb() {
@@ -532,7 +537,7 @@ router.post("/generate", aiLimiter, async (req, res) => {
       if (plan === 'free') {
         isFree = true;
         const claim = await usersCollection.updateOne(
-          { _id: new ObjectId(req.user.userId), $or: [{ freeGenerateCount: { $exists: false } }, { freeGenerateCount: { $lt: 1 } }] },
+          { _id: new ObjectId(req.user.userId), $or: [{ freeGenerateCount: { $exists: false } }, { freeGenerateCount: { $lt: FREE_GENERATE_LIMIT } }] },
           { $inc: { freeGenerateCount: 1 }, $set: { freeGenerateAt: new Date() } }
         );
         if (claim.modifiedCount === 0) {
@@ -619,7 +624,7 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
       // Free-Tease: 1 ECHTE Gratis-Generierung pro Account. Atomar claimen (gegen Parallel-/
       // Skript-Missbrauch: nur EIN Request bekommt modifiedCount=1). Bei Fehler unten Refund.
       const claim = await usersCollection.updateOne(
-        { _id: new ObjectId(req.user.userId), $or: [{ freeGenerateCount: { $exists: false } }, { freeGenerateCount: { $lt: 1 } }] },
+        { _id: new ObjectId(req.user.userId), $or: [{ freeGenerateCount: { $exists: false } }, { freeGenerateCount: { $lt: FREE_GENERATE_LIMIT } }] },
         { $inc: { freeGenerateCount: 1 }, $set: { freeGenerateAt: new Date() } }
       );
       if (claim.modifiedCount === 0) {

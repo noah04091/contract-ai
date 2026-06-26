@@ -929,7 +929,7 @@ function LockCard({ title, used = false, preview, contractId }: { title?: string
   // used=true → die kostenlose Probe-Generierung ist aufgebraucht (kein konkreter Vertrag zum Freikaufen).
   // contractId vorhanden → Einmal-Freischaltung (9,90 €) DIESES Vertrags möglich.
   const vertragLabel = used
-    ? "Kostenlose Probe genutzt"
+    ? "Kostenlose Generierungen aufgebraucht"
     : (title && title !== "lock" ? `Dein ${title} ist fertig!` : "Dein Vertrag ist fertig!");
   const canUnlock = !used && !!contractId;
   return (
@@ -948,19 +948,27 @@ function LockCard({ title, used = false, preview, contractId }: { title?: string
           <div style={{ fontWeight: 700, fontSize: 17, color: "#0f172a", marginBottom: 6 }}>{vertragLabel}</div>
           <div style={{ fontSize: 13.5, color: "#334155", lineHeight: 1.55, marginBottom: 16, maxWidth: 360 }}>
             {used ? (
-              <>Du hast deine <b>kostenlose Probe-Generierung</b> bereits genutzt. Schalte frei, um <b>unbegrenzt Verträge zu erstellen</b> — inkl. PDF, Rechts-Check, Klausel-Erklärung, Fristen & Unterschrift.</>
+              <>Du hast deine <b>kostenlosen Vertrags-Generierungen</b> aufgebraucht. Schalte frei, um <b>unbegrenzt Verträge zu erstellen</b> — inkl. PDF, Rechts-Check, Klausel-Erklärung, Fristen & Unterschrift.</>
             ) : (
               <>Schalte ihn frei, um den <b>Volltext zu sehen</b>, als <b>PDF herunterzuladen</b>, auf <b>Rechtssicherheit zu prüfen</b> und <b>direkt unterschreiben</b> zu lassen.</>
             )}
           </div>
           {canUnlock ? (
-            <>
-              <button type="button" onClick={() => startGenerateUnlock(contractId)} style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "inherit", fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
-                Diesen Vertrag freischalten – 9,90 € <ArrowRight size={17} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, width: "100%", maxWidth: 340 }}>
+              {/* Option 1: Einmalkauf (Vorrang) */}
+              <button type="button" onClick={() => startGenerateUnlock(contractId)} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", font: "inherit", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "12px 20px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+                Freischalten · 9,90 € <ArrowRight size={16} />
               </button>
-              <div style={{ fontSize: 12, color: "#475569", marginTop: 10 }}>Einmalig, kein Abo</div>
-              <a href="/pricing" style={{ fontSize: 12.5, color: "#2563eb", marginTop: 8, textDecoration: "none", fontWeight: 600 }}>oder unbegrenzt mit Business →</a>
-            </>
+              <div style={{ fontSize: 12, color: "#64748b" }}>Einmalig, kein Abo · Volltext, PDF &amp; Unterschrift</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", margin: "2px 0", color: "#94a3b8", fontSize: 11.5 }}>
+                <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} /> oder <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+              </div>
+              {/* Option 2: Abo (auch attraktiv) */}
+              <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", font: "inherit", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7" }}>
+                Mit Business: alle Verträge frei
+              </a>
+              <div style={{ fontSize: 12, color: "#64748b" }}>+ unbegrenzt Analysen, Optimierung, Fristen &amp; mehr</div>
+            </div>
           ) : (
             <>
               <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, font: "inherit", fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
