@@ -846,8 +846,25 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         if (data.fileUrl || data.url) {
           setPdfUrl(data.fileUrl || data.url);
         }
-      } else if (contract.content || contract.contractHTML || contract.isGenerated) {
-        // Fallback: PDF on-demand generieren via React-PDF (isGenerated als Fallback, da content nicht in der Liste geladen wird)
+      } else if (contract.isGenerated) {
+        // 🔒 Generierter Vertrag (Generate 2.0): im PREMIUM-AVV-Design rendern (wie im Chat erstellt),
+        // damit der gekaufte Vertrag GENAUSO aussieht wie bei der Erstellung — nicht im generischen
+        // /pdf-v2-Layout. Gleicher Inhalt (contract.content), nur das richtige Design.
+        const response = await fetch(`/api/contracts/premium/pdf`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ contractId: contract._id, design: contract.designVariant || 'royal' })
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          setPdfUrl(window.URL.createObjectURL(blob));
+        }
+      } else if (contract.content || contract.contractHTML) {
+        // Sonstige Verträge mit content (z.B. optimiert) → bisheriges /pdf-v2-Layout
         const response = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
           method: 'POST',
           headers: {
