@@ -4769,6 +4769,11 @@ export default function Generate() {
 
   const handleSave = async (opts: { silent?: boolean } = {}): Promise<string | null> => {
     const { silent = false } = opts;
+    // 🔒 Free-Tease: Solange das Ergebnis gesperrt ist, hält der State nur die 14-Zeilen-VORSCHAU,
+    // NICHT den Volltext. Ein PUT würde den vollen Vertrag in der DB durch die Vorschau überschreiben
+    // (Volltext wäre weg, auch nach Kauf). Der volle Vertrag liegt bereits serverseitig → niemals
+    // im gesperrten Zustand speichern.
+    if (gatedResult) return savedContractId || null;
     try {
       // ✅ UPDATE wenn bereits gespeichert, CREATE wenn neu
       const isUpdate = !!savedContractId;
