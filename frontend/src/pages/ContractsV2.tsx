@@ -960,6 +960,17 @@ export default function Contracts() {
       } catch { /* Webhook setzt es ohnehin — dies ist nur ein Fallback */ }
       try { toast.success('Freigeschaltet — viel Erfolg!'); } catch { /* ignore */ }
       await fetchContracts();
+      // 🔓 Nach der Verifikation den JETZT freigeschalteten Vertrag voll laden und das Detail
+      // öffnen — so landet der User zuverlässig auf dem vollständig sichtbaren Vertrag
+      // (kein Race: erst unlock.paid setzen, dann den vollen Detail-Stand holen).
+      try {
+        const detail = await apiCall(`/contracts/${cid}`);
+        const full = (detail as { contract?: Contract })?.contract || (detail as Contract);
+        if (full && full._id) {
+          setSelectedContract(full);
+          setShowDetails(true);
+        }
+      } catch { /* Fallback: die view=-Logik öffnet den Vertrag ohnehin */ }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
