@@ -2292,6 +2292,22 @@ router.get("/monitoring-status", async (req, res) => {
     const lastScheduledScan = lastScheduledResult?.createdAt || null;
     const lastAnyScan = lastManualResult?.createdAt || null;
 
+    // 🆕 Ehrlichkeit: ECHTER letzter Radar-Lauf (nicht der letzte Alert!) aus den
+    // durablen cron_logs — damit "Zuletzt geprüft" im Frontend der Realität entspricht.
+    // Rein lesend, ändert keinen bestehenden Wert; bricht nichts, wenn cron_logs fehlt.
+    let lastRadarRun = null;
+    try {
+      const radarLog = await db.collection("cron_logs")
+        .find({ jobName: "pulse-v2-radar", status: "completed" })
+        .sort({ startedAt: -1 })
+        .limit(1)
+        .project({ startedAt: 1 })
+        .next();
+      lastRadarRun = radarLog?.startedAt || null;
+    } catch (e) {
+      console.warn("[PulseV2] lastRadarRun nicht lesbar (unkritisch):", e.message);
+    }
+
     // Build severity counts from unread alerts
     const severityCounts = { critical: 0, high: 0, medium: 0, low: 0 };
     for (const entry of unreadAlertCounts) {
@@ -2328,6 +2344,7 @@ router.get("/monitoring-status", async (req, res) => {
       lastScan: lastAnyScan,
       lastScheduledScan,
       lastRadarScan: lastRadarAlert,
+      lastRadarRun, // echter letzter Radar-Lauf (für ehrliches "Zuletzt geprüft")
       nextMonitorScan: nextMonitorScan.toISOString(),
       nextRadarScan: nextRadarScan.toISOString(),
       alertsTotal: recentAlerts.length,

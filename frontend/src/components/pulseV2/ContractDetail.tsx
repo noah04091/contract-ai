@@ -606,7 +606,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 flexShrink: 0,
               }} />
               <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
-              <span style={{ color: '#16a34a', fontSize: 11 }}>Bei Änderungen werden Sie per E-Mail benachrichtigt</span>
+              <span style={{ color: '#16a34a', fontSize: 11 }}>Täglich auf Gesetzesänderungen geprüft · Treffer erscheinen hier und im Dashboard — und per E-Mail, sofern Ihre Benachrichtigungen aktiv sind</span>
               {monitorInfo.alertCount > 0 && (
                 <span
                   onClick={() => scrollToSection('contract-alerts')}

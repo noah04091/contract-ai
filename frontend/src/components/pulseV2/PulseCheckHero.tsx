@@ -32,6 +32,7 @@ interface PulseCheckHeroProps {
   radarData?: RadarData | null;
   lastScan?: string | null;
   lastRadarScan?: string | null;
+  lastRadarRun?: string | null;
   nextRadarScan?: string | null;
   onAnalyzeFirst?: () => void;
 }
@@ -94,6 +95,7 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
   radarData,
   lastScan,
   lastRadarScan,
+  lastRadarRun,
   nextRadarScan,
   onAnalyzeFirst,
 }) => {
@@ -226,7 +228,7 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
             </div>
 
             {/* Monitoring pulse line — shows the system is alive */}
-            {!isFirstUse && (lastScan || lastRadarScan || nextRadarScan) && (
+            {!isFirstUse && (lastRadarRun || lastScan || lastRadarScan || nextRadarScan) && (
               <div style={{
                 display: 'flex', gap: 12, marginTop: 8, fontSize: 11.5, color: '#94a3b8',
                 flexWrap: 'wrap', alignItems: 'center',
@@ -241,11 +243,11 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
                   Legal Pulse aktiv
                 </span>
                 <span style={{ color: '#d1d5db' }}>·</span>
-                {(lastScan || lastRadarScan) && (
+                {(lastRadarRun || lastScan) && (
                   <>
                     <span>
-                      Letzte Prüfung: <strong style={{ color: '#64748b', fontWeight: 600 }}>
-                        {formatRelativeTime(lastRadarScan || lastScan || '')}
+                      Zuletzt geprüft: <strong style={{ color: '#64748b', fontWeight: 600 }}>
+                        {formatRelativeTime(lastRadarRun || lastScan || '')}
                       </strong>
                     </span>
                     <span style={{ color: '#d1d5db' }}>·</span>
@@ -254,17 +256,16 @@ export const PulseCheckHero: React.FC<PulseCheckHeroProps> = ({
                 {nextRadarScan && (
                   <>
                     <span>
-                      Nächste: <strong style={{ color: '#64748b', fontWeight: 600 }}>
+                      Nächste planmäßige Prüfung: <strong style={{ color: '#64748b', fontWeight: 600 }}>
                         {(() => {
                           const diff = new Date(nextRadarScan).getTime() - Date.now();
-                          if (diff < 0) return 'In Kürze';
+                          if (diff < 0) return 'in Kürze';
                           const hours = Math.floor(diff / (1000 * 60 * 60));
-                          if (hours < 1) return 'In Kürze';
+                          if (hours < 1) return 'in Kürze';
                           if (hours < 24) return `in ${hours}h`;
                           return `in ${Math.floor(hours / 24)}d`;
                         })()}
                       </strong>
-                      <span style={{ color: '#94a3b8' }}> (Radar)</span>
                     </span>
                     <span style={{ color: '#d1d5db' }}>·</span>
                   </>
