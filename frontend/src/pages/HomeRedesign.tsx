@@ -588,7 +588,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== STATS ===== */}
-        <section style={s("padding:56px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 28%,#eef3ff 72%,#ffffff)")}>
+        <section style={s("padding:56px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 20%,#eef3ff 80%,#ffffff)")}>
           <div style={s("max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:18px")} className="ca-lp-stagger">
             {[
               { to: 500, suffix: "+", txt: "500+", label: "Zufriedene Kunden" },
@@ -633,7 +633,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== INTEGRATIONEN ===== */}
-        <section style={s("padding:60px 0 60px;background:linear-gradient(180deg,#fff,#fafafb)")}>
+        <section style={s("padding:60px 0 60px;background:#ffffff")}>
           <div style={s("max-width:1200px;margin:0 auto;padding:0 24px")}>
             <div style={s("max-width:640px;margin:0 auto;text-align:center")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Integrationen</span>
@@ -654,7 +654,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== VERTRAGSVERWALTUNG (01) ===== */}
-        <section style={s("padding:80px 24px 28px;background:linear-gradient(180deg,#ffffff,#eef3ff 15%)")}>
+        <section style={s("padding:80px 24px 28px;background:linear-gradient(180deg,#ffffff,#eef3ff 45%,#eef3ff)")}>
           <div style={s("max-width:1140px;margin:0 auto")} className="ca-lp-reveal">
             <div className="ca-lp-2col" style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
               <div className="ca-lp-rowtext">
@@ -701,7 +701,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== E-MAIL UPLOAD (02) ===== */}
-        <section style={s("padding:28px 24px 88px;background:linear-gradient(180deg,#eef3ff 80%,#ffffff)")}>
+        <section style={s("padding:28px 24px 88px;background:linear-gradient(180deg,#eef3ff,#eef3ff 55%,#ffffff)")}>
           <div style={s("max-width:1140px;margin:0 auto")} className="ca-lp-reveal">
             <div className="ca-lp-2col" style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
               <div className="ca-lp-rowgfx" style={s("order:1;display:flex;flex-direction:column;align-items:center;gap:18px")}>
@@ -733,7 +733,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== FUNKTIONEN SHOWCASE (Videos) ===== */}
-        <section style={s("padding:56px 24px;background:linear-gradient(180deg,#fafafb,#fff)")}>
+        <section style={s("padding:56px 24px;background:#ffffff")}>
           <div style={s("max-width:1200px;margin:0 auto")}>
             <div style={s("max-width:720px;margin:0 auto;text-align:center")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Funktionen</span>
@@ -786,7 +786,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== VERTRAGSTYPEN ===== */}
-        <section id="types" style={s("padding:72px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 14%,#eef3ff 86%,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
+        <section id="types" style={s("padding:72px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 20%,#eef3ff 80%,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
           <span style={s("position:absolute;z-index:-1;top:60px;right:5%;font-weight:700;font-size:130px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftB 18s ease-in-out infinite")}>§</span>
           <span style={s("position:absolute;z-index:-1;bottom:50px;left:4%;font-weight:700;font-size:100px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftA 21s ease-in-out infinite")}>¶</span>
           <div style={s("max-width:1200px;margin:0 auto")}>
@@ -844,8 +844,8 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== CHATGPT-EINWAND ===== */}
-        <section style={s("padding:64px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 16%,#eef3ff 84%,#ffffff)")}>
-          <div style={s("max-width:880px;margin:0 auto;background:#ffffff;border:1px solid rgba(17,17,20,0.07);border-radius:26px;padding:clamp(36px,5vw,64px);position:relative;overflow:hidden")} className="ca-lp-reveal">
+        <section style={s("padding:64px 24px")}>
+          <div style={s("max-width:880px;margin:0 auto;background:#f4f4f7;border:1px solid rgba(17,17,20,0.07);border-radius:26px;padding:clamp(36px,5vw,64px);position:relative;overflow:hidden")} className="ca-lp-reveal">
             <div style={s("position:absolute;inset:0;pointer-events:none;background:radial-gradient(420px 280px at 85% 0%,rgba(37,99,235,0.10),transparent 60%),radial-gradient(420px 300px at 8% 100%,rgba(6,182,212,0.10),transparent 60%)")}></div>
             <div style={s("position:relative;text-align:center")}>
               <h2 style={s("font-size:clamp(24px,3vw,36px);font-weight:600;letter-spacing:-0.02em;line-height:1.2;color:#0c0c10;margin:0")}>„Kann ich nicht einfach <span style={s(GRAD)}>ChatGPT</span> benutzen?“</h2>
@@ -890,7 +890,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== PREISE (Design-Karten, echte Preise) ===== */}
-        <section id="pricing" style={s("padding:64px 24px 80px;background:linear-gradient(180deg,#ffffff,#eef3ff 13%,#eef3ff 87%,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
+        <section id="pricing" style={s("padding:64px 24px 80px;background:linear-gradient(180deg,#ffffff,#eef3ff 20%,#eef3ff 80%,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
           <span style={s("position:absolute;z-index:-1;top:70px;left:5%;font-weight:700;font-size:140px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftB 18s ease-in-out infinite")}>€</span>
           <span style={s("position:absolute;z-index:-1;bottom:60px;right:5%;font-weight:700;font-size:130px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftA 15s ease-in-out infinite")}>%</span>
           <div style={s("max-width:1200px;margin:0 auto")}>
@@ -974,7 +974,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== FAQ ===== */}
-        <section style={s("padding:72px 24px;background:linear-gradient(180deg,#f7f8fa,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
+        <section style={s("padding:72px 24px;background:#ffffff;position:relative;overflow:hidden;isolation:isolate")}>
           <span style={s("position:absolute;z-index:-1;top:50px;left:6%;font-weight:700;font-size:120px;line-height:1;color:rgba(37,99,235,0.05);pointer-events:none;user-select:none;animation:caDriftA 18s ease-in-out infinite")}>?</span>
           <span style={s("position:absolute;z-index:-1;bottom:40px;right:7%;font-weight:700;font-size:90px;line-height:1;color:rgba(37,99,235,0.045);pointer-events:none;user-select:none;animation:caDriftB 16s ease-in-out infinite")}>?</span>
           <div style={s("max-width:780px;margin:0 auto")}>
@@ -1034,7 +1034,7 @@ const HomeRedesign = () => {
         <LandingFooter />
 
         {/* ===== Sticky Floating CTA ===== */}
-        <Link to={!user ? "/register" : "/dashboard"} className={"ca-lp-floatcta" + (showFloat ? " ca-in" : "")} style={s("position:fixed;right:24px;bottom:130px;z-index:9997;display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;padding:14px 22px;border-radius:999px;text-decoration:none;box-shadow:0 14px 34px rgba(37,99,235,0.45);opacity:0;transform:translateY(20px);pointer-events:none")}>Kostenlos starten<Arrow /></Link>
+        <Link to={!user ? "/register" : "/dashboard"} className={"ca-lp-floatcta" + (showFloat ? " ca-in" : "")} style={s("position:fixed;right:24px;bottom:24px;z-index:90;display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;padding:14px 22px;border-radius:999px;text-decoration:none;box-shadow:0 14px 34px rgba(37,99,235,0.45);opacity:0;transform:translateY(20px);pointer-events:none")}>Kostenlos starten<Arrow /></Link>
 
       </div>
     </>

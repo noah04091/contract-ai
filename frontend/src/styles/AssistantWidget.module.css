@@ -7,7 +7,7 @@
 
 .chatBubbleContainer {
   position: fixed;
-  bottom: 24px;
+  bottom: 96px;
   right: 24px;
   z-index: 9998;
   display: flex;
