@@ -3776,6 +3776,10 @@ export default function Generate() {
 
   // 💾 AUTOSAVE: Check for saved draft on mount and show dialog
   useEffect(() => {
+    // 🔁 Rückkehr vom Stripe-Einmalkauf (gen_unlocked/gen_canceled) → eigener Handler übernimmt,
+    // KEIN Entwurf-Dialog (sonst Doppel-Wiederherstellung / falscher Screen).
+    const rp = new URLSearchParams(window.location.search);
+    if (rp.has('gen_unlocked') || rp.has('gen_canceled')) return;
     const savedData = localStorage.getItem('contract_generator_draft');
     if (savedData && !isRestored) {
       try {
@@ -3804,6 +3808,65 @@ export default function Generate() {
         localStorage.removeItem('contract_generator_draft');
       }
     }
+  }, []);
+
+  // 🔓 Rückkehr vom Stripe-Einmalkauf eines GENERIERTEN Vertrags — auf der Generate-Seite bleiben.
+  //  - gen_unlocked=1 → Zahlung verifizieren, vollen Vertrag laden, Sperre auflösen → Step 4 (sichtbar).
+  //  - gen_canceled=1 → zurück auf die gesperrte Ansicht (Entwurf), damit man die andere Option wählen kann.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const unlocked = params.get('gen_unlocked') === '1';
+    const canceled = params.get('gen_canceled') === '1';
+    if (!unlocked && !canceled) return;
+
+    let draft: {
+      selectedTypeId?: string; formData?: FormDataType; contractText?: string;
+      savedContractId?: string | null; currentStep?: number; gatedResult?: boolean; freeUsed?: boolean;
+    } | null = null;
+    try { draft = JSON.parse(localStorage.getItem('contract_generator_draft') || 'null'); } catch { draft = null; }
+    const type = draft?.selectedTypeId ? CONTRACT_TYPES.find(t => t.id === draft!.selectedTypeId) : null;
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    setIsRestored(true); // Entwurf-Dialog unterdrücken
+    if (type) setSelectedType(type);
+    if (draft?.formData) setFormData(draft.formData);
+
+    if (unlocked) {
+      const cid = params.get('contractId') || draft?.savedContractId || null;
+      const sid = params.get('session_id');
+      (async () => {
+        try {
+          // 1) Zahlung verifizieren (Fallback zum Webhook)
+          if (cid) {
+            const q = `contractId=${encodeURIComponent(cid)}${sid ? `&session_id=${encodeURIComponent(sid)}` : ''}`;
+            await fetch(`/api/stripe/verify-unlock?${q}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }, credentials: 'include' });
+          }
+          // 2) Vollen (jetzt freigeschalteten) Vertrag laden
+          if (cid) {
+            const res = await fetch(`/api/contracts/${cid}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }, credentials: 'include' });
+            const full = await res.json().catch(() => null);
+            if (full && full.content) setContractText(full.content);
+            setSavedContractId(cid);
+          }
+          setGatedResult(false);
+          setFreeUsed(false);
+          setSaved(true);
+          setCurrentStep(3);
+          toast.success('Freigeschaltet — dein Vertrag ist jetzt vollständig verfügbar!');
+        } catch {
+          toast.error('Freischaltung konnte nicht bestätigt werden. Bitte Seite neu laden.');
+        }
+      })();
+    } else {
+      // Abbruch → zurück auf die gesperrte Ansicht
+      if (draft?.contractText) setContractText(draft.contractText);
+      if (draft?.savedContractId) setSavedContractId(draft.savedContractId);
+      setGatedResult(draft?.gatedResult ?? true);
+      setFreeUsed(!!draft?.freeUsed);
+      setCurrentStep(draft?.currentStep || 3);
+    }
+    // URL säubern
+    window.history.replaceState({}, document.title, '/generate');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 📂 Entwurf weiter bearbeiten
