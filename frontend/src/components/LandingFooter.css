@@ -11,7 +11,24 @@
 @font-face{font-family:'Geist';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/geist-800.woff2') format('woff2')}
 
 .lp-footer{font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-.lp-footer .ca-lp-footer-link{transition:color .15s}
+
+/* Footer-Links: blaue Farbe + animierte Unterstreichung beim Hover (wie alter Footer) */
+.lp-footer .ca-lp-footer-link{position:relative;transition:color .15s}
 .lp-footer .ca-lp-footer-link:hover{color:#2563eb !important}
+.lp-footer .ca-lp-footer-link::after{content:'';position:absolute;left:0;bottom:-2px;width:100%;height:1px;background:#2563eb;transform:scaleX(0);transform-origin:right;transition:transform .25s ease}
+.lp-footer .ca-lp-footer-link:hover::after{transform:scaleX(1);transform-origin:left}
+
+/* Social-Icons */
 .lp-footer .ca-lp-social{transition:color .15s,background .15s,border-color .15s,transform .15s}
 .lp-footer .ca-lp-social:hover{color:#fff !important;background:#2563eb !important;border-color:#2563eb !important;transform:translateY(-2px)}
+
+/* Trust-Badges (echte Bilder DSGVO + Trustpilot) */
+.lp-footer .lp-trust-badges{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:4px}
+.lp-footer .lp-trust-badge{height:92px;width:auto;max-width:160px;object-fit:contain;display:block}
+@media (max-width:768px){
+  .lp-footer .lp-trust-badge{height:78px;max-width:140px}
+}
+@media (max-width:480px){
+  .lp-footer .lp-trust-badges{gap:14px}
+  .lp-footer .lp-trust-badge{height:68px;max-width:120px}
+}

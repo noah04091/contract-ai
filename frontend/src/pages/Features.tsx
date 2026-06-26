@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../hooks/useAuth";
-import Footer from "../components/Footer";
+import LandingFooter from "../components/LandingFooter";
 import {
   Search,
   Zap,
@@ -647,7 +647,7 @@ const Features: React.FC = () => {
           </div>
         </section>
 
-        <Footer />
+        <LandingFooter />
       </div>
     </>
   );

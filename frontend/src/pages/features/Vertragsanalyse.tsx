@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
-import Footer from "../../components/Footer";
+import LandingFooter from "../../components/LandingFooter";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
@@ -936,7 +936,7 @@ const Vertragsanalyse: React.FC = () => {
 
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 };

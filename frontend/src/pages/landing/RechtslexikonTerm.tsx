@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
-import Footer from "../../components/Footer";
+import LandingFooter from "../../components/LandingFooter";
 import { getTermById, getRelatedTerms } from "../../data/legalTerms";
 import { LEGAL_AREA_INFO } from "../../types/clauseLibrary";
 import { slugToTermId, termPath, termUrl, SITE_URL, LEXIKON_BASE_PATH, hexToRgba } from "../../utils/lexikon";
@@ -56,7 +56,7 @@ export default function RechtslexikonTerm() {
               </Link>
             </div>
           </div>
-          <Footer />
+          <LandingFooter />
         </div>
       </>
     );
@@ -221,7 +221,7 @@ export default function RechtslexikonTerm() {
           </div>
         </main>
 
-        <Footer />
+        <LandingFooter />
       </div>
     </>
   );

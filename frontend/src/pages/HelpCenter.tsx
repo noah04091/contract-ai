@@ -10,7 +10,7 @@ import {
 import { Helmet } from "react-helmet-async";
 import { Link } from 'react-router-dom';
 import styles from '../styles/HelpCenter.module.css';
-import Footer from '../components/Footer';
+import LandingFooter from '../components/LandingFooter';
 
 interface GuideSection {
   id: string;
@@ -1710,7 +1710,7 @@ const HelpCenter: React.FC = () => {
         </section>
 
         {/* Footer */}
-        <Footer />
+        <LandingFooter />
       </div>
     </>
   );

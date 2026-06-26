@@ -1,6 +1,8 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import logoHeader from "../assets/logo-header.webp";
+import dsgvoBadge from "../assets/dsgvo-badge.webp";
+import trustpilotBadge from "../assets/trustpilot-badge.webp";
 import "./LandingFooter.css";
 
 declare global {
@@ -40,7 +42,10 @@ export default function LandingFooter() {
           <div style={s("flex:1 1 280px;max-width:360px")}>
             <div style={s("display:flex;align-items:center;gap:10px;margin-bottom:16px")}><img src={logoHeader} alt="Contract AI" style={{ height: 28, width: 'auto' }} /></div>
             <p style={s("font-size:14px;line-height:1.65;color:#52525b;margin:0 0 18px")}>Contract&nbsp;AI revolutioniert Ihr Vertragsmanagement mit neuester KI-Technologie. Wir helfen Ihnen, Verträge zu analysieren, optimieren und verwalten.</p>
-            <div style={s("display:flex;gap:10px")}><span style={s("font-size:11px;font-weight:600;color:#3f3f46;background:#fff;border:1px solid rgba(17,17,20,0.1);border-radius:8px;padding:6px 12px")}>DSGVO-konform</span><span style={s("font-size:11px;font-weight:600;color:#3f3f46;background:#fff;border:1px solid rgba(17,17,20,0.1);border-radius:8px;padding:6px 12px")}>★ Trustpilot</span></div>
+            <div className="lp-trust-badges">
+              <img src={dsgvoBadge} alt="DSGVO-konform" className="lp-trust-badge" loading="lazy" />
+              <img src={trustpilotBadge} alt="Trustpilot Bewertungen" className="lp-trust-badge" loading="lazy" />
+            </div>
           </div>
           {[
             { h: "Funktionen", links: [["KI-Vertragsanalyse", "/ki-vertragsanalyse"], ["Vertragsanalyse", "/features/vertragsanalyse"], ["Optimierung", "/features/optimierung"], ["Fristen", "/features/fristen"], ["Vergleich", "/features/vergleich"], ["Generator", "/features/generator"], ["Legal Pulse", "/features/legalpulse"], ["Vertragsverwaltung", "/features/vertragsverwaltung"], ["Digitale Signatur", "/features/digitalesignatur"], ["E-Mail Upload", "/features/email-upload"], ["Contract Builder", "/features/contract-builder"], ["Legal Lens", "/features/legal-lens"]] },

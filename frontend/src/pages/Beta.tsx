@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import styles from '../styles/FeaturePage.module.css';
 import betaStyles from '../styles/Beta.module.css';
-import Footer from '../components/Footer';
+import LandingFooter from '../components/LandingFooter';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
@@ -499,7 +499,7 @@ const Beta: React.FC = () => {
         </div>
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 };

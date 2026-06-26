@@ -4,7 +4,7 @@ import { Helmet } from "react-helmet-async";
 import styles from "../styles/Press.module.css";
 import logoHeader from "../assets/logo-header.webp";
 import logo from "../assets/logo.webp";
-import Footer from "../components/Footer";
+import LandingFooter from "../components/LandingFooter";
 import {
   Newspaper, Download, User, Mail, MessageSquare,
   Calendar, Copy, Check, Image, FileText, ChevronRight,
@@ -374,7 +374,7 @@ export default function Press() {
         </div>
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 }

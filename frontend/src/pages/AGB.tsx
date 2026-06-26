@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import styles from "../styles/LegalPage.module.css";
-import Footer from "../components/Footer";
+import LandingFooter from "../components/LandingFooter";
 import {
   Scale, FileText, UserCheck, Layers, CreditCard, Clock,
   Users, Shield, AlertTriangle, RefreshCw, Gavel, CheckCircle,
@@ -868,7 +868,7 @@ export default function AGB() {
         </div>
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 }

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
-import Footer from "../../components/Footer";
+import LandingFooter from "../../components/LandingFooter";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
   ArrowRight, Clock, BookOpen, ChevronDown, ThumbsUp,
@@ -1252,7 +1252,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
 
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 };

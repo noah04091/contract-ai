@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import styles from "../styles/LegalPage.module.css";
-import Footer from "../components/Footer";
+import LandingFooter from "../components/LandingFooter";
 import {
   FileText, Mail, Phone, User, Globe, Building2,
   CreditCard, Scale, Shield, ExternalLink, ArrowRight,
@@ -343,7 +343,7 @@ export default function Impressum() {
         </div>
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 }

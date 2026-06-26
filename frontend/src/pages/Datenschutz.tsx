@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import styles from "../styles/LegalPage.module.css";
-import Footer from "../components/Footer";
+import LandingFooter from "../components/LandingFooter";
 import {
   Shield, Lock, Server, CreditCard, User, Mail,
   FileText, Eye, Trash2, Database, Clock, AlertCircle,
@@ -697,7 +697,7 @@ export default function Datenschutz() {
         </div>
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 }

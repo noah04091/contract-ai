@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../hooks/useAuth";
 import styles from "../styles/FeaturePage.module.css";
-import Footer from "../components/Footer";
+import LandingFooter from "../components/LandingFooter";
 import {
   ArrowRight, ChevronDown, CheckCircle, Shield, Lock, MapPin, Clock,
   Users, UserPlus, FolderOpen, Code, Download, Activity, CreditCard, Zap,
@@ -929,7 +929,7 @@ const FuerAgenturen: React.FC = () => {
         </section>
       </div>
 
-      <Footer />
+      <LandingFooter />
     </>
   );
 };

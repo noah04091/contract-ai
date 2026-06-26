@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, useReducedMotion } from "framer-motion";
 import { Search, X, ArrowRight, BookOpen } from "lucide-react";
-import Footer from "../../components/Footer";
+import LandingFooter from "../../components/LandingFooter";
 import { legalTerms } from "../../data/legalTerms";
 import { LEGAL_AREA_INFO } from "../../types/clauseLibrary";
 import type { LegalArea, LegalTerm } from "../../types/clauseLibrary";
@@ -312,7 +312,7 @@ export default function Rechtslexikon() {
           </p>
         </div>
 
-        <Footer />
+        <LandingFooter />
       </div>
     </>
   );

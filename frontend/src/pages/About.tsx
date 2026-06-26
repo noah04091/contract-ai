@@ -3,7 +3,7 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { Shield, Sparkles, Zap, Users, ArrowRight, Quote } from "lucide-react";
 import styles from "../styles/About.module.css";
-import Footer from "../components/Footer";
+import LandingFooter from "../components/LandingFooter";
 
 // Team Bilder
 import noahImg from "../assets/team/noah-liebold.jpg.png";
@@ -414,7 +414,7 @@ const About: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <Footer />
+      <LandingFooter />
     </>
   );
 };
