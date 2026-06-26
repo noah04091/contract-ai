@@ -958,7 +958,7 @@ export default function Contracts() {
           credentials: 'include',
         });
       } catch { /* Webhook setzt es ohnehin — dies ist nur ein Fallback */ }
-      try { toast.success('Analyse freigeschaltet — viel Erfolg!'); } catch { /* ignore */ }
+      try { toast.success('Freigeschaltet — viel Erfolg!'); } catch { /* ignore */ }
       await fetchContracts();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps

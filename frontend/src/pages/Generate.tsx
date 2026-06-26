@@ -6933,13 +6933,21 @@ export default function Generate() {
                               : "Dein Vertrag wurde erstellt. Schalte frei, um ihn vollständig zu sehen, als PDF herunterzuladen und unterschreiben zu lassen."}
                           </p>
                           {!freeUsed && savedContractId ? (
-                            <>
-                              <button type="button" onClick={() => startGenerateUnlock(savedContractId)} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
-                                Diesen Vertrag freischalten – 9,90 €
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, width: "100%", maxWidth: 340 }}>
+                              {/* Option 1: Einmalkauf (Vorrang) */}
+                              <button type="button" onClick={() => startGenerateUnlock(savedContractId)} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "12px 20px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+                                Diesen Vertrag freischalten · 9,90 €
                               </button>
-                              <div style={{ fontSize: 12.5, color: "#475569", marginTop: 12, textShadow: "0 0 8px #fff" }}>Einmalig, kein Abo · inkl. Volltext, PDF &amp; Unterschrift</div>
-                              <a href="/pricing" style={{ fontSize: 12.5, color: "#2563eb", marginTop: 8, textDecoration: "none", fontWeight: 600 }}>oder unbegrenzt mit Business →</a>
-                            </>
+                              <div style={{ fontSize: 12, color: "#64748b", textShadow: "0 0 8px #fff" }}>Einmalig, kein Abo · Volltext, PDF &amp; Unterschrift</div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", margin: "2px 0", color: "#94a3b8", fontSize: 11.5 }}>
+                                <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} /> oder <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
+                              </div>
+                              {/* Option 2: Abo (auch attraktiv) */}
+                              <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7" }}>
+                                Mit Business: alle Verträge frei
+                              </a>
+                              <div style={{ fontSize: 12, color: "#64748b", textShadow: "0 0 8px #fff" }}>+ unbegrenzt Analysen, Optimierung, Fristen &amp; mehr</div>
+                            </div>
                           ) : (
                             <>
                               <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
