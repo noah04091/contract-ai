@@ -232,8 +232,17 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
   const [contract, setContract] = useState<ChatMsg["contract"] | null>(null);
   const [sigModal, setSigModal] = useState<{ contractId: string; contractName: string; s3Key: string } | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const taRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }); }, [messages, busy]);
+
+  // Eingabefeld wächst mit dem Text mit (bis ~45 % Bildschirmhöhe), schrumpft beim Leeren zurück
+  useEffect(() => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, Math.round(window.innerHeight * 0.45)) + "px";
+  }, [input]);
 
   // Vorbefüllung aus dem Generate-Formular: autoSend=true (Free klickte „Erstellen" → direkt
   // generieren) ODER nur vorbefüllen (Nutzer kann ergänzen, dann senden).
@@ -548,13 +557,14 @@ export default function PremiumChat({ onClose, demo = false, initialPrompt = "",
       <div style={{ padding: "14px 16px", borderTop: `1px solid ${C.border}`, background: "#fff" }}>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 9, border: `1.5px solid ${C.border}`, borderRadius: 14, padding: "8px 8px 8px 14px", background: "#fff" }}>
           <textarea
+            ref={taRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
             placeholder={contract ? "Änderungswunsch … z. B. „Laufzeit auf 6 Monate“" : "Beschreibe deinen Vertrag … (Stichworte reichen)"}
             rows={1}
             disabled={busy}
-            style={{ flex: 1, resize: "none", border: "none", outline: "none", font: "inherit", fontSize: 14, color: C.ink, padding: "6px 0", maxHeight: 120, background: "transparent" }}
+            style={{ flex: 1, resize: "vertical", border: "none", outline: "none", font: "inherit", fontSize: 14, lineHeight: 1.5, color: C.ink, padding: "6px 0", minHeight: 24, maxHeight: "45vh", overflowY: "auto", background: "transparent" }}
           />
           <button onClick={() => handleSend()} disabled={busy || !input.trim()} title="Senden"
             style={{ width: 38, height: 38, borderRadius: 10, border: "none", background: busy || !input.trim() ? "#c7d4ee" : `linear-gradient(135deg,${C.blue},${C.blue2})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: busy || !input.trim() ? "default" : "pointer", flex: "none" }}>
