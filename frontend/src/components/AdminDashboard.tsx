@@ -304,6 +304,20 @@ interface UpcomingCampaign {
   createdByEmail?: string | null;
 }
 
+interface UnlockKindStat {
+  label: string;
+  price: number;
+  purchased: number;
+  revenue: number;
+  purchased30: number;
+  revenue30: number;
+  checkoutsStarted: number;
+}
+interface UnlockStats {
+  totals: { purchased: number; revenue: number; purchased30: number; revenue30: number; checkoutsStarted: number; conversionRate: number | null };
+  byKind: { analysis_unlock: UnlockKindStat; generate_unlock: UnlockKindStat };
+}
+
 interface FinanceStats {
   monthlyRevenue: Array<{ month: string; revenue: number; count: number; byPlan: { business: number; enterprise: number } }>;
   monthlyCosts: Array<{ month: string; cost: number; calls: number }>;
@@ -488,6 +502,7 @@ export default function AdminDashboard() {
   const [deletedAccountsData, setDeletedAccountsData] = useState<DeletedAccountsStats | null>(null);
   const [activityLogData, setActivityLogData] = useState<ActivityLogData | null>(null);
   const [financeStats, setFinanceStats] = useState<FinanceStats | null>(null);
+  const [unlockStats, setUnlockStats] = useState<UnlockStats | null>(null);
   const [acquisitionStats, setAcquisitionStats] = useState<{
     sources: { source: string; signups: number; activated: number; analyzed: number; paid: number }[];
     landingPages: { page: string; count: number }[];
@@ -742,6 +757,14 @@ export default function AdminDashboard() {
         const data = await res.json();
         setFinanceStats(data);
       }
+      // 🔓 Einmalkäufe (Freischaltungen) — separat, darf Finance nicht blockieren
+      try {
+        const ur = await fetch(`${API_URL}/api/admin/unlock-stats`, { credentials: 'include' });
+        if (ur.ok) {
+          const ud = await ur.json();
+          if (ud && ud.success) setUnlockStats(ud);
+        }
+      } catch { /* optional */ }
     } catch (err) {
       console.error('Error fetching finance data:', err);
     } finally {
@@ -3517,6 +3540,47 @@ export default function AdminDashboard() {
         {/* FINANCE TAB */}
         {activeTab === 'finance' && (
           <div className={styles.financeTab}>
+            {/* 🔓 Einmalkäufe (Freischaltungen) — Analyse 4,90 € + Generate 9,90 € */}
+            {unlockStats && (
+              <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 0.25rem', color: '#0f172a' }}>🔓 Einmalkäufe (Freischaltungen)</h2>
+                <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 1rem' }}>Einmal-Zahler ohne Abo — separat von den Abo-Einnahmen oben.</p>
+                <div className={styles.statsGrid}>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg,#ecfdf5,#d1fae5)', color: '#059669' }}><Euro size={28} /></div>
+                    <div className={styles.statContent}>
+                      <h3>Einmalkauf-Umsatz</h3>
+                      <p className={styles.statValue}>{formatEuro(unlockStats.totals.revenue)}</p>
+                      <span className={styles.statSubtext}>{unlockStats.totals.purchased} Käufe · 30T: {formatEuro(unlockStats.totals.revenue30)} ({unlockStats.totals.purchased30})</span>
+                    </div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg,#eff6ff,#dbeafe)', color: '#3b82f6' }}><TrendingUp size={28} /></div>
+                    <div className={styles.statContent}>
+                      <h3>Conversion</h3>
+                      <p className={styles.statValue}>{unlockStats.totals.conversionRate != null ? `${unlockStats.totals.conversionRate}%` : '–'}</p>
+                      <span className={styles.statSubtext}>{unlockStats.totals.purchased}/{unlockStats.totals.checkoutsStarted} Checkout→Kauf</span>
+                    </div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg,#eef2ff,#e0e7ff)', color: '#4f46e5' }}><Zap size={28} /></div>
+                    <div className={styles.statContent}>
+                      <h3>Analyse · 4,90 €</h3>
+                      <p className={styles.statValue}>{unlockStats.byKind.analysis_unlock.purchased}</p>
+                      <span className={styles.statSubtext}>{formatEuro(unlockStats.byKind.analysis_unlock.revenue)} · {unlockStats.byKind.analysis_unlock.checkoutsStarted} Starts</span>
+                    </div>
+                  </div>
+                  <div className={styles.statCard}>
+                    <div className={styles.statIcon} style={{ background: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', color: '#7c3aed' }}><Unlock size={28} /></div>
+                    <div className={styles.statContent}>
+                      <h3>Vertrag · 9,90 €</h3>
+                      <p className={styles.statValue}>{unlockStats.byKind.generate_unlock.purchased}</p>
+                      <span className={styles.statSubtext}>{formatEuro(unlockStats.byKind.generate_unlock.revenue)} · {unlockStats.byKind.generate_unlock.checkoutsStarted} Starts</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {financeLoading ? (
               <div style={{ textAlign: 'center', padding: '3rem' }}>
                 <RefreshCw className={styles.spinning} size={32} />

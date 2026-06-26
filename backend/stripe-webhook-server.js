@@ -413,7 +413,7 @@ async function handleStripeEvent(event) {
             console.log(`🔓 Einmal-Freischaltung (${unlockKind}) gesetzt (contract ${contractId}, user ${userId}) — modified ${r.modifiedCount}`);
             // Nur beim ERSTEN Setzen: Tracking + Rechnung (Dedup ggü. verify-on-return / Stripe-Retries)
             if (r.modifiedCount > 0) {
-              try { require('./services/featureUsage').getInstance().trackFeatureUsage({ userId, feature: 'unlock_purchased' }).catch(() => {}); } catch { /* tracking optional */ }
+              try { require('./services/featureUsage').getInstance().trackFeatureUsage({ userId, feature: 'unlock_purchased', metadata: { kind: unlockKind } }).catch(() => {}); } catch { /* tracking optional */ }
 
               // 📄 Rechnung von UNS — exakt wie beim Abo (eigene PDF + Mail + invoices-Collection).
               // Fail-safe: Rechnungsfehler darf den (bereits gültigen) Unlock NIE kippen.
