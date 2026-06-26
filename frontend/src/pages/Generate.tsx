@@ -3673,6 +3673,10 @@ export default function Generate() {
     savedContractId?: string | null;
     contractData?: any;
     generatedHTML?: string;
+    // 🔒 Free-Tease: Sperr-Status mitsichern, sonst landet Free nach Rückkehr (z.B. von /pricing)
+    // fälschlich auf dem Paid-„Finalisieren"-Schritt statt zurück auf der Sperre.
+    gatedResult?: boolean;
+    freeUsed?: boolean;
   } | null>(null);
 
   // 📋 Vorschau State
@@ -3827,6 +3831,10 @@ export default function Generate() {
         if (pendingDraft.generatedHTML) {
           setGeneratedHTML(pendingDraft.generatedHTML);
         }
+        // 🔒 Free-Tease: Sperr-Status wiederherstellen → Free landet wieder auf der Sperre
+        // (mit 9,90€/Abo-Optionen), nicht auf dem Paid-„Finalisieren"-Schritt.
+        setGatedResult(!!pendingDraft.gatedResult);
+        setFreeUsed(!!pendingDraft.freeUsed);
 
         toast.success('Entwurf wiederhergestellt');
       }
@@ -3857,14 +3865,16 @@ export default function Generate() {
         contractText: contractText || '',
         savedContractId: savedContractId || null,
         contractData: contractData || null,
-        generatedHTML: generatedHTML || ''
+        generatedHTML: generatedHTML || '',
+        gatedResult,   // 🔒 Free-Tease: Sperr-Status mitsichern
+        freeUsed
       };
       localStorage.setItem('contract_generator_draft', JSON.stringify(dataToSave));
       setLastSaved(new Date());
     }, 1000); // Speichere nach 1 Sekunde Inaktivität
 
     return () => clearTimeout(saveTimer);
-  }, [formData, selectedType, currentStep, contractText, savedContractId, contractData, generatedHTML]);
+  }, [formData, selectedType, currentStep, contractText, savedContractId, contractData, generatedHTML, gatedResult, freeUsed]);
 
   // 💾 Clear draft when contract is generated
   const clearDraft = () => {
