@@ -22,7 +22,7 @@ import Step3ClauseSidebar from "../components/Step3ClauseSidebar";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 import { WelcomePopup } from "../components/Tour";
 import { getErrorMessage } from "../utils/errorHandling";
-import { startGenerateUnlock } from "../utils/startAnalysisUnlock";
+import { startGenerateUnlock, startBusinessSubscription } from "../utils/startAnalysisUnlock";
 
 // Generate 2.0: Die einfache „Formular-Vorausfüllen"-Variante ist vorerst ausgeblendet.
 // Sie wird durch den echten Premium-Chat-Modus (Claude Opus + AVV-Design) ersetzt.
@@ -6953,7 +6953,7 @@ export default function Generate() {
                                 <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} /> oder <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
                               </div>
                               {/* Option 2: Abo (auch attraktiv) */}
-                              <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7" }}>
+                              <a href="/pricing" onClick={(e) => { e.preventDefault(); startBusinessSubscription(); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7", cursor: "pointer" }}>
                                 Mit Business: alle Verträge frei
                               </a>
                               <div style={{ fontSize: 12, color: "#64748b", textShadow: "0 0 8px #fff" }}>+ unbegrenzt Analysen, Optimierung, Fristen &amp; mehr</div>

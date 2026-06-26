@@ -55,3 +55,29 @@ export function startAnalysisUnlock(contractId?: string | null): Promise<void> {
 export function startGenerateUnlock(contractId?: string | null): Promise<void> {
   return startUnlock(contractId, "generate_unlock");
 }
+
+// Direktes Abo-Checkout (Business, monatlich) — überspringt die /pricing-Zwischenseite und
+// schickt direkt zum Stripe-Abo-Checkout. Fallback bei Fehler → /pricing.
+export async function startBusinessSubscription(): Promise<void> {
+  try {
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    const res = await fetch(`/api/stripe/create-checkout-session`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: "include",
+      body: JSON.stringify({ plan: "business", billing: "monthly" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data?.url) {
+      window.location.href = data.url; // → Stripe Abo-Checkout
+      return;
+    }
+    window.location.href = "/pricing"; // Fallback (z.B. Preis-ID fehlt)
+  } catch (err) {
+    console.error("[Abo] Checkout-Start fehlgeschlagen:", err);
+    window.location.href = "/pricing";
+  }
+}
