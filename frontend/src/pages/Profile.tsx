@@ -1274,6 +1274,16 @@ export default function Profile() {
                                 <span className={styles.businessIcon}>🏢</span>
                                 Business
                               </span>
+                            ) : invoice.plan === 'generate_unlock' ? (
+                              <span className={styles.standardPlan}>
+                                <span className={styles.standardIcon}>🔓</span>
+                                Vertrag (einmalig)
+                              </span>
+                            ) : invoice.plan === 'analysis_unlock' ? (
+                              <span className={styles.standardPlan}>
+                                <span className={styles.standardIcon}>🔓</span>
+                                Analyse (einmalig)
+                              </span>
                             ) : (
                               <span className={styles.standardPlan}>
                                 <span className={styles.standardIcon}>🔓</span>
@@ -1317,6 +1327,16 @@ export default function Profile() {
                                 <span className={styles.businessPlan}>
                                   <span className={styles.businessIcon}>🏢</span>
                                   Business
+                                </span>
+                              ) : invoice.plan === 'generate_unlock' ? (
+                                <span className={styles.standardPlan}>
+                                  <span className={styles.standardIcon}>🔓</span>
+                                  Vertrag (einmalig)
+                                </span>
+                              ) : invoice.plan === 'analysis_unlock' ? (
+                                <span className={styles.standardPlan}>
+                                  <span className={styles.standardIcon}>🔓</span>
+                                  Analyse (einmalig)
                                 </span>
                               ) : (
                                 <span className={styles.standardPlan}>

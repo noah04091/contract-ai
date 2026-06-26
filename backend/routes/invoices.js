@@ -132,6 +132,35 @@ router.get("/me", verifyToken, async (req, res) => {
       };
     });
 
+    // 🔓 Einmalkäufe (Freischaltungen) aus UNSERER invoices-Sammlung dazumischen.
+    // Warum nötig: Stripe-Checkout mode:"payment" erzeugt KEINE Stripe-Rechnung → diese Käufe
+    // tauchen in stripe.invoices.list NIE auf. Wir haben aber eine eigene Rechnung (inkl. PDF)
+    // gespeichert. Scoping: ausschließlich per eindeutiger customerEmail = der eingeloggte User
+    // (E-Mails sind eindeutig). amount ist bei uns EUR → Frontend rechnet /100, daher *100 (Cent).
+    try {
+      const oneTime = await invoicesCollection.find(
+        { customerEmail: req.user.email, plan: { $in: ['analysis_unlock', 'generate_unlock'] } },
+        { projection: { file: 0 } }
+      ).toArray();
+      let mergedCount = 0;
+      for (const docu of oneTime) {
+        if (!docu || !docu.invoiceNumber) continue; // defensiv: nur gültige Einträge
+        formattedInvoices.push({
+          invoiceNumber: docu.invoiceNumber,
+          plan: docu.plan, // 'analysis_unlock' | 'generate_unlock'
+          planDisplayName: docu.plan === 'generate_unlock' ? 'Vertrags-Freischaltung' : 'Analyse-Freischaltung',
+          amount: Math.round((Number(docu.amount) || 0) * 100),
+          date: (docu.createdAt ? new Date(docu.createdAt) : new Date()).toISOString(),
+          stripeInvoiceId: null,
+        });
+        mergedCount++;
+      }
+      console.log(`🔓 ${mergedCount} Einmalkauf-Rechnung(en) dazugemischt`);
+    } catch (mergeErr) {
+      // Niemals die (funktionierende) Abo-Rechnungsliste wegen der Einmalkäufe kippen.
+      console.warn('⚠️ Einmalkauf-Rechnungen konnten nicht gemischt werden:', mergeErr.message);
+    }
+
     // Nach Datum sortieren (neueste zuerst)
     formattedInvoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -154,6 +183,27 @@ router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
     await ensureDb();
     const { invoiceNumber } = req.params;
     console.log(`📥 Download-Request für Rechnung ${invoiceNumber} von ${req.user.email}`);
+
+    // 0. 🔓 ZUERST unsere eigene PDF aus der DB (deckt Einmalkäufe ab, die es bei Stripe NICHT als
+    //    Rechnung gibt). Streng auf den eingeloggten User gescopet: customerEmail === req.user.email
+    //    (E-Mails sind eindeutig). Nur senden, wenn der Treffer wirklich diesem User gehört.
+    try {
+      const ownInvoice = await invoicesCollection.findOne({
+        customerEmail: req.user.email,
+        $or: [{ invoiceNumber }, { stripeInvoiceNumber: invoiceNumber }]
+      });
+      if (ownInvoice && ownInvoice.file && ownInvoice.customerEmail === req.user.email) {
+        const pdfBuffer = Buffer.isBuffer(ownInvoice.file)
+          ? ownInvoice.file
+          : Buffer.from(ownInvoice.file.buffer || ownInvoice.file);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Rechnung-${invoiceNumber}.pdf"`);
+        console.log(`✅ Eigene PDF (DB) gesendet für Rechnung ${invoiceNumber}`);
+        return res.send(pdfBuffer);
+      }
+    } catch (dbFirstErr) {
+      console.warn(`⚠️ DB-first PDF-Lookup fehlgeschlagen, fahre mit Stripe fort: ${dbFirstErr.message}`);
+    }
 
     // 1. User validieren
     const user = await usersCollection.findOne({
