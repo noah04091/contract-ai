@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 const verifyToken = require("../middleware/verifyToken");
 const requirePremium = require("../middleware/requirePremium"); // 🔐 Business+ Check
+const database = require("../config/database"); // 🔓 für gezielten Signatur-Bypass bei freigekauften Verträgen
 const idempotency = require("../middleware/idempotency"); // 🔒 Prevent duplicate requests
 const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
@@ -17,6 +18,62 @@ const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
 
 const router = express.Router();
+
+// ============================================================================
+// 🔓 SIGNATUR FÜR EINMALIG FREIGEKAUFTE VERTRÄGE (9,90 €)
+// ----------------------------------------------------------------------------
+// Der Einmalkauf eines GENERIERTEN Vertrags (isGenerated + unlock.paid) schaltet auch das
+// Versenden zur Signatur frei — passend zur Sperr-Karten-Werbung. Sonst bleibt Signatur
+// Business-only. Die Bypässe greifen NUR für genau solche Verträge des aufrufenden Users;
+// alles andere fällt auf requirePremium (Business+) zurück.
+// ----------------------------------------------------------------------------
+async function isUnlockedGeneratedContract(userId, contractId) {
+  try {
+    if (!userId || !contractId || !ObjectId.isValid(String(contractId)) || !ObjectId.isValid(String(userId))) return false;
+    const db = await database.connect();
+    const c = await db.collection("contracts").findOne(
+      { _id: new ObjectId(String(contractId)), userId: new ObjectId(String(userId)) },
+      { projection: { isGenerated: 1, "unlock.paid": 1 } }
+    );
+    return !!(c && c.isGenerated === true && c.unlock && c.unlock.paid === true);
+  } catch { return false; }
+}
+
+// Wrapper: erlaubt Free NUR für freigekaufte generierte Verträge, sonst Business-Pflicht.
+function premiumOrUnlockedContract(resolveContractId) {
+  return async (req, res, next) => {
+    try {
+      const cid = await resolveContractId(req);
+      if (await isUnlockedGeneratedContract(req.user && req.user.userId, cid)) return next();
+    } catch { /* fall through */ }
+    return requirePremium(req, res, next);
+  };
+}
+
+// contractId aus dem Envelope (für /:id-Routen)
+const contractIdFromEnvelope = async (req) => {
+  try {
+    const db = await database.connect();
+    const env = await db.collection("envelopes").findOne(
+      { _id: new ObjectId(req.params.id) }, { projection: { contractId: 1 } }
+    );
+    return env && env.contractId;
+  } catch { return null; }
+};
+
+// Liste: erlauben, wenn der User mind. EINEN freigekauften generierten Vertrag hat
+// (er sieht ohnehin nur seine eigenen Envelopes — und kann nur solche erstellt haben).
+async function premiumOrHasUnlockedContract(req, res, next) {
+  try {
+    const db = await database.connect();
+    const c = await db.collection("contracts").findOne(
+      { userId: new ObjectId(String(req.user.userId)), isGenerated: true, "unlock.paid": true },
+      { projection: { _id: 1 } }
+    );
+    if (c) return next();
+  } catch { /* fall through */ }
+  return requirePremium(req, res, next);
+}
 
 // ===== RATE LIMITERS =====
 
@@ -420,7 +477,7 @@ async function sendCompletionNotification(envelope, recipientEmail) {
 /**
  * POST /api/envelopes - Create new envelope
  */
-router.post("/envelopes", verifyToken, requirePremium, async (req, res) => {
+router.post("/envelopes", verifyToken, premiumOrUnlockedContract((req) => req.body && req.body.contractId), async (req, res) => {
   try {
     const {
       contractId,
@@ -624,7 +681,7 @@ router.post("/envelopes", verifyToken, requirePremium, async (req, res) => {
  * - limit: pagination limit (default 50)
  * - offset: pagination offset (default 0)
  */
-router.get("/envelopes", verifyToken, requirePremium, async (req, res) => {
+router.get("/envelopes", verifyToken, premiumOrHasUnlockedContract, async (req, res) => {
   try {
     const { status, archived, search, limit = 50, offset = 0, sort = 'newest' } = req.query;
 
@@ -740,7 +797,7 @@ router.get("/envelopes", verifyToken, requirePremium, async (req, res) => {
 /**
  * GET /api/envelopes/:id - Get single envelope details
  */
-router.get("/envelopes/:id", verifyToken, requirePremium, async (req, res) => {
+router.get("/envelopes/:id", verifyToken, premiumOrUnlockedContract(contractIdFromEnvelope), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -822,7 +879,7 @@ router.get("/envelopes/:id", verifyToken, requirePremium, async (req, res) => {
  * POST /api/envelopes/:id/send - Send invitations to signers
  * 🔒 Idempotency protected to prevent duplicate emails on retries
  */
-router.post("/envelopes/:id/send", verifyToken, requirePremium, emailSendLimiter, idempotency(), async (req, res) => {
+router.post("/envelopes/:id/send", verifyToken, premiumOrUnlockedContract(contractIdFromEnvelope), emailSendLimiter, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -962,7 +1019,7 @@ router.post("/envelopes/:id/send", verifyToken, requirePremium, emailSendLimiter
  * POST /api/envelopes/:id/remind - Remind ALL pending signers (no specific email needed)
  * 🔒 Idempotency protected to prevent duplicate reminder emails
  */
-router.post("/envelopes/:id/remind", verifyToken, requirePremium, emailSendLimiter, idempotency(), async (req, res) => {
+router.post("/envelopes/:id/remind", verifyToken, premiumOrUnlockedContract(contractIdFromEnvelope), emailSendLimiter, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1073,7 +1130,7 @@ router.post("/envelopes/:id/remind", verifyToken, requirePremium, emailSendLimit
  * POST /api/envelopes/:id/resend - Resend invitation reminder to SPECIFIC signer
  * 🔒 Idempotency protected to prevent duplicate emails
  */
-router.post("/envelopes/:id/resend", verifyToken, requirePremium, emailSendLimiter, idempotency(), async (req, res) => {
+router.post("/envelopes/:id/resend", verifyToken, premiumOrUnlockedContract(contractIdFromEnvelope), emailSendLimiter, idempotency(), async (req, res) => {
   try {
     const { id } = req.params;
     const { signerEmail } = req.body;
