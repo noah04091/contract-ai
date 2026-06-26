@@ -1987,6 +1987,29 @@ const connectDB = async () => {
         }
       })));
 
+      // Legal Pulse V2 WATCHDOG ("Herz-Monitor") — täglich 08:45 UTC (nach Radar 07:00)
+      // REIN BEOBACHTEND: liest nur cron_logs + laws, fasst KEINE Legal-Pulse-Logik an.
+      // Alarmiert per Mail NUR wenn Nachschub/Crons lautlos ausfallen (kein Lärm an gesunden Tagen).
+      // Kill-Switch: env PULSE_WATCHDOG_ENABLED=false deaktiviert komplett.
+      cron.schedule("45 8 * * *", withDistributedLock('pulse-v2-watchdog', withCronLock('pulse-v2-watchdog', async () => {
+        if (process.env.PULSE_WATCHDOG_ENABLED === "false") {
+          console.log("[PulseV2Watchdog] deaktiviert (PULSE_WATCHDOG_ENABLED=false)");
+          return;
+        }
+        console.log("[PulseV2Watchdog] Starte Herz-Monitor-Check...");
+        try {
+          await withCronLogging('pulse-v2-watchdog', async () => {
+            const { runPulseV2Watchdog } = require("./jobs/pulseV2Watchdog");
+            const cronDb = await database.connect();
+            const result = await runPulseV2Watchdog(cronDb);
+            return { healthy: result.healthy, alarms: result.alarms?.length || 0, mailed: !!result.mailed };
+          });
+        } catch (error) {
+          console.error("[PulseV2Watchdog] Error:", error);
+          await captureError(error, { route: 'CRON:pulse-v2-watchdog', method: 'SCHEDULED', severity: 'high' });
+        }
+      })));
+
       // 🔥 Cache-Warming: Nach den schweren Nacht-Cron-Jobs (01:00 Status, 02:00 Events, 06:00 LegalPulse)
       // WiredTiger-Cache ist danach mit Scan-Daten gefüllt — hier laden wir die user-facing Daten zurück
       cron.schedule("30 6 * * *", async () => {
