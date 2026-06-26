@@ -16,7 +16,7 @@ import { Sparkles, Send, Download, Lock, ArrowLeft, ArrowRight, ShieldCheck, Che
 import { toast } from "react-toastify";
 import EnhancedSignatureModal from "./EnhancedSignatureModal";
 import { useAuth } from "../hooks/useAuth";
-import { startGenerateUnlock } from "../utils/startAnalysisUnlock";
+import { startGenerateUnlock, startBusinessSubscription } from "../utils/startAnalysisUnlock";
 
 type Kind = "text" | "questions" | "contract" | "generating" | "review" | "streaming" | "events" | "explain" | "demolock";
 interface CalItem { title: string; date: string; severity?: string }
@@ -964,7 +964,7 @@ function LockCard({ title, used = false, preview, contractId }: { title?: string
                 <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} /> oder <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
               </div>
               {/* Option 2: Abo (auch attraktiv) */}
-              <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", font: "inherit", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7" }}>
+              <a href="/pricing" onClick={(e) => { e.preventDefault(); startBusinessSubscription(); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", font: "inherit", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7", cursor: "pointer" }}>
                 Mit Business: alle Verträge frei
               </a>
               <div style={{ fontSize: 12, color: "#64748b" }}>+ unbegrenzt Analysen, Optimierung, Fristen &amp; mehr</div>

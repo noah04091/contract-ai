@@ -1,7 +1,7 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect, useRef } from 'react';
 import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail, Bell, Scale, Lightbulb, AlertTriangle, Users, Sparkles, Info, Star, Search, Lock } from 'lucide-react';
-import { startGenerateUnlock } from '../utils/startAnalysisUnlock';
+import { startGenerateUnlock, startBusinessSubscription } from '../utils/startAnalysisUnlock';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -846,8 +846,25 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         if (data.fileUrl || data.url) {
           setPdfUrl(data.fileUrl || data.url);
         }
-      } else if (contract.content || contract.contractHTML || contract.isGenerated) {
-        // Fallback: PDF on-demand generieren via React-PDF (isGenerated als Fallback, da content nicht in der Liste geladen wird)
+      } else if (contract.isGenerated) {
+        // 🔒 Generierter Vertrag (Generate 2.0): im PREMIUM-AVV-Design rendern (wie im Chat erstellt),
+        // damit der gekaufte Vertrag GENAUSO aussieht wie bei der Erstellung — nicht im generischen
+        // /pdf-v2-Layout. Gleicher Inhalt (contract.content), nur das richtige Design.
+        const response = await fetch(`/api/contracts/premium/pdf`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ contractId: contract._id, design: contract.designVariant || 'royal' })
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          setPdfUrl(window.URL.createObjectURL(blob));
+        }
+      } else if (contract.content || contract.contractHTML) {
+        // Sonstige Verträge mit content (z.B. optimiert) → bisheriges /pdf-v2-Layout
         const response = await fetch(`/api/contracts/${contract._id}/pdf-v2`, {
           method: 'POST',
           headers: {
@@ -2095,7 +2112,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <span style={{ flex: 1, height: 1, background: '#e2e8f0' }} /> oder <span style={{ flex: 1, height: 1, background: '#e2e8f0' }} />
             </div>
             {/* Option 2: Abo (auch attraktiv) */}
-            <a href="/pricing" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: '11px 20px', textDecoration: 'none', color: '#2563eb', background: '#fff', border: '1.5px solid #bcd0f7' }}>
+            <a href="/pricing" onClick={(e) => { e.preventDefault(); startBusinessSubscription(); }} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, width: '100%', fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: '11px 20px', textDecoration: 'none', color: '#2563eb', background: '#fff', border: '1.5px solid #bcd0f7', cursor: 'pointer' }}>
               Mit Business: alle Verträge frei
             </a>
             <div style={{ fontSize: 12, color: '#64748b', textShadow: '0 0 8px #fff' }}>+ unbegrenzt Analysen, Optimierung, Fristen &amp; mehr</div>

@@ -22,7 +22,7 @@ import Step3ClauseSidebar from "../components/Step3ClauseSidebar";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 import { WelcomePopup } from "../components/Tour";
 import { getErrorMessage } from "../utils/errorHandling";
-import { startGenerateUnlock } from "../utils/startAnalysisUnlock";
+import { startGenerateUnlock, startBusinessSubscription } from "../utils/startAnalysisUnlock";
 
 // Generate 2.0: Die einfache „Formular-Vorausfüllen"-Variante ist vorerst ausgeblendet.
 // Sie wird durch den echten Premium-Chat-Modus (Claude Opus + AVV-Design) ersetzt.
@@ -3673,6 +3673,10 @@ export default function Generate() {
     savedContractId?: string | null;
     contractData?: any;
     generatedHTML?: string;
+    // 🔒 Free-Tease: Sperr-Status mitsichern, sonst landet Free nach Rückkehr (z.B. von /pricing)
+    // fälschlich auf dem Paid-„Finalisieren"-Schritt statt zurück auf der Sperre.
+    gatedResult?: boolean;
+    freeUsed?: boolean;
   } | null>(null);
 
   // 📋 Vorschau State
@@ -3772,6 +3776,10 @@ export default function Generate() {
 
   // 💾 AUTOSAVE: Check for saved draft on mount and show dialog
   useEffect(() => {
+    // 🔁 Rückkehr vom Stripe-Einmalkauf (gen_unlocked/gen_canceled) → eigener Handler übernimmt,
+    // KEIN Entwurf-Dialog (sonst Doppel-Wiederherstellung / falscher Screen).
+    const rp = new URLSearchParams(window.location.search);
+    if (rp.has('gen_unlocked') || rp.has('gen_canceled')) return;
     const savedData = localStorage.getItem('contract_generator_draft');
     if (savedData && !isRestored) {
       try {
@@ -3802,6 +3810,65 @@ export default function Generate() {
     }
   }, []);
 
+  // 🔓 Rückkehr vom Stripe-Einmalkauf eines GENERIERTEN Vertrags — auf der Generate-Seite bleiben.
+  //  - gen_unlocked=1 → Zahlung verifizieren, vollen Vertrag laden, Sperre auflösen → Step 4 (sichtbar).
+  //  - gen_canceled=1 → zurück auf die gesperrte Ansicht (Entwurf), damit man die andere Option wählen kann.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const unlocked = params.get('gen_unlocked') === '1';
+    const canceled = params.get('gen_canceled') === '1';
+    if (!unlocked && !canceled) return;
+
+    let draft: {
+      selectedTypeId?: string; formData?: FormDataType; contractText?: string;
+      savedContractId?: string | null; currentStep?: number; gatedResult?: boolean; freeUsed?: boolean;
+    } | null = null;
+    try { draft = JSON.parse(localStorage.getItem('contract_generator_draft') || 'null'); } catch { draft = null; }
+    const type = draft?.selectedTypeId ? CONTRACT_TYPES.find(t => t.id === draft!.selectedTypeId) : null;
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    setIsRestored(true); // Entwurf-Dialog unterdrücken
+    if (type) setSelectedType(type);
+    if (draft?.formData) setFormData(draft.formData);
+
+    if (unlocked) {
+      const cid = params.get('contractId') || draft?.savedContractId || null;
+      const sid = params.get('session_id');
+      (async () => {
+        try {
+          // 1) Zahlung verifizieren (Fallback zum Webhook)
+          if (cid) {
+            const q = `contractId=${encodeURIComponent(cid)}${sid ? `&session_id=${encodeURIComponent(sid)}` : ''}`;
+            await fetch(`/api/stripe/verify-unlock?${q}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }, credentials: 'include' });
+          }
+          // 2) Vollen (jetzt freigeschalteten) Vertrag laden
+          if (cid) {
+            const res = await fetch(`/api/contracts/${cid}`, { headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) }, credentials: 'include' });
+            const full = await res.json().catch(() => null);
+            if (full && full.content) setContractText(full.content);
+            setSavedContractId(cid);
+          }
+          setGatedResult(false);
+          setFreeUsed(false);
+          setSaved(true);
+          setCurrentStep(3);
+          toast.success('Freigeschaltet — dein Vertrag ist jetzt vollständig verfügbar!');
+        } catch {
+          toast.error('Freischaltung konnte nicht bestätigt werden. Bitte Seite neu laden.');
+        }
+      })();
+    } else {
+      // Abbruch → zurück auf die gesperrte Ansicht
+      if (draft?.contractText) setContractText(draft.contractText);
+      if (draft?.savedContractId) setSavedContractId(draft.savedContractId);
+      setGatedResult(draft?.gatedResult ?? true);
+      setFreeUsed(!!draft?.freeUsed);
+      setCurrentStep(draft?.currentStep || 3);
+    }
+    // URL säubern
+    window.history.replaceState({}, document.title, '/generate');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // 📂 Entwurf weiter bearbeiten
   const handleContinueDraft = () => {
     if (pendingDraft) {
@@ -3827,6 +3894,10 @@ export default function Generate() {
         if (pendingDraft.generatedHTML) {
           setGeneratedHTML(pendingDraft.generatedHTML);
         }
+        // 🔒 Free-Tease: Sperr-Status wiederherstellen → Free landet wieder auf der Sperre
+        // (mit 9,90€/Abo-Optionen), nicht auf dem Paid-„Finalisieren"-Schritt.
+        setGatedResult(!!pendingDraft.gatedResult);
+        setFreeUsed(!!pendingDraft.freeUsed);
 
         toast.success('Entwurf wiederhergestellt');
       }
@@ -3857,14 +3928,16 @@ export default function Generate() {
         contractText: contractText || '',
         savedContractId: savedContractId || null,
         contractData: contractData || null,
-        generatedHTML: generatedHTML || ''
+        generatedHTML: generatedHTML || '',
+        gatedResult,   // 🔒 Free-Tease: Sperr-Status mitsichern
+        freeUsed
       };
       localStorage.setItem('contract_generator_draft', JSON.stringify(dataToSave));
       setLastSaved(new Date());
     }, 1000); // Speichere nach 1 Sekunde Inaktivität
 
     return () => clearTimeout(saveTimer);
-  }, [formData, selectedType, currentStep, contractText, savedContractId, contractData, generatedHTML]);
+  }, [formData, selectedType, currentStep, contractText, savedContractId, contractData, generatedHTML, gatedResult, freeUsed]);
 
   // 💾 Clear draft when contract is generated
   const clearDraft = () => {
@@ -6943,7 +7016,7 @@ export default function Generate() {
                                 <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} /> oder <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
                               </div>
                               {/* Option 2: Abo (auch attraktiv) */}
-                              <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7" }}>
+                              <a href="/pricing" onClick={(e) => { e.preventDefault(); startBusinessSubscription(); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7", cursor: "pointer" }}>
                                 Mit Business: alle Verträge frei
                               </a>
                               <div style={{ fontSize: 12, color: "#64748b", textShadow: "0 0 8px #fff" }}>+ unbegrenzt Analysen, Optimierung, Fristen &amp; mehr</div>

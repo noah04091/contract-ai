@@ -212,6 +212,18 @@ router.post("/create-unlock-session", verifyToken, async (req, res) => {
       userId: user._id.toString(),
     };
 
+    // 🔁 Rückkehr-URLs je nach Kontext:
+    //  - generate_unlock: der/die Nutzer:in kam von /generate → dort BLEIBEN. Nach Zahlung wird die
+    //    gesperrte Ansicht in-place zum vollen Vertrag; bei Abbruch zurück auf die Sperre.
+    //  - analysis_unlock: kam von /contracts → wie gehabt dort die Analyse öffnen.
+    const isGen = kind === "generate_unlock";
+    const successUrl = isGen
+      ? `https://contract-ai.de/generate?gen_unlocked=1&contractId=${contractId}&session_id={CHECKOUT_SESSION_ID}`
+      : `https://contract-ai.de/contracts?view=${contractId}&unlocked=1&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = isGen
+      ? `https://contract-ai.de/generate?gen_canceled=1`
+      : `https://contract-ai.de/contracts?view=${contractId}&unlock_canceled=1`;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer: customerId,
@@ -222,8 +234,8 @@ router.post("/create-unlock-session", verifyToken, async (req, res) => {
       billing_address_collection: "required",
       // {CHECKOUT_SESSION_ID} ersetzt Stripe automatisch → verify-unlock kann GENAU diese
       // Session direkt abrufen (bombensicher, unabhängig von Webhook/Kundenliste).
-      success_url: `https://contract-ai.de/contracts?view=${contractId}&unlocked=1&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `https://contract-ai.de/contracts?view=${contractId}&unlock_canceled=1`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
     });
 
     console.log(`✅ [STRIPE] Unlock-Session erstellt: ${session.id} (contract ${contractId})`);
