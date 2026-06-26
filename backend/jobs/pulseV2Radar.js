@@ -26,6 +26,10 @@ const {
   generateParagraph,
   generateDivider,
 } = require("../utils/emailTemplate");
+// Neues, eigenständiges Pulse-Mail-Design (responsiv) — berührt keine andere Mail.
+const {
+  generatePulseEmailTemplate, pulseHeadline, pulseLead, pulsePanel, pulseRow, pulseSection, pulseReassurance, pulseNote,
+} = require("../utils/pulseEmailTemplate");
 
 // B3: Lazy-load vector services for semantic matching (fail-safe)
 let _vectorStore = null;
@@ -1109,24 +1113,9 @@ async function storeAndNotify(db, userId, alerts) {
   const emailAlerts = alerts.length > MAX_ALERTS_PER_USER ? alerts.slice(0, MAX_ALERTS_PER_USER) : alerts;
   const emailCappedCount = alerts.length - emailAlerts.length;
   const alertCount = alerts.length;
-  let body = generateParagraph(`Hallo ${userName},`);
-  body += generateParagraph(
-    `der Legal Radar hat <strong>${alertCount} ${plural(alertCount, "Gesetzesänderung", "Gesetzesänderungen")}</strong> erkannt, die Ihre Verträge betreffen ${plural(alertCount, "könnte", "könnten")}.`
-  );
 
-  const criticalAlerts = alerts.filter((a) => a.severity === "critical");
-  const highAlerts = alerts.filter((a) => a.severity === "high");
   const positiveAlerts = alerts.filter((a) => a.impactDirection === "positive");
   const negativeAlerts = alerts.filter((a) => a.impactDirection !== "positive");
-
-  body += generateStatsRow([
-    { value: String(alertCount), label: plural(alertCount, "Betroffener Vertrag", "Betroffene Verträge"), color: "#ea580c" },
-    ...(criticalAlerts.length > 0 ? [{ value: String(criticalAlerts.length), label: "Kritisch", color: "#dc2626" }] : []),
-    ...(highAlerts.length > 0 ? [{ value: String(highAlerts.length), label: "Hoch", color: "#ea580c" }] : []),
-    ...(positiveAlerts.length > 0 ? [{ value: String(positiveAlerts.length), label: plural(positiveAlerts.length, "Chance", "Chancen"), color: "#059669" }] : []),
-  ]);
-
-  body += generateDivider();
 
   // Group alerts by law change (use fingerprint for dedup if available)
   const byLaw = new Map();
@@ -1139,56 +1128,72 @@ async function storeAndNotify(db, userId, alerts) {
     byLaw.get(key).contracts.push(alert);
   }
 
-  for (const [, group] of byLaw.entries()) {
-    const hasPositive = group.contracts.some((c) => c.impactDirection === "positive");
-    const hasCritical = group.contracts.some((c) => c.severity === "critical" && c.impactDirection !== "positive");
-    const allPositive = group.contracts.every((c) => c.impactDirection === "positive");
-    const contractCount = group.contracts.length;
+  // E-Mail-Body im neuen, ruhigen Pulse-Design (du, Klartext, eine Aktion)
+  let body = pulseHeadline(
+    alertCount === 1
+      ? "Eine Gesetzesänderung betrifft deinen Vertrag"
+      : "Gesetzesänderungen betreffen deine Verträge"
+  );
+  body += pulseLead(`Hallo ${userName},`);
+  body += pulseLead(
+    `Contract&nbsp;AI prüft deine Verträge automatisch jeden Tag auf neue Gesetze und Urteile. Heute haben wir <strong style="color:#1a1f36;">${alertCount} Treffer</strong> gefunden, die du dir ansehen solltest. Hier in einfachen Worten, was sich ändert und was du tun kannst:`
+  );
 
-    body += generateEventCard({
+  for (const [, group] of byLaw.entries()) {
+    const contractCount = group.contracts.length;
+    const gCrit = group.contracts.filter((c) => c.severity === "critical" && c.impactDirection !== "positive").length;
+    body += pulsePanel({
+      eyebrow: "Rechtsquelle",
       title: cleanLawTitle(group.law.title),
-      subtitle: `${group.law.area || "Recht"} \u00B7 ${contractCount} ${plural(contractCount, "Vertrag", "Verträge")} betroffen`,
-      badge: allPositive ? "Chance" : hasCritical ? "Kritisch" : hasPositive ? "Chance & Pr\u00FCfen" : "Pr\u00FCfen",
-      badgeColor: allPositive ? "success" : hasCritical ? "critical" : "warning",
-      icon: allPositive ? "\u2705" : "\u2696\ufe0f",
+      meta: `${group.law.area || "Recht"} &nbsp;&middot;&nbsp; ${contractCount} ${plural(contractCount, "Vertrag", "Verträge")} betroffen${gCrit > 0 ? ` &nbsp;&middot;&nbsp; <span style="color:#dc2626; font-weight:600;">${gCrit} dringend</span>` : ""}`,
     });
 
-    for (const contract of group.contracts.slice(0, 3)) {
+    group.contracts.slice(0, 3).forEach((contract, i) => {
       const isPositive = contract.impactDirection === "positive";
-      const sevColor = isPositive ? "#059669" : contract.severity === "critical" ? "#dc2626" : contract.severity === "high" ? "#ea580c" : "#d97706";
-      const bgColor = isPositive ? "#f0fdf4" : "#f9fafb";
-      const displayName = cleanName(contract.contractName);
+      const st = isPositive
+        ? { dot: "#059669", text: "Chance" }
+        : contract.severity === "critical"
+          ? { dot: "#dc2626", text: "Dringend" }
+          : { dot: "#d97706", text: "Beobachten" };
       const summary = contract.plainSummary || contract.impactSummary || "";
       const impact = contract.businessImpact || "";
       const recommendation = cleanRecommendation(contract.recommendation || "");
-
-      body += `<div style="padding: 10px 16px; margin: 6px 0; border-left: 3px solid ${sevColor}; background: ${bgColor}; border-radius: 0 6px 6px 0;">
-        <div style="font-size: 13px; font-weight: 600; color: #111827; margin-bottom: 6px;">${isPositive ? "\u2705 " : ""}${displayName}</div>
-        ${summary ? `<div style="font-size: 12px; color: #4b5563; line-height: 1.5;">${summary}</div>` : ""}
-        ${impact ? `<div style="font-size: 12px; color: ${isPositive ? "#059669" : "#dc2626"}; margin-top: 6px; font-weight: 500;">${isPositive ? "\u2705 Vorteil" : "\u26A0\uFE0F Risiko"}: ${impact}</div>` : ""}
-        ${recommendation ? `<div style="font-size: 12px; color: ${isPositive ? "#059669" : "#1e40af"}; margin-top: 6px;"><strong>Empfehlung:</strong> ${recommendation}</div>` : ""}
-      </div>`;
-    }
+      const rows = [];
+      if (summary) rows.push(pulseRow("Was sich ändert", summary));
+      if (impact) rows.push(pulseRow("Was das für dich heißt", impact));
+      if (recommendation) rows.push(pulseRow("Was du tun kannst", recommendation, true));
+      body += pulseSection({
+        name: cleanName(contract.contractName),
+        dotColor: st.dot,
+        statusText: st.text,
+        statusColor: st.dot,
+        rows,
+        isFirst: i === 0,
+      });
+    });
 
     if (contractCount > 3) {
-      body += generateParagraph(`+ ${contractCount - 3} weitere ${plural(contractCount - 3, "Vertrag", "Verträge")}`, { muted: true });
+      body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${contractCount - 3} weitere ${plural(contractCount - 3, "Vertrag", "Verträge")}</span>`);
     }
-
-    body += "<br/>";
   }
 
   if (emailCappedCount > 0) {
-    body += generateParagraph(`+ ${emailCappedCount} weitere ${plural(emailCappedCount, "Alert", "Alerts")} \u2014 im Dashboard einsehbar`, { muted: true });
+    body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${emailCappedCount} weitere ${plural(emailCappedCount, "Alert", "Alerts")} &mdash; im Dashboard einsehbar</span>`);
   }
 
-  const html = generateEmailTemplate({
-    title: "\u2696\ufe0f Legal Radar: Gesetzesänderung erkannt",
+  body += pulseReassurance({
+    text: `<strong style="color:#1a1f36;">Keine Sorge &mdash; du musst kein Jurist sein.</strong> Öffne den Vertrag in Contract&nbsp;AI: Wir zeigen dir genau die betroffene Stelle und führen dich Schritt für Schritt durch das, was zu tun ist.`,
+    buttonText: "Verträge ansehen & lösen",
+    buttonUrl: "https://contract-ai.de/pulse",
+  });
+  body += pulseNote(
+    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Du kannst das jederzeit in den Einstellungen ändern."
+  );
+
+  const html = generatePulseEmailTemplate({
     body,
-    preheader: `${alertCount} ${plural(alertCount, "Vertrag", "Verträge")} von Gesetzesänderungen betroffen`,
-    cta: {
-      text: "Alerts im Legal Radar ansehen \u2192",
-      url: "https://contract-ai.de/pulse",
-    },
+    badge: "Legal Radar",
+    preheader: `${alertCount} Verträge von Gesetzesänderungen betroffen`,
     unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
   });
 

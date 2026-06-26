@@ -18,6 +18,10 @@ const {
   generateEventCard,
   generateAlertBox,
 } = require("../utils/emailTemplate");
+// Neues, eigenständiges Pulse-Mail-Design (responsiv) — berührt keine andere Mail.
+const {
+  generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseSection, pulseReassurance, pulseNote,
+} = require("../utils/pulseEmailTemplate");
 
 const STALENESS_THRESHOLD_DAYS = 14;
 const COOLDOWN_DAYS = 14;
@@ -213,79 +217,58 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
   const topContracts = staleContracts.slice(0, MAX_CONTRACTS_IN_EMAIL);
 
   // Intro
-  let body = generateParagraph(`Hallo ${userName},`);
-
-  if (criticalContracts.length > 0) {
-    body += generateAlertBox(
-      `${criticalContracts.length} Vertrag${criticalContracts.length === 1 ? "" : "e"} mit erhöhtem Risiko wurde${criticalContracts.length === 1 ? "" : "n"} länger nicht geprüft.`,
-      "warning"
-    );
-  }
-
-  body += generateParagraph(
-    `${staleContracts.length} Ihrer Verträge wurde${staleContracts.length === 1 ? "" : "n"} seit über 14 Tagen nicht geprüft. ` +
-    `Neue Risiken könnten unentdeckt bleiben.`
+  let body = pulseHeadline(
+    staleContracts.length === 1
+      ? "Ein Vertrag sollte neu geprüft werden"
+      : "Ein paar Verträge sollten neu geprüft werden"
+  );
+  body += pulseLead(`Hallo ${userName},`);
+  body += pulseLead(
+    `<strong style="color:#1a1f36;">${staleContracts.length} deiner Verträge</strong> ${staleContracts.length === 1 ? "wurde" : "wurden"} seit über 14 Tagen nicht mehr geprüft. Neue Gesetze oder Risiken könnten unbemerkt bleiben &mdash; eine kurze erneute Prüfung schafft Sicherheit.`
   );
 
-  // Stats
-  const stats = [
-    { value: String(staleContracts.length), label: "Verträge veraltet", color: "#d97706" },
-  ];
-  if (criticalContracts.length > 0) {
-    stats.push({ value: String(criticalContracts.length), label: "Erhöhtes Risiko", color: "#dc2626" });
-  }
-  body += generateStatsRow(stats);
-  body += generateDivider();
-
-  // Contract cards
-  for (const c of topContracts) {
-    const badgeColor = c.riskLevel === "critical" ? "#dc2626"
-      : c.riskLevel === "high" ? "#ea580c"
-      : c.lastScore < 50 ? "#d97706"
-      : "#6b7280";
-
-    const subtitle = [
-      c.contractType,
-      `Score: ${c.lastScore}`,
-      `Letzte Prüfung: vor ${c.daysStale} Tagen`,
-    ].filter(Boolean).join(" · ");
-
-    body += generateEventCard({
-      title: c.name,
-      subtitle,
-      badge: c.riskLevel === "critical" ? "Kritisch"
-        : c.riskLevel === "high" ? "Hohes Risiko"
-        : `Score ${c.lastScore}`,
-      badgeColor,
-      icon: c.riskLevel === "critical" || c.riskLevel === "high" ? "⚠️" : "📋",
+  topContracts.forEach((c, idx) => {
+    const dot = c.riskLevel === "critical" ? "#dc2626" : c.riskLevel === "high" ? "#ea580c" : "#d97706";
+    const statusText = c.riskLevel === "critical" ? "Erhöhtes Risiko"
+      : c.riskLevel === "high" ? "Hohes Risiko"
+      : `Score ${c.lastScore}`;
+    const metaParts = [c.contractType, `zuletzt geprüft vor ${c.daysStale} Tagen`].filter(Boolean);
+    body += pulseSection({
+      name: c.name,
+      dotColor: dot,
+      statusText,
+      statusColor: dot,
+      metaText: metaParts.join(" &middot; "),
+      isFirst: idx === 0,
     });
-  }
+  });
 
   if (staleContracts.length > MAX_CONTRACTS_IN_EMAIL) {
-    body += generateParagraph(
-      `+ ${staleContracts.length - MAX_CONTRACTS_IN_EMAIL} weitere Verträge`,
-      { muted: true }
-    );
+    body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${staleContracts.length - MAX_CONTRACTS_IN_EMAIL} weitere Verträge</span>`);
   }
 
-  // Build final email
+  body += pulseReassurance({
+    text: `Ein Klick genügt &mdash; wir prüfen deine Verträge erneut gegen die aktuelle Rechtslage und sagen dir, ob etwas zu tun ist.`,
+    buttonText: "Jetzt prüfen",
+    buttonUrl: "https://contract-ai.de/pulse",
+  });
+  body += pulseNote(
+    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Du kannst das jederzeit in den Einstellungen ändern."
+  );
+
   const subject = criticalContracts.length > 0
-    ? `⚠️ ${criticalContracts.length} Vertrag${criticalContracts.length === 1 ? "" : "e"} mit Risiko nicht geprüft`
-    : `📋 ${staleContracts.length} Verträge seit über 14 Tagen nicht geprüft`;
+    ? `${criticalContracts.length} Vertrag${criticalContracts.length === 1 ? "" : "e"} mit Risiko nicht geprüft`
+    : `${staleContracts.length} Verträge seit über 14 Tagen nicht geprüft`;
 
   const preheader = criticalContracts.length > 0
     ? `${criticalContracts.length} Verträge mit erhöhtem Risiko warten auf Prüfung`
     : `${staleContracts.length} Verträge sollten erneut geprüft werden`;
 
-  const html = generateEmailTemplate({
-    title: "Legal Pulse — Erinnerung",
+  const html = generatePulseEmailTemplate({
     body,
+    badge: "Legal Pulse",
     preheader,
-    cta: {
-      text: "Jetzt prüfen →",
-      url: "https://contract-ai.de/pulse",
-    },
-    unsubscribeUrl: "https://contract-ai.de/unsubscribe?type=legal_pulse",
+    unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
   });
 
   await queueEmail(db, {
