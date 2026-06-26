@@ -18,6 +18,10 @@ const {
   generateParagraph,
   generateDivider,
 } = require("../utils/emailTemplate");
+// Neues, eigenständiges Pulse-Mail-Design (responsiv) — berührt keine andere Mail.
+const {
+  generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseRow, pulseSection, pulseReassurance, pulseNote,
+} = require("../utils/pulseEmailTemplate");
 
 const MAX_PER_USER = 5;
 const MAX_PER_RUN = 20;
@@ -267,74 +271,52 @@ async function sendAlertEmail(db, user, contractSummaries) {
   const highCount = totalFindings - criticalCount;
 
   // Build email body
-  let body = generateParagraph(`Hallo ${user.name},`);
-  body += generateParagraph(
-    `Legal Pulse hat bei der automatischen Analyse <strong>${totalFindings} neue Befunde</strong> in ${contractSummaries.length} Vertrag/Verträgen erkannt.`
+  let body = pulseHeadline(
+    contractSummaries.length === 1
+      ? "Neue Punkte in einem deiner Verträge"
+      : "Neue Punkte in deinen überwachten Verträgen"
+  );
+  body += pulseLead(`Hallo ${user.name},`);
+  body += pulseLead(
+    `bei der automatischen Überprüfung deiner Verträge haben wir <strong style="color:#1a1f36;">${totalFindings} neue ${totalFindings === 1 ? "Befund" : "Befunde"}</strong> in ${contractSummaries.length} ${contractSummaries.length === 1 ? "Vertrag" : "Verträgen"} gefunden, die du dir ansehen solltest.`
   );
 
-  // Stats row
-  const statsItems = [
-    { value: String(contractSummaries.length), label: "Verträge betroffen", color: "#ea580c" },
-    { value: String(totalFindings), label: "Neue Befunde", color: "#dc2626" },
-  ];
-  if (criticalCount > 0) {
-    statsItems.push({ value: String(criticalCount), label: "Kritisch", color: "#dc2626" });
-  }
-  if (highCount > 0) {
-    statsItems.push({ value: String(highCount), label: "Hoch", color: "#ea580c" });
-  }
-  body += generateStatsRow(statsItems);
-  body += generateDivider();
-
-  // Contract cards
-  for (const contract of contractSummaries) {
+  contractSummaries.forEach((contract, idx) => {
     const scoreDelta =
       contract.newScore != null && contract.oldScore != null ? contract.newScore - contract.oldScore : null;
-    const scoreBadge =
-      scoreDelta !== null
-        ? scoreDelta < 0
-          ? `Score: ${contract.newScore} (${scoreDelta})`
-          : `Score: ${contract.newScore} (+${scoreDelta})`
-        : contract.newScore != null
-          ? `Score: ${contract.newScore}`
-          : "";
-
-    body += generateEventCard({
-      title: contract.contractName,
-      subtitle: `${contract.findings.length} neue Befunde`,
-      badge: scoreBadge,
-      badgeColor: scoreDelta !== null && scoreDelta < 0 ? "critical" : "info",
-      icon: contract.findings.some((f) => f.severity === "critical") ? "\u26a0\ufe0f" : "\ud83d\udcca",
-    });
-
-    // List findings
-    for (const finding of contract.findings.slice(0, 3)) {
-      const severityLabel = finding.severity === "critical" ? "KRITISCH" : "HOCH";
-      const severityColor = finding.severity === "critical" ? "#dc2626" : "#ea580c";
-      body += `<div style="padding: 8px 16px; margin: 4px 0; border-left: 3px solid ${severityColor}; background: #f9fafb; border-radius: 0 6px 6px 0;">
-        <span style="font-size: 11px; font-weight: 600; color: ${severityColor};">${severityLabel}</span>
-        <span style="font-size: 13px; color: #111827; margin-left: 8px;">${finding.title}</span>
-      </div>`;
-    }
-
+    const hasCrit = contract.findings.some((f) => f.severity === "critical");
+    const statusText = scoreDelta !== null
+      ? `Score ${contract.newScore} (${scoreDelta >= 0 ? "+" : ""}${scoreDelta})`
+      : contract.newScore != null ? `Score ${contract.newScore}` : "";
+    const rows = contract.findings.slice(0, 3).map((f) =>
+      pulseRow(f.severity === "critical" ? "Kritisch" : "Hoch", f.title)
+    );
     if (contract.findings.length > 3) {
-      body += generateParagraph(
-        `+ ${contract.findings.length - 3} weitere Befunde`,
-        { muted: true }
-      );
+      rows.push(pulseRow("", `+ ${contract.findings.length - 3} weitere ${contract.findings.length - 3 === 1 ? "Befund" : "Befunde"}`));
     }
+    body += pulseSection({
+      name: contract.contractName,
+      dotColor: hasCrit ? "#dc2626" : "#d97706",
+      statusText,
+      statusColor: scoreDelta !== null && scoreDelta < 0 ? "#dc2626" : "#697386",
+      rows,
+      isFirst: idx === 0,
+    });
+  });
 
-    body += "<br/>";
-  }
+  body += pulseReassurance({
+    text: `<strong style="color:#1a1f36;">Keine Sorge &mdash; du musst kein Jurist sein.</strong> Im Tool erklären wir dir jeden Punkt in einfachen Worten und zeigen dir, was zu tun ist.`,
+    buttonText: "Im Tool ansehen",
+    buttonUrl: "https://contract-ai.de/pulse",
+  });
+  body += pulseNote(
+    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Du kannst das jederzeit in den Einstellungen ändern."
+  );
 
-  const html = generateEmailTemplate({
-    title: `\u26a0\ufe0f Legal Pulse: ${totalFindings} neue Befunde erkannt`,
+  const html = generatePulseEmailTemplate({
     body,
+    badge: "Legal Pulse",
     preheader: `${totalFindings} neue Risiken in ${contractSummaries.length} Verträgen erkannt`,
-    cta: {
-      text: "Im Dashboard ansehen \u2192",
-      url: "https://contract-ai.de/pulse",
-    },
     unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
   });
 
