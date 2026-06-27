@@ -1,19 +1,16 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Eye, EyeOff } from "lucide-react";
-import "../styles/SplitAuth.css";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Check, Mail, ShieldCheck, Users } from "lucide-react";
+import "../styles/RegisterAuth.css";
 import { getAcquisition } from "../utils/acquisition";
+import logoDark from "../assets/logo-register-dark.png";   // weißes Logo für die blaue Spalte
+import logoLight from "../assets/logo-register-light.webp"; // dunkles Logo für hellen Mobile-Header
 
-// Back Arrow Icon SVG
-const BackArrowIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-  </svg>
-);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Register() {
-  // 🆕 Erweiterte Registrierungsfelder
+  // Registrierungsfelder
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [companyName, setCompanyName] = useState(""); // Optional
@@ -22,6 +19,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
+  const [touched, setTouched] = useState<{ firstName?: boolean; lastName?: boolean; email?: boolean }>({});
 
   // E-Mail-Verification States
   const [showEmailVerification, setShowEmailVerification] = useState(false);
@@ -32,7 +30,25 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const isBetaTester = searchParams.get('beta') === 'true';
 
-  // E-Mail-Verification senden
+  // ===== Live-Validierung (neu im Redesign) =====
+  const emailValid = EMAIL_RE.test(email);
+  const ruleLen = password.length >= 8;
+  const ruleCase = /[a-z]/.test(password) && /[A-Z]/.test(password);
+  const ruleNum = /[0-9]/.test(password);
+  const pwValid = ruleLen && ruleCase && ruleNum;
+  const pwEmpty = password.length === 0;
+  let score = (ruleLen ? 1 : 0) + (ruleCase ? 1 : 0) + (ruleNum ? 1 : 0);
+  if (pwValid && password.length >= 12) score = 4;
+  if (!pwEmpty && score === 0) score = 1;
+  const strengthColor = score >= 4 ? "#34C759" : score === 3 ? "#0d56c9" : score === 2 ? "#FF9500" : "#FF3B30";
+  const strengthLabel = ["", "Schwach", "Mittel", "Stark", "Sehr stark"][score];
+  const barColor = (i: number) => (pwEmpty || i >= score ? "#E5E5EA" : strengthColor);
+  const firstNameError = touched.firstName && !firstName.trim() ? "Pflichtfeld" : "";
+  const lastNameError = touched.lastName && !lastName.trim() ? "Pflichtfeld" : "";
+  const emailError = touched.email && email && !emailValid ? "Bitte gib eine gültige E-Mail-Adresse ein" : "";
+  const formValid = !!(firstName.trim() && lastName.trim() && emailValid && pwValid);
+
+  // ===== Backend (1:1 aus der produktiven Komponente) =====
   const sendVerificationEmail = async (emailToVerify: string) => {
     await new Promise(resolve => setTimeout(resolve, 400));
     try {
@@ -52,7 +68,6 @@ export default function Register() {
     }
   };
 
-  // Resend E-Mail mit Cooldown
   const handleResendEmail = async () => {
     if (resendCooldown > 0 || resendLoading) return;
     setResendLoading(true);
@@ -74,6 +89,7 @@ export default function Register() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || !formValid) return;
     setLoading(true);
 
     try {
@@ -100,13 +116,12 @@ export default function Register() {
 
         if (emailResult.success) {
           setShowEmailVerification(true);
-          setNotification({ message: "Bitte bestätigen Sie Ihre E-Mail-Adresse.", type: "info" });
+          setNotification({ message: "Bitte bestätige deine E-Mail-Adresse.", type: "info" });
         } else {
           setNotification({ message: "Registrierung erfolgreich, E-Mail konnte nicht gesendet werden.", type: "error" });
           setShowEmailVerification(true);
         }
       } else {
-        // Zeige spezifische Passwort-Fehler falls vorhanden
         const errorMessage = data.errors && data.errors.length > 0
           ? data.errors.join('. ')
           : data.message;
@@ -119,313 +134,245 @@ export default function Register() {
     }
   };
 
-  // Mail Icon SVG
-  const MailIcon = () => (
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-  );
-
-  // Checkmark Icon SVG
-  const CheckIcon = () => (
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-    </svg>
-  );
-
   return (
     <>
       <Helmet>
+        <html lang="de" />
         <title>Kostenlos registrieren | Contract AI</title>
         <meta name="robots" content="noindex, nofollow" />
         <meta name="description" content="Erstelle dein kostenloses Contract AI Konto und starte mit KI-gestützter Vertragsanalyse." />
       </Helmet>
 
-      <div className="split-auth-container">
-        {/* Left Side - Branding */}
-        <div className="split-auth-branding blue">
-          {/* Background Effects */}
-          <div className="split-auth-bg-effects">
-            <div className="split-auth-bg-circle-1"></div>
-            <div className="split-auth-bg-circle-2"></div>
-          </div>
+      <div className="ca-reg-page">
+        {/* ============ LINKE MARKEN-SPALTE ============ */}
+        <div className="ca-reg-left">
+          <div className="ca-reg-glow-1" />
+          <div className="ca-reg-glow-2" />
+          <div className="ca-reg-grid" />
 
-          <div className="split-auth-branding-content">
-            {/* Logo - Klickbar zur Homepage */}
-            <Link to="/" className="split-auth-logo-link">
-              <div className="split-auth-back-arrow">
-                <BackArrowIcon />
-              </div>
-              <img src="/logo-contractai.png" alt="Contract AI" className="split-auth-logo-img" />
+          <div className="ca-reg-left-inner">
+            <Link to="/" className="ca-reg-logolink">
+              <span className="ca-reg-back"><ArrowLeft size={17} /></span>
+              <img src={logoDark} alt="Contract AI" className="ca-reg-logo-dark" />
             </Link>
 
-            {/* Headline */}
-            <h1 className="split-auth-headline">
-              Starte kostenlos<br />in wenigen Minuten
-            </h1>
-            <p className="split-auth-subheadline">
-              Erstelle professionelle Vertragsanalysen, verwalte Fristen und optimiere deine Verträge mit KI.
-            </p>
+            <div>
+              <div className="ca-reg-eyebrow">
+                <span className="ca-reg-eyebrow-dot" />
+                Über 1.000 Nutzer vertrauen uns
+              </div>
+              <h1 className="ca-reg-h1">Starte kostenlos<br />in wenigen Minuten</h1>
+              <p className="ca-reg-sub">
+                Erstelle professionelle Vertragsanalysen, verwalte Fristen und optimiere deine Verträge mit KI.
+              </p>
+            </div>
 
-            {/* Features */}
-            <div className="split-auth-features">
+            <div className="ca-reg-features">
               {[
                 "Kostenloser Start – keine Kreditkarte nötig",
                 "3 kostenlose Analysen zum Testen",
                 "KI-gestützte Vertragsoptimierung",
                 "Jederzeit kündbar",
               ].map((feature, i) => (
-                <div key={i} className="split-auth-feature">
-                  <span className="split-auth-feature-icon check"><CheckIcon /></span>
-                  <span className="split-auth-feature-text">{feature}</span>
+                <div key={i} className="ca-reg-feature">
+                  <span className="ca-reg-feature-ico"><Check size={13} strokeWidth={2.8} /></span>
+                  <span>{feature}</span>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="split-auth-branding-footer">
-            <p className="split-auth-footer-text">
-              Bereits über 1.000+ Verträge analysiert
-            </p>
+            <div className="ca-reg-trust">
+              <div className="ca-reg-trust-row">
+                <span className="ca-reg-trust-ico"><Users size={16} /></span>
+                <span className="ca-reg-trust-text">Bereits über <strong>1.000+</strong> Verträge analysiert</span>
+              </div>
+              <div className="ca-reg-trust-row ca-reg-trust-row-2">
+                <ShieldCheck size={15} />
+                <span>DSGVO-konform · Server in Deutschland · SSL-verschlüsselt</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Side - Register Form */}
-        <div className="split-auth-form-side">
-          <div className="split-auth-form-container">
-            {/* Mobile Logo */}
-            <Link to="/" className="split-auth-mobile-logo-link">
-              <div className="split-auth-mobile-back-arrow">
-                <BackArrowIcon />
+        {/* ============ RECHTE FORM-SPALTE ============ */}
+        <div className="ca-reg-right">
+          <div className="ca-reg-form-wrap">
+            {/* Mobile-Header (< 900px) */}
+            <div className="ca-reg-mobilehead">
+              <Link to="/"><img src={logoLight} alt="Contract AI" className="ca-reg-logo-light" /></Link>
+              <div className="ca-reg-mobilehead-trust">
+                <ShieldCheck size={14} />
+                <span>Über 1.000 Nutzer vertrauen uns · DSGVO-konform</span>
               </div>
-              <img src="/logo.png" alt="Contract AI" className="split-auth-mobile-logo-img" />
-            </Link>
+            </div>
 
             {/* Notification */}
             {notification && (
-              <div className={`split-auth-notification ${notification.type || 'info'}`}>
-                <span className="split-auth-notification-icon">
+              <div className={`ca-reg-noti ${notification.type || 'info'}`} aria-live="polite">
+                <span className="ca-reg-noti-ico">
                   {notification.type === "success" ? "✓" : notification.type === "error" ? "✕" : "ℹ"}
                 </span>
-                <span className="split-auth-notification-text">{notification.message}</span>
-                <button onClick={() => setNotification(null)} className="split-auth-notification-close">✕</button>
+                <span className="ca-reg-noti-text">{notification.message}</span>
+                <button onClick={() => setNotification(null)} className="ca-reg-noti-close" aria-label="Schließen">✕</button>
               </div>
             )}
 
             {!showEmailVerification ? (
-              <>
-                {/* Beta Badge */}
+              <div>
                 {isBetaTester && (
-                  <div className="split-auth-beta-badge">
-                    <span>🎁</span>
-                    <span>Beta-Tester Registrierung</span>
-                  </div>
+                  <div className="ca-reg-beta"><span>🎁</span><span>Beta-Tester Registrierung</span></div>
                 )}
 
-                {/* Header */}
-                <div className="split-auth-header">
-                  <h2 className="split-auth-title">
-                    {isBetaTester ? "Willkommen, Beta-Tester!" : "Konto erstellen"}
-                  </h2>
-                  <p className="split-auth-subtitle">
-                    {isBetaTester
-                      ? "3 Monate Premium kostenlos – alle Features inklusive!"
-                      : "Füllen Sie das Formular aus, um loszulegen"
-                    }
-                  </p>
-                </div>
+                <h2 className="ca-reg-title">{isBetaTester ? "Willkommen, Beta-Tester!" : "Konto erstellen"}</h2>
+                <p className="ca-reg-subtitle">
+                  {isBetaTester
+                    ? "3 Monate Premium kostenlos – alle Features inklusive!"
+                    : "Fülle das Formular aus, um loszulegen"}
+                </p>
 
-                {/* Form */}
-                <form onSubmit={handleRegister} className="split-auth-form">
-                  {/* 🆕 Vorname & Nachname in einer Zeile */}
-                  <div className="split-auth-input-row">
-                    <div className="split-auth-input-group">
-                      <label htmlFor="firstName" className="split-auth-label">
-                        Vorname
-                      </label>
+                <form onSubmit={handleRegister} className="ca-reg-form">
+                  <div className="ca-reg-row">
+                    <div className="ca-reg-field">
+                      <label htmlFor="firstName" className="ca-reg-label">Vorname</label>
                       <input
-                        type="text"
-                        id="firstName"
-                        value={firstName}
+                        type="text" id="firstName" value={firstName}
                         onChange={(e) => setFirstName(e.target.value)}
-                        className="split-auth-input"
-                        placeholder="Max"
-                        required
-                        autoComplete="given-name"
+                        onBlur={() => setTouched(t => ({ ...t, firstName: true }))}
+                        className={`ca-reg-input${firstNameError ? " error" : ""}`}
+                        placeholder="Max" required autoComplete="given-name"
                       />
+                      {firstNameError && <p className="ca-reg-field-error">{firstNameError}</p>}
                     </div>
-                    <div className="split-auth-input-group">
-                      <label htmlFor="lastName" className="split-auth-label">
-                        Nachname
-                      </label>
+                    <div className="ca-reg-field">
+                      <label htmlFor="lastName" className="ca-reg-label">Nachname</label>
                       <input
-                        type="text"
-                        id="lastName"
-                        value={lastName}
+                        type="text" id="lastName" value={lastName}
                         onChange={(e) => setLastName(e.target.value)}
-                        className="split-auth-input"
-                        placeholder="Müller"
-                        required
-                        autoComplete="family-name"
+                        onBlur={() => setTouched(t => ({ ...t, lastName: true }))}
+                        className={`ca-reg-input${lastNameError ? " error" : ""}`}
+                        placeholder="Müller" required autoComplete="family-name"
                       />
+                      {lastNameError && <p className="ca-reg-field-error">{lastNameError}</p>}
                     </div>
                   </div>
 
-                  <div className="split-auth-input-group">
-                    <label htmlFor="email" className="split-auth-label">
-                      E-Mail Adresse
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="split-auth-input"
-                      placeholder="name@beispiel.de"
-                      required
-                      autoComplete="email"
-                    />
+                  <div className="ca-reg-field">
+                    <label htmlFor="email" className="ca-reg-label">E-Mail Adresse</label>
+                    <div className="ca-reg-email-wrap">
+                      <input
+                        type="email" id="email" value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => setTouched(t => ({ ...t, email: true }))}
+                        className={`ca-reg-input${emailError ? " error" : ""}`}
+                        placeholder="name@beispiel.de" required autoComplete="email"
+                      />
+                      {emailValid && <span className="ca-reg-email-check"><Check size={20} strokeWidth={2.4} /></span>}
+                    </div>
+                    {emailError && <p className="ca-reg-field-error">{emailError}</p>}
                   </div>
 
-                  <div className="split-auth-input-group">
-                    <label htmlFor="password" className="split-auth-label">
-                      Passwort
-                    </label>
-                    <div className="split-auth-password-wrapper">
+                  <div className="ca-reg-field">
+                    <label htmlFor="password" className="ca-reg-label">Passwort</label>
+                    <div className="ca-reg-pw-wrap">
                       <input
-                        type={showPassword ? "text" : "password"}
-                        id="password"
-                        value={password}
+                        type={showPassword ? "text" : "password"} id="password" value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="split-auth-input"
-                        placeholder="Sicheres Passwort erstellen"
-                        required
-                        autoComplete="new-password"
-                        minLength={8}
+                        className="ca-reg-input"
+                        placeholder="Sicheres Passwort erstellen" required autoComplete="new-password" minLength={8}
                       />
                       <button
-                        type="button"
-                        className="split-auth-password-toggle"
+                        type="button" className="ca-reg-pw-toggle"
                         onClick={() => setShowPassword(!showPassword)}
-                        tabIndex={-1}
+                        tabIndex={-1} aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
-                    <p className="split-auth-password-hint">
-                      Mind. 8 Zeichen, 1 Großbuchstabe, 1 Kleinbuchstabe, 1 Zahl
-                    </p>
+                    <div className="ca-reg-pw-meter">
+                      <div className="ca-reg-pw-meter-row">
+                        <div className="ca-reg-pw-bars">
+                          {[0, 1, 2, 3].map(i => (
+                            <span key={i} className="ca-reg-pw-bar" style={{ background: barColor(i) }} />
+                          ))}
+                        </div>
+                        <span className="ca-reg-pw-strength" style={{ color: pwEmpty ? "#8E8E93" : strengthColor }}>{strengthLabel}</span>
+                      </div>
+                      <div className="ca-reg-pw-rules">
+                        <span className={`ca-reg-pw-rule${ruleLen ? " ok" : ""}`}><Check size={13} strokeWidth={2.6} />Mind. 8 Zeichen</span>
+                        <span className={`ca-reg-pw-rule${ruleCase ? " ok" : ""}`}><Check size={13} strokeWidth={2.6} />Groß- &amp; Kleinbuchstabe</span>
+                        <span className={`ca-reg-pw-rule${ruleNum ? " ok" : ""}`}><Check size={13} strokeWidth={2.6} />Mind. 1 Zahl</span>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* 🆕 Firmenname - Optional */}
-                  <div className="split-auth-input-group">
-                    <label htmlFor="companyName" className="split-auth-label">
-                      Firmenname <span className="split-auth-optional">(optional)</span>
+                  <div className="ca-reg-field">
+                    <label htmlFor="companyName" className="ca-reg-label">
+                      Firmenname <span className="ca-reg-optional">(optional)</span>
                     </label>
                     <input
-                      type="text"
-                      id="companyName"
-                      value={companyName}
+                      type="text" id="companyName" value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      className="split-auth-input"
-                      placeholder="Meine Firma GmbH"
-                      autoComplete="organization"
+                      className="ca-reg-input"
+                      placeholder="Meine Firma GmbH" autoComplete="organization"
                     />
                   </div>
 
-                  <p className="split-auth-terms">
-                    Mit der Registrierung akzeptieren Sie unsere{" "}
+                  <p className="ca-reg-terms">
+                    Mit der Registrierung akzeptierst du unsere{" "}
                     <Link to="/agb">AGB</Link> und{" "}
                     <Link to="/datenschutz">Datenschutzerklärung</Link>.
                   </p>
 
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="split-auth-submit"
-                  >
+                  <button type="submit" disabled={loading || !formValid} className="ca-reg-submit">
                     {loading ? (
-                      <div className="split-auth-spinner"></div>
+                      <span className="ca-reg-spinner" />
                     ) : (
-                      <span>Kostenlos registrieren</span>
+                      <>Kostenlos registrieren <ArrowRight size={17} /></>
                     )}
                   </button>
                 </form>
 
-                {/* Divider */}
-                <div className="split-auth-divider">
-                  <div className="split-auth-divider-line"></div>
-                  <span className="split-auth-divider-text">oder</span>
-                  <div className="split-auth-divider-line"></div>
-                </div>
-
-                {/* Login Link */}
-                <p className="split-auth-switch">
-                  Bereits ein Konto?{" "}
-                  <Link to="/login">Jetzt anmelden</Link>
+                <p className="ca-reg-switch">
+                  Bereits ein Konto? <Link to="/login">Jetzt anmelden</Link>
                 </p>
-              </>
+              </div>
             ) : (
-              /* Email Verification */
-              <div className="split-auth-verification">
-                <div className="split-auth-verification-icon">
-                  <MailIcon />
-                </div>
+              /* ============ VERIFIKATIONS-VIEW ============ */
+              <div className="ca-reg-verify">
+                <div className="ca-reg-verify-ico"><Mail size={34} strokeWidth={1.8} /></div>
+                <h2 className="ca-reg-verify-title">Fast geschafft – E-Mail bestätigen</h2>
+                <p className="ca-reg-verify-text">Wir haben dir eine Bestätigungs-E-Mail gesendet an:</p>
 
-                <h2 className="split-auth-verification-title">E-Mail bestätigen</h2>
-                <p className="split-auth-verification-text">
-                  Wir haben eine Bestätigungs-E-Mail gesendet an:
-                </p>
+                <div className="ca-reg-email-badge"><Mail size={16} /><span>{email}</span></div>
 
-                <div className="split-auth-email-badge">
-                  <MailIcon />
-                  <span>{email}</span>
-                </div>
-
-                {/* Steps */}
-                <div className="split-auth-steps">
+                <div className="ca-reg-steps">
                   {[
                     { num: "1", label: "E-Mail öffnen", active: true },
                     { num: "2", label: "Link klicken", active: false },
                     { num: "3", label: "Anmelden", active: false },
                   ].map((step, i) => (
-                    <div key={i} className="split-auth-step">
-                      <div className={`split-auth-step-number ${step.active ? 'active' : 'inactive'}`}>
-                        {step.num}
-                      </div>
-                      <span className="split-auth-step-label">{step.label}</span>
+                    <div key={i} className="ca-reg-step">
+                      <div className={`ca-reg-step-num${step.active ? " active" : ""}`}>{step.num}</div>
+                      <span className={`ca-reg-step-label${step.active ? " active" : ""}`}>{step.label}</span>
                     </div>
                   ))}
                 </div>
 
-                <div className="split-auth-verification-actions">
-                  <button
-                    onClick={handleResendEmail}
-                    disabled={resendLoading || resendCooldown > 0}
-                    className="split-auth-submit"
-                  >
+                <div className="ca-reg-verify-actions">
+                  <button onClick={handleResendEmail} disabled={resendLoading || resendCooldown > 0} className="ca-reg-submit">
                     {resendLoading ? (
-                      <div className="split-auth-spinner"></div>
+                      <span className="ca-reg-spinner" />
                     ) : resendCooldown > 0 ? (
                       `E-Mail erneut senden (${resendCooldown}s)`
                     ) : (
                       "E-Mail erneut senden"
                     )}
                   </button>
-
-                  <button
-                    onClick={() => navigate("/login")}
-                    className="split-auth-secondary-btn"
-                  >
-                    Zur Anmeldung
-                  </button>
+                  <button onClick={() => navigate("/login")} className="ca-reg-secondary">Zur Anmeldung</button>
                 </div>
 
-                <div className="split-auth-tip">
-                  <p className="split-auth-tip-text">
-                    <strong>Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner, falls die E-Mail nicht ankommt.
-                  </p>
+                <div className="ca-reg-tip">
+                  <p><strong>Tipp:</strong> Schau auch in deinen Spam-Ordner, falls die E-Mail nicht ankommt.</p>
                 </div>
               </div>
             )}

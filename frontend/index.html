@@ -11,7 +11,10 @@
       name="description"
       content="Analysiere, optimiere und verwalte deine Verträge mit KI. Contract AI bietet dir volle Kontrolle, rechtliche Sicherheit und smarte Features in einer Plattform."
     />
-    <meta name="robots" content="index,follow" />
+    <!-- Kein statisches robots-Tag: indexierbare Seiten sind per Default index,follow.
+         Auth-/private Seiten (z.B. /register) setzen ihr eigenes noindex via react-helmet-async.
+         Ein statisches "index,follow" stünde sonst (zuerst) auf JEDER Seite und würde das
+         per-Seite-noindex unterlaufen. Bewusst entfernt (28.06.2026). -->
     <meta name="author" content="Contract AI GmbH" />
     <meta name="publisher" content="Contract AI" />
     <meta name="copyright" content="Contract AI" />
