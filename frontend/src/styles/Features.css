@@ -268,6 +268,32 @@
 .fp-cta-sub { margin: 18px auto 0; font-size: 18px; line-height: 1.6; color: var(--body); max-width: 480px; }
 .fp-cta-buttons { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin-top: 34px; }
 
+/* ===================== HOVER-MICRO-INTERACTIONS (dezent) ===================== */
+/* Pfeile/Chevrons bewegen sich beim Hover leicht nach rechts (Stripe/DocuSign-Stil) */
+.fp-card-link svg,
+.fp-quick-chev,
+.fp-quick-more-link svg,
+.fp-btn-primary svg,
+.fp-hero-badge-arrow { transition: transform .25s cubic-bezier(.16,1,.3,1), color .2s ease, background .2s ease; }
+.fp-card:hover .fp-card-link svg { transform: translateX(4px); }
+.fp-quick-tile:hover .fp-quick-chev { transform: translateX(4px); color: #2563eb; }
+.fp-quick-more-link:hover svg { transform: translateX(4px); }
+.fp-btn-primary:hover svg { transform: translateX(3px); }
+/* Karten-/Tile-Icons reagieren minimal mit */
+.fp-card-ico, .fp-quick-ico { transition: transform .35s cubic-bezier(.16,1,.3,1), background .25s ease; }
+.fp-card:hover .fp-card-ico { transform: scale(1.06) rotate(-2deg); }
+.fp-quick-tile:hover .fp-quick-ico { background: rgba(37,99,235,0.16); }
+/* Workflow-Karten: dezenter Lift wie die Feature-Karten */
+.fp-workflow-card { transition: transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s, border-color .4s; }
+.fp-workflow-card:hover { transform: translateY(-6px); box-shadow: 0 26px 50px -24px rgba(37,99,235,0.32); border-color: rgba(37,99,235,0.3); }
+@media (prefers-reduced-motion: reduce) {
+  .fp-card-link svg, .fp-quick-chev, .fp-quick-more-link svg, .fp-btn-primary svg,
+  .fp-card-ico, .fp-quick-ico, .fp-workflow-card { transition: none; }
+  .fp-card:hover .fp-card-link svg, .fp-quick-tile:hover .fp-quick-chev,
+  .fp-quick-more-link:hover svg, .fp-btn-primary:hover svg,
+  .fp-card:hover .fp-card-ico, .fp-workflow-card:hover { transform: none; }
+}
+
 /* ============================ RESPONSIVE ============================ */
 @media (max-width: 900px) {
   .fp-hero-inner { padding: 40px 24px 64px; gap: 40px; }
