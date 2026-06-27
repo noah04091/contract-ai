@@ -951,7 +951,7 @@ router.get("/", verifyToken, async (req, res) => {
       pulseV2Alerts = await db.collection("pulse_v2_legal_alerts")
         .find(pulseV2Query)
         .sort({ createdAt: -1 })
-        .limit(perSourceLimit)
+        .limit(50) // mehr Roh-Alerts holen, damit die Gruppierung pro Gesetz ALLE Verträge sieht
         .toArray();
     } catch (pulseErr) {
       console.error("[DASHBOARD-NOTIFICATIONS] Legal-Pulse-Quelle übersprungen (unkritisch):", pulseErr.message);
@@ -1011,21 +1011,42 @@ router.get("/", verifyToken, async (req, res) => {
       });
     }
 
-    // Legal Pulse V2 Radar-Alerts transformieren (gleiches einheitliches Format)
+    // Legal Pulse V2 Radar-Alerts — pro GESETZ gruppieren (wie /pulse & die Mail),
+    // damit nicht eine Zeile pro Alert (= Gesetz × Vertrag) entsteht. Schlüssel wie /pulse:
+    // legislationFingerprint || lawId || lawTitle. Verträge werden per contractId entdoppelt.
+    const pulseGroups = new Map();
     for (const alert of pulseV2Alerts) {
-      const isWarn = alert.severity === "critical" || alert.severity === "high";
-      const cleanedName = cleanContractName(alert.contractName, ""); // leerer Fallback → "deine Verträge"
-      const contractLabel = cleanedName ? `„${cleanedName}"` : "deine Verträge";
+      const key = alert.legislationFingerprint || alert.lawId || alert.lawTitle || String(alert._id);
+      let g = pulseGroups.get(key);
+      if (!g) {
+        g = { contractIds: new Set(), firstName: "", summary: "", lawTitle: alert.lawTitle, highCrit: false, newest: alert.createdAt, repId: alert._id };
+        pulseGroups.set(key, g);
+      }
+      if (alert.contractId) g.contractIds.add(alert.contractId.toString());
+      if (!g.firstName && alert.contractName) g.firstName = alert.contractName;
+      if (!g.summary) g.summary = alert.plainSummary || alert.businessImpact || alert.impactSummary || "";
+      if (alert.severity === "critical" || alert.severity === "high") g.highCrit = true;
+      if (new Date(alert.createdAt) > new Date(g.newest)) { g.newest = alert.createdAt; g.repId = alert._id; }
+    }
+    // Neueste Gruppen zuerst, auf die übliche Quell-Obergrenze deckeln (Parität zu den anderen Quellen)
+    const pulseGroupList = [...pulseGroups.values()]
+      .sort((a, b) => new Date(b.newest) - new Date(a.newest))
+      .slice(0, perSourceLimit);
+    for (const g of pulseGroupList) {
+      const count = g.contractIds.size;
+      const cleanedName = cleanContractName(g.firstName, "");
+      const label = count > 1
+        ? `${count} Verträge`
+        : (cleanedName ? `„${cleanedName}"` : "deine Verträge");
       notifications.push({
-        id: alert._id.toString(),
-        type: isWarn ? "warning" : "info",
-        title: `Gesetzesänderung betrifft ${contractLabel}`,
-        message: alert.plainSummary || alert.businessImpact || alert.impactSummary || alert.lawTitle || "Eine Gesetzesänderung betrifft einen deiner Verträge.",
-        time: formatRelativeTime(alert.createdAt),
+        id: g.repId.toString(),
+        type: g.highCrit ? "warning" : "info",
+        title: `Gesetzesänderung betrifft ${label}`,
+        message: g.summary || g.lawTitle || "Eine Gesetzesänderung betrifft einen deiner Verträge.",
+        time: formatRelativeTime(g.newest),
         category: "pulse",
-        contractId: alert.contractId?.toString(),
         actionUrl: "/pulse",
-        createdAt: alert.createdAt
+        createdAt: g.newest
       });
     }
 
