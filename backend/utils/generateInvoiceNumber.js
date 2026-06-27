@@ -3,7 +3,7 @@
 // Mindest-Startnummer: damit Rechnungsnummern „etabliert" wirken (nicht erkennbar, dass es erst
 // die ~60. Rechnung ist), ohne die Eindeutigkeit/Fortlaufendheit zu verletzen (§14 UStG-konform).
 // Einmaliger Sprung auf diese Basis, danach läuft der Zähler ganz normal weiter (+1 je Rechnung).
-const MIN_INVOICE_NUMBER = 25000;
+const MIN_INVOICE_NUMBER = 25111;
 
 function generateInvoiceNumber(latestNumber = 0) {
   const year = new Date().getFullYear();
