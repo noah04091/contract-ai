@@ -16,6 +16,7 @@ const express = require('express');
 const router = express.Router();
 const { ObjectId } = require('mongodb');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // IPv6-sicherer IP-Schlüssel
 
 // Models
 const ClauseAnalysis = require('../models/ClauseAnalysis');
@@ -35,7 +36,7 @@ const batchAnalysisLimiter = rateLimit({
     error: 'Zu viele Analyse-Anfragen. Bitte warten Sie einen Moment.',
     retryAfter: '15 minutes'
   },
-  keyGenerator: (req) => req.user?.userId || req.ip
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip)
 });
 
 /**

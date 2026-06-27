@@ -2,6 +2,7 @@
 // Rate Limiting für REST API v1 (Enterprise-Feature)
 
 const rateLimit = require("express-rate-limit");
+const { ipKeyGenerator } = require("express-rate-limit"); // IPv6-sicherer IP-Schlüssel
 const { isEnterpriseOrHigher } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
 
 /**
@@ -43,7 +44,7 @@ const apiRateLimiter = rateLimit({
       return `api_key:${req.apiKey.keyId}`;
     }
     // Fallback: IP-Adresse
-    return req.ip;
+    return ipKeyGenerator(req.ip);
   },
 
   // Standard headers setzen
@@ -93,7 +94,7 @@ const apiKeysRateLimiter = rateLimit({
     if (req.user && req.user.userId) {
       return `api_keys:${req.user.userId}`;
     }
-    return req.ip;
+    return ipKeyGenerator(req.ip);
   },
 
   handler: (req, res) => {

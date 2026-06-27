@@ -11,6 +11,7 @@ const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
 const { MongoClient, ObjectId } = require('mongodb');
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // IPv6-sicherer IP-Schlüssel
 const crypto = require('crypto');
 
 // Services
@@ -64,7 +65,7 @@ const analysisRateLimiter = rateLimit({
     error: 'Zu viele Anfragen. Bitte warten Sie einen Moment.',
     retryAfter: '15 minutes'
   },
-  keyGenerator: (req) => req.user?.userId || req.ip
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip)
 });
 
 // ============================================

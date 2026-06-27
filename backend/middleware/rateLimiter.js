@@ -2,6 +2,7 @@
 // Rate Limiting fuer Contract AI API Endpoints
 
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = require('express-rate-limit'); // IPv6-sicherer IP-Schlüssel (verhindert Bypass)
 
 const standardLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -13,7 +14,7 @@ const standardLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id || req.ip
+  keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
 });
 
 const authLimiter = rateLimit({
@@ -41,7 +42,7 @@ const analyzeLimiter = rateLimit({
   // verifyToken.js setzt req.user.userId (JWT-Payload). req.user.id bleibt als
   // Fallback erhalten, req.ip ist Last-Resort. Vorher nur req.user?.id → fiel
   // immer auf req.ip zurück und zaehlte mehrere User hinter demselben Edge zusammen.
-  keyGenerator: (req) => req.user?.userId || req.user?.id || req.ip
+  keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
 });
 
 const legalPulseLimiter = rateLimit({
@@ -54,7 +55,7 @@ const legalPulseLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id || req.ip
+  keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
 });
 
 const uploadLimiter = rateLimit({
@@ -67,7 +68,7 @@ const uploadLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id || req.ip
+  keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
 });
 
 const sensitiveLimiter = rateLimit({
@@ -92,7 +93,7 @@ const sseLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.id || req.ip
+  keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
 });
 
 function createDynamicLimiter(options) {
@@ -113,7 +114,7 @@ function createDynamicLimiter(options) {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => req.user?.id || req.ip
+    keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
   });
 }
 

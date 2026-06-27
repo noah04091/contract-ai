@@ -6,6 +6,7 @@ const express = require("express");
 const router = express.Router();
 const { v4: uuidv4 } = require("uuid");
 const rateLimit = require("express-rate-limit");
+const { ipKeyGenerator } = require("express-rate-limit"); // IPv6-sicherer IP-Schlüssel
 const LegalPulseV2Result = require("../models/LegalPulseV2Result");
 const { runPipeline } = require("../services/legalPulseV2");
 const requirePremium = require("../middleware/requirePremium");
@@ -25,7 +26,7 @@ function normalizeToString(val) {
 const analyzeRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
-  keyGenerator: (req) => req.user?.userId || req.ip,
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip),
   handler: (req, res) => {
     res.status(429).json({
       error: "Rate limit erreicht. Maximal 10 Analysen pro Stunde.",
@@ -40,7 +41,7 @@ const autoFixRateLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => req.user?.userId || req.ip,
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip),
   handler: (req, res) => {
     res.status(429).json({
       error: "Rate limit erreicht. Maximal 10 Auto-Fixes pro Stunde.",
@@ -1563,7 +1564,7 @@ ${findingsContext}
 const quickFixRateLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 15,
-  keyGenerator: (req) => req.user?.userId || req.ip,
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip),
   handler: (req, res) => {
     res.status(429).json({ error: "Rate limit erreicht. Maximal 15 Quick-Fixes pro Stunde." });
   },
@@ -2395,7 +2396,7 @@ function getNextCronOccurrence(type, now) {
 const scanNowRateLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 min
   max: 3,
-  keyGenerator: (req) => req.user?.userId || req.ip,
+  keyGenerator: (req) => req.user?.userId || ipKeyGenerator(req.ip),
   handler: (req, res) => {
     res.status(429).json({ error: "Maximal 3 Scans pro 10 Minuten." });
   },

@@ -24,6 +24,7 @@ const FREEMIUM_GATE_LAUNCH = process.env.FREEMIUM_GATE_LAUNCH_DATE
   : null;
 const path = require("path");
 const rateLimit = require("express-rate-limit"); // 🚦 Rate Limiting
+const { ipKeyGenerator } = require("express-rate-limit"); // IPv6-sicherer IP-Schlüssel
 const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provider Detection Import
 const { generateEventsForContract, cleanAndRegenerateAIEvents } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Pulse Risk Analysis
@@ -57,7 +58,7 @@ const analyzeRateLimiter = rateLimit({
   legacyHeaders: false,
   // Rate Limit pro User-ID (aus JWT Token)
   keyGenerator: (req) => {
-    return req.user?.userId || req.ip; // Fallback auf IP wenn kein User
+    return req.user?.userId || ipKeyGenerator(req.ip); // Fallback auf IP wenn kein User
   },
   // Handler für Rate Limit Erreicht
   handler: (req, res) => {

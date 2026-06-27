@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const { ObjectId } = require("mongodb");
 const rateLimit = require("express-rate-limit"); // 🚦 Rate Limiting
+const { ipKeyGenerator } = require("express-rate-limit"); // IPv6-sicherer IP-Schlüssel
 const verifyToken = require("../middleware/verifyToken");
 const requirePremium = require("../middleware/requirePremium"); // 🔐 Premium-Check
 const runLegalPulseScan = require("../services/legalPulseScan");
@@ -21,7 +22,7 @@ const legalPulseRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
-    return req.user?.userId || req.ip;
+    return req.user?.userId || ipKeyGenerator(req.ip);
   },
   handler: (req, res) => {
     res.status(429).json({
