@@ -18,7 +18,9 @@
     <meta name="language" content="de" />
     <meta name="revisit-after" content="7 days" />
     <meta name="rating" content="general" />
-    <link rel="canonical" href="https://www.contract-ai.de/" />
+    <!-- Keine statische canonical hier: jede Seite setzt ihre eigene via react-helmet-async.
+         Eine globale canonical "/" würde Helmet NICHT dedupliziert und stünde auf JEDER
+         Seite zusätzlich (Google-Signal "alles = Home-Duplikat"). Bewusst entfernt (27.06.2026). -->
 
     <!-- ✅ Resource Hints für optimale Ladezeiten -->
     <link rel="preconnect" href="https://api.contract-ai.de" crossorigin />
