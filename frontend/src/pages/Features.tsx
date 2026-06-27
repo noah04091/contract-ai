@@ -241,15 +241,15 @@ const Features: React.FC = () => {
               </div>
 
               <div className="fp-hero-trust">
-                <div className="fp-trust-avatars">
+                <div className="fp-trust-avatars" aria-hidden="true">
                   {[
-                    'https://randomuser.me/api/portraits/men/32.jpg',
-                    'https://randomuser.me/api/portraits/women/44.jpg',
-                    'https://randomuser.me/api/portraits/men/67.jpg',
-                    'https://randomuser.me/api/portraits/women/17.jpg',
-                    'https://randomuser.me/api/portraits/men/52.jpg'
-                  ].map((src, i) => (
-                    <img key={i} src={src} alt="" className="fp-trust-avatar" loading="lazy" />
+                    { l: 'M', c: 'linear-gradient(140deg,#2563eb,#4f8bff)' },
+                    { l: 'K', c: 'linear-gradient(140deg,#0ea5e9,#67d3fb)' },
+                    { l: 'T', c: 'linear-gradient(140deg,#7c3aed,#a78bfa)' },
+                    { l: 'S', c: 'linear-gradient(140deg,#0d9488,#2dd4bf)' },
+                    { l: 'L', c: 'linear-gradient(140deg,#ea580c,#fb923c)' }
+                  ].map((a, i) => (
+                    <span key={i} className="fp-trust-avatar" style={{ background: a.c }}>{a.l}</span>
                   ))}
                 </div>
                 <div className="fp-trust-text">
