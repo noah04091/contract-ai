@@ -937,6 +937,25 @@ router.get("/", verifyToken, async (req, res) => {
       .limit(perSourceLimit)
       .toArray();
 
+    // 5. Legal Pulse V2 — ECHTE Radar-Alerts (zweiter Kanal: auch in der Glocke sichtbar,
+    //    falls eine E-Mail mal verloren geht). Diese liegen in `pulse_v2_legal_alerts`.
+    //    ⚠️ userId ist hier ein STRING (V2-Schema), NICHT ObjectId.
+    //    Eigenes try/catch (fail-open): hakt diese Quelle je, bleibt die Glocke
+    //    mit ihren 4 anderen Quellen voll funktionsfähig.
+    let pulseV2Alerts = [];
+    try {
+      const pulseV2Query = parsedDays > 7
+        ? { userId, status: { $in: ["unread", "read"] }, createdAt: { $gte: daysAgo } }
+        : { userId, status: "unread" };
+      pulseV2Alerts = await db.collection("pulse_v2_legal_alerts")
+        .find(pulseV2Query)
+        .sort({ createdAt: -1 })
+        .limit(perSourceLimit)
+        .toArray();
+    } catch (pulseErr) {
+      console.error("[DASHBOARD-NOTIFICATIONS] Legal-Pulse-Quelle übersprungen (unkritisch):", pulseErr.message);
+    }
+
     // Alle Benachrichtigungen zusammenführen und normalisieren
     const notifications = [];
 
@@ -988,6 +1007,23 @@ router.get("/", verifyToken, async (req, res) => {
         contractId: pulse.contractId?.toString(),
         actionUrl: pulse.actionUrl || `/contracts/${pulse.contractId}`,
         createdAt: pulse.createdAt
+      });
+    }
+
+    // Legal Pulse V2 Radar-Alerts transformieren (gleiches einheitliches Format)
+    for (const alert of pulseV2Alerts) {
+      const isWarn = alert.severity === "critical" || alert.severity === "high";
+      const contractLabel = alert.contractName ? `„${alert.contractName}"` : "deine Verträge";
+      notifications.push({
+        id: alert._id.toString(),
+        type: isWarn ? "warning" : "info",
+        title: `Gesetzesänderung betrifft ${contractLabel}`,
+        message: alert.plainSummary || alert.businessImpact || alert.impactSummary || alert.lawTitle || "Eine Gesetzesänderung betrifft einen deiner Verträge.",
+        time: formatRelativeTime(alert.createdAt),
+        category: "pulse",
+        contractId: alert.contractId?.toString(),
+        actionUrl: "/pulse",
+        createdAt: alert.createdAt
       });
     }
 
@@ -1102,6 +1138,14 @@ router.patch("/:id/read", verifyToken, async (req, res) => {
       );
     }
 
+    // Legal Pulse V2 Radar-Alert (eigene Collection, Status-Feld statt read-Flag)
+    if (result.matchedCount === 0) {
+      result = await db.collection("pulse_v2_legal_alerts").updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status: "read", readAt: new Date() } }
+      );
+    }
+
     res.json({
       success: true,
       message: 'Als gelesen markiert'
@@ -1134,6 +1178,11 @@ router.patch("/mark-all-read", verifyToken, async (req, res) => {
       db.collection("contract_events").updateMany(
         { userId: new ObjectId(userId), read: { $ne: true } },
         { $set: { read: true, readAt: new Date() } }
+      ),
+      // V2-Radar-Alerts (userId ist hier STRING) ebenfalls auf gelesen setzen
+      db.collection("pulse_v2_legal_alerts").updateMany(
+        { userId, status: "unread" },
+        { $set: { status: "read", readAt: new Date() } }
       )
     ]);
 
