@@ -54,7 +54,7 @@
 .ca-reg-logolink { display: inline-flex; align-items: center; gap: 13px; text-decoration: none; color: #fff; align-self: flex-start; }
 .ca-reg-back { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.26); transition: background .2s; }
 .ca-reg-logolink:hover .ca-reg-back { background: rgba(255,255,255,0.26); }
-.ca-reg-logo-dark { height: 33px; width: auto; display: block; }
+.ca-reg-logo-dark { height: 44px; width: auto; display: block; }
 
 .ca-reg-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 980px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.22); font-size: 12px; font-weight: 600; letter-spacing: 0.01em; margin-bottom: 20px; color: #fff; }
 .ca-reg-eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: #5dff9b; box-shadow: 0 0 0 3px rgba(93,255,155,0.28); }
@@ -79,7 +79,7 @@
 .ca-reg-form-wrap { width: 100%; max-width: 456px; }
 
 .ca-reg-mobilehead { display: none; flex-direction: column; gap: 11px; margin-bottom: 26px; }
-.ca-reg-logo-light { height: 30px; width: auto; align-self: flex-start; display: block; }
+.ca-reg-logo-light { height: 36px; width: auto; align-self: flex-start; display: block; }
 .ca-reg-mobilehead-trust { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ca-gray-3); }
 .ca-reg-mobilehead-trust svg { flex-shrink: 0; stroke: var(--ca-blue); }
 
