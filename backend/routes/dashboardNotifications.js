@@ -10,6 +10,7 @@ const { isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscrip
 const { getEmailHealth, reactivateEmail } = require("../services/emailBounceService");
 const LegalPulseV2Result = require("../models/LegalPulseV2Result"); // 🆕 Pulse-V2 Mongoose Model
 const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
+const { cleanContractName } = require("../utils/cleanContractName"); // #1: rohe Dateinamen in der Glocke säubern (wie in den Mails)
 
 // S3 für Profilbild-Upload
 let S3Client, PutObjectCommand, s3Instance;
@@ -1013,7 +1014,8 @@ router.get("/", verifyToken, async (req, res) => {
     // Legal Pulse V2 Radar-Alerts transformieren (gleiches einheitliches Format)
     for (const alert of pulseV2Alerts) {
       const isWarn = alert.severity === "critical" || alert.severity === "high";
-      const contractLabel = alert.contractName ? `„${alert.contractName}"` : "deine Verträge";
+      const cleanedName = cleanContractName(alert.contractName, ""); // leerer Fallback → "deine Verträge"
+      const contractLabel = cleanedName ? `„${cleanedName}"` : "deine Verträge";
       notifications.push({
         id: alert._id.toString(),
         type: isWarn ? "warning" : "info",
