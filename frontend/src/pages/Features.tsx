@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../hooks/useAuth";
@@ -34,6 +34,47 @@ const Features: React.FC = () => {
   const isAuthenticated = user && user.subscriptionActive;
   const heroRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [activeSec, setActiveSec] = useState<string>('');
+
+  // Dezente Scroll-Reveals (Stripe/DocuSign-Stil) + Scroll-Spy für die Sticky-Nav.
+  // Bulletproof: [data-reveal] wird NUR versteckt, wenn JS die Klasse .fp-reveal-on
+  // setzt → läuft JS nicht, bleibt alles sichtbar. Respektiert reduced-motion.
+  useLayoutEffect(() => {
+    const page = pageRef.current;
+    if (!page || !('IntersectionObserver' in window)) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let revealObs: IntersectionObserver | undefined;
+    if (!reduce) {
+      page.classList.add('fp-reveal-on');
+      revealObs = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            const el = e.target as HTMLElement;
+            const d = el.getAttribute('data-reveal-delay');
+            if (d) el.style.transitionDelay = `${d}ms`;
+            el.classList.add('is-revealed');
+            revealObs?.unobserve(el);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -7% 0px' });
+      page.querySelectorAll('[data-reveal]').forEach((el) => revealObs!.observe(el));
+    }
+
+    // Scroll-Spy: aktive Sektion in der Sticky-Nav markieren
+    const spyObs = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          const id = (e.target as HTMLElement).getAttribute('data-sec');
+          if (id) setActiveSec(id);
+        }
+      });
+    }, { rootMargin: '-24% 0px -68% 0px', threshold: 0 });
+    page.querySelectorAll('[data-sec]').forEach((el) => spyObs.observe(el));
+
+    return () => { revealObs?.disconnect(); spyObs.disconnect(); };
+  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -167,7 +208,7 @@ const Features: React.FC = () => {
         </script>
       </Helmet>
 
-      <div className="fp-page">
+      <div className="fp-page" ref={pageRef}>
 
         {/* ===================== HERO ===================== */}
         <section className="fp-hero" ref={heroRef}>
@@ -275,9 +316,9 @@ const Features: React.FC = () => {
         <div className="fp-catnav">
           <div className="fp-catnav-inner">
             <span className="fp-catnav-label">Alle 11 Funktionen —</span>
-            <a href="#sec-analyze" className="fp-pill fp-pill-analyze"><span className="fp-pill-num">01</span>Analysieren</a>
-            <a href="#sec-create" className="fp-pill fp-pill-create"><span className="fp-pill-num">02</span>Erstellen</a>
-            <a href="#sec-manage" className="fp-pill fp-pill-manage"><span className="fp-pill-num">03</span>Verwalten</a>
+            <a href="#sec-analyze" className={`fp-pill fp-pill-analyze${activeSec === 'analyze' ? ' active' : ''}`}><span className="fp-pill-num">01</span>Analysieren</a>
+            <a href="#sec-create" className={`fp-pill fp-pill-create${activeSec === 'create' ? ' active' : ''}`}><span className="fp-pill-num">02</span>Erstellen</a>
+            <a href="#sec-manage" className={`fp-pill fp-pill-manage${activeSec === 'manage' ? ' active' : ''}`}><span className="fp-pill-num">03</span>Verwalten</a>
           </div>
         </div>
 
@@ -323,7 +364,7 @@ const Features: React.FC = () => {
 
         {/* ===================== FEATURE-GRUPPEN ===================== */}
         {mainFeatures.map((section) => (
-          <section key={section.id} className={`fp-fsection fp-acc-${section.accent}`}>
+          <section key={section.id} data-sec={section.accent} className={`fp-fsection fp-acc-${section.accent}`}>
             <div className="fp-fsection-inner">
               <div id={`sec-${section.id}`} className="fp-marker">
                 <span className="fp-marker-label">{section.marker}</span>
