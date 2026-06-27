@@ -69,12 +69,30 @@ export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [currentPlan, setCurrentPlan] = useState<'free' | 'business' | 'enterprise' | null>(null);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 900);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const urlPromoCode = searchParams.get('code')?.trim() || null;
 
   // Kampagne einmal beim Mount bestimmen (kein Neuberechnen pro Countdown-Tick → kein Animations-Restart)
   const campaign = useMemo(() => getCampaign(new Date()), []);
+
+  // Karten-Einblendung NUR auf Desktop. Im Handy-Karussell würde whileInView die
+  // rechts liegenden (offscreen) Karten verstecken → sollen sofort & smooth da sein.
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 900);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const cardMotion = (delay = 0) =>
+    isMobile
+      ? {}
+      : {
+          initial: { opacity: 0, y: 20 },
+          whileInView: { opacity: 1, y: 0 },
+          viewport: { once: true, amount: 0.2 },
+          transition: { duration: 0.45, delay },
+        };
 
   // Load current subscription status
   useEffect(() => {
@@ -122,15 +140,21 @@ export default function Pricing() {
       return new Date(cycleStart + cycleLength);
     },
     getFilledSpots: () => {
+      // Deterministisch (zeitbasiert, nicht zufällig) — aber bewusst „organisch":
+      // variabler Startwert pro Zyklus + kleiner Versatz pro Schritt, damit selten
+      // glatte Zehner (z. B. 80) angezeigt werden. Steigt über ~9 Tage, dann Reset.
       const cycleStart = new Date('2025-01-01T00:00:00').getTime();
       const now = Date.now();
       const hoursPerStep = 3;
       const stepsInCycle = 70;
       const cycleDurationMs = stepsInCycle * hoursPerStep * 60 * 60 * 1000;
       const timeSinceStart = now - cycleStart;
+      const cycleIndex = Math.floor(timeSinceStart / cycleDurationMs);
       const positionInCycle = timeSinceStart % cycleDurationMs;
       const currentStep = Math.floor(positionInCycle / (hoursPerStep * 60 * 60 * 1000));
-      return Math.min(90, 20 + currentStep);
+      const base = 18 + ((cycleIndex * 7 + 3) % 11);       // 18..28, je Zyklus anders
+      const jitter = ((currentStep * 3 + cycleIndex) % 5) - 2; // -2..+2, bricht glatte Zahlen
+      return Math.max(13, Math.min(92, base + currentStep + jitter));
     },
     discountPercent: 25,
     message: "Früher-Zugang Aktion"
@@ -523,7 +547,7 @@ export default function Pricing() {
                     <span className={styles.scarcityCount}>{filledSpots} gesichert</span>
                   </div>
                   <div className={styles.bar}>
-                    <div className={styles.barFill} style={{ width: `${filledSpots}%` }} />
+                    <div className={styles.barFill} style={{ width: `${spotsLeft}%` }} />
                     <div className={styles.barShine} />
                   </div>
                 </div>
@@ -594,14 +618,12 @@ export default function Pricing() {
 
         {/* PLANS */}
         <section id="plans" className={styles.plans}>
+          <div className={styles.cardsHint}>← Wische für alle Pläne →</div>
           <div className={styles.plansGrid}>
             {/* STARTER */}
             <motion.div
               className={styles.card}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.45 }}
+              {...cardMotion(0)}
             >
               <div className={`${styles.planKicker} ${styles.planKickerMuted}`}>Starter</div>
               <p className={styles.planTagline}>Zum Ausprobieren</p>
@@ -628,10 +650,7 @@ export default function Pricing() {
             {/* BUSINESS */}
             <motion.div
               className={styles.card}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.45, delay: 0.05 }}
+              {...cardMotion(0.05)}
             >
               <div className={`${styles.planKicker} ${styles.planKickerAccent}`}>Business</div>
               <p className={styles.planTagline}>Für Profis &amp; Freelancer</p>
@@ -681,10 +700,7 @@ export default function Pricing() {
             {/* ENTERPRISE (popular) */}
             <motion.div
               className={`${styles.card} ${styles.cardPopular}`}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.45, delay: 0.1 }}
+              {...cardMotion(0.1)}
             >
               <div className={styles.popularBadge}><span />Meist gewählt</div>
               <div className={`${styles.planKicker} ${styles.planKickerAccent}`}>Enterprise</div>

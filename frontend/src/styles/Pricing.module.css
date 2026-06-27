@@ -242,6 +242,7 @@
 .sectionH2 { font-size: clamp(30px, 4vw, 44px); letter-spacing: -.03em; font-weight: 800; margin: 16px 0 0; }
 .sectionLede { font-size: 17px; color: var(--body); margin: 14px 0 0; }
 .scrollHint { display: none; text-align: center; font-size: 12.5px; color: var(--muted-2); margin-bottom: 14px; font-weight: 500; }
+.cardsHint { display: none; text-align: center; font-size: 12.5px; color: var(--muted-2); margin-bottom: 8px; font-weight: 500; }
 .tableWrap { overflow-x: auto; border: 1px solid #EAEAEF; border-radius: 20px; box-shadow: 0 1px 2px rgba(11,11,18,.04); -webkit-overflow-scrolling: touch; }
 .table { width: 100%; min-width: 720px; border-collapse: collapse; font-size: 14.5px; }
 .thFeature { text-align: left; padding: 20px 24px; font-weight: 700; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: #FAFAFC; border-bottom: 1px solid #EAEAEF; }
@@ -352,12 +353,25 @@
 
 /* ============================ RESPONSIVE ============================ */
 @media (max-width: 900px) {
-  .plansGrid { grid-template-columns: minmax(0, 1fr); gap: 30px; }
-  .card { padding: 30px 24px; }
+  /* Plan-Karten als horizontales Swipe-Karussell (konsistent zur Landing) */
+  .plansGrid {
+    grid-template-columns: none;
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 16px;
+    padding: 20px 20px 18px;   /* oben: Platz fürs "Meist gewählt"-Badge; seitlich: Peek der nächsten Karte */
+    margin: 0 -20px;           /* Breakout bis zum Bildschirmrand */
+    scrollbar-width: none;
+  }
+  .plansGrid::-webkit-scrollbar { display: none; }
+  .card { flex: 0 0 86%; scroll-snap-align: center; padding: 30px 24px; }
+  .cardsHint { display: block; }
   .seoGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tstGrid { grid-template-columns: minmax(0, 1fr); }
   .scrollHint { display: block; }
-  .cardPopular { margin-top: 4px; }
+  .cardPopular { margin-top: 0; }
 }
 
 @media (max-width: 720px) {
