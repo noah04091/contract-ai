@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { ArrowLeft, ArrowRight, Eye, EyeOff, Check, Mail, ShieldCheck, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, EyeOff, Check, Mail, ShieldCheck, Users, Plus } from "lucide-react";
 import "../styles/RegisterAuth.css";
 import { getAcquisition } from "../utils/acquisition";
 import logoDark from "../assets/logo-register-dark.png";   // weißes Logo für die blaue Spalte
@@ -180,6 +180,10 @@ export default function Register() {
                   <span>{feature}</span>
                 </div>
               ))}
+              <div className="ca-reg-feature ca-reg-feature-more">
+                <span className="ca-reg-feature-ico"><Plus size={13} strokeWidth={2.8} /></span>
+                <span>Und vieles mehr …</span>
+              </div>
             </div>
 
             <div className="ca-reg-trust">
@@ -200,11 +204,10 @@ export default function Register() {
           <div className="ca-reg-form-wrap">
             {/* Mobile-Header (< 900px) */}
             <div className="ca-reg-mobilehead">
-              <Link to="/"><img src={logoLight} alt="Contract AI" className="ca-reg-logo-light" /></Link>
-              <div className="ca-reg-mobilehead-trust">
-                <ShieldCheck size={14} />
-                <span>Über 500 Unternehmen vertrauen uns · DSGVO-konform</span>
-              </div>
+              <Link to="/" className="ca-reg-mobile-logolink" aria-label="Zur Startseite">
+                <span className="ca-reg-mobile-back"><ArrowLeft size={16} /></span>
+                <img src={logoLight} alt="Contract AI" className="ca-reg-logo-light" />
+              </Link>
             </div>
 
             {/* Notification */}

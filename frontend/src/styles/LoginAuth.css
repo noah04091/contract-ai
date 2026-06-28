@@ -81,6 +81,9 @@
 
 .ca-login-mobilehead { display: none; flex-direction: column; gap: 11px; margin-bottom: 26px; }
 .ca-login-logo-light { height: 36px; width: auto; align-self: flex-start; display: block; }
+.ca-login-mobile-logolink { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; align-self: flex-start; }
+.ca-login-mobile-back { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: var(--ca-blue-soft); border: 1px solid var(--ca-blue-soft-2); color: var(--ca-blue); flex-shrink: 0; transition: background .2s; }
+.ca-login-mobile-logolink:hover .ca-login-mobile-back { background: var(--ca-blue-soft-2); }
 .ca-login-mobilehead-trust { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ca-gray-3); }
 .ca-login-mobilehead-trust svg { flex-shrink: 0; stroke: var(--ca-blue); }
 

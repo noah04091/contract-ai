@@ -219,13 +219,10 @@ export default function Login() {
           <div className="ca-login-form-wrap">
             {/* Mobile-Header */}
             <div className="ca-login-mobilehead">
-              <Link to="/" aria-label="Zur Startseite">
+              <Link to="/" className="ca-login-mobile-logolink" aria-label="Zur Startseite">
+                <span className="ca-login-mobile-back"><ArrowLeft size={16} /></span>
                 <img src={logoLight} alt="Contract AI" className="ca-login-logo-light" />
               </Link>
-              <span className="ca-login-mobilehead-trust">
-                <ShieldCheck size={15} />
-                Über 500 Unternehmen vertrauen uns · DSGVO-konform
-              </span>
             </div>
 
             {/* Notification */}
