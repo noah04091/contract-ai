@@ -102,6 +102,32 @@ function getSendWindow(now, lookaheadDays) {
   return { start, end };
 }
 
+/**
+ * Verbleibende KALENDERTAGE bis zum Signatur-Ablauf für die Mail-Anzeige
+ * ("Läuft in X Tagen ab" / "Noch X Tage bis zum Ablauf").
+ *
+ * Wurzel-Fix 28.06.2026: vorher `Math.ceil((expiresAt - now)/Tag)` → jede angebrochene
+ * Stunde zählte als ganzer Tag. Da der Cron um 07:00 UTC läuft, `expiresAt` aber die
+ * Erstellungs-Uhrzeit trägt (meist später), wurde die Zahl um 1 zu hoch ("in 2 Tagen"
+ * obwohl Ablauf morgen / "in 4" statt 3). Jetzt Datum-gegen-Datum (beide auf Tagesbeginn
+ * normalisiert) — exakt das Muster der daysUntilEventDay-Berechnung (~Z.241) und konsistent
+ * mit dem Frontend-Kalender (Calendar.tsx getDaysRemaining). Reine Anzeige-Zahl; Timing,
+ * Versand und Skip-Logik bleiben unberührt.
+ *
+ * @param {Date|string|number} expiresAt - Ablaufzeitpunkt des Envelopes
+ * @param {Date} [now=new Date()] - Bezugszeitpunkt (Cron-Lauf)
+ * @returns {number} ganze Kalendertage, nie negativ
+ */
+function signatureDaysUntilExpiry(expiresAt, now = new Date()) {
+  const expiry = new Date(expiresAt);
+  if (isNaN(expiry.getTime())) return 0;
+  const expiryDateOnly = new Date(expiry);
+  expiryDateOnly.setHours(0, 0, 0, 0);
+  const todayDateOnly = new Date(now);
+  todayDateOnly.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.round((expiryDateOnly - todayDateOnly) / 86400000));
+}
+
 async function checkAndSendNotifications(db) {
   try {
     console.log("Starte Calendar Notification Check...");
@@ -511,7 +537,7 @@ async function queueEventNotification(event, db) {
       const envelopeTitle = event.metadata?.envelopeTitle || event.title;
       const sigExpiresAt = event.metadata?.expiresAt ? new Date(event.metadata.expiresAt) : null;
       const daysUntilExpiry = sigExpiresAt
-        ? Math.max(0, Math.ceil((sigExpiresAt - new Date()) / (1000 * 60 * 60 * 24)))
+        ? signatureDaysUntilExpiry(sigExpiresAt)
         : (event.metadata?.daysUntilExpiry || 0);
 
       if (daysUntilExpiry === 0) {
@@ -831,6 +857,7 @@ module.exports = {
   firesOnOwnDay,
   shouldDeferToOwnDay,
   getSendWindow,
+  signatureDaysUntilExpiry,
   // Reine Render-Funktionen (für Vorschau/Tests; keine Seiteneffekte)
   __render: {
     generateCalendarEmailTemplate,
