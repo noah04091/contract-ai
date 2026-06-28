@@ -5,6 +5,7 @@ const nodemailer = require("nodemailer");
 const { ObjectId } = require("mongodb");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { queueEmail, processEmailQueue } = require("./emailRetryService");
+const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // gemeinsame Tageszahl-Quelle (Anzeige)
 
 /**
  * Maskiert eine E-Mail-Adresse für Logs (DSGVO-Hygiene).
@@ -100,32 +101,6 @@ function getSendWindow(now, lookaheadDays) {
   const end = new Date(now);
   end.setDate(end.getDate() + lookaheadDays);
   return { start, end };
-}
-
-/**
- * Verbleibende KALENDERTAGE bis zum Signatur-Ablauf für die Mail-Anzeige
- * ("Läuft in X Tagen ab" / "Noch X Tage bis zum Ablauf").
- *
- * Wurzel-Fix 28.06.2026: vorher `Math.ceil((expiresAt - now)/Tag)` → jede angebrochene
- * Stunde zählte als ganzer Tag. Da der Cron um 07:00 UTC läuft, `expiresAt` aber die
- * Erstellungs-Uhrzeit trägt (meist später), wurde die Zahl um 1 zu hoch ("in 2 Tagen"
- * obwohl Ablauf morgen / "in 4" statt 3). Jetzt Datum-gegen-Datum (beide auf Tagesbeginn
- * normalisiert) — exakt das Muster der daysUntilEventDay-Berechnung (~Z.241) und konsistent
- * mit dem Frontend-Kalender (Calendar.tsx getDaysRemaining). Reine Anzeige-Zahl; Timing,
- * Versand und Skip-Logik bleiben unberührt.
- *
- * @param {Date|string|number} expiresAt - Ablaufzeitpunkt des Envelopes
- * @param {Date} [now=new Date()] - Bezugszeitpunkt (Cron-Lauf)
- * @returns {number} ganze Kalendertage, nie negativ
- */
-function signatureDaysUntilExpiry(expiresAt, now = new Date()) {
-  const expiry = new Date(expiresAt);
-  if (isNaN(expiry.getTime())) return 0;
-  const expiryDateOnly = new Date(expiry);
-  expiryDateOnly.setHours(0, 0, 0, 0);
-  const todayDateOnly = new Date(now);
-  todayDateOnly.setHours(0, 0, 0, 0);
-  return Math.max(0, Math.round((expiryDateOnly - todayDateOnly) / 86400000));
 }
 
 async function checkAndSendNotifications(db) {
@@ -537,7 +512,7 @@ async function queueEventNotification(event, db) {
       const envelopeTitle = event.metadata?.envelopeTitle || event.title;
       const sigExpiresAt = event.metadata?.expiresAt ? new Date(event.metadata.expiresAt) : null;
       const daysUntilExpiry = sigExpiresAt
-        ? signatureDaysUntilExpiry(sigExpiresAt)
+        ? calendarDaysUntil(sigExpiresAt)
         : (event.metadata?.daysUntilExpiry || 0);
 
       if (daysUntilExpiry === 0) {
@@ -662,7 +637,8 @@ function generateCancelReminderEmail(event) {
 function generateCancelWindowEmail(event) {
   const m = event.metadata || {};
   const expiry = m.expiryDate ? new Date(m.expiryDate) : null;
-  const daysLeft = expiry ? Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24)) : null;
+  // Kalendertage statt Math.ceil (Bruch-Tage) — siehe calendarDaysUntil (Wurzel-Fix 28.06.2026).
+  const daysLeft = expiry ? calendarDaysUntil(expiry) : null;
   return `
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Du kannst ${m.contractName || 'deinen Vertrag'} jetzt kündigen</h1>
     <p style="margin:0 0 22px 0;">Das Kündigungsfenster ist ab jetzt offen. Wenn du wechseln oder beenden möchtest, ist jetzt der richtige Zeitpunkt.</p>
@@ -857,7 +833,6 @@ module.exports = {
   firesOnOwnDay,
   shouldDeferToOwnDay,
   getSendWindow,
-  signatureDaysUntilExpiry,
   // Reine Render-Funktionen (für Vorschau/Tests; keine Seiteneffekte)
   __render: {
     generateCalendarEmailTemplate,

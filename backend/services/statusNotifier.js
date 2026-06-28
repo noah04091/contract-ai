@@ -1,6 +1,7 @@
 // 📧 services/statusNotifier.js - Smart Status Change Notifications
 const nodemailer = require("nodemailer");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
+const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // korrekte Anzeige-Tageszahl
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
@@ -18,9 +19,15 @@ const transporter = nodemailer.createTransport({
  */
 async function notifyExpiringSoon(userEmail, contractName, expiryDate, daysLeft) {
   try {
+    // Anzeige aus dem Ablaufdatum neu berechnen (Kalendertage) — der übergebene daysLeft
+    // stammt aus uhrzeitgenauer Status-Logik (smartStatusUpdater, Math.ceil) und kann 1 zu
+    // hoch sein. Fallback auf daysLeft, falls kein gültiges Datum vorliegt.
+    const displayDays = expiryDate && !isNaN(new Date(expiryDate).getTime())
+      ? calendarDaysUntil(expiryDate)
+      : daysLeft;
     const htmlContent = generateEmailTemplate({
       title: "⚠️ Vertrag läuft bald ab",
-      preheader: `${contractName} läuft in ${daysLeft} Tagen ab`,
+      preheader: `${contractName} läuft in ${displayDays} Tagen ab`,
       body: `
         <p>Ihr Vertrag <strong>"${contractName}"</strong> läuft bald ab.</p>
 
@@ -29,7 +36,7 @@ async function notifyExpiringSoon(userEmail, contractName, expiryDate, daysLeft)
           <ul style="list-style: none; padding: 0; margin: 0;">
             <li style="padding: 5px 0;"><strong>Vertrag:</strong> ${contractName}</li>
             <li style="padding: 5px 0;"><strong>Ablaufdatum:</strong> ${new Date(expiryDate).toLocaleDateString('de-DE')}</li>
-            <li style="padding: 5px 0;"><strong>Verbleibende Tage:</strong> ${daysLeft} Tage</li>
+            <li style="padding: 5px 0;"><strong>Verbleibende Tage:</strong> ${displayDays} Tage</li>
           </ul>
         </div>
 
@@ -54,7 +61,7 @@ async function notifyExpiringSoon(userEmail, contractName, expiryDate, daysLeft)
       }
     });
 
-    const expiringSubject = `${contractName} - Frist in ${daysLeft} Tagen`;
+    const expiringSubject = `${contractName} - Frist in ${displayDays} Tagen`;
     await transporter.sendMail({
       from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
       to: userEmail,

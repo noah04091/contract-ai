@@ -10,6 +10,7 @@ const { isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscrip
 const { getEmailHealth, reactivateEmail } = require("../services/emailBounceService");
 const LegalPulseV2Result = require("../models/LegalPulseV2Result"); // 🆕 Pulse-V2 Mongoose Model
 const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
+const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // korrekte Anzeige-Tageszahl (Kalendertage)
 const { cleanContractName } = require("../utils/cleanContractName"); // #1: rohe Dateinamen in der Glocke säubern (wie in den Mails)
 
 // S3 für Profilbild-Upload
@@ -962,7 +963,7 @@ router.get("/", verifyToken, async (req, res) => {
 
     // Kalender-Events transformieren
     for (const event of calendarEvents) {
-      const daysUntil = Math.ceil((new Date(event.date) - now) / (1000 * 60 * 60 * 24));
+      const daysUntil = calendarDaysUntil(event.date, now); // Kalendertage statt Math.ceil (Bruch-Tage)
 
       let type = 'info';
       let title = event.title || 'Vertragserinnerung';
