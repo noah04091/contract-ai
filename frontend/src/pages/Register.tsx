@@ -159,7 +159,7 @@ export default function Register() {
             <div>
               <div className="ca-reg-eyebrow">
                 <span className="ca-reg-eyebrow-dot" />
-                Über 1.000 Nutzer vertrauen uns
+                Über 500 Unternehmen vertrauen uns
               </div>
               <h1 className="ca-reg-h1">Starte kostenlos<br />in wenigen Minuten</h1>
               <p className="ca-reg-sub">
@@ -172,7 +172,7 @@ export default function Register() {
                 "Kostenloser Start – keine Kreditkarte nötig",
                 "3 kostenlose Analysen zum Testen",
                 "KI-gestützte Vertragsoptimierung",
-                "Jederzeit kündbar",
+                "Erste Analyse in unter 60 Sekunden",
               ].map((feature, i) => (
                 <div key={i} className="ca-reg-feature">
                   <span className="ca-reg-feature-ico"><Check size={13} strokeWidth={2.8} /></span>
@@ -202,7 +202,7 @@ export default function Register() {
               <Link to="/"><img src={logoLight} alt="Contract AI" className="ca-reg-logo-light" /></Link>
               <div className="ca-reg-mobilehead-trust">
                 <ShieldCheck size={14} />
-                <span>Über 1.000 Nutzer vertrauen uns · DSGVO-konform</span>
+                <span>Über 500 Unternehmen vertrauen uns · DSGVO-konform</span>
               </div>
             </div>
 
