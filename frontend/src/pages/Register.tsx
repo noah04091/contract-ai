@@ -163,7 +163,7 @@ export default function Register() {
               </div>
               <h1 className="ca-reg-h1">Starte kostenlos<br />in wenigen Minuten</h1>
               <p className="ca-reg-sub">
-                Erstelle professionelle Vertragsanalysen, verwalte Fristen und optimiere deine Verträge mit KI.
+                Die All-in-One Plattform für KI-gestützte Vertragsanalyse, Optimierung und Fristenverwaltung.
               </p>
             </div>
 
@@ -171,7 +171,7 @@ export default function Register() {
               {[
                 "Kostenloser Start – keine Kreditkarte nötig",
                 "3 kostenlose Analysen zum Testen",
-                "KI-gestützte Vertragsoptimierung",
+                "Risiken & Sparpotenziale auf einen Blick",
                 "Erste Analyse in unter 60 Sekunden",
               ].map((feature, i) => (
                 <div key={i} className="ca-reg-feature">
