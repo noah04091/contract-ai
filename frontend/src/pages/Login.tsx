@@ -230,7 +230,7 @@ export default function Login() {
 
             {/* Notification */}
             {notification && (
-              <div className={`ca-login-noti ${notification.type || 'info'}`}>
+              <div className={`ca-login-noti ${notification.type || 'info'}`} aria-live="polite">
                 <span className="ca-login-noti-ico">
                   {notification.type === "success" ? "✓" : notification.type === "error" ? "✕" : "ℹ"}
                 </span>
@@ -261,13 +261,15 @@ export default function Login() {
                         placeholder="name@beispiel.de"
                         required
                         autoComplete="email"
+                        aria-invalid={emailError}
+                        aria-describedby={emailError ? "login-email-error" : undefined}
                       />
                       {emailValid && (
                         <span className="ca-login-email-check"><Check size={18} /></span>
                       )}
                     </div>
                     {emailError && (
-                      <p className="ca-login-field-error">Bitte gib eine gültige E-Mail-Adresse ein</p>
+                      <p className="ca-login-field-error" id="login-email-error">Bitte gib eine gültige E-Mail-Adresse ein</p>
                     )}
                   </div>
 

@@ -141,6 +141,7 @@ export default function Register() {
         <title>Kostenlos registrieren | Contract AI</title>
         <meta name="robots" content="noindex, nofollow" />
         <meta name="description" content="Erstelle dein kostenloses Contract AI Konto und starte mit KI-gestützter Vertragsanalyse." />
+        <link rel="canonical" href="https://www.contract-ai.de/register" />
       </Helmet>
 
       <div className="ca-reg-page">
@@ -265,10 +266,12 @@ export default function Register() {
                         onBlur={() => setTouched(t => ({ ...t, email: true }))}
                         className={`ca-reg-input${emailError ? " error" : ""}`}
                         placeholder="name@beispiel.de" required autoComplete="email"
+                        aria-invalid={!!emailError}
+                        aria-describedby={emailError ? "reg-email-error" : undefined}
                       />
                       {emailValid && <span className="ca-reg-email-check"><Check size={20} strokeWidth={2.4} /></span>}
                     </div>
-                    {emailError && <p className="ca-reg-field-error">{emailError}</p>}
+                    {emailError && <p className="ca-reg-field-error" id="reg-email-error">{emailError}</p>}
                   </div>
 
                   <div className="ca-reg-field">
