@@ -56,11 +56,15 @@ function generateWelcomeEmail(user) {
   const body = `
     ${generateParagraph(`Hallo ${firstName},`)}
 
-    ${generateParagraph('herzlich willkommen bei Contract AI! Du bist jetzt Teil von über 5.000 Nutzern, die ihre Verträge intelligent verwalten.')}
+    ${generateParagraph('herzlich willkommen bei Contract AI! Du bist jetzt Teil von über 500 Nutzern, die ihre Verträge intelligent verwalten.')}
 
     ${generateInfoBox([
       { label: 'Dein Account', value: user.email },
-      { label: 'Plan', value: user.subscriptionPlan === 'free' ? 'Free (3 Analysen/Monat)' : user.subscriptionPlan },
+      { label: 'Plan', value: user.subscriptionPlan === 'free'
+        ? 'Free · 3 Analysen inklusive'
+        : user.subscriptionPlan === 'business' ? 'Business'
+        : user.subscriptionPlan === 'enterprise' ? 'Enterprise'
+        : user.subscriptionPlan },
       { label: 'Status', value: 'Aktiv' }
     ], { title: 'Deine Account-Details' })}
 
@@ -75,6 +79,10 @@ function generateWelcomeEmail(user) {
     ${generateParagraph('<strong>🔍 Verträge analysieren</strong> - Unsere KI erkennt Risiken und Fallstricke in Sekunden.')}
     ${generateParagraph('<strong>📅 Fristen verwalten</strong> - Nie wieder eine Kündigungsfrist verpassen.')}
     ${generateParagraph('<strong>✨ Verträge optimieren</strong> - Konkrete Verbesserungsvorschläge für bessere Konditionen.')}
+    ${generateParagraph('<strong>💬 Mit deinen Verträgen chatten</strong> - Stell Fragen und bekomm verständliche Antworten in Klartext.')}
+    ${generateParagraph('<strong>⚖️ Rechts-Radar</strong> - Wir warnen dich, wenn Gesetzesänderungen deine Verträge betreffen.')}
+
+    ${generateParagraph('…und vieles mehr.', { muted: true })}
 
     ${generateDivider()}
 
