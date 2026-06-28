@@ -33,7 +33,7 @@ const EMAIL_SEQUENCE = {
   },
   socialProof: {
     delay: 30 * 24 * 60 * 60 * 1000, // 30 days
-    subject: 'Was 5.000+ Nutzer an Contract AI lieben'
+    subject: 'Was über 500 Nutzer an Contract AI lieben'
   }
 };
 
@@ -279,12 +279,12 @@ function generateSocialProofEmail(user) {
       { label: '⭐⭐⭐⭐⭐', value: '"Unverzichtbar für mein Unternehmen." - Michael R.' }
     ], { title: '💬 Das sagen unsere Nutzer' })}
 
-    ${generateAlertBox('<strong>5.247 Nutzer</strong> haben diesen Monat bereits auf Premium gewechselt. Die häufigsten Gründe: Unbegrenzte Analysen und Legal Lens.', 'info')}
+    ${generateAlertBox('Viele Nutzer wechseln zu Premium — die häufigsten Gründe: unbegrenzte Analysen und Legal Lens.', 'info')}
 
     ${generateParagraph('<strong>Warum jetzt upgraden?</strong>')}
 
     ${generateActionBox([
-      '✅ Unbegrenzte Vertragsanalysen statt nur 3/Monat',
+      '✅ Unbegrenzte Vertragsanalysen statt nur 3 Gratis-Analysen',
       '✅ Legal Lens - Jede Klausel in einfacher Sprache',
       '✅ Legal Pulse - Nie wieder Gesetzesänderungen verpassen',
       '✅ Priority Support - Antwort innerhalb 24h'
@@ -304,7 +304,7 @@ function generateSocialProofEmail(user) {
   `;
 
   return generateEmailTemplate({
-    title: 'Was 5.000+ Nutzer an Contract AI lieben',
+    title: 'Was über 500 Nutzer an Contract AI lieben',
     body,
     badge: 'Community',
     cta: {
