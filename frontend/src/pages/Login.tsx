@@ -1,18 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Check, Mail, ShieldCheck, Users, ArrowRight, Plus } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
-import "../styles/SplitAuth.css";
+import "../styles/LoginAuth.css";
+import logoDark from "../assets/logo-register-dark.png";
+import logoLight from "../assets/logo-register-light.webp";
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
-// Back Arrow Icon SVG
-const BackArrowIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-  </svg>
-);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface AuthResponse {
   token?: string;
@@ -26,6 +23,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "warning" | "info" } | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -38,6 +36,11 @@ export default function Login() {
   const [verificationEmail, setVerificationEmail] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  // ---- Live-Validierung (rein clientseitig, ändert Backend nicht) ----
+  const emailValid = EMAIL_RE.test(email);
+  const emailError = emailTouched && email.length > 0 && !emailValid;
+  const formValid = emailValid && password.length > 0;
 
   // E-Mail-Verification senden
   const sendVerificationEmail = async (emailToVerify: string) => {
@@ -144,158 +147,153 @@ export default function Login() {
     return () => { if (redirectTimeout.current) clearTimeout(redirectTimeout.current); };
   }, [navigate, refetchUser, redirectUrl]);
 
-  // Mail Icon SVG
-  const MailIcon = () => (
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-    </svg>
-  );
-
-  // Checkmark Icon SVG
-  const CheckIcon = () => (
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-    </svg>
-  );
-
-  // Arrow Icon SVG
-  const ArrowIcon = () => (
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-    </svg>
-  );
+  const features = [
+    "KI-Vertragsanalyse in Sekunden",
+    "Automatische Fristenverwaltung",
+    "Optimierungsvorschläge",
+    "Risiko-Erkennung",
+  ];
 
   return (
     <>
       <Helmet>
+        <html lang="de" />
         <title>Anmelden | Contract AI</title>
         <meta name="robots" content="noindex, nofollow" />
         <meta name="description" content="Melde dich bei Contract AI an und verwalte deine Verträge intelligent mit KI." />
+        <link rel="canonical" href="https://www.contract-ai.de/login" />
       </Helmet>
 
-      <div className="split-auth-container">
-        {/* Left Side - Branding */}
-        <div className="split-auth-branding blue">
-          {/* Background Effects */}
-          <div className="split-auth-bg-effects">
-            <div className="split-auth-bg-circle-1"></div>
-            <div className="split-auth-bg-circle-2"></div>
-          </div>
+      <div className="ca-login-page">
+        {/* ===================== LINKE MARKEN-SPALTE ===================== */}
+        <div className="ca-login-left">
+          <div className="ca-login-glow-1"></div>
+          <div className="ca-login-glow-2"></div>
+          <div className="ca-login-grid"></div>
 
-          <div className="split-auth-branding-content">
-            {/* Logo - Klickbar zur Homepage */}
-            <Link to="/" className="split-auth-logo-link">
-              <div className="split-auth-back-arrow">
-                <BackArrowIcon />
-              </div>
-              <img src="/logo-contractai.png" alt="Contract AI" className="split-auth-logo-img" />
+          <div className="ca-login-left-inner">
+            <Link to="/" className="ca-login-logolink" aria-label="Zur Startseite">
+              <span className="ca-login-back"><ArrowLeft size={18} /></span>
+              <img src={logoDark} alt="Contract AI" className="ca-login-logo-dark" />
             </Link>
 
-            {/* Headline */}
-            <h1 className="split-auth-headline">
-              Verträge intelligent<br />verwalten
-            </h1>
-            <p className="split-auth-subheadline">
-              Die All-in-One Plattform für KI-gestützte Vertragsanalyse, -erstellung, -optimierung, -signatur und Fristenverwaltung.
-            </p>
+            <div>
+              <span className="ca-login-eyebrow">
+                <span className="ca-login-eyebrow-dot"></span>
+                Über 500 Unternehmen vertrauen uns
+              </span>
+              <h1 className="ca-login-h1">Verträge intelligent<br />verwalten</h1>
+              <p className="ca-login-sub">
+                Die All-in-One Plattform für KI-gestützte Vertragsanalyse, -erstellung, -optimierung, -signatur und Fristenverwaltung.
+              </p>
+            </div>
 
-            {/* Features */}
-            <div className="split-auth-features">
-              {[
-                "KI-Vertragsanalyse in Sekunden",
-                "Automatische Fristenverwaltung",
-                "Optimierungsvorschläge",
-                "Risiko-Erkennung",
-              ].map((feature, i) => (
-                <div key={i} className="split-auth-feature">
-                  <span className="split-auth-feature-icon check"><CheckIcon /></span>
-                  <span className="split-auth-feature-text">{feature}</span>
+            <div className="ca-login-features">
+              {features.map((f) => (
+                <div key={f} className="ca-login-feature">
+                  <span className="ca-login-feature-ico"><Check size={15} /></span>
+                  <span>{f}</span>
                 </div>
               ))}
+              <div className="ca-login-feature ca-login-feature-more">
+                <span className="ca-login-feature-ico"><Plus size={15} /></span>
+                <span>Und vieles mehr …</span>
+              </div>
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="split-auth-branding-footer">
-            <p className="split-auth-footer-text">
-              Bereits über 1.000+ Verträge analysiert
-            </p>
+            <div className="ca-login-trust">
+              <div className="ca-login-trust-row">
+                <span className="ca-login-trust-ico"><Users size={16} /></span>
+                <span className="ca-login-trust-text">Bereits über <strong>1.500</strong> Verträge analysiert</span>
+              </div>
+              <div className="ca-login-trust-row ca-login-trust-row-2">
+                <ShieldCheck size={16} />
+                <span>DSGVO-konform · Server in Deutschland · SSL-verschlüsselt</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Side - Login Form */}
-        <div className="split-auth-form-side">
-          <div className="split-auth-form-container">
-            {/* Mobile Logo */}
-            <Link to="/" className="split-auth-mobile-logo-link">
-              <div className="split-auth-mobile-back-arrow">
-                <BackArrowIcon />
-              </div>
-              <img src="/logo.png" alt="Contract AI" className="split-auth-mobile-logo-img" />
-            </Link>
+        {/* ===================== RECHTE FORM-SPALTE ===================== */}
+        <div className="ca-login-right">
+          <div className="ca-login-form-wrap">
+            {/* Mobile-Header */}
+            <div className="ca-login-mobilehead">
+              <Link to="/" aria-label="Zur Startseite">
+                <img src={logoLight} alt="Contract AI" className="ca-login-logo-light" />
+              </Link>
+              <span className="ca-login-mobilehead-trust">
+                <ShieldCheck size={15} />
+                Über 500 Unternehmen vertrauen uns · DSGVO-konform
+              </span>
+            </div>
 
             {/* Notification */}
             {notification && (
-              <div className={`split-auth-notification ${notification.type || 'info'}`}>
-                <span className="split-auth-notification-icon">
+              <div className={`ca-login-noti ${notification.type || 'info'}`}>
+                <span className="ca-login-noti-ico">
                   {notification.type === "success" ? "✓" : notification.type === "error" ? "✕" : "ℹ"}
                 </span>
-                <span className="split-auth-notification-text">{notification.message}</span>
-                <button onClick={() => setNotification(null)} className="split-auth-notification-close">✕</button>
+                <span className="ca-login-noti-text">{notification.message}</span>
+                <button onClick={() => setNotification(null)} className="ca-login-noti-close" aria-label="Schließen">✕</button>
               </div>
             )}
 
             {!showVerificationPrompt ? (
               <>
-                {/* Header */}
-                <div className="split-auth-header">
-                  <h2 className="split-auth-title">Willkommen zurück</h2>
-                  <p className="split-auth-subtitle">Melden Sie sich an, um fortzufahren</p>
+                <div className="ca-login-header">
+                  <h2 className="ca-login-title">Willkommen zurück</h2>
+                  <p className="ca-login-subtitle">Melde dich an, um fortzufahren</p>
                 </div>
 
-                {/* Form */}
-                <form onSubmit={handleLogin} className="split-auth-form">
-                  <div className="split-auth-input-group">
-                    <label htmlFor="email" className="split-auth-label">
-                      E-Mail Adresse
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="split-auth-input"
-                      placeholder="name@beispiel.de"
-                      required
-                      autoComplete="email"
-                    />
+                <form onSubmit={handleLogin} className="ca-login-form" noValidate>
+                  {/* E-Mail */}
+                  <div className="ca-login-field">
+                    <label htmlFor="email" className="ca-login-label">E-Mail Adresse</label>
+                    <div className="ca-login-email-wrap">
+                      <input
+                        type="email"
+                        id="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onBlur={() => setEmailTouched(true)}
+                        className={`ca-login-input${emailError ? " error" : ""}`}
+                        placeholder="name@beispiel.de"
+                        required
+                        autoComplete="email"
+                      />
+                      {emailValid && (
+                        <span className="ca-login-email-check"><Check size={18} /></span>
+                      )}
+                    </div>
+                    {emailError && (
+                      <p className="ca-login-field-error">Bitte gib eine gültige E-Mail-Adresse ein</p>
+                    )}
                   </div>
 
-                  <div className="split-auth-input-group">
-                    <div className="split-auth-label-row">
-                      <label htmlFor="password" className="split-auth-label">
-                        Passwort
-                      </label>
-                      <Link to="/forgot-password" className="split-auth-forgot-link">
-                        Passwort vergessen?
-                      </Link>
+                  {/* Passwort */}
+                  <div className="ca-login-field">
+                    <div className="ca-login-label-row">
+                      <label htmlFor="password" className="ca-login-label">Passwort</label>
+                      <Link to="/forgot-password" className="ca-login-forgot">Passwort vergessen?</Link>
                     </div>
-                    <div className="split-auth-password-wrapper">
+                    <div className="ca-login-pw-wrap">
                       <input
                         type={showPassword ? "text" : "password"}
                         id="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="split-auth-input"
+                        className="ca-login-input"
                         placeholder="••••••••"
                         required
                         autoComplete="current-password"
                       />
                       <button
                         type="button"
-                        className="split-auth-password-toggle"
+                        className="ca-login-pw-toggle"
                         onClick={() => setShowPassword(!showPassword)}
                         tabIndex={-1}
+                        aria-label={showPassword ? "Passwort verbergen" : "Passwort anzeigen"}
                       >
                         {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
@@ -304,58 +302,47 @@ export default function Login() {
 
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="split-auth-submit"
+                    disabled={loading || !formValid}
+                    className="ca-login-submit"
                   >
                     {loading ? (
-                      <div className="split-auth-spinner"></div>
+                      <span className="ca-login-spinner"></span>
                     ) : (
                       <>
                         <span>Anmelden</span>
-                        <ArrowIcon />
+                        <ArrowRight size={18} />
                       </>
                     )}
                   </button>
                 </form>
 
-                {/* Divider */}
-                <div className="split-auth-divider">
-                  <div className="split-auth-divider-line"></div>
-                  <span className="split-auth-divider-text">oder</span>
-                  <div className="split-auth-divider-line"></div>
-                </div>
-
-                {/* Register Link */}
-                <p className="split-auth-switch">
+                <p className="ca-login-switch">
                   Noch kein Konto?{" "}
                   <Link to="/register">Jetzt kostenlos registrieren</Link>
                 </p>
               </>
             ) : (
-              /* Email Verification Prompt */
-              <div className="split-auth-verification">
-                <div className="split-auth-verification-icon">
-                  <MailIcon />
-                </div>
-
-                <h2 className="split-auth-verification-title">E-Mail bestätigen</h2>
-                <p className="split-auth-verification-text">
-                  Bitte bestätigen Sie Ihre E-Mail-Adresse, um sich anmelden zu können.
+              /* ===================== VIEW B — E-Mail bestätigen ===================== */
+              <div className="ca-login-verify">
+                <div className="ca-login-verify-ico"><Mail size={34} /></div>
+                <h2 className="ca-login-verify-title">E-Mail bestätigen</h2>
+                <p className="ca-login-verify-text">
+                  Bitte bestätige deine E-Mail-Adresse, um dich anmelden zu können.
                 </p>
 
-                <div className="split-auth-email-badge">
-                  <MailIcon />
+                <div className="ca-login-email-badge">
+                  <Mail size={16} />
                   <span>{verificationEmail}</span>
                 </div>
 
-                <div className="split-auth-verification-actions">
+                <div className="ca-login-verify-actions">
                   <button
                     onClick={handleResendEmail}
                     disabled={resendLoading || resendCooldown > 0}
-                    className="split-auth-submit"
+                    className="ca-login-submit"
                   >
                     {resendLoading ? (
-                      <div className="split-auth-spinner"></div>
+                      <span className="ca-login-spinner"></span>
                     ) : resendCooldown > 0 ? (
                       `E-Mail erneut senden (${resendCooldown}s)`
                     ) : (
@@ -365,16 +352,14 @@ export default function Login() {
 
                   <button
                     onClick={() => { setShowVerificationPrompt(false); setNotification(null); }}
-                    className="split-auth-secondary-btn"
+                    className="ca-login-secondary"
                   >
                     Zurück zur Anmeldung
                   </button>
                 </div>
 
-                <div className="split-auth-tip">
-                  <p className="split-auth-tip-text">
-                    <strong>Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner!
-                  </p>
+                <div className="ca-login-tip">
+                  <p><strong>Tipp:</strong> Schau auch in deinen Spam-Ordner, falls die E-Mail nicht ankommt.</p>
                 </div>
               </div>
             )}
