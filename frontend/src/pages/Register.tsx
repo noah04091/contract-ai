@@ -163,7 +163,7 @@ export default function Register() {
               </div>
               <h1 className="ca-reg-h1">Starte kostenlos<br />in wenigen Minuten</h1>
               <p className="ca-reg-sub">
-                Die All-in-One Plattform für KI-gestützte Vertragsanalyse, Optimierung und Fristenverwaltung.
+                Die All-in-One Plattform für KI-gestützte Vertragsanalyse, -erstellung, -optimierung, -signatur und Fristenverwaltung.
               </p>
             </div>
 
@@ -184,7 +184,7 @@ export default function Register() {
             <div className="ca-reg-trust">
               <div className="ca-reg-trust-row">
                 <span className="ca-reg-trust-ico"><Users size={16} /></span>
-                <span className="ca-reg-trust-text">Bereits über <strong>1.000+</strong> Verträge analysiert</span>
+                <span className="ca-reg-trust-text">Bereits über <strong>1.500</strong> Verträge analysiert</span>
               </div>
               <div className="ca-reg-trust-row ca-reg-trust-row-2">
                 <ShieldCheck size={15} />

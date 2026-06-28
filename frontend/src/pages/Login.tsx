@@ -196,7 +196,7 @@ export default function Login() {
               Verträge intelligent<br />verwalten
             </h1>
             <p className="split-auth-subheadline">
-              Die All-in-One Plattform für KI-gestützte Vertragsanalyse, Optimierung und Fristenverwaltung.
+              Die All-in-One Plattform für KI-gestützte Vertragsanalyse, -erstellung, -optimierung, -signatur und Fristenverwaltung.
             </p>
 
             {/* Features */}
