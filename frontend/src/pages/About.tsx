@@ -163,7 +163,7 @@ const About: React.FC = () => {
             "@type": "Organization",
             "name": "Contract AI",
             "url": "https://www.contract-ai.de",
-            "logo": "https://www.contract-ai.de/logo-contractai.webp",
+            "logo": "https://www.contract-ai.de/logo-contractai.png",
             "description": "Contract AI ist eine KI-gestützte Plattform für Vertragsanalyse, -optimierung und -verwaltung. DSGVO-konform mit Servern in Deutschland.",
             "foundingDate": "2024",
             "foundingLocation": {
