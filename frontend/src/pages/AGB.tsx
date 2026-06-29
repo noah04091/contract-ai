@@ -1,40 +1,46 @@
-// AGB - Stripe-Level Legal Page Design
+// AGB - Redesign (gemeinsames Legal-Design-System, Claude-Handoff 29.06.2026)
+// Rechtstext 1:1 aus der bisherigen Fassung übernommen (Satz-für-Satz-gleich).
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import styles from "../styles/LegalPage.module.css";
+import styles from "../styles/LegalRedesign.module.css";
 import LandingFooter from "../components/LandingFooter";
 import {
-  Scale, FileText, UserCheck, Layers, CreditCard, Clock,
+  FileText, UserCheck, Layers, CreditCard, Clock,
   Users, Shield, AlertTriangle, RefreshCw, Gavel, CheckCircle,
-  Calendar, ArrowRight, ExternalLink, ChevronRight
+  Calendar, Clock as ClockMeta, ArrowRight, ExternalLink, MessageCircle
 } from "lucide-react";
 
-interface TocItem {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-}
+interface TocItem { id: string; title: string; }
+
+const tocItems: TocItem[] = [
+  { id: "geltungsbereich", title: "Geltungsbereich" },
+  { id: "vertragsschluss", title: "Vertragsschluss" },
+  { id: "leistungsumfang", title: "Leistungsumfang" },
+  { id: "tarife", title: "Tarife & Preise" },
+  { id: "laufzeit", title: "Laufzeit & Kündigung" },
+  { id: "rechte", title: "Rechte & Pflichten" },
+  { id: "datenschutz", title: "Datenschutz" },
+  { id: "haftung", title: "Haftung" },
+  { id: "aenderungen", title: "Änderungen der AGB" },
+  { id: "streitbeilegung", title: "Streitbeilegung" },
+  { id: "schlussbestimmungen", title: "Schlussbestimmungen" },
+];
+
+const sectionIcons: Record<string, React.ReactNode> = {
+  geltungsbereich: <FileText size={22} />, vertragsschluss: <UserCheck size={22} />,
+  leistungsumfang: <Layers size={22} />, tarife: <CreditCard size={22} />,
+  laufzeit: <Clock size={22} />, rechte: <Users size={22} />,
+  datenschutz: <Shield size={22} />, haftung: <AlertTriangle size={22} />,
+  aenderungen: <RefreshCw size={22} />, streitbeilegung: <Gavel size={22} />,
+  schlussbestimmungen: <CheckCircle size={22} />,
+};
 
 export default function AGB() {
   const [activeSection, setActiveSection] = useState<string>("");
+  const [progress, setProgress] = useState(0);
   const animatedRefs = useRef<(HTMLElement | null)[]>([]);
   const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
-
-  // Table of Contents items
-  const tocItems: TocItem[] = [
-    { id: "geltungsbereich", title: "Geltungsbereich", icon: <FileText size={16} /> },
-    { id: "vertragsschluss", title: "Vertragsschluss", icon: <UserCheck size={16} /> },
-    { id: "leistungsumfang", title: "Leistungsumfang", icon: <Layers size={16} /> },
-    { id: "tarife", title: "Tarife & Preise", icon: <CreditCard size={16} /> },
-    { id: "laufzeit", title: "Laufzeit & Kündigung", icon: <Clock size={16} /> },
-    { id: "rechte", title: "Rechte & Pflichten", icon: <Users size={16} /> },
-    { id: "datenschutz", title: "Datenschutz", icon: <Shield size={16} /> },
-    { id: "haftung", title: "Haftung", icon: <AlertTriangle size={16} /> },
-    { id: "aenderungen", title: "Änderungen der AGB", icon: <RefreshCw size={16} /> },
-    { id: "streitbeilegung", title: "Streitbeilegung", icon: <Gavel size={16} /> },
-    { id: "schlussbestimmungen", title: "Schlussbestimmungen", icon: <CheckCircle size={16} /> },
-  ];
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -44,41 +50,43 @@ export default function AGB() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add(styles.visible);
-            // Update active section for TOC
             const id = entry.target.getAttribute("data-section-id");
             if (id) setActiveSection(id);
           }
         });
       },
-      { threshold: 0.1, rootMargin: "0px 0px -50px 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -55% 0px" }
     );
+    animatedRefs.current.forEach((ref) => { if (ref) observer.observe(ref); });
 
-    animatedRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref);
-    });
+    // Safety-Fallback: nach 900ms ALLES sichtbar (Inhalt darf nie unsichtbar bleiben)
+    const fallback = window.setTimeout(() => {
+      animatedRefs.current.forEach((ref) => ref?.classList.add(styles.visible));
+    }, 900);
 
-    return () => observer.disconnect();
+    const onScroll = () => {
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
+      setProgress(max > 0 ? (h.scrollTop / max) * 100 : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => { observer.disconnect(); window.clearTimeout(fallback); window.removeEventListener("scroll", onScroll); };
   }, []);
 
   const addToRefs = (el: HTMLElement | null) => {
-    if (el && !animatedRefs.current.includes(el)) {
-      animatedRefs.current.push(el);
-    }
+    if (el && !animatedRefs.current.includes(el)) animatedRefs.current.push(el);
   };
 
   const scrollToSection = (id: string) => {
     const element = sectionRefs.current[id];
     if (element) {
-      const offset = 100;
-      const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-      window.scrollTo({
-        top: elementPosition - offset,
-        behavior: "smooth"
-      });
+      const top = element.getBoundingClientRect().top + window.pageYOffset - 92;
+      window.scrollTo({ top, behavior: "smooth" });
     }
   };
 
-  // Structured Data
   const agbSchema = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -86,12 +94,10 @@ export default function AGB() {
     "description": "AGB von Contract AI - transparente Vertragsbedingungen für KI-gestützte Vertragsanalyse und -verwaltung.",
     "url": "https://www.contract-ai.de/agb",
     "inLanguage": "de-DE",
-    "isPartOf": {
-      "@type": "WebSite",
-      "name": "Contract AI",
-      "url": "https://www.contract-ai.de"
-    }
+    "isPartOf": { "@type": "WebSite", "name": "Contract AI", "url": "https://www.contract-ai.de" }
   };
+
+  const setSec = (id: string) => (el: HTMLElement | null) => { addToRefs(el); sectionRefs.current[id] = el; };
 
   return (
     <>
@@ -106,89 +112,82 @@ export default function AGB() {
         <meta property="og:type" content="website" />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content="Allgemeine Geschäftsbedingungen | Contract AI" />
-        <script type="application/ld+json">
-          {JSON.stringify(agbSchema)}
-        </script>
+        <script type="application/ld+json">{JSON.stringify(agbSchema)}</script>
       </Helmet>
 
-      <div className={styles.pageBackground}>
-        <div className={styles.container}>
-          {/* Hero Section */}
-          <header className={styles.hero}>
-            <div className={styles.heroBadge}>
-              <span className={styles.heroBadgeDot}></span>
+      <div className={styles.page}>
+        <div className={styles.progress} style={{ width: `${progress}%` }} />
+
+        {/* Hero */}
+        <header className={styles.hero}>
+          <div className={styles.heroGlows} aria-hidden="true" />
+          <div className={styles.heroBlob} aria-hidden="true" />
+          <div className={styles.heroGrid} aria-hidden="true" />
+          <div className={styles.heroInner}>
+            <span className={styles.heroBadge}>
+              <span className={styles.heroBadgeDot} />
               Rechtliche Informationen
-            </div>
-
-            <div className={styles.heroIconWrapper}>
-              <Scale className={styles.heroIcon} />
-            </div>
-
-            <h1 className={styles.heroTitle}>Allgemeine Geschäftsbedingungen</h1>
-            <p className={styles.heroSubtitle}>
-              Transparente und faire Vertragsbedingungen für die Nutzung von Contract AI
+            </span>
+            <h1 className={styles.heroTitle}>Allgemeine Geschäfts&shy;bedingungen</h1>
+            <p className={styles.heroLead}>
+              Transparente und faire Vertragsbedingungen für die Nutzung von Contract AI.
             </p>
-
-            <div className={styles.lastUpdated}>
-              <Calendar size={14} />
-              Stand: März 2026
+            <div className={styles.heroMeta}>
+              <span className={styles.heroMetaItem}><Calendar size={15} /> Stand: März 2026</span>
+              <span className={styles.heroMetaDot} />
+              <span className={styles.heroMetaItem}><ClockMeta size={15} /> ca. 12 Min. Lesezeit</span>
+              <span className={styles.heroMetaDot} />
+              <span className={styles.heroMetaItem}>11 Abschnitte</span>
             </div>
-          </header>
+          </div>
+        </header>
 
-          {/* Table of Contents */}
-          <nav className={`${styles.tocSection} ${styles.animateOnScroll}`} ref={addToRefs}>
-            <h2 className={styles.tocTitle}>Inhaltsverzeichnis</h2>
-            <div className={styles.tocGrid}>
-              {tocItems.map((item, index) => (
+        {/* Doc-Shell */}
+        <div className={styles.shell}>
+          {/* TOC */}
+          <aside className={styles.toc}>
+            <div className={styles.tocLabel}>Auf dieser Seite</div>
+            <nav className={styles.tocNav}>
+              {tocItems.map((item, i) => (
                 <button
                   key={item.id}
                   onClick={() => scrollToSection(item.id)}
-                  className={`${styles.tocItem} ${activeSection === item.id ? styles.tocItemActive : ""}`}
+                  className={`${styles.tocItem} ${activeSection === item.id ? styles.active : ""}`}
                 >
-                  <span className={styles.tocNumber}>{index + 1}</span>
-                  <span className={styles.tocIcon}>{item.icon}</span>
-                  <span className={styles.tocLabel}>{item.title}</span>
-                  <ChevronRight size={14} className={styles.tocArrow} />
+                  <span className={styles.tocNum}>{String(i + 1).padStart(2, "0")}</span>
+                  <span className={styles.tocText}>{item.title}</span>
                 </button>
               ))}
-            </div>
-          </nav>
+            </nav>
+          </aside>
 
-          {/* Main Content Card */}
-          <div className={styles.contentCard}>
+          {/* Content */}
+          <main className={styles.content}>
 
-            {/* 1. Geltungsbereich */}
-            <section
-              id="geltungsbereich"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["geltungsbereich"] = el; }}
-              data-section-id="geltungsbereich"
-            >
+            {/* 1 */}
+            <section id="geltungsbereich" className={`${styles.section} ${styles.reveal}`} ref={setSec("geltungsbereich")} data-section-id="geltungsbereich">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <FileText size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.geltungsbereich}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 01</div>
+                  <h2 className={styles.sectionTitle}>1. Geltungsbereich und Vertragspartner</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>1. Geltungsbereich und Vertragspartner</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <p>
                   Diese Allgemeinen Geschäftsbedingungen (AGB) regeln die Nutzung der Webanwendung
                   Contract AI unter der Domain www.contract-ai.de sowie aller damit verbundenen
                   Dienstleistungen.
                 </p>
-
                 <div className={styles.highlightBox}>
                   <strong>Anbieter und Vertragspartner:</strong><br />
                   Noah Liebold<br />
                   E-Mail: info@contract-ai.de
                 </div>
-
                 <p>
                   Diese AGB gelten für alle Verträge zwischen dem Anbieter und den Nutzern der
                   Plattform, unabhängig davon, ob es sich um Verbraucher oder Unternehmer handelt.
                 </p>
-
                 <p>
                   Abweichende, entgegenstehende oder ergänzende Allgemeine Geschäftsbedingungen
                   des Nutzers werden nur dann und insoweit Vertragsbestandteil, als der Anbieter
@@ -197,21 +196,16 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 2. Vertragsschluss */}
-            <section
-              id="vertragsschluss"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["vertragsschluss"] = el; }}
-              data-section-id="vertragsschluss"
-            >
+            {/* 2 */}
+            <section id="vertragsschluss" className={`${styles.section} ${styles.reveal}`} ref={setSec("vertragsschluss")} data-section-id="vertragsschluss">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <UserCheck size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.vertragsschluss}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 02</div>
+                  <h2 className={styles.sectionTitle}>2. Vertragsschluss und Registrierung</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>2. Vertragsschluss und Registrierung</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <h3 className={styles.subTitle}>2.1 Registrierung</h3>
                 <p>
                   Die Nutzung der Plattform Contract AI erfordert die Erstellung eines Nutzerkontos.
@@ -219,21 +213,18 @@ export default function AGB() {
                   Nutzungsvertrages ab. Der Vertrag kommt durch die Bestätigung der E-Mail-Adresse
                   durch den Nutzer zustande.
                 </p>
-
                 <h3 className={styles.subTitle}>2.2 Voraussetzungen</h3>
                 <p>
                   Zur Registrierung berechtigt sind ausschließlich volljährige, geschäftsfähige
                   natürliche Personen sowie juristische Personen. Mit der Registrierung versichert
                   der Nutzer, dass er volljährig und geschäftsfähig ist.
                 </p>
-
                 <h3 className={styles.subTitle}>2.3 Wahrheitsgemäße Angaben</h3>
                 <p>
                   Der Nutzer verpflichtet sich, bei der Registrierung wahrheitsgemäße und vollständige
                   Angaben zu machen. Änderungen der angegebenen Daten sind dem Anbieter unverzüglich
                   mitzuteilen.
                 </p>
-
                 <h3 className={styles.subTitle}>2.4 Zugangsdaten</h3>
                 <p>
                   Der Nutzer ist verpflichtet, seine Zugangsdaten vertraulich zu behandeln und vor
@@ -243,102 +234,76 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 3. Leistungsumfang */}
-            <section
-              id="leistungsumfang"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["leistungsumfang"] = el; }}
-              data-section-id="leistungsumfang"
-            >
+            {/* 3 */}
+            <section id="leistungsumfang" className={`${styles.section} ${styles.reveal}`} ref={setSec("leistungsumfang")} data-section-id="leistungsumfang">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <Layers size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.leistungsumfang}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 03</div>
+                  <h2 className={styles.sectionTitle}>3. Leistungsumfang und Funktionen</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>3. Leistungsumfang und Funktionen</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <p>
                   Contract AI ist eine webbasierte SaaS-Plattform zur Verwaltung, Analyse und
                   Optimierung von Verträgen mittels künstlicher Intelligenz. Die Plattform bietet
                   folgende Hauptfunktionen:
                 </p>
-
                 <div className={styles.infoGrid}>
                   <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>3.1 KI-gestützte Vertragsanalyse</div>
-                      <div className={styles.infoValue}>
-                        Upload von Vertragsdokumenten (PDF), automatische Textextraktion und
-                        Analyse durch KI, Erkennung von Risiken und Optimierungspotenzialen.
-                      </div>
+                    <div className={styles.infoLabel}>3.1 KI-gestützte Vertragsanalyse</div>
+                    <div className={styles.infoValue}>
+                      Upload von Vertragsdokumenten (PDF), automatische Textextraktion und
+                      Analyse durch KI, Erkennung von Risiken und Optimierungspotenzialen.
                     </div>
                   </div>
-
                   <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>3.2 Vertragsverwaltung</div>
-                      <div className={styles.infoValue}>
-                        Zentrale Ablage und Organisation aller Verträge, Kategorisierung,
-                        Suchfunktion und sichere Cloud-Speicherung.
-                      </div>
+                    <div className={styles.infoLabel}>3.2 Vertragsverwaltung</div>
+                    <div className={styles.infoValue}>
+                      Zentrale Ablage und Organisation aller Verträge, Kategorisierung,
+                      Suchfunktion und sichere Cloud-Speicherung.
                     </div>
                   </div>
-
                   <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>3.3 Fristen und Erinnerungen</div>
-                      <div className={styles.infoValue}>
-                        Automatische Erkennung von Kündigungsfristen, Kalenderintegration
-                        und E-Mail-Benachrichtigungen.
-                      </div>
+                    <div className={styles.infoLabel}>3.3 Fristen und Erinnerungen</div>
+                    <div className={styles.infoValue}>
+                      Automatische Erkennung von Kündigungsfristen, Kalenderintegration
+                      und E-Mail-Benachrichtigungen.
                     </div>
                   </div>
-
                   <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>3.4 Vertragsvergleich</div>
-                      <div className={styles.infoValue}>
-                        Vergleich von Verträgen, Aufzeigen von Unterschieden und
-                        Empfehlungen zur Optimierung.
-                      </div>
+                    <div className={styles.infoLabel}>3.4 Vertragsvergleich</div>
+                    <div className={styles.infoValue}>
+                      Vergleich von Verträgen, Aufzeigen von Unterschieden und
+                      Empfehlungen zur Optimierung.
                     </div>
                   </div>
-
                   <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>3.5 Vertragsoptimierung</div>
-                      <div className={styles.infoValue}>
-                        Verbesserungsvorschläge, rechtliche Hinweise und
-                        Formulierungsvorschläge für faire Verträge.
-                      </div>
+                    <div className={styles.infoLabel}>3.5 Vertragsoptimierung</div>
+                    <div className={styles.infoValue}>
+                      Verbesserungsvorschläge, rechtliche Hinweise und
+                      Formulierungsvorschläge für faire Verträge.
                     </div>
                   </div>
-
                   <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>3.6 Vertragsgenerierung</div>
-                      <div className={styles.infoValue}>
-                        KI-gestützte Erstellung neuer Vertragsdokumente mit Templates
-                        und digitaler Signatur-Funktion.
-                      </div>
+                    <div className={styles.infoLabel}>3.6 Vertragsgenerierung</div>
+                    <div className={styles.infoValue}>
+                      KI-gestützte Erstellung neuer Vertragsdokumente mit Templates
+                      und digitaler Signatur-Funktion.
                     </div>
                   </div>
                 </div>
-
                 <h3 className={styles.subTitle}>3.7 KI-Chat und Legal Pulse</h3>
                 <p>
                   Chat-basierte Beratung zu Vertragsfragen, Erklärung von Fachbegriffen und Klauseln,
                   aktuelle Rechtsänderungen und Updates (Legal Pulse Feature).
                 </p>
-
                 <h3 className={styles.subTitle}>3.8 Rechnungsverwaltung</h3>
                 <p>
                   Automatische Erstellung von Rechnungen für bezahlte Tarife, PDF-Export und
                   E-Mail-Versand, Übersicht aller Zahlungen im Nutzerkonto.
                 </p>
-
-                <div className={`${styles.highlightBox} ${styles.warning}`}>
+                <div className={styles.calloutWarn}>
                   <strong>3.9 Verfügbarkeit:</strong> Der Anbieter bemüht sich um eine ständige
                   Verfügbarkeit der Plattform. Eine 100%ige Verfügbarkeit kann jedoch nicht
                   garantiert werden. Wartungsarbeiten werden nach Möglichkeit im Voraus angekündigt.
@@ -346,59 +311,44 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 4. Tarife */}
-            <section
-              id="tarife"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["tarife"] = el; }}
-              data-section-id="tarife"
-            >
+            {/* 4 */}
+            <section id="tarife" className={`${styles.section} ${styles.reveal}`} ref={setSec("tarife")} data-section-id="tarife">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <CreditCard size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.tarife}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 04</div>
+                  <h2 className={styles.sectionTitle}>4. Tarife, Preise und Zahlungsbedingungen</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>4. Tarife, Preise und Zahlungsbedingungen</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <h3 className={styles.subTitle}>4.1 Tarifmodelle</h3>
                 <p>Contract AI bietet verschiedene Tarife mit unterschiedlichen Leistungsumfängen an:</p>
-
-                <div className={styles.infoGrid}>
-                  <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>Free-Tarif</div>
-                      <div className={styles.infoValue}>
-                        Kostenlos, 3 Vertragsanalysen einmalig, Grundfunktionen verfügbar.
-                      </div>
+                <div className={styles.tarifGrid}>
+                  <div className={styles.tarifCard}>
+                    <div className={styles.tarifName}>Free-Tarif</div>
+                    <div className={styles.tarifValue}>
+                      Kostenlos, 3 Vertragsanalysen einmalig, Grundfunktionen verfügbar.
                     </div>
                   </div>
-
-                  <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>Business-Tarif</div>
-                      <div className={styles.infoValue}>
-                        19€ pro Monat, 25 Vertragsanalysen pro Monat, alle Standard-Features.
-                      </div>
+                  <div className={`${styles.tarifCard} ${styles.featured}`}>
+                    <span className={styles.tarifBadge}>Beliebt</span>
+                    <div className={styles.tarifName}>Business-Tarif</div>
+                    <div className={styles.tarifValue}>
+                      19€ pro Monat, 25 Vertragsanalysen pro Monat, alle Standard-Features.
                     </div>
                   </div>
-
-                  <div className={styles.infoCard}>
-                    <div className={styles.infoContent}>
-                      <div className={styles.infoLabel}>Enterprise-Tarif</div>
-                      <div className={styles.infoValue}>
-                        29€ pro Monat, unbegrenzte Analysen, alle Premium-Features und Prioritätssupport.
-                      </div>
+                  <div className={styles.tarifCard}>
+                    <div className={styles.tarifName}>Enterprise-Tarif</div>
+                    <div className={styles.tarifValue}>
+                      29€ pro Monat, unbegrenzte Analysen, alle Premium-Features und Prioritätssupport.
                     </div>
                   </div>
                 </div>
-
                 <p>
                   Die jeweils aktuellen Preise sind auf der{" "}
                   <Link to="/pricing" className={styles.link}>Pricing-Seite</Link> einsehbar.
                   Alle Preise verstehen sich inklusive der gesetzlichen Mehrwertsteuer.
                 </p>
-
                 <h3 className={styles.subTitle}>4.2 Zahlungsweise</h3>
                 <p>
                   Die Zahlung für kostenpflichtige Tarife erfolgt wahlweise monatlich oder jährlich
@@ -406,27 +356,23 @@ export default function AGB() {
                   Die Zahlungsabwicklung erfolgt über den externen Zahlungsdienstleister Stripe.
                   Der Anbieter speichert keine Kreditkartendaten.
                 </p>
-
                 <h3 className={styles.subTitle}>4.3 Upgrade und Downgrade</h3>
                 <p>
                   Ein Wechsel zwischen Tarifen ist jederzeit über das Nutzerkonto möglich. Bei einem
                   Upgrade wird die Differenz anteilig für die verbleibende Laufzeit berechnet. Bei
                   einem Downgrade gilt der neue Tarif ab der nächsten Abrechnungsperiode.
                 </p>
-
                 <h3 className={styles.subTitle}>4.4 Nutzungslimits</h3>
                 <p>
                   Bei Überschreitung der monatlichen Analyse-Limits wird der Nutzer aufgefordert,
                   ein Upgrade durchzuführen. Überschreitungen werden nicht automatisch berechnet.
                 </p>
-
                 <h3 className={styles.subTitle}>4.5 Zahlungsverzug</h3>
                 <p>
                   Bei Zahlungsverzug kann der Zugriff auf kostenpflichtige Funktionen bis zur
                   vollständigen Begleichung der ausstehenden Beträge gesperrt werden.
                 </p>
-
-                <div className={`${styles.highlightBox} ${styles.success}`}>
+                <div className={styles.calloutOk}>
                   <strong>4.6 14-Tage-Geld-zurück-Garantie:</strong> Für Erstkunden kostenpflichtiger
                   Tarife bieten wir eine freiwillige 14-Tage-Geld-zurück-Garantie ab Zahlungseingang an.
                   Um die Garantie in Anspruch zu nehmen, muss der Kunde innerhalb von 14 Tagen nach
@@ -444,42 +390,34 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 5. Laufzeit */}
-            <section
-              id="laufzeit"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["laufzeit"] = el; }}
-              data-section-id="laufzeit"
-            >
+            {/* 5 */}
+            <section id="laufzeit" className={`${styles.section} ${styles.reveal}`} ref={setSec("laufzeit")} data-section-id="laufzeit">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <Clock size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.laufzeit}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 05</div>
+                  <h2 className={styles.sectionTitle}>5. Laufzeit, Kündigung und Widerrufsrecht</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>5. Laufzeit, Kündigung und Widerrufsrecht</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <h3 className={styles.subTitle}>5.1 Vertragslaufzeit</h3>
                 <p>
                   Der Nutzungsvertrag für den Free-Tarif wird auf unbestimmte Zeit geschlossen.
                   Kostenpflichtige Tarife haben je nach Wahl eine Mindestlaufzeit von einem Monat
                   (bei monatlicher Zahlung) oder einem Jahr (bei jährlicher Zahlung).
                 </p>
-
                 <h3 className={styles.subTitle}>5.2 Kündigung durch den Nutzer</h3>
                 <p>
                   Der Vertrag kann jederzeit ohne Einhaltung einer Kündigungsfrist über das
                   Nutzerkonto gekündigt werden. Die Kündigung wird zum Ende der aktuellen
                   Abrechnungsperiode wirksam.
                 </p>
-
                 <h3 className={styles.subTitle}>5.3 Keine automatische Verlängerung mit Preiserhöhung</h3>
                 <p>
                   Kostenpflichtige Abonnements verlängern sich automatisch um die gewählte Laufzeit,
                   sofern nicht vor Ablauf gekündigt wird. Preiserhöhungen werden dem Nutzer mindestens
                   30 Tage im Voraus per E-Mail mitgeteilt. Der Nutzer hat dann ein Sonderkündigungsrecht.
                 </p>
-
                 <h3 className={styles.subTitle}>5.4 Kündigung durch den Anbieter</h3>
                 <p>Der Anbieter kann den Vertrag aus wichtigem Grund fristlos kündigen, insbesondere bei:</p>
                 <ul className={styles.list}>
@@ -489,7 +427,6 @@ export default function AGB() {
                   <li>Zahlungsverzug trotz Mahnung</li>
                   <li>Weitergabe von Zugangsdaten an Dritte</li>
                 </ul>
-
                 <div className={styles.highlightBox}>
                   <strong>5.5 Widerrufsrecht für Verbraucher</strong><br /><br />
                   Verbraucher (§ 13 BGB) haben grundsätzlich ein gesetzliches Widerrufsrecht von
@@ -504,26 +441,22 @@ export default function AGB() {
                   Unabhängig davon gewährt der Anbieter eine freiwillige 14-Tage-Geld-zurück-Garantie
                   gemäß § 4.6.
                 </div>
-
                 <h3 className={styles.subTitle}>Widerrufsbelehrung</h3>
                 <p>
                   Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag
                   zu widerrufen. Die Widerrufsfrist beträgt vierzehn Tage ab dem Tag des Vertragsschlusses.
                 </p>
-
                 <p>
                   <strong>Hinweis:</strong> Das Widerrufsrecht kann vorzeitig erlöschen, wenn Sie
                   ausdrücklich zugestimmt haben, dass wir mit der Ausführung der Dienstleistung vor
                   Ablauf der Widerrufsfrist beginnen und Sie die Dienstleistung vollständig in
                   Anspruch genommen haben.
                 </p>
-
                 <p>
                   Um Ihr Widerrufsrecht auszuüben, müssen Sie uns (Noah Liebold, E-Mail: info@contract-ai.de)
                   mittels einer eindeutigen Erklärung (z. B. per E-Mail) über Ihren Entschluss, diesen
                   Vertrag zu widerrufen, informieren.
                 </p>
-
                 <p>
                   <strong>Folgen des Widerrufs:</strong> Wenn Sie diesen Vertrag widerrufen, haben wir
                   Ihnen alle Zahlungen unverzüglich und spätestens binnen vierzehn Tagen zurückzuzahlen.
@@ -531,28 +464,22 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 6. Rechte */}
-            <section
-              id="rechte"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["rechte"] = el; }}
-              data-section-id="rechte"
-            >
+            {/* 6 */}
+            <section id="rechte" className={`${styles.section} ${styles.reveal}`} ref={setSec("rechte")} data-section-id="rechte">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <Users size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.rechte}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 06</div>
+                  <h2 className={styles.sectionTitle}>6. Rechte und Pflichten des Nutzers</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>6. Rechte und Pflichten des Nutzers</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <h3 className={styles.subTitle}>6.1 Nutzungsrechte</h3>
                 <p>
                   Der Nutzer erhält für die Dauer des Vertragsverhältnisses ein nicht-exklusives,
                   nicht übertragbares und nicht unterlizenzierbares Recht zur Nutzung der Plattform
                   Contract AI im vertraglich vereinbarten Umfang.
                 </p>
-
                 <h3 className={styles.subTitle}>6.2 Pflichten des Nutzers</h3>
                 <p>Der Nutzer verpflichtet sich:</p>
                 <ul className={styles.list}>
@@ -563,14 +490,12 @@ export default function AGB() {
                   <li>Keine automatisierten Zugriffe (Bots, Scraper) ohne Genehmigung durchzuführen</li>
                   <li>Die generierten Inhalte eigenverantwortlich zu prüfen</li>
                 </ul>
-
                 <h3 className={styles.subTitle}>6.3 Verantwortung für hochgeladene Inhalte</h3>
                 <p>
                   Der Nutzer ist allein verantwortlich für alle Inhalte, die er auf die Plattform
                   hochlädt. Er versichert, dass er über alle erforderlichen Rechte an den hochgeladenen
                   Dokumenten verfügt.
                 </p>
-
                 <h3 className={styles.subTitle}>6.4 Urheberrecht</h3>
                 <p>
                   Alle Inhalte der Plattform (Texte, Grafiken, Logos, Software, Design) sind
@@ -581,21 +506,16 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 7. Datenschutz */}
-            <section
-              id="datenschutz"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["datenschutz"] = el; }}
-              data-section-id="datenschutz"
-            >
+            {/* 7 */}
+            <section id="datenschutz" className={`${styles.section} ${styles.reveal}`} ref={setSec("datenschutz")} data-section-id="datenschutz">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <Shield size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.datenschutz}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 07</div>
+                  <h2 className={styles.sectionTitle}>7. Datenschutz und Datensicherheit</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>7. Datenschutz und Datensicherheit</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <h3 className={styles.subTitle}>7.1 Datenschutzerklärung</h3>
                 <p>
                   Der Schutz Ihrer personenbezogenen Daten ist uns wichtig. Die Verarbeitung Ihrer
@@ -603,14 +523,12 @@ export default function AGB() {
                   bitte unserer{" "}
                   <Link to="/datenschutz" className={styles.link}>Datenschutzerklärung</Link>.
                 </p>
-
                 <h3 className={styles.subTitle}>7.2 Datenverarbeitung</h3>
                 <p>
                   Zur Erbringung unserer Dienstleistungen verarbeiten wir personenbezogene Daten
                   (Name, E-Mail-Adresse, Zahlungsinformationen) sowie die von Ihnen hochgeladenen
                   Vertragsdokumente. Diese Daten werden ausschließlich zur Vertragserfüllung verwendet.
                 </p>
-
                 <h3 className={styles.subTitle}>7.3 Externe Dienstleister</h3>
                 <p>Wir nutzen folgende externe Dienstleister als Auftragsverarbeiter:</p>
                 <ul className={styles.list}>
@@ -624,21 +542,18 @@ export default function AGB() {
                   Mit allen Dienstleistern wurden Auftragsverarbeitungsverträge nach Art. 28 DSGVO
                   geschlossen.
                 </p>
-
                 <h3 className={styles.subTitle}>7.4 Datensicherheit</h3>
                 <p>
                   Wir setzen technische und organisatorische Maßnahmen ein, um Ihre Daten vor
                   Verlust, Zerstörung, Manipulation und unberechtigtem Zugriff zu schützen. Die
                   Datenübertragung erfolgt verschlüsselt per HTTPS/TLS.
                 </p>
-
-                <div className={`${styles.highlightBox} ${styles.success}`}>
+                <div className={styles.calloutOk}>
                   <strong>7.5 Löschung von Daten:</strong> Nach Beendigung des Vertragsverhältnisses
                   werden alle personenbezogenen Daten und hochgeladenen Dokumente innerhalb von
                   30 Tagen vollständig gelöscht, sofern keine gesetzlichen Aufbewahrungspflichten
                   entgegenstehen.
                 </div>
-
                 <h3 className={styles.subTitle}>7.6 Auftragsverarbeitung bei gewerblicher Nutzung</h3>
                 <p>
                   Verarbeitet der Nutzer über Contract AI personenbezogene Daten Dritter (z. B. seiner
@@ -652,28 +567,22 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 8. Haftung */}
-            <section
-              id="haftung"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["haftung"] = el; }}
-              data-section-id="haftung"
-            >
+            {/* 8 */}
+            <section id="haftung" className={`${styles.section} ${styles.reveal}`} ref={setSec("haftung")} data-section-id="haftung">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <AlertTriangle size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.haftung}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 08</div>
+                  <h2 className={styles.sectionTitle}>8. Haftung und Gewährleistung</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>8. Haftung und Gewährleistung</h2>
               </div>
-
-              <div className={styles.sectionContent}>
-                <div className={`${styles.highlightBox} ${styles.warning}`}>
+              <div className={styles.sectionBody}>
+                <div className={styles.calloutWarn}>
                   <strong>8.1 Keine Rechtsberatung:</strong> Die von Contract AI bereitgestellten
                   Analysen, Bewertungen und Empfehlungen dienen ausschließlich der Information und
                   stellen keine Rechtsberatung dar. Im Zweifelsfall sollte stets ein Rechtsanwalt
                   oder Notar konsultiert werden.
                 </div>
-
                 <h3 className={styles.subTitle}>8.2 KI-Technologie und Fehlerpotential</h3>
                 <p>
                   Die Plattform nutzt künstliche Intelligenz (u. a. OpenAI GPT und Anthropic Claude) zur Analyse und Erstellung von Verträgen.
@@ -681,7 +590,6 @@ export default function AGB() {
                   interpretieren oder wichtige Klauseln übersehen. Der Nutzer ist verpflichtet,
                   alle KI-generierten Inhalte eigenverantwortlich zu prüfen und zu bewerten.
                 </p>
-
                 <h3 className={styles.subTitle}>8.3 Haftungsbeschränkung</h3>
                 <p>
                   Der Anbieter haftet unbeschränkt für Schäden aus der Verletzung des Lebens,
@@ -694,19 +602,16 @@ export default function AGB() {
                   wesentliche Vertragspflicht (Kardinalpflicht) betroffen ist. In diesem Fall ist
                   die Haftung auf den vertragstypischen, vorhersehbaren Schaden begrenzt.
                 </p>
-
                 <h3 className={styles.subTitle}>8.4 Keine Gewährleistung für bestimmte Ergebnisse</h3>
                 <p>
                   Der Anbieter garantiert nicht, dass die Nutzung der Plattform zu bestimmten
                   rechtlichen oder wirtschaftlichen Ergebnissen führt.
                 </p>
-
                 <h3 className={styles.subTitle}>8.5 Verfügbarkeit</h3>
                 <p>
                   Der Anbieter bemüht sich um eine hohe Verfügbarkeit der Plattform, übernimmt
                   jedoch keine Garantie für eine ununterbrochene Erreichbarkeit.
                 </p>
-
                 <h3 className={styles.subTitle}>8.6 Externe Links</h3>
                 <p>
                   Die Plattform kann Links zu externen Webseiten Dritter enthalten. Für die
@@ -715,28 +620,22 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 9. Änderungen */}
-            <section
-              id="aenderungen"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["aenderungen"] = el; }}
-              data-section-id="aenderungen"
-            >
+            {/* 9 */}
+            <section id="aenderungen" className={`${styles.section} ${styles.reveal}`} ref={setSec("aenderungen")} data-section-id="aenderungen">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <RefreshCw size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.aenderungen}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 09</div>
+                  <h2 className={styles.sectionTitle}>9. Änderungen der AGB</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>9. Änderungen der AGB</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <h3 className={styles.subTitle}>9.1 Änderungsrecht</h3>
                 <p>
                   Der Anbieter behält sich das Recht vor, diese AGB bei Vorliegen eines sachlichen
                   Grundes (z. B. Änderungen der Rechtslage, neue Funktionen, Anpassungen an technische
                   Entwicklungen) mit Wirkung für die Zukunft zu ändern.
                 </p>
-
                 <h3 className={styles.subTitle}>9.2 Mitteilung und Widerspruchsrecht</h3>
                 <p>
                   Änderungen der AGB werden dem Nutzer mindestens 30 Tage vor Inkrafttreten per
@@ -744,7 +643,6 @@ export default function AGB() {
                   innerhalb von 30 Tagen nach Zugang der Mitteilung, gelten die geänderten AGB
                   als akzeptiert.
                 </p>
-
                 <h3 className={styles.subTitle}>9.3 Widerspruch</h3>
                 <p>
                   Widerspricht der Nutzer der Geltung der neuen AGB, ist der Anbieter berechtigt,
@@ -753,30 +651,20 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 10. Streitbeilegung */}
-            <section
-              id="streitbeilegung"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["streitbeilegung"] = el; }}
-              data-section-id="streitbeilegung"
-            >
+            {/* 10 */}
+            <section id="streitbeilegung" className={`${styles.section} ${styles.reveal}`} ref={setSec("streitbeilegung")} data-section-id="streitbeilegung">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <Gavel size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.streitbeilegung}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 10</div>
+                  <h2 className={styles.sectionTitle}>10. Streitbeilegung und Gerichtsstand</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>10. Streitbeilegung und Gerichtsstand</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <h3 className={styles.subTitle}>10.1 Online-Streitbeilegung</h3>
                 <p>
                   Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:{" "}
-                  <a
-                    href="https://ec.europa.eu/consumers/odr"
-                    target="_blank"
-                    rel="noreferrer"
-                    className={styles.link}
-                  >
+                  <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noreferrer" className={styles.link}>
                     https://ec.europa.eu/consumers/odr
                     <ExternalLink size={12} style={{ marginLeft: "4px", verticalAlign: "middle" }} />
                   </a>
@@ -785,7 +673,6 @@ export default function AGB() {
                   Der Anbieter ist nicht verpflichtet und nicht bereit, an einem
                   Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.
                 </p>
-
                 <h3 className={styles.subTitle}>10.2 Anwendbares Recht</h3>
                 <p>
                   Für sämtliche Rechtsbeziehungen zwischen dem Anbieter und dem Nutzer gilt
@@ -794,7 +681,6 @@ export default function AGB() {
                   der gewährte Schutz durch zwingende Bestimmungen des Rechts des Staates, in
                   dem der Verbraucher seinen gewöhnlichen Aufenthalt hat, entzogen wird.
                 </p>
-
                 <h3 className={styles.subTitle}>10.3 Gerichtsstand</h3>
                 <p>
                   Ist der Nutzer Kaufmann, juristische Person des öffentlichen Rechts oder
@@ -804,36 +690,28 @@ export default function AGB() {
               </div>
             </section>
 
-            {/* 11. Schlussbestimmungen */}
-            <section
-              id="schlussbestimmungen"
-              className={styles.section}
-              ref={(el) => { addToRefs(el); sectionRefs.current["schlussbestimmungen"] = el; }}
-              data-section-id="schlussbestimmungen"
-            >
+            {/* 11 */}
+            <section id="schlussbestimmungen" className={`${styles.section} ${styles.reveal}`} ref={setSec("schlussbestimmungen")} data-section-id="schlussbestimmungen">
               <div className={styles.sectionHeader}>
-                <div className={styles.sectionIcon}>
-                  <CheckCircle size={22} />
+                <div className={styles.sectionIcon}>{sectionIcons.schlussbestimmungen}</div>
+                <div className={styles.sectionHeaderText}>
+                  <div className={styles.sectionKicker}>§ 11</div>
+                  <h2 className={styles.sectionTitle}>11. Schlussbestimmungen</h2>
                 </div>
-                <h2 className={styles.sectionTitle}>11. Schlussbestimmungen</h2>
               </div>
-
-              <div className={styles.sectionContent}>
+              <div className={styles.sectionBody}>
                 <h3 className={styles.subTitle}>11.1 Salvatorische Klausel</h3>
                 <p>
                   Sollten einzelne Bestimmungen dieser AGB unwirksam oder undurchführbar sein
                   oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen hiervon unberührt.
                 </p>
-
                 <h3 className={styles.subTitle}>11.2 Vertragssprache</h3>
                 <p>Die Vertragssprache ist Deutsch.</p>
-
                 <h3 className={styles.subTitle}>11.3 Abtretung</h3>
                 <p>
                   Der Nutzer darf Rechte und Pflichten aus dem Vertragsverhältnis nur mit vorheriger
                   schriftlicher Zustimmung des Anbieters an Dritte abtreten.
                 </p>
-
                 <h3 className={styles.subTitle}>11.4 Schriftformerfordernis</h3>
                 <p>
                   Änderungen oder Ergänzungen dieser AGB sowie Nebenabreden bedürfen zu ihrer
@@ -844,27 +722,32 @@ export default function AGB() {
             </section>
 
             {/* Contact Info */}
-            <div className={styles.contactFooter}>
-              <p>
+            <div className={`${styles.section} ${styles.reveal}`} ref={addToRefs} style={{ textAlign: "center" }}>
+              <p className={styles.sectionBody} style={{ margin: 0 }}>
                 Bei Fragen zu unseren AGB kontaktieren Sie uns bitte unter{" "}
-                <a href="mailto:info@contract-ai.de" className={styles.link}>
-                  info@contract-ai.de
-                </a>
+                <a href="mailto:info@contract-ai.de" className={styles.link}>info@contract-ai.de</a>
               </p>
             </div>
-          </div>
 
-          {/* Footer CTA */}
-          <div className={`${styles.footerCta} ${styles.animateOnScroll}`} ref={addToRefs}>
-            <h3 className={styles.footerCtaTitle}>Haben Sie Fragen?</h3>
-            <p className={styles.footerCtaText}>
-              Unser Team steht Ihnen bei Fragen zu unseren Geschäftsbedingungen gerne zur Verfügung.
-            </p>
-            <Link to="/contact" className={styles.footerCtaButton}>
-              Kontakt aufnehmen
-              <ArrowRight size={18} />
-            </Link>
-          </div>
+            {/* CTA */}
+            <div className={`${styles.cta} ${styles.reveal}`} ref={addToRefs}>
+              <div className={styles.ctaGlow} aria-hidden="true" />
+              <div className={styles.ctaInner}>
+                <div className={styles.ctaIcon}><MessageCircle size={26} /></div>
+                <h3 className={styles.ctaTitle}>Haben Sie Fragen?</h3>
+                <p className={styles.ctaText}>
+                  Unser Team steht Ihnen bei Fragen zu unseren Geschäftsbedingungen gerne zur Verfügung.
+                </p>
+                <a href="mailto:info@contract-ai.de" className={styles.ctaButton}>
+                  Kontakt aufnehmen
+                  <ArrowRight size={18} />
+                </a>
+              </div>
+            </div>
+          </main>
+
+          {/* Spacer (Symmetrie) */}
+          <div className={styles.spacer} aria-hidden="true" />
         </div>
       </div>
 
