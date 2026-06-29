@@ -25,7 +25,7 @@ const EMAIL_SEQUENCE = {
   },
   features: {
     delay: 7 * 24 * 60 * 60 * 1000, // 7 days
-    subject: 'Entdecke diese 3 Features - perfekt für dich'
+    subject: 'Entdecke diese Features - perfekt für dich'
   },
   upgradeNudge: {
     delay: 14 * 24 * 60 * 60 * 1000, // 14 days
@@ -190,9 +190,14 @@ function generateFeaturesEmail(user) {
   const body = `
     ${generateParagraph(`Hallo ${firstName},`)}
 
-    ${generateParagraph('du nutzt Contract AI jetzt seit einer Woche. Hier sind 3 Features, die perfekt zu dir passen:')}
+    ${generateParagraph('du nutzt Contract AI jetzt seit einer Woche. Hier sind ein paar Features, die perfekt zu dir passen:')}
 
     ${featuresHtml}
+
+    ${generateParagraph('<strong>💬 Vertrags-Chat</strong><br>Stell deinem Vertrag Fragen und bekomm Antworten in einfacher Sprache.')}
+    ${generateParagraph('<strong>🔄 Vertragsvergleich</strong><br>Vergleiche zwei Verträge und finde heraus, welcher besser für dich ist.')}
+
+    ${generateParagraph('…und vieles mehr entdecken.', { muted: true })}
 
     ${generateDivider()}
 
@@ -202,7 +207,7 @@ function generateFeaturesEmail(user) {
   `;
 
   return generateEmailTemplate({
-    title: '3 Features für dich entdeckt',
+    title: 'Features für dich entdeckt',
     body,
     badge: 'Für dich',
     cta: {
