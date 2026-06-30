@@ -71,8 +71,18 @@
   position: relative;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  /* Lange deutsche Komposita (z.B. „Verbraucherstreitbeilegung") nie über die
+     Karte hinausragen lassen — Silbentrennung (lang=de) + harter Umbruch als Reserve.
+     overflow-wrap & hyphens sind vererbte Properties → gelten für alle Nachfahren. */
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .page * { box-sizing: border-box; }
+/* Überschriften zusätzlich explizit absichern (Klasse > globale h1/h2-Regeln) */
+.heroTitle, .sectionTitle, .subTitle, .ctaTitle, .tocText, .infoLabel, .tarifName {
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
 /* Globale h1/h2/p-Element-Regeln (index.css) brechen sonst die Vererbung →
    explizite Schrift auf den Text-Klassen erzwingen (Klasse > Element-Selektor). */
 .heroTitle, .heroLead, .heroSubtitle, .sectionTitle, .subTitle, .ctaTitle, .ctaText, .sectionBody, .infoValue, .heroMeta {
@@ -264,6 +274,15 @@ a.infoCard:hover { border-color: rgba(37,99,235,.3); }
   .hero { padding: 72px 20px 48px; }
   .section { padding: 28px 22px; border-radius: 16px; }
   .cta { padding: 48px 26px; border-radius: 20px; }
+  /* Überschriften auf Mobil kompakter → lange Komposita umbrechen gefälliger */
+  .heroTitle { font-size: 34px; }
+  .sectionTitle { font-size: 21px; }
+  .sectionHeader { gap: 12px; }
+  .sectionIcon { width: 40px; height: 40px; }
+}
+@media (max-width: 400px) {
+  .heroTitle { font-size: 29px; }
+  .sectionTitle { font-size: 19px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .heroBlob, .heroBadgeDot { animation: none; }
