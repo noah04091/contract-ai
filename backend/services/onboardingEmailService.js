@@ -194,7 +194,7 @@ function generateFeaturesEmail(user) {
 
     ${featuresHtml}
 
-    ${generateParagraph('<strong>💬 Vertrags-Chat</strong><br>Stell deinem Vertrag Fragen und bekomm Antworten in einfacher Sprache.')}
+    ${generateParagraph('<strong>💡 Better Contracts</strong><br>Wir finden bessere und günstigere Alternativen zu deinem Vertrag.')}
     ${generateParagraph('<strong>🔄 Vertragsvergleich</strong><br>Vergleiche zwei Verträge und finde heraus, welcher besser für dich ist.')}
 
     ${generateParagraph('…und vieles mehr entdecken.', { muted: true })}
