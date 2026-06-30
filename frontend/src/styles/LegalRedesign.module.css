@@ -3,7 +3,7 @@
    neugestalteten Rechtsseiten AGB / Impressum / Datenschutz.
    (Claude-Handoff, 29.06.2026)
    CSS-Module → Klassen & Keyframes auto-gehasht = kein globales Leck.
-   Alte LegalPage.module.css bleibt unberührt, bis alle 3 migriert sind.
+   Ersetzt die frühere LegalPage.module.css (entfernt — alle 3 Seiten migriert).
    Fonts self-hosted (Schibsted Grotesk variable + JetBrains Mono).
    ============================================================ */
 
