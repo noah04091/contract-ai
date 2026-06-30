@@ -112,9 +112,9 @@ export default function Datenschutz() {
 
         {/* Hero */}
         <header className={styles.hero}>
-          <div className={styles.heroGlows} aria-hidden="true" />
-          <div className={styles.heroBlob} aria-hidden="true" />
-          <div className={styles.heroGrid} aria-hidden="true" />
+          <div className={styles.heroGlows} />
+          <div className={styles.heroBlob} />
+          <div className={styles.heroGrid} />
           <div className={styles.heroInner}>
             <span className={styles.heroBadge}>
               <span className={`${styles.heroBadgeDot} ${styles.green}`} />
@@ -520,7 +520,7 @@ export default function Datenschutz() {
 
             {/* CTA */}
             <div className={`${styles.cta} ${styles.reveal}`} ref={addToRefs}>
-              <div className={styles.ctaGlow} aria-hidden="true" />
+              <div className={styles.ctaGlow} />
               <div className={styles.ctaInner}>
                 <div className={styles.ctaIcon}><Shield size={26} /></div>
                 <h3 className={styles.ctaTitle}>Fragen zum Datenschutz?</h3>
