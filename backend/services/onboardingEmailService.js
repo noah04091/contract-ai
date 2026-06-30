@@ -187,6 +187,17 @@ function generateFeaturesEmail(user) {
     ${generateParagraph(`<strong>${f.icon} ${f.title}</strong><br>${f.desc}`)}
   `).join('');
 
+  // Universelle Bonus-Features — nur zeigen, wenn nicht schon in der Use-Case-Liste (keine Doppelung)
+  const existingTitles = new Set(features.map(f => f.title));
+  const bonusFeatures = [
+    { icon: '📅', title: 'Fristenkalender', desc: 'Automatische Warnung vor Kündigungs- und Ablauffristen – du verpasst keine Frist mehr.' },
+    { icon: '🔄', title: 'Vertragsvergleich', desc: 'Vergleiche zwei Verträge und finde heraus, welcher besser für dich ist.' }
+  ];
+  const bonusHtml = bonusFeatures
+    .filter(f => !existingTitles.has(f.title))
+    .map(f => generateParagraph(`<strong>${f.icon} ${f.title}</strong><br>${f.desc}`))
+    .join('');
+
   const body = `
     ${generateParagraph(`Hallo ${firstName},`)}
 
@@ -194,8 +205,7 @@ function generateFeaturesEmail(user) {
 
     ${featuresHtml}
 
-    ${generateParagraph('<strong>💡 Better Contracts</strong><br>Wir finden bessere und günstigere Alternativen zu deinem Vertrag.')}
-    ${generateParagraph('<strong>🔄 Vertragsvergleich</strong><br>Vergleiche zwei Verträge und finde heraus, welcher besser für dich ist.')}
+    ${bonusHtml}
 
     ${generateParagraph('…und vieles mehr entdecken.', { muted: true })}
 
