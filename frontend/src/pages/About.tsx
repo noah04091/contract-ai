@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Shield, Sparkles, Zap, Users, ArrowRight, Quote } from "lucide-react";
+import { Shield, Sparkles, Zap, Users, ArrowRight, Quote, ShieldCheck } from "lucide-react";
 import styles from "../styles/About.module.css";
 import LandingFooter from "../components/LandingFooter";
 
@@ -47,7 +47,7 @@ const milestones = [
   },
   {
     year: "Q3 2024",
-    title: "Erste 1.000 Nutzer",
+    title: "Erste aktive Nutzer",
     description: "Innerhalb von 3 Monaten erreichen wir unseren ersten großen Meilenstein."
   },
   {
@@ -62,8 +62,8 @@ const milestones = [
   },
   {
     year: "Q1 2025",
-    title: "100.000 Verträge analysiert",
-    description: "Ein wichtiger Meilenstein: Über 100.000 Verträge wurden auf unserer Plattform analysiert."
+    title: "1.500 Verträge analysiert",
+    description: "Ein wichtiger Meilenstein: Über 1.500 Verträge wurden auf unserer Plattform analysiert."
   },
   {
     year: "Q1 2025",
@@ -72,8 +72,8 @@ const milestones = [
   },
   {
     year: "Q1 2025",
-    title: "5.000+ aktive Nutzer",
-    description: "Die Contract AI Community wächst rasant weiter."
+    title: "500+ aktive Nutzer",
+    description: "Die Contract AI Community wächst stetig weiter."
   },
   {
     year: "2025",
@@ -236,10 +236,31 @@ const About: React.FC = () => {
         {/* Hero Section with Parallax */}
         <section className={styles.heroSection}>
           <div className={styles.heroParallaxBg} ref={parallaxRef} />
-          <h1 className={`${styles.heroTitle} fadeInUp`}>
+          <div className={styles.heroGrid} />
+          <div className={styles.heroBlob} />
+          <div className={styles.heroBlob2} />
+          <span className={`${styles.heroBadge} fadeInUp`}>
+            <span className={styles.heroBadgeDot} />
+            LEGAL-TECH AUS DEUTSCHLAND
+          </span>
+          <h1 className={`${styles.heroTitle} fadeInUp`} style={{ animationDelay: '0.06s' }}>
             Unsere Mission:<br />
             <span className={styles.heroTitleHighlight}>Klarheit in jedem Vertrag.</span>
           </h1>
+          <p className={`${styles.heroSubtitle} fadeInUp`} style={{ animationDelay: '0.16s' }}>
+            Wir entwickeln smarte KI-Lösungen für transparente, sichere und einfache Vertragsanalysen — damit jeder Mensch versteht, was er unterschreibt.
+          </p>
+          <div className={`${styles.heroCtas} fadeInUp`} style={{ animationDelay: '0.24s' }}>
+            <Link to="/register" className={styles.heroBtnPrimary}>
+              Jetzt kostenlos starten
+              <ArrowRight size={18} />
+            </Link>
+            <a href="#weg" className={styles.heroBtnSecondary}>Unsere Geschichte</a>
+          </div>
+          <div className={`${styles.heroProof} fadeInUp`} style={{ animationDelay: '0.32s' }}>
+            <span className={styles.heroProofIcon}><ShieldCheck size={16} /></span>
+            <span className={styles.heroProofText}>Vertraut von <strong>über 500 Nutzern</strong> in Deutschland</span>
+          </div>
         </section>
 
         {/* Philosophy Section */}
@@ -299,7 +320,7 @@ const About: React.FC = () => {
         </section>
 
         {/* Timeline Section */}
-        <section className={styles.timelineSection}>
+        <section id="weg" className={styles.timelineSection}>
           <div className={`${styles.sectionHeader} scaleIn`} style={{ animationDelay: '0.4s' }}>
             <span className={styles.sectionEyebrow}>GESCHICHTE</span>
             <h2 className={styles.sectionTitle}>
