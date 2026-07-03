@@ -110,7 +110,12 @@ const About: React.FC = () => {
     const timelineItems = document.querySelectorAll(`.${styles.timelineItem}`);
     timelineItems.forEach((item) => observer.observe(item));
 
-    return () => observer.disconnect();
+    // Sichtbarkeits-Fallback: nach 2s ALLE Items sichtbar (Inhalt darf nie unsichtbar bleiben)
+    const fallback = window.setTimeout(() => {
+      timelineItems.forEach((item) => item.classList.add(styles.visible));
+    }, 2000);
+
+    return () => { observer.disconnect(); window.clearTimeout(fallback); };
   }, []);
 
   // Parallax-Effekt
