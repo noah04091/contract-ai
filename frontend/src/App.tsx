@@ -22,13 +22,13 @@ import { CelebrationProvider } from "./components/Celebration";
 // 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
 // Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
 import HomeRedesign from "./pages/HomeRedesign";
-import Login from "./pages/Login";
+import Login from "./pages/Login"; // eager: auth-kritisch, Chunk nur ~9KB → Lazy lohnt nicht
 import ContractsV2 from "./pages/ContractsV2"; // 🎯 V2 = Standard /contracts, eager-Import (verhindert CSS-Preload-Fehler, wie zuvor V1)
 import Profile from "./pages/Profile"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
-// 🔧 FIX: Direct imports für rechtliche Seiten - verhindert CSS-Preload-Fehler
-import Impressum from "./pages/Impressum";
-import Datenschutz from "./pages/Datenschutz";
-import AGB from "./pages/AGB";
+// ⚡ Legal-Seiten lazy (nach Redesign scoped CSS-Module wie das lazy Register → kein CSS-Preload-Fehler mehr)
+const Impressum = lazy(() => import("./pages/Impressum"));
+const Datenschutz = lazy(() => import("./pages/Datenschutz"));
+const AGB = lazy(() => import("./pages/AGB"));
 // 🔧 FIX: Direct import für ForgotPassword & ResetPassword - verhindert CSS-Preload-Fehler
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
