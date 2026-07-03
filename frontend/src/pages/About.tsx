@@ -6,9 +6,9 @@ import styles from "../styles/About.module.css";
 import LandingFooter from "../components/LandingFooter";
 
 // Team Bilder
-import noahImg from "../assets/team/noah-liebold.jpg.png";
-import michaelImg from "../assets/team/michael-weber.jpg.png";
-import lauraImg from "../assets/team/laura-mueller.jpg.png";
+import noahImg from "../assets/team/noah-liebold.webp";
+import michaelImg from "../assets/team/michael-weber.webp";
+import lauraImg from "../assets/team/laura-mueller.webp";
 
 // Werte-Daten
 const values = [
