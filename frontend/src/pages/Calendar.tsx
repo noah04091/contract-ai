@@ -749,6 +749,9 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
   const isManualEvent = currentEvent.isManual === true && !hasContract;
   // 🖋️ Signatur-Ablauf: keine contractId, aber envelopeId → Erinnerungen per envelopeId laden (wie Verträge).
   const isSignatureExpiry = currentEvent.type === 'SIGNATURE_EXPIRING' && !!currentEvent.metadata?.envelopeId;
+  // Abgelaufene Vertrags-Frist (Stichtag liegt in der Vergangenheit) — steuert die ehrliche
+  // „abgelaufen"-Anzeige statt des irreführenden „keine Erinnerung aktiv / füge hinzu".
+  const isExpiredDeadline = !isSignatureExpiry && daysInfo.text === 'Abgelaufen';
 
   // 🔔 Erinnerungen DIESER Frist laden (reine Anzeige). ?contractId liefert auch die in 3b
   // ausgeblendeten Vorwarnungen; Zuordnung über cleanDeadlineName + isReminderEntry.
@@ -795,12 +798,20 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .map(e => ({ id: e.id, label: reminderLeadLabel(e.title) || 'Erinnerung', dateStr: fmt(e.date), kind: 'upcoming' as const }));
         }
-        // 🔔 Stichtag/Ablauftag selbst (Haupt-Ereignis feuert dann) — mitzeigen, wenn heute/zukünftig.
+        // 🔔 Stichtag/Ablauftag selbst (Haupt-Ereignis feuert dann).
         const anchor = getEventDisplayDate(currentEvent);
         const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
         const anchorStart = new Date(anchor); anchorStart.setHours(0, 0, 0, 0);
-        if (!isNaN(anchorStart.getTime()) && anchorStart >= todayStart) {
-          list.push({ id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor), kind: 'upcoming' as const });
+        if (!isNaN(anchorStart.getTime())) {
+          if (anchorStart >= todayStart) {
+            // heute/zukünftig: Stichtag steht noch bevor.
+            list.push({ id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor), kind: 'upcoming' as const });
+          } else if (!sigExpiry) {
+            // Abgelaufene Vertrags-Frist: Stichtag ist vorbei → ehrlich zeigen, ob am Tag
+            // benachrichtigt wurde (status "notified" = Mail ging wirklich raus), statt ihn
+            // zu verschweigen und die Karte wie "nie erinnert" wirken zu lassen.
+            list.push({ id: 'same-day', label: 'Am Stichtag', dateStr: fmt(anchor), kind: currentEvent.status === 'notified' ? 'sent' : 'skipped' });
+          }
         }
         setDeadlineReminders(list);
         setRemindersLoading(false);
@@ -997,7 +1008,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             <div style={{ background: '#f9fafb', border: '1px solid rgba(0,0,0,0.06)', borderRadius: '14px', padding: '16px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '9px', fontSize: '14px', fontWeight: 700, color: '#374151' }}>
                 <Bell size={16} style={{ color: '#2563eb', flexShrink: 0 }} />
-                <span>{isSignatureExpiry ? 'So wirst du erinnert' : 'So wirst du an diese Frist erinnert'}</span>
+                <span>{isSignatureExpiry ? 'So wirst du erinnert' : isExpiredDeadline ? 'So wurdest du an diese Frist erinnert' : 'So wirst du an diese Frist erinnert'}</span>
               </div>
               {noEmailReminders && (
                 <div style={{ display: 'flex', gap: '9px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '10px 12px', margin: '10px 0 2px' }}>
@@ -1012,7 +1023,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 <div style={{ fontSize: '13px', color: '#9ca3af', marginTop: '10px' }}>Lädt …</div>
               ) : deadlineReminders.length > 0 ? (
                 <>
-                  {!noEmailReminders && (
+                  {!noEmailReminders && !isExpiredDeadline && (
                     <div style={{ fontSize: '12.5px', color: '#6b7280', margin: '3px 0 13px 25px', lineHeight: 1.4 }}>
                       {isSignatureExpiry ? 'Erinnerungen zu dieser Signatur:' : 'Wir mailen dich automatisch an diesen Tagen:'}
                     </div>
@@ -1040,6 +1051,11 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   {isSignatureExpiry
                     ? 'Aktuell sind keine weiteren Erinnerungen offen.'
                     : 'Für diese Frist ist aktuell keine Erinnerung aktiv. Über „verwalten" kannst du eine eigene Erinnerung (z. B. 1 Monat vorher) hinzufügen.'}
+                </div>
+              )}
+              {isExpiredDeadline && (
+                <div style={{ fontSize: '12.5px', color: '#6b7280', margin: '11px 0 0 25px', lineHeight: 1.45 }}>
+                  Diese Frist ist am {new Date(getEventDisplayDate(currentEvent)).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })} abgelaufen — neue Erinnerungen sind hier nicht mehr möglich.
                 </div>
               )}
               {hasContract && onManageReminders && (
