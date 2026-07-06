@@ -752,7 +752,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
 
   // 🔔 Erinnerungen DIESER Frist laden (reine Anzeige). ?contractId liefert auch die in 3b
   // ausgeblendeten Vorwarnungen; Zuordnung über cleanDeadlineName + isReminderEntry.
-  const [deadlineReminders, setDeadlineReminders] = useState<{ id: string; label: string; dateStr: string }[]>([]);
+  const [deadlineReminders, setDeadlineReminders] = useState<{ id: string; label: string; dateStr: string; kind: 'sent' | 'upcoming' | 'skipped' }[]>([]);
   const [remindersLoading, setRemindersLoading] = useState(false);
   useEffect(() => {
     const cid = currentEvent.contractId;
@@ -770,27 +770,37 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
       .then(res => {
         if (cancelled) return;
         const evs = res.data?.events || [];
-        let list: { id: string; label: string; dateStr: string }[];
+        let list: { id: string; label: string; dateStr: string; kind: 'sent' | 'upcoming' | 'skipped' }[];
         if (sigExpiry) {
           // Signatur-Vorwarner (3-/1-Tag) auflisten — Label aus dem Event-Typ.
           const sigLabel = (t: string) => /_3DAY$/i.test(t) ? '3 Tage vorher' : /_1DAY$/i.test(t) ? '1 Tag vorher' : 'Erinnerung';
+          // Vergangene Vorwarner NICHT wegfiltern (sonst wirkt die Karte am Ablauftag wie
+          // "nur am Ablauftag erinnert"). Ehrlich statusbasiert einordnen: status "notified"
+          // = Mail ging wirklich raus ("gesendet"); noch in Zukunft = "upcoming"; vergangen
+          // ohne notified = per Einstellung übersprungen ("skipped"). status kommt aus /events.
           list = evs
-            .filter(e => /^SIGNATURE_REMINDER_/i.test(e.type) && new Date(e.date) > now)
+            .filter(e => /^SIGNATURE_REMINDER_/i.test(e.type))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .map(e => ({ id: e.id, label: sigLabel(e.type), dateStr: fmt(e.date) }));
+            .map(e => {
+              const kind: 'sent' | 'upcoming' | 'skipped' =
+                e.status === 'notified' ? 'sent'
+                : new Date(e.date) > now ? 'upcoming'
+                : 'skipped';
+              return { id: e.id, label: sigLabel(e.type), dateStr: fmt(e.date), kind };
+            });
         } else {
           const deadlineKey = cleanDeadlineName(currentEvent.title);
           list = evs
             .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && new Date(e.date) > now)
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .map(e => ({ id: e.id, label: reminderLeadLabel(e.title) || 'Erinnerung', dateStr: fmt(e.date) }));
+            .map(e => ({ id: e.id, label: reminderLeadLabel(e.title) || 'Erinnerung', dateStr: fmt(e.date), kind: 'upcoming' as const }));
         }
         // 🔔 Stichtag/Ablauftag selbst (Haupt-Ereignis feuert dann) — mitzeigen, wenn heute/zukünftig.
         const anchor = getEventDisplayDate(currentEvent);
         const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
         const anchorStart = new Date(anchor); anchorStart.setHours(0, 0, 0, 0);
         if (!isNaN(anchorStart.getTime()) && anchorStart >= todayStart) {
-          list.push({ id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor) });
+          list.push({ id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor), kind: 'upcoming' as const });
         }
         setDeadlineReminders(list);
         setRemindersLoading(false);
@@ -1004,20 +1014,25 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                 <>
                   {!noEmailReminders && (
                     <div style={{ fontSize: '12.5px', color: '#6b7280', margin: '3px 0 13px 25px', lineHeight: 1.4 }}>
-                      Wir mailen dich automatisch an diesen Tagen:
+                      {isSignatureExpiry ? 'Erinnerungen zu dieser Signatur:' : 'Wir mailen dich automatisch an diesen Tagen:'}
                     </div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {deadlineReminders.map(r => (
-                      <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '11px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '11px 12px' }}>
-                        <span style={{ width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0, background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>🔔</span>
+                    {deadlineReminders.map(r => {
+                      const sent = r.kind === 'sent';
+                      const skipped = r.kind === 'skipped';
+                      const muted = sent || skipped;
+                      return (
+                      <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '11px', background: muted ? '#f9fafb' : '#fff', border: '1px solid #e5e7eb', borderRadius: '10px', padding: '11px 12px' }}>
+                        <span style={{ width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0, background: sent ? '#ecfdf5' : skipped ? '#f3f4f6' : '#eff6ff', color: sent ? '#059669' : skipped ? '#9ca3af' : '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>{sent ? '✓' : skipped ? '–' : '🔔'}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#111827' }}>{r.label}</div>
-                          <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '1px' }}>{r.dateStr}</div>
+                          <div style={{ fontSize: '13.5px', fontWeight: 600, color: muted ? '#6b7280' : '#111827' }}>{r.label}</div>
+                          <div style={{ fontSize: '12px', color: '#9ca3af', marginTop: '1px' }}>{r.dateStr}</div>
                         </div>
-                        <span style={{ fontSize: '10.5px', fontWeight: 600, color: '#2563eb', background: '#eff6ff', borderRadius: '999px', padding: '3px 9px', whiteSpace: 'nowrap' }}>✉️ E-Mail</span>
+                        <span style={{ fontSize: '10.5px', fontWeight: 600, whiteSpace: 'nowrap', borderRadius: '999px', padding: '3px 9px', color: sent ? '#059669' : skipped ? '#9ca3af' : '#2563eb', background: sent ? '#ecfdf5' : skipped ? '#f3f4f6' : '#eff6ff' }}>{sent ? '✓ gesendet' : skipped ? 'nicht gesendet' : '✉️ E-Mail'}</span>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </>
               ) : (
