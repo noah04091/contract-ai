@@ -1773,6 +1773,11 @@ const connectDB = async () => {
         }
       }));
 
+      // 🛑 LEGACY Legal Pulse (Digest-Versand) — an denselben Master-Schalter gehängt wie der Rest
+      //    des Alt-Systems: LEGAL_PULSE_CRON_ENABLED. Steht er auf 'false', schweigt das komplette
+      //    Alt-System (Feeder in legalPulseMonitor.js + diese zwei Digest-Crons). Das neue
+      //    pulseV2-System (Radar/Monitor/Staleness) ist davon NICHT betroffen. Reversibel: Schalter zurueck.
+      if (process.env.LEGAL_PULSE_CRON_ENABLED === 'true') {
       // 📬 Legal Pulse: Täglicher Digest (täglich um 8:10 Uhr morgens)
       // Verarbeitet alle Legal-Pulse-Alerts aus der digest_queue und sendet Sammel-Emails
       // Gestaffelt: 08:10 statt 08:00 um DB-Connection-Kollision mit reminder-calendar zu vermeiden
@@ -1807,6 +1812,7 @@ const connectDB = async () => {
           await captureError(error, { route: 'CRON:legal-pulse-weekly-digest', method: 'SCHEDULED', severity: 'high' });
         }
       }));
+      } // Ende Master-Schalter LEGAL_PULSE_CRON_ENABLED (Legacy Legal Pulse Digest-Versand)
 
       // 📧 NEU: Onboarding E-Mail Sequence (täglich um 8:30 Uhr morgens)
       // Sendet automatisch Day 2, Day 7, Day 14 und Day 30 E-Mails an neue/Free User
