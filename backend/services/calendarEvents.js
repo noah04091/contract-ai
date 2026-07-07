@@ -985,7 +985,12 @@ async function generateEventsForContract(db, contract) {
         // Zukünftige Datums: vollwertige Events MIT Reminder-Staffelung.
         // Vergangene Datums (else-Branch unten): rein historische Read-Only-Events
         // mit isHistorical-Flag, ohne Reminder.
-        if (dateObj > now) {
+        // 🛡️ 07.07.2026: TAG-genau vergleichen (nicht Instant). dateObj liegt auf 12:00 —
+        // ein HEUTE fälliges Datum fiel bei Analyse nach 12:00 UTC faelschlich in den
+        // Historisch-Zweig (kein Event, kein Reminder). "heute oder spaeter" = vollwertig.
+        const dateDayStart = new Date(dateObj); dateDayStart.setHours(0, 0, 0, 0);
+        const todayDayStart = new Date(now); todayDayStart.setHours(0, 0, 0, 0);
+        if (dateDayStart >= todayDayStart) {
           events.push({
             userId: contract.userId,
             contractId: contract._id,
@@ -1805,8 +1810,12 @@ async function cleanAndRegenerateAIEvents(db, contract) {
     isManual: { $ne: true },
     status: { $ne: 'dismissed' },
     $or: [
-      { 'metadata.aiExtracted': true },
-      { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] } },
+      // 🆕 07.07.2026: auch die KI-Zweige auf status:'scheduled' begrenzen — vorher löschte die
+      // Re-Analyse AUCH bereits 'notified'/'completed' KI-Events (Verlust der Historie + moegliches
+      // erneutes Senden). Jetzt konsistent mit dem Lifecycle-Zweig: nur aktive/zukuenftige neu bauen,
+      // bereits gefeuerte bleiben als Historie stehen (der additive Save legt kein Duplikat an).
+      { 'metadata.aiExtracted': true, status: 'scheduled' },
+      { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] }, status: 'scheduled' },
       { type: { $in: REGENERABLE_LIFECYCLE_TYPES }, status: 'scheduled' }
     ]
   };

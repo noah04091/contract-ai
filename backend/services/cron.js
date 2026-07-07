@@ -104,6 +104,16 @@ async function autoDeleteOldVoidedEnvelopes() {
       if (env.s3KeySealed) s3KeysToDelete.push(env.s3KeySealed);
     }
 
+    // 🧹 07.07.2026: zugehörige Kalender-/Erinnerungs-Events dieser Envelopes mitlöschen.
+    // Safety-Net — beim Void werden sie i.d.R. schon via deleteEnvelopeEvents entfernt; falls
+    // etwas durchrutscht, blieben sonst ENVELOPE-Events als Waisen zurück. sourceType-Scope hält es eng.
+    const oldVoidedIds = oldVoidedEnvelopes.map(e => e._id);
+    const evClean = await db.collection("contract_events").deleteMany({
+      envelopeId: { $in: oldVoidedIds },
+      sourceType: "ENVELOPE"
+    });
+    if (evClean.deletedCount > 0) console.log(`🧹 ${evClean.deletedCount} verwaiste Envelope-Event(s) mitgelöscht.`);
+
     // Lösche aus der Datenbank
     const result = await envelopesCollection.deleteMany({
       status: "VOIDED",
