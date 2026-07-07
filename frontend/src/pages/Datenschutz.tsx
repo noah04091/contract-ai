@@ -306,6 +306,15 @@ export default function Datenschutz() {
                     <li>Übermittlung in die USA auf Basis der <strong>EU-Standardvertragsklauseln (SCC)</strong></li>
                   </ul>
                 </div>
+                <h3 className={styles.subTitle}>Vertrag zur Auftragsverarbeitung (AVV)</h3>
+                <p>
+                  Für Kunden, die personenbezogene Daten über die Plattform verarbeiten lassen, stellen wir einen
+                  Vertrag zur Auftragsverarbeitung gemäß Art. 28 DSGVO bereit — inklusive der vollständigen Liste
+                  unserer Unterauftragnehmer und der technischen und organisatorischen Maßnahmen:{" "}
+                  <a href="/AVV_Contract-AI_v2.1.pdf" target="_blank" rel="noreferrer" className={styles.link}>
+                    AVV herunterladen (PDF)
+                  </a>
+                </p>
               </div>
             </section>
 

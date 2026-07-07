@@ -96,6 +96,17 @@ async function sendSeparateNotifications(db, userId, notifications) {
         continue;
       }
 
+      // 💳 Fix #14 (07.07.2026): Tarif-Gate EXAKT wie im calendarNotifier — E-Mail-Erinnerungen
+      // sind Business+; Free bekommt keine. Vorher fehlte die Pruefung in DIESER Pipeline → Free-User
+      // erhielten Status-Mails (bald_ablaufend/abgelaufen) inkonsistent zum Haupt-Versand.
+      // markAsSent (nicht failed) "verbraucht" die Notification sauber, kein Endlos-Retry.
+      const userPlan = user.subscriptionPlan || "free";
+      if (userPlan === "free") {
+        console.log(`   Skipping free user ${user.email} - Status-Mails sind Business+`);
+        await markAsSent(db, notification._id);
+        continue;
+      }
+
       // notificationSettings prüfen
       const ns = user.notificationSettings;
       if (ns?.email?.enabled === false || ns?.email?.contractDeadlines === false) {

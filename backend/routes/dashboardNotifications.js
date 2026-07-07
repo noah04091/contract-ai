@@ -931,9 +931,9 @@ router.get("/", verifyToken, async (req, res) => {
     // 4. Signatur-Status-Updates (letzte X Tage)
     const signatureUpdates = await db.collection("envelopes")
       .find({
-        userId: new ObjectId(userId),
+        ownerId: new ObjectId(userId),
         updatedAt: { $gte: daysAgo },
-        status: { $in: ["signed", "completed", "declined"] }
+        status: { $in: ["SIGNED", "COMPLETED", "DECLINED"] }
       })
       .sort({ updatedAt: -1 })
       .limit(perSourceLimit)
@@ -1074,10 +1074,10 @@ router.get("/", verifyToken, async (req, res) => {
       let title = 'Signatur-Update';
       let type = 'info';
 
-      if (envelope.status === 'completed' || envelope.status === 'signed') {
+      if (envelope.status === 'COMPLETED' || envelope.status === 'SIGNED') {
         title = 'Vertrag unterschrieben';
         type = 'success';
-      } else if (envelope.status === 'declined') {
+      } else if (envelope.status === 'DECLINED') {
         title = 'Signatur abgelehnt';
         type = 'warning';
       }
@@ -1086,7 +1086,7 @@ router.get("/", verifyToken, async (req, res) => {
         id: envelope._id.toString(),
         type,
         title,
-        message: envelope.name || 'Signaturanfrage',
+        message: envelope.title || 'Signaturanfrage',
         time: formatRelativeTime(envelope.updatedAt),
         category: 'signature',
         actionUrl: `/envelopes`,
@@ -1430,7 +1430,10 @@ function formatRelativeTime(date) {
 
   // Zukunft
   if (diffMs < 0) {
-    const futureDays = Math.ceil(Math.abs(diffMs) / (1000 * 60 * 60 * 24));
+    // Kalendertage (Mitternacht-normalisiert, wie calendarDaysUntil) statt Bruchtag-Math.ceil.
+    // Vorher: ceil(exakter Abstand) → +1 gegenüber Titel/Message (die calendarDaysUntil nutzen)
+    // UND ein heute-später-Event wurde als "Morgen" gelabelt. Jetzt konsistent (Wurzel-Fix 28.06.).
+    const futureDays = calendarDaysUntil(then, now);
     if (futureDays === 0) return 'Heute';
     if (futureDays === 1) return 'Morgen';
     return `in ${futureDays} Tagen`;

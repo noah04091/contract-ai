@@ -134,6 +134,25 @@ async function processEmailQueue(db) {
     console.error("⚠️ Auto-Retry Fehler (nicht kritisch):", err.message);
   }
 
+  // 🛟 Processing-Reaper 07.07.2026: Mails, die nach einem Absturz/Deploy zwischen Claim
+  // (pending→processing) und Status-Update haengengeblieben sind, wieder auf "pending" freigeben.
+  // Sonst werden sie NIE erneut versucht (die Auswahl-Query unten liest nur status:"pending") →
+  // stille verlorene Mail + Event bleibt "queued". Schwelle 15 Min ist um Groessenordnungen laenger
+  // als ein realer SMTP-Send (Sekunden), daher wird KEINE echt laufende Zustellung zurueckgesetzt
+  // (kein Doppel-Send); der atomare pending→processing-Claim schuetzt zusaetzlich.
+  try {
+    const stuckThreshold = new Date(now.getTime() - 15 * 60 * 1000);
+    const reaped = await db.collection("email_queue").updateMany(
+      { status: "processing", lastAttemptAt: { $lt: stuckThreshold } },
+      { $set: { status: "pending" } }
+    );
+    if (reaped.modifiedCount > 0) {
+      console.log(`🛟 ${reaped.modifiedCount} haengende "processing"-Mail(s) auf "pending" zurueckgesetzt (Absturz-Recovery)`);
+    }
+  } catch (reapErr) {
+    console.error("⚠️ Processing-Reaper Fehler (nicht kritisch):", reapErr.message);
+  }
+
   // Hole alle E-Mails die versendet werden sollten
   // FIX: Auch Emails ohne nextRetryAt oder mit null-Wert verarbeiten
   const pendingEmails = await db.collection("email_queue")
@@ -405,15 +424,27 @@ async function requeueEventAfterSoftFailure(db, eventId) {
     if (!ev || ev.status !== "queued") return false; // inzwischen notified/dismissed/etc. → nichts tun
     const count = ev.deliveryRetryCount || 0;
     if (count >= MAX_DELIVERY_RETRIES) {
-      console.warn(`⛔ Event ${eventId}: ${count} Zustell-Versuche erschöpft — bleibt liegen (Admin informiert)`);
+      console.warn(`⛔ Event ${eventId}: ${count} Zustell-Zyklen erschöpft — bleibt liegen (Admin informiert)`);
       return false;
     }
-    const res = await db.collection("contract_events").updateOne(
-      { _id, status: "queued" },
-      { $set: { status: "scheduled", updatedAt: new Date() }, $unset: { queuedAt: "" }, $inc: { deliveryRetryCount: 1 } }
+    // 🛟 Fix #1 (07.07.2026): FRÜHER wurde das Event auf "scheduled" zurückgesetzt — der tägliche
+    // Notifier hat es aber wegen des "ab heute 00:00"-Auswahlfensters NIE wieder erfasst (das Datum
+    // lag dann in der Vergangenheit) → die Erinnerung war dauerhaft verloren (nur Admin-Mail).
+    // JETZT: Event bleibt "queued" und die bereits erzeugte, gescheiterte Mail wird für einen
+    // SPÄTEREN Zustellversuch (in RETRY_DELAY_HOURS) reaktiviert — die Zustellung bleibt in der
+    // Queue-Spur (processEmailQueue, alle 15 Min), unabhängig vom Tagesfenster. deliveryRetryCount
+    // deckelt die Zyklen (MAX_DELIVERY_RETRIES) → kein Endlos-Retry. KEINE Änderung am Tagesfenster.
+    const RETRY_DELAY_HOURS = 4;
+    const reactivated = await db.collection("email_queue").updateOne(
+      { eventId: eventId.toString(), status: "failed" },
+      { $set: { status: "pending", retryCount: 0, nextRetryAt: new Date(Date.now() + RETRY_DELAY_HOURS * 3600 * 1000), lastError: "Soft-Fail → verzögerter erneuter Zustellversuch" } }
     );
-    if (res.modifiedCount > 0) {
-      console.warn(`↩️ Event ${eventId} nach Soft-Fail zurück auf "scheduled" (Zustell-Versuch ${count + 1}/${MAX_DELIVERY_RETRIES})`);
+    if (reactivated.modifiedCount > 0) {
+      await db.collection("contract_events").updateOne(
+        { _id, status: "queued" },
+        { $inc: { deliveryRetryCount: 1 }, $set: { updatedAt: new Date() } }
+      );
+      console.warn(`↩️ Event ${eventId}: Mail für verzögerten Zustellversuch reaktiviert (Zyklus ${count + 1}/${MAX_DELIVERY_RETRIES}, in ${RETRY_DELAY_HOURS}h)`);
       return true;
     }
     return false;

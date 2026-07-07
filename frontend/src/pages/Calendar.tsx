@@ -117,6 +117,7 @@ const getDaysRemaining = (date: string) => {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const eventDate = new Date(date);
+  if (isNaN(eventDate.getTime())) return { text: "–", urgent: false }; // kein "NaN Tage" bei defektem Datum
   eventDate.setHours(0, 0, 0, 0);
   const diffDays = Math.round((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return { text: "Heute", urgent: true };
@@ -353,7 +354,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
                   onClick={() => onEventClick(event)}
                 >
                   <div className="day-event-time">
-                    {new Date(event.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(event.date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
                   </div>
                   <div className="day-event-indicator"></div>
                   <div className="day-event-details">
@@ -2027,8 +2028,12 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-      // Create date string that preserves local date (avoid timezone issues)
-      // Format: YYYY-MM-DDTHH:mm:00.000Z but adjusted for local timezone
+      // KONVENTION (Zeitzonen-Konsistenz, Fix 07.07.2026): Manuelle Termine werden als
+      // "floating"/UTC-Wanduhrzeit gespeichert — die getippte Zeit landet 1:1 als UTC (Date.UTC),
+      // und Anzeige (toLocaleTimeString timeZone:'UTC', Z.356) + Edit-Init (toISOString slice, Z.2883)
+      // lesen sie ebenfalls als UTC zurück. So gibt es KEINEN Drift beim Editieren und der UTC-Tag
+      // bleibt == dem gepickten Datum (der Server rechnet Frist-Tage in UTC). NICHT auf lokale
+      // Konstruktion umstellen — das würde Termine nahe Mitternacht auf den Vortag/Folgetag kippen.
       const [year, month, day] = formData.date.split('-').map(Number);
       const [hours, minutes] = formData.time.split(':').map(Number);
       const eventDate = new Date(Date.UTC(year, month - 1, day, hours, minutes, 0));
@@ -2880,7 +2885,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
     title: fixUtf8Display(event.title || ''),
     description: fixUtf8Display(event.description || ''),
     date: event.date ? event.date.split('T')[0] : formatLocalDate(new Date()),
-    time: event.date ? new Date(event.date).toTimeString().slice(0, 5) : '09:00',
+    time: event.date && !isNaN(new Date(event.date).getTime()) ? new Date(event.date).toISOString().slice(11, 16) : '09:00',
     severity: event.severity || 'info' as 'info' | 'warning' | 'critical',
     notes: fixUtf8Display(event.notes || ''),
     contractId: event.contractId || '',

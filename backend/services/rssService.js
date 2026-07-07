@@ -65,13 +65,13 @@ const LEGAL_RSS_FEEDS = {
     url: 'https://www.lto.de/rss/nachrichten-rss/feed.xml',
     name: 'Legal Tribune Online',
     category: 'rechtsnews',
-    enabled: true
+    enabled: false // deaktiviert: Rechtsjournalismus (keine Primaerquelle) erzeugt Headline-Fehltreffer statt echter Gesetzesaenderungen -> Praezision. Reversibel: auf true zuruecksetzen.
   },
   'lto-hintergruende': {
     url: 'https://www.lto.de/hintergruende-rss/rss/feed.xml',
     name: 'LTO Hintergründe',
     category: 'rechtsnews',
-    enabled: true
+    enabled: false // deaktiviert: s.o. (Rechtsjournalismus, keine Primaerquelle)
   },
 
   // ═══════════════════════════════════════════════════
@@ -203,7 +203,7 @@ const LEGAL_RSS_FEEDS = {
     url: 'https://www.edpb.europa.eu/feed/news_en',
     name: 'EU Datenschutzausschuss (EDPB)',
     category: 'datenschutz',
-    enabled: true
+    enabled: false // deaktiviert: engl. News-Feed erzeugt Headline-Fehltreffer auf dt. Vertraege (z.B. "Supporting GDPR consistency"). Dt. Datenschutz deckt BfDI/BayLfD + echte Gesetze ab. Reversibel: auf true zuruecksetzen.
   },
   'eur-lex-amtsblatt': {
     url: 'https://eur-lex.europa.eu/DE/display-feed.rss?rssId=162',

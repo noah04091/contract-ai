@@ -600,7 +600,9 @@ router.post("/confirmation-response", verifyToken, sensitiveLimiter, async (req,
     // Mark the reminder event as completed (skip if eventId is not a valid ObjectId, e.g. 'manual')
     if (ObjectId.isValid(eventId) && eventId !== 'manual') {
       await req.db.collection("contract_events").updateOne(
-        { _id: new ObjectId(eventId) },
+        // 🔒 07.07.2026: eventId kommt aus dem Request → auf den eigenen Nutzer scopen (beide
+        // ID-Formen), sonst ließe sich ein fremdes Event auf "completed" setzen (IDOR).
+        { _id: new ObjectId(eventId), userId: { $in: [req.user.userId, new ObjectId(req.user.userId)] } },
         { $set: { status: "completed", completedAt: new Date(), completionNote: confirmed ? "Bestätigung erhalten" : "Keine Bestätigung — Erinnerung versendet" } }
       );
     } else if (confirmed && cancellation.contractId) {
@@ -799,7 +801,8 @@ router.post("/send-reminder", verifyToken, sensitiveLimiter, async (req, res) =>
     // 3. Mark current event as completed (skip if manual/non-ObjectId)
     if (ObjectId.isValid(eventId) && eventId !== 'manual') {
       await req.db.collection("contract_events").updateOne(
-        { _id: new ObjectId(eventId) },
+        // 🔒 07.07.2026: eventId aus Request → auf eigenen Nutzer scopen (IDOR-Schutz, beide ID-Formen).
+        { _id: new ObjectId(eventId), userId: { $in: [req.user.userId, new ObjectId(req.user.userId)] } },
         { $set: { status: "completed", completedAt: new Date(), completionNote: "Keine Bestätigung — Erinnerung manuell versendet" } }
       );
     }

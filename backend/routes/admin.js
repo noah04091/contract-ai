@@ -628,6 +628,12 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
     }).toArray();
 
     const userIdsToDelete = usersToDelete.map(u => u._id.toString());
+    // 🆕 07.07.2026 (DSGVO): userId in contracts/contract_events/cost_tracking ist als ObjectId
+    // gespeichert, nicht als String. Der reine String-$in traf sie NICHT → Verträge + Kalender-/
+    // Erinnerungs-Events blieben als Waisen zurück (feuerten nie, sammelten sich an). Beide Formen
+    // löschen — exakt derselbe Fix wie in der Selbst-Löschung (auth.js, 19.06.2026).
+    const uidVariants = [];
+    for (const u of usersToDelete) { uidVariants.push(u._id.toString(), u._id); }
 
     if (userIdsToDelete.length === 0) {
       return res.status(400).json({
@@ -638,7 +644,7 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
 
     // Delete contracts
     const contractsResult = await contractsCollection.deleteMany({
-      userId: { $in: userIdsToDelete }
+      userId: { $in: uidVariants }
     });
 
     // 🧹 DSGVO: Legal-Lens-Daten aller gelöschten User mitlöschen
@@ -646,12 +652,12 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
 
     // Delete calendar events
     await db.collection("contract_events").deleteMany({
-      userId: { $in: userIdsToDelete }
+      userId: { $in: uidVariants }
     });
 
     // Delete cost tracking
     const costResult = await costTrackingCollection.deleteMany({
-      userId: { $in: userIdsToDelete }
+      userId: { $in: uidVariants }
     });
 
     // Delete users
