@@ -127,7 +127,9 @@ interface Contract {
     rating: 'good' | 'neutral' | 'bad';
   }>;
   // 📄 Document Category (NEU - für dynamische Anzeige)
-  documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract';
+  documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract' | 'letter';
+  // 📨 Welle 1 (07.07.2026): einseitige Schreiben (LETTER) — Status „Erhalten"
+  documentType?: string;
   contractType?: string;
   provider?: {
     displayName: string;
@@ -2978,6 +2980,13 @@ export default function Contracts() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    // 0. 📨 Einseitiges Schreiben (Welle 1, 07.07.2026) — MUSS als allererster Branch
+    // stehen (VOR Kündigungs-/gekuendigtZum-Logik): ein erhaltenes Kündigungsschreiben
+    // ist weder „Gekündigt" noch „Aktiv", sondern schlicht „Erhalten".
+    if (contract.documentType === 'LETTER' || contract.documentCategory === 'letter') {
+      return 'Erhalten';
+    }
+
     // 1. Kündigungsbestätigung = "Gekündigt"
     if (contract.documentCategory === 'cancellation_confirmation' || contract.gekuendigtZum) {
       const gekuendigtDate = contract.gekuendigtZum ? new Date(contract.gekuendigtZum) : null;
@@ -3088,7 +3097,7 @@ export default function Contracts() {
       return styles.statusCancelled;
     } else if (status === "beendet" || status === "abgelaufen") {
       return styles.statusExpired || styles.statusCancelled;
-    } else if (status === "entwurf" || status === "neu" || status === "optimiert") {
+    } else if (status === "entwurf" || status === "neu" || status === "optimiert" || status === "erhalten") {
       return styles.statusNeutral;
     } else if (status === "bezahlt") {
       return styles.statusActive;

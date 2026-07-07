@@ -47,6 +47,8 @@ export default function V2StickyMiniHeader({
   const analysisLabel = getAnalysisLabel(docClass);
   const docNoun = getDocNoun(docClass);
   const effectiveOptimizeLabel = optimizeLabel ?? `${docNoun} optimieren`;
+  // 📨 Welle 1: Ein empfangenes Schreiben optimiert man nicht — Button ausblenden.
+  const showOptimize = docClass !== "LETTER";
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -94,7 +96,7 @@ export default function V2StickyMiniHeader({
           </div>
         )}
 
-        {onOptimize && (
+        {onOptimize && showOptimize && (
           <button
             type="button"
             className={`${styles.optimizeBtn} ${isOptimizing ? styles.optimizeBtnLoading : ""}`}

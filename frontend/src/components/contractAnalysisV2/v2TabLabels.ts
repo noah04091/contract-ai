@@ -12,7 +12,7 @@
  * unbekannten/missenden documentType-Werten.
  */
 
-export type DocClass = "CONTRACT" | "AGB" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "FINANCIAL_DOCUMENT" | "UNKNOWN";
+export type DocClass = "CONTRACT" | "AGB" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "FINANCIAL_DOCUMENT" | "LETTER" | "UNKNOWN";
 
 export type TabId = "summary" | "risks" | "strengths" | "recos" | "pilot" | "suggestions" | "market" | "opinion";
 
@@ -31,6 +31,10 @@ export function classifyDocType(documentType?: string | null, contractType?: str
   if (upper === "RECEIPT") return "RECEIPT";
   if (upper === "TABLE_DOCUMENT") return "TABLE_DOCUMENT";
   if (upper === "FINANCIAL_DOCUMENT") return "FINANCIAL_DOCUMENT";
+  // 📨 Welle 1 (07.07.2026): einseitige empfangene Schreiben (Kündigung, Abmahnung,
+  // Bescheid, Mahnung) — eigene Klasse, sonst fiele alles auf CONTRACT-Wording
+  // („Du kannst entspannt unterschreiben" über einer Kündigung).
+  if (upper === "LETTER") return "LETTER";
   if (upper === "UNKNOWN") return "UNKNOWN";
   return "CONTRACT"; // CONTRACT + alle unbekannten Werte
 }
@@ -131,6 +135,22 @@ export function getTabLabels(dc: DocClass): Record<TabId, string> {
     };
   }
 
+  // 📨 LETTER: alle 8 IDs bewusst definiert — der Spill-over-Guard in
+  // V2TabsSection kann strengths/suggestions einblenden, wenn die KI sie
+  // wider Erwarten liefert; dann dürfen dort keine Vertrags-Labels stehen.
+  if (dc === "LETTER") {
+    return {
+      summary: "Zusammenfassung",
+      risks: "Was das für dich bedeutet",
+      strengths: "Was für dich spricht",
+      recos: "Deine Optionen & Fristen",
+      pilot: "Detailprüfung",
+      suggestions: "Hinweise",
+      market: "Einordnung",
+      opinion: "Rechtliche Einordnung",
+    };
+  }
+
   return CONTRACT_LABELS;
 }
 
@@ -157,6 +177,11 @@ export function getVisibleTabs(dc: DocClass): TabId[] {
   if (dc === "INVOICE" || dc === "RECEIPT" || dc === "FINANCIAL_DOCUMENT") {
     return ["summary", "risks", "recos", "opinion"];
   }
+  // 📨 LETTER: Fokus auf Bedeutung + Handlungsoptionen/Fristen — kein
+  // Marktvergleich, keine Stärken, keine Verbesserungsideen für ein Schreiben.
+  if (dc === "LETTER") {
+    return ["summary", "risks", "recos", "opinion"];
+  }
   // TABLE_DOCUMENT, UNKNOWN — minimal
   return ["summary", "risks", "opinion"];
 }
@@ -171,6 +196,7 @@ export function getAnalysisLabel(dc: DocClass): string {
     case "RECEIPT": return "Belegprüfung";
     case "TABLE_DOCUMENT": return "Datenanalyse";
     case "FINANCIAL_DOCUMENT": return "Finanzanalyse";
+    case "LETTER": return "Schreiben-Analyse";
     case "UNKNOWN": return "Dokumentenanalyse";
     case "CONTRACT":
     case "AGB":
@@ -189,6 +215,7 @@ export function getDocNoun(dc: DocClass): string {
     case "RECEIPT": return "Beleg";
     case "TABLE_DOCUMENT": return "Tabelle";
     case "FINANCIAL_DOCUMENT": return "Finanzdokument";
+    case "LETTER": return "Schreiben";
     case "UNKNOWN": return "Dokument";
     case "CONTRACT":
     default: return "Vertrag";
@@ -207,6 +234,7 @@ export function getDocNounPlural(dc: DocClass): string {
     case "RECEIPT": return "Belege";
     case "TABLE_DOCUMENT": return "Tabellen";
     case "FINANCIAL_DOCUMENT": return "Finanzdokumente";
+    case "LETTER": return "Schreiben"; // Plural = Singular
     case "UNKNOWN": return "Dokumente";
     case "CONTRACT":
     default: return "Verträge";
@@ -256,6 +284,12 @@ export function getEmptyState(dc: DocClass, tabId: TabId): { title: string; text
         text: "Das Finanzdokument wirkt plausibel und formal korrekt. Bei steuerlich relevanten Bescheiden: prüfe selbst die Einspruchsfrist (§ 355 AO: 1 Monat).",
       };
     }
+    if (dc === "LETTER") {
+      return {
+        title: "Keine Forderungen oder Fristen erkannt",
+        text: "Unsere KI hat in diesem Schreiben keine laufenden Fristen oder Forderungen gefunden. Prüfe trotzdem das Original — gerade bei Kündigungen und Bescheiden können Fristen ab dem Empfangsdatum laufen.",
+      };
+    }
     return {
       title: "Keine Auffälligkeiten gefunden",
       text: "Unsere KI hat das Dokument geprüft — keine offensichtlichen Probleme gefunden.",
@@ -286,6 +320,12 @@ export function getEmptyState(dc: DocClass, tabId: TabId): { title: string; text
       return {
         title: "Keine konkreten Empfehlungen nötig",
         text: "Die KI sieht keine dringenden Punkte, die vor Vertragsschluss verhandelt werden müssten.",
+      };
+    }
+    if (dc === "LETTER") {
+      return {
+        title: "Kein akuter Handlungsbedarf erkannt",
+        text: "Die KI sieht keine Frist, auf die du reagieren musst. Wenn du unsicher bist: prüfe das Empfangsdatum des Schreibens — manche Fristen laufen ab Zugang.",
       };
     }
     return {
@@ -329,6 +369,12 @@ export function getEmptyState(dc: DocClass, tabId: TabId): { title: string; text
 
   // summary — typspezifisch je DocClass (Erweiterung 22.05.2026)
   if (tabId === "summary") {
+    if (dc === "LETTER") {
+      return {
+        title: "Keine Zusammenfassung verfügbar",
+        text: 'Die Eckdaten des Schreibens findest du oben. Prüfe unbedingt die Fristen-Sektion und den Tab „Deine Optionen & Fristen" — dort steht, ob und bis wann du reagieren musst.',
+      };
+    }
     if (dc === "CONTRACT" || dc === "AGB") {
       return {
         title: "Bei dieser Analyse fehlt die Zusammenfassung",

@@ -23,6 +23,7 @@ import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css"; // fü
 import V2StickyMiniHeader from "./contractAnalysisV2/V2StickyMiniHeader"; // 🎨 V2 — Mini-Header beim Scrollen
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
 import V2ActionBar from "./contractAnalysisV2/V2ActionBar"; // 🎨 V2 — sticky Action-Bar unten
+import { classifyDocType } from "./contractAnalysisV2/v2TabLabels"; // 📨 Welle 1 — LETTER-Framing für die Action-Bar
 import datesWrapperStyles from "./contractAnalysisV2/V2DatesWrapper.module.css"; // 🎨 V2 — neutraler statt gelb
 
 interface ContractAnalysisProps {
@@ -175,6 +176,8 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
   const navigate = useNavigate();
   const { clearCache: clearCalendarCache } = useCalendarStore(); // 📅 Calendar Cache Invalidation
   const analysisResultRef = useRef<HTMLDivElement>(null);
+  // 📨 Welle 1: Scroll-Ziel für die LETTER-Primary-CTA „Fristen & Optionen ansehen".
+  const datesSectionRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkAnalyzeHealth().then(setServiceHealth);
@@ -1033,12 +1036,13 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             const failed = isFailedAnalysis(data);
             const heroScore = data?.contractScore ?? null;
             // Score-Color synchron zu V2HeroSection.getScoreVariant
+            // 📨 Welle 1: LETTER hat eigene Schwellen (85/60/35) — synchron halten!
+            const isLetterDoc = String((data as { documentType?: string | null })?.documentType || "").toUpperCase() === "LETTER";
             const scoreColor = heroScore == null
               ? "#94a3b8"
-              : heroScore >= 90 ? "#10b981"
-              : heroScore >= 70 ? "#2563eb"
-              : heroScore >= 40 ? "#f59e0b"
-              : "#ef4444";
+              : isLetterDoc
+                ? (heroScore >= 85 ? "#10b981" : heroScore >= 60 ? "#2563eb" : heroScore >= 35 ? "#f59e0b" : "#ef4444")
+                : (heroScore >= 90 ? "#10b981" : heroScore >= 70 ? "#2563eb" : heroScore >= 40 ? "#f59e0b" : "#ef4444");
             return (
               <>
                 {/* Sticky Mini-Header — erscheint beim Runter-Scrollen mit Filename
@@ -1596,7 +1600,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               V2: Wrapper neutralisiert das gelbe fristenBlock-Styling. */}
           {(result?.originalContractId || initialResult?.originalContractId)
             && !isFailedAnalysis((result || initialResult) as Parameters<typeof isFailedAnalysis>[0]) && (
-            <div className={datesWrapperStyles.v2DatesWrapper}>
+            <div className={datesWrapperStyles.v2DatesWrapper} ref={datesSectionRef}>
               <AnalysisImportantDates
                 contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
                 contractName={displayName}
@@ -1816,6 +1820,16 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             onOpenContract={() => {
               const id = result?.originalContractId || initialResult?.originalContractId;
               if (id && onNavigateToContract) onNavigateToContract(id);
+            }}
+            // 📨 Welle 1: LETTER-Framing — Primary-CTA wird „Fristen & Optionen ansehen"
+            docClass={(() => {
+              const d = (result || initialResult) as { documentType?: string | null; contractType?: string | null } | null;
+              return classifyDocType(d?.documentType, d?.contractType);
+            })()}
+            onShowDeadlines={() => {
+              // Scroll zur Fristen-Sektion; Fallback: ans Ergebnis-Ende (Tabs/Empfehlungen)
+              const target = datesSectionRef.current || analysisResultRef.current;
+              if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           />
           )}

@@ -37,6 +37,10 @@ const FRIST_ICON: Record<string, string> = {
   einwendungsfrist: "⚖️",
   sperrfrist: "🔒",
   sonstige: "📌",
+  // 📨 Welle 1 (07.07.2026): Fristen aus einseitigen Schreiben (LETTER-Modus)
+  klagefrist: "⚖️",
+  widerspruchsfrist: "📮",
+  einspruchsfrist: "🏛️",
 };
 
 const fristIcon = (type?: string): string => {

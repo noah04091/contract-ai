@@ -96,8 +96,17 @@ export function isFailedAnalysis(d: AnalysisData): boolean {
   return false;
 }
 
-function getScoreVariant(score: number | null | undefined) {
+function getScoreVariant(score: number | null | undefined, dc?: DocClass) {
   if (score == null) return { color: "#94a3b8", rating: "Vorläufig", cls: styles.ratingAmber };
+  // 📨 Welle 1: Bei empfangenen Schreiben bedeutet der Score "Wie unkritisch ist
+  // die Lage für dich" — Vertrags-Wörter wie "Verbesserung nötig" wären absurd
+  // ("verbessere deine Kündigung"?). Eigene Handlungs-Wörter.
+  if (dc === "LETTER") {
+    if (score >= 85) return { color: "#10b981", rating: "Kein akuter Handlungsbedarf", cls: styles.ratingSuccess };
+    if (score >= 60) return { color: "#2563eb", rating: "Aufmerksam bleiben", cls: styles.ratingPrimary };
+    if (score >= 35) return { color: "#f59e0b", rating: "Handeln empfohlen", cls: styles.ratingAmber };
+    return { color: "#ef4444", rating: "Dringend handeln", cls: styles.ratingRed };
+  }
   if (score >= 90) return { color: "#10b981", rating: "Exzellent", cls: styles.ratingSuccess };
   if (score >= 70) return { color: "#2563eb", rating: "Solide", cls: styles.ratingPrimary };
   if (score >= 40) return { color: "#f59e0b", rating: "Verbesserung nötig", cls: styles.ratingAmber };
@@ -121,7 +130,7 @@ function formatPercent(v: number | string | null | undefined): string {
 // Werte sind interne Detector-Outputs — niemals user-facing zeigen. Sie können
 // bei Mis-Klassifikation auch zu Pillen wie "TABLE_DOCUMENT" und Icon-
 // Abkürzungen wie "TAB" führen, was Verwirrung erzeugt.
-const BACKEND_DOC_TYPE_MARKERS = /^(CONTRACT|INVOICE|RECEIPT|FINANCIAL_DOCUMENT|TABLE_DOCUMENT|UNKNOWN)$/i;
+const BACKEND_DOC_TYPE_MARKERS = /^(CONTRACT|INVOICE|RECEIPT|FINANCIAL_DOCUMENT|TABLE_DOCUMENT|LETTER|UNKNOWN)$/i;
 function isBackendDocTypeMarker(s: string | null | undefined): boolean {
   return !!s && BACKEND_DOC_TYPE_MARKERS.test(s);
 }
@@ -134,6 +143,7 @@ function buildHeroActivity(dc: DocClass): string {
   switch (dc) {
     case "INVOICE": return "Rechnungsprüfung";
     case "RECEIPT": return "Belegprüfung";
+    case "LETTER": return "Schreiben-Prüfung";
     case "TABLE_DOCUMENT":
     case "FINANCIAL_DOCUMENT":
     case "UNKNOWN":
@@ -161,6 +171,9 @@ function getDocSubject(dc: DocClass): { artikel: string; noun: string; verb_3p: 
       return { artikel: "Das", noun: "Finanzdokument", verb_3p: "wirkt", action_verb: "bei der Weiterverarbeitung" };
     case "UNKNOWN":
       return { artikel: "Das", noun: "Dokument", verb_3p: "wirkt", action_verb: "vor weiterer Nutzung" };
+    case "LETTER":
+      // action_verb bewusst OHNE "Unterschrift" — man reagiert auf ein Schreiben.
+      return { artikel: "Das", noun: "Schreiben", verb_3p: "betrifft", action_verb: "vor deiner Reaktion" };
     case "CONTRACT":
     default:
       return { artikel: "Der", noun: "Vertrag", verb_3p: "wirkt", action_verb: "vor Unterschrift" };
@@ -189,6 +202,25 @@ function buildHeroSubtext(d: AnalysisData, dc: DocClass): string {
   }
   const critCount = Array.isArray(d.criticalIssues) ? d.criticalIssues.length : 0;
   const subj = getDocSubject(dc);
+
+  // 📨 LETTER: eigene Branch (Welle 1) — keine Kopula-Sätze ("wirkt ausgewogen"),
+  // sondern Handlungs-Framing. Fristen sind die Kernaussage.
+  if (dc === "LETTER") {
+    if (score >= 85) {
+      return critCount === 0
+        ? "Aus diesem Schreiben ergibt sich für dich kein akuter Handlungsbedarf. Details findest du unten."
+        : `Kein akuter Handlungsdruck erkennbar — wir haben aber ${formatPunkte(critCount)} für dich markiert.`;
+    }
+    if (score >= 60) {
+      return critCount === 0
+        ? "Behalte dieses Schreiben im Blick. Prüfe die Einordnung und die Fristen unten."
+        : `Wir haben ${formatPunkte(critCount)} markiert. Prüfe besonders die Fristen unten.`;
+    }
+    if (score >= 35) {
+      return `Dieses Schreiben verlangt eine Reaktion von dir. Wir haben ${critCount === 0 ? "die wichtigen Punkte" : formatPunkte(critCount)} und deine Optionen unten aufbereitet.`;
+    }
+    return `Hier läuft eine wichtige Frist — bitte kümmere dich zeitnah darum. Deine Optionen und alle Fristen findest du unten.`;
+  }
 
   // TABLE/FINANCIAL: eigene Branch — "Vertrag" passt nicht, "ausgewogen" auch nicht
   if (dc === "TABLE_DOCUMENT" || dc === "FINANCIAL_DOCUMENT") {
@@ -321,9 +353,10 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
     return raw as string;
   };
   const score = d.contractScore;
-  const variant = getScoreVariant(score);
-  // 🎯 DocClass für typspezifische UI (20.05.2026)
+  // 🎯 DocClass für typspezifische UI (20.05.2026) — vor getScoreVariant,
+  // damit LETTER eigene Rating-Wörter bekommt (Welle 1).
   const docClass: DocClass = classifyDocType(d.documentType, d.contractType);
+  const variant = getScoreVariant(score, docClass);
   const [laymanMode, setLaymanMode] = useState(false);
   const [heroSubExpanded, setHeroSubExpanded] = useState(false);
   const [scoreDrawerOpen, setScoreDrawerOpen] = useState(false);
@@ -667,8 +700,8 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             <div className={styles.unknownDesc}>
               Wir haben dein Dokument analysiert, konnten den Typ aber nicht eindeutig zuordnen.
               Unsere Spezialisten-Profile gibt es für: Verträge (Miete, Arbeit, NDA, Kauf, …), AGB,
-              Rechnungen, Quittungen, Tabellen und Finanzdokumente. Du kannst eine erneute Analyse
-              versuchen oder ein anderes Dokument hochladen.
+              Schreiben (Kündigung, Abmahnung, Bescheid, Mahnung), Rechnungen, Quittungen, Tabellen
+              und Finanzdokumente. Du kannst eine erneute Analyse versuchen oder ein anderes Dokument hochladen.
             </div>
             {(canReanalyze && onReanalyze) || onReset ? (
               <div className={styles.unknownActions}>
@@ -732,7 +765,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
             >
             <div className={styles.scoreDonut} style={{ position: "relative", width: 160, height: 160 }}>
-              <svg viewBox="0 0 160 160" role="img" aria-label={`Vertragsscore: ${displayScore} von 100, Bewertung: ${variant.rating}`} style={{ width: "100%", height: "100%", position: "relative", zIndex: 1 }}>
+              <svg viewBox="0 0 160 160" role="img" aria-label={`${docClass === "LETTER" ? "Einschätzung" : "Vertragsscore"}: ${displayScore} von 100, Bewertung: ${variant.rating}`} style={{ width: "100%", height: "100%", position: "relative", zIndex: 1 }}>
                 <circle cx="80" cy="80" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="11" />
                 <circle
                   cx="80" cy="80" r={radius} fill="none"
@@ -813,7 +846,9 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             <div className={styles.heroStats}>
               <div className={styles.hsItem}>
                 <span className={`${styles.hsDot} ${styles.hsDotRed}`} />
-                <strong>{critCount}</strong>&nbsp;{critCount === 1 ? "kritische Klausel" : "kritische Klauseln"}
+                <strong>{critCount}</strong>&nbsp;{docClass === "LETTER"
+                  ? (critCount === 1 ? "kritischer Punkt" : "kritische Punkte")
+                  : (critCount === 1 ? "kritische Klausel" : "kritische Klauseln")}
               </div>
               <div className={styles.hsItem}>
                 <span className={`${styles.hsDot} ${styles.hsDotAmber}`} />
@@ -939,32 +974,52 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             return item.title || item.description || "";
           };
 
+          // 📨 Welle 1: Bei Schreiben ist die FRIST der „Gold wert"-Moment —
+          // Frist-Karte zuerst, mit Rest-Tagen groß („⚖️ Klagefrist — noch 12 Tage").
+          const daysLeft = topDate ? Math.ceil((topDate.date.getTime() - now.getTime()) / 86400000) : null;
+          const dateCard = topDate && (
+            <div className={`${styles.glanceCard} ${styles.glanceCardDate}`}>
+              <div className={styles.glanceIcon} aria-hidden="true">{docClass === "LETTER" ? "⚖️" : "⏰"}</div>
+              <div className={styles.glanceLabel}>{docClass === "LETTER" ? "Wichtigste Frist" : "Kritischster Termin"}</div>
+              <div className={styles.glanceText}>
+                {topDate.ev.label || topDate.ev.title || "Termin"} · {topDate.date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" })}
+                {docClass === "LETTER" && daysLeft != null && (
+                  <> · <strong>{daysLeft === 0 ? "HEUTE" : daysLeft === 1 ? "noch 1 Tag" : `noch ${daysLeft} Tage`}</strong></>
+                )}
+              </div>
+            </div>
+          );
+          const riskCard = topRisk && (
+            <div className={`${styles.glanceCard} ${styles.glanceCardRisk}`}>
+              <div className={styles.glanceIcon} aria-hidden="true">⚠️</div>
+              <div className={styles.glanceLabel}>{docClass === "LETTER" ? "Wichtigster Punkt" : "Top-Risiko"}</div>
+              <div className={styles.glanceText}>{truncate(getInsightText(topRisk), 90)}</div>
+            </div>
+          );
+          const recoCard = topReco && (
+            <div className={`${styles.glanceCard} ${styles.glanceCardReco}`}>
+              <div className={styles.glanceIcon} aria-hidden="true">💡</div>
+              <div className={styles.glanceLabel}>{docClass === "LETTER" ? "Wichtigste Option" : "Wichtigste Empfehlung"}</div>
+              <div className={styles.glanceText}>{truncate(getInsightText(topReco), 90)}</div>
+            </div>
+          );
+
           return (
             <div className={styles.atAGlance}>
               <div className={styles.atAGlanceTitle}>Auf einen Blick</div>
               <div className={styles.atAGlanceGrid}>
-                {topRisk && (
-                  <div className={`${styles.glanceCard} ${styles.glanceCardRisk}`}>
-                    <div className={styles.glanceIcon} aria-hidden="true">⚠️</div>
-                    <div className={styles.glanceLabel}>Top-Risiko</div>
-                    <div className={styles.glanceText}>{truncate(getInsightText(topRisk), 90)}</div>
-                  </div>
-                )}
-                {topReco && (
-                  <div className={`${styles.glanceCard} ${styles.glanceCardReco}`}>
-                    <div className={styles.glanceIcon} aria-hidden="true">💡</div>
-                    <div className={styles.glanceLabel}>Wichtigste Empfehlung</div>
-                    <div className={styles.glanceText}>{truncate(getInsightText(topReco), 90)}</div>
-                  </div>
-                )}
-                {topDate && (
-                  <div className={`${styles.glanceCard} ${styles.glanceCardDate}`}>
-                    <div className={styles.glanceIcon} aria-hidden="true">⏰</div>
-                    <div className={styles.glanceLabel}>Kritischster Termin</div>
-                    <div className={styles.glanceText}>
-                      {topDate.ev.label || topDate.ev.title || "Termin"} · {topDate.date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit", year: "2-digit" })}
-                    </div>
-                  </div>
+                {docClass === "LETTER" ? (
+                  <>
+                    {dateCard}
+                    {riskCard}
+                    {recoCard}
+                  </>
+                ) : (
+                  <>
+                    {riskCard}
+                    {recoCard}
+                    {dateCard}
+                  </>
                 )}
               </div>
             </div>

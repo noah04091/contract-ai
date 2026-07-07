@@ -188,7 +188,10 @@ interface Contract {
   cancellationConfirmedAt?: string;
   // 📅 KI-extrahierte Eckdaten & Termine
   gekuendigtZum?: string;
-  documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract';
+  documentCategory?: 'cancellation_confirmation' | 'invoice' | 'active_contract' | 'letter';
+  // 📨 Welle 1 (07.07.2026): einseitige Schreiben
+  documentType?: string;
+  letterType?: string;
   contractType?: string;
   provider?: {
     displayName?: string;
@@ -2453,7 +2456,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             server-seitig schon entfernt → blenden sich via &&-Guards selbst aus. */}
         {contract.gated && (
           <div className={styles.section}>
-            <LockedAnalysisUpsell counts={contract.gatedCounts} />
+            <LockedAnalysisUpsell counts={contract.gatedCounts} docClass={contract.documentType === 'LETTER' ? 'LETTER' : undefined} />
           </div>
         )}
 

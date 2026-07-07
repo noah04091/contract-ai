@@ -37,6 +37,10 @@ interface Props {
   counts?: GatedCounts;
   variant?: TeaserVariant;
   onUnlock?: () => void;
+  /** 📨 Welle 1 (07.07.2026): "LETTER" → Schreiben-Demo-Texte (Fristen/Optionen)
+   *  statt Vertrags-Verhandlungs-Demo — sonst schimmert über einer Kündigung
+   *  sichtbar falscher Inhalt („Nachverhandlung vor Unterzeichnung") durch. */
+  docClass?: string;
 }
 
 interface DemoItem { dot: string; title: string; lines: string[]; }
@@ -71,6 +75,42 @@ const DEMO_SETS: Record<Exclude<TeaserVariant, "opinion">, DemoItem[]> = {
   ],
 };
 
+// 📨 Welle 1: Demo-Inhalte für einseitige Schreiben (Kündigung/Abmahnung/Bescheid) —
+// Fristen- und Options-Framing statt Vertrags-Verhandlung, durchgängig „du".
+const LETTER_DEMO_SETS: Record<Exclude<TeaserVariant, "opinion">, DemoItem[]> = {
+  risks: [
+    { dot: "#ef4444", title: "Wichtige Frist läuft — Rechtsverlust möglich", lines: ["In diesem Schreiben läuft eine Frist, nach deren Ablauf du deine Rechte verlieren kannst.", "Das genaue Datum und was es bedeutet, findest du in der vollständigen Analyse."] },
+    { dot: "#f59e0b", title: "Formale Wirksamkeit prüfenswert", lines: ["Es gibt Anhaltspunkte, dass das Schreiben formale Anforderungen nicht vollständig erfüllt.", "Das kann deine Position deutlich stärken."] },
+    { dot: "#ef4444", title: "Konkrete Forderung an dich", lines: ["Das Schreiben verlangt eine Reaktion von dir — mit Konsequenzen bei Untätigkeit."] },
+  ],
+  recommendations: [
+    { dot: "#8b5cf6", title: "Frist notieren und rechtzeitig handeln", lines: ["Die wichtigste Frist mit konkretem Datum und deinen Optionen findest du in der vollständigen Analyse."] },
+    { dot: "#8b5cf6", title: "Wirksamkeit prüfen lassen", lines: ["Bestimmte formale Mängel können das Schreiben angreifbar machen — wir zeigen dir, welche."] },
+    { dot: "#8b5cf6", title: "Deine Reaktions-Optionen abwägen", lines: ["Reagieren, widersprechen oder abwarten — jede Option hat Konsequenzen, die wir für dich aufbereitet haben."] },
+  ],
+  suggestions: [
+    { dot: "#f59e0b", title: "Empfangsdatum dokumentieren", lines: ["Viele Fristen laufen ab Zugang — halte fest, wann du das Schreiben erhalten hast."] },
+    { dot: "#f59e0b", title: "Unterlagen sichern", lines: ["Umschlag, Datum und Anlagen können später als Beweis wichtig sein."] },
+    { dot: "#f59e0b", title: "Nicht vorschnell unterschreiben oder zahlen", lines: ["Erst prüfen, dann reagieren — manche Forderungen sind angreifbar."] },
+  ],
+  market: [
+    { dot: "#0ea5e9", title: "Einordnung deines Schreibens", lines: ["Wie üblich oder ungewöhnlich dieses Schreiben ist, zeigt dir die vollständige Analyse."] },
+    { dot: "#0ea5e9", title: "Typische Reaktionswege", lines: ["Was Empfänger in vergleichbaren Fällen tun, findest du in den Optionen."] },
+    { dot: "#0ea5e9", title: "Häufige Fehler vermeiden", lines: ["Die typischen Fallen bei dieser Art Schreiben haben wir für dich markiert."] },
+  ],
+  default: [
+    { dot: "#ef4444", title: "Wichtige Frist läuft — Rechtsverlust möglich", lines: ["In diesem Schreiben läuft eine Frist, nach deren Ablauf du Rechte verlieren kannst.", "Datum und Bedeutung stehen in der vollständigen Analyse."] },
+    { dot: "#f59e0b", title: "Formale Wirksamkeit prüfenswert", lines: ["Anhaltspunkte für formale Mängel können deine Position stärken."] },
+    { dot: "#8b5cf6", title: "Deine Optionen im Überblick", lines: ["Reagieren, widersprechen oder abwarten — mit Konsequenzen und Fristen aufbereitet."] },
+  ],
+};
+
+const LETTER_OPINION_PARAS: string[] = [
+  "Das Schreiben ist rechtlich einzuordnen und auf seine formale und inhaltliche Wirksamkeit zu prüfen — einschließlich der Frage, ob alle Anforderungen an Form und Berechtigung des Absenders erfüllt sind.",
+  "Im Zentrum steht die Fristenlage: Aus dem Schreiben ergeben sich konkrete Reaktionsfristen, deren Versäumnis erhebliche rechtliche Nachteile bis hin zum Rechtsverlust nach sich ziehen kann.",
+  "Im Ergebnis bestehen mehrere Handlungsoptionen mit unterschiedlichen Konsequenzen, die in der vollständigen Analyse mit konkreten Daten und Prioritäten dargestellt werden.",
+];
+
 // Rechtsgutachten = Fließtext-Absätze statt Karten.
 const OPINION_PARAS: string[] = [
   "Der Vertrag ist insgesamt wirksam geschlossen, weist jedoch in mehreren Punkten ein deutliches Ungleichgewicht zu Lasten des Kunden auf, das im Folgenden klauselweise bewertet wird.",
@@ -96,13 +136,16 @@ const titleStyle: React.CSSProperties = { fontSize: 15, fontWeight: 700, color: 
 const lineStyle: React.CSSProperties = { fontSize: 13.5, lineHeight: 1.55, color: "#334155", WebkitTextFillColor: "#334155" };
 const paraStyle: React.CSSProperties = { ...lineStyle, fontSize: 14 };
 
-const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, variant = "default", onUnlock }) => {
+const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, variant = "default", onUnlock, docClass }) => {
+  const isLetter = docClass === "LETTER";
   const moreRisks = Math.max(0, (counts.risks || 0) - (counts.risksShown || 0));
 
   // Zusammenfassungszeile NUR aus tatsächlich gesperrtem Inhalt bauen (ehrlich —
   // nichts versprechen, was nicht da ist).
   const parts: string[] = [];
-  if (moreRisks > 0) parts.push(`${moreRisks} ${moreRisks === 1 ? "weitere kritische Klausel" : "weitere kritische Klauseln"}`);
+  if (moreRisks > 0) parts.push(isLetter
+    ? `${moreRisks} ${moreRisks === 1 ? "weiterer kritischer Punkt" : "weitere kritische Punkte"}`
+    : `${moreRisks} ${moreRisks === 1 ? "weitere kritische Klausel" : "weitere kritische Klauseln"}`);
   if ((counts.recommendations || 0) > 0) parts.push(`${counts.recommendations} Empfehlungen`);
   if ((counts.suggestions || 0) > 0) parts.push(`${counts.suggestions} Verbesserungsideen`);
   if (counts.hadComparison) parts.push("Marktvergleich");
@@ -115,14 +158,16 @@ const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, variant = "default
     window.location.href = "/pricing";
   };
 
-  const items = variant !== "opinion" ? DEMO_SETS[variant] || DEMO_SETS.default : null;
+  const demoSets = isLetter ? LETTER_DEMO_SETS : DEMO_SETS;
+  const opinionParas = isLetter ? LETTER_OPINION_PARAS : OPINION_PARAS;
+  const items = variant !== "opinion" ? demoSets[variant] || demoSets.default : null;
 
   return (
     <div className={styles.wrap}>
       {/* Verschwommener Demo-Text — visuell kritische Props inline (siehe Kommentar oben) */}
       <div className={styles.blur} style={blurStyle}>
         {variant === "opinion"
-          ? OPINION_PARAS.map((p, i) => <div key={i} style={paraStyle}>{p}</div>)
+          ? opinionParas.map((p, i) => <div key={i} style={paraStyle}>{p}</div>)
           : items!.map((it, i) => (
               <div key={i} style={{ display: "flex", gap: 12 }}>
                 <span style={dotStyle(it.dot)} />

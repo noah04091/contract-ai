@@ -1,4 +1,4 @@
-// V2-Tabs-Section — 7 Tabs (+ optional Pilot-Tab) im v6-Mockup-Stil.
+﻿// V2-Tabs-Section — 7 Tabs (+ optional Pilot-Tab) im v6-Mockup-Stil.
 //
 // Tab-Reihenfolge: Zusammenfassung | Risiken | Stärken | Empfehlungen
 //                  [Pilotprüfung] | Verbesserungsideen | Marktvergleich | Rechtsgutachten
@@ -297,7 +297,7 @@ export default function V2TabsSection({ data }: Props) {
   return (
     <>
       <div className={styles.tabsContainer}>
-        <div className={styles.tabs} role="tablist" aria-label="Vertragsanalyse">
+        <div className={styles.tabs} role="tablist" aria-label={docClass === "LETTER" ? "Schreiben-Analyse" : "Vertragsanalyse"}>
           {tabs.map((t, idx) => (
             <button
               key={t.id}
@@ -394,7 +394,7 @@ export default function V2TabsSection({ data }: Props) {
         {/* 🔒 Free-Tease: NUR wenn es wirklich weitere (gesperrte) Risiken gibt */}
         {teaseRisks && (
           <div style={{ marginTop: criticals.length ? 16 : 0 }}>
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="risks" onUnlock={handleUnlock} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="risks" onUnlock={handleUnlock} docClass={docClass} />
           </div>
         )}
       </div>
@@ -445,7 +445,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {recos.length === 0 ? (
           teaseRecos ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="recommendations" onUnlock={handleUnlock} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="recommendations" onUnlock={handleUnlock} docClass={docClass} />
           ) : (
             <EmptyState
               icon="✓"
@@ -530,7 +530,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {sugs.length === 0 ? (
           teaseSugs ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="suggestions" onUnlock={handleUnlock} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="suggestions" onUnlock={handleUnlock} docClass={docClass} />
           ) : (
             <EmptyState
               icon="💡"
@@ -558,7 +558,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {cmpArr.length === 0 ? (
           teaseMarket ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="market" onUnlock={handleUnlock} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="market" onUnlock={handleUnlock} docClass={docClass} />
           ) : (
             <EmptyState
               icon="📊"
@@ -585,7 +585,7 @@ export default function V2TabsSection({ data }: Props) {
       >
         {opinion.length === 0 ? (
           teaseOpinion ? (
-            <LockedAnalysisUpsell counts={d.gatedCounts} variant="opinion" onUnlock={handleUnlock} />
+            <LockedAnalysisUpsell counts={d.gatedCounts} variant="opinion" onUnlock={handleUnlock} docClass={docClass} />
           ) : (
             <EmptyState
               icon="⚖️"
