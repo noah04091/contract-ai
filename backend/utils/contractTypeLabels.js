@@ -41,7 +41,30 @@ function pilotTypeToLabel(pilotType) {
   return CONTRACT_TYPE_LABELS[key] || CONTRACT_TYPE_LABELS.other;
 }
 
+// 🆕 Welle 1 (07.07.2026): Deutsche Bezeichnungen für einseitige Schreiben (documentType=LETTER).
+// Quelle: VALID_LETTER_TYPES in backend/routes/analyze.js (Türsteher 2).
+const LETTER_TYPE_LABELS = Object.freeze({
+  kuendigung_erhalten: 'Kündigungsschreiben (erhalten)',
+  abmahnung: 'Abmahnung',
+  behoerdenbescheid: 'Behördenbescheid',
+  mahnbescheid: 'Gerichtlicher Mahnbescheid',
+  mahnung: 'Mahnung',
+  sonstiges_schreiben: 'Schreiben'
+});
+
+/**
+ * Mappt einen KI-erkannten letterType auf seine deutsche Bezeichnung.
+ * null/unbekannt → 'Schreiben' (nie null: die Liste soll für LETTER nie '—' zeigen).
+ */
+function letterTypeToLabel(letterType) {
+  if (letterType == null || typeof letterType !== 'string') return LETTER_TYPE_LABELS.sonstiges_schreiben;
+  const key = letterType.toLowerCase().trim();
+  return LETTER_TYPE_LABELS[key] || LETTER_TYPE_LABELS.sonstiges_schreiben;
+}
+
 module.exports = {
   CONTRACT_TYPE_LABELS,
-  pilotTypeToLabel
+  pilotTypeToLabel,
+  LETTER_TYPE_LABELS,
+  letterTypeToLabel
 };

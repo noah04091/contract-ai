@@ -334,22 +334,93 @@ const EXAMPLE_EXCLUSION_HINT = `⚠️ NICHT extrahieren — Datums/Fristen NUR 
 - Erläuterungs-Texten die NUR illustrieren, nicht verpflichten: "Hier ein Beispiel:", "Ein Beispiel wäre, wenn …"
 Regel: Lieber leere Arrays als Beispiel-/Hypothesen-Datums melden. Wenn das Datum keine echte Verpflichtung/Frist im Vertrag verankert → weglassen.`;
 
+// ═══════════════════════════════════════════════════════════════════════
+// 📨 Welle 1 (07.07.2026) — LETTER-Modus für einseitige empfangene Schreiben
+// ═══════════════════════════════════════════════════════════════════════
+// Nur aktiv wenn analyze.js options.documentType === 'LETTER' übergibt.
+// Der Vertrags-Pfad bleibt byte-identisch (alle mode-Parameter defaulten
+// auf null → exakt die bisherigen Prompt-Strings).
+//
+// WARUM nötig: Der Vertrags-FRIST_CALENDAR_HINT lehrt explizit
+// „Widerspruchsfrist X Tage nach Zugang → actionable=false" — für ein
+// ERHALTENES Schreiben ist genau diese Frist aber DER zentrale Termin
+// (Klagefrist § 4 KSchG, Widerspruch § 84 SGG, Mahnbescheid § 694 ZPO).
+// Der LETTER-Modus leitet berechenbare Fristenden als importantDates mit
+// eigenen Typen aus, die der Kalender kritisch (30/7/1) erinnert.
+const LETTER_DATE_SCHEMA = `{
+  "type": "<einer von: klagefrist, widerspruchsfrist, einspruchsfrist, reaktionsfrist, other>",
+  "date": "YYYY-MM-DD",
+  "label": "<Kurzname für Kalender, max 50 Zeichen>",
+  "description": "<1 Satz warum für Mandanten wichtig>",
+  "calculated": true|false,
+  "confidence": <Zahl 0-100: wie sicher du dir bei diesem Datum bist. 90-100 nur wenn explizit + eindeutig im Text. 60-89 bei klaren Indizien. 30-59 bei berechneten/abgeleiteten Datums oder Mehrdeutigkeit. <30 bei großer Unsicherheit (besser dann gar nicht melden).>,
+  "source": "<Absatz-/Stellen-Bezeichnung im Schreiben>",
+  "evidence": "<wörtlicher Satz aus dem Schreiben, max ${EVIDENCE_MAX_LEN} Zeichen>"
+}`;
+
+function buildLetterModeHint(letterType) {
+  const typeHints = {
+    kuendigung_erhalten: `Dies ist ein ERHALTENES KÜNDIGUNGSSCHREIBEN. PFLICHT-Frist: Kündigungsschutzklage binnen 3 WOCHEN ab Zugang (§ 4 KSchG) → type "klagefrist", calculated: true, konservativ ab dem Briefdatum gerechnet, Label: "Klagefrist spätestens <Datum> (läuft ab Zugang — Empfangsdatum prüfen)". Zusätzlich den genannten Beendigungstermin als type "other" ausgeben.`,
+    abmahnung: `Dies ist eine ABMAHNUNG. Extrahiere die gesetzte Frist (Unterlassungserklärung/Stellungnahme/Zahlung) als type "reaktionsfrist" mit konkretem Datum.`,
+    behoerdenbescheid: `Dies ist ein BEHÖRDENBESCHEID. PFLICHT-Frist: Widerspruch/Einspruch binnen 1 Monat ab Bekanntgabe (§ 70 VwGO / § 84 SGG / § 355 AO) → type "widerspruchsfrist" bzw. "einspruchsfrist" (Steuer), calculated: true, konservativ ab dem Bescheiddatum, Label mit Zugangs-Hinweis.`,
+    mahnbescheid: `Dies ist ein GERICHTLICHER MAHN-/VOLLSTRECKUNGSBESCHEID. PFLICHT-Frist: Widerspruch/Einspruch binnen 2 WOCHEN ab Zustellung (§ 694 / § 700 ZPO) → type "widerspruchsfrist" bzw. "einspruchsfrist", calculated: true, konservativ ab dem Bescheiddatum, Label mit Zustellungs-Hinweis. HÖCHSTE Dringlichkeit.`,
+    mahnung: `Dies ist eine MAHNUNG/ZAHLUNGSERINNERUNG. Extrahiere die gesetzte Zahlungsfrist als type "reaktionsfrist" mit konkretem Datum.`,
+    sonstiges_schreiben: `Dies ist ein einseitiges Schreiben. Extrahiere JEDE genannte oder berechenbare Reaktions-/Widerspruchs-/Antwortfrist als type "reaktionsfrist" bzw. "widerspruchsfrist" mit konkretem Datum.`
+  };
+  return `⚠️ SONDERFALL: Das Dokument ist KEIN Vertrag, sondern ein EINSEITIGES EMPFANGENES SCHREIBEN.
+${typeHints[letterType] || typeHints.sonstiges_schreiben}
+
+REGELN FÜR SCHREIBEN (ersetzen die Vertrags-Gewohnheiten):
+- Reaktions-/Klage-/Widerspruchs-/Einspruchsfristen sind hier DIE zentralen Termine.
+  Wenn das Fristende aus Briefdatum + Fristdauer berechenbar ist → als importantDate
+  MIT Datum ausgeben (calculated: true), NICHT nur als vager Frist-Hinweis.
+- Fristen, die "ab Zugang/Zustellung" laufen: konservativ ab dem Briefdatum rechnen
+  und im Label kennzeichnen ("läuft ab Zugang — Empfangsdatum prüfen").
+- KEINE Vertrags-Typen verwenden (kein start_date/end_date/cancellation_deadline) —
+  ein Schreiben hat keinen Vertragsbeginn und kein Vertragsende.
+- Bereits abgelaufene Fristen TROTZDEM ausgeben (Vergangenheits-Datum ist ok).
+- fristHinweise darfst du zusätzlich liefern (für die Anzeige), aber das konkrete
+  Fristende gehört IMMER auch in importantDates.`;
+}
+
+// System-Prompt-Varianten für den LETTER-Modus (gleiche 3 Regeln, richtige Rolle).
+const LETTER_JUNIOR_SYSTEM_PROMPT = `Du bist Junior-Anwalt in einer Kanzlei. Der Mandant hat ein einseitiges Schreiben ERHALTEN (Kündigung, Abmahnung, Bescheid, Mahnung). Du schreibst ihm alle wichtigen Datums + Fristen heraus — besonders Reaktions-, Klage- und Widerspruchsfristen.
+
+Drei Regeln, sonst keine:
+1. Zitiere die belegende Textstelle wörtlich (Feld evidence). Nicht paraphrasieren, nicht kürzen.
+2. Wenn du nichts findest: liefere leere Arrays. Lieber leer als erfunden.
+3. Antworte NUR als JSON.`;
+
+const LETTER_CHUNK_AUDIT_SYSTEM_PROMPT = `Du prüfst EINEN Abschnitt eines empfangenen Schreibens (Kündigung, Abmahnung, Bescheid, Mahnung). Liste alle Datums + Fristen, die in DIESEM Abschnitt stehen — besonders Reaktions-, Klage- und Widerspruchsfristen.
+
+Drei Regeln, sonst keine:
+1. evidence wörtlich aus dem Abschnitt zitieren. Nicht paraphrasieren.
+2. Nur was IM ABSCHNITT steht. Wenn nichts → leere Arrays.
+3. Antworte NUR als JSON.`;
+
+const LETTER_SENIOR_SYSTEM_PROMPT = `Du bist Senior-Anwalt. Junior und Abschnitts-Audit haben ein empfangenes Schreiben analysiert. Du machst die Endprüfung: welche Frist/welches Datum steht IM SCHREIBEN oder ist berechenbar, fehlt aber in der bisherigen Liste? Besonders: Klagefrist (§ 4 KSchG), Widerspruchsfrist (Bescheid/Mahnbescheid), gesetzte Reaktionsfristen.
+
+Drei Regeln, sonst keine:
+1. Liefere NUR ZUSÄTZE — was bereits in der Liste steht, NICHT noch einmal.
+2. evidence wörtlich aus dem Schreiben zitieren. Nicht paraphrasieren.
+3. Antworte NUR als JSON. Wenn nichts fehlt: leere Arrays.`;
+
 /**
  * Stage 1 — Junior-User-Prompt.
  * Liest den ganzen Vertrag, sammelt breit. Kein 13-Regeln-Monster.
  */
-function buildJuniorPrompt(contractText) {
+function buildJuniorPrompt(contractText, mode = null) {
   const today = new Date().toISOString().slice(0, 10);
   return `Heutiges Datum: ${today}
 
-Lies den folgenden Vertrag durch und schreibe alle wichtigen Datums (konkrete Kalendertage, auch berechenbare wie "6 Monate nach Vertragsbeginn") sowie alle wichtigen Frist-Regelungen (Kündigung, Widerruf, Gewährleistung, Probezeit, Reaktion, Einwendung, Annahme, Bestätigung, …) heraus.
+Lies den folgenden ${mode?.letter ? 'Text (empfangenes Schreiben)' : 'Vertrag'} durch und schreibe alle wichtigen Datums (konkrete Kalendertage, auch berechenbare wie "6 Monate nach Vertragsbeginn") sowie alle wichtigen Frist-Regelungen (Kündigung, Widerruf, Gewährleistung, Probezeit, Reaktion, Einwendung, Annahme, Bestätigung, …) heraus.
 
 Datums erkennen in JEDER Form: "30.06.2026", "30. Juni 2026", "dreißigster Juni zweitausendsechsundzwanzig", "im April 2026", oder berechenbar aus Frist + Startdatum. Wörter-Datums ins ISO-Format wandeln.
 
-${EXAMPLE_EXCLUSION_HINT}
+${mode?.letter ? buildLetterModeHint(mode.letterType) + '\n\n' : ''}${EXAMPLE_EXCLUSION_HINT}
 
 Datums-Eintrag:
-${DATE_SCHEMA}
+${mode?.letter ? LETTER_DATE_SCHEMA : DATE_SCHEMA}
 
 Frist-Hinweis-Eintrag:
 ${FRIST_SCHEMA}
@@ -364,13 +435,13 @@ ${contractText}`;
  * Stage 2 — Klausel-Audit-Prompt für EINEN Chunk.
  * Sehr fokussiert. GPT bekommt nur diesen Abschnitt.
  */
-function buildChunkPrompt(chunkText, chunkIdx, totalChunks) {
-  return `Vertragsabschnitt ${chunkIdx + 1} von ${totalChunks}. Welche Datums + Frist-Regelungen stehen in DIESEM Abschnitt?
+function buildChunkPrompt(chunkText, chunkIdx, totalChunks, mode = null) {
+  return `${mode?.letter ? 'Abschnitt eines empfangenen Schreibens' : 'Vertragsabschnitt'} ${chunkIdx + 1} von ${totalChunks}. Welche Datums + Frist-Regelungen stehen in DIESEM Abschnitt?
 
-${EXAMPLE_EXCLUSION_HINT}
+${mode?.letter ? buildLetterModeHint(mode.letterType) + '\n\n' : ''}${EXAMPLE_EXCLUSION_HINT}
 
 Datums-Eintrag:
-${DATE_SCHEMA}
+${mode?.letter ? LETTER_DATE_SCHEMA : DATE_SCHEMA}
 
 Frist-Hinweis-Eintrag:
 ${FRIST_SCHEMA}
@@ -385,7 +456,7 @@ ${chunkText}`;
  * Stage 3 — Senior-Anwalt-Prompt.
  * Bekommt: vollen Vertrag + dedupliziertes Pool aus Stage 1+2.
  */
-function buildSeniorPrompt(contractText, knownFindings) {
+function buildSeniorPrompt(contractText, knownFindings, mode = null) {
   const datesAlreadyFound = (knownFindings.importantDates || []).length > 0
     ? knownFindings.importantDates.map(d => `- ${d.label} (${d.date}, ${d.type})`).join('\n')
     : '(noch keine)';
@@ -403,14 +474,14 @@ ${datesAlreadyFound}
 FRIST-HINWEISE:
 ${fristenAlreadyFound}
 
-Deine Endprüfung: was steht IM VERTRAG, fehlt aber oben? Liefere NUR Zusätze. Wenn alles da ist → leere Arrays.
+Deine Endprüfung: was steht IM ${mode?.letter ? 'SCHREIBEN' : 'VERTRAG'}, fehlt aber oben? Liefere NUR Zusätze. Wenn alles da ist → leere Arrays.
 
-Häufig übersehen werden: Reaktionsfristen, Einwendungsfristen, Annahmefristen, Bestätigungsfristen, Stellungnahmefristen, Optionsfristen, Sperrfristen. Aber: nur extrahieren wenn WIRKLICH im Vertrag.
+Häufig übersehen werden: Reaktionsfristen, Einwendungsfristen, Annahmefristen, Bestätigungsfristen, Stellungnahmefristen, Optionsfristen, Sperrfristen. Aber: nur extrahieren wenn WIRKLICH im ${mode?.letter ? 'Schreiben' : 'Vertrag'}.
 
-${EXAMPLE_EXCLUSION_HINT}
+${mode?.letter ? buildLetterModeHint(mode.letterType) + '\n\n' : ''}${EXAMPLE_EXCLUSION_HINT}
 
 Datums-Eintrag:
-${DATE_SCHEMA}
+${mode?.letter ? LETTER_DATE_SCHEMA : DATE_SCHEMA}
 
 Frist-Hinweis-Eintrag:
 ${FRIST_SCHEMA}
@@ -910,7 +981,7 @@ async function runSingleGPTCall({
 // ═══════════════════════════════════════════════════════════════════════════
 // Stage 1 — Junior-Anwalt (1 GPT-Call, ganzer Vertrag, kurzer Prompt)
 // ═══════════════════════════════════════════════════════════════════════════
-async function runJuniorPass(contractText, openaiClient, requestId) {
+async function runJuniorPass(contractText, openaiClient, requestId, mode = null) {
   const t0 = Date.now();
   const empty = (extra = {}) => ({
     importantDates: [], fristHinweise: [],
@@ -918,8 +989,8 @@ async function runJuniorPass(contractText, openaiClient, requestId) {
   });
   const parsed = await runSingleGPTCall({
     openaiClient,
-    systemPrompt: JUNIOR_SYSTEM_PROMPT,
-    userPrompt: buildJuniorPrompt(contractText),
+    systemPrompt: mode?.letter ? LETTER_JUNIOR_SYSTEM_PROMPT : JUNIOR_SYSTEM_PROMPT,
+    userPrompt: buildJuniorPrompt(contractText, mode),
     maxTokens: JUNIOR_MAX_TOKENS,
     timeoutMs: JUNIOR_TIMEOUT_MS,
     source: 'Junior',
@@ -970,7 +1041,7 @@ async function runWithConcurrency(tasks, concurrency) {
   return results;
 }
 
-async function runClauseAuditPass(contractText, openaiClient, requestId) {
+async function runClauseAuditPass(contractText, openaiClient, requestId, mode = null) {
   const t0 = Date.now();
   const chunks = splitIntoSemanticChunks(contractText);
   const empty = (extra = {}) => ({
@@ -988,8 +1059,8 @@ async function runClauseAuditPass(contractText, openaiClient, requestId) {
   const tasks = chunks.map((chunk, idx) => async () => {
     const parsed = await runSingleGPTCall({
       openaiClient,
-      systemPrompt: CHUNK_AUDIT_SYSTEM_PROMPT,
-      userPrompt: buildChunkPrompt(chunk.text, idx, chunks.length),
+      systemPrompt: mode?.letter ? LETTER_CHUNK_AUDIT_SYSTEM_PROMPT : CHUNK_AUDIT_SYSTEM_PROMPT,
+      userPrompt: buildChunkPrompt(chunk.text, idx, chunks.length, mode),
       maxTokens: CHUNK_AUDIT_MAX_TOKENS,
       timeoutMs: CHUNK_AUDIT_TIMEOUT_MS,
       source: `ClauseAudit#${idx}`,
@@ -1051,8 +1122,8 @@ async function runClauseAuditPass(contractText, openaiClient, requestId) {
       const chunk = chunks[idx];
       const parsed = await runSingleGPTCall({
         openaiClient,
-        systemPrompt: CHUNK_AUDIT_SYSTEM_PROMPT,
-        userPrompt: buildChunkPrompt(chunk.text, idx, chunks.length),
+        systemPrompt: mode?.letter ? LETTER_CHUNK_AUDIT_SYSTEM_PROMPT : CHUNK_AUDIT_SYSTEM_PROMPT,
+        userPrompt: buildChunkPrompt(chunk.text, idx, chunks.length, mode),
         maxTokens: CHUNK_AUDIT_MAX_TOKENS,
         timeoutMs: CHUNK_RETRY_TIMEOUT_MS,
         source: `ClauseAudit#${idx}:retry`,
@@ -1106,7 +1177,7 @@ async function runClauseAuditPass(contractText, openaiClient, requestId) {
 // ═══════════════════════════════════════════════════════════════════════════
 // Stage 3 — Senior-Anwalt (1 GPT-Call, ganzer Vertrag + Pool als Kontext)
 // ═══════════════════════════════════════════════════════════════════════════
-async function runSeniorPass(contractText, knownFindings, openaiClient, requestId) {
+async function runSeniorPass(contractText, knownFindings, openaiClient, requestId, mode = null) {
   const t0 = Date.now();
   const empty = (extra = {}) => ({
     importantDates: [], fristHinweise: [],
@@ -1114,8 +1185,8 @@ async function runSeniorPass(contractText, knownFindings, openaiClient, requestI
   });
   const parsed = await runSingleGPTCall({
     openaiClient,
-    systemPrompt: SENIOR_SYSTEM_PROMPT,
-    userPrompt: buildSeniorPrompt(contractText, knownFindings),
+    systemPrompt: mode?.letter ? LETTER_SENIOR_SYSTEM_PROMPT : SENIOR_SYSTEM_PROMPT,
+    userPrompt: buildSeniorPrompt(contractText, knownFindings, mode),
     maxTokens: SENIOR_MAX_TOKENS,
     timeoutMs: SENIOR_TIMEOUT_MS,
     source: 'Senior',
@@ -1219,6 +1290,12 @@ async function runAnomalyPass(contractText, openaiClient, requestId) {
  */
 async function huntDates(contractText, openaiClient, requestId = '', options = {}) {
   const { signal } = options;
+  // 📨 Welle 1: LETTER-Modus — nur aktiv wenn analyze.js documentType='LETTER'
+  // übergibt. mode=null (Default) → alle Prompts byte-identisch zum Vertrags-Pfad.
+  const mode = options.documentType === 'LETTER'
+    ? { letter: true, letterType: options.letterType || 'sonstiges_schreiben' }
+    : null;
+  if (mode) console.log(`📨 [${requestId}] [DateHunt] LETTER-Modus aktiv (letterType=${mode.letterType})`);
   const t0 = Date.now();
   const stats = {
     durationMs: 0,
@@ -1253,11 +1330,11 @@ async function huntDates(contractText, openaiClient, requestId = '', options = {
     // unabhängig voneinander. Stage 2 ist der Hauptmotor (chunked), Stage 1
     // liefert die "Übersicht" als Backup.
     const [juniorResult, clauseAuditResult] = await Promise.all([
-      runJuniorPass(contractText, openaiClient, requestId).catch(err => {
+      runJuniorPass(contractText, openaiClient, requestId, mode).catch(err => {
         console.warn(`⚠️ [${requestId}] [Junior] unerwarteter Fehler: ${err.message}`);
         return { importantDates: [], fristHinweise: [], stats: { source: 'Junior', fallback: true, error: err.message, durationMs: 0 } };
       }),
-      runClauseAuditPass(contractText, openaiClient, requestId).catch(err => {
+      runClauseAuditPass(contractText, openaiClient, requestId, mode).catch(err => {
         console.warn(`⚠️ [${requestId}] [ClauseAudit] unerwarteter Fehler: ${err.message}`);
         return { importantDates: [], fristHinweise: [], stats: { source: 'ClauseAudit', fallback: true, error: err.message, durationMs: 0 } };
       })
@@ -1291,7 +1368,8 @@ async function huntDates(contractText, openaiClient, requestId = '', options = {
       contractText,
       { importantDates: poolDates, fristHinweise: poolFristen },
       openaiClient,
-      requestId
+      requestId,
+      mode
     ).catch(err => {
       console.warn(`⚠️ [${requestId}] [Senior] unerwarteter Fehler: ${err.message}`);
       return { importantDates: [], fristHinweise: [], stats: { source: 'Senior', fallback: true, error: err.message, durationMs: 0 } };

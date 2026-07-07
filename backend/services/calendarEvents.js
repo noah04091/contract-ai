@@ -956,6 +956,16 @@ async function generateEventsForContract(db, contract) {
         // 📦 LIEFERUNGEN
         'delivery_date': { eventType: 'DELIVERY', emoji: '📦', severity: 'info' },
 
+        // 📨 EINSEITIGE SCHREIBEN (Welle 1, 07.07.2026): Rechtsverlust-Fristen
+        // aus erhaltenen Kündigungen/Bescheiden/Mahnbescheiden — IMMER critical
+        // (30/7/1-Staffelung), weil Fristablauf = Rechtsverlust (§ 7 KSchG,
+        // Bestandskraft, vollstreckbarer Titel). Kommen NUR aus dem DateHunt-
+        // LETTER-Modus; normale Verträge emittieren diese Typen nicht.
+        'klagefrist': { eventType: 'KLAGEFRIST', emoji: '⚖️', severity: 'critical' },
+        'widerspruchsfrist': { eventType: 'WIDERSPRUCHSFRIST', emoji: '📮', severity: 'critical' },
+        'einspruchsfrist': { eventType: 'EINSPRUCHSFRIST', emoji: '🏛️', severity: 'critical' },
+        'reaktionsfrist': { eventType: 'REAKTIONSFRIST', emoji: '⏰', severity: 'critical' },
+
         // 🔄 SONSTIGE
         'other': { eventType: 'CUSTOM_DATE', emoji: '📌', severity: 'info' }
       };

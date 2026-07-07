@@ -757,6 +757,13 @@ function calculateSmartStatusBackend(contract) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // 0. 📨 Einseitiges Schreiben (Welle 1, 07.07.2026) — MUSS als allererster Branch
+  // stehen (VOR Kündigungs-/gekuendigtZum-Logik): ein erhaltenes Kündigungsschreiben
+  // ist weder „Gekündigt" noch „Aktiv", sondern schlicht „Erhalten".
+  if (contract.documentType === 'LETTER' || contract.documentCategory === 'letter') {
+    return 'Erhalten';
+  }
+
   // 1. Kündigungsbestätigung
   if (contract.documentCategory === 'cancellation_confirmation' || contract.gekuendigtZum) {
     const gekuendigtDate = contract.gekuendigtZum ? new Date(contract.gekuendigtZum) : null;
@@ -842,6 +849,10 @@ const STATUS_FILTER_BUCKETS = {
   neu: ['Neu'],
   entwurf: ['Entwurf'],
   optimiert: ['Optimiert'],
+  // 📨 Welle 1: einseitige Schreiben (documentType=LETTER) — eigener Eimer,
+  // damit sie über Filter erreichbar sind (Frontend-Dropdown folgt in v1.x;
+  // ohne Eintrag hier wären sie in KEINEM Filter außer „Alle" sichtbar).
+  erhalten: ['Erhalten'],
 };
 
 // 🚀 Keine $lookup-Aggregation mehr — ALLE Lookups als parallele Batch-Queries
@@ -886,6 +897,9 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     reminderDays: 1, reminderSettings: 1,
     // Org
     organizationId: 1,
+    // 📨 Welle 1: documentType + letterType für LETTER-Anzeige (Status „Erhalten",
+    // Framing in Liste/Modal). Ohne Whitelist-Eintrag kämen sie nie im Frontend an.
+    documentType: 1, letterType: 1,
     // Detail-Modal Felder (werden über "Feld hinzufügen" gesetzt)
     contractType: 1, contractTypeLabel: 1, anbieter: 1, vertragsnummer: 1, kosten: 1,
     provider: 1, customFields: 1, notes: 1,

@@ -36,7 +36,7 @@ const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/t
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 const dateHuntService = require("../services/dateHuntService"); // 📅 Stufe 2: Dedizierte Datums-Extraktion mit Evidence-Validierung
 const pilotCheckService = require("../services/pilotCheck"); // 🎯 Isolierte Pilot-Tiefenanalyse (typeSpecificFindings) — abgekapselt wie DateHunt, berührt Hauptanalyse nicht
-const { pilotTypeToLabel } = require("../utils/contractTypeLabels"); // 🏷️ A1 (28.05.2026): KI-Vertragstyp → deutsche Bezeichnung
+const { pilotTypeToLabel, letterTypeToLabel } = require("../utils/contractTypeLabels"); // 🏷️ A1 (28.05.2026): KI-Vertragstyp → deutsche Bezeichnung | 📨 Welle 1: letterType → Label
 
 const router = express.Router();
 
@@ -901,6 +901,15 @@ function detectDocumentType(filename, text, pageCount) {
       keywords: ['tabelle', 'table', 'liste', 'list', 'übersicht', 'overview', 'aufstellung', 'zusammenfassung'],
       filePatterns: ['tabelle', 'table', 'liste', 'übersicht', 'list'],
       confidence: 0.4
+    },
+    // 🆕 Welle 1 (07.07.2026): Einseitige empfangene Schreiben (Kündigungsschreiben,
+    // Abmahnung, Bescheid, Mahnung). Bewusst NUR starke Einseitigkeits-Marker —
+    // generische Wörter wie "kündig"/"frist" gehören CONTRACT. T1-LETTER ist primär
+    // ein TRIGGER für die GPT-Verifikation (Türsteher 2 entscheidet), kein Endurteil.
+    LETTER: {
+      keywords: ['hiermit kündigen wir', 'hiermit kündige ich', 'kündigen wir ihnen', 'abmahnung', 'rechtsbehelfsbelehrung', 'widerspruchsfrist', 'einspruchsfrist', 'mahnbescheid', 'vollstreckungsbescheid', 'zahlungserinnerung'],
+      filePatterns: ['kuendigungsschreiben', 'kündigungsschreiben', 'abmahnung', 'mahnbescheid', 'mahnung', 'widerspruch'],
+      confidence: 0.4
     }
   };
 
@@ -1016,9 +1025,11 @@ async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) 
 
 Antworte NUR mit JSON in diesem Format:
 {
-  "category": "CONTRACT" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "UNKNOWN",
+  "category": "CONTRACT" | "INVOICE" | "RECEIPT" | "TABLE_DOCUMENT" | "LETTER" | "UNKNOWN",
   "contractType": "factoring" | "rental" | "employment" | "purchase" | "nda" | "loan" | "service" | "telecom" | "insurance" | "energy" | "agb" | "leasing" | "license" | "avv" | "franchise" | "agency" | "aufhebung" | "other" | null,
   "contractTypeConfidence": 0-1,
+  "letterType": "kuendigung_erhalten" | "abmahnung" | "behoerdenbescheid" | "mahnbescheid" | "mahnung" | "sonstiges_schreiben" | null,
+  "letterTypeConfidence": 0-1,
   "parties": {
     "provider": "<Name der anbietenden/leistenden Partei, oder null>",
     "customer": "<Name der empfangenden/kaufenden Partei, oder null>",
@@ -1042,7 +1053,46 @@ Arbeitsvertrag = "employment").
 INVOICE: Rechnungen mit Beträgen/Steuern.
 RECEIPT: Quittungen, Belege, Kassenbons.
 TABLE_DOCUMENT: reine Tabellen, Listen, Konditionsblätter ohne Vertragscharakter.
+LETTER: EINSEITIGES Schreiben AN den Empfänger — Kündigungsschreiben (der Empfänger
+WIRD gekündigt oder erhält eine Kündigung), Abmahnung, Behördenbescheid,
+Mahnung/Mahnbescheid, einseitige Mitteilung. Kennzeichen: EIN Absender erklärt
+etwas gegenüber EINEM Empfänger; es gibt KEINE beidseitigen Unterschriftsfelder,
+keine gegenseitigen Pflichten-Kataloge.
+⚠️ ENTSCHEIDEND ist, was das DOKUMENT SELBST ist — nicht, worauf es sich bezieht:
+Ein Schreiben, das einen Arbeits-/Miet-/Dienstvertrag KÜNDIGT ("hiermit kündigen
+wir das mit Ihnen bestehende Arbeitsverhältnis / Mietverhältnis zum …"), ist der
+klassische LETTER-Fall (letterType kuendigung_erhalten) — es ist NICHT der
+Arbeitsvertrag/Mietvertrag selbst, auch wenn es ihn erwähnt. Brief-Merkmale
+(Anrede "Sehr geehrte/r", Datum+Ort, EINE Unterschrift des Absenders,
+"Mit freundlichen Grüßen") + Kündigungs-/Forderungs-Erklärung ⇒ LETTER.
 UNKNOWN: alles andere.
+
+⚠️ LETTER-ABGRENZUNG (NICHT VERHANDELBAR — im Zweifel CONTRACT):
+- Aufhebungsvertrag / Auflösungsvertrag = CONTRACT (contractType "aufhebung")!
+  Er wird von BEIDEN Seiten unterschrieben, auch wenn er nach Kündigung klingt.
+- Kündigungs-/Auftragsbestätigung (ein Anbieter BESTÄTIGT die Kündigung des
+  Nutzers: "wir bestätigen Ihre Kündigung", "Ihre Kündigung ist eingegangen")
+  = CONTRACT, NICHT LETTER (die App verwaltet den gekündigten Vertrag weiter).
+- Vertrag MIT Kündigungs-/Abmahnungs-/Widerrufs-KLAUSELN = CONTRACT
+  (Klauseln über Kündigung machen kein Kündigungsschreiben).
+- Datenschutzerklärung, AGB, Widerrufsbelehrung als Beilage = CONTRACT/agb.
+- Nur wenn das Dokument SELBST die einseitige Erklärung IST → LETTER.
+
+LETTERTYPE (nur bei category = "LETTER", sonst null):
+- kuendigung_erhalten: Kündigungsschreiben, das der Nutzer ERHALTEN hat
+  (Arbeitgeber kündigt, Vermieter kündigt, Anbieter kündigt) — auch das eigene
+  Kündigungsschreiben des Nutzers als Entwurf.
+- abmahnung: Abmahnung (arbeitsrechtlich, wettbewerbsrechtlich, urheberrechtlich),
+  oft mit Unterlassungserklärung.
+- behoerdenbescheid: Bescheid einer Behörde (Amt, Jobcenter, Finanzamt,
+  Rentenversicherung), oft mit Rechtsbehelfsbelehrung.
+- mahnbescheid: GERICHTLICHER Mahnbescheid oder Vollstreckungsbescheid
+  (vom Amtsgericht, §§ 688 ff. ZPO) — zeitkritisch!
+- mahnung: einfache Mahnung/Zahlungserinnerung eines Unternehmens.
+- sonstiges_schreiben: anderes einseitiges Schreiben (Mitteilung, Zeugnis,
+  Preiserhöhungs-Ankündigung, Vertragsänderungs-Mitteilung).
+Bei category = "LETTER": parties.provider = ABSENDER des Schreibens,
+parties.customer = EMPFÄNGER (gleiche Anti-Halluzinations-Regeln).
 
 CONTRACTTYPE — REGELN (sehr wichtig):
 - NUR die exakten lowercase-Strings aus der Liste oben verwenden.
@@ -1138,7 +1188,7 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
     const raw = completion.choices?.[0]?.message?.content || '{}';
     const parsed = JSON.parse(raw);
     const category = String(parsed.category || 'UNKNOWN').toUpperCase();
-    const validTypes = new Set(['CONTRACT', 'INVOICE', 'RECEIPT', 'FINANCIAL_DOCUMENT', 'TABLE_DOCUMENT', 'UNKNOWN']);
+    const validTypes = new Set(['CONTRACT', 'INVOICE', 'RECEIPT', 'FINANCIAL_DOCUMENT', 'TABLE_DOCUMENT', 'LETTER', 'UNKNOWN']);
     if (!validTypes.has(category)) {
       console.warn(`⚠️ [${requestId}] Türsteher 2: ungültige category="${parsed.category}" — verwerfe`);
       return null;
@@ -1171,11 +1221,38 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
         console.warn(`⚠️ [${requestId}] Türsteher 2: ungültiger contractType="${parsed.contractType}" — verwerfe (Whitelist)`);
       }
     }
+    // 🆕 Welle 1 (07.07.2026): letterType-Feld parsen + validieren (nur bei LETTER).
+    // Gleiche Defense-in-Depth wie contractType: Whitelist + Confidence-Gate ≥0.6.
+    const VALID_LETTER_TYPES = new Set([
+      'kuendigung_erhalten', 'abmahnung', 'behoerdenbescheid',
+      'mahnbescheid', 'mahnung', 'sonstiges_schreiben'
+    ]);
+    let letterType = null;
+    let letterTypeConfidence = 0;
+    if (category === 'LETTER') {
+      if (parsed.letterType != null) {
+        const ltRaw = String(parsed.letterType).toLowerCase().trim();
+        if (VALID_LETTER_TYPES.has(ltRaw)) {
+          const ltConf = typeof parsed.letterTypeConfidence === 'number'
+            ? Math.max(0, Math.min(1, parsed.letterTypeConfidence)) : 0;
+          if (ltConf >= 0.6) {
+            letterType = ltRaw;
+            letterTypeConfidence = ltConf;
+          } else {
+            console.log(`📊 [${requestId}] Türsteher 2 letterType-Confidence zu niedrig (${ltConf.toFixed(2)} < 0.6) → sonstiges_schreiben`);
+          }
+        } else {
+          console.warn(`⚠️ [${requestId}] Türsteher 2: ungültiger letterType="${parsed.letterType}" — verwerfe (Whitelist)`);
+        }
+      }
+      // LETTER ohne validen Subtyp → generisches Schreiben-Profil (universell)
+      if (!letterType) letterType = 'sonstiges_schreiben';
+    }
     // 🆕 Problem H (27.05.2026): Parties-Extraktion mit Evidence-Check.
     // Anti-Halluzination: KI darf nur Namen liefern die wörtlich im Text vorkommen.
     // Whitelist via Evidence-Check, Confidence-Gate <0.6 → null → Keyword-Fallback.
     let parties = { provider: null, customer: null, providerConfidence: 0, customerConfidence: 0 };
-    if (category === 'CONTRACT' && parsed.parties && typeof parsed.parties === 'object') {
+    if ((category === 'CONTRACT' || category === 'LETTER') && parsed.parties && typeof parsed.parties === 'object') {
       const sampleLower = sample.toLowerCase();
       if (typeof parsed.parties.provider === 'string' && parsed.parties.provider.trim().length >= 2) {
         const providerName = parsed.parties.provider.trim();
@@ -1217,8 +1294,8 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
     const partiesLog = (parties.provider || parties.customer)
       ? ` | parties=${parties.provider || '∅'}↔${parties.customer || '∅'} (${parties.providerConfidence.toFixed(2)}/${parties.customerConfidence.toFixed(2)})`
       : '';
-    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)})${contractType ? ` | contractType=${contractType} (${contractTypeConfidence.toFixed(2)})` : ''}${partiesLog} — ${parsed.reason || 'keine Begründung'}`);
-    return { type: category, confidence, contractType, contractTypeConfidence, parties, source: 'gpt-4o-mini' };
+    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)})${contractType ? ` | contractType=${contractType} (${contractTypeConfidence.toFixed(2)})` : ''}${letterType ? ` | letterType=${letterType} (${letterTypeConfidence.toFixed(2)})` : ''}${partiesLog} — ${parsed.reason || 'keine Begründung'}`);
+    return { type: category, confidence, contractType, contractTypeConfidence, letterType, letterTypeConfidence, parties, source: 'gpt-4o-mini' };
   } catch (err) {
     clearTimeout(timeoutHandle);
     const isAbort = err.name === 'AbortError' || controller.signal.aborted;
@@ -1295,6 +1372,14 @@ function selectAnalysisStrategy(documentType, contentQuality, filename) {
       requiresHighQuality: false,
       fallbackToGeneral: true,
       message: 'Erweiterte Tabellenanalyse'
+    },
+    // 🆕 Welle 1 (07.07.2026): Einseitige Schreiben — eigene Strategie,
+    // damit Logging/extraRefs nicht irreführend UNKNOWN tragen.
+    LETTER: {
+      method: 'DEEP_LETTER_ANALYSIS',
+      requiresHighQuality: false,
+      fallbackToGeneral: true,
+      message: 'Rechtliche Prüfung des Schreibens (Empfänger-Sicht)'
     },
     UNKNOWN: {
       method: 'DEEP_GENERAL_DOCUMENT_ANALYSIS',
@@ -3131,6 +3216,193 @@ mitgeben.
 }
 
 /**
+ * 🆕 Welle 1 (07.07.2026): Fach-Profile für einseitige empfangene Schreiben.
+ * Analog zur awarenessMap der Verträge — aber aus EMPFÄNGER-Perspektive:
+ * Was bedeutet das Schreiben, ist es wirksam, welche Fristen laufen, was tun.
+ */
+const LETTER_AWARENESS = {
+  kuendigung_erhalten: {
+    title: 'Fachanwalt für Arbeitsrecht / Kündigungsschutz',
+    expertise: `PRÜFPROGRAMM KÜNDIGUNGSSCHREIBEN (Empfänger-Sicht, Reihenfolge = Priorität):
+1. ⏰ KLAGEFRIST (WICHTIGSTER PUNKT): § 4 KSchG — Kündigungsschutzklage binnen 3 WOCHEN ab ZUGANG der Kündigung. Nach Fristablauf gilt die Kündigung als wirksam (§ 7 KSchG), selbst wenn sie fehlerhaft war! Nachträgliche Zulassung nur eng (§ 5 KSchG). Die 3-Wochen-Frist gilt auch bei fristloser Kündigung (§ 13 KSchG). Berechne das Fristende KONSERVATIV ab dem Briefdatum und kennzeichne: die Frist läuft ab ZUGANG — Empfangsdatum prüfen.
+2. 📝 FORM: § 623 BGB — Kündigung braucht SCHRIFTFORM mit eigenhändiger Unterschrift; elektronische Form (E-Mail, Scan, Fax) ist AUSGESCHLOSSEN. Formmangel = Kündigung nichtig.
+3. 🖊️ VOLLMACHT: § 174 S. 1 BGB — kündigt ein Bevollmächtigter (z.B. Personalleiter, Anwalt) OHNE Vorlage der Original-Vollmachtsurkunde, kann der Empfänger die Kündigung UNVERZÜGLICH (Richtwert ~1 Woche) zurückweisen → Kündigung unwirksam. Sehr zeitkritisch, wird fast immer übersehen!
+4. 📅 KÜNDIGUNGSFRIST: § 622 BGB — gestaffelt nach Betriebszugehörigkeit (Grundfrist 4 Wochen; nach 2 Jahren 1 Monat zum Monatsende, steigend bis 7 Monate nach 20 Jahren). Prüfe, ob der genannte Beendigungstermin zur gesetzlichen/vertraglichen Frist passt — zu kurze Frist = Kündigung wirkt erst zum richtigen Termin.
+5. ⚡ FRISTLOS? § 626 BGB — außerordentliche Kündigung braucht wichtigen Grund UND muss binnen 2 WOCHEN ab Kenntnis des Grundes erklärt werden (§ 626 Abs. 2). Ohne Grundangabe: Anspruch auf schriftliche Mitteilung des Grundes (§ 626 Abs. 2 S. 3).
+6. 🛡️ KÜNDIGUNGSSCHUTZ: KSchG anwendbar bei >10 Arbeitnehmern (§ 23 KSchG) und >6 Monaten Betriebszugehörigkeit (§ 1 KSchG) → Kündigung braucht soziale Rechtfertigung (personen-/verhaltens-/betriebsbedingt).
+7. 🚨 SONDERKÜNDIGUNGSSCHUTZ: Schwerbehinderte → Zustimmung des Integrationsamts nötig (§ 168 SGB IX); Schwangere/junge Mütter → § 17 MuSchG (Kündigungsverbot; Schwangerschaft kann binnen 2 Wochen nach Zugang mitgeteilt werden!); Elternzeit → § 18 BEEG; Betriebsratsmitglieder → § 15 KSchG; Kündigung wegen Betriebsübergangs unwirksam (§ 613a Abs. 4 BGB).
+8. 🏛️ BETRIEBSRAT: Existiert ein Betriebsrat, MUSS er vor JEDER Kündigung angehört werden (§ 102 BetrVG) — ohne Anhörung ist die Kündigung unwirksam.
+9. 💼 ARBEITSAGENTUR (PFLICHT, unabhängig von Klage): Arbeitsuchend-Meldung spätestens 3 MONATE vor Beendigung; liegt zwischen Kenntnis und Ende weniger als 3 Monate, binnen 3 TAGEN nach Kenntnis (§ 38 SGB III). Verspätung = Sperrzeit-Risiko beim Arbeitslosengeld.
+10. 📋 FOLGEANSPRÜCHE: Arbeitszeugnis (§ 109 GewO), Resturlaub/Urlaubsabgeltung (§ 7 Abs. 4 BUrlG), ggf. Freistellung, Überstunden.`,
+    commonTraps: `TYPISCHE FALLEN: (a) Empfänger verpasst die 3-Wochen-Frist, weil er erst "verhandeln" will → § 7 KSchG macht alles unumkehrbar. (b) Kündigung per E-Mail/Scan wird hingenommen, obwohl § 623 sie nichtig macht. (c) § 174-Zurückweisung wird nicht binnen ~1 Woche erklärt. (d) Arbeitsuchend-Meldung vergessen → Sperrzeit. NIEMALS dem Empfänger raten, einfach nichts zu tun.`
+  },
+  abmahnung: {
+    title: 'Fachanwalt für Wettbewerbs-, Urheber- und Arbeitsrecht (Abmahnungen)',
+    expertise: `PRÜFPROGRAMM ABMAHNUNG:
+1. 🎯 ART BESTIMMEN: arbeitsrechtliche Abmahnung (Arbeitgeber rügt Verhalten) vs. wettbewerbsrechtliche (UWG) vs. urheberrechtliche (§ 97a UrhG) vs. markenrechtliche — die Rechtsfolgen sind völlig verschieden.
+2. ✍️ UNTERLASSUNGSERKLÄRUNG: NIEMALS die beigefügte vorformulierte Unterlassungserklärung ungeprüft unterschreiben — sie ist oft zu weit gefasst und gilt 30 Jahre. Übliche Reaktion: MODIFIZIERTE Unterlassungserklärung (ohne Anerkenntnis, angemessene Vertragsstrafe).
+3. ⏰ FRISTEN: gesetzte Frist notieren (oft 7-14 Tage) — bei Untätigkeit droht einstweilige Verfügung/Klage mit deutlich höheren Kosten. Frist ist aber oft verhandelbar (kurze Verlängerung anfragen).
+4. 📋 FORMELLE ANFORDERUNGEN: bei § 97a UrhG-Abmahnungen Pflichtangaben prüfen (Abs. 2: Name des Verletzten, konkrete Rechtsverletzung, Aufschlüsselung der Zahlungsansprüche, Umfang der Unterlassungspflicht) — Verstoß macht die Abmahnung unwirksam und begründet Gegenanspruch (§ 97a Abs. 4). Bei UWG: Missbrauchs-Check (§ 8c UWG — Massenabmahnung, überhöhte Gebühren).
+5. 💼 ARBEITSRECHTLICHE ABMAHNUNG: KEINE Klagefrist! (Wichtig zur Beruhigung.) Optionen: Gegendarstellung zur Personalakte (§ 83 Abs. 2 BetrVG), Entfernungsanspruch bei unberechtigter Abmahnung, oder bewusst nichts tun (Bestreiten bleibt im Kündigungsschutzprozess möglich). Abmahnung ist oft Vorstufe zur verhaltensbedingten Kündigung → Verhalten dokumentieren.
+6. 💰 KOSTEN: geforderte Anwaltskosten/Streitwert auf Angemessenheit prüfen (bei § 97a UrhG: Deckelung für Privatpersonen, Abs. 3).`,
+    commonTraps: `TYPISCHE FALLEN: (a) vorgefertigte Unterlassungserklärung unterschreiben = 30 Jahre Vertragsstrafe-Risiko. (b) Frist ignorieren = einstweilige Verfügung. (c) Bei arbeitsrechtlicher Abmahnung unnötig in Panik geraten — es gibt KEINE Frist, Optionen bleiben offen.`
+  },
+  behoerdenbescheid: {
+    title: 'Fachanwalt für Verwaltungs- und Sozialrecht (Bescheide)',
+    expertise: `PRÜFPROGRAMM BEHÖRDENBESCHEID:
+1. 🏛️ BEHÖRDE/RECHTSWEG BESTIMMEN: Jobcenter/Arbeitsagentur/Rentenversicherung/Krankenkasse → Sozialrecht: WIDERSPRUCH binnen 1 MONAT (§ 84 SGG). Finanzamt → EINSPRUCH binnen 1 MONAT (§ 355 AO). Allgemeine Verwaltung (Stadt, Landratsamt) → Widerspruch binnen 1 Monat (§ 70 VwGO); in mehreren Bundesländern ist das Widerspruchsverfahren abgeschafft → direkt KLAGE binnen 1 Monat (§ 74 VwGO).
+2. 📜 RECHTSBEHELFSBELEHRUNG: Ist sie vorhanden und korrekt? FEHLT sie oder ist sie falsch → Frist verlängert sich auf EIN JAHR (§ 58 Abs. 2 VwGO / § 66 SGG / § 356 Abs. 2 AO). Das ist ein starker Punkt für den Empfänger.
+3. 📅 FRISTBEGINN: Frist läuft ab BEKANNTGABE. Bei Post gilt der Bescheid am 4. TAG nach Aufgabe als bekanntgegeben (Bekanntgabefiktion, § 41 Abs. 2 VwVfG / § 122 AO — seit 01.01.2025 vier statt drei Tage). Berechne das Fristende konservativ ab Bescheiddatum und weise auf die Fiktion hin.
+4. ⚖️ INHALT: Was wird verfügt/festgesetzt/abgelehnt? Begründung tragfähig? Anhörung erfolgt (§ 28 VwVfG / § 24 SGB X)? Bestandskraft-Folgen erklären: ohne fristgerechten Rechtsbehelf wird der Bescheid BESTANDSKRÄFTIG und ist kaum noch angreifbar.
+5. 💰 AUFSCHIEBENDE WIRKUNG: Hat der Widerspruch aufschiebende Wirkung oder muss trotzdem gezahlt werden (z.B. § 80 Abs. 2 VwGO bei Abgaben)? Ggf. Antrag auf Aussetzung der Vollziehung (§ 361 AO / § 80 Abs. 4 VwGO).`,
+    commonTraps: `TYPISCHE FALLEN: (a) Monatsfrist verstreichen lassen → Bestandskraft. (b) falsche Rechtsbehelfsart wählen (Einspruch vs. Widerspruch vs. Klage). (c) übersehen, dass fehlende/falsche Belehrung die Jahresfrist eröffnet.`
+  },
+  mahnbescheid: {
+    title: 'Fachanwalt für Zivilprozessrecht (gerichtliches Mahnverfahren)',
+    expertise: `PRÜFPROGRAMM GERICHTLICHER MAHNBESCHEID / VOLLSTRECKUNGSBESCHEID (§§ 688 ff. ZPO) — HÖCHSTE DRINGLICHKEIT:
+1. 🚨 MAHNBESCHEID: WIDERSPRUCH binnen 2 WOCHEN ab Zustellung (§ 694 ZPO — Widerspruch ist auch danach bis zum Erlass des Vollstreckungsbescheids möglich, aber 2 Wochen sind der sichere Rahmen). Widerspruch braucht KEINE Begründung — einfach das beigefügte Formular nutzen. NICHTSTUN führt zum Vollstreckungsbescheid!
+2. 🚨 VOLLSTRECKUNGSBESCHEID: EINSPRUCH binnen 2 WOCHEN ab Zustellung (§ 700 ZPO i.V.m. § 339 ZPO). Danach ist der Titel rechtskräftig und 30 JAHRE vollstreckbar — Kontopfändung, Gerichtsvollzieher.
+3. ⚖️ WICHTIG: Das Mahngericht prüft die Forderung NICHT inhaltlich — auch völlig unberechtigte Forderungen werden zugestellt. Widerspruch/Einspruch ist der EINZIGE Weg, die inhaltliche Prüfung zu erzwingen.
+4. 🔍 FORDERUNG PRÜFEN: Kennt der Empfänger die Forderung? Verjährt (§§ 195, 199 BGB: regelmäßig 3 Jahre)? Bereits bezahlt? Betrugs-Check: echte Mahnbescheide kommen per förmlicher ZUSTELLUNG (gelber Umschlag) vom AMTSGERICHT — "Mahnbescheide" per einfacher Post von Inkasso-Firmen sind KEINE gerichtlichen Mahnbescheide.
+5. 💰 Teilwiderspruch möglich, wenn nur ein Teil der Forderung bestritten wird.`,
+    commonTraps: `TYPISCHE FALLEN: (a) 2-Wochen-Frist verpassen → 30 Jahre vollstreckbarer Titel selbst bei unberechtigter Forderung. (b) Fake-"Mahnbescheide" von Inkassobüros mit echten verwechseln. (c) zahlen ohne Prüfung, ob die Forderung überhaupt besteht/verjährt ist.`
+  },
+  mahnung: {
+    title: 'Rechtsanwalt für Forderungs- und Verbraucherrecht',
+    expertise: `PRÜFPROGRAMM EINFACHE MAHNUNG / ZAHLUNGSERINNERUNG:
+1. 🔍 FORDERUNG PRÜFEN: Besteht die Forderung (Vertrag? Bestellung?)? Höhe korrekt? Bereits bezahlt? VERJÄHRT (§ 195 BGB: 3 Jahre ab Ende des Entstehungsjahres, § 199 BGB)? Verjährte Forderungen dürfen angemahnt werden, müssen aber nicht bezahlt werden (Einrede der Verjährung).
+2. 💰 MAHNGEBÜHREN/VERZUGSZINSEN: nur bei VERZUG geschuldet (§ 286 BGB); Höhe prüfen (§ 288 BGB: 5 Prozentpunkte über Basiszins bei Verbrauchern). Überhöhte Inkasso-/Mahnpauschalen sind angreifbar.
+3. 📅 KEINE gesetzliche Reaktionsfrist — aber: bei berechtigter Forderung eskaliert Nichtzahlung (Inkasso → gerichtlicher Mahnbescheid → Titel). Gesetzte Zahlungsfrist notieren.
+4. ✉️ REAKTIONS-OPTIONEN: zahlen (wenn berechtigt), begründet bestreiten (schriftlich, Beweise sichern), Ratenzahlung anbieten, bei Verjährung ausdrücklich die Einrede erheben. Unberechtigte Forderungen NICHT ignorieren, sondern einmal schriftlich bestreiten.
+5. 🚨 INKASSO-CHECK: Inkassokosten nur in gesetzlicher Höhe (RVG-Deckelung, § 13e RDG); Drohungen mit Schufa nur bei unbestrittener Forderung zulässig (§ 31 Abs. 2 BDSG-Kriterien).`,
+    commonTraps: `TYPISCHE FALLEN: (a) aus Angst verjährte oder unberechtigte Forderungen zahlen. (b) berechtigte Forderung ignorieren bis der (dann teure) gerichtliche Mahnbescheid kommt. (c) überhöhte Inkassogebühren ungeprüft mitzahlen.`
+  },
+  sonstiges_schreiben: {
+    title: 'Rechtsanwalt (allgemeine Prüfung einseitiger Schreiben)',
+    expertise: `PRÜFPROGRAMM SONSTIGES EINSEITIGES SCHREIBEN (universell):
+1. 🔍 EINORDNUNG: Wer schreibt (Absender/Rolle)? Was will der Absender erreichen (Erklärung, Änderung, Forderung, Information, Angebot)? Ist es rechtlich BINDEND oder nur informatorisch?
+2. ⏰ FRISTEN: JEDE genannte oder gesetzlich ausgelöste Frist identifizieren und mit konkretem Datum benennen (Reaktionsfrist, Widerspruchsfrist, Annahmefrist). Was passiert bei Fristablauf — Zustimmungsfiktion? Verfall von Rechten?
+3. ⚖️ WIRKSAMKEIT: Form gewahrt? Absender berechtigt/bevollmächtigt? Bei Vertragsänderungs-Mitteilungen (Preiserhöhung, AGB-Änderung): besteht ein Sonderkündigungsrecht oder Widerspruchsrecht des Empfängers? Zustimmungsfiktionen (Schweigen = Zustimmung) sind bei Verbrauchern oft unwirksam (BGH XI ZR 26/20).
+4. 📋 HANDLUNGSOPTIONEN: konkret benennen — reagieren/widersprechen/annehmen/ignorieren, jeweils mit Konsequenz und Frist.
+5. 🚨 DRINGLICHKEIT ehrlich einstufen: Muss der Empfänger überhaupt etwas tun? Wenn nein → klar beruhigen.`,
+    commonTraps: `TYPISCHE FALLEN: (a) Zustimmungsfiktionen übersehen ("Wenn Sie nicht widersprechen, gilt..."). (b) unnötige Panik bei rein informatorischen Schreiben. (c) Fristen im Kleingedruckten überlesen.`
+  }
+};
+
+/**
+ * 🆕 Welle 1 (07.07.2026): Eigener User-Prompt für einseitige empfangene Schreiben.
+ * GLEICHES JSON-Output-Schema wie die Vertragsanalyse (Feld-Namen identisch,
+ * Semantik = Empfänger-Perspektive) → Free-Gating, PDF, Chat, Persistenz laufen
+ * unverändert. Der Vertrags-Prompt (generateDeepLawyerLevelPrompt) bleibt
+ * byte-identisch — dieser Pfad greift NUR bei documentType === 'LETTER'.
+ */
+function generateLetterAnalysisPrompt(text, letterType, strategy, requestId, maxTokens, extractionMeta = {}) {
+  const tokenBudget = typeof maxTokens === 'number' && maxTokens > 0 ? maxTokens : 40000;
+  const optimizedText = optimizeTextForGPT4(text, tokenBudget, requestId);
+  const usedOCR = extractionMeta && extractionMeta.usedOCR === true;
+  const awareness = LETTER_AWARENESS[letterType] || LETTER_AWARENESS.sonstiges_schreiben;
+
+  return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📨 SCHREIBEN-PRÜFUNG (EMPFÄNGER-PERSPEKTIVE): ${awareness.title}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Du bist ${awareness.title} mit 20+ Jahren Erfahrung.
+
+📋 SZENARIO:
+Ein Mandant hat dieses Schreiben ERHALTEN und fragt dich:
+"Was bedeutet das für mich? Ist das überhaupt wirksam? Welche Fristen laufen? Was kann/muss ich jetzt tun?"
+
+Das ist KEIN Vertrag zum Unterschreiben — es ist eine einseitige Erklärung, die der Mandant bekommen hat.
+Deine Aufgabe: Rechtslage klären, Fristen sichern, Handlungsoptionen aufzeigen. Fristen sind das WICHTIGSTE.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 DEINE FACHKENNTNIS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${awareness.expertise}
+
+${awareness.commonTraps}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚫 PRINZIPIEN (NON-NEGOTIABLE):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Analysiere NUR was IM SCHREIBEN steht — keine erfundenen Inhalte!
+✅ Jede rechtliche Aussage mit konkretem § begründen
+✅ JEDE Frist mit konkretem Datum benennen, wenn berechenbar — Fristen sind der Kern dieser Prüfung
+✅ Ehrlich über Unsicherheit: Fristen, die ab ZUGANG laufen, konservativ ab dem Briefdatum berechnen
+   und im Label klarstellen: "gerechnet ab Briefdatum — die Frist läuft ab Zugang, prüfe dein Empfangsdatum"
+✅ Wenn der Mandant NICHTS tun muss → klar beruhigen statt künstliche Dringlichkeit
+
+❌ NIEMALS Einleitungsphrasen oder Abschlussfloskeln
+❌ NIEMALS Panik erzeugen, wo keine nötig ist — aber NIEMALS echte Fristen verharmlosen
+❌ NIEMALS raten, wo das Schreiben schweigt — lieber offen sagen, was unklar ist
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 OUTPUT-SCHEMA (JSON) — Feld-Semantik für SCHREIBEN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${usedOCR ? `⚠️ OCR-KONTEXT: Dieser Text stammt aus Bild-Erkennung (gescanntes Dokument). Handschriftliches (Unterschriften, ausgefüllte Felder) ist für OCR unsichtbar. Bei nicht erkennbaren Elementen formuliere in completeness.observation vorsichtig ("in der gescannten Vorlage nicht eindeutig erkennbar — am Original prüfen"), NIE "fehlt". WICHTIG bei Kündigungen: Eine im Text fehlende Unterschrift darfst du bei OCR NICHT als § 623-Formmangel werten.
+
+` : ''}PFLICHTFELDER: documentCharacterization, completeness, asymmetryAssessment, contractScore, scoreReasoning, detailedLegalOpinion.
+
+A. **documentCharacterization**: { "description": "Was ist dieses Schreiben genau? (z.B. 'Ordentliche arbeitgeberseitige Kündigung zum 30.09.2026')", "rationale": "Woran erkennst du das?" }
+B. **completeness**: { "isComplete": true|false, "observation": "FORMALE Prüfung des Schreibens: Unterschrift vorhanden? Absender klar? Datum? Bei Bescheiden: Rechtsbehelfsbelehrung vorhanden?", "openItems": ["nur echte formale Lücken — z.B. 'Rechtsbehelfsbelehrung fehlt', 'keine eigenhändige Unterschrift erkennbar'"] }
+   → WICHTIG: Formale Lücken sind hier oft ein VORTEIL des Empfängers (fehlende Unterschrift → § 623-Formmangel bei Kündigungen; fehlende Rechtsbehelfsbelehrung → Jahresfrist § 58 VwGO). Benenne diese Konsequenz explizit in den criticalIssues/recommendations.${usedOCR ? ' Bei OCR-Text gilt die OCR-Vorsicht oben — dann Unterschrift NICHT als fehlend werten.' : ''}
+C. **asymmetryAssessment**: IMMER { "rating": "not_applicable", "favoredParty": null, "explanation": "Ausgewogenheit nicht anwendbar — einseitiges Schreiben, kein zweiseitiger Vertrag." }
+D. **contractScore** (Number 1-100) — Bedeutung für SCHREIBEN: "Wie unkritisch ist die Lage für den Empfänger?"
+   → 85-100: rein informatorisch, kein Handlungsbedarf
+   → 60-84: Aufmerksamkeit nötig, aber keine harte Frist / geringes Risiko
+   → 35-59: Handlungsbedarf mit laufender Frist ODER erhebliche rechtliche Nachteile möglich
+   → 1-34: DRINGEND handeln — kurze Frist läuft, Rechtsverlust/Titel/Bestandskraft droht
+   → Bei laufender harter Frist (Klagefrist, Widerspruchsfrist, Mahnbescheid) NIEMALS über 60.
+E. **scoreReasoning** (String): 3-5 Sätze, warum genau dieser Wert — Fristen und Risiken benennen.
+F. **laymanSummary** (String[], 2-5): Alltagssprache — "Was heißt das für dich konkret, was musst du bis wann tun?"
+G. **summary** (String[], 3-6): Fakten des Schreibens — Absender, was erklärt wird, zu wann, genannte Gründe, genannte Fristen.
+H. **legalAssessment** (String[], 3-8): rechtliche Bewertung — Wirksamkeits-Prüfpunkte mit §§ (Form, Frist, Vollmacht, Begründung, Belehrung).
+I. **criticalIssues** (Object[]): "Was auf dich zukommt / Wirksamkeits-Zweifel" — Schema { "title", "description", "riskLevel": "critical"|"high"|"medium"|"low", "legalBasis", "consequence" }.
+   → Laufende Fristen mit Rechtsverlust-Folge sind IMMER riskLevel "critical".
+   → Auch CHANCEN des Empfängers hier abbilden, wenn sie aus Mängeln des Schreibens folgen (z.B. "Kündigung möglicherweise formunwirksam — keine eigenhändige Unterschrift erkennbar").
+J. **recommendations** (Object[]): "Deine Handlungsoptionen" — Schema { "title", "description", "priority": "urgent"|"high"|"medium"|"low", "timeframe", "effort" }.
+   → Konkret und mit Datum: "Kündigungsschutzklage prüfen — spätestens bis DD.MM.YYYY (3 Wochen ab Zugang, § 4 KSchG)".
+   → Auch die Option "nichts tun" nennen, wenn sie vertretbar ist — mit Konsequenz.
+K. **quickFacts** (Object[], 3): { "label", "value", "rating": "good"|"neutral"|"bad" }
+   → Label 1: "Absender" · Label 2: "Datum des Schreibens" · Label 3: wichtigste Frist (z.B. "Klagefrist bis" / "Widerspruch bis") oder bei Fristlosigkeit "Handlungsbedarf: keiner".
+L. **importantDates** (Object[]) — KRITISCH für Kalender-Erinnerungen:
+   Schema: { "type", "date": "YYYY-MM-DD", "label", "description", "calculated": true|false, "source" }
+   ERLAUBTE TYPEN FÜR SCHREIBEN:
+   - "klagefrist": Kündigungsschutzklage-Frist (§ 4 KSchG, 3 Wochen) — bei JEDER erhaltenen Arbeitgeber-Kündigung PFLICHT, calculated: true, konservativ ab Briefdatum, Label mit "spätestens ... (läuft ab Zugang — Empfangsdatum prüfen)"
+   - "widerspruchsfrist": Widerspruch gegen Bescheid (§ 84 SGG / § 70 VwGO, 1 Monat) oder gegen gerichtlichen Mahnbescheid (§ 694 ZPO, 2 Wochen)
+   - "einspruchsfrist": Einspruch (§ 355 AO Steuerbescheid / § 700 ZPO Vollstreckungsbescheid)
+   - "reaktionsfrist": im Schreiben explizit gesetzte Frist (Abmahnung, Zahlungsfrist, Stellungnahme-Frist)
+   - "other": sonstige relevante Termine (z.B. genannter Beendigungstermin, Wirksamkeits-Datum)
+   → NIEMALS Vertrags-Typen (start_date/end_date/cancellation_deadline) für ein Schreiben verwenden.
+   → Fristende immer als konkretes Datum; wenn ab Zugang laufend → ab Briefdatum rechnen + calculated: true + Zugangs-Hinweis im Label.
+   → Bereits ABGELAUFENE Fristen trotzdem ausgeben (mit Vergangenheits-Datum) — die Anzeige übernimmt die Einordnung "bereits abgelaufen".
+M. **detailedLegalOpinion** (String, PFLICHT): sachliches Memo (300-1000 Wörter je nach Substanz): Einordnung des Schreibens → Wirksamkeits-Analyse → Fristen → Handlungsoptionen mit Abwägung → Gesamtempfehlung.
+N. **legalPulseHooks** (String[], optional): relevante Rechtsgebiete (z.B. "Kündigungsschutz", "KSchG", "Mahnverfahren").
+
+NICHT AUSGEBEN (für Schreiben ohne Substanz — Felder komplett weglassen):
+- positiveAspects (keine "Vertragsstärken" bei einem Schreiben)
+- suggestions (Handlungsoptionen gehören in recommendations)
+- comparison (kein Marktvergleich für Schreiben)
+- typeSpecificFindings
+- paymentTerms (ein geforderter Betrag ist KEINE wiederkehrende Vertragszahlung — Beträge gehören in summary/criticalIssues)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄 DAS ERHALTENE SCHREIBEN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${optimizedText}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ ANTWORT: NUR VALIDES JSON (keine Markdown-Blöcke, kein Text davor/danach) mit den Feldern:
+documentCharacterization, completeness, asymmetryAssessment, contractScore, scoreReasoning,
+laymanSummary, summary, legalAssessment, criticalIssues, recommendations, quickFacts,
+importantDates, detailedLegalOpinion, legalPulseHooks.`;
+}
+
+/**
  * 📋 Enhanced PDF Content Validator and Analyzer - UNCHANGED
  * Combines the old assessment with new smart analysis
  */
@@ -3174,7 +3446,10 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       documentType.type === 'FINANCIAL_DOCUMENT' ||
       documentType.type === 'TABLE_DOCUMENT' ||
       documentType.type === 'INVOICE' ||
-      documentType.type === 'RECEIPT';
+      documentType.type === 'RECEIPT' ||
+      // 🆕 Welle 1: T1-LETTER ist nur ein Trigger — IMMER GPT-verifizieren,
+      // damit kein Vertrag durch Heuristik-Marker fälschlich LETTER wird.
+      documentType.type === 'LETTER';
 
     // 🆕 Universal contractType-Detection (Problem D, 26.05.2026):
     // Türsteher 2 läuft jetzt IMMER bei wahrscheinlichen Verträgen — auch wenn
@@ -3192,6 +3467,9 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       // extractedContractType-Pfad (Z. 3795+) ihn als Primärquelle nutzen kann.
       const gptContractType = gptOpinion?.contractType || null;
       const gptContractTypeConfidence = gptOpinion?.contractTypeConfidence || 0;
+      // 🆕 Welle 1: letterType aus Türsteher 2 mitführen (nur bei category=LETTER gesetzt)
+      const gptLetterType = gptOpinion?.letterType || null;
+      const gptLetterTypeConfidence = gptOpinion?.letterTypeConfidence || 0;
       // 🆕 Problem H (27.05.2026): Parties via Türsteher 2 mitführen.
       const gptParties = gptOpinion?.parties || { provider: null, customer: null, providerConfidence: 0, customerConfidence: 0 };
 
@@ -3203,7 +3481,19 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
         if (gptOpinion && gptOpinion.confidence >= 0.75) {
           // GPT ist klar → Übernehmen
           console.log(`✅ [${requestId}] Türsteher 2 übernimmt: ${documentType.type} → ${gptOpinion.type}`);
-          documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence, parties: gptParties };
+          documentType = { type: gptOpinion.type, confidence: gptOpinion.confidence, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence, letterType: gptLetterType, letterTypeConfidence: gptLetterTypeConfidence, parties: gptParties };
+        } else if (
+          // 🆕 Welle 1: LETTER-Erhaltung — wenn Türsteher 2 mit solider (aber
+          // nicht override-starker) Konfidenz LETTER sagt, NICHT ins CONTRACT-
+          // Sicherheitsnetz kippen. Analog zur UNKNOWN-Erhaltung (0.65-Schwelle).
+          // Ein einseitiges Schreiben als Vertrag zu analysieren ist der Fehler,
+          // den Welle 1 beheben soll — das Netz darf ihn nicht reproduzieren.
+          gptOpinion &&
+          gptOpinion.type === 'LETTER' &&
+          gptOpinion.confidence >= 0.65
+        ) {
+          console.log(`📨 [${requestId}] LETTER-Erhaltung: Türsteher 2 sagt LETTER (${gptOpinion.confidence.toFixed(2)} ≥ 0.65) → LETTER behalten statt Sicherheitsnetz CONTRACT`);
+          documentType = { type: 'LETTER', confidence: gptOpinion.confidence, contractType: null, contractTypeConfidence: 0, letterType: gptLetterType, letterTypeConfidence: gptLetterTypeConfidence, parties: gptParties };
         } else if (
           // 🎯 UNKNOWN-Erhaltung (20.05.2026 Finding 3) — wenn BEIDE Türsteher
           // explizit UNKNOWN sagen, behalten wir UNKNOWN (User sieht blauen Banner)
@@ -3221,6 +3511,13 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
           console.log(`🛡️ [${requestId}] Beide Türsteher unsicher (Heuristik=${documentType.type}/${documentType.confidence.toFixed(2)}, GPT=${gptOpinion ? `${gptOpinion.type}/${gptOpinion.confidence.toFixed(2)}` : 'failed'}) → Sicherheitsnetz CONTRACT`);
           documentType = { type: 'CONTRACT', confidence: 0.5, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence, parties: gptParties };
         }
+      } else if (gptOpinion && gptOpinion.type === 'LETTER' && gptOpinion.confidence >= 0.8) {
+        // 🆕 Welle 1 (Audit-Fund #6): Heuristik war klar CONTRACT (≥0.6), aber
+        // GPT ist SEHR sicher (≥0.8), dass es ein einseitiges Schreiben ist —
+        // z.B. "Kuendigung_Mietvertrag.pdf" (Dateiname zieht CONTRACT hoch).
+        // Hohe Schwelle bewusst konservativ: im Zweifel bleibt CONTRACT.
+        console.log(`📨 [${requestId}] Türsteher 2 überstimmt Heuristik-CONTRACT: LETTER (${gptOpinion.confidence.toFixed(2)} ≥ 0.8)`);
+        documentType = { type: 'LETTER', confidence: gptOpinion.confidence, contractType: null, contractTypeConfidence: 0, letterType: gptLetterType, letterTypeConfidence: gptLetterTypeConfidence, parties: gptParties };
       } else {
         // Heuristik war klar CONTRACT → category bleibt, aber GPT-contractType wird trotzdem übernommen
         documentType = { ...documentType, contractType: gptContractType, contractTypeConfidence: gptContractTypeConfidence, parties: gptParties };
@@ -3269,6 +3566,9 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       // Wird in der Aufrufer-Pipeline gegen Keyword-Detection priorisiert.
       contractType: documentType.contractType || null,
       contractTypeConfidence: documentType.contractTypeConfidence || 0,
+      // 🆕 Welle 1: letterType (nur bei documentType=LETTER gesetzt, sonst null).
+      letterType: documentType.type === 'LETTER' ? (documentType.letterType || 'sonstiges_schreiben') : null,
+      letterTypeConfidence: documentType.letterTypeConfidence || 0,
       // 🆕 Problem H (27.05.2026): Parties aus Türsteher 2 mit Evidence-Check.
       // null wenn nicht extrahierbar oder Konfidenz <0.6 — dann greift in der
       // Aufrufer-Pipeline der Keyword-Fallback (contractAnalyzer.js).
@@ -3888,7 +4188,12 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
       isAutoRenewal: analysisData.isAutoRenewal || false, // 🆕 AUTO-RENEWAL
       // 🆕 A1 (28.05.2026): Deutsche KI-Bezeichnung des Vertragstyps für V2-Liste.
       // Mapping englisch→deutsch via pilotTypeToLabel (rental→Mietvertrag etc.).
-      contractTypeLabel: pilotTypeToLabel(analysisData.contractType) || null,
+      // 📨 Welle 1: bei LETTER stattdessen letterType-Label („Abmahnung" etc.).
+      contractTypeLabel: analysisData.documentType === 'LETTER'
+        ? letterTypeToLabel(analysisData.letterType)
+        : (pilotTypeToLabel(analysisData.contractType) || null),
+      // 📨 Welle 1: letterType persistieren (Anzeige/Status; null bei Verträgen).
+      letterType: analysisData.letterType || null,
       // 🆕 A2 (28.05.2026): gekuendigtZum auch im Top-Level persistieren.
       // Vorher: nur in analysisData (für Calendar-Events), jetzt auch direkt am
       // Contract-Dokument für V2-Modal-Anzeige.
@@ -4007,7 +4312,9 @@ function resolveSystemPrompt(documentType, contractType) {
     'RECEIPT': "Du bist ein erfahrener Beleg- und Compliance-Prüfer mit Schwerpunkt § 368 BGB (Quittung), § 146a AO (Kassenbon-Pflicht) und GoBD. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Quittung ≠ Rechnung — KEINE § 14 UStG-Pflichtangaben verlangen. Bewerte nur die formale Tauglichkeit + Beweiskraft des vorliegenden Belegs." + HALLUCINATION_GUARD,
     'TABLE_DOCUMENT': "Du bist ein erfahrener Daten- und Plausibilitäts-Analyst. Du analysierst strukturierte Tabellen-Daten auf Vollständigkeit, Konsistenz und Plausibilität — KEIN juristisches Urteil. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Bewerte nur Auffälligkeiten und Datenqualität, die in der vorliegenden Tabelle erkennbar sind." + HALLUCINATION_GUARD,
     'FINANCIAL_DOCUMENT': "Du bist ein erfahrener Bilanz-/Buchhaltungs-Analyst (Steuerberater-Niveau). Du analysierst Finanzdokumente (Bilanzen, Kontoauszüge, Steuerbescheide) auf Plausibilität, gesetzliche Anforderungen (HGB, AO) und auffällige Abweichungen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. KEIN Vertrags-Gutachten. Bewerte nur was im Dokument konkret erkennbar ist." + HALLUCINATION_GUARD,
-    'UNKNOWN': "Du bist ein erfahrener forensischer Dokumenten-Sichter — universeller Generalist. Identifiziere Dokumenttyp, Aussteller, Adressat und Zweck. Bewerte formale Klarheit, Vollständigkeit, rechtliche Bindungswirkung und ggf. Fristen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Wenn der Dokumenttyp unklar bleibt: sag das offen statt zu spekulieren." + HALLUCINATION_GUARD
+    'UNKNOWN': "Du bist ein erfahrener forensischer Dokumenten-Sichter — universeller Generalist. Identifiziere Dokumenttyp, Aussteller, Adressat und Zweck. Bewerte formale Klarheit, Vollständigkeit, rechtliche Bindungswirkung und ggf. Fristen. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Wenn der Dokumenttyp unklar bleibt: sag das offen statt zu spekulieren." + HALLUCINATION_GUARD,
+    // 🆕 Welle 1 (07.07.2026): Einseitige empfangene Schreiben — Empfänger-Perspektive.
+    'LETTER': "Du bist ein hochspezialisierter Rechtsanwalt mit 20+ Jahren Erfahrung, der ein EMPFANGENES einseitiges Schreiben (Kündigung, Abmahnung, Bescheid, Mahnung) für den EMPFÄNGER prüft. Deine Aufgabe ist NICHT die Bewertung eines zu unterschreibenden Vertrags, sondern: Was bedeutet dieses Schreiben für den Empfänger, ist es formell und materiell wirksam, welche Fristen laufen ab wann, und welche Handlungsoptionen hat der Empfänger jetzt. Fristen sind das Wichtigste — nenne sie immer mit konkretem Datum, wenn berechenbar. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Sei präzise, konkret und vermeide Standardphrasen." + HALLUCINATION_GUARD
   };
 
   return docTypeMap[documentType] || DEFAULT_CONTRACT;
@@ -4972,7 +5279,37 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     } catch (error) {
       console.warn(`⚠️ [${requestId}] Provider detection failed:`, error.message);
     }
-    
+
+    // 📨 Welle 1 (07.07.2026) — ZENTRALER LETTER-NEUTRALISIERUNGS-GUARD.
+    // Ein einseitiges Schreiben ist KEIN laufender Vertrag: alle Vertrags-Lebenszyklus-
+    // Felder werden hier — VOR jeder Persistenz — genullt. Das neutralisiert an EINER
+    // Stelle alle nachgelagerten Systeme: expiryDate/endDate (smartStatusUpdater/
+    // statusNotifier „läuft ab"-Mails), gekuendigtZum (calendarEvents Sektion 9a
+    // „erfolgreich gekündigt"-Event — die cancellation_confirmation-Heuristik matcht
+    // sonst auch EMPFANGENE Kündigungen!), canCancelAfterDate (Sektion 9b),
+    // Laufzeit/AutoRenewal/Mindestlaufzeit (Lifecycle-Events), contractType
+    // (kein Vertragstyp für ein Schreiben). documentCategory wird auf 'letter'
+    // gesetzt, damit die Status-Logik (contracts.js + Frontend-Zwillinge) das
+    // Schreiben als „Erhalten" führt statt „Gekündigt"/„Aktiv".
+    if (validationResult.documentType === 'LETTER') {
+      const clearedFields = [];
+      if (extractedEndDate) clearedFields.push(`endDate=${extractedEndDate}`);
+      if (extractedGekuendigtZum) clearedFields.push(`gekuendigtZum=${extractedGekuendigtZum}`);
+      if (extractedCanCancelAfterDate) clearedFields.push('canCancelAfterDate');
+      if (extractedContractType) clearedFields.push(`contractType=${extractedContractType}`);
+      extractedEndDate = null;
+      extractedGekuendigtZum = null;
+      extractedCanCancelAfterDate = null;
+      extractedCancellationPeriod = null;
+      extractedIsAutoRenewal = false;
+      extractedContractDuration = null;
+      extractedMinimumTerm = null;
+      extractedContractType = null;
+      endDateConfidence = 0;
+      extractedDocumentCategory = 'letter';
+      console.log(`📨 [${requestId}] LETTER-Guard: Vertrags-Lebenszyklus-Felder genullt${clearedFields.length ? ` (verworfen: ${clearedFields.join(', ')})` : ''} — documentCategory='letter', letterType=${validationResult.letterType || 'sonstiges_schreiben'}`);
+    }
+
     console.log(`🛠️ [${requestId}] Document analysis successful - proceeding with FIXED DEEP LAWYER-LEVEL analysis:`, {
       documentType: validationResult.documentType,
       strategy: validationResult.strategy,
@@ -5028,7 +5365,19 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     // 📏 Token-Budget für die Hauptanalyse: contractBudgetTokens (Plan-Limit, oder gekürzt
     // bei Monster-Verträgen). maxInputTokens stammt aus getAnalysisLimits(plan).
-    const analysisPrompt = generateDeepLawyerLevelPrompt(
+    // 📨 Welle 1: Einseitige Schreiben bekommen ihren EIGENEN User-Prompt
+    // (Empfänger-Perspektive, Fristen-Fokus) statt der Anwalts-Simulation
+    // „Soll ich unterschreiben?". Vertrags-Pfad byte-identisch.
+    const analysisPrompt = validationResult.documentType === 'LETTER'
+      ? generateLetterAnalysisPrompt(
+          fullTextContent,
+          validationResult.letterType || 'sonstiges_schreiben',
+          validationResult.strategy,
+          requestId,
+          contractBudgetTokens,
+          { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence }
+        )
+      : generateDeepLawyerLevelPrompt(
       fullTextContent,
       promptContractType,
       validationResult.strategy,
@@ -5091,7 +5440,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           fullTextContent,
           createTrackedOpenAI(getOpenAI(), { userId: req.user.userId, feature: 'date-hunt', requestId }),
           requestId,
-          { signal: abortController.signal } // 🛑 Stufe 2: bei Client-Disconnect bricht DateHunt zwischen Stages ab
+          {
+            signal: abortController.signal, // 🛑 Stufe 2: bei Client-Disconnect bricht DateHunt zwischen Stages ab
+            // 📨 Welle 1: LETTER-Modus — DateHunt sucht Reaktions-/Klage-/Widerspruchs-
+            // fristen statt Vertragslaufzeiten. Ohne Modus würde der Vertrags-Prompt
+            // genau diese Fristen als "nicht kalenderwürdig" entschärfen.
+            documentType: validationResult.documentType,
+            letterType: validationResult.letterType || null
+          }
         )
           .catch(err => {
             console.warn(`⚠️ [${requestId}] [DateHunt] unerwarteter Fehler: ${err.message} — Fallback auf leere Datums-Liste`);
@@ -5166,6 +5522,25 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       // ✅ FIXED: Fallback to legacy format instead of throwing
       console.warn(`⚠️ [${requestId}] Using fallback analysis format`);
       result = convertLegacyToDeepLawyerFormat(result, validationResult.documentType, requestId);
+    }
+
+    // 📨 Welle 1: LETTER-Output-Hygiene (Belt & Suspenders zum Prompt).
+    // Der Letter-Prompt verbietet Vertrags-Felder — falls das Modell sie trotzdem
+    // liefert (oder der Legacy-Fallback sie injiziert), hier deterministisch entfernen:
+    // paymentTerms (geforderter Betrag ≠ wiederkehrende Vertragszahlung → sonst
+    // PAYMENT_DUE-Events), comparison/positiveAspects/suggestions (Vertrags-Semantik),
+    // typeSpecificFindings (Pilot ist Vertrags-Feature). Asymmetrie hart auf
+    // not_applicable (Frontend blendet das sauber aus).
+    if (validationResult.documentType === 'LETTER') {
+      const dropped = ['paymentTerms', 'comparison', 'positiveAspects', 'suggestions', 'typeSpecificFindings']
+        .filter(f => result[f] !== undefined && result[f] !== null);
+      for (const f of dropped) delete result[f];
+      result.asymmetryAssessment = {
+        rating: 'not_applicable',
+        favoredParty: null,
+        explanation: 'Ausgewogenheit nicht anwendbar — einseitiges Schreiben, kein zweiseitiger Vertrag.'
+      };
+      if (dropped.length) console.log(`📨 [${requestId}] LETTER-Output-Hygiene: Felder entfernt (${dropped.join(', ')})`);
     }
 
     // 📅 Stufe-2-Merge: Date Hunt Stage liefert evidence-validierte Datums + Frist-Hinweise.
@@ -5276,6 +5651,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
       // Enhanced metadata from deep lawyer-level analysis
       documentType: validationResult.documentType,
+      // 📨 Welle 1: letterType (null bei Verträgen)
+      letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
+      documentCategory: extractedDocumentCategory || null,
       analysisStrategy: validationResult.strategy,
       confidence: validationResult.confidence,
       qualityScore: validationResult.qualityScore,
@@ -5354,7 +5732,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           expiryDate: extractedEndDate || null,
           isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
           // 🆕 A1 (28.05.2026): Deutsche KI-Bezeichnung für V2-Liste.
-          contractTypeLabel: pilotTypeToLabel(extractedContractType) || null,
+          // 📨 Welle 1: bei LETTER aus letterType („Kündigungsschreiben (erhalten)" etc.).
+          contractTypeLabel: validationResult.documentType === 'LETTER'
+            ? letterTypeToLabel(validationResult.letterType)
+            : (pilotTypeToLabel(extractedContractType) || null),
+          // 📨 Welle 1: letterType + documentCategory persistieren (Status-Logik + Anzeige).
+          letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
+          documentCategory: extractedDocumentCategory || existingContract.documentCategory || null,
           // 🆕 A2 (28.05.2026): gekuendigtZum auch im Top-Level persistieren.
           gekuendigtZum: extractedGekuendigtZum || null,
           // 🆕 A3 (29.05.2026): KI-extrahierte Zahlungs-Details aus paymentTerms.
@@ -5425,7 +5809,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // 🔧 FIX: Override expiryDate from AI importantDates if available
         // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
-        let aiEndDate = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+        // 📨 Welle 1: für LETTER komplett überspringen — ein Schreiben hat KEIN
+        // Vertragsende; der Guard oben hat expiryDate bereits genullt und nichts
+        // darf es hier über den importantDates-Pfad wieder hereinholen.
+        let aiEndDate = validationResult.documentType === 'LETTER'
+          ? null
+          : extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
         // 🆕 Hebel A1 (17.06.2026): Behielt das 70%-Gate den Regex-Wert, ist dieser aber IMPLAUSIBEL
         // (==Start/Vergangenheit), darf er das korrekte GPT-Ende NICHT blockieren → GPT-Ende trotz Gate
         // holen (conf=0 umgeht das Gate). Fixt NovaCloud: Regex-Ende==Start blockierte das echte Ende
@@ -5522,7 +5911,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           // erhalten Calendar-Events. Bei TABLE/FINANCIAL sind Datums (Stichtag, Bilanz-
           // Frist, Einspruchsfrist etc.) durchaus relevant. Bei INVOICE/RECEIPT/UNKNOWN
           // bleibt der Guard greifen (Phantom-„Vertragsende"-Termine vermeiden).
-          const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'].includes(validationResult.documentType);
+          // 📨 Welle 1: LETTER erzeugt Events (Klage-/Widerspruchsfristen = Kern-Nutzen!).
+          // Vertrags-Lifecycle-Events sind durch den LETTER-Guard strukturell unmöglich
+          // (expiryDate/gekuendigtZum/canCancelAfter/paymentTerms sind genullt) — es
+          // bleiben nur die validierten importantDates. Wichtig auch für Re-Analyse
+          // CONTRACT→LETTER: der Cleanup löscht dann die alten falschen Vertrags-Events.
+          const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT', 'LETTER'].includes(validationResult.documentType);
           if (canCreateEvents) {
             // 🛡️ Stufe 2 (22.05.2026): Calendar-Backup vor Cleanup. Falls Pipeline
             // zwischen "alte Events gelöscht" und "neue Events erzeugt" abbricht
@@ -5673,7 +6067,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
           startDate: extractedStartDate || null, // 🆕 START DATE
           expiryDate: extractedEndDate || null,  // null statt "" für Datums-Checks!
-          status: extractedDocumentCategory === 'cancellation_confirmation' ? 'Gekündigt' : 'Active',
+          // 📨 Welle 1: LETTER → Status 'Erhalten' (kein laufender Vertrag)
+          status: validationResult.documentType === 'LETTER' ? 'Erhalten'
+            : (extractedDocumentCategory === 'cancellation_confirmation' ? 'Gekündigt' : 'Active'),
 
           // 📋 NEUE FELDER:
           provider: extractedProvider,
@@ -5703,6 +6099,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           // saveContractWithUpload via pilotTypeToLabel() den deutschen Label setzen kann.
           // Vorher fehlte das — Bug aus A1-Implementation entdeckt während A3.
           contractType: extractedContractType,
+          // 📨 Welle 1: letterType + documentType für saveContractWithUpload (Label + Anzeige).
+          letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
+          documentType: validationResult.documentType,
           // 🆕 A3 (29.05.2026): KI-extrahierte Zahlungs-Details für saveContractWithUpload.
           paymentTerms: extractAndValidatePaymentTerms(result.paymentTerms, requestId)
         };
@@ -5713,10 +6112,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // Pfad ein falsches "Ende==Start" gespeichert wird → keine falschen Ablauf-/Verlängerungs-
         // Termine. Bewusst NACH dem Objekt-Bau (kein Eingriff in die importantDates-Filterung).
         {
-          let aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+          // 📨 Welle 1: LETTER hat kein Vertragsende — Override komplett überspringen.
+          let aiEndDateNew = validationResult.documentType === 'LETTER'
+            ? null
+            : extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
           // 🆕 Hebel A1 (17.06.2026): implausibles Regex-Ende darf GPT-Ende nicht blockieren (s. Re-Analyse-Pfad).
-          if (!aiEndDateNew) {
-            const scA1n = (result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
+          if (!aiEndDateNew && validationResult.documentType !== 'LETTER') {
+            const scA1n =(result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
             if (shouldClearExpiry({ expiryDate: contractAnalysisData.expiryDate, startDate: contractAnalysisData.startDate, startCandidates: scA1n }).clear) {
               aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, 0, requestId);
             }
@@ -5750,10 +6152,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // 🔧 FIX: Extract AI end date for new contracts too
         // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
-        let aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
+        // 📨 Welle 1: LETTER hat kein Vertragsende — Override komplett überspringen.
+        let aiEndDateNew = validationResult.documentType === 'LETTER'
+          ? null
+          : extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
         // 🆕 Hebel A1 (17.06.2026): implausibles Regex-Ende darf GPT-Ende nicht blockieren (s. Re-Analyse-Pfad).
-        if (!aiEndDateNew) {
-          const scA1p = (result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
+        if (!aiEndDateNew && validationResult.documentType !== 'LETTER') {
+          const scA1p =(result.importantDates || []).filter(d => d && d.type === 'start_date' && d.date).map(d => d.date);
           if (shouldClearExpiry({ expiryDate: extractedEndDate, startDate: extractedStartDate, startCandidates: scA1p }).clear) {
             aiEndDateNew = extractEndDateFromImportantDates(result.importantDates, 0, requestId);
           }
@@ -5797,6 +6202,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
               // Enhanced metadata
               documentType: validationResult.documentType,
+              // 📨 Welle 1: letterType (null bei Verträgen)
+              letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
               analysisStrategy: validationResult.strategy,
               confidence: validationResult.confidence,
               qualityScore: validationResult.qualityScore,
@@ -5866,7 +6273,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // Frist, Einspruchsfrist etc.) durchaus relevant. Bei INVOICE/RECEIPT/UNKNOWN
         // bleibt der Guard greifen (Phantom-„Vertragsende"-Termine vermeiden).
         try {
-          const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'].includes(validationResult.documentType);
+          // 📨 Welle 1: LETTER erzeugt Events (Klage-/Widerspruchsfristen = Kern-Nutzen!).
+          // Vertrags-Lifecycle-Events sind durch den LETTER-Guard strukturell unmöglich
+          // (expiryDate/gekuendigtZum/canCancelAfter/paymentTerms sind genullt) — es
+          // bleiben nur die validierten importantDates. Wichtig auch für Re-Analyse
+          // CONTRACT→LETTER: der Cleanup löscht dann die alten falschen Vertrags-Events.
+          const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT', 'LETTER'].includes(validationResult.documentType);
           if (canCreateEvents) {
             const db = await database.connect();
             const events = await generateEventsForContract(db, savedContract);
@@ -6077,7 +6489,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       
       // Enhanced response data
       documentType: validationResult.documentType || "UNKNOWN",
-      analysisStrategy: validationResult.strategy || "DEEP_LAWYER_LEVEL_ANALYSIS", 
+      // 📨 Welle 1: letterType für Frontend-Framing (null bei Verträgen)
+      letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
+      analysisStrategy: validationResult.strategy || "DEEP_LAWYER_LEVEL_ANALYSIS",
       confidence: `${Math.round(validationResult.confidence * 100)}%`,
       qualityScore: `${Math.round(validationResult.qualityScore * 100)}%`,
       analysisMessage: validationResult.analysisMessage || "Tiefgehende anwaltliche Vertragsanalyse",
@@ -6396,3 +6810,7 @@ module.exports.getContractTypeAwareness = getContractTypeAwareness;
 // ♻️ Wiederverwendung der kanonischen Analyse-Pipeline durch die Re-Analyse-Route
 // (POST /api/contracts/:id/analyze) — damit "Jetzt analysieren" identisch zum Upload läuft.
 module.exports.handleEnhancedDeepLawyerAnalysisRequest = handleEnhancedDeepLawyerAnalysisRequest;
+// 📨 Welle 1 (07.07.2026): Exporte für Offline-/Live-Tests (scripts/testLetterWelle1.js)
+module.exports.detectDocumentType = detectDocumentType;
+module.exports.classifyDocumentTypeWithGPT = classifyDocumentTypeWithGPT;
+module.exports.generateLetterAnalysisPrompt = generateLetterAnalysisPrompt;
