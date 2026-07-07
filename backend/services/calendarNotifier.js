@@ -328,12 +328,21 @@ async function checkAndSendNotifications(db) {
         console.log(`Skipping ${maskEmail(event.user.email)} - E-Mail-Benachrichtigungen deaktiviert`);
         continue;
       }
+      // 🖋️ Fix #5 (07.07.2026): Signatur-Events (Ablauf + 3-/1-Tage-Vorwarner) gehören zum
+      // UI-Schalter „Signatur-Updates", NICHT zu „Vertragsfristen". Vorher liefen sie durch die
+      // contractDeadlines-/deadlineReminders-Gates (falscher Schalter). Jetzt EIGENES Gating; unten
+      // werden sie von den Fristen-Gates ausgenommen.
+      const isSignatureEvent = event.sourceType === "ENVELOPE" || /^SIGNATURE_/i.test(event.type || "");
+      if (isSignatureEvent && ns?.email?.signatureUpdates === false) {
+        console.log(`Skipping ${maskEmail(event.user.email)} - Signatur-Updates deaktiviert`);
+        continue;
+      }
       // Selbst gesetzte Erinnerungen sind KEINE „Vertragsfrist": Der Schalter heißt im UI
       // „Vertragsfristen — Kündigungsfristen & Ablaufdaten". Schaltet der User den aus, will er
       // keine automatischen Fristen-Mails mehr — aber NICHT, dass sein eigener Wecker (z.B.
       // Reminder auf den 11.6.) still verschwindet. Darum: user-gewählte Exakt-Termine hier
       // ausnehmen. Echte abgeleitete Fristen-Events bleiben vom Schalter gestoppt.
-      if (ns?.email?.contractDeadlines === false && !isUserPickedDate) {
+      if (ns?.email?.contractDeadlines === false && !isUserPickedDate && !isSignatureEvent) {
         console.log(`Skipping ${maskEmail(event.user.email)} - Vertragsfristen-Mails deaktiviert`);
         continue;
       }
@@ -360,7 +369,7 @@ async function checkAndSendNotifications(db) {
       // Das betrifft (a) Alt-Events aus Bestandsverträgen (vor 3a erzeugt, laufen aus) UND
       // (b) seltene Spezial-Erzeuger, die weiter eigene Vorläufe nutzen: Mindestlaufzeit-/
       // Probezeit-Reminder (14d → days7) und Zahlungs-Reminder (3d → days1).
-      if (dr && !isUserPickedDate) {
+      if (dr && !isUserPickedDate && !isSignatureEvent) {
         const canonicalStages = [
           { lead: 30, enabled: dr.days30 !== false },
           { lead: 7,  enabled: dr.days7 !== false },
