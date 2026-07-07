@@ -65,13 +65,13 @@ const LEGAL_RSS_FEEDS = {
     url: 'https://www.lto.de/rss/nachrichten-rss/feed.xml',
     name: 'Legal Tribune Online',
     category: 'rechtsnews',
-    enabled: true
+    enabled: false // deaktiviert: Rechtsjournalismus (keine Primaerquelle) erzeugt Headline-Fehltreffer statt echter Gesetzesaenderungen -> Praezision. Reversibel: auf true zuruecksetzen.
   },
   'lto-hintergruende': {
     url: 'https://www.lto.de/hintergruende-rss/rss/feed.xml',
     name: 'LTO Hintergründe',
     category: 'rechtsnews',
-    enabled: true
+    enabled: false // deaktiviert: s.o. (Rechtsjournalismus, keine Primaerquelle)
   },
 
   // ═══════════════════════════════════════════════════
