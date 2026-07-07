@@ -75,6 +75,7 @@ export default function LandingFooter() {
               <li><Link to="/datenschutz" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Datenschutz</Link></li>
               <li><Link to="/agb" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>AGB</Link></li>
               <li><Link to="/impressum" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Impressum</Link></li>
+              <li><a href="/AVV_Contract-AI_v2.1.pdf" target="_blank" rel="noreferrer" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>AVV (PDF)</a></li>
               <li><a role="button" tabIndex={0} onClick={handleOpenCookieSettings} className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none;cursor:pointer")}>Cookie-Einstellungen</a></li>
             </ul>
           </div>
