@@ -976,7 +976,14 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
 
           // 📨 Welle 1: Bei Schreiben ist die FRIST der „Gold wert"-Moment —
           // Frist-Karte zuerst, mit Rest-Tagen groß („⚖️ Klagefrist — noch 12 Tage").
-          const daysLeft = topDate ? Math.ceil((topDate.date.getTime() - now.getTime()) / 86400000) : null;
+          // Kalendertage-Rechnung: Datum auf LOKALE Mitternacht normalisieren + round,
+          // sonst überschätzt der UTC-Parse von "YYYY-MM-DD" die Frist um 1 Tag
+          // (dieselbe Off-by-one-Klasse wie utils/calendarDaysUntil.js im Backend).
+          const daysLeft = topDate ? (() => {
+            const d = new Date(topDate.date);
+            d.setHours(0, 0, 0, 0);
+            return Math.round((d.getTime() - now.getTime()) / 86400000);
+          })() : null;
           const dateCard = topDate && (
             <div className={`${styles.glanceCard} ${styles.glanceCardDate}`}>
               <div className={styles.glanceIcon} aria-hidden="true">{docClass === "LETTER" ? "⚖️" : "⏰"}</div>

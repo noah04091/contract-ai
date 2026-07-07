@@ -1384,7 +1384,11 @@ async function huntDates(contractText, openaiClient, requestId = '', options = {
     // Wenn Pipeline auffällig wenig Datums findet bei langem Vertrag, ist das
     // suspekt. Letzter fokussierter Call auf Anfang+Ende des Vertrags.
     let anomalyResult = null;
+    // 📨 Welle 1 (TÜV m5): Anomaly-Pass ist vertrags-framed (sucht Vertragsdatum/
+    // Beginn mit Vertrags-DATE_SCHEMA) — für Briefe deaktiviert, sonst könnte er
+    // start_date/end_date/contract_signed für ein Schreiben emittieren.
     const isAnomaly =
+      !mode &&
       contractText.length > ANOMALY_TRIGGER_MIN_CONTRACT_LEN &&
       mergedDates.length < ANOMALY_TRIGGER_MAX_DATES;
     if (isAnomaly) {

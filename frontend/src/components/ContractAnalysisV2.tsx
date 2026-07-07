@@ -1827,9 +1827,13 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               return classifyDocType(d?.documentType, d?.contractType);
             })()}
             onShowDeadlines={() => {
-              // Scroll zur Fristen-Sektion; Fallback: ans Ergebnis-Ende (Tabs/Empfehlungen)
-              const target = datesSectionRef.current || analysisResultRef.current;
-              if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+              // Scroll zur Fristen-Sektion; Fallback: ans ENDE des Ergebnisses
+              // (Tabs/Empfehlungen) — nicht an den Anfang (wäre Scroll nach oben).
+              if (datesSectionRef.current) {
+                datesSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              } else if (analysisResultRef.current) {
+                analysisResultRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+              }
             }}
           />
           )}

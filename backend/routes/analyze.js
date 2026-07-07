@@ -4194,6 +4194,10 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
         : (pilotTypeToLabel(analysisData.contractType) || null),
       // 📨 Welle 1: letterType persistieren (Anzeige/Status; null bei Verträgen).
       letterType: analysisData.letterType || null,
+      // 🛡️ TÜV M1: documentCategory='letter' schon bei Neu-Anlage persistieren
+      // (Status-/Filter-Pfad braucht es; bewusst NUR im LETTER-Fall — Verträge
+      // bleiben byte-identisch zum Verhalten vor Welle 1).
+      ...(analysisData.documentType === 'LETTER' ? { documentCategory: 'letter', documentType: 'LETTER' } : {}),
       // 🆕 A2 (28.05.2026): gekuendigtZum auch im Top-Level persistieren.
       // Vorher: nur in analysisData (für Calendar-Events), jetzt auch direkt am
       // Contract-Dokument für V2-Modal-Anzeige.
@@ -5306,6 +5310,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       extractedMinimumTerm = null;
       extractedContractType = null;
       endDateConfidence = 0;
+      // 🛡️ TÜV m4: auch startDate nullen — sonst können Dateinamen-Heuristiken
+      // (Kuendigung_Arbeitsvertrag.pdf → isArbeitsvertrag) Phantom-Events
+      // (Probezeit/Gewährleistung/Jubiläum) aus Start+X berechnen.
+      extractedStartDate = null;
+      startDateConfidence = 0;
       extractedDocumentCategory = 'letter';
       console.log(`📨 [${requestId}] LETTER-Guard: Vertrags-Lebenszyklus-Felder genullt${clearedFields.length ? ` (verworfen: ${clearedFields.join(', ')})` : ''} — documentCategory='letter', letterType=${validationResult.letterType || 'sonstiges_schreiben'}`);
     }
@@ -5570,7 +5579,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // (→ keine echte Frist mehr fälschlich "vor Beginn" verworfen). Konservativ: nur bei GPT-Konf ≥ Regex-Konf
     // und nur wenn das Datum abweicht; sonst alles wie bisher. Fehler → defensiv Regex-Start behalten.
     try {
-      const aiStart = (result.importantDates || []).find(d => d && d.type === 'start_date' && d.date);
+      // 📨 Welle 1 (TÜV m4): Hebel A2 für LETTER überspringen — ein Schreiben hat
+      // keinen Vertragsbeginn; nichts darf startDate über den GPT-Pfad zurückholen.
+      const aiStart = validationResult.documentType === 'LETTER'
+        ? null
+        : (result.importantDates || []).find(d => d && d.type === 'start_date' && d.date);
       if (aiStart) {
         const aiStartConf = typeof aiStart.confidence === 'number' ? aiStart.confidence : 0;
         const aiStartDate = new Date(aiStart.date);
@@ -5736,9 +5749,30 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           contractTypeLabel: validationResult.documentType === 'LETTER'
             ? letterTypeToLabel(validationResult.letterType)
             : (pilotTypeToLabel(extractedContractType) || null),
-          // 📨 Welle 1: letterType + documentCategory persistieren (Status-Logik + Anzeige).
+          // 📨 Welle 1: letterType persistieren (Status-Logik + Anzeige).
           letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
-          documentCategory: extractedDocumentCategory || existingContract.documentCategory || null,
+          // 🛡️ TÜV m3: documentCategory NUR im LETTER-Fall anfassen (Verträge byte-
+          // identisch zum Verhalten vor Welle 1). LETTER→CONTRACT-Rückklassifikation:
+          // verwaistes 'letter' zurücksetzen, sonst bliebe Status „Erhalten" kleben.
+          ...(validationResult.documentType === 'LETTER'
+            ? { documentCategory: 'letter' }
+            : (existingContract.documentCategory === 'letter'
+                ? { documentCategory: extractedDocumentCategory || 'active_contract' }
+                : {})),
+          // 🛡️ TÜV M2: bei LETTER ALLE Lifecycle-Schwesterfelder AKTIV nullen —
+          // Altwerte aus einer früheren (Fehl-)Analyse als Vertrag dürfen nicht
+          // überleben (endDate → „läuft ab"-Mail via smartStatusUpdater/statusNotifier;
+          // canCancelAfterDate/minimumTerm → „Jetzt kündbar"-Events; payment* →
+          // wiederkehrende Zahlungs-Events).
+          ...(validationResult.documentType === 'LETTER' ? {
+            endDate: null,
+            canCancelAfterDate: null,
+            minimumTerm: null,
+            paymentAmount: null,
+            paymentFrequency: null,
+            paymentMethod: null,
+            expiryDateSource: 'letter_neutralized'
+          } : {}),
           // 🆕 A2 (28.05.2026): gekuendigtZum auch im Top-Level persistieren.
           gekuendigtZum: extractedGekuendigtZum || null,
           // 🆕 A3 (29.05.2026): KI-extrahierte Zahlungs-Details aus paymentTerms.
@@ -6281,7 +6315,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT', 'LETTER'].includes(validationResult.documentType);
           if (canCreateEvents) {
             const db = await database.connect();
-            const events = await generateEventsForContract(db, savedContract);
+            // 🛡️ TÜV m6: savedContract stammt aus saveContractWithUpload und trägt die
+            // erst im nachfolgenden $set persistierten Analyse-Felder (importantDates!)
+            // NICHT — Block 10 (Klagefrist-Events) liefe leer. Frisches Dokument laden;
+            // Fallback auf savedContract = exakt das bisherige Verhalten.
+            const freshContract = await contractsCollection.findOne({ _id: savedContract._id }) || savedContract;
+            const events = await generateEventsForContract(db, freshContract);
             console.log(`📅 Calendar Events generiert für ${savedContract.name}: ${events.length} Events${savedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
             console.log(`📅 Events:`, events.map(e => ({
               type: e.type,

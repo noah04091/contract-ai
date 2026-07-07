@@ -1449,7 +1449,10 @@ router.get("/", async (req, res) => {
       expiryDate: 1, status: 1, statusOverride: 1, folderId: 1, documentCategory: 1,
       gekuendigtZum: 1, cancellationId: 1, cancellationConfirmed: 1,
       isGenerated: 1, isOptimized: 1, analyzed: 1, contractScore: 1,
-      paymentStatus: 1, createdAt: 1
+      paymentStatus: 1, createdAt: 1,
+      // 📨 Welle 1 (TÜV M1): documentType/letterType für Branch 0 „Erhalten" —
+      // sonst zählt der Filter-/Sidebar-Pfad Briefe als „Aktiv" (Filter ≠ Badge).
+      documentType: 1, letterType: 1
     };
 
     // 📊 Status-Filter (vereinheitlicht): Treffer-IDs aus calculateSmartStatusBackend bestimmen,

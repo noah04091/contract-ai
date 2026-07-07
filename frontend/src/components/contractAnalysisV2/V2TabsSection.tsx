@@ -1,4 +1,4 @@
-﻿// V2-Tabs-Section — 7 Tabs (+ optional Pilot-Tab) im v6-Mockup-Stil.
+// V2-Tabs-Section — 7 Tabs (+ optional Pilot-Tab) im v6-Mockup-Stil.
 //
 // Tab-Reihenfolge: Zusammenfassung | Risiken | Stärken | Empfehlungen
 //                  [Pilotprüfung] | Verbesserungsideen | Marktvergleich | Rechtsgutachten
