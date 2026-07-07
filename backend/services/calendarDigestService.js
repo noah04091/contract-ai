@@ -172,9 +172,12 @@ function generateEventCard(event, severity, baseUrl) {
   };
   const c = colors[severity] || colors.info;
 
-  const eventDate = new Date(event.date);
-  const today = new Date();
-  const daysUntil = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+  // Kalendertage (Mitternacht-normalisiert, Math.round) statt Bruchtag-Math.ceil — konsistent mit
+  // calendarDaysUntil/Glocke/Einzel-Mail (Wurzel-Fix 28.06., hier nachgezogen). Bewusst OHNE
+  // max(0)-Clamp, damit die "vor X Tagen"-Zeile (daysUntil < 0) für Vergangenheit erhalten bleibt.
+  const eventDate = new Date(event.date); eventDate.setHours(0, 0, 0, 0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const daysUntil = Math.round((eventDate - today) / 86400000);
 
   let daysText = "";
   if (daysUntil === 0) {
