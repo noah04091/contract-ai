@@ -75,8 +75,13 @@ async function generateEventsForContract(db, contract) {
       const originalExpiry = new Date(expiryDate);
       
       // Berechne nächstes Ablaufdatum (nutzt autoRenewMonths, Default: 12 Monate)
-      const autoRenewMonths = contract.autoRenewMonths || 12;
-      while (expiryDate < now) {
+      // 🛡️ Guard 07.07.2026: ungültige (negativ/0/NaN) Verlängerungsdauer → Default 12, sonst
+      // liefe die Schleife nie in die Zukunft = Endlosschleife/Server-Hang. Zusätzlich harte
+      // Iterations-Obergrenze (1200 Monate ≈ 100 Jahre) als Sicherheitsnetz.
+      let autoRenewMonths = Number(contract.autoRenewMonths);
+      if (!Number.isFinite(autoRenewMonths) || autoRenewMonths <= 0) autoRenewMonths = 12;
+      let renewGuard = 0;
+      while (expiryDate < now && renewGuard++ < 1200) {
         expiryDate.setMonth(expiryDate.getMonth() + autoRenewMonths);
       }
       
@@ -1432,7 +1437,14 @@ function extractNoticeMonths(input) {
 function subtractNoticePeriod(expiryDate, noticePeriodDays, noticePeriodMonths) {
   const result = new Date(expiryDate);
   if (noticePeriodMonths > 0) {
+    // 🛡️ Monatsende-Clamp 07.07.2026: setMonth rollt bei kürzeren Zielmonaten über
+    // (31.03 − 1 Monat → JS ergibt 03.03 statt 28.02) → der berechnete letzte Kündigungstag
+    // läge Tage ZU SPÄT (rechtlich riskant). Nach Überlauf auf den korrekten Monatsletzten klemmen.
+    const targetDay = result.getDate();
     result.setMonth(result.getMonth() - noticePeriodMonths);
+    if (result.getDate() !== targetDay) {
+      result.setDate(0); // = letzter Tag des beabsichtigten (Vor-)Monats
+    }
   } else {
     result.setDate(result.getDate() - noticePeriodDays);
   }
