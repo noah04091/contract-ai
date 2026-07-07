@@ -139,9 +139,60 @@ async function autoDeleteOldVoidedEnvelopes() {
 }
 
 // EXPORTIERE ALLE FUNKTIONEN
+// ⏳ Abgelaufene, noch OFFENE Signaturanfragen sauber auf EXPIRED setzen + deren Kalender-Events
+// aufräumen. Behebt (Vollaudit 07.07.): findExpiredEnvelopes wurde NIE aufgerufen → abandoned
+// Envelopes blieben ewig SENT/AWAITING_SIGNER_x, ihre Events verwaisten (status:'scheduled'),
+// der "Ausstehend"-Zähler zeigte sie endlos, DSGVO. Idempotent, eng gescopet, mit Kill-Switch.
+async function expireOverdueEnvelopes() {
+  if (process.env.ENVELOPE_EXPIRY_ENABLED === "false") {
+    console.log("⏸️ Envelope-Expiry-Job via ENV deaktiviert (ENVELOPE_EXPIRY_ENABLED=false).");
+    return { expired: 0, disabled: true };
+  }
+  try {
+    const db = await database.connect();
+    const now = new Date();
+    // Nur Zustände, in denen noch auf eine Unterschrift gewartet wird (DRAFT bleibt unberührt —
+    // ein Entwurf ist keine "ausstehende" Anfrage und koennte noch bewusst versendet werden).
+    const OPEN_STATES = [
+      "SENT",
+      "AWAITING_SIGNER_1", "AWAITING_SIGNER_2", "AWAITING_SIGNER_3", "AWAITING_SIGNER_4", "AWAITING_SIGNER_5",
+      "AWAITING_SIGNER_6", "AWAITING_SIGNER_7", "AWAITING_SIGNER_8", "AWAITING_SIGNER_9", "AWAITING_SIGNER_10"
+    ];
+    // $type:"date" schuetzt vor Envelopes ohne echtes expiresAt: null/missing wuerde per BSON-
+    // Typ-Ordnung faelschlich als "< now" matchen. Nur echte, vergangene Ablaufdaten erfassen.
+    const filter = { status: { $in: OPEN_STATES }, expiresAt: { $type: "date", $lt: now } };
+
+    const overdue = await db.collection("envelopes").find(filter, { projection: { _id: 1 } }).toArray();
+    if (overdue.length === 0) {
+      console.log("✅ Keine abgelaufenen offenen Signaturanfragen.");
+      return { expired: 0 };
+    }
+    const ids = overdue.map(e => e._id);
+
+    const upd = await db.collection("envelopes").updateMany(
+      filter,
+      { $set: { status: "EXPIRED", expiredAt: now, updatedAt: now } }
+    );
+
+    // Zugehörige Kalender-/Erinnerungs-Events entfernen — identisch zu onEnvelopeStatusChange→EXPIRED
+    // (deleteEnvelopeEvents), nur gebündelt. sourceType-Scope haelt es strikt auf Envelope-Events.
+    const evClean = await db.collection("contract_events").deleteMany({
+      envelopeId: { $in: ids },
+      sourceType: "ENVELOPE"
+    });
+
+    console.log(`⏳ ${upd.modifiedCount} Signaturanfrage(n) auf EXPIRED gesetzt, ${evClean.deletedCount} zugehörige Event(s) entfernt.`);
+    return { expired: upd.modifiedCount, eventsRemoved: evClean.deletedCount };
+  } catch (error) {
+    console.error("❌ expireOverdueEnvelopes Fehler:", error.message);
+    return { expired: 0, error: error.message };
+  }
+}
+
 module.exports = {
   checkContractsAndSendReminders,
   checkCalendarEventsAndSendNotifications,
   updateAllContractStatuses, // 🧠 Smart Status
-  autoDeleteOldVoidedEnvelopes // 🗑️ Auto-Delete nach 30 Tagen
+  autoDeleteOldVoidedEnvelopes, // 🗑️ Auto-Delete nach 30 Tagen
+  expireOverdueEnvelopes // ⏳ Abgelaufene offene Signaturanfragen -> EXPIRED
 };

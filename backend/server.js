@@ -2331,6 +2331,21 @@ const connectDB = async () => {
         }
       }));
 
+      // ⏳ ENVELOPE-EXPIRY: abgelaufene, noch offene Signaturanfragen auf EXPIRED setzen +
+      // deren verwaiste Kalender-Events aufräumen (täglich 03:30, vor dem Auto-Delete um 04:00).
+      // Kill-Switch: ENV ENVELOPE_EXPIRY_ENABLED=false deaktiviert komplett. Idempotent.
+      cron.schedule("30 3 * * *", async () => {
+        console.log("⏳ [ENVELOPE-EXPIRY] Prüfe abgelaufene offene Signaturanfragen...");
+        try {
+          const { expireOverdueEnvelopes } = require("./services/cron");
+          const result = await expireOverdueEnvelopes();
+          console.log(`⏳ [ENVELOPE-EXPIRY] Ergebnis: ${result.expired} auf EXPIRED, ${result.eventsRemoved || 0} Event(s) entfernt`);
+        } catch (error) {
+          console.error("❌ [ENVELOPE-EXPIRY] Cron Error:", error);
+          await captureError(error, { route: 'CRON:envelope-expiry', method: 'SCHEDULED', severity: 'low' });
+        }
+      });
+
       // 🗑️ AUTO-DELETE: Stornierte Envelopes nach 30 Tagen endgültig löschen (täglich um 4 Uhr nachts)
       cron.schedule("0 4 * * *", async () => {
         console.log("🗑️ [AUTO-DELETE] Starte Bereinigung alter stornierter Envelopes...");
