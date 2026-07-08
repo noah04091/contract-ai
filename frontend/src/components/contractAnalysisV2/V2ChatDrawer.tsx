@@ -44,10 +44,14 @@ export default function V2ChatDrawer({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
+    // TÜV: vorherigen overflow-Wert MERKEN — die Analyse läuft oft in Modals,
+    // die selbst overflow=hidden setzen; ein unconditionales "" beim Schließen
+    // würde deren Scroll-Lock zerstören (Hintergrund scrollt hinterm Modal).
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [open, onClose]);
 
@@ -276,8 +280,9 @@ export default function V2ChatDrawer({
                 Dein Chat-Kontingent ist aufgebraucht
               </div>
               <div style={{ fontSize: 13.5, color: "#475569", lineHeight: 1.55, maxWidth: 380 }}>
-                Du hast deine {limitReached.limit} kostenlosen Chat-Nachrichten diesen Monat genutzt.
-                Mit dem Business-Tarif bekommst du 50 Nachrichten/Monat — mit Volltext-Kontext zu deinen Dokumenten.
+                {limitReached.limit < 50
+                  ? `Du hast dein monatliches Chat-Kontingent (${limitReached.limit} Nachrichten) genutzt. Mit dem Business-Tarif bekommst du 50 Nachrichten/Monat — mit Volltext-Kontext zu deinen Dokumenten.`
+                  : `Du hast dein monatliches Chat-Kontingent (${limitReached.limit} Nachrichten) genutzt. Es wird zum Monatsanfang zurückgesetzt — mit Enterprise chattest du unbegrenzt.`}
               </div>
               <a
                 href="/pricing"
@@ -294,7 +299,7 @@ export default function V2ChatDrawer({
                   textDecoration: "none",
                 }}
               >
-                Business ansehen →
+                {limitReached.limit < 50 ? "Business ansehen →" : "Tarife ansehen →"}
               </a>
             </div>
           ) : chatId ? (

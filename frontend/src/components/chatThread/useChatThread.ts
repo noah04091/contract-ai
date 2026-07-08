@@ -233,6 +233,10 @@ export function useChatThread() {
 
           if (payload.delta) {
             assistantContent += payload.delta;
+            // TÜV: Stale-Write-Guard — ein bereits resolvter Chunk eines
+            // abgebrochenen Alt-Streams darf den State eines neuen send
+            // nicht mehr anfassen (Hook ist wiederverwendbar deklariert).
+            if (abortRef.current !== controller) return;
             // Letzte (Assistant-)Message in Echtzeit ersetzen.
             setMessages((prev) => {
               const msgs = [...prev];
@@ -243,6 +247,7 @@ export function useChatThread() {
 
           // ✅ Follow-up-Fragen aus dem done-Signal.
           if (payload.done && payload.followUpQuestions && payload.followUpQuestions.length > 0) {
+            if (abortRef.current !== controller) return; // TÜV: Stale-Write-Guard
             setSmartQuestions(payload.followUpQuestions);
           }
         };
@@ -279,6 +284,7 @@ export function useChatThread() {
         }
 
         if (streamError) {
+          if (abortRef.current !== controller) return; // TÜV: Stale-Write-Guard
           dropEmptyAssistant();
           setError(streamError);
         }

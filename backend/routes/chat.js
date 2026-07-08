@@ -257,7 +257,15 @@ async function ensureChatUsageFresh(userId, usersCollection) {
     { $set: { chatUsage: { count: 0, resetDate: getNextResetDate() } } }
   );
   await usersCollection.updateOne(
-    { _id: new ObjectId(userId), "chatUsage.resetDate": { $lte: now.toISOString() } },
+    {
+      _id: new ObjectId(userId),
+      // TÜV-Härtung: auch Legacy-Docs OHNE resetDate resetten (sonst nie Reset).
+      $or: [
+        { "chatUsage.resetDate": { $lte: now.toISOString() } },
+        { "chatUsage.resetDate": { $exists: false } },
+        { "chatUsage.resetDate": null }
+      ]
+    },
     { $set: { "chatUsage.count": 0, "chatUsage.resetDate": getNextResetDate() } }
   );
 }
@@ -885,10 +893,17 @@ router.get("/:id", verifyToken, async (req, res) => {
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     const chats = req.db.collection("chats");
-    const chat = await chats.findOne({
-      _id: new ObjectId(req.params.id),
-      userId: new ObjectId(userId),
-    });
+    const chat = await chats.findOne(
+      {
+        _id: new ObjectId(req.params.id),
+        userId: new ObjectId(userId),
+      },
+      // 📨 Welle 2 (TÜV): Volltext + Seiten-Duplikat NICHT ans Frontend schiffen
+      // (~200-300KB pro Öffnen bei 100k-Attachments). Frontend braucht aus
+      // attachments nur name/contractType/smartQuestions. Die Message-Route
+      // lädt ihr eigenes, VOLLES Dokument — die bleibt unberührt.
+      { projection: { "attachments.extractedText": 0, "attachments.pdfPages": 0 } }
+    );
 
     if (!chat) return res.status(404).json({ error: "Chat not found" });
 
@@ -990,7 +1005,9 @@ router.post("/:id/message", verifyToken, async (req, res) => {
         // 📨 Welle 2: Token-Budget statt fester 12000/6000-Zeichen-Caps.
         // Der Chat kennt jetzt (fast) das ganze Dokument; das Budget garantiert,
         // dass System + Dokument(e) + History + RAG + Antwort ins 128k-Fenster passen.
-        const systemPromptTokens = estimateChatTokens(chat.messages?.[0]?.content || '') + 500;
+        // TÜV: + aktuelle User-Nachricht (bis 20k Zeichen ≈ 6k tok) in die Fixkosten —
+        // sie wird NACH der Budgetierung gepusht und wäre sonst unreserviert.
+        const systemPromptTokens = estimateChatTokens(chat.messages?.[0]?.content || '') + estimateChatTokens(content) + 500;
         const { docBudgetTokens } = computeBudgets({ systemPromptTokens, docCount: contracts.length });
 
         // Build structured context for ALL contracts
@@ -1089,7 +1106,7 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       // (fixe 30 Stück reichen nicht mehr — 30 lange Antworten wären 50k+ Tokens
       // neben einem 100k-Zeichen-Dokument). Cap max 30 bleibt als Obergrenze.
       const { historyBudgetTokens } = computeBudgets({
-        systemPromptTokens: estimateChatTokens(chat.messages?.[0]?.content || '') + 500,
+        systemPromptTokens: estimateChatTokens(chat.messages?.[0]?.content || '') + estimateChatTokens(content) + 500,
         docCount: (chat.attachments || []).length || 1
       });
       const trimmedConversation = budgetHistory(conversationMessages, historyBudgetTokens);
