@@ -10,7 +10,7 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, Scale, Eye, AlertTriangle, PenLine } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, Scale, Eye, AlertTriangle, PenLine, MessageSquare } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
@@ -64,6 +64,9 @@ interface Props {
   isInitialResult?: boolean;
   // Action-Buttons rechts in der File-Card (statt oben im Header)
   canReanalyze?: boolean;
+  // 📨 Welle 2.1: Chat-Einstieg direkt in der File-Card (neben PDF/Erneut analysieren)
+  onOpenChat?: () => void;
+  openingChat?: boolean;
   analyzing?: boolean;
   onReanalyze?: () => void;
   onReset?: () => void;
@@ -341,7 +344,7 @@ function pickDocTypeLabel(d: AnalysisData): string {
   return fallback;
 }
 
-export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset, contractId, usage, userPlan }: Props) {
+export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset, contractId, usage, userPlan, onOpenChat, openingChat }: Props) {
   const d = data;
   // 🛡️ Kaputte/Platzhalter-Dateinamen (z.B. "$value.pdf" aus fremden Lohn-Systemen,
   // "undefined.pdf", leere Namen) NICHT roh anzeigen — stattdessen sinnvoller Fallback.
@@ -642,6 +645,23 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         </div>
         {(onReanalyze || onReset || contractId) && (
           <div className={styles.fcActions}>
+            {/* 📨 Welle 2.1: Chat-Einstieg direkt oben in der File-Card — der
+                Moment „ich hab noch Fragen" entsteht hier, nicht erst an der
+                Action-Bar ganz unten. Gleicher Handler wie der Bar-Button
+                (öffnet den Inline-Drawer, Backend erzwingt das Kontingent). */}
+            {contractId && onOpenChat && (
+              <button
+                type="button"
+                className={`${styles.fcBtn} ${styles.fcBtnInfo} ${openingChat ? styles.fcBtnLoading : ""}`}
+                onClick={onOpenChat}
+                disabled={analyzing || openingChat}
+                aria-label="Fragen zum Dokument im Chat stellen"
+                aria-busy={openingChat || undefined}
+              >
+                <MessageSquare size={14} aria-hidden="true" />
+                <span>{openingChat ? "Öffne Chat..." : "Fragen stellen"}</span>
+              </button>
+            )}
             {contractId && (
               <button
                 type="button"

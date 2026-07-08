@@ -1093,6 +1093,8 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                     contractId={(result?.originalContractId || initialResult?.originalContractId || propContractId) as string | undefined}
                     usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2HeroSection>[0]['usage']}
                     userPlan={user?.subscriptionPlan}
+                    onOpenChat={handleOpenInChat}
+                    openingChat={openingChat}
                   />
                   {/* Bei kaputter Analyse: Tabs überspringen — Hero zeigt schon Fehler-Banner.
                       Conversion-Banner wurde in V2HeroSection inline verschoben (max Sichtbarkeit
