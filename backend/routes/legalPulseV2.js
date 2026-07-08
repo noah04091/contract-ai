@@ -3317,6 +3317,51 @@ router.get("/admin/weekly-report-preview", verifyAdmin, async (req, res) => {
 });
 
 /**
+ * GET /admin/weekly-report-test-send
+ * Schickt dem eingeloggten Admin ZWEI Test-Wach-Berichte (ruhige Woche +
+ * Woche mit Punkten) an die EIGENE E-Mail — echte Kennzahlen, Beispiel-Funde,
+ * Betreff mit [TEST]. Geht NUR an den Admin selbst, NICHT an Kunden.
+ * Einfach im eingeloggten Browser öffnen (Cookie-Auth über .contract-ai.de).
+ */
+router.get("/admin/weekly-report-test-send", verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const { buildTestScenarioEmails } = require("../jobs/pulseV2WeeklyReport");
+    const { queueEmail, processEmailQueue } = require("../services/emailRetryService");
+
+    const toEmail = req.user.email;
+    if (!toEmail) return res.status(400).json({ error: "Keine E-Mail am Admin-Konto" });
+    const userName = req.user.name || req.user.firstName || "Noah";
+
+    const scenarios = await buildTestScenarioEmails(db, req.user.userId, userName);
+    for (const s of scenarios) {
+      await queueEmail(db, {
+        to: toEmail, subject: s.subject, html: s.html,
+        userId: String(req.user.userId), emailType: "legal_pulse_v2_weekly_report_test",
+      });
+    }
+    // Sofort ausliefern (statt bis zu 15 Min auf den Queue-Cron zu warten) — best effort.
+    try { await processEmailQueue(db); } catch (flushErr) { console.warn("[PulseV2WeeklyReport] flush warn:", flushErr.message); }
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.send(
+      `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
+      `<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:540px;margin:64px auto;padding:0 22px;line-height:1.65;color:#18202e;background:#f5f7fa">` +
+      `<div style="background:#fff;border:1px solid #e6eaf0;border-radius:14px;padding:26px 28px">` +
+      `<h2 style="margin:0 0 10px;font-size:20px">&#9989; Zwei Testmails sind unterwegs</h2>` +
+      `<p style="margin:0 0 14px;color:#4d586a">An <b>${toEmail}</b> gehen gerade zwei Beispiel-Wach-Berichte raus:</p>` +
+      `<ol style="margin:0 0 16px;padding-left:20px;color:#18202e"><li style="margin-bottom:6px">${scenarios[0].scenario}</li><li>${scenarios[1].scenario}</li></ol>` +
+      `<p style="margin:0;color:#8c96a6;font-size:13.5px">Schau in dein Postfach (ggf. kurz warten &amp; Spam-Ordner pr&uuml;fen). Es wurde <b>nichts</b> an Kunden verschickt &mdash; nur an dich.</p>` +
+      `</div></body>`
+    );
+  } catch (err) {
+    console.error("[PulseV2WeeklyReport] test-send error:", err.message);
+    return res.status(500).json({ error: "Testversand fehlgeschlagen", detail: err.message });
+  }
+});
+
+/**
  * GET /admin/test-alerts-check
  * Validates existing alerts for this user: required fields, dedup, clauseImpacts, status tracking.
  *

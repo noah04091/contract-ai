@@ -272,4 +272,34 @@ async function runWeeklyReport(db, options = {}) {
   return { usersChecked: userIds.length, eligible: eligible.length, sent, skipped, changesEvaluated, durationMs };
 }
 
-module.exports = { runWeeklyReport, buildWeeklyReportEmail, computeUserStats };
+/**
+ * Baut ZWEI Test-Szenario-Mails (ruhige Woche + Woche mit Punkten) für einen
+ * Nutzer — echte Kennzahlen (überwachte Verträge / geprüfte Änderungen), aber
+ * Beispiel-Funde für Szenario B. Betreff mit [TEST] gekennzeichnet. Sendet NICHTS.
+ */
+async function buildTestScenarioEmails(db, userId, userName) {
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - WEEK_DAYS * 24 * 60 * 60 * 1000);
+  const evaluatedReal = await countChangesEvaluated(db, weekAgo);
+  const real = await computeUserStats(db, userId, weekAgo);
+
+  const monitoredCount = Math.max(real.monitoredCount, 1);     // für die Anschauung mind. 1
+  const changesEvaluated = evaluatedReal || 37;                // Fallback nur für Test-Sichtbarkeit
+
+  // Szenario A — ruhige Woche (alles aktuell)
+  const emptyStats = { alerts: [], negative: [], positive: [], critical: [] };
+  const a = buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats: emptyStats });
+
+  // Szenario B — Woche mit Punkten (Beispiel-Funde: 1 dringend, 1 Chance)
+  const crit = { contractName: "Arbeitsvertrag Muster GmbH", lawTitle: "BGH-Urteil zur Datenschutz-Einwilligung bei Beschäftigten", severity: "critical", impactDirection: "negative" };
+  const chance = { contractName: "Mietvertrag Lager Nord", lawTitle: "Neues Sonderkündigungsrecht bei Gewerbemiete", severity: "medium", impactDirection: "positive" };
+  const findingStats = { alerts: [crit, chance], negative: [crit], positive: [chance], critical: [crit] };
+  const b = buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats: findingStats });
+
+  return [
+    { subject: "[TEST] " + a.subject, html: a.html, scenario: "Ruhige Woche — alles aktuell" },
+    { subject: "[TEST] " + b.subject, html: b.html, scenario: "Woche mit Punkten — 1 dringend, 1 Chance" },
+  ];
+}
+
+module.exports = { runWeeklyReport, buildWeeklyReportEmail, computeUserStats, countChangesEvaluated, buildTestScenarioEmails };
