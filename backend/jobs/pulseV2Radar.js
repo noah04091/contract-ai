@@ -362,7 +362,8 @@ const NOISE_PATTERNS = [
   /genitalverstümmelung|todesstrafe|deepfake/i,
   // Political / administrative noise
   /fortschrittsbericht\s+\d{4}/i,
-  /normenkontrolle.*bundesverfassungsgericht/i,
+  // ENTFERNT (Silent-Miss-Fix 08.07.): eine BVerfG-Normenkontrolle kann ein Gesetz kippen
+  // (Höchst-Impact) — darf kein Rauschen sein. Rein-politische Sondervermögen-Variante bleibt.
   /normenkontrolle.*sondervermögen/i,
   /pilotprojekt.*simulation/i,
   /wissenschaftliche.*arbeitskreis/i,
@@ -416,7 +417,8 @@ const NOISE_PATTERNS = [
   /\btätigkeitsbericht\b/i,
   // Newsletter / promotional content
   /\bnewsletter\b/i,
-  /\brundschreiben\b/i,
+  // ENTFERNT (Silent-Miss-Fix 08.07.): BaFin/Ministeriums-"Rundschreiben" sind bindende
+  // Aufsichts-Vorgaben (detectLawStatus: guideline) — kein Rauschen. "Newsletter" bleibt.
   /\b(folgen\s+sie\s+uns|follow\s+us)\b/i,
   /\b(jetzt\s+anmelden|jetzt\s+registrieren)\b/i,
   /\babonnieren\b/i,
@@ -431,9 +433,18 @@ const NOISE_PATTERNS = [
   /\b(das\s+bedeutet|was\s+sie\s+wissen\s+müssen)\b/i,
 ];
 
+// Schutzschild (Silent-Miss-Fix 08.07.): klare echte Rechtsakte (Gesetzentwürfe/Verordnungen)
+// NIE als Rauschen verwerfen — sie tragen oft eine Drucksachen-Nummer im Titel und würden sonst
+// am /drucksache …/-Muster hängenbleiben. Prozedurales (Anfrage/Beschlussempfehlung/Protokoll/
+// Unterrichtung) ist ausdrücklich ausgenommen und wird weiterhin gefiltert.
+const REAL_LAW_SIGNAL = /\b(gesetzentwurf|entwurf eines\s+[\wäöüß]*\s*gesetzes|artikelgesetz|verordnungsentwurf|verordnung\s+(zur|zum|über|des|der)\b)/i;
+const PROCEDURAL_SIGNAL = /\b(anfrage|beschlussempfehlung|protokoll|tagesordnung|unterrichtung|entschlie(ß|ss)ungsantrag)\b/i;
+
 function isNoiseLaw(law) {
   const title = (law.title || "").trim();
   if (title.length < 15) return true;
+  // Echte Gesetze/Verordnungen schützen (aber nicht prozedurale Drucksachen wie Anfragen)
+  if (REAL_LAW_SIGNAL.test(title) && !PROCEDURAL_SIGNAL.test(title)) return false;
   return NOISE_PATTERNS.some((p) => p.test(title));
 }
 
@@ -1220,4 +1231,4 @@ async function storeAndNotify(db, userId, alerts) {
   console.log(`[PulseV2Radar] Alert email queued for ${user.email}: ${alerts.length} impacts`);
 }
 
-module.exports = { runPulseV2Radar };
+module.exports = { runPulseV2Radar, isNoiseLaw };
