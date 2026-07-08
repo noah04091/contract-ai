@@ -204,6 +204,15 @@ async function runWeeklyReport(db, options = {}) {
     return { subject, html, monitoredCount: stats.monitoredCount, changesEvaluated, findings: stats.negative.length + stats.positive.length };
   }
 
+  // ── Sicherung ─────────────────────────────────────────────────────────────
+  // Wurden diese Woche real 0 Änderungen ausgewertet (z.B. Radar-Ausfall), KEINEN
+  // Bericht senden: ein "0 geprüft" würde Vertrauen untergraben UND einen Ausfall
+  // kaschieren (dafür ist der Watchdog zuständig).
+  if (!changesEvaluated) {
+    console.log("[PulseV2WeeklyReport] 0 Änderungen ausgewertet — Wochenbericht übersprungen (kein Versand).");
+    return { usersChecked: 0, sent: 0, skipped: 0, changesEvaluated: 0, reason: "no_changes_evaluated", durationMs: Date.now() - startTime };
+  }
+
   // ── Regulärer Wochenlauf ──────────────────────────────────────────────────
   const reportLog = db.collection("pulse_v2_weekly_report_log");
   await reportLog.createIndex({ userId: 1, sentAt: -1 }, { background: true }).catch(() => {});
