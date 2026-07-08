@@ -64,7 +64,10 @@ const PLAN_LIMITS = {
     optimize: 0,
     generate: 0,
     compare: 0,
-    chat: 0,
+    // 📨 Welle 2 (08.07.2026): Free-Chat-Kontingent 5 Nachrichten/Monat
+    // (Product-Led-Growth: Feature am eigenen Dokument erleben, Limit = Conversion-
+    // Moment; Kosten gpt-4o-mini ~3-5 Cent/aktivem User/Monat — Noahs Entscheidung).
+    chat: 5,
     envelopes: 0
   },
   [PLANS.BUSINESS]: {
@@ -86,13 +89,26 @@ const PLAN_LIMITS = {
 };
 
 /**
+ * 🆕 Welle 2 (08.07.2026): Plan-Normalisierung — Alt-/Beta-Pläne auf die
+ * 3 echten Pläne mappen. `legendary` (Beta-Comp-Accounts, auth.js legt sie bis
+ * heute an) und `premium` (Alt-Wording) waren in HIERARCHY/LIMITS unbekannt →
+ * getFeatureLimit lieferte 0 (weniger Rechte als Free!) und isBusinessOrHigher
+ * false. Mapping: beide → enterprise (Comp-Accounts = volle Rechte).
+ */
+function normalizePlan(plan) {
+  const p = (plan || 'free').toLowerCase();
+  if (p === 'legendary' || p === 'premium') return PLANS.ENTERPRISE;
+  return PLAN_HIERARCHY[p] !== undefined ? p : PLANS.FREE;
+}
+
+/**
  * Prüft ob ein Plan Zugriff auf ein Feature hat
  * @param {string} plan - Der Subscription-Plan des Users
  * @param {string} feature - Das zu prüfende Feature
  * @returns {boolean}
  */
 function hasFeatureAccess(plan, feature) {
-  const normalizedPlan = (plan || 'free').toLowerCase();
+  const normalizedPlan = normalizePlan(plan);
   const allowedPlans = FEATURE_ACCESS[feature];
 
   if (!allowedPlans) {
@@ -109,7 +125,7 @@ function hasFeatureAccess(plan, feature) {
  * @returns {boolean}
  */
 function isBusinessOrHigher(plan) {
-  const normalizedPlan = (plan || 'free').toLowerCase();
+  const normalizedPlan = normalizePlan(plan);
   return PLAN_HIERARCHY[normalizedPlan] >= PLAN_HIERARCHY[PLANS.BUSINESS];
 }
 
@@ -119,7 +135,7 @@ function isBusinessOrHigher(plan) {
  * @returns {boolean}
  */
 function isEnterpriseOrHigher(plan) {
-  const normalizedPlan = (plan || 'free').toLowerCase();
+  const normalizedPlan = normalizePlan(plan);
   return PLAN_HIERARCHY[normalizedPlan] >= PLAN_HIERARCHY[PLANS.ENTERPRISE];
 }
 
@@ -130,7 +146,7 @@ function isEnterpriseOrHigher(plan) {
  * @returns {number}
  */
 function getFeatureLimit(plan, feature) {
-  const normalizedPlan = (plan || 'free').toLowerCase();
+  const normalizedPlan = normalizePlan(plan);
   const limits = PLAN_LIMITS[normalizedPlan];
 
   if (!limits) {
@@ -146,6 +162,7 @@ module.exports = {
   PLAN_HIERARCHY,
   FEATURE_ACCESS,
   PLAN_LIMITS,
+  normalizePlan,
   hasFeatureAccess,
   isBusinessOrHigher,
   isEnterpriseOrHigher,

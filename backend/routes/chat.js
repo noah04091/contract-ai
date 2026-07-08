@@ -10,6 +10,8 @@ const fs = require("fs");
 const path = require("path");
 
 const { isBusinessOrHigher, isEnterpriseOrHigher, getFeatureLimit } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen
+// 📨 Welle 2 (08.07.2026): Token-Budget für Volltext-Kontext (utils/chatTokenBudget.js)
+const { estimateChatTokens, budgetHistory, fitDocumentToBudget, computeBudgets } = require("../utils/chatTokenBudget");
 const { findContractWithOrgAccess } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 
@@ -227,62 +229,6 @@ function smartTitleFallback(oldTitle, lastMsg) {
   return makeSmartTitle(lastMsg);
 }
 
-// 🔧 HELPER: Check Chat Usage Limits
-async function checkChatLimit(userId, usersCollection) {
-  const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
-  if (!user) throw new Error("User not found");
-
-  const plan = user.subscriptionPlan || "free";
-
-  // Limit aus zentraler Konfiguration (subscriptionPlans.js)
-  const chatLimit = getFeatureLimit(plan, 'chat');
-
-  // Initialize chatUsage if not exists
-  if (!user.chatUsage) {
-    const resetDate = getNextResetDate();
-    await usersCollection.updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          chatUsage: {
-            count: 0,
-            limit: chatLimit,
-            resetDate
-          }
-        }
-      }
-    );
-    return { allowed: true, remaining: chatLimit, current: 0, limit: chatLimit, resetDate };
-  }
-
-  // Check if reset needed
-  const now = new Date();
-  const resetDate = new Date(user.chatUsage.resetDate);
-
-  if (now >= resetDate) {
-    // Reset usage
-    const newResetDate = getNextResetDate();
-    await usersCollection.updateOne(
-      { _id: user._id },
-      {
-        $set: {
-          "chatUsage.count": 0,
-          "chatUsage.limit": chatLimit,
-          "chatUsage.resetDate": newResetDate
-        }
-      }
-    );
-    return { allowed: true, remaining: chatLimit, current: 0, limit: chatLimit, resetDate: newResetDate };
-  }
-
-  // Check limit
-  const currentCount = user.chatUsage.count || 0;
-  const allowed = currentCount < chatLimit;
-  const remaining = Math.max(0, chatLimit - currentCount);
-
-  return { allowed, remaining, current: currentCount, limit: chatLimit, resetDate: user.chatUsage.resetDate };
-}
-
 // 🔧 HELPER: Get next reset date (1st of next month)
 function getNextResetDate() {
   const now = new Date();
@@ -290,12 +236,102 @@ function getNextResetDate() {
   return nextMonth.toISOString();
 }
 
-// 🔧 HELPER: Increment chat usage
-async function incrementChatUsage(userId, usersCollection) {
+// 📨 Welle 2 (08.07.2026): Quota in ZWEI strikt getrennte Funktionen.
+//
+// getChatUsage = REIN LESEND. Wird von GET /usage/stats + allen Vorab-Checks
+// benutzt. Das Frontend ruft die Stats bei Mount + nach JEDER Nachricht ab —
+// eine verbrauchende Stats-Route würde das Kontingent durch bloßes Anzeigen
+// leeren (Audit-Blocker B-1).
+//
+// consumeChatQuota = ATOMAR verbrauchend (nur die Message-Route). Muster
+// analyze.js:4444: Bedingung + $inc in EINEM findOneAndUpdate → race-sicher.
+// Monats-Reset race-fest: Guard IM Filter (nur der Gewinner matcht, der
+// Verlierer no-opt — kein „Reset frisst Increment" mehr, Audit M-1).
+
+async function ensureChatUsageFresh(userId, usersCollection) {
+  // Lazy-Init + Monats-Reset. Reset-Guard im FILTER: matcht nur, wenn resetDate
+  // wirklich überschritten ist → bei 2 parallelen Requests resettet genau einer.
+  const now = new Date();
   await usersCollection.updateOne(
-    { _id: new ObjectId(userId) },
-    { $inc: { "chatUsage.count": 1 } }
+    { _id: new ObjectId(userId), chatUsage: { $exists: false } },
+    { $set: { chatUsage: { count: 0, resetDate: getNextResetDate() } } }
   );
+  await usersCollection.updateOne(
+    { _id: new ObjectId(userId), "chatUsage.resetDate": { $lte: now.toISOString() } },
+    { $set: { "chatUsage.count": 0, "chatUsage.resetDate": getNextResetDate() } }
+  );
+}
+
+async function getChatUsage(userId, usersCollection) {
+  await ensureChatUsageFresh(userId, usersCollection);
+  const user = await usersCollection.findOne(
+    { _id: new ObjectId(userId) },
+    { projection: { subscriptionPlan: 1, chatUsage: 1 } }
+  );
+  if (!user) throw new Error("User not found");
+  const plan = user.subscriptionPlan || "free";
+  const chatLimit = getFeatureLimit(plan, 'chat');
+  const currentCount = user.chatUsage?.count || 0;
+  const allowed = chatLimit === Infinity || currentCount < chatLimit;
+  const remaining = chatLimit === Infinity ? Infinity : Math.max(0, chatLimit - currentCount);
+  return {
+    allowed,
+    remaining,
+    current: currentCount,
+    limit: chatLimit,
+    resetDate: user.chatUsage?.resetDate || getNextResetDate(),
+    plan
+  };
+}
+
+async function consumeChatQuota(userId, usersCollection) {
+  await ensureChatUsageFresh(userId, usersCollection);
+  const user = await usersCollection.findOne(
+    { _id: new ObjectId(userId) },
+    { projection: { subscriptionPlan: 1, chatUsage: 1 } }
+  );
+  if (!user) throw new Error("User not found");
+  const plan = user.subscriptionPlan || "free";
+  const chatLimit = getFeatureLimit(plan, 'chat');
+
+  // Unbegrenzte Pläne (Enterprise / normalisierte legendary): zählen, nie blocken.
+  if (chatLimit === Infinity) {
+    await usersCollection.updateOne(
+      { _id: new ObjectId(userId) },
+      { $inc: { "chatUsage.count": 1 } }
+    );
+    return { allowed: true, remaining: Infinity, current: (user.chatUsage?.count || 0) + 1, limit: chatLimit, resetDate: user.chatUsage?.resetDate };
+  }
+
+  // Atomar: Bedingung + Increment in EINER Operation. $or fängt fehlend/null
+  // (Erstnutzer: $lt matcht NICHT auf nicht-existente Felder — analyze.js-Muster).
+  const updateResult = await usersCollection.findOneAndUpdate(
+    {
+      _id: new ObjectId(userId),
+      $or: [
+        { "chatUsage.count": { $lt: chatLimit } },
+        { "chatUsage.count": { $exists: false } },
+        { "chatUsage.count": null }
+      ]
+    },
+    { $inc: { "chatUsage.count": 1 } },
+    { returnDocument: 'after' }
+  );
+
+  const doc = updateResult && (updateResult.value !== undefined ? updateResult.value : updateResult);
+  if (!doc) {
+    // Limit erreicht — Zustand für den 403-Body nachlesen (byte-identisches Format).
+    const fresh = await getChatUsage(userId, usersCollection);
+    return { ...fresh, allowed: false };
+  }
+  const current = doc.chatUsage?.count || 1;
+  return {
+    allowed: true,
+    remaining: Math.max(0, chatLimit - current),
+    current,
+    limit: chatLimit,
+    resetDate: doc.chatUsage?.resetDate
+  };
 }
 
 // 🔧 HELPER: Analyze contract type from text
@@ -508,14 +544,17 @@ router.post("/new-with-contract", verifyToken, async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const plan = user.subscriptionPlan || "free";
-    const hasAccess = isBusinessOrHigher(plan);
-
-    if (!hasAccess) {
+    // 📨 Welle 2: quota-basiertes Gate statt Business-only. WICHTIG: allowed
+    // (Kontingent übrig) prüfen, NICHT nur limit>0 — sonst erzeugen erschöpfte
+    // Free-User weiter Geister-Chats (S3-Fetch+Parse+DB-Doc). Verbraucht wird
+    // hier NICHTS (nur die Message-Route zählt) — reine Vorab-Prüfung.
+    const usage = await getChatUsage(userId, usersCollection);
+    if (!usage.allowed) {
       return res.status(403).json({
-        error: "Subscription required",
-        message: "Diese Funktion ist nur für Business und Enterprise Nutzer verfügbar.",
-        requiredPlan: "business"
+        error: "Chat limit reached",
+        message: `Du hast dein monatliches Chat-Limit erreicht (${usage.limit} Nachrichten). Mit Business bekommst du 50 Nachrichten/Monat.`,
+        limit: usage.limit,
+        current: usage.current
       });
     }
 
@@ -527,6 +566,25 @@ router.post("/new-with-contract", verifyToken, async (req, res) => {
     }
 
     const contract = access.contract;
+
+    // 📨 Welle 2 (Idempotenz): Existiert zu diesem Vertrag bereits ein frischer
+    // Chat des Users (<24h, nicht archiviert), diesen zurückgeben statt einen
+    // neuen anzulegen. Verhindert Doppel-/Geister-Chats bei Mehrfach-Klick —
+    // auch über den Quick-Action-Button der Vertragsdetailseite.
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const existingChat = await chats.findOne(
+      {
+        userId: new ObjectId(userId),
+        linkedContractId: new ObjectId(contractId),
+        archived: { $ne: true },
+        updatedAt: { $gte: dayAgo }
+      },
+      { projection: { _id: 1 }, sort: { updatedAt: -1 } }
+    );
+    if (existingChat) {
+      console.log(`♻️ [chat] Bestehenden Chat ${existingChat._id} für Vertrag ${contractId} wiederverwendet`);
+      return res.json({ chatId: existingChat._id, success: true, reused: true });
+    }
 
     // Extract PDF text with page numbers for precise citations
     let extractedText = "";
@@ -547,41 +605,89 @@ router.post("/new-with-contract", verifyToken, async (req, res) => {
           Key: effectiveS3Key
         }).promise();
 
-        // ✅ NEW: Extract with page annotations for precise citations
-        const pdfResult = await extractPdfWithPages(s3Object.Body, 15000);
+        // 📨 Welle 2: VOLLTEXT statt 15k — der Chat soll das ganze Dokument
+        // kennen (Kernproblem: Fragen zu späten Seiten waren unbeantwortbar).
+        // 100k = gleiches Cap wie contract.fullText; das Token-Budget der
+        // Message-Route (chatTokenBudget.js) sorgt für Kontextfenster-Sicherheit.
+        // Seitenmarker bleiben erhalten (Näherung über Zeichen-Aufteilung).
+        const pdfResult = await extractPdfWithPages(s3Object.Body, 100000);
         extractedText = pdfResult.annotatedText;
         pdfPages = pdfResult.pages;
 
-        console.log(`📄 Extracted ${pdfResult.extractedPages}/${pdfResult.totalPages} pages from PDF`);
+        console.log(`📄 Extracted ${pdfResult.extractedPages}/${pdfResult.totalPages} pages from PDF (${extractedText.length} chars)`);
       } catch (s3Error) {
         console.warn("⚠️ Could not extract PDF text from S3:", s3Error.message);
         // Continue without PDF text - analysis context is still available
       }
     }
 
+    // 📨 Welle 2 (Fallback): kein S3/Extraktion fehlgeschlagen → gespeicherten
+    // Volltext aus der Analyse nutzen (bis 100k, analyze.js). OHNE Seitenmarker —
+    // die Seitenzitat-Instruktion in der Message-Route ist darauf konditional.
+    if (!extractedText && (contract.fullText || contract.content)) {
+      extractedText = String(contract.fullText || contract.content).substring(0, 100000);
+      console.log(`📄 Fallback: contract.fullText verwendet (${extractedText.length} chars, ohne Seitenmarker)`);
+    }
+
     // Detect contract type from existing analysis or from text
-    let contractType = contract.analysis?.contractType || "Vertrag";
+    let contractType = contract.analysis?.contractType || contract.contractType || "Vertrag";
+    // 📨 Welle 2/B7: einseitige Schreiben (Welle 1) erkennen — eigener Ton im Chat.
+    const isLetterDoc = contract.documentType === 'LETTER';
 
+    // 📨 Welle 2/B6: Analyse-Kontext SERVER-SEITIG aus dem DB-Contract bauen
+    // (Client-String wird nicht mehr blind vertraut — nur noch Fallback).
+    // Defensiv über beide Feld-Generationen (top-level + legacy analysis.*)
+    // und beide Shapes (string | array | Objekt-Arrays).
+    const serverAnalysisContext = (() => {
+      try {
+        const parts = [];
+        const asLines = (v) => Array.isArray(v) ? v : (typeof v === 'string' && v.trim() ? [v] : []);
+        const itemTitle = (it) => typeof it === 'string' ? it : (it && (it.title || it.name || it.description)) || '';
+        const score = typeof contract.contractScore === 'number' ? contract.contractScore
+          : (typeof contract.analysis?.contractScore === 'number' ? contract.analysis.contractScore : null);
+        if (score != null) parts.push(`**Score:** ${score}/100`);
+        const summaryLines = asLines(contract.summary || contract.analysis?.summary).slice(0, 6);
+        if (summaryLines.length) parts.push(`**Zusammenfassung:**\n${summaryLines.map(s => `- ${s}`).join('\n')}`);
+        const crits = (Array.isArray(contract.criticalIssues) ? contract.criticalIssues
+          : (Array.isArray(contract.analysis?.criticalIssues) ? contract.analysis.criticalIssues : [])).slice(0, 6);
+        if (crits.length) parts.push(`**${isLetterDoc ? 'Wichtige Punkte' : 'Kritische Punkte'}:**\n${crits.map(c => `- ${itemTitle(c)}`).filter(l => l !== '- ').join('\n')}`);
+        const recos = (Array.isArray(contract.recommendations) ? contract.recommendations
+          : (Array.isArray(contract.analysis?.recommendations) ? contract.analysis.recommendations : [])).slice(0, 6);
+        if (recos.length) parts.push(`**${isLetterDoc ? 'Handlungsoptionen' : 'Empfehlungen'}:**\n${recos.map(r => `- ${itemTitle(r)}`).filter(l => l !== '- ').join('\n')}`);
+        return parts.length ? parts.join('\n\n') : null;
+      } catch (e) {
+        console.warn('⚠️ [chat] serverAnalysisContext-Bau fehlgeschlagen:', e.message);
+        return null;
+      }
+    })();
+    const effectiveAnalysisContext = serverAnalysisContext || analysisContext || null;
+
+    const docWord = isLetterDoc ? 'Schreibens' : 'Vertrags';
     // Build welcome message with analysis context
-    const welcomeMessage = `Ich habe die Analyse deines Vertrags "${contractName}" geladen.
+    const welcomeMessage = `Ich habe die Analyse deines ${docWord} "${contractName}" geladen.
 
-${analysisContext || "Keine Analysedaten verfügbar."}
+${effectiveAnalysisContext || "Keine Analysedaten verfügbar."}
 
-**Was möchtest du zu diesem Vertrag wissen?**
+**Was möchtest du zu diesem ${isLetterDoc ? 'Schreiben' : 'Vertrag'} wissen?**
 
 Du kannst mir spezifische Fragen stellen, z.B.:
-- Was bedeutet eine bestimmte Klausel?
+${isLetterDoc
+  ? `- Was bedeutet dieses Schreiben für mich?
+- Welche Fristen laufen und was passiert, wenn ich nichts tue?
+- Welche Reaktions-Möglichkeiten habe ich?`
+  : `- Was bedeutet eine bestimmte Klausel?
 - Welche Risiken sollte ich beachten?
-- Wie kann ich bestimmte Punkte nachverhandeln?`;
+- Wie kann ich bestimmte Punkte nachverhandeln?`}`;
 
     // Create attachment object for context (with page info for citations)
     const attachment = {
       name: contractName,
       contractId: contractId,
       contractType: contractType,
+      isLetter: isLetterDoc, // 📨 Welle 2/B7: Schreiben-Ton in der Message-Route
       extractedText: extractedText,
       pdfPages: pdfPages, // ✅ NEW: Page-by-page breakdown for precise citations
-      analysisContext: analysisContext,
+      analysisContext: effectiveAnalysisContext,
       s3Key: effectiveS3Key || null,
       uploadedAt: new Date()
     };
@@ -757,7 +863,10 @@ router.get("/", verifyToken, async (req, res) => {
     const chatList = await chats
       .find(
         { userId: new ObjectId(userId) },
-        { projection: { messages: 0 } } // Exclude messages for performance
+        // 📨 Welle 2: auch attachments ausschließen — mit 100k-Volltext + pdfPages
+        // wären das ~200KB+ pro Chat; die Liste (ChatLite) braucht sie nicht,
+        // und das Frontend lädt die Liste nach JEDER Nachricht neu.
+        { projection: { messages: 0, attachments: 0 } }
       )
       .sort({ updatedAt: -1 })
       .toArray();
@@ -800,6 +909,15 @@ router.post("/:id/message", verifyToken, async (req, res) => {
     if (!content || !content.trim()) {
       return res.status(400).json({ error: "Message content required" });
     }
+    // 📨 Welle 2: Nachrichtenlänge hart deckeln (war UNGEDECKELT — ein 400k-
+    // Zeichen-Paste läge in History + aktueller Message und sprengt jedes Budget).
+    const MAX_MESSAGE_CHARS = 20000;
+    if (content.length > MAX_MESSAGE_CHARS) {
+      return res.status(400).json({
+        error: "Message too long",
+        message: `Deine Nachricht ist zu lang (${content.length.toLocaleString('de-DE')} Zeichen, max. ${MAX_MESSAGE_CHARS.toLocaleString('de-DE')}). Tipp: Das Dokument ist bereits als Kontext geladen — du musst nichts hineinkopieren.`
+      });
+    }
 
     const chats = req.db.collection("chats");
     const usersCollection = req.db.collection("users");
@@ -813,8 +931,10 @@ router.post("/:id/message", verifyToken, async (req, res) => {
 
     if (!chat) return res.status(404).json({ error: "Chat not found" });
 
-    // ✅ CHECK CHAT LIMITS
-    const limitCheck = await checkChatLimit(userId, usersCollection);
+    // 📨 Welle 2: ATOMAR verbrauchen (Bedingung + Increment in einer Operation —
+    // ersetzt das race-anfällige read-then-increment). 403-Body byte-identisch
+    // zum bisherigen Format (Frontend matcht exakt auf error === "Chat limit reached").
+    const limitCheck = await consumeChatQuota(userId, usersCollection);
     if (!limitCheck.allowed) {
       return res.status(403).json({
         error: "Chat limit reached",
@@ -836,9 +956,6 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       }
     );
 
-    // ✅ INCREMENT USAGE
-    await incrementChatUsage(userId, usersCollection);
-
     // ✅ SSE STREAMING SETUP
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -856,6 +973,11 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       console.log("🔌 Client disconnected from SSE stream");
     });
 
+    // 🛠️ Welle 2 (Audit m-6): Deklaration VOR dem try — der catch unten
+    // referenziert fullResponse für die Teilantwort-Persistenz; innerhalb des
+    // try deklariert war das ein ReferenceError → Persistenz war toter Code.
+    let fullResponse = "";
+
     try {
       // ✅ BUILD CONTEXT: Include analysis + contract text (supports MULTIPLE contracts)
       let contextMessages = [...chat.messages];
@@ -864,6 +986,12 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       if (chat.attachments && chat.attachments.length > 0) {
         const contracts = chat.attachments;
         const isMultiDoc = contracts.length > 1;
+
+        // 📨 Welle 2: Token-Budget statt fester 12000/6000-Zeichen-Caps.
+        // Der Chat kennt jetzt (fast) das ganze Dokument; das Budget garantiert,
+        // dass System + Dokument(e) + History + RAG + Antwort ins 128k-Fenster passen.
+        const systemPromptTokens = estimateChatTokens(chat.messages?.[0]?.content || '') + 500;
+        const { docBudgetTokens } = computeBudgets({ systemPromptTokens, docCount: contracts.length });
 
         // Build structured context for ALL contracts
         let contextParts = [];
@@ -875,12 +1003,17 @@ router.post("/:id/message", verifyToken, async (req, res) => {
         }
 
         // Process each contract
+        let anyPageMarkers = false;
         contracts.forEach((contract, index) => {
-          const label = isMultiDoc ? `Vertrag ${String.fromCharCode(65 + index)}` : 'Vertrag';
-          const charLimit = isMultiDoc ? 6000 : 12000; // Less per doc if multiple
+          const isLetterAtt = contract.isLetter === true;
+          const label = isMultiDoc ? `Vertrag ${String.fromCharCode(65 + index)}` : (isLetterAtt ? 'Schreiben' : 'Vertrag');
 
           contextParts.push(`---`);
-          contextParts.push(`# 📎 ${label}: "${contract.name}" (${contract.contractType || 'Vertrag'})`);
+          contextParts.push(`# 📎 ${label}: "${contract.name}" (${contract.contractType || (isLetterAtt ? 'Schreiben' : 'Vertrag')})`);
+          if (isLetterAtt) {
+            // 📨 Welle 2/B7: Schreiben-Ton (Welle-1-Dokumente)
+            contextParts.push('⚠️ Dies ist ein EMPFANGENES einseitiges Schreiben (z.B. Kündigung/Bescheid), KEIN Vertrag — sprich von "deinem Schreiben", nicht "deinem Vertrag". Fristen und Handlungsoptionen stehen im Fokus.');
+          }
           contextParts.push('');
 
           // Include analysis context
@@ -890,24 +1023,33 @@ router.post("/:id/message", verifyToken, async (req, res) => {
             contextParts.push('');
           }
 
-          // Include extracted PDF text (limited per contract if multiple)
+          // Include extracted document text — budgetiert, mit ehrlichem Kürzungs-
+          // Marker IM Block (eine separate System-Message würde vom Reordering
+          // unten verschluckt — es behält genau EINE Contract-Context-Message).
           if (contract.extractedText) {
-            const limitedText = contract.extractedText.substring(0, charLimit);
+            const fitted = fitDocumentToBudget(contract.extractedText, docBudgetTokens);
             contextParts.push(`## 📄 TEXT (${label}):`);
-            contextParts.push(limitedText);
-            if (contract.extractedText.length > charLimit) {
-              contextParts.push(`\n[... ${label} gekürzt auf ${charLimit} Zeichen ...]`);
+            contextParts.push(fitted.text);
+            if (fitted.truncated) {
+              console.log(`📏 [chat] ${label} budgetiert: ${fitted.includedChars}/${fitted.totalChars} Zeichen im Kontext (Budget ${docBudgetTokens} tok)`);
             }
             contextParts.push('');
+            if (Array.isArray(contract.pdfPages) && contract.pdfPages.length > 0) anyPageMarkers = true;
           }
         });
 
         // Add instruction based on mode
         contextParts.push('---');
+        // 📨 Seitenzitat-Instruktion NUR wenn Seitenmarker existieren (der
+        // fullText-Fallback hat keine — sonst erfindet das Modell Seitenzahlen).
+        // Marker sind NÄHERUNGEN (Zeichen-Aufteilung) → "ungefähre Seitenangabe".
+        const citeHint = anyPageMarkers
+          ? 'Zitiere konkrete Stellen mit der (ungefähren) Seitenangabe aus den [📄 Seite X]-Markern.'
+          : 'Zitiere konkrete Stellen wörtlich. Nenne KEINE Seitenzahlen — der Text enthält keine Seitenmarker.';
         if (isMultiDoc) {
-          contextParts.push('**Instruktion (Multi-Dokument):** Vergleiche die Verträge wenn gefragt. Referenziere klar: "In Vertrag A steht X, während Vertrag B Y regelt." Zitiere mit Seitenzahlen wenn vorhanden.');
+          contextParts.push(`**Instruktion (Multi-Dokument):** Vergleiche die Verträge wenn gefragt. Referenziere klar: "In Vertrag A steht X, während Vertrag B Y regelt." ${citeHint}`);
         } else {
-          contextParts.push('**Instruktion:** Beantworte Fragen basierend auf den Analyse-Ergebnissen UND dem Vertragstext. Zitiere konkrete Stellen mit Seitenzahlen. Wenn etwas nicht im Text steht, sag das klar.');
+          contextParts.push(`**Instruktion:** Beantworte Fragen basierend auf den Analyse-Ergebnissen UND dem Dokumenttext. ${citeHint} Wenn etwas nicht im Text steht (oder im gekürzten Bereich liegen könnte), sag das klar.`);
         }
 
         if (contextParts.length > 3) { // Only add if we have actual content
@@ -922,7 +1064,6 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       }
 
       // ✅ FIX A: Explicit message order guarantee (systemPrompt → contractContext → conversation)
-      const MAX_HISTORY_MESSAGES = 30; // Last 30 user+assistant messages
 
       // EXPLICIT ORDER: Separate messages by role and position
       // Find the main system prompt (first system message, or one containing key phrases)
@@ -944,11 +1085,16 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       );
       const conversationMessages = contextMessages.filter(m => m.role !== 'system');
 
-      // Trim conversation if too long
-      let trimmedConversation = conversationMessages;
-      if (conversationMessages.length > MAX_HISTORY_MESSAGES) {
-        trimmedConversation = conversationMessages.slice(-MAX_HISTORY_MESSAGES);
-        console.log(`📝 Trimmed chat history from ${conversationMessages.length} to ${MAX_HISTORY_MESSAGES} messages`);
+      // 📨 Welle 2: History TOKEN-budgetiert von der neuesten Nachricht rückwärts
+      // (fixe 30 Stück reichen nicht mehr — 30 lange Antworten wären 50k+ Tokens
+      // neben einem 100k-Zeichen-Dokument). Cap max 30 bleibt als Obergrenze.
+      const { historyBudgetTokens } = computeBudgets({
+        systemPromptTokens: estimateChatTokens(chat.messages?.[0]?.content || '') + 500,
+        docCount: (chat.attachments || []).length || 1
+      });
+      const trimmedConversation = budgetHistory(conversationMessages, historyBudgetTokens);
+      if (trimmedConversation.length < conversationMessages.length) {
+        console.log(`📝 History budgetiert: ${conversationMessages.length} → ${trimmedConversation.length} Messages (${historyBudgetTokens} tok Budget)`);
       }
 
       // ✅ GUARANTEED ORDER: systemPrompt FIRST, then contractContext, then conversation
@@ -1041,23 +1187,32 @@ router.post("/:id/message", verifyToken, async (req, res) => {
       // Add current user message
       contextMessages.push({ role: "user", content });
 
-      // Declare fullResponse outside try for error handling access
-      let fullResponse = "";
-
       // OpenAI Streaming
+      // 📨 Welle 2: max_tokens 4000 (war UNBEGRENZT — jetzt fester Posten im
+      // Token-Budget; 4000 statt 2000, weil LEVEL-4-Analysen lang sind).
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini", // Cost-effective for chat
         stream: true,
         temperature: 0.3, // Slightly higher for more natural responses
+        max_tokens: 4000,
         messages: contextMessages,
       });
 
+      let finishReason = null;
       for await (const chunk of response) {
         const delta = chunk.choices?.[0]?.delta?.content || "";
+        if (chunk.choices?.[0]?.finish_reason) finishReason = chunk.choices[0].finish_reason;
         if (delta) {
           fullResponse += delta;
           res.write(`data: ${JSON.stringify({ delta })}\n\n`);
         }
+      }
+
+      // 📨 Welle 2: Bei Längen-Kappung ehrlich sein statt mid-sentence abzubrechen.
+      if (finishReason === 'length') {
+        const cutNote = "\n\n✂️ *Die Antwort wurde aus Längengründen gekürzt — stell mir gern eine Folgefrage zum Rest.*";
+        fullResponse += cutNote;
+        res.write(`data: ${JSON.stringify({ delta: cutNote })}\n\n`);
       }
 
       // ✅ Generate dynamic follow-up questions (non-blocking)
@@ -1201,13 +1356,19 @@ router.get("/usage/stats", verifyToken, async (req, res) => {
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     const usersCollection = req.db.collection("users");
-    const limitCheck = await checkChatLimit(userId, usersCollection);
+    // 📨 Welle 2: REIN LESEND (getChatUsage) — Stats-Abrufe dürfen niemals
+    // Kontingent verbrauchen (Frontend fragt bei Mount + nach jeder Nachricht).
+    const limitCheck = await getChatUsage(userId, usersCollection);
 
     res.json({
       current: limitCheck.current || 0,
-      limit: limitCheck.limit,
-      remaining: limitCheck.remaining,
+      // Infinity ist nicht JSON-serialisierbar (wird null) — als -1 = unbegrenzt senden?
+      // NEIN: bisheriges Verhalten beibehalten (Enterprise bekam schon Infinity→null);
+      // Frontend behandelt limit tolerant. Nur Zahlen unverändert durchreichen.
+      limit: limitCheck.limit === Infinity ? null : limitCheck.limit,
+      remaining: limitCheck.remaining === Infinity ? null : limitCheck.remaining,
       resetDate: limitCheck.resetDate,
+      unlimited: limitCheck.limit === Infinity
     });
   } catch (error) {
     console.error("❌ Error getting usage stats:", error);
@@ -1226,6 +1387,18 @@ router.post("/:id/upload", verifyToken, localUpload.single("file"), async (req, 
 
     const chats = req.db.collection("chats");
     const chatId = new ObjectId(req.params.id);
+
+    // 📨 Welle 2: Kontingent-Gate (Route war UNGEGATED — PDF-Parse + 1 LLM-Call
+    // + optional S3-Put pro Upload). Rein prüfend, verbraucht nichts.
+    const uploadUsage = await getChatUsage(userId, req.db.collection("users"));
+    if (!uploadUsage.allowed) {
+      return res.status(403).json({
+        error: "Chat limit reached",
+        message: `Du hast dein monatliches Chat-Limit erreicht (${uploadUsage.limit} Nachrichten).`,
+        limit: uploadUsage.limit,
+        current: uploadUsage.current
+      });
+    }
 
     // Verify chat ownership
     const chat = await chats.findOne({
@@ -1377,3 +1550,6 @@ router.get("/:id/questions", verifyToken, async (req, res) => {
 });
 
 module.exports = router;
+// 📨 Welle 2 (08.07.2026): Exporte für Offline-Tests (scripts/testChatWelle2.js)
+module.exports.getChatUsage = getChatUsage;
+module.exports.consumeChatQuota = consumeChatQuota;
