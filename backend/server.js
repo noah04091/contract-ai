@@ -1993,6 +1993,29 @@ const connectDB = async () => {
         }
       })));
 
+      // Legal Pulse V2 — Wöchentlicher Wach-Bericht ("Vigilance Report") — Montag 11:00 UTC
+      // Ruhiger Wochen-Überblick pro Nutzer ("X Verträge überwacht, Y Änderungen geprüft, alles aktuell/Z Punkte").
+      // ADDITIV: berührt weder Radar-Matching noch andere Mails. Zahlen aus echten Prüfläufen.
+      // Kill-Switch: sendet NUR wenn env PULSE_WEEKLY_REPORT_ENABLED === 'true' (Standard: AUS bis freigegeben).
+      cron.schedule("0 11 * * 1", withDistributedLock('pulse-v2-weekly-report', withCronLock('pulse-v2-weekly-report', async () => {
+        if (process.env.PULSE_WEEKLY_REPORT_ENABLED !== 'true') {
+          console.log("[PulseV2WeeklyReport] deaktiviert (PULSE_WEEKLY_REPORT_ENABLED != 'true')");
+          return;
+        }
+        console.log("[PulseV2WeeklyReport] Starte wöchentlichen Wach-Bericht...");
+        try {
+          await withCronLogging('pulse-v2-weekly-report', async () => {
+            const { runWeeklyReport } = require("./jobs/pulseV2WeeklyReport");
+            const cronDb = await database.connect();
+            const result = await runWeeklyReport(cronDb);
+            return result;
+          });
+        } catch (error) {
+          console.error("[PulseV2WeeklyReport] Error:", error);
+          await captureError(error, { route: 'CRON:pulse-v2-weekly-report', method: 'SCHEDULED', severity: 'low' });
+        }
+      })));
+
       // Legal Pulse V2 WATCHDOG ("Herz-Monitor") — täglich 08:45 UTC (nach Radar 07:00)
       // REIN BEOBACHTEND: liest nur cron_logs + laws, fasst KEINE Legal-Pulse-Logik an.
       // Alarmiert per Mail NUR wenn Nachschub/Crons lautlos ausfallen (kein Lärm an gesunden Tagen).

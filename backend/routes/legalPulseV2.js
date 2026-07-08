@@ -3297,6 +3297,26 @@ router.post("/admin/test-email-preview", verifyAdmin, async (req, res) => {
 });
 
 /**
+ * GET /admin/weekly-report-preview
+ * Rendert den wöchentlichen Wach-Bericht für den anfragenden Admin mit ECHTEN
+ * Daten (dryRun) und gibt das fertige E-Mail-HTML zurück — sendet NICHTS.
+ * So kann die Mail mit realen Zahlen angesehen werden, bevor der Cron freigegeben wird.
+ */
+router.get("/admin/weekly-report-preview", verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const { runWeeklyReport } = require("../jobs/pulseV2WeeklyReport");
+    const preview = await runWeeklyReport(db, { userId: req.user.userId, dryRun: true });
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.send(preview.html);
+  } catch (err) {
+    console.error("[PulseV2WeeklyReport] preview error:", err.message);
+    return res.status(500).json({ error: "Vorschau fehlgeschlagen", detail: err.message });
+  }
+});
+
+/**
  * GET /admin/test-alerts-check
  * Validates existing alerts for this user: required fields, dedup, clauseImpacts, status tracking.
  *
