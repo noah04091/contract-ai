@@ -32,7 +32,6 @@ interface Props {
 export default function V2ActionBar(props: Props) {
   const {
     hasContractId,
-    isBusinessOrHigher,
     optimizing,
     generatingPdf,
     openingChat,
@@ -91,17 +90,19 @@ export default function V2ActionBar(props: Props) {
         <span>{generatingPdf ? "Erstelle..." : "PDF"}</span>
       </button>
 
+      {/* 📨 Welle 2 (08.07.2026): Chat für ALLE Pläne klickbar — Free hat 5
+          Nachrichten/Monat, das Backend erzwingt das Kontingent (403 → Upsell
+          im Drawer). Keine Krone mehr; isBusinessOrHigher bleibt als Prop für
+          andere Konsumenten erhalten. */}
       <button
         type="button"
-        className={`${styles.secondary} ${!isBusinessOrHigher ? styles.locked : ""} ${openingChat ? styles.secondaryLoading : ""}`}
+        className={`${styles.secondary} ${openingChat ? styles.secondaryLoading : ""}`}
         onClick={onOpenChat}
-        disabled={!isBusinessOrHigher || openingChat || !hasContractId}
-        title={!isBusinessOrHigher ? "Nur für Business & Enterprise verfügbar" : undefined}
+        disabled={openingChat || !hasContractId}
         aria-label="Mit KI besprechen"
       >
         {openingChat ? <Loader size={13} aria-hidden="true" /> : <MessageSquare size={13} aria-hidden="true" />}
         <span>Chat</span>
-        {!isBusinessOrHigher && <span className={styles.crown}>👑</span>}
       </button>
 
       {showPulseLink && (

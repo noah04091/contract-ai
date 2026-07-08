@@ -302,7 +302,7 @@ export default function Pricing() {
     { feature: "KI-Vertragsanalysen", free: "3 (einmalig)", business: "25/Monat", premium: "Unbegrenzt" },
     { feature: "KI-Optimierung", free: "–", business: "15/Monat", premium: "Unbegrenzt" },
     { feature: "Vertragsvergleich", free: "–", business: "20/Monat", premium: "Unbegrenzt" },
-    { feature: "KI-Chat mit Vertrag", free: "–", business: "50 Fragen/Monat", premium: "Unbegrenzt" },
+    { feature: "KI-Chat mit Vertrag", free: "5 Fragen/Monat", business: "50 Fragen/Monat", premium: "Unbegrenzt" },
     { feature: "Legal Lens", free: "–", business: "✓", premium: "✓" },
     { feature: "Better Contracts (Anbieterwechsel)", free: "–", business: "✓", premium: "✓" },
     // Erstellung & Vorlagen

@@ -55,7 +55,13 @@ function getAuthHeaders(): HeadersInit {
 
 export default function Chat() {
   const { user, isLoading } = useAuth();
-  const isPremium = user?.subscriptionActive === true;
+  // 📨 Welle 2 (08.07.2026): Zugang quota-basiert statt subscriptionActive —
+  // Free hat jetzt 5 Nachrichten/Monat (Backend erzwingt das Limit, dieses Gate
+  // ist nur noch die Anzeige-Weiche). Spiegel von backend/constants/
+  // subscriptionPlans.js PLAN_LIMITS.chat — bei Änderung dort hier nachziehen.
+  const CHAT_LIMITS: Record<string, number> = { free: 5, business: 50, enterprise: Infinity, legendary: Infinity, premium: Infinity };
+  const planKey = (user?.subscriptionPlan || 'free').toLowerCase();
+  const hasChatAccess = (CHAT_LIMITS[planKey] ?? CHAT_LIMITS.free) > 0;
   const location = useLocation();
 
   // State
@@ -83,15 +89,15 @@ export default function Chat() {
 
   // ✅ Load chat list on mount and auto-create or open latest chat
   useEffect(() => {
-    if (isPremium) {
+    if (hasChatAccess) {
       loadChats();
       loadUsage();
     }
-  }, [isPremium]);
+  }, [hasChatAccess]);
 
   // ✅ Handle URL parameter ?id= to open specific chat
   useEffect(() => {
-    if (!isPremium || isLoading || initialChatIdLoaded) return;
+    if (!hasChatAccess || isLoading || initialChatIdLoaded) return;
 
     const urlParams = new URLSearchParams(location.search);
     const chatIdFromUrl = urlParams.get('id');
@@ -100,7 +106,7 @@ export default function Chat() {
       setInitialChatIdLoaded(true);
       openChat(chatIdFromUrl);
     }
-  }, [isPremium, isLoading, location.search, initialChatIdLoaded]);
+  }, [hasChatAccess, isLoading, location.search, initialChatIdLoaded]);
 
   // ✅ Auto-open latest chat or create new one if none exist
   useEffect(() => {
@@ -114,11 +120,11 @@ export default function Chat() {
     if (chats.length > 0 && !active) {
       // Open the most recent chat
       openChat(chats[0]._id);
-    } else if (chats.length === 0 && !active && isPremium) {
+    } else if (chats.length === 0 && !active && hasChatAccess) {
       // No chats exist, create a new one automatically
       newChat();
     }
-  }, [chats, active, isPremium, chatsLoaded, location.search]);
+  }, [chats, active, hasChatAccess, chatsLoaded, location.search]);
 
   // ✅ Autoscroll on new messages AND during streaming
   useEffect(() => {
@@ -551,17 +557,19 @@ export default function Chat() {
     );
   }
 
-  if (!isPremium) {
+  if (!hasChatAccess) {
+    // Aktuell unerreichbar (alle Pläne haben Kontingent > 0) — bleibt als
+    // Sicherheitsnetz, falls ein Plan je auf 0 gestellt wird.
     return (
       <>
         <Helmet>
-          <title>Vertrags-Chat – Business Feature | Contract AI</title>
+          <title>Vertrags-Chat | Contract AI</title>
         </Helmet>
         <div className={styles.premiumRequired}>
           <div className={styles.premiumIcon}>⚖️</div>
-          <h2>Legal Chat 2.0 – Business Feature</h2>
+          <h2>Dein Chat-Kontingent ist aufgebraucht</h2>
           <p>
-            Der professionelle Vertrags-Chat ist nur für Business- und Enterprise-Nutzer verfügbar.
+            Mit dem Business-Tarif bekommst du 50 Chat-Nachrichten pro Monat — inklusive Volltext-Kontext zu deinen Dokumenten.
           </p>
           <a href="/subscribe" className={styles.upgradeButton}>
             Jetzt upgraden

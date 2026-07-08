@@ -23,7 +23,8 @@ import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css"; // fü
 import V2StickyMiniHeader from "./contractAnalysisV2/V2StickyMiniHeader"; // 🎨 V2 — Mini-Header beim Scrollen
 import V2TabsSection from "./contractAnalysisV2/V2TabsSection"; // 🎨 V2 — Tabs-System für Detail-Sektionen
 import V2ActionBar from "./contractAnalysisV2/V2ActionBar"; // 🎨 V2 — sticky Action-Bar unten
-import { classifyDocType } from "./contractAnalysisV2/v2TabLabels"; // 📨 Welle 1 — LETTER-Framing für die Action-Bar
+import V2ChatDrawer from "./contractAnalysisV2/V2ChatDrawer"; // 📨 Welle 2 — Inline-Chat über der Analyse
+import { classifyDocType, getDocNoun } from "./contractAnalysisV2/v2TabLabels"; // 📨 Welle 1/2 — LETTER-Framing + Doc-Wording
 import datesWrapperStyles from "./contractAnalysisV2/V2DatesWrapper.module.css"; // 🎨 V2 — neutraler statt gelb
 
 interface ContractAnalysisProps {
@@ -178,6 +179,10 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
   const analysisResultRef = useRef<HTMLDivElement>(null);
   // 📨 Welle 1: Scroll-Ziel für die LETTER-Primary-CTA „Fristen & Optionen ansehen".
   const datesSectionRef = useRef<HTMLDivElement>(null);
+  // 📨 Welle 2: Inline-Chat-Drawer über der Analyse (statt Navigation zu /chat).
+  const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
+  const [chatDrawerChatId, setChatDrawerChatId] = useState<string | null>(null);
+  const [chatLimitInfo, setChatLimitInfo] = useState<{ limit: number; current: number } | null>(null);
 
   useEffect(() => {
     checkAnalyzeHealth().then(setServiceHealth);
@@ -520,12 +525,28 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
         })
       });
 
+      // 📨 Welle 2: 403 „Chat limit reached" → Upsell-State im Drawer (kein alert).
+      if (response.status === 403) {
+        const errBody = await response.json().catch(() => ({}));
+        if (errBody?.error === 'Chat limit reached') {
+          setChatLimitInfo({ limit: errBody.limit ?? 0, current: errBody.current ?? 0 });
+          setChatDrawerChatId(null);
+          setChatDrawerOpen(true);
+          return;
+        }
+        throw new Error('Chat konnte nicht erstellt werden');
+      }
+
       if (!response.ok) {
         throw new Error('Chat konnte nicht erstellt werden');
       }
 
       const data = await response.json();
-      navigate(`/chat?id=${data.chatId}`);
+      // 📨 Welle 2: Drawer statt Navigation — der Chat öffnet direkt ÜBER der
+      // Analyse (Backend liefert bei erneutem Klick idempotent denselben Chat).
+      setChatLimitInfo(null);
+      setChatDrawerChatId(String(data.chatId));
+      setChatDrawerOpen(true);
     } catch (error) {
       console.error('Error opening chat:', error);
       alert('Chat konnte nicht geöffnet werden. Bitte versuche es erneut.');
@@ -1837,6 +1858,19 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             }}
           />
           )}
+
+          {/* 📨 Welle 2: Inline-Chat-Drawer — öffnet über der Analyse (z-120) */}
+          <V2ChatDrawer
+            open={chatDrawerOpen}
+            onClose={() => setChatDrawerOpen(false)}
+            chatId={chatDrawerChatId}
+            contractName={displayName}
+            docNoun={(() => {
+              const d = (result || initialResult) as { documentType?: string | null; contractType?: string | null } | null;
+              return getDocNoun(classifyDocType(d?.documentType, d?.contractType));
+            })()}
+            limitReached={chatLimitInfo}
+          />
         </motion.div>
       )}
     </div>
