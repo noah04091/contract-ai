@@ -3232,9 +3232,33 @@ const LETTER_AWARENESS = {
 6. 🛡️ KÜNDIGUNGSSCHUTZ: KSchG anwendbar bei >10 Arbeitnehmern (§ 23 KSchG) und >6 Monaten Betriebszugehörigkeit (§ 1 KSchG) → Kündigung braucht soziale Rechtfertigung (personen-/verhaltens-/betriebsbedingt).
 7. 🚨 SONDERKÜNDIGUNGSSCHUTZ: Schwerbehinderte → Zustimmung des Integrationsamts nötig (§ 168 SGB IX); Schwangere/junge Mütter → § 17 MuSchG (Kündigungsverbot; Schwangerschaft kann binnen 2 Wochen nach Zugang mitgeteilt werden!); Elternzeit → § 18 BEEG; Betriebsratsmitglieder → § 15 KSchG; Kündigung wegen Betriebsübergangs unwirksam (§ 613a Abs. 4 BGB).
 8. 🏛️ BETRIEBSRAT: Existiert ein Betriebsrat, MUSS er vor JEDER Kündigung angehört werden (§ 102 BetrVG) — ohne Anhörung ist die Kündigung unwirksam.
-9. 💼 ARBEITSAGENTUR (PFLICHT, unabhängig von Klage): Arbeitsuchend-Meldung spätestens 3 MONATE vor Beendigung; liegt zwischen Kenntnis und Ende weniger als 3 Monate, binnen 3 TAGEN nach Kenntnis (§ 38 SGB III). Verspätung = Sperrzeit-Risiko beim Arbeitslosengeld.
+9. 💼 ARBEITSAGENTUR (PFLICHT, unabhängig von Klage — § 38 SGB III, SITUATIV RECHNEN!):
+   Grundregel: Arbeitsuchend-Meldung spätestens 3 MONATE vor Beendigung.
+   ⚠️ WEICHE (fast immer der Fall bei Kündigungen!): Liegen zwischen Kenntnis der
+   Kündigung (= Briefdatum/Zugang) und dem Beendigungstermin WENIGER als 3 Monate,
+   gilt stattdessen: Meldung binnen 3 TAGEN nach Kenntnis!
+   → RECHNE in DREI Schritten (alle Pflicht):
+   SCHRITT 1: Spanne Briefdatum→Beendigungstermin. Unter 3 Monaten ⇒ 3-Tage-Regel.
+   SCHRITT 2: 3-Tage-Datum = Briefdatum + 3 Tage.
+   SCHRITT 3: Vergleiche dieses Datum mit dem HEUTIGEN Datum (steht oben im Prompt)!
+   → Liegt es HEUTE oder SPÄTER: "Melde dich bis spätestens <Datum> arbeitsuchend."
+   → Liegt es in der VERGANGENHEIT (der Mandant lädt das Schreiben oft Tage nach
+     Erhalt hoch!): NIEMALS ein Vergangenheits-Datum empfehlen — stattdessen:
+     "Die 3-Tage-Meldefrist (§ 38 SGB III) ist wahrscheinlich bereits verstrichen —
+     melde dich SOFORT arbeitsuchend, jede weitere Verzögerung erhöht das
+     Sperrzeit-Risiko." (priority: urgent, timeframe: "Sofort")
+   NIEMALS die 3-Monats-Regel nennen, wenn sie zeitlich unmöglich ist.
+   Bei der 3-Tage-Variante ist das die DRINGENDSTE Pflicht neben der Klagefrist
+   → auch als importantDate (type reaktionsfrist; abgelaufen trotzdem ausgeben).
+   Verspätung = Sperrzeit-Risiko beim Arbeitslosengeld.
 10. 📋 FOLGEANSPRÜCHE: Arbeitszeugnis (§ 109 GewO), Resturlaub/Urlaubsabgeltung (§ 7 Abs. 4 BUrlG), ggf. Freistellung, Überstunden.`,
-    commonTraps: `TYPISCHE FALLEN: (a) Empfänger verpasst die 3-Wochen-Frist, weil er erst "verhandeln" will → § 7 KSchG macht alles unumkehrbar. (b) Kündigung per E-Mail/Scan wird hingenommen, obwohl § 623 sie nichtig macht. (c) § 174-Zurückweisung wird nicht binnen ~1 Woche erklärt. (d) Arbeitsuchend-Meldung vergessen → Sperrzeit. NIEMALS dem Empfänger raten, einfach nichts zu tun.`
+    commonTraps: `TYPISCHE FALLEN: (a) Empfänger verpasst die 3-Wochen-Frist, weil er erst "verhandeln" will → § 7 KSchG macht alles unumkehrbar. (b) Kündigung per E-Mail/Scan wird hingenommen, obwohl § 623 sie nichtig macht. (c) § 174-Zurückweisung wird nicht binnen ~1 Woche erklärt. (d) Arbeitsuchend-Meldung vergessen → Sperrzeit. NIEMALS dem Empfänger raten, einfach nichts zu tun.
+
+📌 PFLICHT-PRÜFPUNKTE (MÜSSEN im Output erscheinen, auch wenn unauffällig — dann kurz "geprüft: unauffällig, weil …"):
+1. § 623 Form (eigenhändige Unterschrift?)
+2. § 174 VOLLMACHT: Unterschreibt ein Vertreter (Personalleiter, "i.V.", "i.A.", Anwalt, Niederlassungsleiter — alles außer dem Geschäftsführer/Inhaber selbst)? Dann IMMER prüfen und ausgeben: Lag eine ORIGINAL-Vollmachtsurkunde bei? Wenn aus dem Schreiben nicht ersichtlich → als Handlungsoption ausgeben: "Zurückweisung nach § 174 BGB prüfen — muss UNVERZÜGLICH erfolgen (Richtwert ~1 Woche ab Zugang, konkretes Datum nennen)". Das wird in der Praxis fast immer übersehen und kann die Kündigung unwirksam machen!
+3. § 4 KSchG Klagefrist (konkretes Datum)
+4. § 38 SGB III Meldepflicht (situativ gerechnete Variante, s.o.)`
   },
   abmahnung: {
     title: 'Fachanwalt für Wettbewerbs-, Urheber- und Arbeitsrecht (Abmahnungen)',
@@ -3301,10 +3325,13 @@ function generateLetterAnalysisPrompt(text, letterType, strategy, requestId, max
   const optimizedText = optimizeTextForGPT4(text, tokenBudget, requestId);
   const usedOCR = extractionMeta && extractionMeta.usedOCR === true;
   const awareness = LETTER_AWARENESS[letterType] || LETTER_AWARENESS.sonstiges_schreiben;
+  const today = new Date().toISOString().slice(0, 10);
 
   return `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📨 SCHREIBEN-PRÜFUNG (EMPFÄNGER-PERSPEKTIVE): ${awareness.title}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Heutiges Datum: ${today}
 
 Du bist ${awareness.title} mit 20+ Jahren Erfahrung.
 
@@ -3330,6 +3357,21 @@ ${awareness.commonTraps}
 ✅ Analysiere NUR was IM SCHREIBEN steht — keine erfundenen Inhalte!
 ✅ Jede rechtliche Aussage mit konkretem § begründen
 ✅ JEDE Frist mit konkretem Datum benennen, wenn berechenbar — Fristen sind der Kern dieser Prüfung
+✅ SITUATIV RECHNEN (NICHT VERHANDELBAR): Bevor du eine Fristregel nennst, RECHNE
+   die konkreten Zeitspannen aus (heutiges Datum, Briefdatum, genannte Termine).
+   Hängt eine Regel von einer Zeitspanne ab (z.B. "3 Monate vorher, sonst 3 Tage";
+   Bekanntgabefiktion +4 Tage; "binnen 2 Wochen ab Zustellung"), wende NUR die auf
+   DIESE Situation zutreffende Variante an — eine Regel zu nennen, die zeitlich
+   gar nicht mehr einhaltbar ist, ist ein Fachfehler.
+✅ PFLICHT-PRÜFPUNKTE des Fachprofils oben MÜSSEN im Output erscheinen (in
+   legalAssessment, criticalIssues oder recommendations) — auch wenn unauffällig,
+   dann mit kurzer Begründung "geprüft: unauffällig, weil …". Stillschweigendes
+   Weglassen eines Pflicht-Prüfpunkts ist ein Fachfehler.
+✅ HANDLUNGSOPTIONEN AUS HEUTIGER SICHT: Liegt ein berechnetes Fristende bereits
+   VOR dem heutigen Datum, empfiehl NIEMALS "bis spätestens <Vergangenheitsdatum>" —
+   sage ehrlich "diese Frist ist möglicherweise bereits verstrichen" und nenne die
+   beste VERBLEIBENDE Option (sofort nachholen, um Nachteile zu mindern;
+   nachträgliche Zulassung § 5 KSchG; Wiedereinsetzung; anwaltliche Prüfung).
 ✅ Ehrlich über Unsicherheit: Fristen, die ab ZUGANG laufen, konservativ ab dem Briefdatum berechnen
    und im Label klarstellen: "gerechnet ab Briefdatum — die Frist läuft ab Zugang, prüfe dein Empfangsdatum"
 ✅ Wenn der Mandant NICHTS tun muss → klar beruhigen statt künstliche Dringlichkeit
@@ -3356,6 +3398,8 @@ D. **contractScore** (Number 1-100) — Bedeutung für SCHREIBEN: "Wie unkritisc
    → 35-59: Handlungsbedarf mit laufender Frist ODER erhebliche rechtliche Nachteile möglich
    → 1-34: DRINGEND handeln — kurze Frist läuft, Rechtsverlust/Titel/Bestandskraft droht
    → Bei laufender harter Frist (Klagefrist, Widerspruchsfrist, Mahnbescheid) NIEMALS über 60.
+   → Dringlichkeit koppeln: Restzeit bis zur wichtigsten Frist unter 14 Tagen (ab heute
+     gerechnet) → Score unter 35 ("Dringend handeln").
 E. **scoreReasoning** (String): 3-5 Sätze, warum genau dieser Wert — Fristen und Risiken benennen.
 F. **laymanSummary** (String[], 2-5): Alltagssprache — "Was heißt das für dich konkret, was musst du bis wann tun?"
 G. **summary** (String[], 3-6): Fakten des Schreibens — Absender, was erklärt wird, zu wann, genannte Gründe, genannte Fristen.
@@ -6853,3 +6897,4 @@ module.exports.handleEnhancedDeepLawyerAnalysisRequest = handleEnhancedDeepLawye
 module.exports.detectDocumentType = detectDocumentType;
 module.exports.classifyDocumentTypeWithGPT = classifyDocumentTypeWithGPT;
 module.exports.generateLetterAnalysisPrompt = generateLetterAnalysisPrompt;
+module.exports.resolveSystemPrompt = resolveSystemPrompt;
