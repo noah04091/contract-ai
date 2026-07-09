@@ -215,13 +215,18 @@ async function runPulseV2Radar(db, options = {}) {
   let totalTokensOutput = 0;
   let totalCostUSD = 0;
   const failedLawIds = []; // Track laws where AI assessment failed (for retry on next run)
+  // Silent-Miss-Fix 08.07.: NUR wirklich verarbeitete Gesetze als processed markieren.
+  // Vorher wurden ALLE (nicht-fehlgeschlagenen) lawChanges markiert — auch die, die der
+  // Budget-Break (Zeile darunter) nie erreicht hat → sie galten faelschlich als "geprueft"
+  // und wurden nie wieder angesehen. Jetzt sammeln wir explizit die tatsaechlich erledigten.
+  const processedLawIds = [];
 
   for (const law of lawChanges) {
-    if (totalMatches >= MAX_CONTRACT_MATCHES) break;
+    if (totalMatches >= MAX_CONTRACT_MATCHES) break; // NICHT verarbeitet -> bleibt fuer naechsten Lauf
 
     try {
       const matches = await matchLawToContracts(db, law, options);
-      if (matches.length === 0) continue;
+      if (matches.length === 0) { processedLawIds.push(law._id); continue; } // geprueft, keine Treffer -> erledigt
 
       // 3. Assess impact with AI
       const { impacts: confirmedImpacts, cost, aiError } = await assessImpact(law, matches);
@@ -230,6 +235,7 @@ async function runPulseV2Radar(db, options = {}) {
         continue; // Don't count matches — will be retried on next run
       }
       totalMatches += matches.length;
+      processedLawIds.push(law._id); // vollstaendig verarbeitet -> erledigt
 
       // Accumulate cost
       totalAiCalls += cost.aiCalls || 0;
@@ -280,11 +286,14 @@ async function runPulseV2Radar(db, options = {}) {
     }
   }
 
-  // 5. Mark processed law changes (exclude laws where AI assessment failed — they will be retried)
-  const failedSet = new Set(failedLawIds.map(id => id.toString()));
-  const lawIds = lawChanges.filter(l => !failedSet.has(l._id.toString())).map(l => l._id);
-  if (failedLawIds.length > 0) {
-    console.log(`[PulseV2Radar] ${failedLawIds.length} laws NOT marked as processed (AI failure) — will retry on next run`);
+  // 5. Mark ONLY genuinely processed law changes (Silent-Miss-Fix 08.07.):
+  //    - AI-failed laws (failedLawIds) -> nicht markiert, Retry naechster Lauf
+  //    - vom Budget-Break uebersprungene Laws -> gar nicht in processedLawIds -> Retry
+  //    Vorher wurden faelschlich alle nicht-fehlgeschlagenen lawChanges markiert.
+  const lawIds = processedLawIds;
+  const skippedCount = lawChanges.length - lawIds.length - failedLawIds.length;
+  if (failedLawIds.length > 0 || skippedCount > 0) {
+    console.log(`[PulseV2Radar] ${lawIds.length} laws marked processed; ${failedLawIds.length} AI-failed + ${skippedCount} budget-skipped NOT marked (retry next run)`);
   }
   await db.collection("laws").updateMany(
     { _id: { $in: lawIds } },
