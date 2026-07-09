@@ -506,6 +506,20 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
 
     console.log(`[PulseV2] Pipeline completed for contract ${contractId}: Score ${scores.overall}, ${analysisResult.clauseFindings.length} findings, coverage ${analysisResult.coverage.percentage}%, $${analysisResult.costs.costUSD.toFixed(4)}`);
 
+    // Backlog-Sweep (Bereich C "Rückblick beim Aufnehmen"): frisch analysierten Vertrag EINMALIG
+    // gegen die bestehende Rechtslage der letzten ~75 Tage prüfen. FIRE-AND-FORGET (nicht awaited)
+    // -> darf die Analyse NIE verlangsamen oder zum Scheitern bringen. Nur bei nutzer-initiierten
+    // Analysen (nicht beim wöchentlichen Monitor-Re-Scan). Dedup verhindert Doppel-Alerts.
+    if (triggeredBy !== "scheduled") {
+      Promise.resolve()
+        .then(async () => {
+          const sweepDb = await database.connect();
+          const { runBacklogSweepForContract } = require("../../jobs/pulseV2Radar");
+          return runBacklogSweepForContract(sweepDb, contractId, userId);
+        })
+        .catch((err) => console.error("[PulseV2Backlog] auto-sweep failed (unkritisch):", err.message));
+    }
+
     return {
       resultId: record._id.toString(),
       scores,
