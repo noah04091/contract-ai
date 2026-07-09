@@ -215,13 +215,18 @@ async function runPulseV2Radar(db, options = {}) {
   let totalTokensOutput = 0;
   let totalCostUSD = 0;
   const failedLawIds = []; // Track laws where AI assessment failed (for retry on next run)
+  // Silent-Miss-Fix 08.07.: NUR wirklich verarbeitete Gesetze als processed markieren.
+  // Vorher wurden ALLE (nicht-fehlgeschlagenen) lawChanges markiert — auch die, die der
+  // Budget-Break (Zeile darunter) nie erreicht hat → sie galten faelschlich als "geprueft"
+  // und wurden nie wieder angesehen. Jetzt sammeln wir explizit die tatsaechlich erledigten.
+  const processedLawIds = [];
 
   for (const law of lawChanges) {
-    if (totalMatches >= MAX_CONTRACT_MATCHES) break;
+    if (totalMatches >= MAX_CONTRACT_MATCHES) break; // NICHT verarbeitet -> bleibt fuer naechsten Lauf
 
     try {
       const matches = await matchLawToContracts(db, law, options);
-      if (matches.length === 0) continue;
+      if (matches.length === 0) { processedLawIds.push(law._id); continue; } // geprueft, keine Treffer -> erledigt
 
       // 3. Assess impact with AI
       const { impacts: confirmedImpacts, cost, aiError } = await assessImpact(law, matches);
@@ -230,6 +235,7 @@ async function runPulseV2Radar(db, options = {}) {
         continue; // Don't count matches — will be retried on next run
       }
       totalMatches += matches.length;
+      processedLawIds.push(law._id); // vollstaendig verarbeitet -> erledigt
 
       // Accumulate cost
       totalAiCalls += cost.aiCalls || 0;
@@ -280,11 +286,14 @@ async function runPulseV2Radar(db, options = {}) {
     }
   }
 
-  // 5. Mark processed law changes (exclude laws where AI assessment failed — they will be retried)
-  const failedSet = new Set(failedLawIds.map(id => id.toString()));
-  const lawIds = lawChanges.filter(l => !failedSet.has(l._id.toString())).map(l => l._id);
-  if (failedLawIds.length > 0) {
-    console.log(`[PulseV2Radar] ${failedLawIds.length} laws NOT marked as processed (AI failure) — will retry on next run`);
+  // 5. Mark ONLY genuinely processed law changes (Silent-Miss-Fix 08.07.):
+  //    - AI-failed laws (failedLawIds) -> nicht markiert, Retry naechster Lauf
+  //    - vom Budget-Break uebersprungene Laws -> gar nicht in processedLawIds -> Retry
+  //    Vorher wurden faelschlich alle nicht-fehlgeschlagenen lawChanges markiert.
+  const lawIds = processedLawIds;
+  const skippedCount = lawChanges.length - lawIds.length - failedLawIds.length;
+  if (failedLawIds.length > 0 || skippedCount > 0) {
+    console.log(`[PulseV2Radar] ${lawIds.length} laws marked processed; ${failedLawIds.length} AI-failed + ${skippedCount} budget-skipped NOT marked (retry next run)`);
   }
   await db.collection("laws").updateMany(
     { _id: { $in: lawIds } },
@@ -362,7 +371,8 @@ const NOISE_PATTERNS = [
   /genitalverstümmelung|todesstrafe|deepfake/i,
   // Political / administrative noise
   /fortschrittsbericht\s+\d{4}/i,
-  /normenkontrolle.*bundesverfassungsgericht/i,
+  // ENTFERNT (Silent-Miss-Fix 08.07.): eine BVerfG-Normenkontrolle kann ein Gesetz kippen
+  // (Höchst-Impact) — darf kein Rauschen sein. Rein-politische Sondervermögen-Variante bleibt.
   /normenkontrolle.*sondervermögen/i,
   /pilotprojekt.*simulation/i,
   /wissenschaftliche.*arbeitskreis/i,
@@ -416,7 +426,8 @@ const NOISE_PATTERNS = [
   /\btätigkeitsbericht\b/i,
   // Newsletter / promotional content
   /\bnewsletter\b/i,
-  /\brundschreiben\b/i,
+  // ENTFERNT (Silent-Miss-Fix 08.07.): BaFin/Ministeriums-"Rundschreiben" sind bindende
+  // Aufsichts-Vorgaben (detectLawStatus: guideline) — kein Rauschen. "Newsletter" bleibt.
   /\b(folgen\s+sie\s+uns|follow\s+us)\b/i,
   /\b(jetzt\s+anmelden|jetzt\s+registrieren)\b/i,
   /\babonnieren\b/i,
@@ -431,9 +442,18 @@ const NOISE_PATTERNS = [
   /\b(das\s+bedeutet|was\s+sie\s+wissen\s+müssen)\b/i,
 ];
 
+// Schutzschild (Silent-Miss-Fix 08.07.): klare echte Rechtsakte (Gesetzentwürfe/Verordnungen)
+// NIE als Rauschen verwerfen — sie tragen oft eine Drucksachen-Nummer im Titel und würden sonst
+// am /drucksache …/-Muster hängenbleiben. Prozedurales (Anfrage/Beschlussempfehlung/Protokoll/
+// Unterrichtung) ist ausdrücklich ausgenommen und wird weiterhin gefiltert.
+const REAL_LAW_SIGNAL = /\b(gesetzentwurf|entwurf eines\s+[\wäöüß]*\s*gesetzes|artikelgesetz|verordnungsentwurf|verordnung\s+(zur|zum|über|des|der)\b)/i;
+const PROCEDURAL_SIGNAL = /\b(anfrage|beschlussempfehlung|protokoll|tagesordnung|unterrichtung|entschlie(ß|ss)ungsantrag)\b/i;
+
 function isNoiseLaw(law) {
   const title = (law.title || "").trim();
   if (title.length < 15) return true;
+  // Echte Gesetze/Verordnungen schützen (aber nicht prozedurale Drucksachen wie Anfragen)
+  if (REAL_LAW_SIGNAL.test(title) && !PROCEDURAL_SIGNAL.test(title)) return false;
   return NOISE_PATTERNS.some((p) => p.test(title));
 }
 
@@ -498,7 +518,12 @@ function scoreLawRelevance(law, activeContractTypes) {
   if (IMPACT_BOOST_PATTERN.test(text)) score += 15;
 
   // 4. Law status boost (in-force > passed > court_decision > proposal)
-  const statusBoost = { effective: 20, passed: 15, court_decision: 10, guideline: 5, proposal: 3 };
+  // Silent-Miss-Fix 09.07.: court_decision 10 -> 25. Urteils-Titel sind naturgemäß dünn
+  // (Aktenzeichen statt Signalwörter wie "in Kraft/Pflicht"), darum fielen echte BGH/BAG-
+  // Urteile trotz hoher Bedeutung unter die 30er-Relevanzschwelle und wurden nie geprüft.
+  // Höherer Floor holt frische Urteile der obersten Bundesgerichte rein; die eigentliche
+  // Relevanz filtert danach die KI (assessImpact, "im Zweifel affected=false").
+  const statusBoost = { effective: 20, passed: 15, court_decision: 25, guideline: 5, proposal: 3 };
   score += statusBoost[law.lawStatus] || 0;
 
   // 5. Recency boost (newer = slight boost, max 10 points)
@@ -1000,7 +1025,7 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
 /**
  * Store alerts in DB and send consolidated email to user.
  */
-async function storeAndNotify(db, userId, alerts) {
+async function storeAndNotify(db, userId, alerts, options = {}) {
   // Store in pulse_v2_legal_alerts
   let alertDocs = alerts.map((a) => ({
     userId,
@@ -1061,6 +1086,14 @@ async function storeAndNotify(db, userId, alerts) {
     // Ignore duplicate key errors (code 11000) — means alert already exists
     if (err.code !== 11000) throw err;
     console.log(`[PulseV2Radar] ${err.writeErrors?.length || 0} duplicate alerts skipped for user ${userId}`);
+  }
+
+  // Still speichern ohne sofortige Mail (z.B. Backlog-Sweep beim Onboarding):
+  // Alerts sind persistiert (sichtbar auf /pulse + Glocke, tauchen im naechsten
+  // Wach-Bericht auf) — aber keine ueberraschende Extra-Mail direkt nach der Analyse.
+  if (options.skipEmail) {
+    console.log(`[PulseV2] ${alertDocs.length} alerts persisted for user ${userId} (skipEmail)`);
+    return;
   }
 
   // Load user for email
@@ -1220,4 +1253,99 @@ async function storeAndNotify(db, userId, alerts) {
   console.log(`[PulseV2Radar] Alert email queued for ${user.email}: ${alerts.length} impacts`);
 }
 
-module.exports = { runPulseV2Radar };
+/**
+ * Backlog-Sweep (Bereich C "Rückblick beim Aufnehmen"):
+ * Prüft EINEN frisch analysierten Vertrag EINMALIG gegen die Rechtsänderungen der letzten
+ * `sinceDays` Tage — inkl. der bereits vom Radar verarbeiteten (pulseV2Processed:true), die
+ * der tägliche Radar nicht mehr anschaut. So wird ein neu aufgenommener Vertrag gegen die
+ * BESTEHENDE Rechtslage geprüft, nicht nur gegen künftige Änderungen.
+ *
+ * Sicher: reine Wiederverwendung der bewährten Radar-Bausteine, scoped auf EINEN Vertrag,
+ * harter Kostendeckel (MAX_BACKLOG_LAWS), Dedup via storeAndNotify (kein Doppel-Alert),
+ * setzt pulseV2Processed NICHT (Radar-Cursor unberührt), still (skipEmail).
+ * @returns {Promise<{swept:boolean, reason?:string, laws?:number, relevant?:number, alerts?:number}>}
+ */
+async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75) {
+  const MAX_BACKLOG_LAWS = 20; // Kostendeckel: max. so viele Gesetze pro Vertrag KI-prüfen
+  const { ObjectId } = require("mongodb");
+  const cidStr = String(contractId);
+  const uidStr = String(userId);
+
+  // 1. Neuestes abgeschlossenes V2-Ergebnis dieses Vertrags → Vertrags-Payload (wie matchLawToContracts liefert)
+  const idCandidates = [contractId, cidStr];
+  try { if (ObjectId.isValid(cidStr)) idCandidates.push(new ObjectId(cidStr)); } catch { /* ignore */ }
+  const result = await LegalPulseV2Result.findOne(
+    { contractId: { $in: idCandidates }, status: "completed" },
+    null,
+    { sort: { createdAt: -1 } }
+  ).lean();
+  if (!result) return { swept: false, reason: "no_completed_result" };
+
+  const contractType = result.document?.contractType || "unknown";
+  if (contractType === "nicht_vertrag") return { swept: false, reason: "not_a_contract" };
+
+  const contractPayload = {
+    userId: result.userId,
+    contractId: result.contractId,
+    contractName: result.context?.contractName || cidStr,
+    contractType,
+    findings: (result.clauseFindings || [])
+      .filter((f) => f.severity === "critical" || f.severity === "high" || f.severity === "medium")
+      .map((f) => ({ title: f.title, category: f.category, severity: f.severity, clauseId: f.clauseId })),
+    clauses: (result.clauses || []).map((c) => ({ id: c.id, title: c.title, category: c.category })),
+    scores: result.scores,
+  };
+
+  // 2. Backlog-Gesetze laden (auch bereits verarbeitete! → bewusst KEIN pulseV2Processed-Filter)
+  const sinceDate = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000);
+  const candidates = await db.collection("laws")
+    .find({ updatedAt: { $gte: sinceDate } })
+    .sort({ updatedAt: -1 })
+    .limit(500)
+    .toArray();
+  if (candidates.length === 0) return { swept: true, laws: 0, relevant: 0, alerts: 0 };
+
+  // 3. Rauschen raus + Relevanz gegen DIESEN Vertragstyp scoren + Top-N (Kostendeckel)
+  const activeTypes = [String(contractType).toLowerCase()];
+  const scored = candidates
+    .filter((law) => !isNoiseLaw(law))
+    .map((law) => ({ law, score: scoreLawRelevance(law, activeTypes) }))
+    .filter((s) => s.score >= MIN_RELEVANCE_SCORE)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_BACKLOG_LAWS);
+  if (scored.length === 0) return { swept: true, laws: candidates.length, relevant: 0, alerts: 0 };
+
+  // 4. Je Gesetz: KI-Impact-Prüfung gegen den EINEN Vertrag (assessImpact filtert affected + Konfidenz≥60)
+  const alerts = [];
+  for (const { law } of scored) {
+    try {
+      const { impacts } = await assessImpact(law, [contractPayload]);
+      for (const impact of impacts || []) {
+        alerts.push({
+          lawChange: law,
+          contractId: impact.contractId,
+          contractName: impact.contractName,
+          impactSummary: impact.summary,
+          plainSummary: impact.plainSummary || "",
+          businessImpact: impact.businessImpact || "",
+          severity: impact.severity,
+          impactDirection: impact.impactDirection || "negative",
+          recommendation: impact.recommendation,
+          affectedClauseIds: impact.affectedClauseIds,
+          clauseImpacts: impact.clauseImpacts,
+        });
+      }
+    } catch (err) {
+      console.warn(`[PulseV2Backlog] assessImpact failed for law ${law._id}:`, err.message);
+    }
+  }
+
+  // 5. Still persistieren (Dedup automatisch via storeAndNotify, KEINE sofortige Mail)
+  if (alerts.length > 0) {
+    await storeAndNotify(db, uidStr, alerts, { skipEmail: true });
+  }
+  console.log(`[PulseV2Backlog] contract ${cidStr}: ${candidates.length} laws in ${sinceDays}d, ${scored.length} relevant, ${alerts.length} alerts (silent).`);
+  return { swept: true, laws: candidates.length, relevant: scored.length, alerts: alerts.length };
+}
+
+module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract };
