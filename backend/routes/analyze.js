@@ -4,6 +4,7 @@ const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = require("../services/textExtractor");
 const pdfExtractor = require("../services/pdfExtractor");
+const { convertImageToPdf, isImageMimetype } = require("../services/imageToPdf"); // 🖼️ Welle 4a: Handy-Foto → PDF am Eingang
 const { shouldAttemptOcr } = require("../utils/ocrGate"); // 🔍 OCR-Weiche (Text-Menge + Scan-Dichte)
 const { tryParseLenient } = require("../utils/jsonRepair"); // 🩹 Tolerantes JSON-Parsen für abgeschnittene KI-Antworten
 const { shouldClearExpiry, isImplausibleAiEndDate } = require("../utils/expiryPlausibility"); // 🛡️ Enddatum-Plausibilität (Vergangenheit / ==Start) + KI-Enddatum-Guard (TÜV-Fund #1)
@@ -231,10 +232,14 @@ const createUploadMiddleware = () => {
     storage,
     limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
     fileFilter: (req, file, cb) => {
-      if (isSupportedMimetype(file.mimetype)) {
+      // 🖼️ Welle 4a: Fotos (JPEG/PNG/HEIC/…) zusätzlich zulassen — sie werden
+      // direkt nach dem Upload in ein PDF gewickelt (siehe router.post "/").
+      // isImageMimetype ist NUR hier aktiv, NICHT in der geteilten
+      // SUPPORTED_MIMETYPES-Liste (sonst nähmen Compare/Optimizer/… auch Bilder an).
+      if (isSupportedMimetype(file.mimetype) || isImageMimetype(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Nur PDF- und DOCX-Dateien sind erlaubt'), false);
+        cb(new Error('Nur PDF-, DOCX- oder Bild-Dateien (Foto) sind erlaubt'), false);
       }
     }
   });
@@ -4154,6 +4159,7 @@ async function dispatchAnalyzeRequest(req, res) {
     user: { userId: req.user.userId },
     body: { ...req.body },
     query: { ...req.query },
+    fromPhoto: req.fromPhoto === true, // 🖼️ Welle 4a: Foto-Herkunft in Async durchreichen
     jobId
   };
 
@@ -4188,6 +4194,7 @@ async function runPipelineInBackground(jobId, snapshot) {
     user: snapshot.user,
     body: snapshot.body,
     query: snapshot.query,
+    fromPhoto: snapshot.fromPhoto === true, // 🖼️ Welle 4a
     jobId: snapshot.jobId,
     on: () => {},
     removeListener: () => {}
@@ -4563,6 +4570,42 @@ router.post("/", verifyToken, analyzeRateLimiter, async (req, res, next) => {
       });
     }
     
+    // 🖼️ Welle 4a (09.07.2026): Handy-Foto → PDF am EINGANG, vor allem anderen.
+    // Wenn ein Bild hochgeladen wurde, wickeln wir es in ein einseitiges PDF und
+    // tauschen req.file transparent aus. Ab hier sieht die GESAMTE Pipeline
+    // (S3-Upload, Hash, pdf-parse→OCR-Fallback, Viewer, Async-Snapshot) ein ganz
+    // normales gescanntes PDF — kein Downstream-Eingriff, der User bekommt ein
+    // anzeigbares PDF. Fehler → saubere 400 statt Crash.
+    if (req.file && isImageMimetype(req.file.mimetype)) {
+      try {
+        const imgBuffer = await fs.readFile(req.file.path);
+        const { pdfBuffer } = await convertImageToPdf(imgBuffer, req.file.mimetype);
+
+        const pdfPath = req.file.path + '.pdf';
+        await fs.writeFile(pdfPath, pdfBuffer);
+        // Original-Bild-Tempdatei aufräumen (non-fatal)
+        try { await fs.unlink(req.file.path); } catch { /* egal */ }
+
+        const baseName = (req.file.originalname || 'foto').replace(/\.[^.]+$/, '');
+        req.file.path = pdfPath;
+        req.file.filename = (req.file.filename || 'foto').replace(/\.[^.]+$/, '') + '.pdf';
+        req.file.originalname = `${baseName}.pdf`;
+        req.file.mimetype = 'application/pdf';
+        req.file.size = pdfBuffer.length;
+        req.fromPhoto = true; // Info-Flag: kam ursprünglich als Foto rein
+        console.log(`🖼️ [ANALYZE] Foto-Upload erkannt → in PDF gewickelt (${req.file.originalname})`);
+      } catch (convErr) {
+        console.error(`❌ [ANALYZE] Foto→PDF-Konvertierung fehlgeschlagen: ${convErr.message}`);
+        try { if (req.file?.path) await fs.unlink(req.file.path); } catch { /* egal */ }
+        return res.status(400).json({
+          success: false,
+          message: "📸 Das Foto konnte nicht verarbeitet werden. Bitte stelle sicher, dass es ein gültiges Bild (JPEG, PNG, HEIC) ist — oder lade das Dokument als PDF hoch.",
+          error: "IMAGE_CONVERSION_FAILED",
+          details: convErr.message
+        });
+      }
+    }
+
     // 🆕 Stufe 5 (27.05.2026): Dispatcher entscheidet ob sync (default) oder async
     // (wenn ?async=true UND ANALYZE_ASYNC_ENABLED!=false). Existierende Pipeline-Logik
     // bleibt unangetastet — Async läuft via Fake-Res-Wrapper.
@@ -5676,6 +5719,21 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       }
     }
 
+    // 🖼️ Welle 4a: OCR-Ehrlichkeits-Hinweis (nur Banner). Wenn der Text per
+    // Texterkennung aus einem Foto/Scan gewonnen wurde (usedOCR), sagen wir das
+    // ehrlich — OCR kann sich verlesen, Handschriftliches bleibt unsichtbar.
+    // Gilt für Foto-Uploads UND gescannte PDFs gleichermaßen (robust in Sync- und
+    // Async-Pfad, weil aus der Extraktion abgeleitet, nicht aus dem req-Objekt).
+    if (pdfData && pdfData.usedOCR === true) {
+      result.ocrNotice = {
+        fromPhoto: req.fromPhoto === true,
+        confidence: typeof pdfData.ocrConfidence === 'number' ? Math.round(pdfData.ocrConfidence) : null
+      };
+      console.log(`🖼️ [${requestId}] ocrNotice: Text per OCR gewonnen (fromPhoto=${result.ocrNotice.fromPhoto}, conf=${result.ocrNotice.confidence ?? 'n/a'}%) — Ehrlichkeits-Banner`);
+    } else {
+      result.ocrNotice = null;
+    }
+
     // 📨 Welle 1: LETTER-Output-Hygiene (Belt & Suspenders zum Prompt).
     // Der Letter-Prompt verbietet Vertrags-Felder — falls das Modell sie trotzdem
     // liefert (oder der Legacy-Fallback sie injiziert), hier deterministisch entfernen:
@@ -5920,6 +5978,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           analysisCoverage: result.analysisCoverage || null,
           // 🌍 Welle 4b: Jurisdiktions-Warnung IMMER explizit (Stale-Schutz)
           jurisdictionWarning: result.jurisdictionWarning || null,
+          // 🖼️ Welle 4a: OCR-Hinweis IMMER explizit (Stale-Schutz)
+          ocrNotice: result.ocrNotice || null,
           // 🛡️ TÜV m3: documentCategory NUR im LETTER-Fall anfassen (Verträge byte-
           // identisch zum Verhalten vor Welle 1). LETTER→CONTRACT-Rückklassifikation:
           // verwaistes 'letter' zurücksetzen, sonst bliebe Status „Erhalten" kleben.
@@ -6413,6 +6473,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               analysisCoverage: result.analysisCoverage || null,
               // 🌍 Welle 4b: Jurisdiktions-Warnung IMMER explizit (Stale-Schutz)
               jurisdictionWarning: result.jurisdictionWarning || null,
+              // 🖼️ Welle 4a: OCR-Hinweis IMMER explizit (Stale-Schutz)
+              ocrNotice: result.ocrNotice || null,
               analysisStrategy: validationResult.strategy,
               confidence: validationResult.confidence,
               qualityScore: validationResult.qualityScore,

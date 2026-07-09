@@ -904,6 +904,8 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     analysisCoverage: 1, pilotTruncated: 1, usedFallbackFormat: 1,
     // 🌍 Welle 4b: Jurisdiktions-Warnung (nicht-DE-Recht-Banner)
     jurisdictionWarning: 1,
+    // 🖼️ Welle 4a: OCR-Hinweis (Foto-/Scan-Ehrlichkeits-Banner)
+    ocrNotice: 1,
     // Detail-Modal Felder (werden über "Feld hinzufügen" gesetzt)
     contractType: 1, contractTypeLabel: 1, anbieter: 1, vertragsnummer: 1, kosten: 1,
     provider: 1, customFields: 1, notes: 1,

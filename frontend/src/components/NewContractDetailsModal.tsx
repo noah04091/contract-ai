@@ -197,6 +197,7 @@ interface Contract {
   // das ganze Doc an V2HeroSection durch, dort werden die Banner gerendert
   analysisCoverage?: { originalChars: number; analyzedChars: number; truncated: boolean } | null;
   jurisdictionWarning?: { language?: string; jurisdiction?: string } | null; // 🌍 Welle 4b
+  ocrNotice?: { fromPhoto?: boolean; confidence?: number | null } | null; // 🖼️ Welle 4a
   pilotTruncated?: boolean;
   usedFallbackFormat?: boolean;
   provider?: {

@@ -61,6 +61,7 @@ type AnalysisData = {
   usedFallbackFormat?: boolean;
   // 🌍 Welle 4b — Warnung bei nicht-deutschem Recht/Sprache (render-if-present)
   jurisdictionWarning?: { language?: string; jurisdiction?: string } | null;
+  ocrNotice?: { fromPhoto?: boolean; confidence?: number | null } | null; // 🖼️ Welle 4a
 };
 
 interface Props {
@@ -858,6 +859,33 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 Unsere Analyse orientiert sich an <strong>deutschem Recht</strong> und ist hier mit Vorsicht zu genießen —
                 die genannten Paragraphen und Bewertungen treffen für {jurLabel} möglicherweise nicht zu.
                 Für eine verbindliche Prüfung wende dich an eine im jeweiligen Rechtsraum zugelassene Beratung.
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* 🖼️ Welle 4a: OCR-Ehrlichkeits-Hinweis — eigener Block, stapelt mit den
+          übrigen Bannern. Informativ (kein Alarm) → role="note", blau. Zeigt, dass
+          der Text per Texterkennung aus einem Foto/Scan stammt (kann Lesefehler
+          enthalten, Handschriftliches bleibt unsichtbar). Render-if-present. */}
+      {d.ocrNotice && (() => {
+        const oc = d.ocrNotice;
+        const conf = typeof oc.confidence === "number" ? oc.confidence : null;
+        return (
+          <div className={styles.lowTextBanner} role="note" style={{ borderColor: "#3b82f6" }}>
+            <div className={styles.lowTextIcon} aria-hidden="true">{oc.fromPhoto ? "📸" : "🔍"}</div>
+            <div className={styles.lowTextBody}>
+              <div className={styles.lowTextTitle}>
+                {oc.fromPhoto
+                  ? "Analyse basiert auf einem Foto (Texterkennung)"
+                  : "Analyse basiert auf einem Scan (Texterkennung)"}
+              </div>
+              <div className={styles.lowTextDesc}>
+                Der Text wurde per <strong>OCR</strong> aus dem Bild gelesen
+                {conf !== null ? ` (Erkennungsgüte ca. ${conf}%)` : ""}. Das funktioniert in der Regel sehr gut,
+                kann aber vereinzelt Lesefehler enthalten; Handschriftliches (z.&nbsp;B. Unterschriften) ist für die
+                Erkennung unsichtbar. Bei wichtigen Zahlen und Fristen bitte kurz mit dem Originaldokument abgleichen.
               </div>
             </div>
           </div>

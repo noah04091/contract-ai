@@ -161,6 +161,7 @@ interface Contract {
   pilotTruncated?: boolean;
   usedFallbackFormat?: boolean;
   jurisdictionWarning?: { language?: string; jurisdiction?: string } | null; // 🌍 Welle 4b
+  ocrNotice?: { fromPhoto?: boolean; confidence?: number | null } | null; // 🖼️ Welle 4a
   // 📊 Analysis Object (für Analyse-Tab Verfügbarkeit)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis?: Record<string, any>;
@@ -2513,6 +2514,7 @@ export default function Contracts() {
           // 🛡️ Welle 3 „Vertrauens-Schicht": Transparenz-Felder durchreichen (sonst Banner unsichtbar)
           analysisCoverage: updatedContract.analysis?.analysisCoverage ?? updatedContract.analysisCoverage,
           jurisdictionWarning: updatedContract.analysis?.jurisdictionWarning ?? updatedContract.jurisdictionWarning,
+          ocrNotice: updatedContract.analysis?.ocrNotice ?? updatedContract.ocrNotice,
           pilotTruncated: updatedContract.analysis?.pilotTruncated ?? updatedContract.pilotTruncated,
           usedFallbackFormat: updatedContract.analysis?.usedFallbackFormat ?? updatedContract.usedFallbackFormat,
           // Legacy Felder für Kompatibilität
@@ -2679,6 +2681,7 @@ export default function Contracts() {
             // 🛡️ Welle 3 „Vertrauens-Schicht": Transparenz-Felder durchreichen (sonst Banner unsichtbar)
             analysisCoverage: fresh.analysis?.analysisCoverage ?? fresh.analysisCoverage,
             jurisdictionWarning: fresh.analysis?.jurisdictionWarning ?? fresh.jurisdictionWarning,
+            ocrNotice: fresh.analysis?.ocrNotice ?? fresh.ocrNotice,
             pilotTruncated: fresh.analysis?.pilotTruncated ?? fresh.pilotTruncated,
             usedFallbackFormat: fresh.analysis?.usedFallbackFormat ?? fresh.usedFallbackFormat,
             kuendigung: fresh.kuendigung,
@@ -4025,7 +4028,7 @@ export default function Contracts() {
         type="file"
         onChange={handleMultipleFileChange}
         style={{ display: 'none' }}
-        accept=".pdf,.docx"
+        accept=".pdf,.docx,image/*,.heic,.heif"
         multiple={canMultiUpload}
         id="contractFile"
         ref={fileInputRef}
@@ -5001,7 +5004,7 @@ export default function Contracts() {
                             }
                           </p>
                           <div className={styles.uploadFormats}>
-                            Unterstützte Formate: PDF, DOCX
+                            Unterstützte Formate: PDF, DOCX, Foto (JPG/PNG/HEIC)
                           </div>
                           {canMultiUpload && hasAnalysesLeft && (
                             <div className={styles.premiumFeature}>
