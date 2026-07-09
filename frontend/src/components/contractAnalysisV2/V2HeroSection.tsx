@@ -763,7 +763,10 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           Felder rendern exakt wie bisher. */}
       {(() => {
         const lowTextShown = typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200;
-        const unknownShown = docClass === "UNKNOWN" && !lowTextShown;
+        // TÜV: lowText unterdrückt auch die Vertrauens-Banner (fundamentalere
+        // Aussage; verhindert Banner-Stapel bei Mini-Scan + Fallback).
+        if (lowTextShown) return null;
+        const unknownShown = docClass === "UNKNOWN";
         if (unknownShown) return null;
 
         // 1) Fallback-Banner (wichtigster): Analyse nur eingeschränkt erstellt
@@ -774,7 +777,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               <div className={styles.lowTextBody}>
                 <div className={styles.lowTextTitle}>Diese Analyse konnte nur eingeschränkt erstellt werden</div>
                 <div className={styles.lowTextDesc}>
-                  Die Inhalte sind teilweise generisch statt dokumentspezifisch. {onReanalyze
+                  Die Inhalte sind teilweise generisch statt dokumentspezifisch. {canReanalyze && onReanalyze
                     ? "Klicke auf „Erneut analysieren“ — meistens reicht ein zweiter Versuch."
                     : "Nutze „Erneut analysieren“ in der Vertragsansicht."}
                 </div>

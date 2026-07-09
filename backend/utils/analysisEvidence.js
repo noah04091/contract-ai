@@ -42,7 +42,10 @@ function verifyAnalysisEvidence(result, fullText) {
   const issues = result.criticalIssues;
   if (!Array.isArray(issues) || !fullText || typeof fullText !== 'string') return stats;
 
-  const normText = normalize(fullText);
+  // TÜV-Perf: normalize(fullText) (~10 Regex-Pässe über bis zu 400k Zeichen)
+  // erst berechnen, wenn WIRKLICH ein evidence-String zu prüfen ist —
+  // im Prod-Default (Feld AUS) läuft die Funktion sonst als reiner No-op.
+  let normText = null;
   for (const issue of issues) {
     if (!issue || typeof issue !== 'object') continue;
     const ev = typeof issue.evidence === 'string' ? issue.evidence.trim() : '';
@@ -59,6 +62,7 @@ function verifyAnalysisEvidence(result, fullText) {
       stats.failed++;
       continue;
     }
+    if (normText === null) normText = normalize(fullText);
     const ok = evidenceMatchesText(normalize(ev), normText);
     issue.evidenceVerified = ok === true;
     if (issue.evidenceVerified) stats.verified++; else stats.failed++;
