@@ -518,7 +518,12 @@ function scoreLawRelevance(law, activeContractTypes) {
   if (IMPACT_BOOST_PATTERN.test(text)) score += 15;
 
   // 4. Law status boost (in-force > passed > court_decision > proposal)
-  const statusBoost = { effective: 20, passed: 15, court_decision: 10, guideline: 5, proposal: 3 };
+  // Silent-Miss-Fix 09.07.: court_decision 10 -> 25. Urteils-Titel sind naturgemäß dünn
+  // (Aktenzeichen statt Signalwörter wie "in Kraft/Pflicht"), darum fielen echte BGH/BAG-
+  // Urteile trotz hoher Bedeutung unter die 30er-Relevanzschwelle und wurden nie geprüft.
+  // Höherer Floor holt frische Urteile der obersten Bundesgerichte rein; die eigentliche
+  // Relevanz filtert danach die KI (assessImpact, "im Zweifel affected=false").
+  const statusBoost = { effective: 20, passed: 15, court_decision: 25, guideline: 5, proposal: 3 };
   score += statusBoost[law.lawStatus] || 0;
 
   // 5. Recency boost (newer = slight boost, max 10 points)
@@ -1240,4 +1245,4 @@ async function storeAndNotify(db, userId, alerts) {
   console.log(`[PulseV2Radar] Alert email queued for ${user.email}: ${alerts.length} impacts`);
 }
 
-module.exports = { runPulseV2Radar, isNoiseLaw };
+module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance };
