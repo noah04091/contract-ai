@@ -59,6 +59,8 @@ type AnalysisData = {
   analysisCoverage?: { originalChars: number; analyzedChars: number; truncated: boolean } | null;
   pilotTruncated?: boolean;
   usedFallbackFormat?: boolean;
+  // 🌍 Welle 4b — Warnung bei nicht-deutschem Recht/Sprache (render-if-present)
+  jurisdictionWarning?: { language?: string; jurisdiction?: string } | null;
 };
 
 interface Props {
@@ -829,6 +831,37 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         }
 
         return null;
+      })()}
+
+      {/* 🌍 Welle 4b: Jurisdiktions-Warnung — EIGENER Block AUSSERHALB der Trust-
+          Kaskade oben (andere Achse: „welches Recht" vs. „wie vollständig"), damit
+          er die Fallback-/Kürzungs-Banner NICHT verdrängt (stapeln statt verdrängen).
+          Haftungsrelevant → role="alert". Render-if-present. */}
+      {d.jurisdictionWarning && (() => {
+        const jw = d.jurisdictionWarning;
+        const isForeignLang = jw.language && jw.language !== "de";
+        const jurNames: Record<string, string> = {
+          AT: "österreichischem Recht", CH: "Schweizer Recht", US: "US-amerikanischem Recht",
+          UK: "englischem/britischem Recht", other: "ausländischem Recht",
+        };
+        const jurLabel = jurNames[jw.jurisdiction || "other"] || "ausländischem Recht";
+        return (
+          <div className={styles.lowTextBanner} role="alert" style={{ borderColor: "#f59e0b" }}>
+            <div className={styles.lowTextIcon} aria-hidden="true">🌍</div>
+            <div className={styles.lowTextBody}>
+              <div className={styles.lowTextTitle}>
+                {isForeignLang
+                  ? "Dieses Dokument scheint nicht deutschsprachig zu sein"
+                  : `Dieses Dokument unterliegt offenbar ${jurLabel}`}
+              </div>
+              <div className={styles.lowTextDesc}>
+                Unsere Analyse orientiert sich an <strong>deutschem Recht</strong> und ist hier mit Vorsicht zu genießen —
+                die genannten Paragraphen und Bewertungen treffen für {jurLabel} möglicherweise nicht zu.
+                Für eine verbindliche Prüfung wende dich an eine im jeweiligen Rechtsraum zugelassene Beratung.
+              </div>
+            </div>
+          </div>
+        );
       })()}
 
       {/* Recognition-Banner-Block entfernt (30.05.2026) — komplett ersetzt durch

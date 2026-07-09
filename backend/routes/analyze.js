@@ -1018,7 +1018,7 @@ async function classifyDocumentTypeWithGPT(textSample, openaiClient, requestId) 
       model: 'gpt-4o-mini',
       temperature: 0.1,
       seed: 42, // 🎯 Determinismus best-effort — konsistent zu Hauptanalyse (:4013) + DateHunt (dateHuntService.js:884); stabilere Typ-/Kategorie-Klassifikation bei identischem Dokument
-      max_tokens: 350,
+      max_tokens: 450, // 🌍 Welle 4b: +Puffer für 3 kleine Sprach-/Jurisdiktions-Felder (Trunkierung würde SONST ALLE T2-Felder killen)
       response_format: { type: 'json_object' },
       messages: [
         {
@@ -1038,9 +1038,18 @@ Antworte NUR mit JSON in diesem Format:
     "providerConfidence": 0-1,
     "customerConfidence": 0-1
   },
+  "language": "de" | "en" | "other",
+  "jurisdiction": "DE" | "AT" | "CH" | "EU" | "US" | "UK" | "other" | null,
+  "jurisdictionConfidence": 0-1,
   "confidence": 0-1,
   "reason": "kurze Begründung auf Deutsch (1 Satz)"
 }
+
+SPRACHE & RECHTSRAUM (language / jurisdiction):
+- language = die HAUPTSPRACHE des Dokumenttexts ("de" deutsch, "en" englisch, "other" sonst). Einzelne englische Fachbegriffe (SaaS, Force Majeure, Indemnification) in einem sonst deutschen Text bleiben "de".
+- jurisdiction = das ANWENDBARE Recht. Primär aus einer Rechtswahl-/Gerichtsstandsklausel ("Es gilt deutsches Recht", "governing law: laws of England", "This Agreement is governed by the laws of the State of Delaware"). Fehlt eine solche Klausel: aus dem Gesamtkontext (Sprache, Parteisitz, Währung) vorsichtig ableiten.
+- jurisdiction = "DE" für deutsches Recht. "EU" NUR wenn ausschließlich EU-Recht ohne nationalen Bezug (selten). Ein deutscher Vertrag, der DSGVO/EU-Recht zitiert, bleibt "DE".
+- jurisdictionConfidence: 0.9-1.0 bei expliziter Rechtswahlklausel; 0.6-0.8 bei klarem Kontext; <0.6 wenn unsicher. Im Zweifel jurisdiction=null (dann behandelt die App es als deutsches Standard-Dokument).
 
 CATEGORY:
 CONTRACT: alle Verträge & rechtsverbindliche Vereinbarungen — Mietvertrag,
@@ -1250,6 +1259,25 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
       // LETTER ohne validen Subtyp → generisches Schreiben-Profil (universell)
       if (!letterType) letterType = 'sonstiges_schreiben';
     }
+    // 🌍 Welle 4b: Sprache + Rechtsraum (additiv, wie letterType). Konservativ:
+    // im Zweifel Default de/DE → App behandelt es als deutsches Standard-Dokument.
+    const VALID_LANGUAGES = new Set(['de', 'en', 'other']);
+    const VALID_JURISDICTIONS = new Set(['DE', 'AT', 'CH', 'EU', 'US', 'UK', 'other']);
+    let language = 'de';
+    if (typeof parsed.language === 'string' && VALID_LANGUAGES.has(parsed.language.toLowerCase().trim())) {
+      language = parsed.language.toLowerCase().trim();
+    }
+    let jurisdiction = null;
+    let jurisdictionConfidence = 0;
+    if (parsed.jurisdiction != null) {
+      const jRaw = String(parsed.jurisdiction).toUpperCase().trim();
+      if (VALID_JURISDICTIONS.has(jRaw)) {
+        jurisdiction = jRaw;
+        jurisdictionConfidence = typeof parsed.jurisdictionConfidence === 'number'
+          ? Math.max(0, Math.min(1, parsed.jurisdictionConfidence)) : 0;
+      }
+    }
+
     // 🆕 Problem H (27.05.2026): Parties-Extraktion mit Evidence-Check.
     // Anti-Halluzination: KI darf nur Namen liefern die wörtlich im Text vorkommen.
     // Whitelist via Evidence-Check, Confidence-Gate <0.6 → null → Keyword-Fallback.
@@ -1296,8 +1324,10 @@ Im Zweifel CONTRACT — Vertragsanalyse ist die Standardanwendung dieser App.`
     const partiesLog = (parties.provider || parties.customer)
       ? ` | parties=${parties.provider || '∅'}↔${parties.customer || '∅'} (${parties.providerConfidence.toFixed(2)}/${parties.customerConfidence.toFixed(2)})`
       : '';
-    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)})${contractType ? ` | contractType=${contractType} (${contractTypeConfidence.toFixed(2)})` : ''}${letterType ? ` | letterType=${letterType} (${letterTypeConfidence.toFixed(2)})` : ''}${partiesLog} — ${parsed.reason || 'keine Begründung'}`);
-    return { type: category, confidence, contractType, contractTypeConfidence, letterType, letterTypeConfidence, parties, source: 'gpt-4o-mini' };
+    const jurisLog = (language !== 'de' || (jurisdiction && jurisdiction !== 'DE'))
+      ? ` | lang=${language}${jurisdiction ? ` juris=${jurisdiction}(${jurisdictionConfidence.toFixed(2)})` : ''}` : '';
+    console.log(`🤖 [${requestId}] Türsteher 2 (gpt-4o-mini, ${sample.length} chars): ${category} (${confidence.toFixed(2)})${contractType ? ` | contractType=${contractType} (${contractTypeConfidence.toFixed(2)})` : ''}${letterType ? ` | letterType=${letterType} (${letterTypeConfidence.toFixed(2)})` : ''}${partiesLog}${jurisLog} — ${parsed.reason || 'keine Begründung'}`);
+    return { type: category, confidence, contractType, contractTypeConfidence, letterType, letterTypeConfidence, parties, language, jurisdiction, jurisdictionConfidence, source: 'gpt-4o-mini' };
   } catch (err) {
     clearTimeout(timeoutHandle);
     const isAbort = err.name === 'AbortError' || controller.signal.aborted;
@@ -3495,6 +3525,14 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
     // unzuverlässigen Typen (FINANCIAL_DOCUMENT, TABLE_DOCUMENT). Sicheres
     // Sicherheitsnetz: bei beidseitiger Unsicherheit → CONTRACT (95% aller
     // User-Uploads sind Verträge, sicherster Default für Vertragsanalyse-App).
+    // 🌍 Welle 4b: Sprache/Rechtsraum sind DOKUMENT-weit (unabhängig von der
+    // Kategorie-Entscheidung) → hier deklariert, aus gptOpinion befüllt, direkt
+    // ins Return gehängt (kein Threading durch die vielen documentType-Zweige).
+    // Default de/null → deutscher Standard, wenn T2 nicht lief.
+    let detectedLanguage = 'de';
+    let detectedJurisdiction = null;
+    let detectedJurisdictionConfidence = 0;
+
     const needsSecondOpinion =
       documentType.confidence < 0.6 ||
       documentType.type === 'UNKNOWN' ||
@@ -3527,6 +3565,12 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       const gptLetterTypeConfidence = gptOpinion?.letterTypeConfidence || 0;
       // 🆕 Problem H (27.05.2026): Parties via Türsteher 2 mitführen.
       const gptParties = gptOpinion?.parties || { provider: null, customer: null, providerConfidence: 0, customerConfidence: 0 };
+      // 🌍 Welle 4b: Sprache/Rechtsraum aus T2 übernehmen (dokument-weit, kategorie-unabhängig).
+      if (gptOpinion) {
+        detectedLanguage = gptOpinion.language || 'de';
+        detectedJurisdiction = gptOpinion.jurisdiction || null;
+        detectedJurisdictionConfidence = gptOpinion.jurisdictionConfidence || 0;
+      }
 
       if (needsSecondOpinion) {
         // Threshold 0.75 (vorher 0.7) — konservative Anpassung nach Multi-Sample-
@@ -3628,6 +3672,11 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
       // null wenn nicht extrahierbar oder Konfidenz <0.6 — dann greift in der
       // Aufrufer-Pipeline der Keyword-Fallback (contractAnalyzer.js).
       parties: documentType.parties || { provider: null, customer: null, providerConfidence: 0, customerConfidence: 0 },
+      // 🌍 Welle 4b: Sprache/Rechtsraum (dokument-weit). Nur-Banner-Feature —
+      // KEIN Prompt-Eingriff (System-Prompt bleibt immer byte-identisch).
+      language: detectedLanguage,
+      jurisdiction: detectedJurisdiction,
+      jurisdictionConfidence: detectedJurisdictionConfidence,
       qualityScore: contentQuality.qualityScore,
       analysisMessage: strategy.message,
       metrics: {
@@ -5609,6 +5658,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       if (_wasTruncated) console.log(`🛡️ [${requestId}] analysisCoverage: Dokument gekürzt gelesen (~${result.analysisCoverage.analyzedChars}/${_origChars} Zeichen)`);
     }
 
+    // 🌍 Welle 4b: Jurisdiktions-Warnung ableiten (NUR Banner, kein Prompt-Eingriff).
+    // Konservativ: nur bei SICHER erkanntem, eindeutig NICHT-deutschem Recht.
+    // EU zählt NICHT als fremd (DSGVO ist anwendbares Recht für DE-Verträge —
+    // sonst würde jeder deutsche AVV/DSGVO-SaaS fälschlich gewarnt). Sprache
+    // allein triggert NICHT (deutsche Verträge mit engl. Fachbegriffen).
+    {
+      const _jur = validationResult.jurisdiction || null;
+      const _jurConf = validationResult.jurisdictionConfidence || 0;
+      const _lang = validationResult.language || 'de';
+      const _foreignLaw = _jur && !['DE', 'EU'].includes(_jur) && _jurConf >= 0.7;
+      if (_foreignLaw) {
+        result.jurisdictionWarning = { language: _lang, jurisdiction: _jur };
+        console.log(`🌍 [${requestId}] jurisdictionWarning: Recht=${_jur} (${_jurConf.toFixed(2)}), Sprache=${_lang} — Warn-Banner (Analyse orientiert sich weiter an DE-Recht)`);
+      } else {
+        result.jurisdictionWarning = null;
+      }
+    }
+
     // 📨 Welle 1: LETTER-Output-Hygiene (Belt & Suspenders zum Prompt).
     // Der Letter-Prompt verbietet Vertrags-Felder — falls das Modell sie trotzdem
     // liefert (oder der Legacy-Fallback sie injiziert), hier deterministisch entfernen:
@@ -5851,6 +5918,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           usedFallbackFormat: result.usedFallbackFormat === true,
           pilotTruncated: result.pilotTruncated === true,
           analysisCoverage: result.analysisCoverage || null,
+          // 🌍 Welle 4b: Jurisdiktions-Warnung IMMER explizit (Stale-Schutz)
+          jurisdictionWarning: result.jurisdictionWarning || null,
           // 🛡️ TÜV m3: documentCategory NUR im LETTER-Fall anfassen (Verträge byte-
           // identisch zum Verhalten vor Welle 1). LETTER→CONTRACT-Rückklassifikation:
           // verwaistes 'letter' zurücksetzen, sonst bliebe Status „Erhalten" kleben.
@@ -6342,6 +6411,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               usedFallbackFormat: result.usedFallbackFormat === true,
               pilotTruncated: result.pilotTruncated === true,
               analysisCoverage: result.analysisCoverage || null,
+              // 🌍 Welle 4b: Jurisdiktions-Warnung IMMER explizit (Stale-Schutz)
+              jurisdictionWarning: result.jurisdictionWarning || null,
               analysisStrategy: validationResult.strategy,
               confidence: validationResult.confidence,
               qualityScore: validationResult.qualityScore,

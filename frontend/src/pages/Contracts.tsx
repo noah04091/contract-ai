@@ -160,6 +160,7 @@ interface Contract {
   analysisCoverage?: { originalChars: number; analyzedChars: number; truncated: boolean } | null;
   pilotTruncated?: boolean;
   usedFallbackFormat?: boolean;
+  jurisdictionWarning?: { language?: string; jurisdiction?: string } | null; // 🌍 Welle 4b
   // 📊 Analysis Object (für Analyse-Tab Verfügbarkeit)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis?: Record<string, any>;
@@ -2511,6 +2512,7 @@ export default function Contracts() {
           detailedLegalOpinion: updatedContract.analysis?.detailedLegalOpinion || updatedContract.detailedLegalOpinion,
           // 🛡️ Welle 3 „Vertrauens-Schicht": Transparenz-Felder durchreichen (sonst Banner unsichtbar)
           analysisCoverage: updatedContract.analysis?.analysisCoverage ?? updatedContract.analysisCoverage,
+          jurisdictionWarning: updatedContract.analysis?.jurisdictionWarning ?? updatedContract.jurisdictionWarning,
           pilotTruncated: updatedContract.analysis?.pilotTruncated ?? updatedContract.pilotTruncated,
           usedFallbackFormat: updatedContract.analysis?.usedFallbackFormat ?? updatedContract.usedFallbackFormat,
           // Legacy Felder für Kompatibilität
@@ -2676,6 +2678,7 @@ export default function Contracts() {
             detailedLegalOpinion: fresh.analysis?.detailedLegalOpinion || fresh.detailedLegalOpinion,
             // 🛡️ Welle 3 „Vertrauens-Schicht": Transparenz-Felder durchreichen (sonst Banner unsichtbar)
             analysisCoverage: fresh.analysis?.analysisCoverage ?? fresh.analysisCoverage,
+            jurisdictionWarning: fresh.analysis?.jurisdictionWarning ?? fresh.jurisdictionWarning,
             pilotTruncated: fresh.analysis?.pilotTruncated ?? fresh.pilotTruncated,
             usedFallbackFormat: fresh.analysis?.usedFallbackFormat ?? fresh.usedFallbackFormat,
             kuendigung: fresh.kuendigung,
