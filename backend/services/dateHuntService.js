@@ -1454,6 +1454,12 @@ module.exports = {
   validateDateEntry,
   validateFristHinweis,
   repairReplacementChars,
+  // 🛡️ Welle 3: Evidence-Validator für die Hauptanalyse wiederverwendet
+  // (utils/analysisEvidence.js) — strikt-wörtlich mit OCR-/Unicode-Toleranz.
+  normalize,
+  evidenceMatchesText,
+  EVIDENCE_MIN_LEN,
+  EVIDENCE_MAX_LEN,
   buildJuniorPrompt,
   buildChunkPrompt,
   buildSeniorPrompt,

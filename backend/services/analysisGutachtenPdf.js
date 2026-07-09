@@ -1337,11 +1337,20 @@ function RecommendationsSection({ contract, sectionNumber }) {
   );
 }
 
-function DisclaimerBlock() {
+function DisclaimerBlock({ contract } = {}) {
+  // 🛡️ Welle 3 (Vertrauens-Schicht): Ehrlichkeits-Notizen — das PDF wirkt
+  // autoritativer als jedes UI-Banner und darf Kürzung/Fallback nicht verschweigen.
+  const coverageNote = contract?.analysisCoverage?.truncated
+    ? ` Hinweis: Das Dokument ist sehr umfangreich (${Number(contract.analysisCoverage.originalChars || 0).toLocaleString('de-DE')} Zeichen); die Analyse basiert auf den wichtigsten ca. ${Number(contract.analysisCoverage.analyzedChars || 0).toLocaleString('de-DE')} Zeichen (Anfang, Kernabschnitte, Ende).`
+    : '';
+  const fallbackNote = contract?.usedFallbackFormat === true
+    ? ' Hinweis: Diese Analyse konnte nur eingeschränkt erstellt werden und enthält teilweise generische Formulierungen — eine erneute Analyse wird empfohlen.'
+    : '';
   return e(View, { style: styles.disclaimerWrap, wrap: false },
     e(Text, { style: styles.disclaimerTitle }, 'RECHTLICHER HINWEIS'),
     e(Text, { style: styles.disclaimerText },
-      'Diese rechtliche Vorprüfung wurde KI-gestützt erstellt und stellt keine individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG) dar. Sie ersetzt keine Beratung durch einen zugelassenen Rechtsanwalt. Die rechtliche Einordnung basiert auf dem hochgeladenen Vertragstext und kann durch Aspekte beeinflusst werden, die der KI nicht zugänglich waren. Für verbindliche rechtliche Auskünfte konsultieren Sie bitte einen Fachanwalt.',
+      'Diese rechtliche Vorprüfung wurde KI-gestützt erstellt und stellt keine individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG) dar. Sie ersetzt keine Beratung durch einen zugelassenen Rechtsanwalt. Die rechtliche Einordnung basiert auf dem hochgeladenen Vertragstext und kann durch Aspekte beeinflusst werden, die der KI nicht zugänglich waren. Für verbindliche rechtliche Auskünfte konsultieren Sie bitte einen Fachanwalt.'
+      + coverageNote + fallbackNote,
     ),
   );
 }
@@ -1408,7 +1417,7 @@ function GutachtenDocument({ contract, companyProfile }) {
       hasFrist && e(FristHinweiseSection, { contract, sectionNumber: fristNum }),
       hasPos && e(PositiveAspectsSection, { contract, sectionNumber: posNum }),
       hasOpinion && e(DetailedOpinionSection, { contract, sectionNumber: opinionNum }),
-      e(DisclaimerBlock),
+      e(DisclaimerBlock, { contract }),
     ),
   );
 }

@@ -93,4 +93,6 @@ async function runPilotCheck(contractText, title, pilotChecklist, openaiClient, 
   return clean;
 }
 
-module.exports = { runPilotCheck };
+// 🛡️ Welle 3: MAX_TEXT_CHARS exportiert — analyze.js setzt das pilotTruncated-
+// Transparenz-Flag anhand DERSELBEN Konstante (kein Hardcode-Drift).
+module.exports = { runPilotCheck, MAX_TEXT_CHARS };

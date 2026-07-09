@@ -900,6 +900,8 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     // 📨 Welle 1: documentType + letterType für LETTER-Anzeige (Status „Erhalten",
     // Framing in Liste/Modal). Ohne Whitelist-Eintrag kämen sie nie im Frontend an.
     documentType: 1, letterType: 1,
+    // 🛡️ Welle 3: Vertrauens-Flags (Kürzungs-/Fallback-Banner im Modal)
+    analysisCoverage: 1, pilotTruncated: 1, usedFallbackFormat: 1,
     // Detail-Modal Felder (werden über "Feld hinzufügen" gesetzt)
     contractType: 1, contractTypeLabel: 1, anbieter: 1, vertragsnummer: 1, kosten: 1,
     provider: 1, customFields: 1, notes: 1,

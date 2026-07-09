@@ -36,6 +36,8 @@ const { sendLimitReachedEmail, sendAlmostAtLimitEmail } = require("../services/t
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 const dateHuntService = require("../services/dateHuntService"); // 📅 Stufe 2: Dedizierte Datums-Extraktion mit Evidence-Validierung
 const pilotCheckService = require("../services/pilotCheck"); // 🎯 Isolierte Pilot-Tiefenanalyse (typeSpecificFindings) — abgekapselt wie DateHunt, berührt Hauptanalyse nicht
+const PILOT_MAX_TEXT_CHARS = pilotCheckService.MAX_TEXT_CHARS; // 🛡️ Welle 3: pilotTruncated-Flag nutzt DIESELBE Konstante
+const { verifyAnalysisEvidence } = require("../utils/analysisEvidence"); // 🛡️ Welle 3: „✓ Im Dokument belegt"-Verifikation (DateHunt-Validator)
 const { pilotTypeToLabel, letterTypeToLabel } = require("../utils/contractTypeLabels"); // 🏷️ A1 (28.05.2026): KI-Vertragstyp → deutsche Bezeichnung | 📨 Welle 1: letterType → Label
 
 const router = express.Router();
@@ -2589,6 +2591,11 @@ function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId, 
     return pages.length ? ` (Seite ${pages.join(', ')})` : '';
   })();
 
+  // 🛡️ Welle 3: evidence-Feld schaltbar (Default AN) — der OHNE-Arm des
+  // Live-A/B-Beweises (scripts/testEvidenceLive.js) fährt mit includeEvidence:false
+  // gegen identischen Code. Prod-Verhalten = true.
+  const includeEvidence = !!(extractionMeta && extractionMeta.includeEvidence === true); // Default AUS — A/B-Beweis 09.07. nicht bestanden (Score-Drift + Verified-Quote 40-50%); W3.1 = server-seitige Zitat-Suche statt Modell-Zitat
+
   // Get contract-type-specific AWARENESS (nicht Checklisten!)
   const awareness = getContractTypeAwareness(documentType);
 
@@ -2840,7 +2847,8 @@ ADAPTIVE FELDER (nur ausgeben wenn substanziell):
      "description": "KOMPAKT: Max. 2 Sätze zu Folgen",
      "riskLevel": "critical" | "high" | "medium" | "low",
      "legalBasis": "§ 123 BGB" | "Art. 6 DSGVO" | etc.  // optional
-     "consequence": "KOMPAKT: 1 Satz konkrete Folge"  // optional
+     "consequence": "KOMPAKT: 1 Satz konkrete Folge"  // optional${includeEvidence ? `
+     "evidence": "kurzer Beleg-Halbsatz, ZEICHENGENAU aus dem Vertrag kopiert (copy-paste, 40-150 Zeichen); weglassen wenn kein wörtlicher Beleg existiert"  // optional` : ''}
    }
    → 0 Punkte wenn Vertrag perfekt, 6+ wenn katastrophal
    → Beispiel: {"title": "Unwirksamer Gewährleistungsausschluss", "description": "Klausel nichtig nach § 475 BGB. Käufer hat trotzdem 2 Jahre Gewährleistung.", "riskLevel": "critical", "legalBasis": "§ 475 BGB", "consequence": "Bei Motorschaden nach 6 Monaten volle Rechte"}
@@ -3142,7 +3150,7 @@ Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text d
   "suggestions": ["Vorschlag 1 (max. 2 Sätze)", "Vorschlag 2", "..."],
   "comparison": ["Benchmark 1 (max. 2 Sätze)", "Benchmark 2", "..."],
   "positiveAspects": [{"title": "Vorteil (max. 8 Wörter)", "description": "Max. 2 Sätze", "impact": "high"}],
-  "criticalIssues": [{"title": "Risiko (max. 10 Wörter)", "description": "Max. 2 Sätze", "riskLevel": "critical", "legalBasis": "§ X BGB", "consequence": "1 Satz Folge"}],
+  "criticalIssues": [{"title": "Risiko (max. 10 Wörter)", "description": "Max. 2 Sätze", "riskLevel": "critical", "legalBasis": "§ X BGB", "consequence": "1 Satz Folge"${includeEvidence ? ', "evidence": "copy-paste-Halbsatz aus dem Vertrag (optional)"' : ''}}],
   "recommendations": [{"title": "Maßnahme (max. 8 Wörter)", "description": "Max. 2 Sätze", "priority": "urgent", "timeframe": "Sofort", "effort": "low"}],
   "contractScore": 75,
   "quickFacts": [{"label": "Kündigungsfrist", "value": "3 Monate", "rating": "bad"}],
@@ -3324,6 +3332,8 @@ function generateLetterAnalysisPrompt(text, letterType, strategy, requestId, max
   const tokenBudget = typeof maxTokens === 'number' && maxTokens > 0 ? maxTokens : 40000;
   const optimizedText = optimizeTextForGPT4(text, tokenBudget, requestId);
   const usedOCR = extractionMeta && extractionMeta.usedOCR === true;
+  // 🛡️ Welle 3: evidence-Feld schaltbar (Default AN) — für den A/B-Beweis.
+  const includeEvidence = !!(extractionMeta && extractionMeta.includeEvidence === true); // Default AUS — A/B-Beweis 09.07. nicht bestanden (Score-Drift + Verified-Quote 40-50%); W3.1 = server-seitige Zitat-Suche statt Modell-Zitat
   const awareness = LETTER_AWARENESS[letterType] || LETTER_AWARENESS.sonstiges_schreiben;
   const today = new Date().toISOString().slice(0, 10);
 
@@ -3404,7 +3414,8 @@ E. **scoreReasoning** (String): 3-5 Sätze, warum genau dieser Wert — Fristen 
 F. **laymanSummary** (String[], 2-5): Alltagssprache — "Was heißt das für dich konkret, was musst du bis wann tun?"
 G. **summary** (String[], 3-6): Fakten des Schreibens — Absender, was erklärt wird, zu wann, genannte Gründe, genannte Fristen.
 H. **legalAssessment** (String[], 3-8): rechtliche Bewertung — Wirksamkeits-Prüfpunkte mit §§ (Form, Frist, Vollmacht, Begründung, Belehrung).
-I. **criticalIssues** (Object[]): "Was auf dich zukommt / Wirksamkeits-Zweifel" — Schema { "title", "description", "riskLevel": "critical"|"high"|"medium"|"low", "legalBasis", "consequence" }.
+I. **criticalIssues** (Object[]): "Was auf dich zukommt / Wirksamkeits-Zweifel" — Schema { "title", "description", "riskLevel": "critical"|"high"|"medium"|"low", "legalBasis", "consequence"${includeEvidence ? ', "evidence"' : ''} }.${includeEvidence ? `
+   → evidence (optional): WÖRTLICHES Zitat aus dem Schreiben (max. 300 Zeichen), das den Punkt belegt — NICHT paraphrasieren. Bei Punkten, die im FEHLEN von etwas liegen (fehlende Vollmacht, fehlende Belehrung): Feld WEGLASSEN. Lieber weglassen als erfunden.` : ''}
    → Laufende Fristen mit Rechtsverlust-Folge sind IMMER riskLevel "critical".
    → Auch CHANCEN des Empfängers hier abbilden, wenn sie aus Mängeln des Schreibens folgen (z.B. "Kündigung möglicherweise formunwirksam — keine eigenhändige Unterschrift erkennbar").
 J. **recommendations** (Object[]): "Deine Handlungsoptionen" — Schema { "title", "description", "priority": "urgent"|"high"|"medium"|"low", "timeframe", "effort" }.
@@ -5575,6 +5586,27 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       // ✅ FIXED: Fallback to legacy format instead of throwing
       console.warn(`⚠️ [${requestId}] Using fallback analysis format`);
       result = convertLegacyToDeepLawyerFormat(result, validationResult.documentType, requestId);
+      // 🛡️ Welle 3 (Vertrauens-Schicht): Fallback EHRLICH kennzeichnen — die
+      // Floskel-Inhalte dürfen nicht wie eine echte Analyse aussehen. NACH dem
+      // Aufruf gesetzt (convertLegacy baut ein komplett NEUES Objekt).
+      result.usedFallbackFormat = true;
+    }
+
+    // 🛡️ Welle 3: Kürzungs-Transparenz — spiegelt die Kürz-Entscheidung von
+    // optimizeTextForGPT4 EXAKT nach außen (Kopplung: estimateTokens (:787) ===
+    // estimateTokenCount (:756) === ceil(len/4); kürzt nur wenn tokens > budget;
+    // der zweite No-Op-Pfad :811 ist mathematisch unerreichbar, da 4B > 3B).
+    // Display-only: kein Prompt-String, kein Score wird berührt. truncated=true
+    // ist praktisch Enterprise-only (>~393k Zeichen — Plan-Gate lehnt vorher ab).
+    {
+      const _origChars = fullTextContent.length;
+      const _wasTruncated = estimateTokenCount(fullTextContent) > contractBudgetTokens;
+      result.analysisCoverage = {
+        originalChars: _origChars,
+        analyzedChars: _wasTruncated ? Math.floor(contractBudgetTokens * 3) : _origChars,
+        truncated: _wasTruncated
+      };
+      if (_wasTruncated) console.log(`🛡️ [${requestId}] analysisCoverage: Dokument gekürzt gelesen (~${result.analysisCoverage.analyzedChars}/${_origChars} Zeichen)`);
     }
 
     // 📨 Welle 1: LETTER-Output-Hygiene (Belt & Suspenders zum Prompt).
@@ -5658,6 +5690,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         );
         if (Array.isArray(pilotFindings) && pilotFindings.length > 0) {
           result.typeSpecificFindings = pilotFindings;
+          // 🛡️ Welle 3: Pilot-Kürzungs-Transparenz — pilotCheck liest nur die
+          // ersten MAX_TEXT_CHARS (60k) Zeichen; das Fenster 60k–393k trifft
+          // reale Business-Dokumente. Flag NUR im ERFOLGS-Zweig (Banner darf
+          // nichts behaupten, was nicht lief) + nie für LETTER.
+          result.pilotTruncated = validationResult.documentType !== 'LETTER'
+            && fullTextContent.length > PILOT_MAX_TEXT_CHARS;
           const issues = pilotFindings.filter(f => f.status === 'issue').length;
           console.log(`🎯 [${requestId}] Pilot-Tiefenanalyse: ${pilotFindings.length} Checkpoints (${issues} issue) für contractType=${promptContractType}`);
         } else {
@@ -5672,6 +5710,19 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // gespeichert/gesendet wird, repariert deterministisch kaputte Zeichen (�, weggelassene
     // Umlaute, Mojibake) in ALLEN angezeigten KI-Textfeldern — quelltext-validiert, erfindet
     // nie. Display-only: Score/Logik/Datums/Enums bleiben bitidentisch (siehe textSanitizer.js).
+    // 🛡️ Welle 3: Evidence-Verifikation der kritischen Funde — VOR sanitize
+    // (sanitize CLONED das result; spätere In-Place-Mutation wäre wirkungslos).
+    // Geprüft wird IMMER gegen den Volltext (optimizedText ist ggf. gekürzt).
+    // Kennzeichnet nur (verified true/false bzw. Felder weg) — löscht NIE Funde.
+    try {
+      const evStats = verifyAnalysisEvidence(result, fullTextContent);
+      if (evStats.checked > 0) {
+        console.log(`🛡️ [${requestId}] Evidence-Verifikation: ${evStats.verified}/${evStats.checked} belegt (${evStats.failed} nicht wörtlich, ${evStats.missing} ohne Beleg)`);
+      }
+    } catch (evErr) {
+      console.warn(`⚠️ [${requestId}] Evidence-Verifikation übersprungen (ignoriert): ${evErr.message}`);
+    }
+
     result = sanitizeAnalysisResult(result, (pdfData && pdfData.text) || fullTextContent || '');
 
     console.log(`🛠️ [${requestId}] FIXED Deep lawyer-level analysis successful, saving to DB...`);
@@ -5795,6 +5846,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             : (pilotTypeToLabel(extractedContractType) || null),
           // 📨 Welle 1: letterType persistieren (Status-Logik + Anzeige).
           letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
+          // 🛡️ Welle 3: Vertrauens-Flags IMMER explizit schreiben (Stale-Schutz —
+          // sonst klebt der „erneut analysieren"-Banner nach erfolgreicher Re-Analyse).
+          usedFallbackFormat: result.usedFallbackFormat === true,
+          pilotTruncated: result.pilotTruncated === true,
+          analysisCoverage: result.analysisCoverage || null,
           // 🛡️ TÜV m3: documentCategory NUR im LETTER-Fall anfassen (Verträge byte-
           // identisch zum Verhalten vor Welle 1). LETTER→CONTRACT-Rückklassifikation:
           // verwaistes 'letter' zurücksetzen, sonst bliebe Status „Erhalten" kleben.
@@ -6282,6 +6338,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               documentType: validationResult.documentType,
               // 📨 Welle 1: letterType (null bei Verträgen)
               letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
+              // 🛡️ Welle 3: Vertrauens-Flags IMMER explizit (Stale-Schutz)
+              usedFallbackFormat: result.usedFallbackFormat === true,
+              pilotTruncated: result.pilotTruncated === true,
+              analysisCoverage: result.analysisCoverage || null,
               analysisStrategy: validationResult.strategy,
               confidence: validationResult.confidence,
               qualityScore: validationResult.qualityScore,
