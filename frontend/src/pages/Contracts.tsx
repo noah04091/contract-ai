@@ -156,6 +156,10 @@ interface Contract {
     legalBasis?: string;
     evidence?: string;
   }>;
+  // 🛡️ Welle 3 „Vertrauens-Schicht" (07/2026): Transparenz-Felder aus der Analyse
+  analysisCoverage?: { originalChars: number; analyzedChars: number; truncated: boolean } | null;
+  pilotTruncated?: boolean;
+  usedFallbackFormat?: boolean;
   // 📊 Analysis Object (für Analyse-Tab Verfügbarkeit)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis?: Record<string, any>;
@@ -2505,6 +2509,10 @@ export default function Contracts() {
           criticalIssues: updatedContract.analysis?.criticalIssues,
           recommendations: updatedContract.analysis?.recommendations,
           detailedLegalOpinion: updatedContract.analysis?.detailedLegalOpinion || updatedContract.detailedLegalOpinion,
+          // 🛡️ Welle 3 „Vertrauens-Schicht": Transparenz-Felder durchreichen (sonst Banner unsichtbar)
+          analysisCoverage: updatedContract.analysis?.analysisCoverage ?? updatedContract.analysisCoverage,
+          pilotTruncated: updatedContract.analysis?.pilotTruncated ?? updatedContract.pilotTruncated,
+          usedFallbackFormat: updatedContract.analysis?.usedFallbackFormat ?? updatedContract.usedFallbackFormat,
           // Legacy Felder für Kompatibilität
           kuendigung: updatedContract.kuendigung,
           laufzeit: updatedContract.laufzeit,
@@ -2666,6 +2674,10 @@ export default function Contracts() {
             criticalIssues: fresh.analysis?.criticalIssues,
             recommendations: fresh.analysis?.recommendations,
             detailedLegalOpinion: fresh.analysis?.detailedLegalOpinion || fresh.detailedLegalOpinion,
+            // 🛡️ Welle 3 „Vertrauens-Schicht": Transparenz-Felder durchreichen (sonst Banner unsichtbar)
+            analysisCoverage: fresh.analysis?.analysisCoverage ?? fresh.analysisCoverage,
+            pilotTruncated: fresh.analysis?.pilotTruncated ?? fresh.pilotTruncated,
+            usedFallbackFormat: fresh.analysis?.usedFallbackFormat ?? fresh.usedFallbackFormat,
             kuendigung: fresh.kuendigung,
             laufzeit: fresh.laufzeit,
             risiken: fresh.risiken,

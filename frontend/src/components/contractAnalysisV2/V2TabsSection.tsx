@@ -38,6 +38,9 @@ interface InsightItem {
   consequence?: string;
   riskLevel?: string;
   impact?: string; // bei positiveAspects manchmal das einzige Beschreibungs-Feld
+  // 🛡️ Welle 3 „Vertrauens-Schicht" (07/2026): wörtlicher Beleg aus dem Dokument
+  evidence?: string;
+  evidenceVerified?: boolean;
 }
 
 interface PilotItem {
@@ -373,15 +376,28 @@ export default function V2TabsSection({ data }: Props) {
               const title = getInsightTitle(item);
               const desc = getInsightDesc(item);
               const legal = getInsightLegal(item);
+              // 🛡️ Welle 3: verifizierter Dokument-Beleg → grünes Badge.
+              // NUR bei evidenceVerified === true zeigen — keine negative Kennzeichnung.
+              const verifiedEvidence = typeof item !== "string" && item.evidenceVerified === true && item.evidence
+                ? item.evidence
+                : null;
               return (
                 <div className={`${styles.insightCard} ${sev.card}`} key={i}>
                   <div className={`${styles.insightIcon} ${sev.icon}`}>!</div>
                   <div className={styles.insightContent}>
                     {title && <div className={styles.insightTitle}>{title}</div>}
                     <div className={styles.insightDesc}>{desc || (typeof item === "string" ? item : "")}</div>
-                    {legal && (
+                    {(legal || verifiedEvidence) && (
                       <div className={styles.insightMeta}>
-                        <LegalRefPill reference={legal} fallbackClassName={styles.insightMeta} />
+                        {legal && <LegalRefPill reference={legal} fallbackClassName={styles.insightMeta} />}
+                        {verifiedEvidence && (
+                          <span
+                            title={`Beleg aus deinem Dokument: „${verifiedEvidence}“`}
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, fontSize: 10.5, fontWeight: 700, background: "#ecfdf5", color: "#047857", border: "1px solid #a7f3d0", cursor: "help" }}
+                          >
+                            ✓ Im Dokument belegt
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>

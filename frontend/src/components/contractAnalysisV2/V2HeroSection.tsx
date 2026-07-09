@@ -55,6 +55,10 @@ type AnalysisData = {
   isReanalysis?: boolean;
   lawyerLevelAnalysis?: boolean;
   requestId?: string;
+  // 🛡️ Welle 3 „Vertrauens-Schicht" (07/2026) — Transparenz-Felder, render-if-present
+  analysisCoverage?: { originalChars: number; analyzedChars: number; truncated: boolean } | null;
+  pilotTruncated?: boolean;
+  usedFallbackFormat?: boolean;
 };
 
 interface Props {
@@ -750,6 +754,79 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           </div>
         </div>
       )}
+
+      {/* 🛡️ VERTRAUENS-BANNER (Welle 3, 07/2026) — drei Transparenz-Hinweise,
+          Struktur/Klassen 1:1 vom lowTextBanner-Muster (keine neuen CSS-Klassen).
+          Mutex: wenn der UNKNOWN-Banner rendert, keinen der drei zeigen (UNKNOWN
+          ist fundamentaler). Untereinander max. 1 sichtbar — Priorität:
+          Fallback > Kürzung > Pilot. Render-if-present: alte Analysen ohne die
+          Felder rendern exakt wie bisher. */}
+      {(() => {
+        const lowTextShown = typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200;
+        const unknownShown = docClass === "UNKNOWN" && !lowTextShown;
+        if (unknownShown) return null;
+
+        // 1) Fallback-Banner (wichtigster): Analyse nur eingeschränkt erstellt
+        if (d.usedFallbackFormat === true) {
+          return (
+            <div className={styles.lowTextBanner} role="alert">
+              <div className={styles.lowTextIcon} aria-hidden="true">⚠️</div>
+              <div className={styles.lowTextBody}>
+                <div className={styles.lowTextTitle}>Diese Analyse konnte nur eingeschränkt erstellt werden</div>
+                <div className={styles.lowTextDesc}>
+                  Die Inhalte sind teilweise generisch statt dokumentspezifisch. {onReanalyze
+                    ? "Klicke auf „Erneut analysieren“ — meistens reicht ein zweiter Versuch."
+                    : "Nutze „Erneut analysieren“ in der Vertragsansicht."}
+                </div>
+                {canReanalyze && onReanalyze && (
+                  <div className={styles.unknownActions}>
+                    <button
+                      type="button"
+                      className={styles.unknownBtnPrimary}
+                      onClick={onReanalyze}
+                      disabled={analyzing}
+                    >
+                      Erneut analysieren
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        // 2) Kürzungs-Banner: sehr großes Dokument, Analyse auf Kernabschnitten
+        if (d.analysisCoverage?.truncated) {
+          return (
+            <div className={styles.lowTextBanner} role="status">
+              <div className={styles.lowTextIcon} aria-hidden="true">ℹ️</div>
+              <div className={styles.lowTextBody}>
+                <div className={styles.lowTextTitle}>Sehr großes Dokument — Analyse basiert auf den Kernabschnitten</div>
+                <div className={styles.lowTextDesc}>
+                  Dein Dokument hat {d.analysisCoverage.originalChars.toLocaleString("de-DE")} Zeichen; analysiert wurden die wichtigsten ≈{d.analysisCoverage.analyzedChars.toLocaleString("de-DE")} Zeichen (Anfang, Kernabschnitte, Ende).
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // 3) Pilot-Hinweis (dezenteste Stufe): nur Zusatz-Tiefenprüfung gekürzt
+        if (d.pilotTruncated === true && !d.analysisCoverage?.truncated) {
+          return (
+            <div className={styles.lowTextBanner} role="status">
+              <div className={styles.lowTextIcon} aria-hidden="true">ℹ️</div>
+              <div className={styles.lowTextBody}>
+                <div className={styles.lowTextTitle}>Hinweis zur Zusatz-Tiefenprüfung</div>
+                <div className={styles.lowTextDesc}>
+                  Die Hauptanalyse hat dein gesamtes Dokument gelesen. Nur die typspezifische Zusatz-Tiefenprüfung basiert auf den ersten 60.000 Zeichen.
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        return null;
+      })()}
 
       {/* Recognition-Banner-Block entfernt (30.05.2026) — komplett ersetzt durch
           Status-Pille in File-Card oben + Pflichtangaben-Sektion unter dem Hero. */}

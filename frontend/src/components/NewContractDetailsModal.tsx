@@ -193,6 +193,11 @@ interface Contract {
   documentType?: string;
   letterType?: string;
   contractType?: string;
+  // 🛡️ Welle 3 „Vertrauens-Schicht" (07/2026): Transparenz-Felder — Modal reicht
+  // das ganze Doc an V2HeroSection durch, dort werden die Banner gerendert
+  analysisCoverage?: { originalChars: number; analyzedChars: number; truncated: boolean } | null;
+  pilotTruncated?: boolean;
+  usedFallbackFormat?: boolean;
   provider?: {
     displayName?: string;
     name?: string;
