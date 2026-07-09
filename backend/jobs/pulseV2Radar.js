@@ -1025,7 +1025,7 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
 /**
  * Store alerts in DB and send consolidated email to user.
  */
-async function storeAndNotify(db, userId, alerts) {
+async function storeAndNotify(db, userId, alerts, options = {}) {
   // Store in pulse_v2_legal_alerts
   let alertDocs = alerts.map((a) => ({
     userId,
@@ -1086,6 +1086,14 @@ async function storeAndNotify(db, userId, alerts) {
     // Ignore duplicate key errors (code 11000) — means alert already exists
     if (err.code !== 11000) throw err;
     console.log(`[PulseV2Radar] ${err.writeErrors?.length || 0} duplicate alerts skipped for user ${userId}`);
+  }
+
+  // Still speichern ohne sofortige Mail (z.B. Backlog-Sweep beim Onboarding):
+  // Alerts sind persistiert (sichtbar auf /pulse + Glocke, tauchen im naechsten
+  // Wach-Bericht auf) — aber keine ueberraschende Extra-Mail direkt nach der Analyse.
+  if (options.skipEmail) {
+    console.log(`[PulseV2] ${alertDocs.length} alerts persisted for user ${userId} (skipEmail)`);
+    return;
   }
 
   // Load user for email
@@ -1245,4 +1253,99 @@ async function storeAndNotify(db, userId, alerts) {
   console.log(`[PulseV2Radar] Alert email queued for ${user.email}: ${alerts.length} impacts`);
 }
 
-module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance };
+/**
+ * Backlog-Sweep (Bereich C "Rückblick beim Aufnehmen"):
+ * Prüft EINEN frisch analysierten Vertrag EINMALIG gegen die Rechtsänderungen der letzten
+ * `sinceDays` Tage — inkl. der bereits vom Radar verarbeiteten (pulseV2Processed:true), die
+ * der tägliche Radar nicht mehr anschaut. So wird ein neu aufgenommener Vertrag gegen die
+ * BESTEHENDE Rechtslage geprüft, nicht nur gegen künftige Änderungen.
+ *
+ * Sicher: reine Wiederverwendung der bewährten Radar-Bausteine, scoped auf EINEN Vertrag,
+ * harter Kostendeckel (MAX_BACKLOG_LAWS), Dedup via storeAndNotify (kein Doppel-Alert),
+ * setzt pulseV2Processed NICHT (Radar-Cursor unberührt), still (skipEmail).
+ * @returns {Promise<{swept:boolean, reason?:string, laws?:number, relevant?:number, alerts?:number}>}
+ */
+async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75) {
+  const MAX_BACKLOG_LAWS = 20; // Kostendeckel: max. so viele Gesetze pro Vertrag KI-prüfen
+  const { ObjectId } = require("mongodb");
+  const cidStr = String(contractId);
+  const uidStr = String(userId);
+
+  // 1. Neuestes abgeschlossenes V2-Ergebnis dieses Vertrags → Vertrags-Payload (wie matchLawToContracts liefert)
+  const idCandidates = [contractId, cidStr];
+  try { if (ObjectId.isValid(cidStr)) idCandidates.push(new ObjectId(cidStr)); } catch { /* ignore */ }
+  const result = await LegalPulseV2Result.findOne(
+    { contractId: { $in: idCandidates }, status: "completed" },
+    null,
+    { sort: { createdAt: -1 } }
+  ).lean();
+  if (!result) return { swept: false, reason: "no_completed_result" };
+
+  const contractType = result.document?.contractType || "unknown";
+  if (contractType === "nicht_vertrag") return { swept: false, reason: "not_a_contract" };
+
+  const contractPayload = {
+    userId: result.userId,
+    contractId: result.contractId,
+    contractName: result.context?.contractName || cidStr,
+    contractType,
+    findings: (result.clauseFindings || [])
+      .filter((f) => f.severity === "critical" || f.severity === "high" || f.severity === "medium")
+      .map((f) => ({ title: f.title, category: f.category, severity: f.severity, clauseId: f.clauseId })),
+    clauses: (result.clauses || []).map((c) => ({ id: c.id, title: c.title, category: c.category })),
+    scores: result.scores,
+  };
+
+  // 2. Backlog-Gesetze laden (auch bereits verarbeitete! → bewusst KEIN pulseV2Processed-Filter)
+  const sinceDate = new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000);
+  const candidates = await db.collection("laws")
+    .find({ updatedAt: { $gte: sinceDate } })
+    .sort({ updatedAt: -1 })
+    .limit(500)
+    .toArray();
+  if (candidates.length === 0) return { swept: true, laws: 0, relevant: 0, alerts: 0 };
+
+  // 3. Rauschen raus + Relevanz gegen DIESEN Vertragstyp scoren + Top-N (Kostendeckel)
+  const activeTypes = [String(contractType).toLowerCase()];
+  const scored = candidates
+    .filter((law) => !isNoiseLaw(law))
+    .map((law) => ({ law, score: scoreLawRelevance(law, activeTypes) }))
+    .filter((s) => s.score >= MIN_RELEVANCE_SCORE)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_BACKLOG_LAWS);
+  if (scored.length === 0) return { swept: true, laws: candidates.length, relevant: 0, alerts: 0 };
+
+  // 4. Je Gesetz: KI-Impact-Prüfung gegen den EINEN Vertrag (assessImpact filtert affected + Konfidenz≥60)
+  const alerts = [];
+  for (const { law } of scored) {
+    try {
+      const { impacts } = await assessImpact(law, [contractPayload]);
+      for (const impact of impacts || []) {
+        alerts.push({
+          lawChange: law,
+          contractId: impact.contractId,
+          contractName: impact.contractName,
+          impactSummary: impact.summary,
+          plainSummary: impact.plainSummary || "",
+          businessImpact: impact.businessImpact || "",
+          severity: impact.severity,
+          impactDirection: impact.impactDirection || "negative",
+          recommendation: impact.recommendation,
+          affectedClauseIds: impact.affectedClauseIds,
+          clauseImpacts: impact.clauseImpacts,
+        });
+      }
+    } catch (err) {
+      console.warn(`[PulseV2Backlog] assessImpact failed for law ${law._id}:`, err.message);
+    }
+  }
+
+  // 5. Still persistieren (Dedup automatisch via storeAndNotify, KEINE sofortige Mail)
+  if (alerts.length > 0) {
+    await storeAndNotify(db, uidStr, alerts, { skipEmail: true });
+  }
+  console.log(`[PulseV2Backlog] contract ${cidStr}: ${candidates.length} laws in ${sinceDays}d, ${scored.length} relevant, ${alerts.length} alerts (silent).`);
+  return { swept: true, laws: candidates.length, relevant: scored.length, alerts: alerts.length };
+}
+
+module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract };

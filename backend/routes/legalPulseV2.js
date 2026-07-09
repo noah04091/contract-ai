@@ -3362,6 +3362,41 @@ router.get("/admin/weekly-report-test-send", verifyAdmin, async (req, res) => {
 });
 
 /**
+ * GET /admin/backlog-sweep-test/:contractId
+ * Löst den Backlog-Sweep (Bereich C "Rückblick beim Aufnehmen") für EINEN Vertrag des
+ * eingeloggten Admins manuell aus und zeigt eine Zusammenfassung. Persistiert still
+ * (sichtbar auf /pulse), sendet KEINE Mail. Zum Testen VOR dem Automatik-Auslöser.
+ * Optional ?days=NN (Standard 75, max 180).
+ */
+router.get("/admin/backlog-sweep-test/:contractId", verifyAdmin, async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const { runBacklogSweepForContract } = require("../jobs/pulseV2Radar");
+    const sinceDays = Math.min(parseInt(req.query.days, 10) || 75, 180);
+    const started = Date.now();
+    const result = await runBacklogSweepForContract(db, req.params.contractId, req.user.userId, sinceDays);
+    const secs = Math.round((Date.now() - started) / 1000);
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.send(
+      `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
+      `<body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:560px;margin:60px auto;padding:0 22px;line-height:1.6;color:#18202e;background:#f5f7fa">` +
+      `<div style="background:#fff;border:1px solid #e6eaf0;border-radius:14px;padding:26px 28px">` +
+      `<h2 style="margin:0 0 12px;font-size:20px">&#128270; Backlog-Sweep &mdash; Testlauf</h2>` +
+      `<p style="margin:0 0 10px;color:#4d586a">Vertrag <code>${req.params.contractId}</code>, R&uuml;ckblick <b>${sinceDays} Tage</b>, ${secs}s:</p>` +
+      (result.swept
+        ? `<ul style="color:#18202e"><li><b>${result.laws ?? 0}</b> Gesetze im Fenster gepr&uuml;ft</li><li><b>${result.relevant ?? 0}</b> als relevant eingestuft (KI-gepr&uuml;ft)</li><li><b>${result.alerts ?? 0}</b> Treffer erstellt (still gespeichert)</li></ul>`
+        : `<p style="color:#b5811b">Kein Sweep: <b>${result.reason}</b> &mdash; der Vertrag hat keine abgeschlossene Legal-Pulse-Analyse (oder ist kein Vertrag).</p>`) +
+      `<p style="margin:14px 0 0;color:#8c96a6;font-size:13px">Es wurde <b>keine E-Mail</b> verschickt. Treffer erscheinen unter <a href="https://www.contract-ai.de/pulse">/pulse</a> und in der Glocke. Nichts ging an Kunden.</p>` +
+      `</div></body>`
+    );
+  } catch (err) {
+    console.error("[PulseV2Backlog] test error:", err.message);
+    return res.status(500).json({ error: "Backlog-Sweep-Test fehlgeschlagen", detail: err.message });
+  }
+});
+
+/**
  * GET /admin/test-alerts-check
  * Validates existing alerts for this user: required fields, dedup, clauseImpacts, status tracking.
  *
