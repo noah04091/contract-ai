@@ -5548,6 +5548,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // 📨 Welle 1: Einseitige Schreiben bekommen ihren EIGENEN User-Prompt
     // (Empfänger-Perspektive, Fristen-Fokus) statt der Anwalts-Simulation
     // „Soll ich unterschreiben?". Vertrags-Pfad byte-identisch.
+    // 🧪 11.07.2026: Evidence-Feld per Env-Flag (Default AUS = includeEvidence false =
+    // Prompt byte-identisch). A/B mit gpt-4o 2× NICHT bestanden; mit gpt-5.4 BESTANDEN
+    // (K1 Δ≤2.5, K2 0 verloren, K3 76% ≥60% — testEvidenceLive.js 11.07.). Gehört zum
+    // Modellwechsel-Paket: NUR zusammen mit ANALYZE_MODEL=gpt-5.4 aktivieren!
+    const includeEvidenceFlag = process.env.ANALYZE_EVIDENCE_ENABLED === 'true';
     const analysisPrompt = validationResult.documentType === 'LETTER'
       ? generateLetterAnalysisPrompt(
           fullTextContent,
@@ -5555,7 +5560,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           validationResult.strategy,
           requestId,
           contractBudgetTokens,
-          { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence }
+          { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence, includeEvidence: includeEvidenceFlag }
         )
       : generateDeepLawyerLevelPrompt(
       fullTextContent,
@@ -5564,7 +5569,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       requestId,
       contractBudgetTokens,
       // Signaturen NUR bei echten Verträgen an die KI geben (konsistent zum Badge-Gate unten).
-      { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence, signatures: (validationResult.documentType === 'CONTRACT' && Array.isArray(pdfData.signatures)) ? pdfData.signatures : [] }
+      { usedOCR: pdfData.usedOCR === true, ocrConfidence: pdfData.ocrConfidence, includeEvidence: includeEvidenceFlag, signatures: (validationResult.documentType === 'CONTRACT' && Array.isArray(pdfData.signatures)) ? pdfData.signatures : [] }
     );
 
     // ✍️ Unterschrifts-Status fürs Frontend-Badge (Feature-Flag ENABLE_SIGNATURE_DETECTION).

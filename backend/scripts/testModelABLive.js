@@ -190,4 +190,7 @@ function schemaCheck(r) {
   save();
   console.log(`\n📄 Detail-Ergebnisse: ${OUT_FILE}`);
   if (results.errors.length) console.log(`⚠️ Fehler: ${results.errors.length} — ${results.errors.join(' | ')}`);
+  // Sauber beenden — offene Handles (DB-Pool/S3 aus dem analyze.js-Import) halten
+  // den Prozess sonst nach getaner Arbeit am Leben (Background-Task hängt).
+  process.exit(0);
 })().catch(e => { console.error('💥', e); process.exit(1); });

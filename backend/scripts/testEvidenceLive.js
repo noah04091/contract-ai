@@ -28,11 +28,19 @@ const CANDIDATES = [
   ['SaaS_Version_A_CloudPlatform.pdf', 'service'],
 ];
 
+// 🧪 11.07.2026: Modell via EVIDENCE_AB_MODEL übersteuerbar (Default gpt-4o = bisheriges
+// Verhalten 1:1). Reasoning-Modelle (gpt-5.x) bekommen den Shim wie in analyze.js/
+// testModelABLive.js: max_completion_tokens, kein temperature/seed/max_tokens.
+const AB_MODEL = process.env.EVIDENCE_AB_MODEL || 'gpt-4o';
+const AB_IS_REASONING = /^(gpt-5|o[0-9])/.test(AB_MODEL);
+if (AB_MODEL !== 'gpt-4o') console.log(`🧪 Evidence-A/B läuft mit Modell: ${AB_MODEL} (reasoning=${AB_IS_REASONING})`);
+
 async function analyzeOnce(text, contractType, includeEvidence, tag) {
   const userPrompt = generateDeepLawyerLevelPrompt(text, contractType, 'AB', `ab-${tag}`, 40000, { includeEvidence });
   const systemPrompt = resolveSystemPrompt('CONTRACT', contractType);
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o', temperature: 0.1, seed: 42, max_tokens: 8000,
+    model: AB_MODEL,
+    ...(AB_IS_REASONING ? { max_completion_tokens: 16000 } : { temperature: 0.1, seed: 42, max_tokens: 8000 }),
     response_format: { type: 'json_object' },
     messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }]
   });
