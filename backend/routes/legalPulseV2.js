@@ -2863,7 +2863,9 @@ router.post("/admin/test-radar", verifyAdmin, async (req, res) => {
 
     let radarResult;
     try {
-      radarResult = await runPulseV2Radar(db, { userId });
+      // Säule 3: ?deepVerify=true erzwingt die Tiefenprüfung für diesen Testlauf (unabhängig vom env-Schalter)
+      const deepVerify = req.query.deepVerify === "true" || req.body?.deepVerify === true;
+      radarResult = await runPulseV2Radar(db, { userId, ...(deepVerify && { deepVerify: true }) });
     } finally {
       console.log = originalLog;
       console.warn = originalWarn;

@@ -67,10 +67,21 @@ const MIN_RELEVANCE_SCORE = 30; // Laws below this score are skipped (no keyword
 const MAX_PER_AREA = 4; // Diversity: max laws from same primary area in top 25
 const MAX_ALERTS_PER_USER = 10; // Email cap: max alerts shown in email per run (all alerts stored in DB)
 
-// OpenAI pricing per 1K tokens (gpt-4o-mini, 2026-04)
+// OpenAI pricing per 1K tokens (2026-04)
 const PRICES = {
   "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
+  "gpt-4o": { input: 0.0025, output: 0.01 },
 };
+
+// ── Säule 3: Zweistufige Tiefe (11.07.) ─────────────────────────────────────
+// Stufe 1 (billig, gpt-4o-mini): Titel-Netz findet Verdachtsfälle (wie bisher).
+// Stufe 2 (nur bei Verdacht, gpt-4o): liest die ECHTEN Klauseltexte und bestätigt
+// mit wörtlichem Zitat — oder verwirft. Kill-Switch: env PULSE_DEEP_VERIFY_ENABLED.
+const DEEP_VERIFY_MODEL = "gpt-4o";
+const MAX_DEEP_CLAUSES = 8;          // max. Klauseln im Volltext pro Tiefenprüfung
+const DEEP_CLAUSE_TEXT_SLICE = 2200; // max. Zeichen pro Klauseltext
+const MAX_DEEP_CHECKS_PER_RUN = 25;  // Kostendeckel pro Lauf
+const DEEP_WIDENED_THRESHOLD = 40;   // mit Stufe 2 dürfen auch Grenzfälle (40-59) zur Tiefenprüfung
 
 /**
  * Extract a canonical fingerprint from a law/ruling title.
@@ -215,6 +226,11 @@ async function runPulseV2Radar(db, options = {}) {
   let totalTokensOutput = 0;
   let totalCostUSD = 0;
   const failedLawIds = []; // Track laws where AI assessment failed (for retry on next run)
+  // Säule 3 (11.07.): Tiefenprüfung aktiv? (env-Schalter ODER explizit per Option, z.B. Admin-Test)
+  const deepVerifyEnabled = options.deepVerify === true || process.env.PULSE_DEEP_VERIFY_ENABLED === "true";
+  const deepBudget = { left: MAX_DEEP_CHECKS_PER_RUN }; // Kostendeckel pro Lauf
+  let deepChecked = 0;
+  let deepRejected = 0;
   // Silent-Miss-Fix 08.07.: NUR wirklich verarbeitete Gesetze als processed markieren.
   // Vorher wurden ALLE (nicht-fehlgeschlagenen) lawChanges markiert — auch die, die der
   // Budget-Break (Zeile darunter) nie erreicht hat → sie galten faelschlich als "geprueft"
@@ -228,8 +244,8 @@ async function runPulseV2Radar(db, options = {}) {
       const matches = await matchLawToContracts(db, law, options);
       if (matches.length === 0) { processedLawIds.push(law._id); continue; } // geprueft, keine Treffer -> erledigt
 
-      // 3. Assess impact with AI
-      const { impacts: confirmedImpacts, cost, aiError } = await assessImpact(law, matches);
+      // 3. Assess impact with AI (Stufe 1: Titel-Netz)
+      const { impacts: stage1Impacts, cost, aiError } = await assessImpact(law, matches, { widenForDeepVerify: deepVerifyEnabled });
       if (aiError) {
         failedLawIds.push(law._id);
         continue; // Don't count matches — will be retried on next run
@@ -242,6 +258,19 @@ async function runPulseV2Radar(db, options = {}) {
       totalTokensInput += cost.tokensInput || 0;
       totalTokensOutput += cost.tokensOutput || 0;
       totalCostUSD += cost.costUSD || 0;
+
+      // Säule 3, Stufe 2: Tiefenprüfung der Verdachtsfälle am ECHTEN Klauseltext
+      let confirmedImpacts = stage1Impacts;
+      if (deepVerifyEnabled && stage1Impacts.length > 0) {
+        const dv = await applyDeepVerify(db, law, stage1Impacts, deepBudget);
+        confirmedImpacts = dv.impacts;
+        deepChecked += dv.totals.checked;
+        deepRejected += dv.totals.rejected;
+        totalAiCalls += dv.totals.aiCalls;
+        totalTokensInput += dv.totals.tokensInput;
+        totalTokensOutput += dv.totals.tokensOutput;
+        totalCostUSD += dv.totals.costUSD;
+      }
 
       // Group by user
       for (const impact of confirmedImpacts) {
@@ -260,6 +289,8 @@ async function runPulseV2Radar(db, options = {}) {
           recommendation: impact.recommendation,
           affectedClauseIds: impact.affectedClauseIds,
           clauseImpacts: impact.clauseImpacts,
+          deepVerified: impact.deepVerified === true,
+          evidenceQuote: impact.evidenceQuote || "",
         });
         totalAlerts++;
       }
@@ -329,16 +360,19 @@ async function runPulseV2Radar(db, options = {}) {
       tokensOutput: totalTokensOutput,
       estimatedCostUSD: Number(totalCostUSD.toFixed(6)),
       aiFailures: failedLawIds.length,
+      deepVerifyEnabled,
+      deepChecked,
+      deepRejected,
     });
   } catch (histErr) {
     console.warn("[PulseV2Radar] Failed to write run history:", histErr.message);
   }
 
   console.log(
-    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} pos, ${negativeAlertCount} neg${cappedCount > 0 ? `, ${cappedCount} capped` : ""}${failedLawIds.length > 0 ? `, ${failedLawIds.length} AI failures` : ""}), ${userAlerts.size} users. ${Math.round(duration / 1000)}s | ${totalAiCalls} AI calls, ${totalTokensInput}in/${totalTokensOutput}out tokens, $${totalCostUSD.toFixed(4)}`
+    `[PulseV2Radar] Done. ${lawChanges.length} laws, ${totalMatches} matches, ${totalAlerts} alerts (${positiveAlertCount} pos, ${negativeAlertCount} neg${cappedCount > 0 ? `, ${cappedCount} capped` : ""}${failedLawIds.length > 0 ? `, ${failedLawIds.length} AI failures` : ""}), ${userAlerts.size} users. ${Math.round(duration / 1000)}s | ${totalAiCalls} AI calls, ${totalTokensInput}in/${totalTokensOutput}out tokens, $${totalCostUSD.toFixed(4)}${deepVerifyEnabled ? ` | DEEP: ${deepChecked} geprüft, ${deepRejected} verworfen` : ""}`
   );
 
-  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, alertsCapped: cappedCount, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, usersNotified: userAlerts.size, durationMs: duration, aiCalls: totalAiCalls, tokensInput: totalTokensInput, tokensOutput: totalTokensOutput, estimatedCostUSD: Number(totalCostUSD.toFixed(6)), aiFailures: failedLawIds.length };
+  return { lawChanges: lawChanges.length, contractsMatched: totalMatches, alertsSent: totalAlerts, alertsCapped: cappedCount, positiveAlerts: positiveAlertCount, negativeAlerts: negativeAlertCount, usersNotified: userAlerts.size, durationMs: duration, aiCalls: totalAiCalls, tokensInput: totalTokensInput, tokensOutput: totalTokensOutput, estimatedCostUSD: Number(totalCostUSD.toFixed(6)), aiFailures: failedLawIds.length, deepVerifyEnabled, deepChecked, deepRejected };
 }
 
 // ═══════════════════════════════════════════════════
@@ -786,6 +820,7 @@ async function matchLawToContracts(db, lawChange, options = {}) {
     .map((r) => ({
       userId: r._id.userId,
       contractId: r._id.contractId,
+      resultId: r.latestResult._id, // Säule 3: erlaubt der Tiefenstufe, echte Klauseltexte nachzuladen
       contractName: r.latestResult.context?.contractName || r._id.contractId,
       contractType: r.latestResult.document?.contractType || "unknown",
       findings: (r.latestResult.clauseFindings || [])
@@ -802,9 +837,13 @@ async function matchLawToContracts(db, lawChange, options = {}) {
  * Returns only confirmed impacts above confidence threshold plus token usage/cost.
  * Shape: { impacts: [...], cost: { aiCalls, tokensInput, tokensOutput, costUSD } }
  */
-async function assessImpact(lawChange, contracts) {
+async function assessImpact(lawChange, contracts, opts = {}) {
   const emptyCost = { aiCalls: 0, tokensInput: 0, tokensOutput: 0, costUSD: 0 };
   if (contracts.length === 0) return { impacts: [], cost: emptyCost };
+  // Säule 3: Ist die Tiefenstufe aktiv, dürfen auch Grenzfälle (Konfidenz 40-59) als
+  // KANDIDATEN durch — die Tiefenprüfung am echten Klauseltext entscheidet dann.
+  // Ohne Tiefenstufe bleibt die 60er-Schwelle exakt wie bisher.
+  const minConfidence = opts.widenForDeepVerify ? DEEP_WIDENED_THRESHOLD : IMPACT_CONFIDENCE_THRESHOLD;
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -992,7 +1031,7 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
 
     for (const impact of parsed.impacts || []) {
       if (!impact.affected) continue;
-      if (impact.confidence < IMPACT_CONFIDENCE_THRESHOLD) continue;
+      if (impact.confidence < minConfidence) continue;
 
       const contract = contracts[impact.contractIndex - 1];
       if (!contract) continue;
@@ -1009,6 +1048,7 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
       confirmedImpacts.push({
         userId: contract.userId,
         contractId: contract.contractId,
+        resultId: contract.resultId || null, // Säule 3: für Klauseltext-Nachladen der Tiefenstufe
         contractName: contract.contractName,
         summary: impact.summary,
         plainSummary: impact.plainSummary || "",
@@ -1027,6 +1067,209 @@ Prüfe für JEDEN Vertrag ob er von dieser Änderung betroffen ist.`,
     console.error("[PulseV2Radar] AI assessment failed:", err.message);
     return { impacts: [], cost: emptyCost, aiError: true };
   }
+}
+
+// ═══════════════════════════════════════════════════
+// SÄULE 3 — TIEFENPRÜFUNG (Stufe 2): echter Klauseltext statt Titel
+// ═══════════════════════════════════════════════════
+
+/**
+ * Wählt die relevantesten Klauseln (mit Volltext) für die Tiefenprüfung aus:
+ * 1. die von Stufe 1 als betroffen vermuteten Klauseln (affectedClauseIds)
+ * 2. Klauseln, deren Kategorie zum Rechtsgebiet des Gesetzes passt
+ * 3. Auffüllen mit den restlichen Klauseln bis MAX_DEEP_CLAUSES.
+ * Pure Funktion (testbar). Texte werden auf DEEP_CLAUSE_TEXT_SLICE gekürzt.
+ */
+function selectClausesForDeepCheck(fullClauses, impact, lawChange) {
+  const byId = new Map((fullClauses || []).map((c) => [c.id, c]));
+  const picked = [];
+  const seen = new Set();
+  const push = (c) => {
+    if (!c || seen.has(c.id) || picked.length >= MAX_DEEP_CLAUSES) return;
+    const text = (c.currentText || c.originalText || "").trim();
+    if (!text) return;
+    seen.add(c.id);
+    picked.push({ id: c.id, title: c.title || c.id, text: text.slice(0, DEEP_CLAUSE_TEXT_SLICE) });
+  };
+  // 1. Verdachts-Klauseln zuerst
+  for (const id of impact.affectedClauseIds || []) push(byId.get(id));
+  // 2. Kategorie-Match zum Rechtsgebiet (z.B. law.area "Datenschutz" ↔ clause.category "datenschutz")
+  const lawAreas = [lawChange.area, ...(lawChange.areas || [])].filter(Boolean).map((a) => String(a).toLowerCase());
+  for (const c of fullClauses || []) {
+    if (picked.length >= MAX_DEEP_CLAUSES) break;
+    const cat = String(c.category || "").toLowerCase();
+    if (cat && lawAreas.some((a) => a.includes(cat) || cat.includes(a))) push(c);
+  }
+  // 3. Rest auffüllen (Dokumentreihenfolge)
+  for (const c of fullClauses || []) { if (picked.length >= MAX_DEEP_CLAUSES) break; push(c); }
+  return picked;
+}
+
+/** Whitespace-normalisierter Substring-Check: steht das Zitat wirklich im Klauseltext? */
+function quoteAppearsIn(quote, clauses) {
+  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const q = norm(quote).slice(0, 80);
+  if (q.length < 15) return false; // zu kurz, um als Beleg zu zählen
+  return clauses.some((c) => norm(c.text).includes(q));
+}
+
+/**
+ * Tiefenprüfung EINES Verdachtsfalls am echten Klauseltext (gpt-4o).
+ * @returns {{verdict:'confirmed'|'rejected'|'error', refined?:object, cost:object}}
+ */
+async function deepVerifyImpact(db, lawChange, impact) {
+  const emptyCost = { aiCalls: 0, tokensInput: 0, tokensOutput: 0, costUSD: 0 };
+  try {
+    if (!impact.resultId) return { verdict: "error", cost: emptyCost };
+    const result = await LegalPulseV2Result.findById(impact.resultId, { clauses: 1 }).lean();
+    if (!result?.clauses?.length) return { verdict: "error", cost: emptyCost };
+
+    const clauses = selectClausesForDeepCheck(result.clauses, impact, lawChange);
+    if (clauses.length === 0) return { verdict: "error", cost: emptyCost };
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) return { verdict: "error", cost: emptyCost };
+    const openai = new OpenAI({ apiKey, timeout: 60000, maxRetries: 1 });
+
+    const clauseBlock = clauses
+      .map((c) => `[${c.id}] ${c.title}\n${c.text}`)
+      .join("\n\n---\n\n");
+
+    const response = await openai.chat.completions.create({
+      model: DEEP_VERIFY_MODEL,
+      temperature: 0,
+      max_tokens: 1200,
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "deep_verification",
+          strict: true,
+          schema: {
+            type: "object",
+            properties: {
+              verified: { type: "boolean" },
+              confidence: { type: "number" },
+              severity: { type: "string", enum: ["critical", "high", "medium", "low"] },
+              impactDirection: { type: "string", enum: ["negative", "positive", "neutral"] },
+              plainSummary: { type: "string" },
+              businessImpact: { type: "string" },
+              recommendation: { type: "string" },
+              affectedClauseIds: { type: "array", items: { type: "string" } },
+              evidenceQuote: { type: "string" },
+            },
+            required: ["verified", "confidence", "severity", "impactDirection", "plainSummary", "businessImpact", "recommendation", "affectedClauseIds", "evidenceQuote"],
+            additionalProperties: false,
+          },
+        },
+      },
+      messages: [
+        {
+          role: "system",
+          content: `Du bist ein erfahrener deutscher Fachanwalt und prüfst in ZWEITER INSTANZ, ob eine Rechtsänderung einen konkreten Vertrag WIRKLICH betrifft. Eine Voranalyse (die nur Klausel-ÜBERSCHRIFTEN kannte) hat einen Verdacht gemeldet. Dir liegen jetzt die ECHTEN Klauseltexte vor.
+
+STRENGE REGELN:
+- Entscheide AUSSCHLIESSLICH anhand der vorliegenden Klauseltexte und der Rechtsänderung.
+- verified=true NUR, wenn du die Betroffenheit an einer konkreten Textstelle festmachen kannst. Zitiere diese Stelle WÖRTLICH und EXAKT aus dem Klauseltext in evidenceQuote (max. 200 Zeichen, keine Paraphrase, keine Auslassungspunkte am Satzanfang).
+- Tragen die echten Texte den Verdacht NICHT (Klausel regelt etwas anderes, Sachkontext passt nicht, Vertrag ist bereits konform, Rechtsänderung betrifft andere Konstellationen): verified=false. Im Zweifel verified=false.
+- Bei verified=true: formuliere plainSummary (1 Satz, Nicht-Jurist), businessImpact (was passiert konkret bei Nichtstun) und recommendation (konkreter nächster Schritt mit Klausel-Bezug) NEU, bezogen auf den ECHTEN Wortlaut — kein Raten, keine Floskeln wie "prüfen und ggf. anpassen".
+- affectedClauseIds: NUR IDs aus der Klauselliste (Format wie angegeben).`,
+        },
+        {
+          role: "user",
+          content: `RECHTSÄNDERUNG:
+Titel: ${lawChange.title}
+Bereich: ${lawChange.area || "unbekannt"}
+Status: ${lawChange.lawStatus || "unknown"}
+Beschreibung: ${lawChange.description || lawChange.summary || ""}
+
+VERDACHT DER VORANALYSE (nur aus Überschriften):
+${impact.summary || impact.impactSummary || ""}
+Vermutete Klauseln: ${(impact.affectedClauseIds || []).join(", ") || "keine benannt"}
+Schwere (vorläufig): ${impact.severity}
+
+ECHTE KLAUSELTEXTE DES VERTRAGS "${impact.contractName}":
+
+${clauseBlock}
+
+Prüfe streng: Ist dieser Vertrag von der Rechtsänderung WIRKLICH betroffen?`,
+        },
+      ],
+    });
+
+    const usage = response.usage || {};
+    const cost = {
+      aiCalls: 1,
+      tokensInput: usage.prompt_tokens || 0,
+      tokensOutput: usage.completion_tokens || 0,
+      costUSD: ((usage.prompt_tokens || 0) / 1000) * PRICES[DEEP_VERIFY_MODEL].input +
+               ((usage.completion_tokens || 0) / 1000) * PRICES[DEEP_VERIFY_MODEL].output,
+    };
+    const parsed = JSON.parse(response.choices[0].message.content);
+
+    if (!parsed.verified) return { verdict: "rejected", cost };
+
+    // Anti-Halluzination: das Zitat MUSS wörtlich im vorgelegten Klauseltext stehen.
+    // Fehlt es → kein Beleg → Verdacht gilt als NICHT am Text verifiziert.
+    if (!quoteAppearsIn(parsed.evidenceQuote, clauses)) {
+      console.warn(`[PulseV2Deep] evidenceQuote nicht im Klauseltext gefunden — nicht verifiziert (${impact.contractName})`);
+      return { verdict: "rejected", cost, noEvidence: true };
+    }
+
+    const validIds = new Set(clauses.map((c) => c.id));
+    return {
+      verdict: "confirmed",
+      cost,
+      refined: {
+        plainSummary: parsed.plainSummary,
+        businessImpact: parsed.businessImpact,
+        recommendation: parsed.recommendation,
+        severity: parsed.severity,
+        impactDirection: parsed.impactDirection,
+        affectedClauseIds: (parsed.affectedClauseIds || []).filter((id) => validIds.has(id)).slice(0, 5),
+        evidenceQuote: String(parsed.evidenceQuote || "").slice(0, 300),
+        deepConfidence: parsed.confidence,
+      },
+    };
+  } catch (err) {
+    console.error("[PulseV2Deep] Tiefenprüfung fehlgeschlagen:", err.message);
+    return { verdict: "error", cost: emptyCost };
+  }
+}
+
+/**
+ * Wendet die Tiefenprüfung auf die Verdachtsfälle EINES Gesetzes an.
+ * Entscheidungsregeln:
+ *  - Konfidenz ≥60 (heutiges Niveau):  confirmed → verfeinert · rejected → raus · error/Budget leer → BEHALTEN (fail-open, nie schlechter als heute)
+ *  - Konfidenz 40-59 (Grenzfall, NEU): NUR bei confirmed behalten — sonst raus (kein Beleg = kein Alert)
+ * @param {{left:number}} budget - Lauf-weiter Kostendeckel (mutiert)
+ */
+async function applyDeepVerify(db, lawChange, impacts, budget) {
+  const kept = [];
+  const totals = { aiCalls: 0, tokensInput: 0, tokensOutput: 0, costUSD: 0, checked: 0, rejected: 0, refined: 0 };
+  for (const impact of impacts) {
+    const borderline = impact.confidence < IMPACT_CONFIDENCE_THRESHOLD;
+    if (!budget || budget.left <= 0) {
+      if (!borderline) kept.push(impact); // Budget leer: Verhalten wie heute
+      continue;
+    }
+    budget.left--;
+    const { verdict, refined, cost } = await deepVerifyImpact(db, lawChange, impact);
+    totals.checked++;
+    totals.aiCalls += cost.aiCalls; totals.tokensInput += cost.tokensInput;
+    totals.tokensOutput += cost.tokensOutput; totals.costUSD += cost.costUSD;
+
+    if (verdict === "confirmed") {
+      totals.refined++;
+      kept.push({ ...impact, ...refined, deepVerified: true });
+    } else if (verdict === "rejected") {
+      totals.rejected++;
+      console.log(`[PulseV2Deep] verworfen am echten Text: "${(lawChange.title || "").slice(0, 60)}" ⇄ ${impact.contractName}${borderline ? " (Grenzfall)" : ""}`);
+    } else {
+      // error → fail-open nur für sichere Treffer
+      if (!borderline) kept.push(impact);
+    }
+  }
+  return { impacts: kept, totals };
 }
 
 /**
@@ -1051,6 +1294,8 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
     recommendation: a.recommendation,
     affectedClauseIds: a.affectedClauseIds || [],
     clauseImpacts: a.clauseImpacts || [],
+    deepVerified: a.deepVerified === true, // Säule 3: am echten Klauseltext bestätigt
+    evidenceQuote: a.evidenceQuote || "",   // wörtliches Zitat der betroffenen Stelle
     legislationFingerprint: extractLegislationFingerprint(a.lawChange.title) || null,
     status: "unread",
     createdAt: new Date(),
@@ -1288,6 +1533,7 @@ async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75
   if (contractType === "nicht_vertrag") return { swept: false, reason: "not_a_contract" };
 
   const contractPayload = {
+    resultId: result._id, // Säule 3: erlaubt der Tiefenstufe, echte Klauseltexte nachzuladen
     userId: result.userId,
     contractId: result.contractId,
     contractName: result.context?.contractName || cidStr,
@@ -1318,11 +1564,18 @@ async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75
     .slice(0, MAX_BACKLOG_LAWS);
   if (scored.length === 0) return { swept: true, laws: candidates.length, relevant: 0, alerts: 0 };
 
-  // 4. Je Gesetz: KI-Impact-Prüfung gegen den EINEN Vertrag (assessImpact filtert affected + Konfidenz≥60)
+  // 4. Je Gesetz: KI-Impact-Prüfung gegen den EINEN Vertrag (Stufe 1: Titel-Netz;
+  //    mit aktiver Säule 3 zusätzlich Stufe 2: Tiefenprüfung am echten Klauseltext)
+  const deepEnabled = process.env.PULSE_DEEP_VERIFY_ENABLED === "true";
+  const deepBudget = { left: MAX_DEEP_CHECKS_PER_RUN };
   const alerts = [];
   for (const { law } of scored) {
     try {
-      const { impacts } = await assessImpact(law, [contractPayload]);
+      let { impacts } = await assessImpact(law, [contractPayload], { widenForDeepVerify: deepEnabled });
+      if (deepEnabled && (impacts || []).length > 0) {
+        const dv = await applyDeepVerify(db, law, impacts, deepBudget);
+        impacts = dv.impacts;
+      }
       for (const impact of impacts || []) {
         alerts.push({
           lawChange: law,
@@ -1336,6 +1589,8 @@ async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75
           recommendation: impact.recommendation,
           affectedClauseIds: impact.affectedClauseIds,
           clauseImpacts: impact.clauseImpacts,
+          deepVerified: impact.deepVerified === true,
+          evidenceQuote: impact.evidenceQuote || "",
         });
       }
     } catch (err) {
@@ -1351,4 +1606,4 @@ async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75
   return { swept: true, laws: candidates.length, relevant: scored.length, alerts: alerts.length };
 }
 
-module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract };
+module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract, selectClausesForDeepCheck, deepVerifyImpact, quoteAppearsIn };
