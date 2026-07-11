@@ -209,7 +209,40 @@ const LEGAL_RSS_FEEDS = {
     url: 'https://eur-lex.europa.eu/DE/display-feed.rss?rssId=162',
     name: 'EU Parlament & Rat Gesetzgebung',
     category: 'eu_recht',
-    enabled: false // NOTE: 100 Items/Sync, meist Berichtigungen — hohes Rauschen, geringer Nutzen. Aktivieren wenn Content-Filter implementiert.
+    enabled: true // Reaktiviert 11.07. (Quellen-Ausbau Bereich A): Content-Filter existiert jetzt
+    // (Radar: Berichtigungs-Noise-Guard + Relevanz-Scoring + MAX_PER_AREA). Live-verifiziert 200/XML.
+  },
+
+  // ═══════════════════════════════════════════════════
+  // LANDESGERICHTE (Bereich A, 11.07.) — schließt die "nur Bundesgerichte"-Lücke.
+  // gesetze-bayern.de: offizielle RSS-API, Titel enthalten Vertrags-Stichwörter
+  // (z.B. "OLG München – ... – Rahmenvertrag, Vertragsstrafe, AGB") → matchen stark.
+  // Kategorie 'rechtsprechung': detectLawStatus stuft damit ALLES korrekt als
+  // court_decision ein (Kategorie-Check vor Titel-Muster); Rechtsgebiet per Inhalt.
+  // ═══════════════════════════════════════════════════
+  'bayern-zivilgerichte': {
+    url: 'https://www.gesetze-bayern.de/Api/Feed/OrdentlicheGerichtsbarkeit',
+    name: 'Bayerische Zivilgerichte (OLG/LG/AG)',
+    category: 'rechtsprechung',
+    enabled: true // Live-verifiziert 11.07.: 200, application/rss+xml, tagesaktuell
+  },
+  'bayern-arbeitsgerichte': {
+    url: 'https://www.gesetze-bayern.de/Api/Feed/Arbeitsgerichtsbarkeit',
+    name: 'Bayerische Arbeitsgerichte (LAG/ArbG)',
+    category: 'rechtsprechung',
+    enabled: true // Live-verifiziert 11.07.: 200, application/rss+xml, tagesaktuell
+  },
+
+  // ═══════════════════════════════════════════════════
+  // BUNDESFINANZMINISTERIUM (Bereich A, 11.07.) — schließt die "kein BMF"-Lücke.
+  // Themen-Feed Steuern (Anwendungserlasse, BMF-Schreiben, DBA) — bewusst NUR Steuern,
+  // nicht Presse/Aktuelles (Politik-Rauschen). XML-Endpunkt offen trotz Bot-Schutz der HTML-Seiten.
+  // ═══════════════════════════════════════════════════
+  'bmf-steuern': {
+    url: 'https://www.bundesfinanzministerium.de/SiteGlobals/Functions/RSSFeed/DE/Steuern/RSSSteuern.xml',
+    name: 'Bundesfinanzministerium Steuern',
+    category: 'steuerrecht',
+    enabled: true // Live-verifiziert 11.07.: 200, text/xml, aktuelle BMF-Schreiben
   },
 
   // ═══════════════════════════════════════════════════
