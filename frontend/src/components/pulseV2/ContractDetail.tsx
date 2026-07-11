@@ -413,6 +413,33 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         </div>
       )}
 
+      {/* ═══ Truncation Warning Banner (lange Verträge ehrlich behandeln) ═══ */}
+      {result.truncationWarning?.truncated && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '12px 16px',
+          background: '#fffbeb',
+          border: '1px solid #fde68a',
+          borderRadius: 10,
+          marginBottom: 16,
+          fontSize: 13,
+          color: '#92400e',
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>&#128207;</span>
+          <div>
+            <div style={{ fontWeight: 600 }}>
+              Sehr langer Vertrag — analysiert wurden die ersten ~{result.truncationWarning.analyzedPages} von ~{result.truncationWarning.totalPages} Seiten
+            </div>
+            <div style={{ fontSize: 12, color: '#a16207', marginTop: 2 }}>
+              Befunde und laufende Überwachung beziehen sich auf diesen Teil. Für vollständige Abdeckung
+              können Sie umfangreiche Anhänge/AGB als separaten Vertrag hochladen.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ Coverage Warning Banner ═══ */}
       {result.coverage && result.coverage.percentage < 100 && (
         <div style={{

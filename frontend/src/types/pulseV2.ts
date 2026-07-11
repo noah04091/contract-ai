@@ -151,6 +151,14 @@ export interface PulseV2Result {
     score: number;
     message: string;
   };
+  truncationWarning?: {
+    truncated: boolean;
+    analyzedChars: number;
+    totalChars: number;
+    analyzedPages: number;
+    totalPages: number;
+    message: string;
+  };
   // Lazy-populated translation cache (PR 4). Each key holds translated copies
   // of user-facing strings. Technical IDs and category tags stay untouched.
   translations?: {

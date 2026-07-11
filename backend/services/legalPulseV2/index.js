@@ -192,9 +192,20 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       message: t("error.qualityWarning", lang),
     } : null;
 
+    // Ehrlichkeit bei langen Verträgen (11.07.): Text wurde auf ~50k Zeichen gekürzt →
+    // dem Nutzer sagen, wie viel analysiert/überwacht wird, statt still abzuschneiden.
+    const truncationWarning = docMeta.truncated ? {
+      truncated: true,
+      analyzedChars: docMeta.cleanedTextLength,
+      totalChars: docMeta.originalTextLength,
+      analyzedPages: Math.max(1, Math.round(docMeta.cleanedTextLength / 3000)),
+      totalPages: Math.max(1, Math.round(docMeta.originalTextLength / 3000)),
+      message: t("error.truncationWarning", lang),
+    } : null;
+
     await LegalPulseV2Result.updateOne(
       { _id: record._id },
-      { $set: { currentStage: 2, document: docMeta, ...(qualityWarning && { qualityWarning }) } }
+      { $set: { currentStage: 2, document: docMeta, ...(qualityWarning && { qualityWarning }), ...(truncationWarning && { truncationWarning }) } }
     );
 
     onProgress(20, t("progress.documentCleaned", lang, {
@@ -527,6 +538,7 @@ async function runPipeline({ userId, contractId, requestId, triggeredBy = "manua
       clauseCount: analysisResult.clauses.length,
       coverage: analysisResult.coverage,
       qualityWarning,
+      truncationWarning,
     };
 
   } catch (error) {

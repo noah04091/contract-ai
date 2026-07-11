@@ -304,6 +304,10 @@ function runDocumentIntelligence(rawText) {
       language,
       structureDetected: structure.structureDetected,
       cleanedTextLength: truncatedText.length,
+      // Ehrlichkeit bei langen Verträgen (11.07.): wurde der Text auf 50k gekürzt,
+      // wird das sichtbar gemacht statt still abgeschnitten (index.js -> truncationWarning).
+      truncated: cleanedText.length > truncatedText.length,
+      originalTextLength: cleanedText.length,
       contractType,
       contractTypeConfidence,
       extractedMeta: {
