@@ -74,6 +74,8 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
     language: String,
     structureDetected: Boolean,
     cleanedTextLength: Number,
+    truncated: Boolean,           // TÜV-Fix 11.07.: lange Verträge — Text wurde auf 50k gekürzt
+    originalTextLength: Number,   // TÜV-Fix 11.07.: Länge vor der Kürzung
     contractType: String,
     contractTypeConfidence: Number,
     extractedMeta: {
@@ -82,6 +84,14 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
       contractType: String,
     },
   },
+
+  // TÜV-Fix 11.07.: Diese Warnungen wurden per $set geschrieben, standen aber NICHT im
+  // Schema → Mongoose (strict) hat sie beim Speichern STILL verworfen. qualityWarning war
+  // dadurch seit jeher tot (bisher folgenlos: nie ein Fall <40), truncationWarning wäre
+  // nie beim Nutzer angekommen. Mixed, weil die Objekte in services/legalPulseV2/index.js
+  // gebaut werden und flexibel bleiben sollen.
+  qualityWarning: { type: mongoose.Schema.Types.Mixed, default: undefined },
+  truncationWarning: { type: mongoose.Schema.Types.Mixed, default: undefined },
 
   // Stage 1 — Context Gathering
   context: {
