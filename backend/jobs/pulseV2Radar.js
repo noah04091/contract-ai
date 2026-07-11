@@ -1124,15 +1124,11 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
 
   // -- Helpers for email formatting --
   const plural = (n, singular, pluralForm) => n === 1 ? singular : pluralForm;
-  const cleanName = (name) => {
-    if (!name) return "Unbenannter Vertrag";
-    return name
-      .replace(/\.\w{2,4}$/, "")     // .pdf, .docx entfernen
-      .replace(/^\d{10,13}[-_]/, "")  // Unix-Timestamp-Prefix
-      .replace(/^\d{6}_/, "")         // YYMMDD_ Prefix
-      .replace(/_/g, " ")             // Unterstriche → Leerzeichen
-      .trim() || "Unbenannter Vertrag";
-  };
+  // 11.07.: gemeinsamer Helfer statt eigener Mini-Säuberung — repariert auch Mojibake
+  // ("Obst & GemÃ¼se" → "Obst & Gemüse") via fixUtf8; Glocke nutzt ihn bereits (QA-#1),
+  // damit zeigen Mail und Glocke jetzt denselben sauberen Namen.
+  const { cleanContractName } = require("../utils/cleanContractName");
+  const cleanName = (name) => cleanContractName(name);
   const cleanLawTitle = (title) => {
     if (!title) return "Gesetzesänderung";
     return title
