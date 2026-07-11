@@ -720,6 +720,21 @@ try {
 let lastGPT4Request = 0;
 const GPT4_MIN_INTERVAL = 4000; // 4 seconds between GPT-4 requests
 
+// 🧪 Modell-A/B (11.07.2026): Herzstück-Modell per Env-Flag umschaltbar.
+// Standard = gpt-4o → Request-Parameter BYTE-IDENTISCH zu vorher (kein Prod-Delta,
+// solange das Flag nicht gesetzt ist). A/B-Beweis (6 Verträge, 36 Läufe, scripts/
+// testModelABLive.js + Memory project_modell-ab-herzstueck-2026-07-11): gpt-5.4
+// findet 5-6 statt 1-2 echte Risiken, 82-95% wörtlich belegte Zitate, JSON 12/12
+// sauber — aber ~15 Punkte strengere Scores + 57s Latenz → Umlegen ist Noahs
+// Produktentscheidung, nur via Render-Env `ANALYZE_MODEL=gpt-5.4`.
+// Reasoning-Modelle (gpt-5.x/o*) unterstützen temperature/seed/max_tokens NICHT →
+// Param-Shim unten (max_completion_tokens, Floor 16k weil Reasoning-Tokens mitzählen).
+const ANALYZE_MODEL = process.env.ANALYZE_MODEL || 'gpt-4o';
+const ANALYZE_MODEL_IS_REASONING = /^(gpt-5|o[0-9])/.test(ANALYZE_MODEL);
+if (ANALYZE_MODEL !== 'gpt-4o') {
+  console.log(`🧪 [ANALYZE] Herzstück-Modell via ANALYZE_MODEL übersteuert: ${ANALYZE_MODEL} (reasoning=${ANALYZE_MODEL_IS_REASONING})`);
+}
+
 // ✅ FIXED: Updated Token limits for different models
 const MODEL_LIMITS = {
   'gpt-4': 8192,                    // ❌ Original GPT-4 (problematic)
@@ -4465,11 +4480,22 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       // maxRetries: 0 — wir haben eigene Retry-Logik im outer-Loop (Z.2955).
       // 180s (statt 90s) — fängt OpenAI-Latenz-Spitzen ab, ohne 20-Min-Hänger.
       const reqController = new AbortController();
-      const reqTimeoutHandle = setTimeout(() => reqController.abort(), 180_000);
+      // Reasoning-Modelle brauchen mehr Zeit (Ø57s im A/B) → 240s statt 180s Abbruch.
+      const reqTimeoutHandle = setTimeout(() => reqController.abort(), ANALYZE_MODEL_IS_REASONING ? 240_000 : 180_000);
       let completion;
       try {
+        // 🧪 Modell-Flag: Standard (gpt-4o) → Parameter byte-identisch zu vorher.
+        // Reasoning-Modelle: kein temperature/seed/max_tokens; stattdessen
+        // max_completion_tokens mit 16k-Floor (Reasoning-Tokens zählen ins Budget).
+        const modelParams = ANALYZE_MODEL_IS_REASONING
+          ? { max_completion_tokens: Math.max(maxOutputTokens, 16000) }
+          : {
+              temperature: 0.1, // Low for consistency
+              seed: 42, // 🎯 Determinismus best-effort — gleicher Vertrag → gleicher Score (siehe Memory: project_datehunt-3-schichten-proposal)
+              max_tokens: maxOutputTokens, // 📦 Koffer-Fix: adaptiver Antwort-Platz (vom Aufrufer berechnet) statt fix 16k — verhindert 128k-Überlauf bei großen Verträgen
+            };
         completion = await openai.chat.completions.create({
-          model: "gpt-4o", // 🚀 GPT-4o for 128k context + 16k output tokens
+          model: ANALYZE_MODEL, // 🚀 Default gpt-4o (128k context); via Env ANALYZE_MODEL umschaltbar (A/B-Beweis siehe oben)
           messages: [
             {
               role: "system",
@@ -4478,9 +4504,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
             { role: "user", content: prompt },
           ],
           response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
-          temperature: 0.1, // Low for consistency
-          seed: 42, // 🎯 Determinismus best-effort — gleicher Vertrag → gleicher Score (siehe Memory: project_datehunt-3-schichten-proposal)
-          max_tokens: maxOutputTokens, // 📦 Koffer-Fix: adaptiver Antwort-Platz (vom Aufrufer berechnet) statt fix 16k — verhindert 128k-Überlauf bei großen Verträgen
+          ...modelParams,
         }, { signal: reqController.signal, maxRetries: 0 });
       } finally {
         clearTimeout(reqTimeoutHandle);
@@ -5625,7 +5649,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         const costTracker = getCostTrackingService();
         await costTracker.trackAPICall({
           userId: req.user.userId,
-          model: 'gpt-4o',
+          model: ANALYZE_MODEL, // 🧪 folgt dem Modell-Flag (Standard gpt-4o)
           inputTokens: completion.usage.prompt_tokens,
           outputTokens: completion.usage.completion_tokens,
           feature: 'analyze',
@@ -7091,3 +7115,4 @@ module.exports.detectDocumentType = detectDocumentType;
 module.exports.classifyDocumentTypeWithGPT = classifyDocumentTypeWithGPT;
 module.exports.generateLetterAnalysisPrompt = generateLetterAnalysisPrompt;
 module.exports.resolveSystemPrompt = resolveSystemPrompt;
+module.exports.makeRateLimitedGPT4Request = makeRateLimitedGPT4Request; // 🧪 für Modell-Flag-Offline-Test
