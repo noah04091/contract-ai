@@ -363,6 +363,11 @@ const NOISE_PATTERNS = [
   // EU noise
   /^OJ:L:\d{4}:\d+/i,
   /amtsblatt\s+der\s+europäischen\s+union/i,
+  // EU-Amtsblatt-Korrekturen (11.07., Voraussetzung für EUR-Lex-Reaktivierung):
+  // "Berichtigung der Verordnung (EU) ..." = Tippfehler-Korrektur eines längst
+  // veröffentlichten Rechtsakts — für ein Frühwarnsystem irrelevant, aber die
+  // Hauptquelle des früheren EUR-Lex-Rauschens (100 Items/Sync).
+  /^berichtigung\b/i,
   // Criminal law (never relevant for contracts)
   /strafbarkeit|strafgesetzbuch|strafrecht/i,
   /strafsenat|strafkammer/i,
@@ -447,7 +452,9 @@ const NOISE_PATTERNS = [
 // am /drucksache …/-Muster hängenbleiben. Prozedurales (Anfrage/Beschlussempfehlung/Protokoll/
 // Unterrichtung) ist ausdrücklich ausgenommen und wird weiterhin gefiltert.
 const REAL_LAW_SIGNAL = /\b(gesetzentwurf|entwurf eines\s+[\wäöüß]*\s*gesetzes|artikelgesetz|verordnungsentwurf|verordnung\s+(zur|zum|über|des|der)\b)/i;
-const PROCEDURAL_SIGNAL = /\b(anfrage|beschlussempfehlung|protokoll|tagesordnung|unterrichtung|entschlie(ß|ss)ungsantrag)\b/i;
+// 'berichtigung' ergänzt 11.07.: "Berichtigung der Verordnung (EU) ..." darf der Schild NICHT
+// retten — sonst fluten EU-Amtsblatt-Korrekturen den Radar (Grund der früheren Deaktivierung).
+const PROCEDURAL_SIGNAL = /\b(anfrage|beschlussempfehlung|protokoll|tagesordnung|unterrichtung|berichtigung|entschlie(ß|ss)ungsantrag)\b/i;
 
 function isNoiseLaw(law) {
   const title = (law.title || "").trim();
