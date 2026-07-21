@@ -30,6 +30,19 @@ const MAX_FINDINGS_IN_EMAIL = 6;
 const ACCENT = "#2f4bd6";
 
 /**
+ * TÜV-Fix 21.07.: Nutzer robust laden. results.userId ist ein STRING, users._id aber
+ * ObjectId — die frühere Suche { $or: [{ _id: userId }, { userId }] } fand deshalb NIE
+ * jemanden → Wach-Bericht-Läufe 13.+20.07.: sent=0, skipped=6 (alle still übersprungen).
+ */
+async function findUserRobust(db, userId, projection) {
+  const { ObjectId } = require("mongodb");
+  const idStr = String(userId);
+  const candidates = [userId, idStr];
+  try { if (ObjectId.isValid(idStr)) candidates.push(new ObjectId(idStr)); } catch { /* ignore */ }
+  return db.collection("users").findOne({ _id: { $in: candidates } }, { projection });
+}
+
+/**
  * Zählt die in der Woche real ausgewerteten Rechtsänderungen (global, aus den
  * echten täglichen Radar-Läufen — scoped/Admin-Testläufe ausgenommen).
  */
@@ -190,10 +203,7 @@ async function runWeeklyReport(db, options = {}) {
   // ── Vorschau / Einzelnutzer (kein Senden) ────────────────────────────────
   if (options.dryRun) {
     const userId = options.userId;
-    const user = await db.collection("users").findOne(
-      { $or: [{ _id: userId }, { userId }] },
-      { projection: { email: 1, name: 1, firstName: 1 } }
-    );
+    const user = await findUserRobust(db, userId, { email: 1, name: 1, firstName: 1 });
     const stats = await computeUserStats(db, userId, weekAgo);
     const { subject, html } = buildWeeklyReportEmail({
       userName: user?.firstName || user?.name || "Nutzer",
@@ -239,10 +249,7 @@ async function runWeeklyReport(db, options = {}) {
   let sent = 0, skipped = 0;
   for (const userId of eligible.slice(0, MAX_USERS_PER_RUN)) {
     try {
-      const user = await db.collection("users").findOne(
-        { $or: [{ _id: userId }, { userId }] },
-        { projection: { email: 1, name: 1, firstName: 1, subscriptionPlan: 1, legalPulseSettings: 1 } }
-      );
+      const user = await findUserRobust(db, userId, { email: 1, name: 1, firstName: 1, subscriptionPlan: 1, legalPulseSettings: 1 });
       if (!user?.email) { skipped++; continue; }
 
       // Nur zahlende Pläne (Legal Pulse = Business+)
