@@ -517,6 +517,14 @@ function normalize(s) {
     .replace(/­/g, '')                  // Soft-Hyphen-Unicode entfernen
     .replace(/(\w)-\n\s*(\w)/g, '$1$2')      // Silbentrennung am Zeilenende heilen
     .replace(/\s+/g, ' ')
+    // 🆕 21.07.2026 (Live-Fund GVP-Tarifwerk): pdf-parse macht aus Zeilenumbrüchen oft
+    // LEERZEICHEN → Silbentrennung erscheint als "fol- genden" (Hyphen+Space, kein \n)
+    // und die Heilung oben griff nicht → echte Fristen fielen als evidence_not_in_text.
+    // Heilung nach dem Whitespace-Collapse (deckt damit auch \n/\r\n-Fälle mit ab).
+    // WICHTIG: Ergänzungsstrich NICHT anfassen ("urlaubs- und weihnachtsgeld") —
+    // Konjunktions-Guard. Symmetrisch auf Evidence UND Text angewandt → Matching
+    // bleibt konsistent, Halluzinationen (Text nicht vorhanden) scheitern weiter.
+    .replace(/([a-z])- (?!(?:und|oder|bzw|sowie|beziehungsweise|wie|als|noch)\b)([a-z])/g, '$1$2')
     .trim();
 }
 
@@ -533,6 +541,16 @@ function evidenceMatchesText(normEvidence, normText) {
   if (normText.includes(normEvidence)) return true;
   const stripped = normEvidence.replace(/[.!?,;]\s*$/, '').trim();
   if (stripped !== normEvidence && normText.includes(stripped)) return true;
+  // 🆕 21.07.2026 (Live-Fund GVP-Tarifwerk): Das LLM tippt beim Zitieren sporadisch
+  // Umlaute OHNE Punkte ("hoherwertigen"/"ubertragen" statt "höherwertigen"/
+  // "übertragen"). Nach normalize() steht im Text "hoeherwertigen", in der Evidence
+  // "hoherwertigen" → strikter Match scheitert, echte Fristen wurden verworfen.
+  // Second-Chance NUR nach Fehlschlag: ae/oe/ue → a/o/u auf BEIDEN Seiten
+  // (symmetrisch — echte Zitate matchen, Halluzinationen stehen weiterhin nicht im
+  // Text und scheitern; konflatiert nur die ä/a-Klasse, keine Wort-Umstellungen).
+  const deUml = (s) => s.replace(/ae/g, 'a').replace(/oe/g, 'o').replace(/ue/g, 'u');
+  const evU = deUml(stripped || normEvidence);
+  if (evU.length >= 15 && deUml(normText).includes(evU)) return true;
   // 🆕 09.06.2026: Das LLM tippt beim Zitieren deutschen Texts sporadisch das Unicode-
   // Replacement-Zeichen "�" statt Umlaut/§ (z.B. "l�uft" statt "läuft") — der
   // Quelltext ist sauber, nur das KI-Zitat ist betroffen. Der strikte Substring-Match
