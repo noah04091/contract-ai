@@ -230,6 +230,16 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
 
 // ─── Sub-Components ────────────────────────────────────────
 
+
+// Redesign E3: Emoji-Entities → einheitliche SVG-Icons (Fallback: Entity)
+const NODE_ICON_PATHS: Record<string, string> = {
+  '&#128203;': 'M9 3h6v3H9zM7 5H5v16h14V5h-2M9 11h6M9 15h4',                        // Zwischenablage
+  '&#9888;&#65039;': 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z',
+  '&#9989;': 'M20 6 9 17l-5-5',
+  '&#128196;': 'M6 3h9l5 5v13H6zM14 3v6h6',
+  '&#128161;': 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10c.7.6 1 1.2 1 2h6c0-.8.3-1.4 1-2a6 6 0 0 0-4-10z',
+  '&#9878;&#65039;': 'M12 3v18M5 7l7-4 7 4M3 12h4l-2 5h4M17 12h4l-2 5h4',
+};
 const GraphNode: React.FC<{
   icon: string;
   label: string;
@@ -252,7 +262,13 @@ const GraphNode: React.FC<{
       cursor: clickable ? 'pointer' : 'default',
     }}
   >
-    <span style={{ fontSize: 18, flexShrink: 0 }} dangerouslySetInnerHTML={{ __html: icon }} />
+    {NODE_ICON_PATHS[icon] ? (
+      <span style={{ width: 30, height: 30, borderRadius: 8, background: `${color}15`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={NODE_ICON_PATHS[icon]} /></svg>
+      </span>
+    ) : (
+      <span style={{ fontSize: 18, flexShrink: 0 }} dangerouslySetInnerHTML={{ __html: icon }} />
+    )}
     <div>
       <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: 'uppercase', marginBottom: 2 }}>
         {label}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { cleanContractName } from '../../utils/contractName';
 import type { PulseV2Result, PulseV2Action, PulseV2Finding, PulseV2LegalAlert, PulseV2Translation, PulseV2TranslateResponse } from '../../types/pulseV2';
 import { useToast } from '../../context/ToastContext';
 import { HealthScoreGauge } from './HealthScoreGauge';
@@ -144,7 +145,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
   useEffect(() => {
     const names = new Map<string, string>();
-    names.set(result.contractId, result.context?.contractName || 'Aktueller Vertrag');
+    names.set(result.contractId, cleanContractName(result.context?.contractName || '') || 'Aktueller Vertrag');
     if (result.context?.relatedContracts) {
       for (const rc of result.context.relatedContracts) {
         if (rc.name) names.set(rc.name, rc.name);
@@ -484,7 +485,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         </div>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>
-            {result.context?.contractName || 'Vertragsanalyse'}
+            {cleanContractName(result.context?.contractName || '') || 'Vertragsanalyse'}
           </h2>
           <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>
             {result.document?.contractType && (
@@ -927,7 +928,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 <div style={{
                   height: '100%',
                   width: `${progressPct}%`,
-                  background: progressPct === 100 ? '#22c55e' : 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                  background: progressPct === 100 ? '#22c55e' : '#2563eb',
                   borderRadius: 2,
                   transition: 'width 0.3s ease',
                 }} />
