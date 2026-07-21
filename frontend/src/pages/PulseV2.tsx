@@ -1027,8 +1027,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             ))}
           </div>
         </div>
-      ) : (
-        /* Minimized Hero */
+      ) : stats.analyzed === 0 ? (
+        /* Minimized Hero (nur Onboarding) */
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '16px 28px',
@@ -1062,7 +1062,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             &#9432; Mehr anzeigen
           </button>
         </div>
-      )}
+      ) : null}
 
       {/* ══════════ Zone 1: Pulse-Check Hero ══════════ */}
       <PulseCommandCenter
