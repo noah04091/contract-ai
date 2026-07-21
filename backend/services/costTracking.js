@@ -8,8 +8,19 @@ class CostTrackingService {
     this.db = null;
     this.isInitialized = false;
 
-    // OpenAI Pricing (Stand März 2026)
+    // OpenAI Pricing (Stand Juli 2026)
     this.pricing = {
+      // 🧪 Modell-A/B (21.07.2026): Herzstück läuft via ANALYZE_MODEL auf gpt-5.4 —
+      // ohne diese Einträge fiel der Tracker auf den gpt-4-Urtarif ($30/$60) zurück
+      // und überschätzte die Kosten ~7× ($1.14 statt real ~$0.16 pro Analyse).
+      'gpt-5.4': {
+        input: 0.0025 / 1000,  // $2.50 per 1M input tokens
+        output: 0.015 / 1000   // $15.00 per 1M output tokens
+      },
+      'gpt-5.4-mini': {
+        input: 0.00075 / 1000, // $0.75 per 1M input tokens
+        output: 0.0045 / 1000  // $4.50 per 1M output tokens
+      },
       'gpt-4o': {
         input: 0.0025 / 1000,  // $2.50 per 1M input tokens
         output: 0.01 / 1000    // $10.00 per 1M output tokens
@@ -87,7 +98,16 @@ class CostTrackingService {
       }
 
       // Calculate cost
-      const modelPricing = this.pricing[model] || this.pricing['gpt-4']; // Fallback to gpt-4
+      // 🧪 21.07.2026: Snapshot-tolerante Zuordnung — "gpt-5.4-2026-03-05" findet
+      // den "gpt-5.4"-Preis (längster Präfix zuerst, damit "-mini" vor Basis matcht).
+      let modelPricing = this.pricing[model];
+      if (!modelPricing && typeof model === 'string') {
+        const prefixKey = Object.keys(this.pricing)
+          .filter(k => model.startsWith(k))
+          .sort((a, b) => b.length - a.length)[0];
+        if (prefixKey) modelPricing = this.pricing[prefixKey];
+      }
+      if (!modelPricing) modelPricing = this.pricing['gpt-4']; // Fallback to gpt-4
       const inputCost = (inputTokens || 0) * modelPricing.input;
       const outputCost = (outputTokens || 0) * modelPricing.output;
       const totalCost = inputCost + outputCost;
