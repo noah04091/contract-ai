@@ -1880,6 +1880,18 @@ router.delete("/envelopes/bulk", verifyToken, requirePremium, async (req, res) =
       _id: { $in: envelopeIdsToDelete }
     });
 
+    // 📅 21.07.2026 (Audit-NIEDRIG-Rest): Kalender-Events der gelöschten Envelopes
+    // miträumen — sonst bleiben Signatur-Erinnerungen als Waisen im Kalender stehen
+    // (DSGVO + tote Einträge). Gleiches Muster wie Einzel-Löschung (:1553) und
+    // Void (:3079). Defensiv pro Envelope, damit ein Fehler den Rest nicht stoppt.
+    for (const envId of envelopeIdsToDelete) {
+      try {
+        await deleteEnvelopeEvents(req.db, envId);
+      } catch (evErr) {
+        console.warn(`⚠️ Kalender-Events für Envelope ${envId} konnten nicht gelöscht werden: ${evErr.message}`);
+      }
+    }
+
     console.log(`✅ Deleted ${result.deletedCount} envelopes + ${s3Result.deleted} S3 files`);
 
     // Response mit Info über geschützte Envelopes

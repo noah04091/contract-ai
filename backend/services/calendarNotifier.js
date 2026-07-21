@@ -407,6 +407,22 @@ async function checkAndSendNotifications(db) {
 
       } catch (error) {
         console.error(`Fehler beim Queuing der Benachrichtigung fuer Event ${event._id}:`, error);
+        // 🛟 21.07.2026 (Audit-NIEDRIG-Rest, Loch-1a-Härtung): Bevor wir das Event
+        // zurücksetzen, EIN sofortiger zweiter Zustell-Versuch — der realistische
+        // Auslöser (transienter DB-Schluckauf) ist Sekunden später meist weg. Ein
+        // heute fälliges Event, das auf "scheduled" zurückfällt, läge morgen vor dem
+        // Sende-Fenster und wäre still verloren; der Retry schließt dieses Rest-Loch
+        // in fast allen realen Fällen. Doppel-Mail-sicher: requeueEventOnQueueFailure
+        // prüft ohnehin, ob die Mail doch in der Queue gelandet ist.
+        try {
+          await new Promise(r => setTimeout(r, 2000));
+          await queueEventNotification(event, db);
+          queuedCount++;
+          console.warn(`🛟 Event ${event._id}: Queuing im 2. Versuch erfolgreich (transienter Fehler überbrückt)`);
+          continue;
+        } catch (retryError) {
+          console.error(`Auch 2. Queuing-Versuch fehlgeschlagen für Event ${event._id}:`, retryError.message);
+        }
         // 🛟 Loch-1a-Schutz (19.06.2026): Die Mail-Übergabe ist NACH dem "queued"-Claim
         // fehlgeschlagen (z.B. DB-Schluckauf). Ohne Rücksetzen bliebe das Event für immer
         // "queued" → der nächste Lauf (sucht nur "scheduled") fasst es nie wieder an →

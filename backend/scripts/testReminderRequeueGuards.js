@@ -5,8 +5,11 @@
  * Fix A (calendarNotifier.requeueEventOnQueueFailure): Mail-Übergabe nach "queued"-Claim
  *   gepatzt → Event zurück auf "scheduled", ABER nur wenn KEIN email_queue-Eintrag existiert
  *   (sonst Doppel-Mail).
- * Fix B (emailRetryService.requeueEventAfterSoftFailure): endgültiger Soft-Fail → Event zurück
- *   auf "scheduled" mit Zähler gegen Endlos-Schleife; bereits "notified" bleibt unberührt.
+ * Fix B (emailRetryService.requeueEventAfterSoftFailure): endgültiger Soft-Fail →
+ *   ⚠️ VERHALTEN GEÄNDERT durch Audit-Fix #1 (07.07.2026, Commit fde5495a):
+ *   Event bleibt "queued", stattdessen wird die GESCHEITERTE MAIL reaktiviert
+ *   (failed→pending, +4h) — das alte "zurück auf scheduled" verlor heute fällige
+ *   Erinnerungen dauerhaft (Tagesfenster). Test am 21.07.2026 nachgezogen.
  *
  * Reiner Logik-/Mock-DB-Test (kein echtes DB/SMTP). Beweist die Wächter.
  */
@@ -60,29 +63,38 @@ function makeDb(state) {
   const r3 = await requeueEventOnQueueFailure(makeDb({ contract_events: [ce3], email_queue: [] }), id3);
   ok('A3 bereits "notified" → unverändert', r3 === false && ce3.status === 'notified');
 
-  console.log('\n════ Fix B — requeueEventAfterSoftFailure (Schleifen-/Status-sicher) ════');
+  console.log('\n════ Fix B — requeueEventAfterSoftFailure (Mail-Reaktivierung statt Event-Bounce) ════');
 
-  // B1: queued, Zähler 0 → scheduled + Zähler 1
+  // B1: queued + gescheiterte Mail → Mail reaktiviert (pending, +4h), Event BLEIBT queued, Zähler 1
   const id4 = new ObjectId(); const ce4 = { _id: id4, status: 'queued', queuedAt: new Date() };
-  const r4 = await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce4] }), id4.toString());
-  ok('B1 Soft-Fail queued → "scheduled"', r4 === true && ce4.status === 'scheduled');
+  const mail4 = { eventId: id4.toString(), status: 'failed', retryCount: 3 };
+  const r4 = await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce4], email_queue: [mail4] }), id4.toString());
+  ok('B1 Soft-Fail → Mail reaktiviert (failed→pending)', r4 === true && mail4.status === 'pending');
+  ok('B1 Retry-Zähler der Mail zurückgesetzt + Verzögerung gesetzt', mail4.retryCount === 0 && mail4.nextRetryAt instanceof Date && mail4.nextRetryAt > new Date());
+  ok('B1 Event BLEIBT "queued" (kein Bounce mehr — Tagesfenster-Falle)', ce4.status === 'queued');
   ok('B1 deliveryRetryCount 0 → 1', ce4.deliveryRetryCount === 1);
-  ok('B1 queuedAt entfernt', !('queuedAt' in ce4));
 
-  // B2: Zähler erschöpft (3) → NICHT zurücksetzen
+  // B1b: queued, aber KEINE gescheiterte Mail vorhanden → nichts zu reaktivieren, kein Zähler-Anstieg
+  const id4b = new ObjectId(); const ce4b = { _id: id4b, status: 'queued' };
+  const r4b = await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce4b], email_queue: [] }), id4b.toString());
+  ok('B1b keine failed-Mail → false, Event unverändert', r4b === false && ce4b.status === 'queued' && !ce4b.deliveryRetryCount);
+
+  // B2: Zähler erschöpft (3) → NICHT reaktivieren
   const id5 = new ObjectId(); const ce5 = { _id: id5, status: 'queued', deliveryRetryCount: 3 };
-  const r5 = await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce5] }), id5.toString());
-  ok('B2 Zähler 3 (erschöpft) → bleibt "queued"', r5 === false && ce5.status === 'queued');
+  const mail5 = { eventId: id5.toString(), status: 'failed' };
+  const r5 = await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce5], email_queue: [mail5] }), id5.toString());
+  ok('B2 Zähler 3 (erschöpft) → bleibt liegen, Mail bleibt failed', r5 === false && ce5.status === 'queued' && mail5.status === 'failed');
 
   // B3: bereits "notified" → unverändert
   const id6 = new ObjectId(); const ce6 = { _id: id6, status: 'notified' };
-  const r6 = await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce6] }), id6.toString());
+  const r6 = await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce6], email_queue: [] }), id6.toString());
   ok('B3 bereits "notified" → unverändert', r6 === false && ce6.status === 'notified');
 
-  // B4: zweiter Soft-Fail erhöht 1 → 2
+  // B4: zweiter Soft-Fail erhöht 1 → 2 (Mail erneut reaktiviert, Event bleibt queued)
   const id7 = new ObjectId(); const ce7 = { _id: id7, status: 'queued', deliveryRetryCount: 1 };
-  await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce7] }), id7.toString());
-  ok('B4 Zähler 1 → 2 (+ scheduled)', ce7.deliveryRetryCount === 2 && ce7.status === 'scheduled');
+  const mail7 = { eventId: id7.toString(), status: 'failed' };
+  await requeueEventAfterSoftFailure(makeDb({ contract_events: [ce7], email_queue: [mail7] }), id7.toString());
+  ok('B4 Zähler 1 → 2, Mail reaktiviert, Event bleibt queued', ce7.deliveryRetryCount === 2 && mail7.status === 'pending' && ce7.status === 'queued');
 
   console.log(`\n──────── Ergebnis: ${pass} bestanden, ${fail} fehlgeschlagen ────────`);
   process.exit(fail === 0 ? 0 : 1);
