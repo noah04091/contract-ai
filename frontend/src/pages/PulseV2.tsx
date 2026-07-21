@@ -9,7 +9,9 @@ import { PortfolioInsightsPanel } from '../components/pulseV2/PortfolioInsightsP
 import { ActionItem } from '../components/pulseV2/ActionItem';
 import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
-import { PulseCheckHero } from '../components/pulseV2/PulseCheckHero';
+import { PulseCommandCenter } from '../components/pulseV2/PulseCommandCenter';
+// Redesign 21.07.: alter Hero bleibt für Rollback erhalten — Import inaktiv
+// import { PulseCheckHero } from '../components/pulseV2/PulseCheckHero';
 import { SystemStatusPanel } from '../components/pulseV2/SystemStatusPanel';
 import { useRadarHealth } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
@@ -933,7 +935,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   return (
     <div>
       {/* ══════════ Intro Hero Banner (original) ══════════ */}
-      {!heroCollapsed ? (
+      {!heroCollapsed && stats.analyzed === 0 ? (
         <div style={{
           position: 'relative',
           background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 50%, #f8fafc 100%)',
@@ -1063,7 +1065,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       )}
 
       {/* ══════════ Zone 1: Pulse-Check Hero ══════════ */}
-      <PulseCheckHero
+      <PulseCommandCenter
         stats={stats}
         alerts={legalAlerts}
         criticalContractCount={alertStats.criticalContracts.length}
@@ -1191,6 +1193,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             onNavigate={(contractId) => onSelectContract(contractId)}
           />
 
+          <div id="pulse-tasks" />
           {/* Action Center */}
           {actions.length > 0 && (
             <ActionCenter
@@ -1204,6 +1207,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
           {/* Zone 3: Contract Health + Radar — now consolidated into PulseCheckHero above */}
 
+          <div id="pulse-portfolio" />
           {/* Portfolio Improvement Tracking */}
           {portfolioSummary && (
             <PortfolioImprovementCard
@@ -1247,6 +1251,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              id="pulse-contracts"
               placeholder="Vertrag suchen..."
               style={{
                 width: '100%',
