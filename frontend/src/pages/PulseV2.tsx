@@ -702,6 +702,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [portfolioSummary, setPortfolioSummary] = useState<{ hasData: boolean; avgScoreNow: number | null; avgScorePrevious: number | null; delta: number; contractsAnalyzed: number; contractsImproved: number; contractsWorsened: number; actionsTotal: number; actionsCompleted: number; criticalNow: number; criticalResolved: number; topImprovement: { contractId: string; name: string; delta: number; scoreNow: number } | null; topDecline: { contractId: string; name: string; delta: number; scoreNow: number } | null; improvedContracts?: { contractId: string; name: string; delta: number; scoreNow: number }[]; worsenedContracts?: { contractId: string; name: string; delta: number; scoreNow: number }[]; actionsByContract?: { contractId: string; name: string; actions: { title: string; priority: string; status: string }[]; total: number; completed: number }[] } | null>(null);
   const [monitoringStatus, setMonitoringStatus] = useState<{ status: 'green' | 'yellow' | 'red' | 'neutral'; statusLabel: string; contractsMonitored: number; lastScan: string | null; lastScheduledScan: string | null; lastRadarScan: string | null; lastRadarRun: string | null; nextMonitorScan: string; nextRadarScan: string; alertsTotal: number; severityCounts: { critical: number; high: number; medium: number; low: number }; recentAlertsCount: number } | null>(null);
   const [filter, setFilter] = useState<DashboardFilter>('all');
+  const [showAllUnanalyzed, setShowAllUnanalyzed] = useState(false); // UX-Fix: Friedhof eingeklappt
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('score_asc');
@@ -1382,15 +1383,46 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           )}
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: 14,
-        }}>
-          {filteredItems.map(item => (
-            <ContractCard key={item.contractId} item={item} onClick={() => onSelectContract(item.contractId)} />
-          ))}
-        </div>
+        (() => {
+          // UX-Fix 21.07.: In der „Alle"-Ansicht die analysierten (überwachten) Verträge
+          // zuerst zeigen und den langen „Noch nicht analysiert"-Rest einklappen —
+          // sonst scrollt der Nutzer durch hunderte Rechnungen/Uploads, um seine
+          // überwachten Verträge zu finden. Suche/andere Filter bleiben unverändert.
+          const collapseUnanalyzed = filter === 'all' && !debouncedQuery;
+          const analyzed = collapseUnanalyzed ? filteredItems.filter(i => i.hasV2Result) : filteredItems;
+          const unanalyzed = collapseUnanalyzed ? filteredItems.filter(i => !i.hasV2Result) : [];
+          return (
+            <>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                gap: 14,
+              }}>
+                {(showAllUnanalyzed ? [...analyzed, ...unanalyzed] : analyzed).map(item => (
+                  <ContractCard key={item.contractId} item={item} onClick={() => onSelectContract(item.contractId)} />
+                ))}
+              </div>
+              {collapseUnanalyzed && unanalyzed.length > 0 && !showAllUnanalyzed && (
+                <button
+                  onClick={() => setShowAllUnanalyzed(true)}
+                  style={{
+                    marginTop: 14,
+                    width: '100%',
+                    padding: '12px 16px',
+                    fontSize: 13,
+                    color: '#6b7280',
+                    background: '#f9fafb',
+                    border: '1px dashed #d1d5db',
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                  }}
+                >
+                  + {unanalyzed.length} nicht analysierte Dokumente anzeigen (werden nicht überwacht)
+                </button>
+              )}
+            </>
+          );
+        })()
       )}
 
       {/* ══════════ System-Status (eingeklappt, am Ende) ══════════ */}

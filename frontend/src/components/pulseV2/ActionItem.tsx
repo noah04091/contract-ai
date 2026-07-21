@@ -251,7 +251,12 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
               display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center',
             }}>
               <span style={{ fontSize: 12, color: '#9ca3af' }}>Betrifft:</span>
-              {action.relatedContracts.map((id) => {
+              {action.relatedContracts.filter((id) => {
+                // UX-Fix 21.07.: unauflösbare rohe DB-IDs (24-Hex) NIE dem Nutzer zeigen
+                const resolvedId = resolveContractId(id);
+                const hasName = (resolvedId && contractNames.get(resolvedId)) || contractNames.get(id);
+                return !!hasName || !/^[a-f0-9]{24}$/i.test(id);
+              }).map((id) => {
                 const resolvedId = resolveContractId(id);
                 const name = (resolvedId && contractNames.get(resolvedId)) || contractNames.get(id) || id;
                 return (

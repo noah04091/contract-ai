@@ -119,6 +119,15 @@ function groupAlertsByLaw(alerts: PulseV2LegalAlert[]): AlertGroup[] {
       });
     }
     const group = map.get(key)!;
+    // UX-Fix 21.07.: sichtbare Duplikate zusammenfalten — derselbe Vertrag (nach
+    // gesäubertem Anzeigenamen) erscheint pro Gesetz nur EINMAL. Betrifft Alt-Alerts
+    // aus der Zeit vor dem Backend-Dedup-Fix sowie doppelt hochgeladene Dateien.
+    const normName = (n: string) => String(n || '')
+      .replace(/\.\w{2,4}$/, '').replace(/^\d{10,13}[-_]/, '').replace(/^\d{6}_/, '')
+      .replace(/_/g, ' ').trim().toLowerCase();
+    if (group.alerts.some((a) => normName(a.contractName) === normName(alert.contractName))) {
+      continue; // Duplikat desselben Vertrags unter demselben Gesetz → nicht doppelt anzeigen
+    }
     group.alerts.push(alert);
     if ((SEVERITY_ORDER[alert.severity] || 3) < (SEVERITY_ORDER[group.highestSeverity] || 3)) {
       group.highestSeverity = alert.severity;

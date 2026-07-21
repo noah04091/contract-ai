@@ -22,8 +22,17 @@ const INSIGHT_TYPE_CONFIG: Record<string, { icon: string; label: string; tooltip
 
 /** Replace UUID filenames in AI-generated text with friendly label */
 const UUID_FILE_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.\w+/gi;
+// UX-Fix 21.07.: zerspacte PDF-Header („M I E T V E R T R") als „Anbieter" sahen kaputt aus
+const LETTERSPACED_RE = /\b(?:[A-ZÄÖÜ]\s){3,}[A-ZÄÖÜ]\b/g;
+// Rohe 24-Hex-DB-IDs und Timestamp-Präfixe nie dem Nutzer zeigen
+const RAW_ID_RE = /\b[0-9a-f]{24}\b/gi;
+const TS_PREFIX_RE = /\b\d{10,13}-/g;
 function cleanInsightText(text: string): string {
-  return text.replace(UUID_FILE_RE, 'Unbenannter Vertrag');
+  return text
+    .replace(UUID_FILE_RE, 'Unbenannter Vertrag')
+    .replace(LETTERSPACED_RE, (m) => m.replace(/\s+/g, ''))
+    .replace(RAW_ID_RE, 'Unbenannter Vertrag')
+    .replace(TS_PREFIX_RE, '');
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
