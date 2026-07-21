@@ -77,6 +77,7 @@ const KiVertragsanalyse = lazy(() => import("./pages/KiVertragsanalyse")); // �
 // 🎯 SEO Long-Tail Landing Pages (Vertragstypen)
 const ArbeitsvertragPruefen = lazy(() => import("./pages/landing/ArbeitsvertragPruefen"));
 const AufhebungsvertragPruefen = lazy(() => import("./pages/landing/AufhebungsvertragPruefen"));
+const KuendigungPruefen = lazy(() => import("./pages/landing/KuendigungPruefen")); // 📨 Welle-1-Showcase (21.07.2026)
 const MietvertragPruefen = lazy(() => import("./pages/landing/MietvertragPruefen"));
 const NdaPruefen = lazy(() => import("./pages/landing/NdaPruefen"));
 const KaufvertragPruefen = lazy(() => import("./pages/landing/KaufvertragPruefen"));
@@ -231,6 +232,7 @@ function AppWithLoader() {
             {/* 🎯 SEO Long-Tail Landing Pages (Vertragstypen) */}
             <Route path="/arbeitsvertrag-pruefen" element={<ArbeitsvertragPruefen />} />
             <Route path="/aufhebungsvertrag-pruefen" element={<AufhebungsvertragPruefen />} />
+            <Route path="/kuendigung-pruefen" element={<KuendigungPruefen />} />
             <Route path="/mietvertrag-pruefen" element={<MietvertragPruefen />} />
             <Route path="/nda-pruefen" element={<NdaPruefen />} />
             <Route path="/kaufvertrag-pruefen" element={<KaufvertragPruefen />} />

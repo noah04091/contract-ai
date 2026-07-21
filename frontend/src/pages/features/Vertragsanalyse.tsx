@@ -8,7 +8,7 @@ import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Search, Shield, Zap, FileText, AlertTriangle, CheckCircle,
   ArrowRight, Clock, BookOpen, Target, ChevronDown, ThumbsUp,
-  Languages, BarChart3, Download, Sparkles, Scale
+  Languages, BarChart3, Download, Sparkles, Scale, Quote, Camera
 } from "lucide-react";
 
 // Video
@@ -352,6 +352,29 @@ const Vertragsanalyse: React.FC = () => {
                 <h3 className={styles.functionTitle}>Chancen-Analyse</h3>
                 <p className={styles.functionDesc}>
                   Zeigt nicht nur Risiken, sondern auch günstige Klauseln und Vorteile auf.
+                </p>
+              </div>
+
+              {/* 🆕 21.07.2026: Die zwei neuen Stärken sichtbar machen (Modell-Upgrade + Welle 4a) */}
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #bbf7d0 100%)', color: '#16a34a' }}>
+                  <Quote size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Wörtlich belegt</h3>
+                <p className={styles.functionDesc}>
+                  Risiken kommen mit Original-Zitat aus Ihrem Vertrag — automatisch gegen den
+                  Vertragstext verifiziert, statt bloßer KI-Behauptung.
+                </p>
+              </div>
+
+              <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)', color: '#f97316' }}>
+                  <Camera size={24} />
+                </div>
+                <h3 className={styles.functionTitle}>Foto genügt</h3>
+                <p className={styles.functionDesc}>
+                  Vertrag einfach mit dem Handy abfotografieren — die Texterkennung liest das
+                  Dokument aus und die Analyse startet wie bei einer PDF.
                 </p>
               </div>
 
