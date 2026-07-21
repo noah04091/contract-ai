@@ -273,6 +273,21 @@ export default function V2ScoreDetailDrawer({
               Detaillierte Score-Begründung liegt für diese Analyse nicht vor.
             </p>
           )}
+
+          {/* 🧪 Methodik-Versionshinweis (Lighthouse-Muster, 21.07.2026): ruhige Zeile
+              statt Banner — beantwortet „warum ist der Score strenger als früher?"
+              genau dort, wo jemand nachschaut. Kein Alarm, keine Bühne. */}
+          <p style={{
+            margin: "4px 0 0",
+            paddingTop: 12,
+            borderTop: "1px solid #e2e8f0",
+            fontSize: 11.5,
+            color: "#94a3b8",
+            lineHeight: 1.5,
+          }}>
+            Score-Methodik Juli 2026: Die Analyse prüft seit Juli 2026 strenger und belegt
+            Funde wörtlich im Vertrag. Scores fallen dadurch niedriger aus als bei früheren Analysen.
+          </p>
         </div>
       </div>
     </div>
