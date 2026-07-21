@@ -81,9 +81,14 @@ async function runStalenessReminder(db) {
 
       if (staleContracts.length === 0) continue;
 
-      // Get user info
+      // Get user info — TÜV-Fix 21.07.: results.userId ist STRING, users._id ObjectId.
+      // Die alte $or-Suche fand nie jemanden → Staleness-Mails wurden still nie versendet
+      // (gleicher Bug wie im Wach-Bericht).
+      const { ObjectId } = require("mongodb");
+      const idCandidates = [userId, String(userId)];
+      try { if (ObjectId.isValid(String(userId))) idCandidates.push(new ObjectId(String(userId))); } catch { /* ignore */ }
       const user = await db.collection("users").findOne(
-        { $or: [{ _id: userId }, { userId }] },
+        { _id: { $in: idCandidates } },
         { projection: { email: 1, name: 1, firstName: 1 } }
       );
 

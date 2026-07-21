@@ -114,6 +114,53 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
               );
             })()}
 
+            {/* Vertrauens-Badge (Säule 3): Tiefenprüfung hat diesen Treffer am ECHTEN
+                Klauseltext bestätigt — Badge + wörtliches Zitat als Beweis. */}
+            {alert.deepVerified && (
+              <div style={{
+                marginLeft: 42,
+                marginTop: 8,
+                marginBottom: 4,
+                padding: '10px 14px',
+                background: '#ecfdf5',
+                border: '1px solid #a7f3d0',
+                borderRadius: 10,
+              }}>
+                <div style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: '#047857',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                }}>
+                  <span style={{
+                    width: 16, height: 16, borderRadius: '50%',
+                    background: '#059669', color: '#fff',
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 10, flexShrink: 0,
+                  }}>&#10003;</span>
+                  Am Vertragstext belegt
+                </div>
+                {alert.evidenceQuote && (
+                  <div style={{
+                    marginTop: 6,
+                    fontSize: 12.5,
+                    lineHeight: 1.55,
+                    color: '#065f46',
+                    fontStyle: 'italic',
+                  }}>
+                    &bdquo;{alert.evidenceQuote}&ldquo;
+                  </div>
+                )}
+                <div style={{ marginTop: 5, fontSize: 10.5, color: '#059669' }}>
+                  Diese Stelle steht w&ouml;rtlich in Ihrem Vertrag &mdash; von der Tiefenpr&uuml;fung verifiziert.
+                </div>
+              </div>
+            )}
+
             {/* Step 2: What happens if you do nothing? */}
             {alert.businessImpact ? (
               <>

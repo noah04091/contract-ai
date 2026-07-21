@@ -121,6 +121,17 @@ function extractLegislationFingerprint(title) {
   const courtCase = t.match(/\b([IVX]+)\s+(Z[RB]|AR|StR|BLw)\s+(\d+)[\/\-](\d{2,4})\b/);
   if (courtCase) return `court_${courtCase[1]}_${courtCase[2]}_${courtCase[3]}_${courtCase[4]}`;
 
+  // 8. OLG/LG/AG/LAG-Aktenzeichen mit arabischer Senatsnummer: "25 U 5146/23",
+  //    "14 U 390/25", "101 Sch 45/26", "35 Ca 3785/25" (Dedup-Fix 21.07.:
+  //    gesetze-bayern publiziert dasselbe Urteil teils unter ZWEI Kennungen →
+  //    ohne Fingerprint gab es 4 Mails zum selben OLG-Urteil an 4 Tagen).
+  //    Bewusst NUR wenn der Titel klar von einem Gericht stammt (OLG/LG/AG/…-Präfix),
+  //    damit Drucksachen-/Gesetzes-Nummern nicht fälschlich matchen.
+  if (/^(OLG|BayObLG|KG|LG|AG|LAG|ArbG|OVG|VGH|VG|FG|SG|LSG)\b/i.test(t)) {
+    const stateCase = t.match(/\b(\d{1,4})\s+([A-Za-z]{1,4})\s+(\d{1,6})[\/\-](\d{2})\b/);
+    if (stateCase) return `court_${stateCase[1]}_${stateCase[2].toLowerCase()}_${stateCase[3]}_${stateCase[4]}`;
+  }
+
   return null; // No fingerprint → no dedup (conservative)
 }
 
@@ -812,7 +823,12 @@ async function matchLawToContracts(db, lawChange, options = {}) {
   return allResults
     .filter((r) => {
       const name = r.latestResult.context?.contractName || r._id.contractId;
-      const key = `${r._id.userId}_${name}`;
+      // Dedup-Fix 21.07.: über den GESÄUBERTEN Namen deduplizieren. Vorher lief der
+      // Roh-Name in den Schlüssel — "1776950…-mustervertrag_….docx" und "mustervertrag
+      // contract ai test" galten als verschieden und landeten DOPPELT in einer Mail,
+      // obwohl die Anzeige (cleanName) beide identisch darstellt.
+      const { cleanContractName } = require("../utils/cleanContractName");
+      const key = `${r._id.userId}_${cleanContractName(name).toLowerCase()}`;
       if (seenNames.has(key)) return false;
       seenNames.add(key);
       return true;
@@ -1331,14 +1347,29 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
 
   if (alertDocs.length === 0) return; // All duplicates — skip insert + email
 
-  // Insert with ordered:false to skip duplicates (unique index prevents re-alerts)
+  // Insert with ordered:false to skip duplicates (unique index prevents re-alerts).
+  // Dedup-Fix 21.07.: Vorher ging die MAIL trotzdem raus, auch wenn die DB ALLE Docs
+  // als Duplikate abgewiesen hat (Urlaubswoche: 4 Mails zum selben OLG-Urteil).
+  // Jetzt: nur die WIRKLICH NEU eingefügten Alerts dürfen in die Mail — 0 neu = keine Mail.
   try {
     await db.collection("pulse_v2_legal_alerts").insertMany(alertDocs, { ordered: false });
   } catch (err) {
     // Ignore duplicate key errors (code 11000) — means alert already exists
     if (err.code !== 11000) throw err;
-    console.log(`[PulseV2Radar] ${err.writeErrors?.length || 0} duplicate alerts skipped for user ${userId}`);
+    const failedIdx = new Set((err.writeErrors || []).map((we) => we.index));
+    console.log(`[PulseV2Radar] ${failedIdx.size} duplicate alerts skipped for user ${userId}`);
+    alertDocs = alertDocs.filter((_, i) => !failedIdx.has(i));
+    if (alertDocs.length === 0) {
+      console.log(`[PulseV2Radar] Alle Alerts waren DB-Duplikate — keine Mail an user ${userId}`);
+      return;
+    }
   }
+
+  // Die MAIL wird unten aus `alerts` gebaut — auf die überlebenden (fingerprint- und
+  // insert-gefilterten) Docs einschränken, sonst enthält sie weiterhin alle Duplikate.
+  const survivingKeys = new Set(alertDocs.map((d) => `${d.lawId}|${String(d.contractId)}`));
+  alerts = alerts.filter((a) => survivingKeys.has(`${a.lawChange._id.toString()}|${String(a.contractId)}`));
+  if (alerts.length === 0) return;
 
   // Still speichern ohne sofortige Mail (z.B. Backlog-Sweep beim Onboarding):
   // Alerts sind persistiert (sichtbar auf /pulse + Glocke, tauchen im naechsten
@@ -1365,7 +1396,9 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
 
   if (!user || !user.email) return;
 
-  const userName = user.firstName || user.name || "Nutzer";
+  // Fallback-Kette 21.07.: manche users-Docs haben keine Namensfelder → statt „Hallo Nutzer"
+  // den E-Mail-Lokalteil verwenden (z.B. „liebold.noah") — persönlicher, nie falsch.
+  const userName = user.firstName || user.name || (user.email ? String(user.email).split("@")[0] : "Nutzer");
 
   // -- Helpers for email formatting --
   const plural = (n, singular, pluralForm) => n === 1 ? singular : pluralForm;
@@ -1606,4 +1639,4 @@ async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75
   return { swept: true, laws: candidates.length, relevant: scored.length, alerts: alerts.length };
 }
 
-module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract, selectClausesForDeepCheck, deepVerifyImpact, quoteAppearsIn };
+module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract, selectClausesForDeepCheck, deepVerifyImpact, quoteAppearsIn, extractLegislationFingerprint };

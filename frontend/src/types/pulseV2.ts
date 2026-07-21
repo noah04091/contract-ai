@@ -273,6 +273,9 @@ export interface PulseV2LegalAlert {
   recommendation: string;
   affectedClauseIds: string[];
   clauseImpacts: PulseV2ClauseImpact[];
+  // Säule 3 (Tiefenprüfung): am echten Klauseltext bestätigt + wörtliches Zitat
+  deepVerified?: boolean;
+  evidenceQuote?: string;
   legislationFingerprint?: string;
   status: 'unread' | 'read' | 'dismissed' | 'resolved';
   resolvedClauseIds?: string[];
