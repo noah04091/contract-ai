@@ -206,7 +206,7 @@ async function runWeeklyReport(db, options = {}) {
     const user = await findUserRobust(db, userId, { email: 1, name: 1, firstName: 1 });
     const stats = await computeUserStats(db, userId, weekAgo);
     const { subject, html } = buildWeeklyReportEmail({
-      userName: user?.firstName || user?.name || "Nutzer",
+      userName: user?.firstName || user?.name || (user?.email ? String(user.email).split("@")[0] : "Nutzer"),
       monitoredCount: stats.monitoredCount,
       changesEvaluated,
       stats,
@@ -263,7 +263,7 @@ async function runWeeklyReport(db, options = {}) {
       if (stats.monitoredCount === 0) { skipped++; continue; } // nichts zu berichten
 
       const { subject, html } = buildWeeklyReportEmail({
-        userName: user.firstName || user.name || "Nutzer",
+        userName: user.firstName || user.name || (user.email ? String(user.email).split("@")[0] : "Nutzer"),
         monitoredCount: stats.monitoredCount,
         changesEvaluated,
         stats,
