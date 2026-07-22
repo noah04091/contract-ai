@@ -1188,12 +1188,13 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
 
-              <Link to="/blog/kuendigung-arbeitsvertrag-fristen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+              {/* 🆕 21.07.2026: Querverweis auf die neue Kündigungs-Seite (thematisch direkt verwandt) */}
+              <Link to="/kuendigung-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><Clock size={20} /></span>
                 <div className={styles.relatedContent}>
-                  <div className={styles.relatedTitle}>Kündigungsfristen Arbeitsvertrag</div>
+                  <div className={styles.relatedTitle}>Kündigung erhalten?</div>
                   <div className={styles.relatedDescription}>
-                    Fristen, Formvorschriften und Kündigungsschutz im Überblick
+                    3-Wochen-Klagefrist, Formfehler, nächste Schritte — Prüfung aus Empfänger-Sicht
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
