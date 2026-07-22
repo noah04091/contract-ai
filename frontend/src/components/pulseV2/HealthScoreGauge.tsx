@@ -76,7 +76,7 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
   }, [showScoreInfo]);
 
   const isLarge = size === 'large';
-  const gaugeSize = isLarge ? 180 : 80;
+  const gaugeSize = isLarge ? 116 : 80;
   const strokeWidth = isLarge ? 12 : 6;
   const radius = (gaugeSize - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -194,11 +194,11 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
 
       {isLarge && (
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 8,
-          marginTop: 16,
-          fontSize: 13,
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 7,
+          marginTop: 14,
+          fontSize: 12,
         }}>
           <SubScore label="Risiko" value={scores.risk} />
           <SubScore label="Compliance" value={scores.compliance} />
@@ -212,12 +212,12 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
 
 const SubScore: React.FC<{ label: string; value: number }> = ({ label, value }) => (
   <div className={styles.miniStatCard} style={{
-    padding: '8px 10px',
-    background: '#f9fafb',
+    padding: '5px 10px',
+    background: '#fff',
     borderRadius: 8,
-    border: '1px solid #f1f5f9',
-    display: 'flex',
-    justifyContent: 'space-between',
+    border: '1px solid #e2e8f0',
+    display: 'inline-flex',
+    gap: 6,
     alignItems: 'center',
   }}>
     <span style={{ color: '#6b7280' }}>{label}</span>

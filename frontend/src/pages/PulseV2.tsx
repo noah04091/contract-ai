@@ -1208,18 +1208,20 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           {/* Zone 3: Contract Health + Radar — now consolidated into PulseCheckHero above */}
 
           <div id="pulse-portfolio" />
-          {/* Portfolio Improvement Tracking */}
-          {portfolioSummary && (
-            <PortfolioImprovementCard
-              summary={portfolioSummary}
-              lastAnalysisMap={contractLastAnalysisMap}
-              onNavigate={(id) => onSelectContract(id)}
-            />
-          )}
-
-          {/* Portfolio Insights */}
-          {insights.length > 0 && (
-            <PortfolioInsightsPanel insights={insights} contractNames={contractNames} />
+          {/* Portfolio: Trend + Insights nebeneinander (Mockup-Zweispalter) */}
+          {(portfolioSummary || insights.length > 0) && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px, 100%), 1fr))', gap: 14, alignItems: 'start', marginBottom: 20 }}>
+              {portfolioSummary && (
+                <PortfolioImprovementCard
+                  summary={portfolioSummary}
+                  lastAnalysisMap={contractLastAnalysisMap}
+                  onNavigate={(id) => onSelectContract(id)}
+                />
+              )}
+              {insights.length > 0 && (
+                <PortfolioInsightsPanel insights={insights} contractNames={contractNames} />
+              )}
+            </div>
           )}
         </>
       )}
