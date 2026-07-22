@@ -300,8 +300,8 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
 
           {!showDismissed && groups.length > 0 && (
             <span style={{
-              fontSize: 11, fontWeight: 600, color: '#fff',
-              background: criticalCount > 0 ? '#dc2626' : '#ea580c',
+              fontSize: 11, fontWeight: 600, color: criticalCount > 0 ? '#dc2626' : '#475569',
+              background: criticalCount > 0 ? '#fef2f2' : '#f1f5f9',
               padding: '2px 8px', borderRadius: 10,
             }}>
               {groups.length} {groups.length === 1 ? 'Gesetz' : 'Gesetze'} &middot; {active.length} {active.length === 1 ? 'Vertrag' : 'Verträge'}
@@ -522,7 +522,9 @@ const LawGroup: React.FC<{
 
   return (
     <div className={styles.lawGroupCard} style={{
-      border: `1px solid ${sevColor}22`,
+      border: '1px solid #e2e8f0',
+      borderLeft: `4px solid ${sevColor}`,
+      background: '#fff',
       borderRadius: 12,
       boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       marginBottom: 12,
@@ -532,16 +534,17 @@ const LawGroup: React.FC<{
         onClick={() => setExpanded(!expanded)}
         style={{
           padding: '14px 16px',
-          background: group.hasPositive ? '#f0fdf4' : '#fafafa',
+          background: group.hasPositive ? '#f0fdf4' : '#fff',
           borderRadius: expanded ? '10px 10px 0 0' : 10,
           cursor: 'pointer',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
           <div style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: sevColor, flexShrink: 0,
-          }} />
+            width: 30, height: 30, borderRadius: 8,
+            background: `${sevColor}18`, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={sevColor} strokeWidth="2" strokeLinecap="round"><path d="M12 3v18M5 7l7-4 7 4M3 12h4l-2 5h4M17 12h4l-2 5h4"/></svg></div>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {cleanLawTitle(group.lawTitle)}

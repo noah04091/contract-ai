@@ -350,7 +350,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
               fontSize: 15,
               fontWeight: 600,
               color: '#fff',
-              background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+              background: '#2563eb',
               border: 'none',
               borderRadius: 10,
               cursor: 'pointer',
@@ -403,7 +403,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
                 fontSize: 13,
                 fontWeight: 600,
                 color: '#fff',
-                background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                background: '#2563eb',
                 border: 'none',
                 borderRadius: 8,
                 cursor: 'pointer',
@@ -440,7 +440,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
               fontSize: 15,
               fontWeight: 600,
               color: '#fff',
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+              background: '#2563eb',
               border: 'none',
               borderRadius: 10,
               cursor: 'pointer',
@@ -1027,8 +1027,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             ))}
           </div>
         </div>
-      ) : (
-        /* Minimized Hero */
+      ) : stats.analyzed === 0 ? (
+        /* Minimized Hero (nur Onboarding) */
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '16px 28px',
@@ -1062,7 +1062,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
             &#9432; Mehr anzeigen
           </button>
         </div>
-      )}
+      ) : null}
 
       {/* ══════════ Zone 1: Pulse-Check Hero ══════════ */}
       <PulseCommandCenter

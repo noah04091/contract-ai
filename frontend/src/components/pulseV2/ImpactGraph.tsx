@@ -18,6 +18,17 @@ const SEVERITY_COLORS: Record<string, { color: string; bg: string }> = {
 
 const POSITIVE_COLORS = { color: '#059669', bg: '#ecfdf5' };
 
+
+// Redesign E4 (Mockup 863486b9): Schritt-Zeile — Mono-Label links, Inhalt rechts
+const StepRow: React.FC<{ label: string; first?: boolean; strong?: boolean; children: React.ReactNode }> = ({ label, first, strong, children }) => (
+  <div style={{
+    display: 'grid', gridTemplateColumns: '118px 1fr', gap: 12,
+    padding: '9px 0', borderTop: first ? 'none' : '1px solid #e2e8f0', fontSize: 13,
+  }}>
+    <b style={{ color: '#94a3b8', fontWeight: 600, fontSize: 10.5, fontFamily: 'ui-monospace, Consolas, monospace', letterSpacing: '0.05em', textTransform: 'uppercase', paddingTop: 2 }}>{label}</b>
+    <span style={{ color: strong ? '#0f172a' : '#475569', fontWeight: strong ? 600 : 400, minWidth: 0 }}>{children}</span>
+  </div>
+);
 export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hideContractInfo }) => {
   const [expanded, setExpanded] = useState(false);
   const isPositive = alert.impactDirection === 'positive';
@@ -77,148 +88,54 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
         </span>
       </div>
 
-      {/* Expanded: Impact details */}
+      {/* Expanded: Impact details (Redesign E4 — Mockup-Steps-Grid) */}
       {expanded && (
-        <div style={{ padding: '0 16px 16px', background: '#fff' }}>
-          <div style={{ paddingTop: 16 }}>
-            {/* Step 1: What's changing? — show impactSummary (technical detail) since plainSummary is already in LawGroup header + collapsed header */}
-            <GraphNode
-              icon={isPositive ? "&#9989;" : "&#128203;"}
-              label={isPositive ? 'Chance erkannt' : 'Was ändert sich?'}
-              title={alert.impactSummary || alert.plainSummary || alert.lawTitle || 'Änderung im Rechtsbereich'}
-              color={isPositive ? '#059669' : '#3b82f6'}
-            />
-            {/* Source link — only show if it's a real URL */}
-            {alert.lawSource && alert.lawSource.startsWith('http') && (() => {
-              let host = '';
-              try { host = new URL(alert.lawSource).hostname.replace(/^www\./, ''); } catch { host = ''; }
-              return (
-                <div style={{ paddingLeft: 42, marginTop: -4, marginBottom: 4 }}>
-                  <a
-                    className={styles.sourceLink}
-                    href={alert.lawSource}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      fontSize: 11,
-                      color: '#3b82f6',
-                      textDecoration: 'none',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                    }}
-                  >
-                    &#128279; {host ? `Gesetzestext auf ${host}` : 'Originalquelle anzeigen'}
-                  </a>
-                </div>
-              );
-            })()}
-
-            {/* Vertrauens-Badge (Säule 3): Tiefenprüfung hat diesen Treffer am ECHTEN
-                Klauseltext bestätigt — Badge + wörtliches Zitat als Beweis. */}
-            {alert.deepVerified && (
-              <div style={{
-                marginLeft: 42,
-                marginTop: 8,
-                marginBottom: 4,
-                padding: '10px 14px',
-                background: '#ecfdf5',
-                border: '1px solid #a7f3d0',
-                borderRadius: 10,
-              }}>
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: '#047857',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.04em',
-                }}>
-                  <span style={{
-                    width: 16, height: 16, borderRadius: '50%',
-                    background: '#059669', color: '#fff',
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 10, flexShrink: 0,
-                  }}>&#10003;</span>
-                  Am Vertragstext belegt
-                </div>
-                {alert.evidenceQuote && (
-                  <div style={{
-                    marginTop: 6,
-                    fontSize: 12.5,
-                    lineHeight: 1.55,
-                    color: '#065f46',
-                    fontStyle: 'italic',
-                  }}>
-                    &bdquo;{alert.evidenceQuote}&ldquo;
-                  </div>
+        <div style={{ padding: '2px 16px 16px', background: '#fff' }}>
+          <div>
+            <StepRow first label="Was sich ändert">{alert.impactSummary || alert.plainSummary || alert.lawTitle}</StepRow>
+            {!hideContractInfo && (
+              <StepRow label="Betrifft">
+                <span
+                  onClick={() => onNavigate?.(alert.contractId)}
+                  style={{ fontWeight: 600, color: '#0f172a', cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none', textUnderlineOffset: 3 }}
+                >{cleanContractName(alert.contractName)}</span>
+                {alert.clauseImpacts?.length > 0 && <span style={{ color: '#94a3b8' }}> — {alert.clauseImpacts.length} Klausel{alert.clauseImpacts.length > 1 ? 'n' : ''}</span>}
+                {alert.deepVerified && (
+                  <span style={{ marginLeft: 8, fontSize: 10.5, fontWeight: 600, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: 6, whiteSpace: 'nowrap' }}>&#10003; Am Vertragstext belegt</span>
                 )}
-                <div style={{ marginTop: 5, fontSize: 10.5, color: '#059669' }}>
-                  Diese Stelle steht w&ouml;rtlich in Ihrem Vertrag &mdash; von der Tiefenpr&uuml;fung verifiziert.
-                </div>
+              </StepRow>
+            )}
+            <StepRow label={isPositive ? 'Ihr Vorteil' : 'Wenn nichts passiert'}>
+              {alert.businessImpact || (isPositive ? '' : 'Die betroffenen Klauseln könnten nicht mehr rechtskonform sein. Eine Prüfung wird empfohlen.')}
+            </StepRow>
+            <StepRow label="Nächster Schritt" strong>
+              {alert.recommendation || 'Klausel prüfen und ggf. anpassen — der Vorschlag unten hilft dabei.'}
+            </StepRow>
+
+            {alert.deepVerified && alert.evidenceQuote && (
+              <div style={{ margin: '10px 0 2px', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 10, padding: '9px 13px', fontSize: 12.5, color: '#065f46', fontStyle: 'italic' }}>
+                &bdquo;{alert.evidenceQuote}&ldquo;
               </div>
             )}
 
-            {/* Step 2: What happens if you do nothing? */}
-            {alert.businessImpact ? (
-              <>
-                <GraphConnector />
-                <GraphNode
-                  icon={isPositive ? "&#128161;" : "&#9888;&#65039;"}
-                  label={isPositive ? 'Ihr Vorteil' : 'Was passiert wenn Sie nichts tun?'}
-                  title={alert.businessImpact}
-                  color={isPositive ? '#059669' : '#dc2626'}
-                />
-              </>
-            ) : !isPositive && (
-              <>
-                <GraphConnector />
-                <GraphNode
-                  icon="&#9888;&#65039;"
-                  label="Was passiert wenn Sie nichts tun?"
-                  title="Die betroffenen Klauseln könnten nicht mehr rechtskonform sein. Eine Prüfung wird empfohlen."
-                  color="#dc2626"
-                />
-              </>
-            )}
-
-            {/* Step 3: Affected Contract — hidden on single-contract view */}
-            {!hideContractInfo && (
-              <>
-                <GraphConnector />
-                <GraphNode
-                  icon="&#128196;"
-                  label="Betroffener Vertrag"
-                  title={cleanContractName(alert.contractName)}
-                  detail={`${alert.clauseImpacts?.length || 0} Klausel(n) betroffen`}
-                  color="#0891b2"
-                  onClick={() => onNavigate?.(alert.contractId)}
-                  clickable={!!onNavigate}
-                />
-              </>
-            )}
+            {/* Aktionen */}
+            <div style={{ display: 'flex', gap: 8, margin: '12px 0 4px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {!hideContractInfo && onNavigate && (
+                <button onClick={() => onNavigate(alert.contractId)} style={{ fontWeight: 600, fontSize: 12.5, padding: '8px 14px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer' }}>Vertrag öffnen</button>
+              )}
+              {alert.lawSource && alert.lawSource.startsWith('http') && (
+                <a href={alert.lawSource} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, fontSize: 12.5, padding: '8px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#475569', textDecoration: 'none' }}>Quelle</a>
+              )}
+            </div>
 
             {/* Step 4: Affected Clauses */}
             {hasClauseImpacts && alert.clauseImpacts.map((ci, idx) => (
               <React.Fragment key={idx}>
-                <GraphConnector />
                 <ClauseImpactNode clauseImpact={ci} severity={alert.severity} alertId={alert._id} contractId={alert.contractId} />
               </React.Fragment>
             ))}
 
-            {/* Step 5: Recommendation — always show (fallback if empty) */}
-            <>
-              <GraphConnector />
-              <GraphNode
-                icon="&#9989;"
-                label="Nächster Schritt"
-                title={alert.recommendation || 'Klausel prüfen und ggf. anpassen. Nutzen Sie den Auto-Fix oder kontaktieren Sie einen Anwalt.'}
-                color="#16a34a"
-              />
-            </>
-
+            
             {/* D3: User feedback */}
             <FeedbackButtons alertId={alert._id} existingFeedback={alert.userFeedback} />
           </div>
@@ -230,53 +147,8 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
 
 // ─── Sub-Components ────────────────────────────────────────
 
-const GraphNode: React.FC<{
-  icon: string;
-  label: string;
-  title: string;
-  detail?: string;
-  color: string;
-  onClick?: () => void;
-  clickable?: boolean;
-}> = ({ icon, label, title, detail, color, onClick, clickable }) => (
-  <div
-    onClick={onClick}
-    style={{
-      display: 'flex',
-      alignItems: 'flex-start',
-      gap: 12,
-      padding: '10px 12px',
-      background: `${color}08`,
-      borderRadius: 10,
-      borderLeft: `3px solid ${color}`,
-      cursor: clickable ? 'pointer' : 'default',
-    }}
-  >
-    <span style={{ fontSize: 18, flexShrink: 0 }} dangerouslySetInnerHTML={{ __html: icon }} />
-    <div>
-      <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: 'uppercase', marginBottom: 2 }}>
-        {label}
-      </div>
-      <div style={{
-        fontSize: 13, fontWeight: 500, color: '#111827',
-        textDecoration: clickable ? 'underline' : 'none',
-      }}>
-        {title}
-      </div>
-      {detail && (
-        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{detail}</div>
-      )}
-    </div>
-  </div>
-);
 
-const GraphConnector: React.FC = () => (
-  <div style={{
-    width: 2, height: 16,
-    background: '#d1d5db',
-    marginLeft: 22,
-  }} />
-);
+
 
 const ClauseImpactNode: React.FC<{
   clauseImpact: { clauseId: string; clauseTitle: string; impact: string; suggestedChange: string };
