@@ -363,8 +363,9 @@
 @media (min-width: 1024px) {
   .detailCols {
     display: grid;
-    grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
-    gap: 18px;
+    /* Etwas breitere Status-Spalte → mehr Luft für lange Namen/Anbieter, nichts gequetscht */
+    grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
+    gap: 20px;
     align-items: start;
   }
   .detailRail {

@@ -485,24 +485,24 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           <HealthScoreGauge scores={scoresState} riskTrend={result.context?.riskTrend} />
         </div>
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 6px', lineHeight: 1.3, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
             {cleanContractName(result.context?.contractName || '') || 'Vertragsanalyse'}
           </h2>
-          <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>
+          <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px' }}>
             {result.document?.contractType && (
               <span style={{
                 background: '#eff6ff',
                 color: '#1e40af',
                 padding: '2px 8px',
                 borderRadius: 4,
-                marginRight: 8,
                 fontSize: 12,
+                whiteSpace: 'nowrap',
               }}>
                 {safeContractType(result.document.contractType)}
               </span>
             )}
             {result.context?.provider && (
-              <span style={{ marginRight: 12 }}>Anbieter: {safeContractType(result.context.provider)}</span>
+              <span style={{ overflowWrap: 'anywhere' }}>Anbieter: {safeContractType(result.context.provider)}</span>
             )}
             {result.context?.daysUntilExpiry !== null && result.context?.daysUntilExpiry !== undefined && (
               <span style={{
@@ -546,7 +546,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           </div>
 
           {/* Meta + PDF Export */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: monitorInfo ? 10 : 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: monitorInfo ? 10 : 0 }}>
             <span style={{ fontSize: 12, color: '#9ca3af' }}>
               Analysiert am {new Date(result.createdAt).toLocaleDateString('de-DE')} um {new Date(result.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
             </span>
@@ -613,47 +613,50 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             )}
           </div>
 
-          {/* Monitoring Status */}
+          {/* Monitoring Status — zwei Zeilen: Label+Pille oben, Beschreibung darunter.
+              So bleibt es in schmaler wie breiter Spalte luftig und nie eingequetscht. */}
           {monitorInfo && (
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
               fontSize: 12,
               color: '#15803d',
               background: '#f0fdf4',
               border: '1px solid #bbf7d0',
-              borderRadius: 6,
-              padding: '6px 10px',
+              borderRadius: 8,
+              padding: '9px 12px',
             }}>
-              <span style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: '#22c55e',
-                boxShadow: '0 0 4px rgba(34,197,94,0.5)',
-                flexShrink: 0,
-              }} />
-              <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
-              <span style={{ color: '#16a34a', fontSize: 11 }}>Täglich auf Gesetzesänderungen geprüft · Treffer erscheinen hier und im Dashboard — und per E-Mail, sofern Ihre Benachrichtigungen aktiv sind</span>
-              {monitorInfo.alertCount > 0 && (
-                <span
-                  onClick={() => scrollToSection('contract-alerts')}
-                  style={{
-                    background: '#fef2f2',
-                    color: '#dc2626',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '1px 6px',
-                    borderRadius: 8,
-                    border: '1px solid #fecaca',
-                    marginLeft: 'auto',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {monitorInfo.alertCount} {monitorInfo.alertCount === 1 ? 'Alert' : 'Alerts'}
-                </span>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  boxShadow: '0 0 4px rgba(34,197,94,0.5)',
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
+                {monitorInfo.alertCount > 0 && (
+                  <span
+                    onClick={() => scrollToSection('contract-alerts')}
+                    style={{
+                      background: '#fef2f2',
+                      color: '#dc2626',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '1px 8px',
+                      borderRadius: 8,
+                      border: '1px solid #fecaca',
+                      marginLeft: 'auto',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {monitorInfo.alertCount} {monitorInfo.alertCount === 1 ? 'Alert' : 'Alerts'}
+                  </span>
+                )}
+              </div>
+              <div style={{ color: '#16a34a', fontSize: 11, lineHeight: 1.5, marginTop: 4 }}>
+                Täglich auf Gesetzesänderungen geprüft · Treffer erscheinen hier und im Dashboard — und per E-Mail, sofern Ihre Benachrichtigungen aktiv sind
+              </div>
             </div>
           )}
         </div>

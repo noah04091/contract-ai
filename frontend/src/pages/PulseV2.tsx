@@ -126,25 +126,52 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
 
   return (
     <div style={{ maxWidth: 1360, margin: '0 auto', padding: '24px 16px' }}>
-      {/* Back button */}
-      <button
-        onClick={() => navigate('/pulse')}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '6px 12px',
-          fontSize: 13,
-          color: '#6b7280',
-          background: 'none',
-          border: '1px solid #e5e7eb',
-          borderRadius: 6,
-          cursor: 'pointer',
-          marginBottom: 16,
-        }}
-      >
-        &#8592; Alle Verträge
-      </button>
+      {/* Top-Toolbar: Zurück links, Erneut analysieren rechts — immer auf einer Höhe,
+          direkt unter der Navbar. Auf Handy bricht der Analyse-Button unter den
+          Zurück-Button (flexWrap), nichts wird abgeschnitten. */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        flexWrap: 'wrap',
+        marginBottom: 16,
+      }}>
+        <button
+          onClick={() => navigate('/pulse')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 12px',
+            fontSize: 13,
+            color: '#6b7280',
+            background: 'none',
+            border: '1px solid #e5e7eb',
+            borderRadius: 6,
+            cursor: 'pointer',
+          }}
+        >
+          &#8592; Alle Verträge
+        </button>
+        {status === 'completed' && result && (
+          <button
+            onClick={handleStartAnalysis}
+            style={{
+              padding: '8px 20px',
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#fff',
+              background: '#2563eb',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+            }}
+          >
+            Erneut analysieren
+          </button>
+        )}
+      </div>
 
       {/* Analysis Running — bewusst schmal halten (Lesebreite), Seite selbst ist 1360px */}
       {status === 'analyzing' && (
@@ -402,29 +429,9 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
         </div>
       )}
 
-      {/* Result */}
+      {/* Result — der „Erneut analysieren"-Button sitzt jetzt oben in der Toolbar */}
       {status === 'completed' && result && (
-        <>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-            <button
-              onClick={handleStartAnalysis}
-              style={{
-                padding: '8px 20px',
-                fontSize: 13,
-                fontWeight: 600,
-                color: '#fff',
-                background: '#2563eb',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-              }}
-            >
-              Erneut analysieren
-            </button>
-          </div>
-
-          <ContractDetail result={result} monitorInfo={monitorInfo} contractAlerts={contractAlerts} />
-        </>
+        <ContractDetail result={result} monitorInfo={monitorInfo} contractAlerts={contractAlerts} />
       )}
 
       {/* No result yet */}
