@@ -116,7 +116,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                     <tr>
                       <td style="vertical-align:middle;">
-                        <span style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:600;color:#334155;">&#128196;&nbsp; Mobilfunkvertrag_2026.pdf</span>
+                        <span style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:600;color:#334155;">&#128196;&nbsp; Dienstleistungsvertrag_2026.pdf</span>
                       </td>
                       <td align="right" style="vertical-align:middle;">
                         <span style="display:inline-block;padding:4px 12px;background-color:#fef2f2;border:1px solid #fecaca;border-radius:14px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;font-weight:800;color:#dc2626;white-space:nowrap;">43&thinsp;/&thinsp;100</span>
@@ -132,11 +132,11 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
                     <tr>
                       <td style="padding:13px 16px;">
                         <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;color:#0f172a;">
-                          Automatische Verl&auml;ngerung um 24 Monate
+                          Automatische Verl&auml;ngerung um 12 Monate
                           <span style="display:inline-block;padding:2px 8px;margin-left:6px;background-color:#eff6ff;border-radius:10px;font-size:10px;font-weight:700;color:#1d4ed8;vertical-align:middle;">&#10003; W&ouml;rtlich belegt</span>
                         </div>
                         <div class="mock-quote" style="margin-top:6px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;line-height:1.55;color:#64748b;font-style:italic;">
-                          &bdquo;&hellip; verl&auml;ngert sich der Vertrag jeweils um weitere 24 Monate, sofern nicht sp&auml;testens 3 Monate vor Ablauf &hellip;&ldquo; &mdash; &sect;&thinsp;11 Abs.&thinsp;2
+                          &bdquo;&hellip; verl&auml;ngert sich der Vertrag jeweils um weitere 12 Monate, sofern nicht sp&auml;testens 3 Monate vor Ablauf &hellip;&ldquo; &mdash; &sect;&thinsp;11 Abs.&thinsp;2
                         </div>
                       </td>
                     </tr>
@@ -174,7 +174,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
               </tr>
             </table>
             <p style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;text-align:center;">
-              So sieht es aus, wenn Contract AI einen Vertrag pr&uuml;ft &mdash; Beispiel-Analyse.
+              So pr&uuml;ft Contract AI jeden Vertrag &mdash; vom Handyvertrag bis zum Gewerbemietvertrag. Beispiel-Analyse.
             </p>
           </td>
         </tr>
@@ -318,39 +318,39 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
 
                 <!-- BUSINESS -->
                 <td class="price-card" valign="top" style="width:33.33%;padding:6px;">
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:2px solid #2563eb;border-radius:14px;background-color:#ffffff;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e2e8f0;border-radius:14px;background-color:#ffffff;">
                     <tr>
-                      <td style="padding:0;">
-                        <div style="padding:6px 12px;background:linear-gradient(135deg,#2563eb 0%,#1e40af 100%);background-color:#2563eb;border-radius:11px 11px 0 0;text-align:center;">
-                          <span style="color:#ffffff;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">&#9733; Empfohlen</span>
-                        </div>
-                        <div style="padding:16px 16px 20px;">
-                          <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;color:#1d4ed8;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">Business</div>
-                          <div style="margin-top:10px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:26px;color:#0f172a;font-weight:800;letter-spacing:-0.5px;">19&thinsp;&euro;<span style="font-size:13px;color:#64748b;font-weight:600;">/Monat</span></div>
-                          <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11.5px;color:#16a34a;font-weight:700;">${PROMO_PRICE_BUSINESS}&thinsp;&euro; mit Code</div>
-                          <div style="margin-top:12px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;color:#334155;line-height:1.8;">
-                            <span style="color:#2563eb;font-weight:700;">&#10003;</span>&nbsp;25 Analysen/Monat<br>
-                            <span style="color:#2563eb;font-weight:700;">&#10003;</span>&nbsp;Premium-Features<br>
-                            <span style="color:#2563eb;font-weight:700;">&#10003;</span>&nbsp;Fristen automatisch
-                          </div>
+                      <td style="padding:20px 16px;">
+                        <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;color:#1d4ed8;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">Business</div>
+                        <div style="margin-top:10px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:26px;color:#0f172a;font-weight:800;letter-spacing:-0.5px;">19&thinsp;&euro;<span style="font-size:13px;color:#64748b;font-weight:600;">/Monat</span></div>
+                        <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11.5px;color:#16a34a;font-weight:700;">${PROMO_PRICE_BUSINESS}&thinsp;&euro; mit Code</div>
+                        <div style="margin-top:12px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;color:#334155;line-height:1.8;">
+                          <span style="color:#2563eb;font-weight:700;">&#10003;</span>&nbsp;25 Analysen/Monat<br>
+                          <span style="color:#2563eb;font-weight:700;">&#10003;</span>&nbsp;Premium-Features<br>
+                          <span style="color:#2563eb;font-weight:700;">&#10003;</span>&nbsp;Fristen automatisch
                         </div>
                       </td>
                     </tr>
                   </table>
                 </td>
 
-                <!-- ENTERPRISE -->
+                <!-- ENTERPRISE ★ MEIST GEWÄHLT -->
                 <td class="price-card" valign="top" style="width:33.33%;padding:6px;">
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e2e8f0;border-radius:14px;background-color:#ffffff;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:2px solid #f59e0b;border-radius:14px;background-color:#ffffff;">
                     <tr>
-                      <td style="padding:20px 16px;">
-                        <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;color:#b45309;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">Enterprise</div>
-                        <div style="margin-top:10px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:26px;color:#0f172a;font-weight:800;letter-spacing:-0.5px;">29&thinsp;&euro;<span style="font-size:13px;color:#64748b;font-weight:600;">/Monat</span></div>
-                        <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11.5px;color:#16a34a;font-weight:700;">${PROMO_PRICE_ENTERPRISE}&thinsp;&euro; mit Code</div>
-                        <div style="margin-top:12px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;color:#334155;line-height:1.8;">
-                          <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp;Ohne Analyse-Limit<br>
-                          <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp;API &amp; Excel-Export<br>
-                          <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp;CRM-Integrationen
+                      <td style="padding:0;">
+                        <div style="padding:6px 12px;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);background-color:#f59e0b;border-radius:11px 11px 0 0;text-align:center;">
+                          <span style="color:#ffffff;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">&#9733; Meist gew&auml;hlt</span>
+                        </div>
+                        <div style="padding:16px 16px 20px;">
+                          <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;color:#b45309;letter-spacing:1.5px;text-transform:uppercase;font-weight:700;">Enterprise</div>
+                          <div style="margin-top:10px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:26px;color:#0f172a;font-weight:800;letter-spacing:-0.5px;">29&thinsp;&euro;<span style="font-size:13px;color:#64748b;font-weight:600;">/Monat</span></div>
+                          <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11.5px;color:#16a34a;font-weight:700;">${PROMO_PRICE_ENTERPRISE}&thinsp;&euro; mit Code</div>
+                          <div style="margin-top:12px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;color:#334155;line-height:1.8;">
+                            <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp;Ohne Analyse-Limit<br>
+                            <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp;API &amp; Excel-Export<br>
+                            <span style="color:#d97706;font-weight:700;">&#10003;</span>&nbsp;CRM-Integrationen
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -368,39 +368,39 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
         <!-- ═══ DARK OFFER PANEL ═══ -->
         <tr>
           <td class="px-inner" style="padding:40px 32px 0;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);background-color:#0f172a;border-radius:16px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);background-color:#eff6ff;border:1px solid #bfdbfe;border-radius:16px;">
               <tr>
                 <td style="padding:36px 28px;text-align:center;">
-                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#93c5fd;letter-spacing:3px;text-transform:uppercase;font-weight:700;">
+                  <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;color:#1d4ed8;letter-spacing:3px;text-transform:uppercase;font-weight:700;">
                     Nur noch ${PROMO_DAYS} Tage
                   </div>
-                  <div style="margin-top:12px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:30px;line-height:1.2;color:#ffffff;font-weight:800;letter-spacing:-0.6px;">
+                  <div style="margin-top:12px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:30px;line-height:1.2;color:#0f172a;font-weight:800;letter-spacing:-0.6px;">
                     ${PROMO_PERCENT}&thinsp;% Rabatt auf<br>deinen Schutz
                   </div>
-                  <div style="margin-top:20px;display:inline-block;padding:12px 24px;background-color:rgba(59,130,246,0.16);border:1px dashed #60a5fa;border-radius:10px;">
-                    <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:9px;color:#bfdbfe;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Dein Code</div>
-                    <div class="promo-code" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:24px;color:#ffffff;font-weight:800;letter-spacing:6px;">${PROMO_CODE}</div>
+                  <div style="margin-top:20px;display:inline-block;padding:12px 24px;background-color:#ffffff;border:1px dashed #2563eb;border-radius:10px;">
+                    <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:9px;color:#64748b;letter-spacing:2px;text-transform:uppercase;font-weight:600;margin-bottom:4px;">Dein Code</div>
+                    <div class="promo-code" style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:24px;color:#1e3a8a;font-weight:800;letter-spacing:6px;">${PROMO_CODE}</div>
                   </div>
-                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;border-top:1px solid rgba(255,255,255,0.12);">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:22px;border-top:1px solid #bfdbfe;">
                     <tr>
-                      <td style="padding:14px 0 4px;color:#cbd5e1;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;text-align:left;">Monatsabo</td>
-                      <td style="padding:14px 0 4px;color:#ffffff;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:700;text-align:right;">${PROMO_PERCENT}&thinsp;% f&uuml;r 3 Monate</td>
+                      <td style="padding:14px 0 4px;color:#475569;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;text-align:left;">Monatsabo</td>
+                      <td style="padding:14px 0 4px;color:#0f172a;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:700;text-align:right;">${PROMO_PERCENT}&thinsp;% f&uuml;r 3 Monate</td>
                     </tr>
                     <tr>
-                      <td style="padding:4px 0;color:#cbd5e1;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;text-align:left;">Jahresabo</td>
-                      <td style="padding:4px 0;color:#ffffff;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:700;text-align:right;">${PROMO_PERCENT}&thinsp;% aufs ganze Jahr</td>
+                      <td style="padding:4px 0;color:#475569;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;text-align:left;">Jahresabo</td>
+                      <td style="padding:4px 0;color:#0f172a;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;font-weight:700;text-align:right;">${PROMO_PERCENT}&thinsp;% aufs ganze Jahr</td>
                     </tr>
                   </table>
                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:24px auto 0;">
                     <tr>
-                      <td style="background-color:#ffffff;border-radius:12px;">
-                        <a href="https://contract-ai.de/pricing?code=${PROMO_CODE}" class="cta-link" style="display:inline-block;padding:15px 34px;color:#1e3a8a;text-decoration:none;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14.5px;font-weight:700;letter-spacing:0.2px;">
+                      <td style="background:linear-gradient(135deg,#2563eb 0%,#1e40af 100%);background-color:#2563eb;border-radius:12px;">
+                        <a href="https://contract-ai.de/pricing?code=${PROMO_CODE}" class="cta-link" style="display:inline-block;padding:15px 34px;color:#ffffff;text-decoration:none;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14.5px;font-weight:700;letter-spacing:0.2px;">
                           Rabatt einl&ouml;sen &rarr;
                         </a>
                       </td>
                     </tr>
                   </table>
-                  <p style="margin:14px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11.5px;line-height:1.6;color:#93c5fd;">
+                  <p style="margin:14px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11.5px;line-height:1.6;color:#64748b;">
                     Code wird im Checkout automatisch angewendet.
                   </p>
                 </td>
@@ -482,7 +482,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
 export const freeToBusinessUltimateV3Template: NewsletterTemplate = {
   id: 'free-to-business-ultimate-v3',
   label: '🚀 Free → Business · ULTIMATE v3 (Fintech-Design)',
-  description: 'TOP-EMPFEHLUNG v3. Modernes Stripe/DocuSign-Level-Design (Inter statt Serifen, Produkt-Mock statt Stock-Foto). Neu vs. v2: echte Preise in der Tarif-Tabelle (19€/29€ + rabattiert), Risk-Reversal unter jedem CTA (monatlich kündbar + 14-Tage-Geld-zurück), aktuelle USPs (Wörtlich belegt, Klagefrist §4 KSchG, Foto-Upload), kürzerer Mobile-tauglicher Betreff.',
+  description: 'TOP-EMPFEHLUNG v3. Modernes Stripe/DocuSign-Level-Design (Inter statt Serifen, Produkt-Mock „Dienstleistungsvertrag" statt Stock-Foto, helles Aktion-Panel). Neu vs. v2: echte Preise in der Tarif-Tabelle (19€/29€ + rabattiert), Enterprise als „Meist gewählt" hervorgehoben, Risk-Reversal unter jedem CTA (monatlich kündbar + 14-Tage-Geld-zurück), aktuelle USPs (Wörtlich belegt, Klagefrist §4 KSchG, Foto-Upload), kürzerer Mobile-tauglicher Betreff.',
   subject: '{{firstName}}, liest du deine Verträge wirklich?',
   preheader: 'Geht den meisten so. 10% Rabatt mit Code AKTION10 — nur 7 Tage. Im Jahresabo: aufs ganze Jahr.',
   title: 'Liest du deine Verträge wirklich?',
