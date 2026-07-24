@@ -4522,7 +4522,16 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
           ],
           response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
           ...modelParams,
-        }, { signal: reqController.signal, maxRetries: 0 });
+        }, {
+          signal: reqController.signal,
+          maxRetries: 0,
+          // ⏱️ 24.07.2026 (Live-Vorfall): Der Client-Default (getOpenAI: timeout 90s,
+          // gpt-4o-Ära) killte jede Reasoning-Analyse >90s mit "Request timed out",
+          // BEVOR unser AbortController (240s) je feuern konnte. Per-Request-Override
+          // konsistent zum Abort-Timeout; schnelle Calls anderer Aufrufer (T2, Pilot)
+          // behalten den 90s-Client-Default.
+          timeout: ANALYZE_MODEL_IS_REASONING ? 240_000 : 180_000,
+        });
       } finally {
         clearTimeout(reqTimeoutHandle);
       }
@@ -5633,13 +5642,19 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     let completion;
     let dateHuntResult = { importantDates: [], stats: { fallback: true } };
     try {
+      // ⏱️ 24.07.2026 (Live-Vorfall AVV „AI service unavailable"): Die äußere Race
+      // war fix 185s — für gpt-4o (Abort 180s) korrekt, aber sie killte beim
+      // Reasoning-Modell (Abort 240s, reale Denkzeit 60–110s) den 3. Versuch mitten
+      // im Lauf. Jetzt flag-konsistent: Race > Versuche × per-Versuch-Timeout,
+      // gedeckelt unter dem 10-Min-Frontend-Polling (Reasoning: 520s ≈ 2 volle
+      // Timeout-Versuche + Puffer; klassisch: unverändert 185s).
+      const OUTER_RACE_MS = ANALYZE_MODEL_IS_REASONING ? 520_000 : 185_000;
       const [completionResult, dateHuntPromiseResult] = await Promise.all([
         Promise.race([
           makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3, validationResult.documentType, extractedContractType, analysisMaxTokens),
-          // 🎯 Promise.race 185s — Library-AbortController (180s) soll zuerst feuern.
-          // Diese externe Race ist Backup für den Fall dass AbortController hängt.
+          // 🎯 Externe Race als Backup für den Fall, dass der AbortController hängt.
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("OpenAI API timeout after 185s")), 185000)
+            setTimeout(() => reject(new Error(`OpenAI API timeout after ${Math.round(OUTER_RACE_MS / 1000)}s`)), OUTER_RACE_MS)
           )
         ]),
         dateHuntService.huntDates(
