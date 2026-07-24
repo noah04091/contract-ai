@@ -54,6 +54,13 @@ function getImpactIcon(impact: string): string {
   return '\ud83d\udccc';
 }
 
+
+// Redesign E5: Prioritäts-Icons als SVG-Pfade (statt Emojis)
+const PRIORITY_ICON_PATHS: Record<string, string> = {
+  now: 'M13 2 4 14h6l-1 8 9-12h-6l1-8z',
+  plan: 'M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z',
+  watch: 'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
+};
 export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resultId, contractNames, contractLastAnalysisMap, onStatusChange, onCommentSave }) => {
   const navigate = useNavigate();
   const priority = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.watch;
@@ -132,7 +139,9 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
       opacity: isDismissed ? 0.6 : 1,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-        <span style={{ fontSize: 18 }}>{priority.icon}</span>
+        <span style={{ width: 30, height: 30, borderRadius: 8, background: `${priority.color}15`, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={priority.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={PRIORITY_ICON_PATHS[action.priority] || PRIORITY_ICON_PATHS.watch} /></svg>
+        </span>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
             <span style={{
