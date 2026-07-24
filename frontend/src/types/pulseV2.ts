@@ -278,6 +278,7 @@ export interface PulseV2LegalAlert {
   evidenceQuote?: string;
   legislationFingerprint?: string;
   status: 'unread' | 'read' | 'dismissed' | 'resolved';
+  statusChangedAt?: string;
   resolvedClauseIds?: string[];
   lastFixAppliedAt?: string;
   userFeedback?: {

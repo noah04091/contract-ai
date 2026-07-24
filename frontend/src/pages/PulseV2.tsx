@@ -1172,6 +1172,25 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                 toast.error('Verbindungsfehler — bitte erneut versuchen.');
               }
             }}
+            onResolve={async (alertId) => {
+              try {
+                const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+                  method: 'PATCH',
+                  credentials: 'include',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status: 'resolved' }),
+                });
+                if (res.ok) {
+                  setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'resolved', statusChangedAt: new Date().toISOString() } : a));
+                  toast.success('Alert als erledigt markiert.');
+                } else {
+                  toast.error('Alert konnte nicht als erledigt markiert werden.');
+                }
+              } catch (err) {
+                console.error('[PulseV2] Alert resolve failed:', err);
+                toast.error('Verbindungsfehler — bitte erneut versuchen.');
+              }
+            }}
             onRestore={async (alertId) => {
               try {
                 const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
@@ -1210,7 +1229,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           <div id="pulse-portfolio" />
           {/* Portfolio: Trend + Insights nebeneinander (Mockup-Zweispalter) */}
           {(portfolioSummary || insights.length > 0) && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px, 100%), 1fr))', gap: 14, alignItems: 'start', marginBottom: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px, 100%), 1fr))', gap: 14, alignItems: 'stretch', marginBottom: 20 }}>
               {portfolioSummary && (
                 <PortfolioImprovementCard
                   summary={portfolioSummary}
