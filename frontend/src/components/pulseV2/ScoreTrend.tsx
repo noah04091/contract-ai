@@ -56,21 +56,26 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
       border: '1px solid rgba(0,0,0,0.05)',
+      borderTop: '3px solid #2563eb',
       borderRadius: 16,
       padding: 24,
-      marginBottom: 28,
+      marginBottom: 20,
       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <div>
-          <div style={{ fontSize: 15, fontWeight: 600, color: '#111827' }}>
-            Score-Entwicklung
-          </div>
-          <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>
-            {timeline.length} Analysen
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minWidth: 0 }}>
+          <span style={{ width: 40, height: 40, borderRadius: 10, background: '#eff6ff', border: '1px solid #2563eb33', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17l6-6 4 4 8-8M21 7v6h-6" /></svg>
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#2563eb', marginBottom: 1 }}>Verlauf</div>
+            <div style={{ fontSize: 16.5, fontWeight: 700, color: '#111827' }}>Score-Entwicklung</div>
+            <div style={{ fontSize: 12.5, color: '#6b7280', marginTop: 4, lineHeight: 1.5 }}>
+              So verändert sich der Health-Score dieses Vertrags über {timeline.length} {timeline.length === 1 ? 'Analyse' : 'Analysen'}.
+            </div>
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
           <span style={{ fontSize: 24, fontWeight: 700, color: trendColor }}>
             {trendArrow} {delta > 0 ? '+' : ''}{delta}
           </span>

@@ -891,36 +891,41 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           <div id="empfehlungen" className={`${styles.sectionCard} ${styles.fadeInDelay3}`} style={{
             background: '#ffffff',
             border: `1px solid ${borderColor}`,
+            borderTop: `3px solid ${criticalCount > 0 ? '#dc2626' : '#d97706'}`,
             borderRadius: 16,
             padding: 24,
             marginBottom: 20,
             boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
           }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: '#111827', paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
-                Empfehlungen
-              </div>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                {resolvedFindingCount > 0 && (
-                  <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>
-                    {resolvedFindingCount}/{actionableFindings.length} Befunde bearbeitet
+            {/* Kapitel-Kopf */}
+            <div style={{ marginBottom: 16 }}>
+              <ChapterHead
+                icon="action"
+                eyebrow="Was zu tun ist"
+                title="Empfehlungen"
+                accent={criticalCount > 0 ? '#dc2626' : '#d97706'}
+                accentBg={criticalCount > 0 ? '#fef2f2' : '#fffbeb'}
+                right={(resolvedFindingCount > 0 || doneCount > 0) ? (
+                  <span style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
+                    {resolvedFindingCount > 0 && (
+                      <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>
+                        {resolvedFindingCount}/{actionableFindings.length} Befunde bearbeitet
+                      </span>
+                    )}
+                    {doneCount > 0 && (
+                      <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+                        {doneCount}/{totalCount} erledigt
+                      </span>
+                    )}
                   </span>
-                )}
-                {doneCount > 0 && (
-                  <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
-                    {doneCount}/{totalCount} erledigt
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Subtext — erklärt die Sektion */}
-            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 16, lineHeight: 1.5 }}>
-              Basierend auf der Analyse aller {clauses.length} Klauseln.
-              {hasCriticalFindings
-                ? ' Beginnen Sie mit dem obersten Punkt — dieser hat die höchste Priorität.'
-                : ' Sortiert nach Relevanz. Beginnen Sie mit dem obersten Punkt.'}
+                ) : undefined}
+                subtitle={<>
+                  Basierend auf der Analyse aller {clauses.length} Klauseln.
+                  {hasCriticalFindings
+                    ? ' Beginnen Sie mit dem obersten Punkt — dieser hat die höchste Priorität.'
+                    : ' Sortiert nach Relevanz. Beginnen Sie mit dem obersten Punkt.'}
+                </>}
+              />
             </div>
 
             {/* Progress bar */}
@@ -1159,29 +1164,28 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         <div id="contract-alerts" style={{
           background: '#ffffff',
           border: '1px solid rgba(0,0,0,0.05)',
+          borderTop: '3px solid #7c3aed',
           borderRadius: 16,
           overflow: 'hidden',
           marginTop: 20,
           boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
         }}>
-          <div style={{
-            padding: 24,
-            borderBottom: '1px solid #fef2f2',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}>
-            <span style={{ fontSize: 18 }}>&#9878;&#65039;</span>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#111827' }}>
-                Legal Radar — Gesetzesänderungen
-              </div>
-              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-                {contractAlerts.length === 1
-                  ? 'Eine aktuelle Rechtsänderung betrifft diesen Vertrag. Nutzen Sie „Klausel automatisch anpassen" um den Vorschlag direkt zu übernehmen.'
-                  : `${contractAlerts.length} aktuelle Rechtsänderungen betreffen diesen Vertrag. Nutzen Sie „Klausel automatisch anpassen" um Vorschläge direkt zu übernehmen.`}
-              </div>
-            </div>
+          <div style={{ padding: 24, borderBottom: '1px solid #f1f5f9' }}>
+            <ChapterHead
+              icon="law"
+              eyebrow="Neue Rechtslage"
+              title="Legal Radar"
+              accent="#7c3aed"
+              accentBg="#f5f3ff"
+              right={(
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 999, padding: '2px 9px' }}>
+                  {contractAlerts.length} {contractAlerts.length === 1 ? 'Änderung' : 'Änderungen'}
+                </span>
+              )}
+              subtitle={contractAlerts.length === 1
+                ? 'Eine aktuelle Gesetzesänderung oder ein Urteil betrifft diesen Vertrag. Über „Klausel automatisch anpassen" übernehmen Sie den Vorschlag direkt.'
+                : `${contractAlerts.length} aktuelle Gesetzesänderungen oder Urteile betreffen diesen Vertrag. Über „Klausel automatisch anpassen" übernehmen Sie Vorschläge direkt.`}
+            />
           </div>
           <div style={{ padding: 24 }}>
             {contractAlerts.map(alert => (
@@ -1208,6 +1212,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           <div id="geprueft" style={{
             background: '#ffffff',
             border: '1px solid rgba(0,0,0,0.05)',
+            borderTop: '3px solid #059669',
             borderRadius: 16,
             overflow: 'hidden',
             marginTop: 20,
@@ -1218,32 +1223,31 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               onClick={() => setShowAllFindings(!showAllFindings)}
               style={{
                 width: '100%',
-                padding: '14px 24px',
+                padding: '16px 24px',
                 background: showAllFindings ? '#f9fafb' : '#fff',
                 border: 'none',
                 cursor: 'pointer',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                fontSize: 14,
-                fontWeight: 500,
-                color: '#374151',
-                textAlign: 'left',
+                gap: 12,
               }}
             >
-              <div>
-                <div>
-                  Geprüft &amp; unauffällig
-                  <span style={{ color: '#9ca3af', fontWeight: 400, marginLeft: 8, fontSize: 12 }}>
+              <ChapterHead
+                icon="ok"
+                eyebrow="Unbedenklich"
+                title="Geprüft & unauffällig"
+                accent="#059669"
+                accentBg="#f0fdf4"
+                right={(
+                  <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400 }}>
                     {allCheckedFindings.length} {allCheckedFindings.length === 1 ? 'Klausel' : 'Klauseln'}
                   </span>
-                </div>
-                <div style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginTop: 2 }}>
-                  {contractType
-                    ? `Diese Klauseln sind für einen ${contractType} üblich und erfordern kein Handeln.`
-                    : 'Diese Klauseln wurden geprüft und erfordern kein Handeln.'}
-                </div>
-              </div>
+                )}
+                subtitle={contractType
+                  ? `Diese Klauseln sind für einen ${contractType} üblich und erfordern kein Handeln.`
+                  : 'Diese Klauseln wurden geprüft und erfordern kein Handeln.'}
+              />
               <span style={{
                 fontSize: 12,
                 color: '#9ca3af',
@@ -1307,5 +1311,42 @@ const SeverityDot: React.FC<{ color: string; label: string; count: number }> = (
   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
     <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
     <span style={{ color: '#4b5563' }}>{count} {label}</span>
+  </div>
+);
+
+// ── Einheitliche Kapitel-Kopfzeile für die rechte Spalte (Redesign Runde 9) ──
+// Farbcodiert nach Rolle: Orange = Handeln, Violett = neue Rechtslage, Grün = unbedenklich.
+// Icon-Box + Kategorie-Label (Eyebrow) + Titel + Klartext-Zeile → sofort erkennbar, was der Block ist.
+const CHAPTER_ICONS: Record<string, string> = {
+  action: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM9 14l2 2 4-4',
+  law: 'M12 3v18M5 7l7-4 7 4M3 12h4l-2 5h4M17 12h4l-2 5h4',
+  ok: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
+};
+
+const ChapterHead: React.FC<{
+  icon: keyof typeof CHAPTER_ICONS;
+  eyebrow: string;
+  title: string;
+  subtitle?: React.ReactNode;
+  accent: string;
+  accentBg: string;
+  right?: React.ReactNode;
+}> = ({ icon, eyebrow, title, subtitle, accent, accentBg, right }) => (
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, textAlign: 'left' }}>
+    <span style={{
+      width: 40, height: 40, borderRadius: 10, background: accentBg,
+      border: `1px solid ${accent}33`, display: 'inline-flex',
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={CHAPTER_ICONS[icon]} /></svg>
+    </span>
+    <div style={{ minWidth: 0, flex: 1 }}>
+      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: accent, marginBottom: 1 }}>{eyebrow}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 16.5, fontWeight: 700, color: '#111827' }}>{title}</span>
+        {right}
+      </div>
+      {subtitle && <div style={{ fontSize: 12.5, color: '#6b7280', marginTop: 4, lineHeight: 1.5 }}>{subtitle}</div>}
+    </div>
   </div>
 );
