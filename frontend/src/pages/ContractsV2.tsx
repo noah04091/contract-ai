@@ -711,7 +711,7 @@ export default function Contracts() {
   });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
-  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; progress: number }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay
+  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; progress: number; stage?: string }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay (📶 stage = echte Backend-Etappe)
 
   // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
   const [uploadSuccessModal, setUploadSuccessModal] = useState<{
@@ -2806,7 +2806,11 @@ export default function Contracts() {
         ));
 
         // 🎨 Smooth progress animation variables (declared outside try/catch for cleanup)
+        // 📶 24.07.2026 („99%-Hänger"): Simulation deckelt jetzt bei 90 und kriecht in der
+        // langen KI-Etappe ehrlich langsam; der ECHTE Backend-Fortschritt (Job-Polling:
+        // 15/28/40/80/92 + Etappen-Text) schiebt den Balken, 100 gibt es erst bei Abschluss.
         let currentProgress = 0;
+        let realStage: string | null = null;
         let progressIntervalId: NodeJS.Timeout | null = null;
 
         try {
@@ -2816,31 +2820,27 @@ export default function Contracts() {
           progressIntervalId = setInterval(() => {
             setUploadFiles(prev => prev.map((item, idx) => {
               if (item.status === 'analyzing' && idx === i) {
-                // Increment progress smoothly, but slow down as we approach thresholds
                 let increment = 1;
-
-                // Slow down near step boundaries to avoid jumping ahead
                 if (currentProgress >= 10 && currentProgress < 15) increment = 0.5;
-                else if (currentProgress >= 30 && currentProgress < 35) increment = 0.5;
-                else if (currentProgress >= 50 && currentProgress < 55) increment = 0.5;
-                else if (currentProgress >= 80 && currentProgress < 85) increment = 0.5;
-                else if (currentProgress >= 95) increment = 0.2; // Very slow near completion
+                else if (currentProgress >= 28 && currentProgress < 32) increment = 0.5;
+                else if (currentProgress >= 40) increment = 0.08; // lange KI-Etappe (1–3 Min) — ehrlich langsam
 
-                currentProgress = Math.min(currentProgress + increment, 99); // Cap at 99%
+                currentProgress = Math.min(currentProgress + increment, 90); // Deckel 90 — 100 erst bei echtem Abschluss
 
                 return { ...item, progress: Math.round(currentProgress) };
               }
               return item;
             }));
-            // 🔍 Overlay-Progress synchron aktualisieren
-            setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: Math.round(currentProgress) } : prev);
+            // 🔍 Overlay-Progress + echte Etappe synchron aktualisieren
+            setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: Math.round(currentProgress), stage: realStage ?? prev.stage } : prev);
           }, 200); // Update every 200ms for smooth animation
 
-          const analysisResult = await uploadAndAnalyze(uploadFileItem.file, (progress) => {
-            // This callback may not be called by backend, but we keep it for compatibility
+          const analysisResult = await uploadAndAnalyze(uploadFileItem.file, (progress, stage) => {
+            // 📶 Echter Backend-Fortschritt übernimmt, sobald er weiter ist als die Simulation
             if (progress > currentProgress) {
               currentProgress = progress;
             }
+            if (stage) realStage = stage;
           }, true); // forceReanalyze = true!
 
           // Clear the progress interval
@@ -2966,15 +2966,15 @@ export default function Contracts() {
     setAnalyzingOverlay({ show: true, contractName: fixUtf8Display(contract.name), progress: 0 });
 
     // 🔍 Simulierter Progress für bestehendes Vertrag-Overlay
+    // 📶 24.07.2026: Sync-Route ohne Job-Etappen → ehrliche Kurve (Deckel 90,
+    // langsames Kriechen in der langen KI-Etappe) statt 99%-Parken.
     let currentProgress = 0;
     const progressInterval = setInterval(() => {
       let increment = 1;
       if (currentProgress >= 10 && currentProgress < 15) increment = 0.5;
-      else if (currentProgress >= 30 && currentProgress < 35) increment = 0.5;
-      else if (currentProgress >= 50 && currentProgress < 55) increment = 0.5;
-      else if (currentProgress >= 80 && currentProgress < 85) increment = 0.5;
-      else if (currentProgress >= 95) increment = 0.2;
-      currentProgress = Math.min(currentProgress + increment, 99);
+      else if (currentProgress >= 28 && currentProgress < 32) increment = 0.5;
+      else if (currentProgress >= 40) increment = 0.08; // lange KI-Etappe (1–3 Min)
+      currentProgress = Math.min(currentProgress + increment, 90);
       setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: Math.round(currentProgress) } : prev);
     }, 200);
 
@@ -3169,19 +3169,18 @@ export default function Contracts() {
       progress: 0,
     });
 
-    // 🎨 Smooth Progress-Animation 0→99% — 1:1 dieselbe Stufung wie in
-    // handleAnalyzeExistingContract, damit beide Re-Analyse-Wege identisch wirken.
+    // 🎨 Progress-Animation — 📶 24.07.2026: ehrliche Kurve (Deckel 90, langsames
+    // Kriechen ab 40) + ECHTER Backend-Fortschritt/Etappe via Job-Polling.
     let currentProgress = 0;
+    let realStage: string | null = null;
     const progressInterval = setInterval(() => {
       let increment = 1;
       if (currentProgress >= 10 && currentProgress < 15) increment = 0.5;
-      else if (currentProgress >= 30 && currentProgress < 35) increment = 0.5;
-      else if (currentProgress >= 50 && currentProgress < 55) increment = 0.5;
-      else if (currentProgress >= 80 && currentProgress < 85) increment = 0.5;
-      else if (currentProgress >= 95) increment = 0.2;
-      currentProgress = Math.min(currentProgress + increment, 99);
+      else if (currentProgress >= 28 && currentProgress < 32) increment = 0.5;
+      else if (currentProgress >= 40) increment = 0.08; // lange KI-Etappe (1–3 Min)
+      currentProgress = Math.min(currentProgress + increment, 90);
       const rounded = Math.round(currentProgress);
-      setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: rounded } : prev);
+      setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: rounded, stage: realStage ?? prev.stage } : prev);
       setUploadFiles(prev => prev.map(item =>
         item.id === fileItem.id ? { ...item, progress: rounded } : item
       ));
@@ -3190,7 +3189,11 @@ export default function Contracts() {
     try {
       const result = await uploadAndAnalyze(
         fileItem.file,
-        () => { /* Progress läuft via Interval — Backend liefert keinen echten Progress */ },
+        (progress, stage) => {
+          // 📶 Echter Backend-Fortschritt (15/28/40/80/92) übernimmt die Führung
+          if (progress > currentProgress) currentProgress = progress;
+          if (stage) realStage = stage;
+        },
         true // ✅ forceReanalyze EXPLICIT — Backend überspringt Duplikat-Check
       ) as AnalysisResult;
 
@@ -7054,6 +7057,7 @@ export default function Contracts() {
         show={analyzingOverlay.show}
         contractName={analyzingOverlay.contractName}
         progress={analyzingOverlay.progress}
+        currentStep={analyzingOverlay.stage} // 📶 echte Backend-Etappe (Fallback: eigene Labels)
         pdfFile={analyzingOverlay.pdfFile}
       />
 

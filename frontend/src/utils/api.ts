@@ -713,7 +713,9 @@ export async function pollAnalysisJob(
  */
 export const uploadAndAnalyze = async (
   file: File,
-  onProgress?: (progress: number) => void,
+  // 📶 24.07.2026: stage = echte Backend-Etappe (z.B. „KI-Tiefenprüfung läuft…") —
+  // löst den „99%-Hänger" ehrlich: der Balken folgt jetzt der Pipeline statt einem Timer.
+  onProgress?: (progress: number, stage?: string | null) => void,
   forceReanalyze: boolean = false // ✅ NEU: Parameter für Re-Analyse
 ): Promise<unknown> => {
   const formData = new FormData();
@@ -753,8 +755,10 @@ export const uploadAndAnalyze = async (
       setPendingJob(result.jobId, file.name);
       const finalResult = await pollAnalysisJob(result.jobId, {
         onProgress: (status) => {
+          // 📶 Echten Fortschritt + Etappen-Text durchreichen (progress 0 = Job noch
+          // ohne Meilenstein → nicht rückwärts springen, min. 10 halten).
           if (onProgress && typeof status.progress === 'number') {
-            onProgress(Math.max(30, status.progress));
+            onProgress(Math.max(10, status.progress), status.stage ?? null);
           }
         }
       });

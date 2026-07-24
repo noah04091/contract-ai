@@ -3286,6 +3286,7 @@ export default function CalendarPage() {
   const {
     events,
     loading,
+    error: storeError, // 🩹 24.07.2026: Lade-Fehler sichtbar machen (war nie ausgelesen → stumm-leerer Kalender)
     fetchEvents,
     dismissEvent,
     snoozeEvent,
@@ -3860,6 +3861,28 @@ export default function CalendarPage() {
                   ))}
                 </div>
               </div>
+
+              {/* 🩹 24.07.2026: Lade-Fehler SICHTBAR machen statt stumm-leerem Kalender
+                  (Live-Vorfall: 403 bei abgelaufener Sitzung sah aus wie Datenverlust). */}
+              {storeError && !loading && (
+                <div role="alert" style={{
+                  margin: '0 0 16px', padding: '14px 18px', borderRadius: 10,
+                  background: '#fffbeb', border: '1px solid #fde68a', color: '#92400e',
+                  display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'
+                }}>
+                  <span style={{ fontSize: 18 }} aria-hidden="true">⚠️</span>
+                  <span style={{ flex: 1, minWidth: 220 }}>{storeError}</span>
+                  <button
+                    onClick={() => fetchEvents(true)}
+                    style={{
+                      padding: '7px 14px', borderRadius: 8, border: '1px solid #f59e0b',
+                      background: '#fff', color: '#92400e', fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >
+                    Erneut laden
+                  </button>
+                </div>
+              )}
 
               {/* Calendar Grid */}
               {loading ? (

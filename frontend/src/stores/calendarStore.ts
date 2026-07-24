@@ -6,6 +6,7 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import axios from 'axios';
+import { clearAuthData } from '../utils/api'; // 🩹 24.07.2026: App-Standard-Logout bei TOKEN_EXPIRED
 
 // 🔒 Calendar Access Info (vom Backend)
 export interface CalendarAccess {
@@ -188,7 +189,22 @@ export const useCalendarStore = create<CalendarState>()(
             }
           } catch (err) {
             console.error('[CalendarStore] Error fetching events:', err);
-            set({ loading: false, error: 'Fehler beim Laden' });
+            // 🩹 24.07.2026 (Live-Vorfall „Kalender leer"): Der Store nutzt rohes axios
+            // und umging damit den App-Standard aus apiCall — bei abgelaufener Sitzung
+            // (403 TOKEN_EXPIRED aus verifyToken.js) blieb der Kalender STUMM leer und
+            // sah aus wie Datenverlust. Jetzt: exakt das apiCall-Muster (Auto-Logout +
+            // Redirect); andere Fehler bekommen eine sprechende Meldung für die UI.
+            const resp = (err as { response?: { status?: number; data?: { error?: string } } })?.response;
+            if (resp?.status === 403 && resp?.data?.error === 'TOKEN_EXPIRED') {
+              console.warn('🔒 [CalendarStore] Sitzung abgelaufen - Auto-Logout');
+              clearAuthData();
+              if (!window.location.pathname.startsWith('/login')) {
+                window.location.href = '/login?reason=session_expired';
+              }
+              set({ loading: false, error: 'Sitzung abgelaufen. Bitte erneut einloggen.' });
+              return;
+            }
+            set({ loading: false, error: 'Deine Termine konnten gerade nicht geladen werden — sie sind weiterhin gespeichert. Bitte lade die Seite neu.' });
           }
         },
 

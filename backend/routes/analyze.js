@@ -4195,6 +4195,23 @@ async function dispatchAnalyzeRequest(req, res) {
 }
 
 /**
+ * 📶 Echter Analyse-Fortschritt (24.07.2026, Live-Feedback „99%-Hänger"):
+ * Schreibt Etappe+Prozent ins Job-Doc, das das Frontend ohnehin pollt.
+ * Sync-Pfad (kein jobId) und Fehler sind no-ops — die Pipeline darf dadurch
+ * NIE beeinflusst werden. Vorher blieb progress konstant 0 und das Frontend
+ * simulierte bis 99% → parkte dort minutenlang („hängt das?").
+ */
+async function reportJobProgress(req, stage, progress) {
+  if (!req || !req.jobId) return;
+  try {
+    const db = await database.connect();
+    await updateAnalysisJob(db, req.jobId, { stage, progress });
+  } catch (e) {
+    console.warn(`⚠️ [job-progress] ${req.jobId}: ${e.message}`);
+  }
+}
+
+/**
  * Pipeline-Wrapper: ruft die existierende handleEnhancedDeepLawyerAnalysisRequest mit
  * Mock-req/res-Objekten und schreibt Result ins Job-Doc.
  */
@@ -5075,6 +5092,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       const extracted = await extractTextFromBuffer(buffer, fileMimetype);
       pdfData = { text: extracted.text, numpages: extracted.pageCount || 0, usedOCR: false, ocrConfidence: null, signatures: [] };
       console.log(`📄 [${requestId}] Document parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
+      reportJobProgress(req, 'Dokument gelesen', 15); // 📶 fire-and-forget
 
       // OCR-Fallback für gescannte PDFs mit wenig Text ODER scan-typischer Dichte (14.06.2026).
       // Bisher nur „<200 Zeichen gesamt" → gescannte Mehrseiter mit etwas Junk-Text rutschten durch.
@@ -5490,6 +5508,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.log(`📨 [${requestId}] LETTER-Guard: Vertrags-Lebenszyklus-Felder genullt${clearedFields.length ? ` (verworfen: ${clearedFields.join(', ')})` : ''} — documentCategory='letter', letterType=${validationResult.letterType || 'sonstiges_schreiben'}`);
     }
 
+    reportJobProgress(req, 'Dokumenttyp erkannt & Vertragsdaten extrahiert', 28); // 📶
     console.log(`🛠️ [${requestId}] Document analysis successful - proceeding with FIXED DEEP LAWYER-LEVEL analysis:`, {
       documentType: validationResult.documentType,
       strategy: validationResult.strategy,
@@ -5604,6 +5623,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     }
 
     console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document (contractType passed to prompt: ${promptContractType})`);
+    // 📶 Die LANGE Etappe beginnt (KI-Tiefenprüfung + Fristen-Suche, 1–3 Min)
+    reportJobProgress(req, 'KI-Tiefenprüfung & Fristen-Suche läuft — je nach Umfang 1–3 Minuten', 40);
 
     // 🚀 Parallel-Aufruf: Hauptanalyse + Date Hunt Stage gleichzeitig.
     // Date Hunt liefert evidence-validierte importantDates — die Liste der
@@ -5647,6 +5668,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     }
 
     console.log(`✅ [${requestId}] OpenAI deep lawyer-level response received`);
+    reportJobProgress(req, 'Ergebnis wird geprüft & aufbereitet', 80); // 📶
 
     // 💰 Track API cost
     if (completion.usage) {
@@ -5950,6 +5972,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     try {
       console.log(`💾 [${requestId}] Saving contract with FIXED deep lawyer-level analysis (${storageInfo.uploadType})...`);
+      reportJobProgress(req, 'Analyse wird gespeichert', 92); // 📶
 
       if (existingContract && req.body.forceReanalyze === 'true') {
         console.log(`📄 [${requestId}] Updating existing contract with FIXED deep lawyer-level analysis: ${existingContract._id}`);

@@ -134,7 +134,8 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
           </div>
           <p className={styles.stepLabel}>{stepLabel}</p>
           <p className={styles.hint}>
-            Die KI analysiert Ihren Vertrag. Dies kann bis zu 30 Sekunden dauern.
+            {/* 📶 24.07.2026: ehrliche Erwartung — die Tiefenprüfung braucht real 1–3 Minuten. */}
+            Die KI prüft Ihren Vertrag gründlich — je nach Umfang ein bis drei Minuten.
           </p>
         </div>
       </div>
