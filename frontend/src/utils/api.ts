@@ -290,7 +290,13 @@ function isDuplicateError(error: unknown): error is DuplicateError {
  */
 function isUserFriendlyError(message: string): boolean {
   const userFriendlyMarkers = [
-    '📸', '📄', '🔄', '📊', '⏱️', '🔧', // Emojis aus Backend
+    '📸', '📄', '🔄', '📊', '⏱️', '🔧', '⏳', // Emojis aus Backend
+    // 🩹 24.07.2026 (Live-Vorfall AVV-Upload): Die ehrliche 409-Meldung „Eine
+    // Analyse für diese Datei läuft bereits…" hatte keinen Marker → fiel unten
+    // in die „Datei"-Pauschalregel und wurde zur FALSCHEN Format-Fehlermeldung
+    // umgeschrieben. Ehrliche Meldungen müssen unverändert durchgereicht werden.
+    'läuft bereits',
+    'ANALYSIS_IN_PROGRESS',
     'Diese PDF scheint gescannt zu sein',
     'PDF enthält nur Bilddaten',
     'Konvertiere die PDF zu einem durchsuchbaren Format',
@@ -934,10 +940,17 @@ export const uploadAndOptimize = async (
     if (onProgress) onProgress(0); // Reset bei Fehler
     
     console.error("❌ Upload & Optimize Fehler:", error);
-    
+
     // ✅ FIXED: TypeScript-sichere Fehlerbehandlung
     const errorMessage = getErrorMessage(error);
-    
+
+    // 🩹 24.07.2026: Ehrliche Backend-Meldungen unverändert durchreichen (Parität
+    // zum /analyze-Pfad) — sonst verstümmelt die „Datei"-Pauschalregel unten z.B.
+    // „…läuft bereits…" zur falschen Format-Fehlermeldung.
+    if (isUserFriendlyError(errorMessage)) {
+      throw new Error(errorMessage);
+    }
+
     // ✅ Benutzerfreundliche Fehlermeldungen für Optimierung
     if (errorMessage.includes('nicht gefunden') || errorMessage.includes('404')) {
       throw new Error("❌ Optimierung-Service ist derzeit nicht verfügbar. Bitte kontaktiere den Support.");

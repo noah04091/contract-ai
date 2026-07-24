@@ -309,6 +309,11 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
         } else if (errMsg.includes('Timeout')) {
           errorMessage = "Analyse-Timeout. Die PDF-Datei ist möglicherweise zu groß.";
           canRetry = true;
+        } else if (errMsg.includes('läuft bereits')) {
+          // 🩹 24.07.2026: „Analyse läuft bereits" ist KEIN Formatfehler — ehrlich
+          // durchreichen und Retry erlauben (Lock löst sich, sobald der Erst-Lauf fertig ist).
+          errorMessage = errMsg;
+          canRetry = true;
         } else if (errMsg.includes('PDF') || errMsg.includes('Datei')) {
           errorMessage = "PDF konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.";
           canRetry = false;
