@@ -891,7 +891,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           <div id="empfehlungen" className={`${styles.sectionCard} ${styles.fadeInDelay3}`} style={{
             background: '#ffffff',
             border: `1px solid ${borderColor}`,
-            borderTop: `3px solid ${criticalCount > 0 ? '#dc2626' : '#d97706'}`,
             borderRadius: 16,
             padding: 24,
             marginBottom: 20,
@@ -903,8 +902,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 icon="action"
                 eyebrow="Was zu tun ist"
                 title="Empfehlungen"
-                accent={criticalCount > 0 ? '#dc2626' : '#d97706'}
-                accentBg={criticalCount > 0 ? '#fef2f2' : '#fffbeb'}
                 right={(resolvedFindingCount > 0 || doneCount > 0) ? (
                   <span style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
                     {resolvedFindingCount > 0 && (
@@ -1164,7 +1161,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         <div id="contract-alerts" style={{
           background: '#ffffff',
           border: '1px solid rgba(0,0,0,0.05)',
-          borderTop: '3px solid #7c3aed',
           borderRadius: 16,
           overflow: 'hidden',
           marginTop: 20,
@@ -1175,10 +1171,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               icon="law"
               eyebrow="Neue Rechtslage"
               title="Legal Radar"
-              accent="#7c3aed"
-              accentBg="#f5f3ff"
               right={(
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#7c3aed', background: '#f5f3ff', border: '1px solid #ddd6fe', borderRadius: 999, padding: '2px 9px' }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 999, padding: '2px 9px' }}>
                   {contractAlerts.length} {contractAlerts.length === 1 ? 'Änderung' : 'Änderungen'}
                 </span>
               )}
@@ -1212,7 +1206,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           <div id="geprueft" style={{
             background: '#ffffff',
             border: '1px solid rgba(0,0,0,0.05)',
-            borderTop: '3px solid #059669',
             borderRadius: 16,
             overflow: 'hidden',
             marginTop: 20,
@@ -1237,8 +1230,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 icon="ok"
                 eyebrow="Unbedenklich"
                 title="Geprüft & unauffällig"
-                accent="#059669"
-                accentBg="#f0fdf4"
                 right={(
                   <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400 }}>
                     {allCheckedFindings.length} {allCheckedFindings.length === 1 ? 'Klausel' : 'Klauseln'}
@@ -1314,9 +1305,9 @@ const SeverityDot: React.FC<{ color: string; label: string; count: number }> = (
   </div>
 );
 
-// ── Einheitliche Kapitel-Kopfzeile für die rechte Spalte (Redesign Runde 9) ──
-// Farbcodiert nach Rolle: Orange = Handeln, Violett = neue Rechtslage, Grün = unbedenklich.
-// Icon-Box + Kategorie-Label (Eyebrow) + Titel + Klartext-Zeile → sofort erkennbar, was der Block ist.
+// ── Einheitliche Kapitel-Kopfzeile für die rechte Spalte (Redesign Runde 10: ruhig/monochrom) ──
+// Struktur statt Farbe: dezente graue Icon-Box + Kategorie-Label (Eyebrow) + Titel + Klartext-Zeile.
+// Sorgt für klare Trennung/Orientierung, ohne bunt zu wirken. Farbe bleibt den Befund-Schweregraden vorbehalten.
 const CHAPTER_ICONS: Record<string, string> = {
   action: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM9 14l2 2 4-4',
   law: 'M12 3v18M5 7l7-4 7 4M3 12h4l-2 5h4M17 12h4l-2 5h4',
@@ -1328,22 +1319,20 @@ const ChapterHead: React.FC<{
   eyebrow: string;
   title: string;
   subtitle?: React.ReactNode;
-  accent: string;
-  accentBg: string;
   right?: React.ReactNode;
-}> = ({ icon, eyebrow, title, subtitle, accent, accentBg, right }) => (
+}> = ({ icon, eyebrow, title, subtitle, right }) => (
   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, textAlign: 'left' }}>
     <span style={{
-      width: 40, height: 40, borderRadius: 10, background: accentBg,
-      border: `1px solid ${accent}33`, display: 'inline-flex',
+      width: 38, height: 38, borderRadius: 9, background: '#f8fafc',
+      border: '1px solid #e2e8f0', display: 'inline-flex',
       alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     }}>
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={CHAPTER_ICONS[icon]} /></svg>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={CHAPTER_ICONS[icon]} /></svg>
     </span>
     <div style={{ minWidth: 0, flex: 1 }}>
-      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: accent, marginBottom: 1 }}>{eyebrow}</div>
+      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 1 }}>{eyebrow}</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 16.5, fontWeight: 700, color: '#111827' }}>{title}</span>
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{title}</span>
         {right}
       </div>
       {subtitle && <div style={{ fontSize: 12.5, color: '#6b7280', marginTop: 4, lineHeight: 1.5 }}>{subtitle}</div>}

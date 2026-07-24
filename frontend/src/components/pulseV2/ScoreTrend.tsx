@@ -56,7 +56,6 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
       background: '#fff',
       border: '1px solid rgba(0,0,0,0.05)',
-      borderTop: '3px solid #2563eb',
       borderRadius: 16,
       padding: 24,
       marginBottom: 20,
@@ -64,12 +63,12 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minWidth: 0 }}>
-          <span style={{ width: 40, height: 40, borderRadius: 10, background: '#eff6ff', border: '1px solid #2563eb33', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17l6-6 4 4 8-8M21 7v6h-6" /></svg>
+          <span style={{ width: 38, height: 38, borderRadius: 9, background: '#f8fafc', border: '1px solid #e2e8f0', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 17l6-6 4 4 8-8M21 7v6h-6" /></svg>
           </span>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#2563eb', marginBottom: 1 }}>Verlauf</div>
-            <div style={{ fontSize: 16.5, fontWeight: 700, color: '#111827' }}>Score-Entwicklung</div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 1 }}>Verlauf</div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>Score-Entwicklung</div>
             <div style={{ fontSize: 12.5, color: '#6b7280', marginTop: 4, lineHeight: 1.5 }}>
               So verändert sich der Health-Score dieses Vertrags über {timeline.length} {timeline.length === 1 ? 'Analyse' : 'Analysen'}.
             </div>
