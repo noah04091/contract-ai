@@ -354,3 +354,31 @@
     padding: 16px !important;
   }
 }
+
+/* ═══ Vertragsseite Zweispalter (Redesign Runde 7, 24.07.2026) ═══
+   Mobil/Tablet (<1024px): eine Spalte wie bisher — nichts verschoben, nichts abgeschnitten.
+   Desktop (>=1024px): links feststehende Status-Spalte, rechts die Arbeitsliste. */
+.detailCols { display: block; }
+.detailRail, .detailWork { min-width: 0; }
+@media (min-width: 1024px) {
+  .detailCols {
+    display: grid;
+    grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  .detailRail {
+    position: sticky;
+    top: 16px;
+    /* Höher als der Viewport? Dann intern scrollen statt Inhalte unerreichbar machen */
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+
+/* Score-Kopfkarte: horizontal (Ring links, Text rechts) auf mittleren Breiten,
+   vertikal in der schmalen Desktop-Rail und auf schmalen Handys */
+.detailHeaderCard { display: grid; grid-template-columns: auto 1fr; gap: 28px; }
+@media (min-width: 1024px) { .detailHeaderCard { grid-template-columns: 1fr; gap: 14px; } }
+@media (max-width: 560px) { .detailHeaderCard { grid-template-columns: 1fr; gap: 14px; } }

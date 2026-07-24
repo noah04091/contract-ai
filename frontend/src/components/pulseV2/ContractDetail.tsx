@@ -467,11 +467,12 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         </div>
       )}
 
+      {/* ═══ Zweispalter: links Status-Rail (sticky), rechts Arbeitsliste — <1024px eine Spalte ═══ */}
+      <div className={styles.detailCols}>
+      <div className={styles.detailRail}>
+
       {/* ═══ Header: Score + Contract Overview ═══ */}
-      <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
-        display: 'grid',
-        gridTemplateColumns: 'auto 1fr',
-        gap: 32,
+      <div className={`${styles.sectionCard} ${styles.fadeIn} ${styles.detailHeaderCard}`} style={{
         marginBottom: 20,
         padding: 24,
         background: '#ffffff',
@@ -864,6 +865,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           </div>
         </div>
       )}
+
+      </div>{/* Ende detailRail */}
+      <div className={styles.detailWork}>
 
       {/* ═══ Empfehlungen — Actions + kritische Findings zusammen ═══ */}
       {(displayActions.length > 0 || topFindings.length > 0) && (() => {
@@ -1288,6 +1292,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           </div>
         </div>
       )}
+
+      </div>{/* Ende detailWork */}
+      </div>{/* Ende detailCols */}
 
     </div>
   );
