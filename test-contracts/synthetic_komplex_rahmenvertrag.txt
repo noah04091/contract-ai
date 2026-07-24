@@ -1,0 +1,226 @@
+RAHMENVERTRAG
+über Entwicklung, Lizenzierung und Pflege einer Individualsoftware
+("Rahmenvertrag")
+
+zwischen
+
+Baltic Foods GmbH, Speicherstadt 14, 20457 Hamburg,
+vertreten durch die Geschäftsführerin Frau Ines Kramer
+– nachfolgend "Auftraggeberin" –
+
+und
+
+CodeWerk Solutions GmbH, Innovationspark 3, 44227 Dortmund,
+vertreten durch den Geschäftsführer Herrn Robert Steinbach
+– nachfolgend "Auftragnehmerin" –
+
+– Auftraggeberin und Auftragnehmerin nachfolgend gemeinsam die "Parteien" –
+
+Präambel
+
+Die Auftraggeberin ist ein mittelständisches Handelsunternehmen für Tiefkühl-Lebensmittel mit angeschlossener Logistik. Sie beabsichtigt, ihre Warenwirtschaft, Chargenverfolgung und Tourenplanung durch eine individuell zu entwickelnde Softwarelösung ("FrostChain Suite") zu digitalisieren. Die Auftragnehmerin ist ein Softwarehaus mit Erfahrung in der Entwicklung branchenspezifischer Logistiklösungen. Vor diesem Hintergrund vereinbaren die Parteien was folgt:
+
+§ 1 Vertragsgegenstand und Vertragsbestandteile
+
+1.1 Gegenstand dieses Rahmenvertrages sind (a) die Entwicklung der FrostChain Suite gemäß der Leistungsbeschreibung in Anlage 1, (b) die Einräumung von Nutzungsrechten nach Maßgabe des § 11, (c) die Pflege und Weiterentwicklung der Software nach Maßgabe des Service Level Agreements in Anlage 2 sowie (d) die Verarbeitung personenbezogener Daten nach Maßgabe der Auftragsverarbeitungsvereinbarung in Anlage 3.
+
+1.2 Vertragsbestandteile sind in der folgenden Rangfolge: dieser Rahmenvertrag, Anlage 1 (Leistungsbeschreibung), Anlage 2 (Service Level Agreement), Anlage 3 (Auftragsverarbeitungsvereinbarung). Bei Widersprüchen geht die jeweils ranghöhere Regelung vor, soweit nicht ausdrücklich etwas anderes bestimmt ist.
+
+1.3 Allgemeine Geschäftsbedingungen der Auftraggeberin finden keine Anwendung, auch wenn die Auftragnehmerin ihnen nicht ausdrücklich widerspricht.
+
+§ 2 Begriffsbestimmungen
+
+2.1 "Arbeitstage" im Sinne dieses Vertrages sind Montag bis Samstag mit Ausnahme der gesetzlichen Feiertage am Sitz der Auftragnehmerin.
+
+2.2 "Servicezeiten" sind die Zeiten von Montag bis Freitag, jeweils 10:00 Uhr bis 16:00 Uhr, mit Ausnahme der gesetzlichen Feiertage am Sitz der Auftragnehmerin.
+
+2.3 "Mangel" ist eine Abweichung der Software von der in Anlage 1 vereinbarten Beschaffenheit, die die Nutzung der Software mehr als nur unerheblich beeinträchtigt.
+
+2.4 "Produktivsetzung" ist die erstmalige Nutzung der Software im Echtbetrieb der Auftraggeberin nach erklärter Abnahme.
+
+§ 3 Vertragslaufzeit
+
+3.1 Dieser Rahmenvertrag tritt am 01.10.2026 in Kraft ("Vertragsbeginn").
+
+3.2 Der Vertrag hat eine feste Erstlaufzeit von 36 Monaten ab Vertragsbeginn ("Erstlaufzeit"), mithin bis zum 30.09.2029.
+
+3.3 Der Vertrag verlängert sich nach Ablauf der Erstlaufzeit jeweils stillschweigend um weitere 24 Monate, sofern er nicht gemäß § 4 gekündigt wird.
+
+§ 4 Ordentliche Kündigung
+
+4.1 Während der Erstlaufzeit ist die ordentliche Kündigung durch die Auftraggeberin ausgeschlossen.
+
+4.2 Die Auftraggeberin kann den Vertrag mit einer Frist von sechs Monaten zum Ende der Erstlaufzeit sowie mit gleicher Frist zum Ende eines jeden Verlängerungszeitraums kündigen.
+
+4.3 Die Auftragnehmerin ist berechtigt, den Vertrag jederzeit mit einer Frist von zwei Wochen zum Monatsende zu kündigen, sofern ihr die Fortsetzung des Vertrages aus betrieblichen Gründen nicht zumutbar ist; die Beurteilung der Zumutbarkeit obliegt der Auftragnehmerin.
+
+4.4 Jede Kündigung bedarf der Schriftform.
+
+§ 5 Entwicklungsleistungen, Meilensteine, Abnahme
+
+5.1 Die Auftragnehmerin entwickelt die FrostChain Suite in drei Modulen (Warenwirtschaft, Chargenverfolgung, Tourenplanung) gemäß Anlage 1.
+
+5.2 Für die Entwicklung gelten folgende Meilensteine: Bereitstellung Modul 1 (Warenwirtschaft) zur Abnahme bis zum 15.01.2027; Bereitstellung Modul 2 (Chargenverfolgung) zur Abnahme bis zum 15.05.2027; Bereitstellung Modul 3 (Tourenplanung) zur Abnahme bis zum 15.09.2027; Gesamtabnahme der integrierten FrostChain Suite bis zum 30.11.2027.
+
+5.3 Die Auftraggeberin prüft jedes Modul innerhalb von zwanzig Arbeitstagen nach Bereitstellung und erklärt die Abnahme, wenn keine wesentlichen Mängel vorliegen. Unwesentliche Mängel berechtigen nicht zur Verweigerung der Abnahme; sie werden im Rahmen der Pflege behoben. Erklärt sich die Auftraggeberin innerhalb der Prüffrist nicht, gilt das jeweilige Modul als abgenommen.
+
+5.4 Nachträgliche Änderungswünsche der Auftraggeberin werden im Change-Request-Verfahren behandelt. Die Auftragnehmerin unterbreitet binnen zehn Arbeitstagen ein Angebot über Mehr- oder Minderaufwand; ohne beidseitige Freigabe bleibt der bisherige Leistungsumfang maßgeblich.
+
+§ 6 Vergütung und Zahlungsbedingungen
+
+6.1 Die Vergütung für die Entwicklungsleistungen beträgt pauschal 480.000,00 EUR zuzüglich gesetzlicher Umsatzsteuer, zahlbar in vier Raten: 25 % bei Vertragsbeginn, je 25 % nach Abnahme von Modul 1 und Modul 2, 25 % nach Gesamtabnahme.
+
+6.2 Die Vergütung für Pflege und Support gemäß Anlage 2 beträgt monatlich 6.800,00 EUR zuzüglich gesetzlicher Umsatzsteuer, erstmals ab Produktivsetzung, längstens ab dem 01.01.2028.
+
+6.3 Rechnungen der Auftragnehmerin sind innerhalb von 90 Tagen nach Rechnungszugang ohne Abzug zur Zahlung fällig.
+
+6.4 Die Pflegevergütung nach Ziffer 6.2 erhöht sich erstmals zum 01.01.2028 und sodann jeweils zum 1. Januar eines jeden Kalenderjahres automatisch um bis zu 9 %, wobei die Auftragnehmerin die konkrete Höhe der Anpassung nach billigem Ermessen festlegt und der Auftraggeberin bis zum 30. November des Vorjahres mitteilt. Ein Kündigungsrecht der Auftraggeberin wird durch die Anpassung nicht begründet.
+
+6.5 Die Aufrechnung durch die Auftraggeberin ist ausgeschlossen; dies gilt auch für unbestrittene oder rechtskräftig festgestellte Gegenforderungen. Zurückbehaltungsrechte der Auftraggeberin sind ausgeschlossen, soweit sie nicht auf demselben Vertragsverhältnis beruhen und von der Auftragnehmerin schriftlich anerkannt wurden.
+
+§ 7 Mitwirkungspflichten der Auftraggeberin
+
+7.1 Die Auftraggeberin stellt der Auftragnehmerin unentgeltlich alle für die Entwicklung erforderlichen Informationen, Testdaten, Schnittstellenbeschreibungen und fachkundigen Ansprechpartner zur Verfügung.
+
+7.2 Die Auftraggeberin benennt einen Projektverantwortlichen und einen Stellvertreter, die Entscheidungen mit Wirkung für die Auftraggeberin treffen können.
+
+7.3 Verletzt die Auftraggeberin wesentliche Mitwirkungspflichten und verzögert sich hierdurch die Leistungserbringung, verschieben sich betroffene Meilensteine angemessen; Mehraufwand wird nach den Sätzen der jeweils aktuellen Preisliste der Auftragnehmerin vergütet.
+
+§ 8 Vertragsstrafe
+
+8.1 Verstößt die Auftraggeberin gegen die Vertraulichkeitsverpflichtung nach § 14 oder gegen die Beschränkungen der Rechteeinräumung nach § 11, ist für jeden Einzelfall eine Vertragsstrafe in Höhe von 25.000,00 EUR verwirkt, ohne dass es eines Verschuldens der Auftraggeberin bedarf.
+
+8.2 Die Einrede des Fortsetzungszusammenhangs ist ausgeschlossen. Mehrere Verstöße lösen die Vertragsstrafe jeweils gesondert aus; eine summenmäßige Obergrenze besteht nicht.
+
+8.3 Die Geltendmachung eines weitergehenden Schadens bleibt vorbehalten; die Vertragsstrafe wird auf einen solchen Schadensersatz nicht angerechnet.
+
+§ 9 Leistungsänderungen durch die Auftragnehmerin
+
+9.1 Die Auftragnehmerin ist berechtigt, die technische Ausführung der Software zu ändern, insbesondere Komponenten, Frameworks und Hosting-Umgebungen auszutauschen, soweit die vereinbarte Funktionalität hierdurch nicht wesentlich beeinträchtigt wird.
+
+9.2 Änderungen der Anlagen 1 und 2 durch die Auftragnehmerin werden der Auftraggeberin mit einer Frist von sechs Wochen in Textform angekündigt und gelten als genehmigt, wenn die Auftraggeberin nicht innerhalb von zwei Wochen nach Zugang der Ankündigung in Textform widerspricht. Auf die Genehmigungswirkung wird in der Ankündigung hingewiesen.
+
+§ 10 Gewährleistung
+
+10.1 Die Auftragnehmerin gewährleistet, dass die Software bei Abnahme der in Anlage 1 vereinbarten Beschaffenheit entspricht.
+
+10.2 Bei Mängeln ist die Auftragnehmerin zunächst zur Nacherfüllung berechtigt und verpflichtet. Schlägt die Nacherfüllung auch innerhalb einer von der Auftraggeberin gesetzten angemessenen Nachfrist fehl, stehen der Auftraggeberin die gesetzlichen Rechte zu, jedoch mit der Maßgabe des § 12 und des § 13.
+
+10.3 Die Gewährleistung ist ausgeschlossen für Mängel, die auf Eingriffen der Auftraggeberin oder Dritter in die Software, auf einer Nutzung außerhalb der Systemvoraussetzungen oder auf nicht freigegebenen Umgebungsänderungen beruhen, es sei denn, die Auftraggeberin weist nach, dass der Eingriff für den Mangel nicht ursächlich war.
+
+§ 11 Nutzungsrechte
+
+11.1 Die Auftragnehmerin räumt der Auftraggeberin an der FrostChain Suite ein einfaches, nicht übertragbares, nicht unterlizenzierbares Nutzungsrecht für eigene Geschäftszwecke am Standort Hamburg ein.
+
+11.2 Die Einräumung sämtlicher Nutzungsrechte steht unter der aufschiebenden Bedingung der vollständigen Bezahlung aller Forderungen der Auftragnehmerin aus der Geschäftsverbindung mit der Auftraggeberin, einschließlich künftig entstehender Forderungen aus diesem Vertrag.
+
+11.3 Eine Herausgabe des Quellcodes erfolgt nicht. Die Hinterlegung des Quellcodes bei einem Escrow-Agenten kann gegen gesonderte Vergütung vereinbart werden.
+
+11.4 Der Einsatz der Software an weiteren Standorten, für verbundene Unternehmen oder durch Dienstleister der Auftraggeberin bedarf einer gesonderten entgeltlichen Lizenzerweiterung.
+
+§ 12 Haftung
+
+12.1 Jegliche Haftung der Auftragnehmerin auf Schadensersatz, gleich aus welchem Rechtsgrund, einschließlich der Haftung für vorsätzliches und grob fahrlässiges Handeln ihrer Organe, Mitarbeiter und Erfüllungsgehilfen, ist ausgeschlossen.
+
+12.2 Soweit der Ausschluss nach Ziffer 12.1 im Einzelfall keine Wirkung entfalten sollte, ist die Haftung der Auftragnehmerin je Schadensfall auf 10 % des im Schadensjahr an sie gezahlten Netto-Pflegeentgelts, höchstens jedoch auf 8.000,00 EUR, begrenzt; für entgangenen Gewinn, Datenverlust, Betriebsunterbrechung und mittelbare Schäden wird in keinem Fall gehaftet.
+
+12.3 Die Haftungsbeschränkungen gelten auch zugunsten der Organe, Mitarbeiter und Subunternehmer der Auftragnehmerin.
+
+§ 13 Verjährung
+
+13.1 Sämtliche Ansprüche der Auftraggeberin aus und im Zusammenhang mit diesem Vertrag verjähren innerhalb von sechs Monaten ab ihrem Entstehen, ohne Rücksicht auf die Kenntnis der Auftraggeberin. Dies gilt auch für Ansprüche wegen vorsätzlicher Pflichtverletzungen sowie für Ansprüche aus unerlaubter Handlung.
+
+13.2 Für Ansprüche der Auftragnehmerin gelten die gesetzlichen Verjährungsfristen.
+
+§ 14 Vertraulichkeit
+
+14.1 Die Parteien verpflichten sich wechselseitig, alle im Rahmen der Vertragsdurchführung erlangten Geschäfts- und Betriebsgeheimnisse sowie als vertraulich gekennzeichneten Informationen der jeweils anderen Partei vertraulich zu behandeln und nur für Zwecke dieses Vertrages zu verwenden.
+
+14.2 Die Vertraulichkeitsverpflichtung gilt nicht für Informationen, die öffentlich bekannt sind, dem Empfänger bereits zuvor bekannt waren, ihm von Dritten rechtmäßig ohne Vertraulichkeitsverpflichtung überlassen wurden oder aufgrund gesetzlicher oder behördlicher Anordnung offenzulegen sind; im letztgenannten Fall informiert der Empfänger die andere Partei, soweit rechtlich zulässig, vorab.
+
+14.3 Die Verpflichtungen nach diesem § 14 bestehen für die Dauer des Vertrages und für einen Zeitraum von drei Jahren nach seiner Beendigung fort.
+
+§ 15 Datenschutz
+
+15.1 Soweit die Auftragnehmerin im Rahmen der Pflege- und Supportleistungen Zugriff auf personenbezogene Daten aus der Sphäre der Auftraggeberin erhält, erfolgt die Verarbeitung ausschließlich auf Grundlage der Auftragsverarbeitungsvereinbarung nach Art. 28 DSGVO, die diesem Vertrag als Anlage 3 beigefügt ist.
+
+15.2 Beide Parteien verpflichten ihre mit der Vertragsdurchführung befassten Mitarbeiter auf die Vertraulichkeit nach Art. 28 Abs. 3 lit. b DSGVO und beachten die Grundsätze der Datenminimierung.
+
+§ 16 Höhere Gewalt
+
+16.1 Keine Partei haftet für die Nichterfüllung oder Verzögerung ihrer Leistungspflichten, soweit diese auf Ereignissen höherer Gewalt beruht, insbesondere Naturkatastrophen, Krieg, Epidemien, behördlichen Anordnungen oder flächendeckenden Ausfällen von Kommunikationsnetzen, die die betroffene Partei auch bei Anwendung zumutbarer Sorgfalt nicht abwenden konnte.
+
+16.2 Die betroffene Partei zeigt das Ereignis der anderen Partei unverzüglich in Textform an und bemüht sich um Schadensminderung. Dauert das Ereignis länger als drei Monate ununterbrochen an, ist jede Partei berechtigt, den Vertrag mit einer Frist von einem Monat zum Monatsende zu kündigen; bereits erbrachte Leistungen werden anteilig vergütet.
+
+§ 17 Streitbeilegung
+
+17.1 Die Parteien bemühen sich, Meinungsverschiedenheiten aus oder im Zusammenhang mit diesem Vertrag zunächst durch Verhandlungen auf Ebene der Projektverantwortlichen und sodann auf Geschäftsführungsebene beizulegen.
+
+17.2 Scheitern die Verhandlungen, führen die Parteien vor Beschreiten des Rechtswegs ein Mediationsverfahren nach der Mediationsordnung der IHK Hamburg durch; das Recht, bei Eilbedürftigkeit einstweiligen Rechtsschutz zu beantragen, bleibt unberührt.
+
+§ 18 Schlussbestimmungen
+
+18.1 Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.
+
+18.2 Ausschließlicher Gerichtsstand für alle Streitigkeiten aus und im Zusammenhang mit diesem Vertrag ist Dortmund.
+
+18.3 Änderungen und Ergänzungen dieses Vertrages bedürfen der Textform; dies gilt auch für die Änderung dieses Textformerfordernisses.
+
+18.4 Abweichend von § 4.2 kann die Kündigung durch die Auftraggeberin zum Ende der Erstlaufzeit nur mit einer Frist von zwölf Monaten erklärt werden; § 4.2 bleibt für Kündigungen zum Ende eines Verlängerungszeitraums unberührt.
+
+18.5 Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt. Die Parteien verpflichten sich, die unwirksame Bestimmung durch eine wirksame zu ersetzen, die dem wirtschaftlich Gewollten am nächsten kommt.
+
+Hamburg, den 12.09.2026                    Dortmund, den 15.09.2026
+
+______________________________            ______________________________
+Baltic Foods GmbH                          CodeWerk Solutions GmbH
+Ines Kramer, Geschäftsführerin             Robert Steinbach, Geschäftsführer
+
+
+ANLAGE 1 — LEISTUNGSBESCHREIBUNG FROSTCHAIN SUITE (Auszug)
+
+A1.1 Modul Warenwirtschaft: Artikelstammverwaltung für bis zu 25.000 Artikel, Chargen- und MHD-Verwaltung, Bestandsführung über drei Tiefkühl-Lagerzonen (−18 °C, −25 °C, Wareneingang), Inventurmodul mit Stichtags- und permanenter Inventur, Schnittstelle zur bestehenden Finanzbuchhaltung (DATEV-Export im Format CSV, täglicher Batchlauf 23:30 Uhr).
+
+A1.2 Modul Chargenverfolgung: Lückenlose Rückverfolgbarkeit je Charge vom Wareneingang bis zur Auslieferung gemäß Art. 18 der Verordnung (EG) Nr. 178/2002, Rückruf-Report je Charge binnen vier Stunden, Etikettendruck mit GS1-128-Codierung, Temperatur-Logging über die bestehenden Datenlogger der Auftraggeberin (Import im Format JSON über REST-Schnittstelle).
+
+A1.3 Modul Tourenplanung: Tagesdisposition für bis zu 40 Fahrzeuge, Berücksichtigung von Zeitfenstern der Empfänger, Kühlketten-Dokumentation je Stopp, Fahrer-App (Android) mit Abliefernachweis durch Unterschrift und Foto, Übergabe der Tagesdaten an das Modul Warenwirtschaft bis 05:00 Uhr des Folgetages.
+
+A1.4 Systemvoraussetzungen: Serverseitiger Betrieb in der Private-Cloud-Umgebung der Auftragnehmerin (Rechenzentrum Frankfurt am Main), Client-Zugriff über die jeweils aktuelle und die unmittelbar vorhergehende Hauptversion der Browser Chrome und Edge, Fahrer-App ab Android 13.
+
+A1.5 Nicht geschuldet sind insbesondere: Datenmigration aus Altsystemen über den in A1.6 beschriebenen Umfang hinaus, Schulungen über zwei Remote-Termine à drei Stunden hinaus, kundenspezifische Berichte über die in A1.1 bis A1.3 genannten Standardreports hinaus.
+
+A1.6 Datenmigration: Einmalige Übernahme der Artikelstammdaten und offenen Bestände aus dem Altsystem "WaWi 2000" auf Basis einer von der Auftraggeberin bereitzustellenden, validierten CSV-Datei gemäß Migrationsschema der Auftragnehmerin.
+
+
+ANLAGE 2 — SERVICE LEVEL AGREEMENT (SLA)
+
+A2.1 Gegenstand: Pflege, Störungsbeseitigung und Support für die FrostChain Suite ab Produktivsetzung.
+
+A2.2 Verfügbarkeit: Die Auftragnehmerin gewährleistet eine Verfügbarkeit der FrostChain Suite von 99,9 % im Jahresmittel. Die Verfügbarkeit wird ausschließlich innerhalb der Servicezeiten gemäß § 2.2 des Rahmenvertrages gemessen. Zeiten geplanter Wartung (Ankündigung mindestens 48 Stunden zuvor, Durchführung bevorzugt Samstag 20:00 Uhr bis Sonntag 06:00 Uhr) sowie Zeiten, in denen die Software aus von der Auftragnehmerin nicht zu vertretenden Gründen nicht erreichbar ist, gelten nicht als Ausfallzeiten.
+
+A2.3 Störungsklassen und Reaktionszeiten: Kritische Störung (Produktivbetrieb unmöglich, insbesondere Ausfall der Chargenverfolgung während eines Rückrufs): Reaktion innerhalb von vier Stunden innerhalb der Servicezeiten. Erhebliche Störung (wesentliche Funktion beeinträchtigt, Umgehung möglich): Reaktion innerhalb von zwei Arbeitstagen. Sonstige Störung: Reaktion innerhalb von fünf Arbeitstagen. Reaktionszeiten sind keine Wiederherstellungszeiten.
+
+A2.4 Supportkanäle: Ticketsystem der Auftragnehmerin (rund um die Uhr erreichbar, Bearbeitung innerhalb der Servicezeiten), Telefon-Hotline innerhalb der Servicezeiten. Ansprechberechtigt sind ausschließlich die nach § 7.2 benannten Personen sowie bis zu drei weitere namentlich registrierte Key-User.
+
+A2.5 Updates und Upgrades: Die Auftragnehmerin stellt Fehlerkorrekturen (Patches) und funktionserhaltende Updates ohne gesonderte Vergütung bereit. Funktionserweiternde Upgrades kann die Auftragnehmerin gesondert anbieten; eine Pflicht zur Abnahme besteht nicht. Die Auftraggeberin ist verpflichtet, bereitgestellte Patches innerhalb von zehn Arbeitstagen zu installieren beziehungsweise deren Installation zu ermöglichen; für Schäden, die auf unterlassener Installation beruhen, ist die Gewährleistung ausgeschlossen.
+
+A2.6 Mitwirkung im Störungsfall: Die Auftraggeberin stellt für die Störungsanalyse einen Fernzugriff nach dem Sicherheitskonzept der Auftragnehmerin bereit und benennt für kritische Störungen eine rund um die Uhr erreichbare Kontaktperson.
+
+A2.7 Ergänzende Regelung zur Abrechnung: Abweichend von § 6.3 des Rahmenvertrages sind Rechnungen über die Pflegevergütung innerhalb von 120 Tagen nach Rechnungszugang zur Zahlung fällig; für die Entwicklungsvergütung verbleibt es bei § 6.3. Im Übrigen gelten die Zahlungsbedingungen des Rahmenvertrages entsprechend.
+
+A2.8 Eskalation: Bei kritischen Störungen, die nicht innerhalb von 24 Stunden nach Reaktionsbeginn behoben sind, kann die Auftraggeberin die Eskalation an die Geschäftsführung der Auftragnehmerin verlangen; § 17 des Rahmenvertrages bleibt unberührt.
+
+
+ANLAGE 3 — AUFTRAGSVERARBEITUNGSVEREINBARUNG NACH ART. 28 DSGVO (Auszug)
+
+A3.1 Gegenstand und Dauer: Die Auftragnehmerin verarbeitet personenbezogene Daten (insbesondere Namen und dienstliche Kontaktdaten von Mitarbeitern, Fahrern und Empfänger-Ansprechpartnern der Auftraggeberin sowie Abliefernachweise) ausschließlich zur Durchführung der Pflege- und Supportleistungen für die Dauer des Rahmenvertrages.
+
+A3.2 Weisungsrecht: Die Verarbeitung erfolgt ausschließlich auf dokumentierte Weisung der Auftraggeberin, es sei denn, die Auftragnehmerin ist nach dem Recht der Union oder der Mitgliedstaaten zur Verarbeitung verpflichtet.
+
+A3.3 Technische und organisatorische Maßnahmen: Die Auftragnehmerin trifft die in ihrem TOM-Konzept (Stand September 2026) beschriebenen Maßnahmen nach Art. 32 DSGVO, insbesondere Verschlüsselung der Datenübertragung, rollenbasierte Zugriffskontrolle und tägliche Sicherungen mit Aufbewahrung von 30 Tagen.
+
+A3.4 Unterauftragsverarbeiter: Der Einsatz des Rechenzentrumsbetreibers Main-Colo GmbH, Frankfurt am Main, wird genehmigt. Der Einsatz weiterer Unterauftragsverarbeiter bedarf der vorherigen gesonderten Genehmigung der Auftraggeberin in Textform.
+
+A3.5 Betroffenenrechte und Löschung: Die Auftragnehmerin unterstützt die Auftraggeberin bei der Erfüllung von Betroffenenrechten und löscht oder retourniert alle personenbezogenen Daten nach Beendigung des Rahmenvertrages nach Wahl der Auftraggeberin, soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
+
+— Ende des Vertragswerks —
