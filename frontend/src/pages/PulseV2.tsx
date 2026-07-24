@@ -78,6 +78,16 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
     })();
   }, [contractId, loadLatest]);
 
+  // Sticky-Fix (nur diese Seite): global gilt body{overflow-x:hidden} — das macht
+  // den Body zum nie scrollenden Scroll-Container und deaktiviert position:sticky
+  // der Status-Spalte. 'clip' klippt identisch, erzeugt aber keinen Scroll-Container.
+  // Beim Verlassen der Seite wird der vorherige Wert wiederhergestellt.
+  useEffect(() => {
+    const prev = document.body.style.overflowX;
+    document.body.style.overflowX = 'clip';
+    return () => { document.body.style.overflowX = prev; };
+  }, []);
+
   // Fetch monitoring info (next scan + alerts for this contract)
   useEffect(() => {
     (async () => {

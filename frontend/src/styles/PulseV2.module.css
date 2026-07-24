@@ -369,9 +369,10 @@
   }
   .detailRail {
     position: sticky;
-    top: 16px;
+    /* Unter der fixen Navbar (~64px) kleben, sonst verdeckt sie den Score-Ring */
+    top: 80px;
     /* Höher als der Viewport? Dann intern scrollen statt Inhalte unerreichbar machen */
-    max-height: calc(100vh - 32px);
+    max-height: calc(100vh - 96px);
     overflow-y: auto;
     scrollbar-width: thin;
   }
