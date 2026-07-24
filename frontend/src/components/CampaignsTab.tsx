@@ -1261,8 +1261,8 @@ function Step2Content({ form, setForm }: { form: CampaignForm; setForm: (f: Camp
   const [previewTemplate, setPreviewTemplate] = useState<NewsletterTemplate | null>(null);
   const [showAlternatives, setShowAlternatives] = useState(false);
 
-  const FEATURED_IDS = ['free-to-business-ultimate-v2', 'free-inactive-reactivation'];
-  const TOP_RECOMMENDED_ID = 'free-to-business-ultimate-v2';
+  const FEATURED_IDS = ['free-to-business-ultimate-v3', 'free-to-business-ultimate-v2', 'free-inactive-reactivation'];
+  const TOP_RECOMMENDED_ID = 'free-to-business-ultimate-v3';
   const featuredTemplates = newsletterTemplates.filter((t) => FEATURED_IDS.includes(t.id));
   const alternativeTemplates = newsletterTemplates.filter((t) => !FEATURED_IDS.includes(t.id));
 

@@ -115,7 +115,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
   }
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
+    <div style={{ maxWidth: 1360, margin: '0 auto', padding: '24px 16px' }}>
       {/* Back button */}
       <button
         onClick={() => navigate('/pulse')}
@@ -136,9 +136,9 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
         &#8592; Alle Verträge
       </button>
 
-      {/* Analysis Running */}
+      {/* Analysis Running — bewusst schmal halten (Lesebreite), Seite selbst ist 1360px */}
       {status === 'analyzing' && (
-        <>
+        <div style={{ maxWidth: 900, margin: '0 auto' }}>
           <AnalysisPipeline
             stages={stages}
             progress={progress}
@@ -258,7 +258,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
               )}
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* Rejected: Document is not a contract */}
