@@ -1161,7 +1161,7 @@ router.get("/legal-alerts", async (req, res) => {
       .collection("pulse_v2_legal_alerts")
       .find({ userId })
       .sort({ createdAt: -1 })
-      .limit(20)
+      .limit(100)
       .toArray();
 
     // Fix UTF-8 encoding in contract names (legacy data)
@@ -2078,7 +2078,7 @@ router.patch("/legal-alerts/:alertId", async (req, res) => {
 
     await db.collection("pulse_v2_legal_alerts").updateOne(
       { _id: new ObjectId(req.params.alertId), userId: req.user.userId },
-      { $set: { status } }
+      { $set: { status, statusChangedAt: new Date() } }
     );
 
     res.json({ success: true });

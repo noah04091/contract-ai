@@ -90,7 +90,10 @@ export const PortfolioImprovementCard: React.FC<PortfolioImprovementCardProps> =
       borderRadius: 16,
       border: '1px solid rgba(0,0,0,0.05)',
       padding: 24,
-      marginBottom: 28,
+      // Abstand kommt vom Portfolio-Grid; volle Zellhöhe, damit beide Karten bündig sind
+      marginBottom: 0,
+      height: '100%',
+      boxSizing: 'border-box',
       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       {/* Header */}

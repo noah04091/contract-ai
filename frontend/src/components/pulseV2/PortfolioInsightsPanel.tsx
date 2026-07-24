@@ -185,7 +185,10 @@ export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ 
       border: '1px solid rgba(0,0,0,0.05)',
       borderRadius: 16,
       padding: 24,
-      marginBottom: 28,
+      // Abstand kommt vom Portfolio-Grid; volle Zellhöhe, damit beide Karten bündig sind
+      marginBottom: 0,
+      height: '100%',
+      boxSizing: 'border-box',
       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16, paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>

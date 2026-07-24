@@ -65,11 +65,13 @@ export const PulseCommandCenter: React.FC<Props> = (p) => {
     next ? `nächste Prüfung ${next}` : null,
   ].filter(Boolean);
 
-  const kpis: Array<{ v: React.ReactNode; l: string; c?: string }> = [
-    { v: openAlerts, l: 'Offene Radar-Alerts', c: openAlerts > 0 ? C.crit : undefined },
-    { v: p.openActionCount, l: 'Offene Aufgaben' },
-    { v: p.criticalContractCount, l: 'Kritische Verträge', c: p.criticalContractCount > 0 ? C.crit : undefined },
-    { v: `${p.stats.analyzed}/${p.stats.total}`, l: 'Verträge überwacht' },
+  const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const kpis: Array<{ v: React.ReactNode; l: string; c?: string; target: string }> = [
+    { v: openAlerts, l: 'Offene Radar-Alerts', c: openAlerts > 0 ? C.crit : undefined, target: 'legal-alerts' },
+    { v: p.openActionCount, l: 'Offene Aufgaben', target: 'pulse-tasks' },
+    { v: p.criticalContractCount, l: 'Kritische Verträge', c: p.criticalContractCount > 0 ? C.crit : undefined, target: 'pulse-contracts' },
+    { v: `${p.stats.analyzed}/${p.stats.total}`, l: 'Verträge überwacht', target: 'pulse-contracts' },
   ];
   const tabs: Array<{ label: string; n?: number; target: string }> = [
     { label: 'Legal Radar', n: openAlerts, target: 'legal-alerts' },
@@ -81,7 +83,14 @@ export const PulseCommandCenter: React.FC<Props> = (p) => {
   return (
     <div style={{ background: '#fff', border: `1px solid ${C.line}`, borderRadius: 14, boxShadow: '0 1px 2px rgba(15,23,42,.05)', padding: '20px 22px', marginBottom: 20 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-        <div style={{ width: 70, height: 70, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: `conic-gradient(${ringColor} 0 ${pct}%, ${C.line} 0)` }}>
+        <div
+          role="button"
+          tabIndex={0}
+          title="Durchschnittlicher Health-Score aller überwachten Verträge — klicken für die Vertragsliste"
+          onClick={() => scrollTo('pulse-contracts')}
+          onKeyDown={e => { if (e.key === 'Enter') scrollTo('pulse-contracts'); }}
+          style={{ width: 70, height: 70, borderRadius: '50%', flexShrink: 0, display: 'grid', placeItems: 'center', background: `conic-gradient(${ringColor} 0 ${pct}%, ${C.line} 0)`, cursor: 'pointer' }}
+        >
           <div style={{ width: 54, height: 54, borderRadius: '50%', background: '#fff', display: 'grid', placeItems: 'center', fontSize: 19, fontWeight: 700, color: C.ink }}>
             {score != null ? score : '–'}
           </div>
@@ -90,18 +99,30 @@ export const PulseCommandCenter: React.FC<Props> = (p) => {
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, letterSpacing: '-0.01em', color: C.ink }}>Legal Pulse</h1>
           <p style={{ margin: '2px 0 0', fontSize: 12.5, color: C.soft }}>{infoParts.join(' · ')}</p>
         </div>
-        <div style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 7, background: statusCfg.bg, border: `1px solid ${statusCfg.bd}`, color: statusCfg.c, fontWeight: 600, fontSize: 12.5, padding: '7px 13px', borderRadius: 999 }}>
+        <button
+          onClick={() => scrollTo(openAlerts > 0 ? 'legal-alerts' : p.openActionCount > 0 ? 'pulse-tasks' : 'pulse-contracts')}
+          title={status === 'red' || status === 'yellow' ? 'Zu den offenen Punkten springen' : 'Zur Vertragsübersicht springen'}
+          style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 7, background: statusCfg.bg, border: `1px solid ${statusCfg.bd}`, color: statusCfg.c, fontWeight: 600, fontSize: 12.5, padding: '7px 13px', borderRadius: 999, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: statusCfg.c }} />
           {statusCfg.label}
-        </div>
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginTop: 16 }}>
         {kpis.map(k => (
-          <div key={k.l} style={{ border: `1px solid ${C.line}`, borderRadius: 10, padding: '11px 13px' }}>
+          <button
+            key={k.l}
+            onClick={() => scrollTo(k.target)}
+            title={`Zum Abschnitt „${k.l}" springen`}
+            style={{ border: `1px solid ${C.line}`, borderRadius: 10, padding: '11px 13px', background: '#fff', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', position: 'relative', transition: 'border-color .12s, box-shadow .12s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = C.blue; e.currentTarget.style.boxShadow = '0 1px 4px rgba(37,99,235,.14)'; const a = e.currentTarget.querySelector('span[data-arrow]') as HTMLElement | null; if (a) a.style.opacity = '1'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = C.line; e.currentTarget.style.boxShadow = 'none'; const a = e.currentTarget.querySelector('span[data-arrow]') as HTMLElement | null; if (a) a.style.opacity = '0'; }}
+          >
             <b style={{ display: 'block', fontSize: 19, color: k.c || C.ink, fontVariantNumeric: 'tabular-nums' }}>{k.v}</b>
             <span style={{ fontSize: 11, color: C.faint }}>{k.l}</span>
-          </div>
+            <span data-arrow style={{ position: 'absolute', top: 9, right: 11, fontSize: 13, color: C.blue, opacity: 0, transition: 'opacity .12s' }}>›</span>
+          </button>
         ))}
       </div>
 

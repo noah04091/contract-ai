@@ -7,10 +7,23 @@ import styles from '../../styles/PulseV2.module.css';
 interface LegalAlertsPanelProps {
   alerts: PulseV2LegalAlert[];
   onDismiss?: (alertId: string) => void;
+  onResolve?: (alertId: string) => void;
   onRestore?: (alertId: string) => void;
   onNavigate?: (contractId: string) => void;
   lastVisit?: string | null;
 }
+
+type PanelView = 'active' | 'resolved' | 'dismissed';
+
+// Anzeigedauer erledigter Alerts (Tage); 0 = nie automatisch ausblenden.
+// Reine Anzeige-Einstellung (localStorage) — Daten werden erst durch das
+// 180-Tage-TTL der Collection endgültig gelöscht.
+const RETENTION_KEY = 'pulseResolvedRetentionDays';
+const RETENTION_OPTIONS: Array<{ value: number; label: string }> = [
+  { value: 30, label: '30 Tagen' },
+  { value: 90, label: '90 Tagen' },
+  { value: 0, label: 'nie' },
+];
 
 interface AlertGroup {
   lawId: string;
@@ -183,12 +196,21 @@ function groupByTime(groups: AlertGroup[]): TimeBucket[] {
   return all.filter(b => b.groups.length > 0);
 }
 
-export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDismiss, onRestore, onNavigate, lastVisit }) => {
-  const [showDismissed, setShowDismissed] = useState(false);
+export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDismiss, onResolve, onRestore, onNavigate, lastVisit }) => {
+  const [view, setView] = useState<PanelView>('active');
   const [showInfo, setShowInfo] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');
   const [collapsedBuckets, setCollapsedBuckets] = useState<Record<string, boolean>>({ older: true });
+  const [retentionDays, setRetentionDays] = useState<number>(() => {
+    const stored = Number(localStorage.getItem(RETENTION_KEY));
+    return Number.isFinite(stored) && RETENTION_OPTIONS.some(o => o.value === stored) ? stored : 90;
+  });
   const infoRef = useRef<HTMLDivElement>(null);
+
+  const changeRetention = (days: number) => {
+    setRetentionDays(days);
+    try { localStorage.setItem(RETENTION_KEY, String(days)); } catch { /* Anzeige-Einstellung, kein harter Fehler */ }
+  };
 
   const lastVisitTs = lastVisit ? new Date(lastVisit).getTime() : 0;
   const isNewAlert = (a: PulseV2LegalAlert): boolean =>
@@ -207,25 +229,39 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
 
   const active = alerts.filter(a => a.status !== 'dismissed' && a.status !== 'resolved');
   const dismissed = alerts.filter(a => a.status === 'dismissed');
-  const resolvedCount = alerts.filter(a => a.status === 'resolved').length;
+  const resolvedAll = alerts.filter(a => a.status === 'resolved');
+  // Erledigte nach Ablauf der eingestellten Frist automatisch ausblenden
+  const resolvedAgeDays = (a: PulseV2LegalAlert) => {
+    const ts = new Date(a.statusChangedAt || a.createdAt || 0).getTime();
+    return ts ? (Date.now() - ts) / (1000 * 60 * 60 * 24) : 0;
+  };
+  const resolved = retentionDays === 0 ? resolvedAll : resolvedAll.filter(a => resolvedAgeDays(a) <= retentionDays);
+  const resolvedHiddenCount = resolvedAll.length - resolved.length;
+  const resolvedCount = resolvedAll.length;
 
-  // Auto-switch back to active view when no dismissed alerts remain
+  // Auto-switch back to active view when the current tab has no alerts left
   useEffect(() => {
-    if (showDismissed && dismissed.length === 0) {
-      setShowDismissed(false);
-    }
-  }, [showDismissed, dismissed.length]);
+    if (view === 'dismissed' && dismissed.length === 0) setView('active');
+    if (view === 'resolved' && resolvedAll.length === 0) setView('active');
+  }, [view, dismissed.length, resolvedAll.length]);
 
   if (active.length === 0 && resolvedCount === 0 && dismissed.length === 0) return null;
+  const showDismissed = view !== 'active'; // beide Nicht-Aktiv-Ansichten teilen das schlichte Listen-Layout
 
   const criticalCount = active.filter(a => a.severity === 'critical' && a.impactDirection !== 'positive').length;
   const highCount = active.filter(a => a.severity === 'high' && a.impactDirection !== 'positive').length;
   const positiveCount = active.filter(a => a.impactDirection === 'positive').length;
 
-  const displayAlerts = showDismissed ? dismissed : active;
+  const displayAlerts = view === 'dismissed' ? dismissed : view === 'resolved' ? resolved : active;
   const groups = groupAlertsByLaw(displayAlerts);
   const timeBuckets = viewMode === 'timeline' ? groupByTime(groups) : [];
   const newCount = active.filter(isNewAlert).length;
+
+  const tabDefs: Array<{ key: PanelView; label: string; n: number }> = [
+    { key: 'active', label: 'Aktive', n: active.length },
+    { key: 'resolved', label: 'Erledigte', n: resolvedCount },
+    { key: 'dismissed', label: 'Ausgeblendete', n: dismissed.length },
+  ].filter(t => t.key === 'active' || t.n > 0) as Array<{ key: PanelView; label: string; n: number }>;
 
   return (
     <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
@@ -279,9 +315,9 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
                   EU-Amtsblatt, Fachpublikationen — &uuml;ber 26 RSS-Feeds.
                 </p>
                 <p style={{ margin: '0 0 8px' }}>
-                  <strong>Alerts bleiben sichtbar</strong>, bis Sie sie als &bdquo;behoben&ldquo; markieren (Auto-Fix &uuml;bernehmen)
-                  oder ausblenden. Es gibt <strong>keine automatische Archivierung</strong>. Ausgeblendete Alerts k&ouml;nnen Sie
-                  jederzeit &uuml;ber den &bdquo;Ausgeblendete&ldquo;-Reiter wiederherstellen.
+                  <strong>Alerts bleiben sichtbar</strong>, bis Sie sie per &#10003; als <strong>erledigt</strong> markieren
+                  oder ausblenden. Erledigte und ausgeblendete Alerts finden Sie in den gleichnamigen Reitern und
+                  k&ouml;nnen sie jederzeit wiederherstellen. Wie lange Erledigte angezeigt werden, stellen Sie dort selbst ein.
                 </p>
                 <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
                   Neue Alerts erscheinen automatisch, sobald relevante Rechts&auml;nderungen erkannt werden.
@@ -321,12 +357,17 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
             </span>
           )}
           {!showDismissed && resolvedCount > 0 && (
-            <span style={{
-              fontSize: 11, fontWeight: 600, color: '#059669',
-              background: '#ecfdf5', padding: '2px 8px', borderRadius: 10,
-            }}>
-              {resolvedCount} behoben
-            </span>
+            <button
+              onClick={() => setView('resolved')}
+              title="Erledigte Alerts ansehen"
+              style={{
+                fontSize: 11, fontWeight: 600, color: '#059669',
+                background: '#ecfdf5', padding: '2px 8px', borderRadius: 10,
+                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {resolvedCount} erledigt
+            </button>
           )}
           {!showDismissed && criticalCount > 0 && (
             <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>{criticalCount} kritisch</span>
@@ -376,25 +417,31 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
               ))}
             </div>
           )}
-          {dismissed.length > 0 && (
-            <button
-              onClick={() => setShowDismissed(!showDismissed)}
-              style={{
-                padding: '4px 12px', fontSize: 11, fontWeight: 600,
-                color: showDismissed ? '#111827' : '#9ca3af',
-                background: showDismissed ? '#f3f4f6' : 'transparent',
-                border: `1px solid ${showDismissed ? '#d1d5db' : 'transparent'}`,
-                borderRadius: 6, cursor: 'pointer',
-              }}
-            >
-              {showDismissed ? `Aktive (${active.length})` : `Ausgeblendete (${dismissed.length})`}
-            </button>
+          {tabDefs.length > 1 && (
+            <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 8, padding: 2 }}>
+              {tabDefs.map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setView(t.key)}
+                  style={{
+                    padding: '4px 10px', fontSize: 11, fontWeight: 600,
+                    color: view === t.key ? '#0f172a' : '#64748b',
+                    background: view === t.key ? '#ffffff' : 'transparent',
+                    border: 'none', borderRadius: 6, cursor: 'pointer',
+                    boxShadow: view === t.key ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {t.label} ({t.n})
+                </button>
+              ))}
+            </div>
           )}
         </div>
       </div>
 
-      {/* Dismissed view header */}
-      {showDismissed && (
+      {/* View-Header für Erledigte / Ausgeblendete */}
+      {view === 'dismissed' && (
         <div style={{
           padding: '8px 12px', marginBottom: 12,
           background: '#f9fafb', borderRadius: 8,
@@ -404,13 +451,48 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           Sie können jeden Alert wiederherstellen.
         </div>
       )}
+      {view === 'resolved' && (
+        <div style={{
+          padding: '8px 12px', marginBottom: 12,
+          background: '#f0fdf4', borderRadius: 8,
+          fontSize: 12, color: '#166534',
+          display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+        }}>
+          <span>Erledigte Alerts — automatisch ausblenden nach:</span>
+          <select
+            value={retentionDays}
+            onChange={e => changeRetention(Number(e.target.value))}
+            style={{
+              fontSize: 12, fontWeight: 600, color: '#166534',
+              background: '#fff', border: '1px solid #bbf7d0', borderRadius: 6,
+              padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            {RETENTION_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          {resolvedHiddenCount > 0 && (
+            <span style={{ color: '#4d7c0f' }}>
+              ({resolvedHiddenCount} ältere derzeit ausgeblendet)
+            </span>
+          )}
+          <span style={{ color: '#6b7280', width: '100%' }}>
+            Endgültig gelöscht werden Alerts erst 180 Tage nach ihrer Erkennung.
+          </span>
+        </div>
+      )}
 
       {/* Grouped alerts */}
       {displayAlerts.length === 0 ? (
         <div style={{ fontSize: 13, color: showDismissed ? '#6b7280' : '#059669', textAlign: 'center', padding: 16, background: showDismissed ? '#f9fafb' : '#f0fdf4', borderRadius: 8 }}>
-          {showDismissed
+          {view === 'dismissed'
             ? 'Keine ausgeblendeten Alerts.'
-            : `Alle Alerts behoben. ${resolvedCount} Klausel(n) wurden angepasst.`
+            : view === 'resolved'
+            ? (resolvedHiddenCount > 0
+                ? `Alle ${resolvedHiddenCount} erledigten Alerts sind älter als ${retentionDays} Tage und daher ausgeblendet.`
+                : 'Keine erledigten Alerts.')
+            : `Alle Alerts erledigt. ${resolvedCount} Alert(s) wurden abgearbeitet.`
           }
         </div>
       ) : viewMode === 'timeline' && !showDismissed ? (
@@ -451,6 +533,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
                     key={group.lawId}
                     group={group}
                     onDismiss={onDismiss}
+                    onResolve={onResolve}
                     onRestore={undefined}
                     onNavigate={onNavigate}
                     isNew={group.alerts.some(isNewAlert)}
@@ -466,10 +549,11 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
             <LawGroup
               key={group.lawId}
               group={group}
-              onDismiss={showDismissed ? undefined : onDismiss}
-              onRestore={showDismissed ? onRestore : undefined}
+              onDismiss={view === 'active' ? onDismiss : undefined}
+              onResolve={view === 'active' ? onResolve : undefined}
+              onRestore={view !== 'active' ? onRestore : undefined}
               onNavigate={onNavigate}
-              isNew={!showDismissed && group.alerts.some(isNewAlert)}
+              isNew={view === 'active' && group.alerts.some(isNewAlert)}
             />
           ))}
           {groups.length > 8 && (
@@ -499,10 +583,11 @@ const SEVERITY_COLORS: Record<string, string> = {
 const LawGroup: React.FC<{
   group: AlertGroup;
   onDismiss?: (alertId: string) => void;
+  onResolve?: (alertId: string) => void;
   onRestore?: (alertId: string) => void;
   onNavigate?: (contractId: string) => void;
   isNew?: boolean;
-}> = ({ group, onDismiss, onRestore, onNavigate, isNew }) => {
+}> = ({ group, onDismiss, onResolve, onRestore, onNavigate, isNew }) => {
   const [expanded, setExpanded] = useState(false);
   const [confirmDismiss, setConfirmDismiss] = useState<string | null>(null);
   const dismissRef = useRef<HTMLDivElement>(null);
@@ -632,6 +717,22 @@ const LawGroup: React.FC<{
           {group.alerts.map(alert => (
             <div key={alert._id} style={{ position: 'relative' }}>
               <ImpactGraph alert={alert} onNavigate={onNavigate} />
+
+              {/* Als erledigt markieren (jederzeit über den Erledigte-Reiter rückholbar) */}
+              {onResolve && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onResolve(alert._id); }}
+                  title="Als erledigt markieren"
+                  style={{
+                    position: 'absolute', top: 14, right: 68,
+                    width: 22, height: 22, borderRadius: 4,
+                    border: '1px solid #a7f3d0', background: '#ecfdf5',
+                    cursor: 'pointer', fontSize: 11, color: '#059669',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    zIndex: 1,
+                  }}
+                >&#10003;</button>
+              )}
 
               {/* Dismiss button with confirmation */}
               {onDismiss && (
