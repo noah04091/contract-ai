@@ -909,8 +909,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
     if (firstUnanalyzed) {
       onSelectContract(firstUnanalyzed.contractId);
     } else if (stats.total === 0) {
-      // Noch gar keine Verträge → zum Upload-Bereich (Dashboard) leiten
-      navigate('/dashboard');
+      // Noch gar keine Verträge → zur Verträge-Seite leiten, wo man hochlädt
+      navigate('/contracts');
     } else if (contractsRef.current) {
       contractsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -972,7 +972,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               </div>
             )}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14, marginBottom: 28 }}>
             {[
               { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4', t: 'Rechtliche Risiken erkennen', s: 'Die KI prüft jede Klausel auf Wirksamkeit, DSGVO-Konformität und Haftungsrisiken.' },
               { d: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM14.8 9a3.5 3.5 0 1 0 0 6M7.5 11.2h6M7.5 13.4h5', t: 'Kostenfallen vermeiden', s: 'Erkennt automatische Verlängerungen, versteckte Gebühren und überhöhte Preise.' },
@@ -1105,10 +1105,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         </>
       )}
 
-      {/* Vertragsliste, Filter & System-Status nur zeigen, wenn überhaupt Verträge da sind
-          — sonst bekäme ein brandneuer Nutzer eine leere Liste mit Suche/Filtern präsentiert. */}
-      {items.length > 0 && (
-        <>
       {/* ══════════ Contract Grid: Search + Filter + Sort ══════════ */}
       <div ref={contractsRef} style={{ marginBottom: 20 }}>
         {/* Row 1: Title + Search + Sort */}
@@ -1322,8 +1318,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           radarData={radarData ?? null}
         />
       </div>
-        </>
-      )}
     </div>
   );
 };
