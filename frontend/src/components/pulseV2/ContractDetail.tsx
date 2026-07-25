@@ -1310,7 +1310,8 @@ const SeverityDot: React.FC<{ color: string; label: string; count: number }> = (
 // Sorgt für klare Trennung/Orientierung, ohne bunt zu wirken. Farbe bleibt den Befund-Schweregraden vorbehalten.
 const CHAPTER_ICONS: Record<string, string> = {
   action: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM9 14l2 2 4-4',
-  law: 'M12 3v18M5 7l7-4 7 4M3 12h4l-2 5h4M17 12h4l-2 5h4',
+  // Gerechtigkeitswaage (Lucide „scale"): Ständer + Balken + zwei hängende Waagschalen
+  law: 'M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z',
   ok: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
 };
 

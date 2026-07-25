@@ -58,6 +58,7 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
       border: '1px solid rgba(0,0,0,0.05)',
       borderRadius: 16,
       padding: 24,
+      marginTop: 20,
       marginBottom: 20,
       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>

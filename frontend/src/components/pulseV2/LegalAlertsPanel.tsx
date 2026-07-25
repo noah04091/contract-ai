@@ -629,7 +629,7 @@ const LawGroup: React.FC<{
             width: 30, height: 30, borderRadius: 8,
             background: `${sevColor}18`, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={sevColor} strokeWidth="2" strokeLinecap="round"><path d="M12 3v18M5 7l7-4 7 4M3 12h4l-2 5h4M17 12h4l-2 5h4"/></svg></div>
+          }}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={sevColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/></svg></div>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {cleanLawTitle(group.lawTitle)}
