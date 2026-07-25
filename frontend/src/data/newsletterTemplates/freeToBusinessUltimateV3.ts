@@ -230,10 +230,10 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
                 </td>
                 <td style="vertical-align:top;">
                   <h3 class="feat-h" style="margin:0 0 6px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:18px;line-height:1.3;color:#0f172a;font-weight:700;letter-spacing:-0.3px;">
-                    Fristen, bevor sie ablaufen.
+                    Hochladen und vergessen.
                   </h3>
                   <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#475569;">
-                    K&uuml;ndigungsfristen landen automatisch im Kalender. Und bei einer erhaltenen K&uuml;ndigung erkennt Contract AI sogar die 3-Wochen-Klagefrist (&sect;&thinsp;4 KSchG) &mdash; am Tag&thinsp;1, nicht wenn es zu sp&auml;t ist.
+                    Lad einen Vertrag hoch &mdash; und denk nie wieder an eine Frist. Contract AI tr&auml;gt K&uuml;ndigungsfristen automatisch in den Kalender und meldet sich rechtzeitig, weil <em style="font-style:normal;font-weight:600;color:#0f172a;">es</em> f&uuml;r dich dran denkt. Sogar die 3-Wochen-Klagefrist (&sect;&thinsp;4 KSchG) bei einer erhaltenen K&uuml;ndigung erkennt es am Tag&thinsp;1 &mdash; nicht wenn es zu sp&auml;t ist.
                   </p>
                 </td>
               </tr>
