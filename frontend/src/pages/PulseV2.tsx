@@ -725,8 +725,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortBy>('score_asc');
-  const [heroCollapsed, setHeroCollapsed] = useState(false);
-  const [showFirstUseTip, setShowFirstUseTip] = useState(false);
   const radarRef = useRef<HTMLDivElement>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
   const contractsRef = useRef<HTMLDivElement>(null);
@@ -750,21 +748,6 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
       window.removeEventListener('beforeunload', markNow);
     };
   }, []);
-
-  // Hero auto-collapse: first visit = open, after that = collapsed
-  useEffect(() => {
-    const dismissed = localStorage.getItem('pulseV2_heroDismissed') === 'true';
-    const visits = parseInt(localStorage.getItem('pulseV2_heroVisits') || '0');
-    if (dismissed || visits >= 1) {
-      setHeroCollapsed(true);
-    }
-    localStorage.setItem('pulseV2_heroVisits', String(visits + 1));
-  }, []);
-
-  const collapseHero = () => {
-    localStorage.setItem('pulseV2_heroDismissed', 'true');
-    setHeroCollapsed(true);
-  };
 
   // Debounce search to avoid excessive re-renders
   useEffect(() => {
@@ -917,14 +900,17 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
     return map;
   }, [items]);
 
-  // First-use tip toast: appear after 10s, disappear after 20s
+  // Neuer Nutzer ohne Analyse → eigener, aufgeräumter Empty State (statt Banner+Command-Center+Toast+Karten)
   const isFirstUse = stats.analyzed === 0;
-  useEffect(() => {
-    if (!isFirstUse) return;
-    const show = setTimeout(() => setShowFirstUseTip(true), 10000);
-    const hide = setTimeout(() => setShowFirstUseTip(false), 20000);
-    return () => { clearTimeout(show); clearTimeout(hide); };
-  }, [isFirstUse]);
+
+  const startFirstAnalysis = () => {
+    const firstUnanalyzed = items.find(i => !i.hasV2Result);
+    if (firstUnanalyzed) {
+      onSelectContract(firstUnanalyzed.contractId);
+    } else if (contractsRef.current) {
+      contractsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>Lade Dashboard...</div>;
@@ -951,221 +937,74 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
 
   return (
     <div>
-      {/* ══════════ Intro Hero Banner (original) ══════════ */}
-      {!heroCollapsed && stats.analyzed === 0 ? (
-        <div style={{
-          position: 'relative',
-          background: 'linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 50%, #f8fafc 100%)',
-          borderRadius: 20,
-          padding: 'clamp(24px, 4vw, 48px) clamp(20px, 4vw, 52px)',
-          marginBottom: 28,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(59,130,246,0.08)',
-          border: '1px solid rgba(59,130,246,0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 48,
-          flexWrap: 'wrap' as const,
-        }}>
-          {/* Collapse button */}
-          <button
-            onClick={collapseHero}
-            title="Einklappen"
-            style={{
-              position: 'absolute', top: 16, right: 16,
-              width: 32, height: 32, borderRadius: '50%',
-              border: 'none', background: 'rgba(59,130,246,0.08)',
-              cursor: 'pointer', fontSize: 16, color: '#94a3b8',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            &times;
-          </button>
-
-          {/* Left: Title + Subtitle */}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.5px' }}>
-                Legal Pulse
-              </h1>
-              <span style={{
-                fontSize: 10, fontWeight: 700, color: '#1d4ed8',
-                background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
-                padding: '4px 12px', borderRadius: 6,
-                letterSpacing: '0.5px', textTransform: 'uppercase',
-              }}>
-                Laufende Überwachung
-              </span>
-            </div>
-            <p style={{ fontSize: 15, color: '#64748b', margin: '0 0 20px', lineHeight: 1.6, maxWidth: 480 }}>
-              Kontinuierliche Überwachung Ihrer analysierten Verträge auf rechtliche Risiken, Gesetzesänderungen und Optimierungspotenzial.
-            </p>
-            <div style={{ display: 'flex', gap: 24, fontSize: 13, color: '#64748b', flexWrap: 'wrap' as const }}>
-              <span><strong style={{ color: '#0f172a', fontSize: 18 }}>{stats.analyzed}</strong> / {stats.total} analysiert</span>
-              {stats.total > stats.analyzed && (
-                <span style={{ color: '#2563eb' }}>
-                  {stats.total - stats.analyzed} noch nicht aufgenommen — einmal analysieren, um sie zu überwachen
-                </span>
-              )}
-              {alertStats.criticalContracts.length > 0 && (
-                <span><strong style={{ color: '#dc2626', fontSize: 18 }}>{alertStats.criticalContracts.length}</strong> kritisch</span>
-              )}
-              {alertStats.openActions.length > 0 && (
-                <span><strong style={{ color: '#d97706', fontSize: 18 }}>{alertStats.openActions.length}</strong> offene Empfehlungen</span>
-              )}
-            </div>
-          </div>
-
-          {/* Right: Feature cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 280px', minWidth: 0 }}>
-            {[
-              { icon: '\u26A1', title: 'KI-Analyse', desc: '6-Stufen Deep Analysis Pipeline' },
-              { icon: '\uD83D\uDEE1\uFE0F', title: 'Legal Radar', desc: 'Gesetzesänderungen automatisch erkennen' },
-              { icon: '\uD83D\uDCCA', title: 'Portfolio Health', desc: 'Alle Verträge auf einen Blick' },
-            ].map((card) => (
-              <div key={card.title} style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                background: '#ffffff', padding: '14px 18px',
-                borderRadius: 12, border: '1px solid rgba(59,130,246,0.1)',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-                minWidth: 0,
-              }}>
-                <div style={{
-                  fontSize: 20, width: 42, height: 42,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: '#f0f7ff', borderRadius: 10,
-                }}>
-                  {card.icon}
-                </div>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>{card.title}</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8' }}>{card.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : stats.analyzed === 0 ? (
-        /* Minimized Hero (nur Onboarding) */
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 28px',
-          background: 'linear-gradient(135deg, #f0f7ff 0%, #f8fafc 100%)', borderRadius: 14,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 20px rgba(59,130,246,0.08)',
-          border: '1px solid rgba(59,130,246,0.1)',
-          marginBottom: 28,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <h1 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', margin: 0 }}>Legal Pulse</h1>
-            <span style={{
-              fontSize: 10, fontWeight: 700, color: '#1d4ed8',
-              background: '#dbeafe', padding: '2px 8px', borderRadius: 4,
-              letterSpacing: '0.5px', textTransform: 'uppercase',
-            }}>
-              Aktiv
-            </span>
-            <span style={{ fontSize: 13, color: '#94a3b8' }}>
-              {stats.analyzed} / {stats.total} Verträge analysiert
-            </span>
-          </div>
-          <button
-            onClick={() => setHeroCollapsed(false)}
-            style={{
-              padding: '6px 14px', fontSize: 12, fontWeight: 600,
-              color: '#3b82f6', background: '#eff6ff',
-              border: '1px solid #bfdbfe', borderRadius: 8,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-            }}
-          >
-            &#9432; Mehr anzeigen
-          </button>
-        </div>
-      ) : null}
-
-      {/* ══════════ Zone 1: Pulse-Check Hero ══════════ */}
-      <PulseCommandCenter
-        stats={stats}
-        alerts={legalAlerts}
-        criticalContractCount={alertStats.criticalContracts.length}
-        openActionCount={alertStats.openActions.length}
-        renewalSoonCount={alertStats.renewalSoon.length}
-        unanalyzedCount={alertStats.unanalyzed.length}
-        severityCounts={monitoringStatus?.severityCounts ?? { critical: 0, high: 0, medium: 0, low: 0 }}
-        recentAlertsCount={monitoringStatus?.recentAlertsCount ?? 0}
-        lastVisit={lastVisit}
-        avgScore={alertStats.avgScore}
-        radarData={radarData ?? null}
-        lastScan={monitoringStatus?.lastScheduledScan ?? monitoringStatus?.lastScan ?? null}
-        lastRadarScan={monitoringStatus?.lastRadarScan ?? null}
-        lastRadarRun={monitoringStatus?.lastRadarRun ?? null}
-        nextRadarScan={monitoringStatus?.nextRadarScan ?? null}
-        onAnalyzeFirst={() => {
-          const firstUnanalyzed = items.find(i => !i.hasV2Result);
-          if (firstUnanalyzed) {
-            onSelectContract(firstUnanalyzed.contractId);
-          } else if (contractsRef.current) {
-            contractsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }}
-      />
-
       {isFirstUse ? (
-        /* ══════════ First-Use: Feature cards + subtle tip toast ══════════ */
-        <>
-          {/* Tipp-Toast: appears after 10s, disappears after 20s */}
-          {showFirstUseTip && (
-            <div className={styles.fadeIn} style={{
-              padding: '14px 20px',
-              background: 'linear-gradient(135deg, #f0f7ff, #eff6ff)',
-              border: '1px solid #bfdbfe',
-              borderRadius: 12,
-              marginBottom: 20,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              boxShadow: '0 2px 8px rgba(59,130,246,0.1)',
-            }}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>&#128161;</span>
-              <div style={{ flex: 1, fontSize: 13, color: '#1e40af', lineHeight: 1.5 }}>
-                <strong>Tipp:</strong> Starten Sie Ihre erste Analyse, um die automatische Vertrags&uuml;berwachung zu aktivieren.
-                Legal Pulse pr&uuml;ft dann jede Klausel auf Risiken und &uuml;berwacht Gesetzes&auml;nderungen f&uuml;r Sie.
-              </div>
-              <button
-                onClick={() => setShowFirstUseTip(false)}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: 16, color: '#93c5fd', padding: 4, flexShrink: 0,
-                }}
-              >&times;</button>
-            </div>
-          )}
-
-          {/* Feature cards */}
+        /* ══════════ Empty State (neuer Nutzer, aufgeräumt) ══════════ */
+        <div>
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: 16,
-            marginBottom: 24,
+            background: 'linear-gradient(135deg, #f6fbff 0%, #eef5fe 60%, #f7fafe 100%)',
+            border: '1px solid rgba(59,130,246,0.12)',
+            borderRadius: 18,
+            padding: 'clamp(28px, 4vw, 44px) clamp(20px, 4vw, 40px)',
+            textAlign: 'center',
+            boxShadow: '0 4px 20px rgba(59,130,246,0.06)',
+            marginBottom: 16,
           }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 14, flexWrap: 'wrap' as const }}>
+              <span style={{ width: 44, height: 44, borderRadius: 12, background: '#fff', border: '1px solid rgba(59,130,246,0.2)', display: 'grid', placeItems: 'center', boxShadow: '0 1px 3px rgba(37,99,235,0.12)' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+              </span>
+              <h1 style={{ fontSize: 26, fontWeight: 800, color: '#0f172a', margin: 0, letterSpacing: '-0.4px' }}>Legal Pulse</h1>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#1d4ed8', background: '#dbeafe', padding: '4px 11px', borderRadius: 6, letterSpacing: '0.5px', textTransform: 'uppercase' }}>Laufende Überwachung</span>
+            </div>
+            <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.6, maxWidth: 520, margin: '0 auto 22px' }}>
+              Legal Pulse überwacht deine Verträge laufend — auf rechtliche Risiken, neue Urteile und Gesetzesänderungen sowie Optimierungspotenzial. Analysiere einen Vertrag, um die Überwachung zu starten.
+            </p>
+            <button onClick={startFirstAnalysis} style={{ padding: '12px 26px', fontSize: 14, fontWeight: 600, color: '#fff', background: '#2563eb', border: 0, borderRadius: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(37,99,235,0.25)' }}>
+              Ersten Vertrag analysieren
+            </button>
+            {stats.total > 0 && (
+              <div style={{ marginTop: 14, fontSize: 13, color: '#64748b' }}>
+                <strong style={{ color: '#0f172a' }}>{stats.total} {stats.total === 1 ? 'Vertrag' : 'Verträge'}</strong> bereit — einmal analysieren genügt, danach läuft die Überwachung automatisch.
+              </div>
+            )}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
             {[
-              { icon: '\u2696\uFE0F', title: 'Rechtliche Risiken erkennen', desc: 'KI-Analyse pr\u00FCft jede Klausel auf Wirksamkeit, DSGVO und Haftungsrisiken.' },
-              { icon: '\uD83D\uDCB0', title: 'Kostenfallen vermeiden', desc: 'Erkennt automatische Verl\u00E4ngerungen, versteckte Geb\u00FChren und \u00FCberh\u00F6hte Preise.' },
-              { icon: '\uD83D\uDCCA', title: 'Portfolio \u00FCberwachen', desc: 'Alle Vertr\u00E4ge auf einen Blick \u2014 mit Fristen, Scores und Handlungsempfehlungen.' },
-            ].map(card => (
-              <div key={card.title} style={{
-                padding: 24,
-                background: '#fff',
-                borderRadius: 12,
-                border: '1px solid #e5e7eb',
-              }}>
-                <div style={{ fontSize: 28, marginBottom: 12 }}>{card.icon}</div>
-                <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 6 }}>{card.title}</div>
-                <div style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>{card.desc}</div>
+              { d: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4', t: 'Rechtliche Risiken erkennen', s: 'Die KI prüft jede Klausel auf Wirksamkeit, DSGVO-Konformität und Haftungsrisiken.' },
+              { d: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM14.8 9a3.5 3.5 0 1 0 0 6M7.5 11.2h6M7.5 13.4h5', t: 'Kostenfallen vermeiden', s: 'Erkennt automatische Verlängerungen, versteckte Gebühren und überhöhte Preise.' },
+              { d: 'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z', t: 'Gesetze im Blick behalten', s: 'Neue Urteile und Gesetzesänderungen werden automatisch gegen deine Verträge geprüft.' },
+            ].map(c => (
+              <div key={c.t} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 14, padding: 22, boxShadow: '0 1px 2px rgba(15,23,42,0.04)' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 11, background: '#eff6ff', display: 'grid', placeItems: 'center', marginBottom: 14 }}>
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={c.d} /></svg>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#0f172a', marginBottom: 5 }}>{c.t}</div>
+                <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.55 }}>{c.s}</div>
               </div>
             ))}
           </div>
-        </>
+        </div>
       ) : (
         <>
+          <PulseCommandCenter
+            stats={stats}
+            alerts={legalAlerts}
+            criticalContractCount={alertStats.criticalContracts.length}
+            openActionCount={alertStats.openActions.length}
+            renewalSoonCount={alertStats.renewalSoon.length}
+            unanalyzedCount={alertStats.unanalyzed.length}
+            severityCounts={monitoringStatus?.severityCounts ?? { critical: 0, high: 0, medium: 0, low: 0 }}
+            recentAlertsCount={monitoringStatus?.recentAlertsCount ?? 0}
+            lastVisit={lastVisit}
+            avgScore={alertStats.avgScore}
+            radarData={radarData ?? null}
+            lastScan={monitoringStatus?.lastScheduledScan ?? monitoringStatus?.lastScan ?? null}
+            lastRadarScan={monitoringStatus?.lastRadarScan ?? null}
+            lastRadarRun={monitoringStatus?.lastRadarRun ?? null}
+            nextRadarScan={monitoringStatus?.nextRadarScan ?? null}
+            onAnalyzeFirst={startFirstAnalysis}
+          />
+
           {/* ══════════ Zone 2: Legal Radar (Herzstück) ══════════ */}
           <div ref={radarRef} id="legal-alerts" />
           <LegalAlertsPanel
