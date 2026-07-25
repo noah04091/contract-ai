@@ -711,6 +711,7 @@ type SortBy = 'score_asc' | 'score_desc' | 'name' | 'recent';
 
 const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ onSelectContract }) => {
   const toast = useToast();
+  const navigate = useNavigate();
   const [items, setItems] = useState<PulseV2DashboardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState(false);
@@ -907,6 +908,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
     const firstUnanalyzed = items.find(i => !i.hasV2Result);
     if (firstUnanalyzed) {
       onSelectContract(firstUnanalyzed.contractId);
+    } else if (stats.total === 0) {
+      // Noch gar keine Verträge → zum Upload-Bereich (Dashboard) leiten
+      navigate('/dashboard');
     } else if (contractsRef.current) {
       contractsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -957,10 +961,10 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
               <span style={{ fontSize: 10, fontWeight: 700, color: '#1d4ed8', background: '#dbeafe', padding: '4px 11px', borderRadius: 6, letterSpacing: '0.5px', textTransform: 'uppercase' }}>Laufende Überwachung</span>
             </div>
             <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.6, maxWidth: 520, margin: '0 auto 22px' }}>
-              Legal Pulse überwacht deine Verträge laufend — auf rechtliche Risiken, neue Urteile und Gesetzesänderungen sowie Optimierungspotenzial. Analysiere einen Vertrag, um die Überwachung zu starten.
+              Legal Pulse überwacht deine Verträge laufend — auf rechtliche Risiken, neue Urteile und Gesetzesänderungen sowie Optimierungspotenzial. Lade einen Vertrag hoch und analysiere ihn, um die Überwachung zu starten.
             </p>
             <button onClick={startFirstAnalysis} style={{ padding: '12px 26px', fontSize: 14, fontWeight: 600, color: '#fff', background: '#2563eb', border: 0, borderRadius: 10, cursor: 'pointer', boxShadow: '0 2px 8px rgba(37,99,235,0.25)' }}>
-              Ersten Vertrag analysieren
+              {stats.total === 0 ? 'Vertrag hochladen' : 'Ersten Vertrag analysieren'}
             </button>
             {stats.total > 0 && (
               <div style={{ marginTop: 14, fontSize: 13, color: '#64748b' }}>
@@ -1101,6 +1105,10 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
         </>
       )}
 
+      {/* Vertragsliste, Filter & System-Status nur zeigen, wenn überhaupt Verträge da sind
+          — sonst bekäme ein brandneuer Nutzer eine leere Liste mit Suche/Filtern präsentiert. */}
+      {items.length > 0 && (
+        <>
       {/* ══════════ Contract Grid: Search + Filter + Sort ══════════ */}
       <div ref={contractsRef} style={{ marginBottom: 20 }}>
         {/* Row 1: Title + Search + Sort */}
@@ -1314,6 +1322,8 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
           radarData={radarData ?? null}
         />
       </div>
+        </>
+      )}
     </div>
   );
 };
