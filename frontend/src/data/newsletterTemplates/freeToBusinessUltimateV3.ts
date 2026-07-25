@@ -81,7 +81,10 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
             </h1>
             <p style="margin:18px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#475569;">
               Vom ersten Absatz bis zur letzten Klausel? Geht den meisten so.<br class="br-desk">
-              Und genau dort wird es teuer: eine &uuml;bersehene Klausel, eine vergessene Frist, eine Verl&auml;ngerung, die du nie wolltest.
+              Die meisten Probleme entstehen n&auml;mlich nicht beim Unterschreiben &mdash; sondern Monate sp&auml;ter: eine &uuml;bersehene Klausel, eine vergessene Frist, eine Verl&auml;ngerung, die du nie wolltest.
+            </p>
+            <p style="margin:22px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:20px;line-height:1.35;color:#0f172a;font-weight:700;letter-spacing:-0.4px;">
+              Contract AI liest deine Vertr&auml;ge.<br><span style="color:#2563eb;">Damit du es nicht musst.</span>
             </p>
           </td>
         </tr>
@@ -174,7 +177,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
               </tr>
             </table>
             <p style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;text-align:center;">
-              So pr&uuml;ft Contract AI jeden Vertrag &mdash; vom Handyvertrag bis zum Gewerbemietvertrag. Beispiel-Analyse.
+              So pr&uuml;ft Contract AI jeden Vertrag &mdash; vom Handyvertrag bis zum Gewerbemietvertrag, jede Klausel mit Fundstelle und Begr&uuml;ndung. Beispiel-Analyse.
             </p>
           </td>
         </tr>
@@ -193,7 +196,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
               Was Premium f&uuml;r dich &uuml;bernimmt
             </div>
             <h2 class="section-h" style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:28px;line-height:1.2;color:#0f172a;font-weight:800;letter-spacing:-0.6px;">
-              Drei Dinge, die du<br>sofort sp&uuml;rst.
+              Drei Werkzeuge, die du<br>sofort sp&uuml;rst.
             </h2>
           </td>
         </tr>
