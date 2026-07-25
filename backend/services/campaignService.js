@@ -784,8 +784,12 @@ async function processNextBatch(campaignId, batchSize = BATCH_SIZE) {
         }
       }
 
+      // Unterstützt {{firstName}} (leerer Fallback, rückwärtskompatibel) UND
+      // {{firstName|Fallback}} — z.B. "{{firstName|Hallo}}, ..." → "Hallo, ..." wenn kein Vorname.
+      // Verhindert unprofessionelle Artefakte wie führendes Komma bei fehlendem Namen.
       const substitute = (text) => typeof text === 'string'
-        ? text.replace(/\{\{firstName\}\}/g, firstName)
+        ? text.replace(/\{\{firstName(?:\|([^}]*))?\}\}/g, (_m, fallback) =>
+            firstName || (fallback != null ? fallback : ''))
         : text;
 
       const personalizedCampaign = {

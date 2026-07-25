@@ -74,7 +74,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
         <tr>
           <td class="px-inner" style="padding:44px 40px 0;text-align:center;">
             <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;color:#64748b;letter-spacing:2px;text-transform:uppercase;font-weight:600;">
-              Pers&ouml;nlich f&uuml;r {{firstName}}
+              Pers&ouml;nlich f&uuml;r {{firstName|dich}}
             </div>
             <h1 class="hero-h" style="margin:16px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:38px;line-height:1.12;color:#0f172a;font-weight:800;letter-spacing:-1.2px;">
               Liest du deine Vertr&auml;ge<br><span style="color:#2563eb;">wirklich</span>?
@@ -469,6 +469,21 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
               <p style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;color:#0f172a;">
                 Contract&nbsp;AI
               </p>
+
+              <!-- Rechtlicher Absender-Footer (§5 TMG) -->
+              <p style="margin:22px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.7;color:#94a3b8;">
+                Contract AI &middot; Inhaber Noah Liebold<br>
+                Richard-Oberle-Weg 27 &middot; 76648 Durmersheim &middot; Deutschland<br>
+                <a href="mailto:info@contract-ai.de" style="color:#94a3b8;text-decoration:underline;">info@contract-ai.de</a>
+              </p>
+              <p style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.7;color:#94a3b8;">
+                <a href="https://contract-ai.de/impressum" style="color:#64748b;text-decoration:underline;">Impressum</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://contract-ai.de/datenschutz" style="color:#64748b;text-decoration:underline;">Datenschutz</a>
+              </p>
+              <p style="margin:14px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10.5px;line-height:1.6;color:#b8c0cc;">
+                Du erh&auml;ltst diese E-Mail, weil du ein Konto bei Contract AI hast.
+              </p>
             </div>
           </td>
         </tr>
@@ -486,7 +501,7 @@ export const freeToBusinessUltimateV3Template: NewsletterTemplate = {
   id: 'free-to-business-ultimate-v3',
   label: '🚀 Free → Business · ULTIMATE v3 (Fintech-Design)',
   description: 'TOP-EMPFEHLUNG v3. Modernes Stripe/DocuSign-Level-Design (Inter statt Serifen, Produkt-Mock „Dienstleistungsvertrag" statt Stock-Foto, helles Aktion-Panel). Neu vs. v2: echte Preise in der Tarif-Tabelle (19€/29€ + rabattiert), Enterprise als „Meist gewählt" hervorgehoben, Risk-Reversal unter jedem CTA (monatlich kündbar + 14-Tage-Geld-zurück), aktuelle USPs (Wörtlich belegt, Klagefrist §4 KSchG, Foto-Upload), kürzerer Mobile-tauglicher Betreff.',
-  subject: '{{firstName}}, liest du deine Verträge wirklich?',
+  subject: '{{firstName|Hallo}}, liest du deine Verträge wirklich?',
   preheader: 'Geht den meisten so. 10% Rabatt mit Code AKTION10 — nur 7 Tage. Im Jahresabo: aufs ganze Jahr.',
   title: 'Liest du deine Verträge wirklich?',
   ctaText: 'Verträge absichern',
