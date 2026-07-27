@@ -39,9 +39,11 @@ interface ContractDetailProps {
   result: PulseV2Result;
   monitorInfo?: { nextRadarScan: string | null; alertCount: number } | null;
   contractAlerts?: PulseV2LegalAlert[];
+  /** Deep-Link von einer Legal-Radar-Meldung (?alert=…): zu diesem Alert scrollen + aufklappen */
+  highlightAlertId?: string | null;
 }
 
-export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts }) => {
+export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts, highlightAlertId }) => {
   const toast = useToast();
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [findingsState, setFindingsState] = useState<PulseV2Finding[]>(result.clauseFindings || []);
@@ -51,7 +53,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
   const [showFindingsInfo, setShowFindingsInfo] = useState(false);
   const [showActionsInfo, setShowActionsInfo] = useState(false);
-  const [pdfExporting, setPdfExporting] = useState(false);
   const juristischeInfoRef = useRef<HTMLDivElement>(null);
 
   // ── Language toggle (PR 4) ──
@@ -205,29 +206,26 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     });
   }, []);
 
-  const handlePdfExport = useCallback(async () => {
-    setPdfExporting(true);
-    try {
-      const res = await fetch(`/api/legal-pulse-v2/results/${result._id}/export-pdf`, {
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('PDF Export fehlgeschlagen');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Vertragsanalyse_${result.context?.contractName?.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, '_') || result.contractId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('[PulseV2] PDF export error:', err);
-      toast.error('PDF-Export fehlgeschlagen. Bitte erneut versuchen.');
-    } finally {
-      setPdfExporting(false);
-    }
-  }, [result._id, result.context?.contractName, result.contractId]);
+  // Deep-Link: Ankunft über eine Legal-Radar-Meldung (?alert=…) → automatisch zum
+  // betreffenden Alert scrollen. Die Alerts laden asynchron nach, deshalb wartet der
+  // Effekt, bis der Alert wirklich gerendert ist; block:'center' hält ihn unter der
+  // fixen Navbar sichtbar. Aufklappen übernimmt initialExpanded am ImpactGraph.
+  useEffect(() => {
+    if (!highlightAlertId) return;
+    if (!contractAlerts?.some(a => a._id === highlightAlertId)) return;
+    const t = setTimeout(() => {
+      document.getElementById(`alert-${highlightAlertId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+    return () => clearTimeout(t);
+  }, [highlightAlertId, contractAlerts]);
+
+  // PDF im neuen Tab öffnen statt Download erzwingen. Bewusst SYNCHRON per window.open
+  // (kein fetch+blob davor): nur so bleibt der Klick-Kontext erhalten und Popup-Blocker
+  // greifen nicht. Auth läuft über das Cookie (same-origin /api). Speichern geht
+  // weiterhin direkt aus dem Browser-Viewer, Dateiname bleibt erhalten (inline+filename).
+  const handlePdfExport = useCallback(() => {
+    window.open(`/api/legal-pulse-v2/results/${result._id}/export-pdf?inline=1`, '_blank', 'noopener');
+  }, [result._id]);
 
   const handleFindingStatusChange = useCallback(async (findingIndex: number, status: 'open' | 'resolved' | 'dismissed', comment?: string) => {
     try {
@@ -553,7 +551,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             <button
               className={styles.btnSecondary}
               onClick={handlePdfExport}
-              disabled={pdfExporting}
+              title="Analyse-Bericht als PDF in neuem Tab ansehen"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -561,14 +559,14 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 padding: '3px 10px',
                 fontSize: 11,
                 fontWeight: 500,
-                color: pdfExporting ? '#9ca3af' : '#4b5563',
+                color: '#4b5563',
                 background: '#f9fafb',
                 border: '1px solid #e5e7eb',
                 borderRadius: 5,
-                cursor: pdfExporting ? 'default' : 'pointer',
+                cursor: 'pointer',
               }}
             >
-              {pdfExporting ? '\u23F3' : '\uD83D\uDCC4'} {pdfExporting ? 'Exportiert...' : 'PDF'}
+              {'\uD83D\uDCC4'} PDF ansehen
             </button>
             {/* Language toggle (PR 4): only rendered for English-language contracts.
                 German contracts are the main customer base — the German UI is the
@@ -1183,7 +1181,13 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           </div>
           <div style={{ padding: 24 }}>
             {contractAlerts.map(alert => (
-              <ImpactGraph key={alert._id} alert={alert} hideContractInfo />
+              <div
+                key={alert._id}
+                id={`alert-${alert._id}`}
+                className={alert._id === highlightAlertId ? styles.alertHighlight : undefined}
+              >
+                <ImpactGraph alert={alert} hideContractInfo initialExpanded={alert._id === highlightAlertId} />
+              </div>
             ))}
           </div>
         </div>

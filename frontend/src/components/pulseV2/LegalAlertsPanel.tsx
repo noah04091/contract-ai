@@ -9,7 +9,7 @@ interface LegalAlertsPanelProps {
   onDismiss?: (alertId: string) => void;
   onResolve?: (alertId: string) => void;
   onRestore?: (alertId: string) => void;
-  onNavigate?: (contractId: string) => void;
+  onNavigate?: (contractId: string, alertId?: string) => void;
   lastVisit?: string | null;
 }
 
@@ -585,7 +585,7 @@ const LawGroup: React.FC<{
   onDismiss?: (alertId: string) => void;
   onResolve?: (alertId: string) => void;
   onRestore?: (alertId: string) => void;
-  onNavigate?: (contractId: string) => void;
+  onNavigate?: (contractId: string, alertId?: string) => void;
   isNew?: boolean;
 }> = ({ group, onDismiss, onResolve, onRestore, onNavigate, isNew }) => {
   const [expanded, setExpanded] = useState(false);

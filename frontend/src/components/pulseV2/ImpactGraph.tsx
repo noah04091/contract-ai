@@ -5,8 +5,12 @@ import styles from '../../styles/PulseV2.module.css';
 
 interface ImpactGraphProps {
   alert: PulseV2LegalAlert;
-  onNavigate?: (contractId: string) => void;
+  // alertId wird mitgegeben, damit die Zielseite per ?alert=… direkt zu genau
+  // diesem Alert scrollen und ihn aufgeklappt zeigen kann (Deep-Link).
+  onNavigate?: (contractId: string, alertId?: string) => void;
   hideContractInfo?: boolean;
+  /** Deep-Link: Alert direkt aufgeklappt rendern (z. B. Ankunft via ?alert=…) */
+  initialExpanded?: boolean;
 }
 
 const SEVERITY_COLORS: Record<string, { color: string; bg: string }> = {
@@ -29,8 +33,8 @@ const StepRow: React.FC<{ label: string; first?: boolean; strong?: boolean; chil
     <span style={{ color: strong ? '#0f172a' : '#475569', fontWeight: strong ? 600 : 400, minWidth: 0 }}>{children}</span>
   </div>
 );
-export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hideContractInfo }) => {
-  const [expanded, setExpanded] = useState(false);
+export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hideContractInfo, initialExpanded }) => {
+  const [expanded, setExpanded] = useState(initialExpanded ?? false);
   const isPositive = alert.impactDirection === 'positive';
   const sev = isPositive ? POSITIVE_COLORS : (SEVERITY_COLORS[alert.severity] || SEVERITY_COLORS.low);
   const hasClauseImpacts = alert.clauseImpacts && alert.clauseImpacts.length > 0;
@@ -96,7 +100,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
             {!hideContractInfo && (
               <StepRow label="Betrifft">
                 <span
-                  onClick={() => onNavigate?.(alert.contractId)}
+                  onClick={() => onNavigate?.(alert.contractId, alert._id)}
                   style={{ fontWeight: 600, color: '#0f172a', cursor: onNavigate ? 'pointer' : 'default', textDecoration: onNavigate ? 'underline' : 'none', textUnderlineOffset: 3 }}
                 >{cleanContractName(alert.contractName)}</span>
                 {alert.clauseImpacts?.length > 0 && <span style={{ color: '#94a3b8' }}> — {alert.clauseImpacts.length} Klausel{alert.clauseImpacts.length > 1 ? 'n' : ''}</span>}
@@ -121,7 +125,7 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
             {/* Aktionen */}
             <div style={{ display: 'flex', gap: 8, margin: '12px 0 4px', alignItems: 'center', flexWrap: 'wrap' }}>
               {!hideContractInfo && onNavigate && (
-                <button onClick={() => onNavigate(alert.contractId)} style={{ fontWeight: 600, fontSize: 12.5, padding: '8px 14px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer' }}>Vertrag öffnen</button>
+                <button onClick={() => onNavigate(alert.contractId, alert._id)} style={{ fontWeight: 600, fontSize: 12.5, padding: '8px 14px', borderRadius: 8, border: 'none', background: '#2563eb', color: '#fff', cursor: 'pointer' }}>Vertrag öffnen</button>
               )}
               {alert.lawSource && alert.lawSource.startsWith('http') && (
                 <a href={alert.lawSource} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 600, fontSize: 12.5, padding: '8px 14px', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#475569', textDecoration: 'none' }}>Quelle</a>

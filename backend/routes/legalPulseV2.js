@@ -681,7 +681,9 @@ router.get("/results/:id/export-pdf", async (req, res) => {
     const contractName = result.context?.contractName || "Vertrag";
     const safeFileName = contractName.replace(/[^a-zA-Z0-9äöüÄÖÜß _-]/g, "").substring(0, 60);
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(safeFileName)}_Legal_Pulse.pdf"`);
+    // ?inline=1 → im Browser-Viewer anzeigen statt Download erzwingen (filename bleibt fürs Speichern erhalten)
+    const disposition = req.query.inline === "1" ? "inline" : "attachment";
+    res.setHeader("Content-Disposition", `${disposition}; filename="${encodeURIComponent(safeFileName)}_Legal_Pulse.pdf"`);
     doc.pipe(res);
 
     // ── Design tokens ──

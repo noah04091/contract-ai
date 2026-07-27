@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 // DashboardLayout not used — PulseV2 uses the global Navbar only
 import { usePulseV2 } from '../hooks/usePulseV2';
 import { AnalysisPipeline } from '../components/pulseV2/AnalysisPipeline';
@@ -49,7 +49,8 @@ const PulseV2: React.FC = () => {
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #f0f4ff 0%, #fafbff 50%, #f8fafc 100%)' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 32px' }}>
-        <DashboardView onSelectContract={(id) => navigate(`/pulse/${id}`)} />
+        {/* alertId (optional) → Deep-Link: Zielseite scrollt zum Alert und klappt ihn auf */}
+        <DashboardView onSelectContract={(id, alertId) => navigate(`/pulse/${id}${alertId ? `?alert=${encodeURIComponent(alertId)}` : ''}`)} />
       </div>
     </div>
   );
@@ -66,6 +67,9 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
     startAnalysis, cancelAnalysis, loadLatest,
   } = usePulseV2();
   const navigate = useNavigate();
+  // Deep-Link von einer Legal-Radar-Meldung: ?alert=<id> → zum Alert scrollen + aufklappen
+  const [searchParams] = useSearchParams();
+  const highlightAlertId = searchParams.get('alert');
   const [loading, setLoading] = useState(true);
   const [monitorInfo, setMonitorInfo] = useState<{ nextRadarScan: string | null; alertCount: number } | null>(null);
   const [contractAlerts, setContractAlerts] = useState<PulseV2LegalAlert[]>([]);
@@ -431,7 +435,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
 
       {/* Result — der „Erneut analysieren"-Button sitzt jetzt oben in der Toolbar */}
       {status === 'completed' && result && (
-        <ContractDetail result={result} monitorInfo={monitorInfo} contractAlerts={contractAlerts} />
+        <ContractDetail result={result} monitorInfo={monitorInfo} contractAlerts={contractAlerts} highlightAlertId={highlightAlertId} />
       )}
 
       {/* No result yet */}
@@ -709,7 +713,7 @@ const ActionCenter: React.FC<{
 type DashboardFilter = 'all' | 'critical' | 'action_needed' | 'unanalyzed';
 type SortBy = 'score_asc' | 'score_desc' | 'name' | 'recent';
 
-const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ onSelectContract }) => {
+const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string) => void }> = ({ onSelectContract }) => {
   const toast = useToast();
   const navigate = useNavigate();
   const [items, setItems] = useState<PulseV2DashboardItem[]>([]);
@@ -1069,7 +1073,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string) => void }> = ({ o
                 toast.error('Verbindungsfehler — bitte erneut versuchen.');
               }
             }}
-            onNavigate={(contractId) => onSelectContract(contractId)}
+            onNavigate={(contractId, alertId) => onSelectContract(contractId, alertId)}
           />
 
           <div id="pulse-tasks" />
