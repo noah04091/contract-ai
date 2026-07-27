@@ -5,7 +5,8 @@
   "scripts": {
     "test": "jest --coverage --detectOpenHandles",
     "test:watch": "jest --watch",
-    "test:unit": "jest --testPathPattern=tests/unit"
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "e2e": "node -r dotenv/config scripts/e2eLivePrueffahrt.js"
   },
   "keywords": [],
   "author": "",

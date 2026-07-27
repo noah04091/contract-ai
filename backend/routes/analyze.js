@@ -7167,3 +7167,9 @@ module.exports.classifyDocumentTypeWithGPT = classifyDocumentTypeWithGPT;
 module.exports.generateLetterAnalysisPrompt = generateLetterAnalysisPrompt;
 module.exports.resolveSystemPrompt = resolveSystemPrompt;
 module.exports.makeRateLimitedGPT4Request = makeRateLimitedGPT4Request; // 🧪 für Modell-Flag-Offline-Test
+// ⚡ Async-Job-Helfer (27.07.2026): erlauben der Re-Analyse-Route (contracts.js), denselben
+// analysis_jobs-Mechanismus + Polling-Endpunkt zu nutzen wie der Haupt-Upload — gegen den
+// Cloudflare-~100s-Schnitt bei langen Läufen. contracts.js baut seinen eigenen Runner darauf.
+module.exports.generateJobId = generateJobId;
+module.exports.insertAnalysisJob = insertAnalysisJob;
+module.exports.updateAnalysisJob = updateAnalysisJob;

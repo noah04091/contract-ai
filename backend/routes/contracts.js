@@ -18,12 +18,15 @@ const nodemailer = require("nodemailer"); // 📧 Email Service
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const contractAnalyzer = require("../services/contractAnalyzer"); // 🤖 ULTRA-INTELLIGENT Contract Analyzer v10
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ Legal Pulse Risk Analysis
+const { applyReanalysisEnrichment } = require("../services/reanalysisEnrichment"); // 🔗 Re-Analyse-Zusatz (legalPulse + Onboarding), von blockierendem UND async-Pfad geteilt
 const { preprocessContract } = require("../services/legalLens/clausePreprocessor"); // 🧠 Legal Lens Vorverarbeitung
 const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
 const { findContractWithOrgAccess, hasPermission, buildOrgFilter } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { normalizeLaufzeit, normalizeKuendigung } = require("../utils/contractFieldLabels"); // 🇩🇪 Englisch→Deutsch Normalisierung für Eckdaten
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness, handleEnhancedDeepLawyerAnalysisRequest } = analyzeRoute;
+// ⚡ Async-Job-Helfer für den Re-Analyse-Pfad (gegen Cloudflare-~100s-Schnitt bei langen Läufen)
+const { generateJobId, insertAnalysisJob, updateAnalysisJob } = analyzeRoute;
 const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 const { applyAnalysisGate, effectivePlan, isContractUnlocked, applyGeneratedContentGate } = require("../utils/analysisGate"); // 🔒 Freemium-Tease-Gate (Phase 2) + Einmal-Freischaltung (Stufe 2) + Generierte-Volltext-Sperre
@@ -2603,6 +2606,76 @@ router.post("/:id/detect-provider", verifyToken, async (req, res) => {
 });
 
 // ✅ NEU: POST /contracts/:id/analyze – Nachträgliche Analyse für bestehenden Vertrag
+// ⚡ Hintergrund-Runner für die ASYNC Re-Analyse (27.07.2026, gegen Cloudflare-~100s-Schnitt).
+// Nutzt dieselbe kanonische Pipeline (fakeReq/fakeRes) wie der blockierende Pfad, schreibt
+// Fortschritt+Ergebnis ins analysis_jobs-Doc (dasselbe, das das Frontend über
+// /api/analyze/job/:jobId pollt) und führt danach die GETEILTE Enrichment aus — also
+// verhaltensgleich zum blockierenden Pfad, nur ohne offene HTTP-Verbindung.
+async function runReanalysisInBackground(jobId, ctx) {
+  const { tempFilePath, contractId, userId, originalname, fileSize, requestId } = ctx;
+  const db = await database.connect();
+  await updateAnalysisJob(db, jobId, { status: 'processing', startedAt: new Date() });
+
+  const fakeReq = {
+    file: {
+      path: tempFilePath,
+      originalname,
+      mimetype: 'application/pdf',
+      size: fileSize,
+      filename: path.basename(tempFilePath)
+    },
+    user: { userId },
+    body: { forceReanalyze: 'true' },
+    query: {},
+    jobId, // 🔑 aktiviert echten Fortschritt (reportJobProgress schreibt Etappen ins Job-Doc)
+    on: () => {},
+    removeListener: () => {}
+  };
+  const fakeRes = {
+    headersSent: false,
+    _statusCode: 200,
+    _body: null,
+    status(code) { this._statusCode = code; return this; },
+    json(body) { this._body = body; this.headersSent = true; return this; }
+  };
+
+  try {
+    await handleEnhancedDeepLawyerAnalysisRequest(fakeReq, fakeRes);
+    const ok = fakeRes._statusCode >= 200 && fakeRes._statusCode < 300 && fakeRes._body?.success === true;
+    if (ok) {
+      // Zusatz-Aufbereitung identisch zum blockierenden Pfad (keine Daten verlieren)
+      const analyzedContract = await contractsCollection.findOne({ _id: new ObjectId(contractId) });
+      await applyReanalysisEnrichment({
+        contractsCollection, usersCollection, aiLegalPulse, ObjectId,
+        contractId, userId, requestId, analyzedContract
+      });
+      await updateAnalysisJob(db, jobId, { status: 'done', result: fakeRes._body, completedAt: new Date() });
+      console.log(`✅ [${jobId}] Async Re-Analyse erfolgreich abgeschlossen`);
+    } else {
+      await updateAnalysisJob(db, jobId, {
+        status: 'failed',
+        error: {
+          code: fakeRes._body?.error || 'UNKNOWN',
+          message: fakeRes._body?.message || 'KI-Analyse fehlgeschlagen',
+          httpStatus: fakeRes._statusCode
+        },
+        completedAt: new Date()
+      });
+      console.warn(`⚠️ [${jobId}] Async Re-Analyse fehlgeschlagen: ${fakeRes._statusCode}`);
+    }
+  } catch (err) {
+    console.error(`❌ [${jobId}] Async Re-Analyse Ausnahme:`, err.message);
+    await updateAnalysisJob(db, jobId, {
+      status: 'failed',
+      error: { code: 'PIPELINE_EXCEPTION', message: err.message || 'Interner Fehler' },
+      completedAt: new Date()
+    });
+  } finally {
+    // 🧹 Temp-Datei gehört dem Runner (die Route hat sie im Async-Modus bewusst NICHT gelöscht)
+    if (tempFilePath) { try { await fs.unlink(tempFilePath); } catch (_) { /* ignore */ } }
+  }
+}
+
 router.post("/:id/analyze", verifyToken, async (req, res) => {
   const requestId = `ANALYZE-${Date.now()}`;
   let tempFilePath = null; // 📄 Temp-Datei der Re-Analyse-Delegation (im finally aufgeräumt)
@@ -2703,6 +2776,45 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     tempFilePath = path.join(os.tmpdir(), `reanalyze-${id}-${Date.now()}.pdf`);
     await fs.writeFile(tempFilePath, buffer);
 
+    // ⚡ ASYNC-MODUS (27.07.2026): Bei ?async=true den Job dispatchen und SOFORT mit 202 antworten,
+    // Pipeline läuft im Hintergrund. So kann Cloudflare die HTTP-Verbindung nicht bei ~100s kappen
+    // (Error 524), wenn ein langer Vertrag über die Grenze rechnet. Das Frontend pollt danach
+    // /api/analyze/job/:jobId — denselben Endpunkt wie der Haupt-Upload. Ohne ?async=true bleibt der
+    // bewährte blockierende Pfad unverändert (abwärtskompatibel). Kill-Switch: ANALYZE_ASYNC_ENABLED=false.
+    const wantsAsync = req.query.async === 'true' || req.body?.async === 'true';
+    if (wantsAsync && process.env.ANALYZE_ASYNC_ENABLED !== 'false') {
+      const jobId = generateJobId();
+      const jobDb = await database.connect();
+      await insertAnalysisJob(jobDb, {
+        jobId,
+        userId: req.user.userId,
+        requestId,
+        originalFilename: contract.name || 'vertrag.pdf',
+        fileSize: buffer.length
+      });
+      const bgCtx = {
+        tempFilePath,
+        contractId: id,
+        userId: req.user.userId,
+        originalname: contract.name || 'vertrag.pdf',
+        fileSize: buffer.length,
+        requestId
+      };
+      tempFilePath = null; // 🔑 Runner übernimmt Datei + Aufräumen; finally hier NICHT löschen
+      res.status(202).json({
+        success: true,
+        async: true,
+        jobId,
+        statusUrl: `/api/analyze/job/${jobId}`,
+        pollIntervalMs: 1000,
+        message: 'Analyse läuft im Hintergrund. Status über statusUrl abfragen.'
+      });
+      setImmediate(() => runReanalysisInBackground(jobId, bgCtx).catch(err => {
+        console.error(`❌ [${jobId}] runReanalysisInBackground uncaught:`, err.message);
+      }));
+      return;
+    }
+
     // ♻️ DIESELBE Pipeline wie beim Upload aufrufen (erprobtes fakeReq/fakeRes-Muster aus dem
     // Async-Modus von analyze.js). Der Handler übernimmt: Text/OCR, GPT mit Koffer-Fix
     // (adaptiver max_tokens), DateHunt, Validierung, Speicherung (contracts + analyses),
@@ -2744,61 +2856,18 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     // criticalIssues, recommendations, quickFacts, importantDates, …).
     const analyzedContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
 
-    // ⚡ LEGAL PULSE: initiales legalPulse aus den Analyse-Ergebnissen ableiten.
-    // (Die Upload-Pipeline füllt dieses reiche Objekt nicht — wir behalten das Mapping hier,
-    //  damit die Re-Analyse gegenüber vorher keine Daten verliert. Quelle: gespeicherter Vertrag.)
-    try {
-      const contractScoreRaw = analyzedContract?.contractScore || 0;
-      const initialRiskScore = Math.max(0, Math.min(100, 100 - contractScoreRaw));
-      const initialHealthScore = aiLegalPulse.calculateHealthScore(initialRiskScore, { uploadedAt: new Date() });
-      const initialTopRisks = (analyzedContract?.criticalIssues || []).map(issue => ({
-        title: issue.title || 'Kritischer Punkt',
-        description: issue.description || '',
-        severity: issue.impact === 'high' || issue.severity === 'high' ? 'high' : 'medium',
-        impact: issue.impact || '',
-        solution: issue.recommendation || issue.action || ''
-      }));
-      const initialRecommendations = (analyzedContract?.recommendations || []).map(rec =>
-        typeof rec === 'string'
-          ? { title: rec, description: rec, priority: 'medium', effort: 'mittel', impact: 'mittel' }
-          : rec
-      );
-      const initialLegalPulse = {
-        riskScore: initialRiskScore,
-        healthScore: initialHealthScore,
-        summary: Array.isArray(analyzedContract?.summary) ? analyzedContract.summary.join(' ') : (analyzedContract?.summary || ''),
-        lastChecked: new Date(),
-        analysisDate: new Date(),
-        topRisks: initialTopRisks,
-        recommendations: initialRecommendations,
-        riskFactors: (analyzedContract?.risiken || []).map(r => typeof r === 'string' ? r : r.title || r.description || ''),
-        lawInsights: (analyzedContract?.legalPulseHooks || []).slice(0, 5),
-        marketSuggestions: [],
-        scoreHistory: [{ date: new Date(), score: initialRiskScore }],
-        analysisHistory: [{
-          date: new Date(),
-          riskScore: initialRiskScore,
-          healthScore: initialHealthScore,
-          changes: ['Initiale Analyse aus Vertragsanalyse abgeleitet'],
-          triggeredBy: 'contract_analysis'
-        }],
-        aiGenerated: true,
-        status: 'synced'
-      };
-      await contractsCollection.updateOne({ _id: new ObjectId(id) }, { $set: { legalPulse: initialLegalPulse } });
-    } catch (lpErr) {
-      console.warn(`⚠️ [${requestId}] Legal Pulse Mapping fehlgeschlagen:`, lpErr.message);
-    }
-
-    // Onboarding: firstAnalysisComplete automatisch auf true setzen
-    try {
-      await usersCollection.updateOne(
-        { _id: new ObjectId(req.user.userId) },
-        { $set: { 'onboarding.checklist.firstAnalysisComplete': true, updatedAt: new Date() } }
-      );
-    } catch (onboardingErr) {
-      console.warn('⚠️ [ONBOARDING] Checklist update failed:', onboardingErr.message);
-    }
+    // ⚡ Zusatz-Aufbereitung (legalPulse ableiten + Onboarding-Häkchen) — geteilte Quelle,
+    // damit der spätere Async-Job exakt dasselbe tut. Best-effort, wirft nie.
+    await applyReanalysisEnrichment({
+      contractsCollection,
+      usersCollection,
+      aiLegalPulse,
+      ObjectId,
+      contractId: id,
+      userId: req.user.userId,
+      requestId,
+      analyzedContract
+    });
 
     // ✅ Antwort in der bisherigen Form (Frontend bleibt unverändert).
     const finalContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
