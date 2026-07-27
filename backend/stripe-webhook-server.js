@@ -597,15 +597,26 @@ async function handleStripeEvent(event) {
 
       // Optional: Kündigungs-Email senden
       try {
+        const firstName = user.firstName || (user.name ? user.name.split(' ')[0] : '') || '';
+        const greeting = firstName ? `Hallo ${firstName},` : 'Hallo,';
         await sendEmail({
           to: user.email,
           subject: "Contract AI - Dein Abo wurde beendet",
-          html: `
-            <h2>Schade, dass du gehst!</h2>
-            <p>Dein Contract AI Abo wurde beendet. Du kannst weiterhin die kostenlosen Features nutzen.</p>
-            <p>Falls du es dir anders überlegst, kannst du jederzeit wieder upgraden:</p>
-            <p><a href="https://contract-ai.de/pricing">Jetzt wieder upgraden</a></p>
-          `
+          html: generateEmailTemplate({
+            title: "Schade, dass du gehst",
+            preheader: "Dein Contract AI Abo wurde beendet. Deine Verträge und Daten bleiben erhalten.",
+            body: `
+              <p style="margin: 0 0 16px 0;">${greeting}</p>
+              <p style="margin: 0 0 16px 0;">dein Contract AI Abo wurde beendet. Ab sofort bist du wieder im kostenlosen Starter-Plan.</p>
+              <p style="margin: 0 0 16px 0;"><strong>Deine Verträge und Daten bleiben gespeichert.</strong> Du kannst dich jederzeit einloggen und die kostenlosen Funktionen weiter nutzen.</p>
+              <p style="margin: 0 0 16px 0;">Falls du zurückkommen möchtest: Deine Premium-Funktionen sind mit einem Klick wieder da. Kein neues Konto, keine Einrichtung.</p>
+              <p style="margin: 0;">Wir würden uns freuen, dich wiederzusehen.</p>
+            `,
+            cta: {
+              text: "Wieder upgraden",
+              url: "https://contract-ai.de/pricing"
+            }
+          })
         });
       } catch (emailErr) {
         console.error(`❌ Kündigungs-Email Fehler:`, emailErr);
