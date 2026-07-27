@@ -227,6 +227,28 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     window.open(`/api/legal-pulse-v2/results/${result._id}/export-pdf?inline=1`, '_blank', 'noopener');
   }, [result._id]);
 
+  // Original-Vertrag (hochgeladenes Dokument) im neuen Tab ansehen. Das Fenster wird
+  // SYNCHRON beim Klick geöffnet (sonst blockt der Popup-Blocker) und erst danach die
+  // kurzlebige S3-Inline-URL hineingeladen. Bei Fehler (z. B. Alt-Upload ohne S3-Key)
+  // schließt sich der leere Tab wieder und es gibt einen verständlichen Hinweis.
+  const handleViewOriginal = useCallback(async () => {
+    const win = window.open('about:blank', '_blank');
+    if (win) win.opener = null;
+    try {
+      const res = await fetch(`/api/s3/view-inline?contractId=${result.contractId}`, { credentials: 'include' });
+      const data = res.ok ? await res.json() : null;
+      if (data?.fileUrl) {
+        if (win) { win.location.href = data.fileUrl; } else { window.open(data.fileUrl, '_blank'); }
+      } else {
+        win?.close();
+        toast.error('Originaldokument nicht verfügbar.');
+      }
+    } catch {
+      win?.close();
+      toast.error('Dokument konnte nicht geöffnet werden — bitte erneut versuchen.');
+    }
+  }, [result.contractId, toast]);
+
   const handleFindingStatusChange = useCallback(async (findingIndex: number, status: 'open' | 'resolved' | 'dismissed', comment?: string) => {
     try {
       const body: Record<string, unknown> = { status };
@@ -550,8 +572,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             </span>
             <button
               className={styles.btnSecondary}
-              onClick={handlePdfExport}
-              title="Analyse-Bericht als PDF in neuem Tab ansehen"
+              onClick={handleViewOriginal}
+              title="Hochgeladenes Original-Dokument in neuem Tab ansehen"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -566,7 +588,27 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 cursor: 'pointer',
               }}
             >
-              {'\uD83D\uDCC4'} PDF ansehen
+              {'\uD83D\uDCC4'} Vertrag ansehen
+            </button>
+            <button
+              className={styles.btnSecondary}
+              onClick={handlePdfExport}
+              title="Legal-Pulse-Analysebericht als PDF in neuem Tab ansehen"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '3px 10px',
+                fontSize: 11,
+                fontWeight: 500,
+                color: '#4b5563',
+                background: '#f9fafb',
+                border: '1px solid #e5e7eb',
+                borderRadius: 5,
+                cursor: 'pointer',
+              }}
+            >
+              {'\uD83D\uDCCA'} Analyse-PDF
             </button>
             {/* Language toggle (PR 4): only rendered for English-language contracts.
                 German contracts are the main customer base — the German UI is the
