@@ -740,8 +740,9 @@ export async function reanalyzeExistingContract(
     return (dispatch || { success: false }) as ReanalyzeResult;
   }
 
-  // Async: pollen bis fertig (wirft bei status='failed' mit echter Backend-Meldung)
-  await pollAnalysisJob(dispatch.jobId, { onProgress });
+  // Async: pollen bis fertig (wirft bei status='failed' mit echter Backend-Meldung).
+  // Das Job-Ergebnis IST die (gegatete) Analyse-Antwort der Pipeline — als Fallback behalten.
+  const jobResult = await pollAnalysisJob(dispatch.jobId, { onProgress });
 
   // Fertig → frischen, gegateten Vertrag laden (GET /:id liefert das Dokument direkt)
   const fresh = await apiCall(`/contracts/${contractId}`, { method: 'GET' }, 0, true) as
@@ -751,7 +752,8 @@ export async function reanalyzeExistingContract(
     success: true,
     contractId,
     contract,
-    analysis: (contract as { analysis?: unknown })?.analysis,
+    // Exakt wie der alte blockierende Pfad: nested analysis, sonst Pipeline-Ergebnis.
+    analysis: (contract as { analysis?: unknown })?.analysis || jobResult,
   };
 }
 
