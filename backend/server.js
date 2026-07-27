@@ -1842,6 +1842,19 @@ const connectDB = async () => {
         }
       }));
 
+      // 🔁 WIN-BACK FOLLOW-UP nach Kündigung (~3 Tage danach, 2. Anstoß mit COMEBACK20), täglich 10:15
+      cron.schedule("15 10 * * *", withDistributedLock('winback-canceled-followup', async () => {
+        console.log("📧 [WINBACK-CANCEL] Starte Win-back-Follow-up für Kündiger...");
+        try {
+          const { processCanceledWinbackEmails } = require("./services/triggerEmailService");
+          const emailsSent = await processCanceledWinbackEmails(db);
+          console.log(`📧 [WINBACK-CANCEL] ${emailsSent} Follow-up-Mail(s) gesendet`);
+        } catch (error) {
+          console.error("❌ Win-back-Follow-up Cron Error:", error);
+          await captureError(error, { route: 'CRON:winback-canceled-followup', method: 'SCHEDULED', severity: 'low' });
+        }
+      }));
+
       // ✅ CALENDAR: Event-Generierung für neue Verträge (täglich um 2 Uhr nachts)
       cron.schedule("0 2 * * *", withCronLock('event-generation', async () => {
         console.log("🔄 Starte tägliche Event-Generierung für neue Verträge...");
