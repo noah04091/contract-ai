@@ -22,7 +22,8 @@ const COOLDOWN_PERIODS = {
   limitReached: 7 * 24 * 60 * 60 * 1000,      // 7 days - don't spam about limits
   featureBlocked: 3 * 24 * 60 * 60 * 1000,    // 3 days - gentle reminder
   almostAtLimit: 14 * 24 * 60 * 60 * 1000,    // 14 days - early warning
-  winbackInactive: 30 * 24 * 60 * 60 * 1000   // 30 days - re-engagement
+  winbackInactive: 30 * 24 * 60 * 60 * 1000,  // 30 days - re-engagement
+  winbackCanceled: 90 * 24 * 60 * 60 * 1000   // 90 days - Follow-up nach Kündigung (einmalig pro Kündigung)
 };
 
 // ============================================
@@ -247,6 +248,48 @@ function generateWinbackInactiveEmail(user, context = {}) {
   });
 }
 
+/**
+ * Generate "Win-back Follow-up" Email (3 Tage nach Kündigung)
+ * Zweiter, sanfter Anstoß mit dem einmaligen COMEBACK20-Angebot.
+ */
+function generateWinbackCanceledEmail(user) {
+  const firstName = user.firstName || user.name?.split(' ')[0] || '';
+  const greeting = firstName ? `Hallo ${firstName},` : 'Hallo,';
+
+  const body = `
+    <p style="margin: 0 0 16px 0;">${greeting}</p>
+    <p style="margin: 0 0 16px 0;">vor ein paar Tagen wurde dein Contract AI Abo beendet. Wir wollten nur kurz nachhaken: Dein persönliches Rückkehr-Angebot gilt noch.</p>
+    <p style="margin: 0 0 20px 0;">Falls du zurück möchtest, kommst du mit einem Klick genau dorthin, wo du aufgehört hast. Deine Verträge und Daten sind alle noch da.</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
+      <tr>
+        <td style="padding: 24px; text-align: center;">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1d4ed8;">Nur noch kurze Zeit &middot; einmalig f&uuml;r dich</div>
+          <div style="margin-top: 10px; font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.4px;">20&thinsp;% Rabatt, 3 Monate lang</div>
+          <div style="margin-top: 8px; font-size: 14px; line-height: 1.6; color: #334155;">Komm zur&uuml;ck und sichere dir 3 Monate lang 20&thinsp;% auf Business oder Enterprise. Jederzeit k&uuml;ndbar.</div>
+          <div style="margin-top: 16px; display: inline-block; padding: 10px 20px; background-color: #ffffff; border: 1px dashed #2563eb; border-radius: 8px;">
+            <div style="font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #64748b;">Dein Code</div>
+            <div style="font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #1e3a8a;">COMEBACK20</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 0;">Kein Druck. Wenn du bleiben möchtest, wo du bist, ist das völlig in Ordnung.</p>
+  `;
+
+  return generateEmailTemplate({
+    title: 'Dein Angebot wartet noch',
+    preheader: 'Dein persönliches Rückkehr-Angebot: 20% Rabatt für 3 Monate mit Code COMEBACK20.',
+    body,
+    cta: {
+      text: 'Angebot einlösen',
+      url: 'https://contract-ai.de/pricing?code=COMEBACK20'
+    },
+    unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
+  });
+}
+
 // ============================================
 // 🔧 TRIGGER FUNCTIONS
 // Call these from your API endpoints
@@ -456,15 +499,76 @@ async function processWinbackEmails(db) {
   return emailsSent;
 }
 
+/**
+ * Send "Win-back Follow-up" Email an einen gekündigten Abonnenten (3 Tage danach)
+ */
+async function sendCanceledWinbackEmail(db, user) {
+  try {
+    if (!await canSendTriggerEmail(db, user._id, 'winbackCanceled')) {
+      return { sent: false, reason: 'cooldown_or_optout' };
+    }
+
+    const html = generateWinbackCanceledEmail(user);
+    const subject = 'Dein 20%-Angebot wartet noch';
+
+    await sendEmail(user.email, subject, '', html, { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') });
+    await markTriggerEmailSent(db, user._id, 'winbackCanceled');
+
+    console.log(`📧 [Trigger] Canceled-Winback email sent to ${user.email}`);
+    return { sent: true };
+  } catch (error) {
+    console.error(`❌ [Trigger] Error sending Canceled-Winback email:`, error.message);
+    return { sent: false, reason: 'error', error: error.message };
+  }
+}
+
+/**
+ * Process canceled subscribers for win-back follow-up (~3 Tage nach Kündigung)
+ * Called by cron job. Fenster 3-7 Tage fängt auch verpasste Cron-Tage ab;
+ * die winbackCanceled-Cooldown verhindert Doppelversand pro Kündigung.
+ */
+async function processCanceledWinbackEmails(db) {
+  console.log('📧 Processing win-back follow-up for canceled subscribers...');
+
+  const usersCollection = db.collection('users');
+  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  // Nur User, die: gekündigt haben, im 3-7-Tage-Fenster, NICHT wieder aktiv,
+  // E-Mail-Benachrichtigungen an, kein Marketing-Opt-out.
+  const users = await usersCollection.find({
+    subscriptionStatus: 'canceled',
+    canceledAt: { $lte: threeDaysAgo, $gte: sevenDaysAgo },
+    subscriptionActive: { $ne: true },
+    emailNotifications: { $ne: false },
+    'emailPreferences.marketing': { $ne: false },
+    emailOptOut: { $ne: true }
+  }).toArray();
+
+  console.log(`📧 Found ${users.length} canceled subscribers for win-back follow-up`);
+
+  let emailsSent = 0;
+  for (const user of users) {
+    const result = await sendCanceledWinbackEmail(db, user);
+    if (result.sent) emailsSent++;
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+
+  console.log(`📧 Canceled win-back follow-ups sent: ${emailsSent}`);
+  return emailsSent;
+}
+
 module.exports = {
   // Send functions (call from API endpoints)
   sendLimitReachedEmail,
   sendFeatureBlockedEmail,
   sendAlmostAtLimitEmail,
   sendWinbackInactiveEmail,
+  sendCanceledWinbackEmail,
 
   // Batch processing (call from cron)
   processWinbackEmails,
+  processCanceledWinbackEmails,
 
   // Utilities
   canSendTriggerEmail,
