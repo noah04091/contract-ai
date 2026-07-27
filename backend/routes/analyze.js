@@ -5985,6 +5985,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       throw new Error(`Database error while saving: ${dbError.message}`);
     }
 
+    // 🩹 27.07.2026 (E2E-Prüffahrt-Fund): savedContract war mit `const` NUR im
+    // Neu-Anlage-else-Block (~:6474) deklariert, wird aber später beim Response-Aufbau
+    // (`else if (savedContract)`, ~:6890) AUSSERHALB dieses Blocks referenziert →
+    // ReferenceError "savedContract is not defined" bei JEDER Erst-Analyse eines neuen
+    // Dokuments (Analyse lief durch + gespeichert, aber HTTP 500). Re-Analysen von
+    // Duplikaten nahmen den existingContract-Zweig → Bug blieb verborgen. Fix: in den
+    // gemeinsamen Scope heben.
+    let savedContract = null;
     try {
       console.log(`💾 [${requestId}] Saving contract with FIXED deep lawyer-level analysis (${storageInfo.uploadType})...`);
       reportJobProgress(req, 'Analyse wird gespeichert', 92); // 📶
@@ -6471,7 +6479,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           }
         }
 
-        const savedContract = await saveContractWithUpload(
+        savedContract = await saveContractWithUpload(
           req.user.userId,
           contractAnalysisData,
           req.file,
