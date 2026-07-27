@@ -6,6 +6,7 @@ import Notification from "../components/Notification";
 import ContractRiskGrid from "../components/ContractRiskGrid";
 import LegalPulseSettings from "../components/LegalPulseSettings";
 import { useErrorHandler } from "../hooks/useErrorHandler";
+import { reanalyzeExistingContract } from "../utils/api"; // ♻️ async Re-Analyse (Cloudflare-sicher)
 import { WelcomePopup } from "../components/Tour";
 import OneClickCancelModal from "../components/OneClickCancelModal";
 import SaveClauseModal from "../components/LegalLens/SaveClauseModal";
@@ -699,44 +700,21 @@ export default function LegalPulse() {
     if (!selectedContract || isStartingAnalysis) return;
     setIsStartingAnalysis(true);
     try {
-      const token = localStorage.getItem('token');
-      const API_BASE = import.meta.env.VITE_API_URL || '';
-      const response = await fetch(`${API_BASE}/api/contracts/${selectedContract._id}/analyze`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        setNotification({ message: 'Analyse gestartet! Die Legal Pulse Daten werden geladen...', type: 'success' });
-        // Reload contract data after analysis
-        setTimeout(async () => {
-          try {
-            const contractRes = await fetch(`${API_BASE}/api/contracts/${selectedContract._id}`, {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (contractRes.ok) {
-              const updatedContract = await contractRes.json();
-              setSelectedContract(updatedContract);
-              // Also update in contracts list
-              setContracts(prev => prev.map(c =>
-                c._id === updatedContract._id ? updatedContract : c
-              ));
-            }
-          } catch {
-            // Silent fail, user can refresh manually
-          }
-          setIsStartingAnalysis(false);
-        }, 3000); // Wait 3 seconds for analysis to complete
-      } else {
-        const error = await response.json();
-        setNotification({ message: `Analyse fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`, type: 'error' });
-        setIsStartingAnalysis(false);
+      setNotification({ message: 'Analyse gestartet! Die Legal Pulse Daten werden geladen...', type: 'success' });
+      // ♻️ 27.07.2026: async Re-Analyse (Cloudflare-sicher). Wartet, bis die Analyse WIRKLICH fertig
+      // ist (statt fixem 3s-Timeout, der bei ~60–114s vorher veraltete Daten lud), und lädt dann den
+      // frischen Vertrag inkl. Legal-Pulse-Daten. Wirft bei Fehler mit echter Backend-Meldung.
+      const result = await reanalyzeExistingContract(selectedContract._id);
+      const updatedContract = result.contract as Contract | undefined;
+      if (updatedContract) {
+        setSelectedContract(updatedContract);
+        setContracts(prev => prev.map(c =>
+          c._id === updatedContract._id ? updatedContract : c
+        ));
       }
     } catch (err) {
       handleError(err, 'LegalPulse:startAnalysis');
+    } finally {
       setIsStartingAnalysis(false);
     }
   };

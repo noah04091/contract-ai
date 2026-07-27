@@ -36,7 +36,7 @@ import FristHinweiseSection from "../components/FristHinweiseSection"; // ⏰ Un
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
+import { apiCall, uploadAndAnalyze, uploadOnly, reanalyzeExistingContract } from "../utils/api"; // ✅ NEU: uploadOnly + async Re-Analyse
 import { useAuth } from "../hooks/useAuth"; // 🏢 Org-Rolle für Rollen-Awareness
 import { useToast } from "../context/ToastContext"; // 🔔 Toast-Benachrichtigungen
 import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
@@ -2981,31 +2981,11 @@ export default function Contracts() {
     try {
       setError(null);
 
-      // API URL - nutze die korrekte Produktions-URL
-      const apiUrl = import.meta.env.VITE_API_URL || '';
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken');
-
-      if (!token) {
-        throw new Error('Nicht eingeloggt. Bitte melden Sie sich erneut an.');
-      }
-
-
-      // Trigger Re-Analyse via Backend
-      const response = await fetch(`${apiUrl}/api/contracts/${contract._id}/analyze`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      // Prüfe auf Netzwerkfehler
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
-        throw new Error(errorData.message || `Server-Fehler: ${response.status}`);
-      }
-
-      const data = await response.json();
+      // ♻️ 27.07.2026: Re-Analyse läuft jetzt als ASYNC-Job (Cloudflare-sicher, kein ~100s-Cut).
+      // reanalyzeExistingContract dispatcht, pollt und liefert dieselbe Form { success, contract,
+      // analysis } wie der alte blockierende Pfad — der restliche Ablauf bleibt unverändert.
+      // Fehler werden geworfen (echte Backend-Meldung) und vom bestehenden catch behandelt.
+      const data = await reanalyzeExistingContract(contract._id) as { success: boolean; contract?: Contract; analysis?: unknown; message?: string };
 
       if (data.success) {
 

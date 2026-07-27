@@ -205,6 +205,50 @@ async function uploadAndPoll(token, fileBuffer, fileName, mime, maxMs, label) {
     }
   }
 
+  if (TESTS.includes('E')) {
+    console.log('\n━━━ TEST E: ASYNC Re-Analyse /contracts/:id/analyze?async=true (Cloudflare-sicher) ━━━');
+    // Beweist den 27.07.-Fix: der Re-Analyse-Button laeuft jetzt als Hintergrund-Job (202+jobId),
+    // haelt keine HTTP-Verbindung >100s offen. Setup wie Test B: frisches Unique-PDF NUR speichern,
+    // dann async re-analysieren, pollen, Enrichment (legalPulse) pruefen, aufraeumen.
+    const basePdf = fs.readFileSync(path.join(__dirname, '..', '..', 'test-contracts', 'real_factoring_eisqueen.pdf'));
+    const uniquePdf = Buffer.concat([basePdf, Buffer.from(`\n% e2e-async-${Date.now()}\n`)]);
+    let eId = null;
+    try {
+      const form = new FormData();
+      form.append('file', new Blob([uniquePdf], { type: 'application/pdf' }), `pruef-async-${Date.now()}.pdf`);
+      const up = await fetch(`${API}/upload`, { method: 'POST', body: form, headers: { Authorization: `Bearer ${token}` } });
+      const upBody = await up.json().catch(() => null);
+      eId = upBody?.contract?._id || upBody?.contractId || upBody?._id || null;
+      ok(`E1 Frischer Vertrag NUR gespeichert (HTTP ${up.status})`, up.status === 200 && !!eId);
+
+      if (eId) {
+        const t0 = Date.now();
+        const disp = await api(`/contracts/${eId}/analyze?async=true`, { method: 'POST', headers: { 'Content-Type': 'application/json' } }, token);
+        ok(`E2 Async-Dispatch angenommen (202 + jobId)`, disp.status === 202 && !!disp.body?.jobId,
+          `status=${disp.status} ${JSON.stringify(disp.body || {}).substring(0, 150)}`);
+        if (disp.body?.jobId) {
+          console.log(`  → [E] Job ${disp.body.jobId} dispatcht, polle...`);
+          const out = await pollJob(disp.body.jobId, token, 6 * 60 * 1000);
+          ok(`E3 Analyse erfolgreich (${Math.round(out.secs)}s, kein offener HTTP-Cut)`, out.done === true,
+            JSON.stringify(out.error || {}).substring(0, 200));
+          ok(`E4 ECHTER Fortschritt gesehen (max ${out.sawProgress}%, Etappe: ${String(out.sawStage || '—').substring(0, 30)})`,
+            out.sawProgress >= 40 && !!out.sawStage);
+          // Enrichment-Beweis: legalPulse muss nach der async Re-Analyse am Vertrag stehen
+          const detail = await api(`/contracts/${eId}`, {}, token);
+          const lp = detail.body?.contract?.legalPulse || detail.body?.legalPulse;
+          ok(`E5 Enrichment lief (legalPulse gesetzt, healthScore=${lp?.healthScore ?? '—'})`,
+            !!lp && typeof lp.healthScore === 'number');
+        }
+      }
+    } finally {
+      if (eId) {
+        await sleep(3000);
+        const del = await api(`/contracts/${eId}`, { method: 'DELETE' }, token);
+        console.log(`  🧹 Aufgeräumt: Test-Vertrag gelöscht (HTTP ${del.status})`);
+      }
+    }
+  }
+
   console.log(`\n${fail === 0 ? '🎉 PRÜFFAHRT BESTANDEN' : '💥 PRÜFFAHRT MIT BEFUNDEN'} — ${pass} bestanden, ${fail} fehlgeschlagen`);
   process.exit(fail === 0 ? 0 : 1);
 })().catch(e => { console.error('💥 Prüffahrt-Crash:', e.message); process.exit(1); });

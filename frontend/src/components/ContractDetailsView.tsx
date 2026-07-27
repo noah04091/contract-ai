@@ -8,6 +8,7 @@ import {
   ZoomIn, ZoomOut, Maximize2
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
+import { reanalyzeExistingContract } from "../utils/api"; // ♻️ async Re-Analyse (Cloudflare-sicher)
 import SmartContractInfo from "./SmartContractInfo";
 import ContractShareModal from "./ContractShareModal";
 import ContractEditModal from "./ContractEditModal";
@@ -395,31 +396,19 @@ export default function ContractDetailsView({
     setIsAnalyzing(true);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/contracts/${contract._id}/analyze`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.analysis) {
-          setContract(prev => ({
-            ...prev,
-            analysis: result.analysis,
-            lastAnalyzed: new Date().toISOString()
-          }));
-        }
-        if (onEdit) onEdit(contract._id);
-      } else {
-        const error = await response.json();
-        alert(`Analyse fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`);
+      // ♻️ 27.07.2026: async Re-Analyse (Cloudflare-sicher, kein ~100s-Cut). Rückgabe wie bisher
+      // { success, analysis }; wirft bei Fehler mit der echten Backend-Meldung.
+      const result = await reanalyzeExistingContract(contract._id);
+      if (result.analysis) {
+        setContract(prev => ({
+          ...prev,
+          analysis: result.analysis as typeof prev.analysis,
+          lastAnalyzed: new Date().toISOString()
+        }));
       }
-    } catch {
-      alert('Fehler beim Starten der Analyse. Bitte versuche es erneut.');
+      if (onEdit) onEdit(contract._id);
+    } catch (e) {
+      alert(`Analyse fehlgeschlagen: ${e instanceof Error ? e.message : 'Unbekannter Fehler'}`);
     } finally {
       setIsAnalyzing(false);
     }

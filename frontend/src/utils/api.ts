@@ -704,6 +704,57 @@ export async function pollAnalysisJob(
   }
 }
 
+export interface ReanalyzeResult {
+  success: boolean;
+  contractId?: string;
+  contract?: unknown;
+  analysis?: unknown;
+  [key: string]: unknown;
+}
+
+/**
+ * ♻️ Re-Analyse eines BESTEHENDEN Vertrags (Button „Erneut analysieren").
+ * 27.07.2026: nutzt jetzt den ASYNC-Job-Pfad (POST /contracts/:id/analyze?async=true), damit
+ * Cloudflare die HTTP-Verbindung bei langen Verträgen nicht bei ~100s kappt (Error 524 —
+ * Backend rechnet unsichtbar weiter, User sieht Fehler). Antwortet das Backend mit { jobId },
+ * pollen wir /analyze/job/:jobId (derselbe Endpunkt wie der Haupt-Upload) und laden danach den
+ * frischen, gegateten Vertrag. Die Rückgabe hat DIESELBE Form wie der alte blockierende Pfad
+ * ({ success, contractId, contract, analysis }) → Aufrufer bleiben unverändert.
+ * Backwards-Compat: kommt KEIN { jobId } (Kill-Switch ANALYZE_ASYNC_ENABLED=false), ist es die
+ * alte synchrone Antwort → unverändert zurückgeben. Bei Fehler wirft pollAnalysisJob mit der
+ * ECHTEN Backend-Meldung (das try/catch der Aufrufer greift wie bisher).
+ */
+export async function reanalyzeExistingContract(
+  contractId: string,
+  onProgress?: (status: JobStatusResponse) => void
+): Promise<ReanalyzeResult> {
+  const dispatch = await apiCall(
+    `/contracts/${contractId}/analyze?async=true`,
+    { method: 'POST' },
+    0,
+    true
+  ) as { jobId?: string } & ReanalyzeResult;
+
+  // Kill-Switch / altes Backend → synchrone Antwort direkt zurückgeben
+  if (!dispatch?.jobId) {
+    return (dispatch || { success: false }) as ReanalyzeResult;
+  }
+
+  // Async: pollen bis fertig (wirft bei status='failed' mit echter Backend-Meldung)
+  await pollAnalysisJob(dispatch.jobId, { onProgress });
+
+  // Fertig → frischen, gegateten Vertrag laden (GET /:id liefert das Dokument direkt)
+  const fresh = await apiCall(`/contracts/${contractId}`, { method: 'GET' }, 0, true) as
+    { contract?: Record<string, unknown> } & Record<string, unknown>;
+  const contract = (fresh?.contract as Record<string, unknown>) || fresh;
+  return {
+    success: true,
+    contractId,
+    contract,
+    analysis: (contract as { analysis?: unknown })?.analysis,
+  };
+}
+
 /**
  * ✅ FIXED: Spezielle Funktion für File-Upload mit Analyse - ROBUSTE DUPLIKAT-BEHANDLUNG + KORREKTE PDF-FEHLER
  * 🆕 Stufe 5 (27.05.2026): opt-in Async-Pfad via formData.async=true.
