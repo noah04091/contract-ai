@@ -597,15 +597,40 @@ async function handleStripeEvent(event) {
 
       // Optional: Kündigungs-Email senden
       try {
+        const firstName = user.firstName || (user.name ? user.name.split(' ')[0] : '') || '';
+        const greeting = firstName ? `Hallo ${firstName},` : 'Hallo,';
         await sendEmail({
           to: user.email,
           subject: "Contract AI - Dein Abo wurde beendet",
-          html: `
-            <h2>Schade, dass du gehst!</h2>
-            <p>Dein Contract AI Abo wurde beendet. Du kannst weiterhin die kostenlosen Features nutzen.</p>
-            <p>Falls du es dir anders überlegst, kannst du jederzeit wieder upgraden:</p>
-            <p><a href="https://contract-ai.de/pricing">Jetzt wieder upgraden</a></p>
-          `
+          html: generateEmailTemplate({
+            title: "Schade, dass du gehst",
+            preheader: "Bevor du gehst: 20% Rabatt für 3 Monate, nur für dich. Deine Verträge bleiben gespeichert.",
+            body: `
+              <p style="margin: 0 0 16px 0;">${greeting}</p>
+              <p style="margin: 0 0 16px 0;">dein Contract AI Abo wurde beendet. Ab sofort bist du wieder im kostenlosen Starter-Plan, und deine Verträge und Daten bleiben natürlich gespeichert.</p>
+              <p style="margin: 0 0 20px 0;">Bevor du ganz gehst, möchten wir dir etwas anbieten. Weil wir dich ungern verlieren:</p>
+
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
+                <tr>
+                  <td style="padding: 24px; text-align: center;">
+                    <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1d4ed8;">Einmalig, nur f&uuml;r dich &middot; 14 Tage g&uuml;ltig</div>
+                    <div style="margin-top: 10px; font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.4px;">20&thinsp;% Rabatt, 3 Monate lang</div>
+                    <div style="margin-top: 8px; font-size: 14px; line-height: 1.6; color: #334155;">Komm zur&uuml;ck und sichere dir 3 Monate lang 20&thinsp;% auf Business oder Enterprise. Jederzeit k&uuml;ndbar.</div>
+                    <div style="margin-top: 16px; display: inline-block; padding: 10px 20px; background-color: #ffffff; border: 1px dashed #2563eb; border-radius: 8px;">
+                      <div style="font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #64748b;">Dein Code</div>
+                      <div style="font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #1e3a8a;">COMEBACK20</div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 0;">Kein neues Konto, keine Einrichtung. Ein Klick, und alles ist wieder da.</p>
+            `,
+            cta: {
+              text: "Angebot einlösen",
+              url: "https://contract-ai.de/pricing?code=COMEBACK20"
+            }
+          })
         });
       } catch (emailErr) {
         console.error(`❌ Kündigungs-Email Fehler:`, emailErr);

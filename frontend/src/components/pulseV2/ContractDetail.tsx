@@ -39,9 +39,11 @@ interface ContractDetailProps {
   result: PulseV2Result;
   monitorInfo?: { nextRadarScan: string | null; alertCount: number } | null;
   contractAlerts?: PulseV2LegalAlert[];
+  /** Deep-Link von einer Legal-Radar-Meldung (?alert=…): zu diesem Alert scrollen + aufklappen */
+  highlightAlertId?: string | null;
 }
 
-export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts }) => {
+export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts, highlightAlertId }) => {
   const toast = useToast();
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [findingsState, setFindingsState] = useState<PulseV2Finding[]>(result.clauseFindings || []);
@@ -51,7 +53,6 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
   const [showFindingsInfo, setShowFindingsInfo] = useState(false);
   const [showActionsInfo, setShowActionsInfo] = useState(false);
-  const [pdfExporting, setPdfExporting] = useState(false);
   const juristischeInfoRef = useRef<HTMLDivElement>(null);
 
   // ── Language toggle (PR 4) ──
@@ -205,29 +206,26 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     });
   }, []);
 
-  const handlePdfExport = useCallback(async () => {
-    setPdfExporting(true);
-    try {
-      const res = await fetch(`/api/legal-pulse-v2/results/${result._id}/export-pdf`, {
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('PDF Export fehlgeschlagen');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Vertragsanalyse_${result.context?.contractName?.replace(/[^a-zA-Z0-9äöüÄÖÜß_-]/g, '_') || result.contractId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('[PulseV2] PDF export error:', err);
-      toast.error('PDF-Export fehlgeschlagen. Bitte erneut versuchen.');
-    } finally {
-      setPdfExporting(false);
-    }
-  }, [result._id, result.context?.contractName, result.contractId]);
+  // Deep-Link: Ankunft über eine Legal-Radar-Meldung (?alert=…) → automatisch zum
+  // betreffenden Alert scrollen. Die Alerts laden asynchron nach, deshalb wartet der
+  // Effekt, bis der Alert wirklich gerendert ist; block:'center' hält ihn unter der
+  // fixen Navbar sichtbar. Aufklappen übernimmt initialExpanded am ImpactGraph.
+  useEffect(() => {
+    if (!highlightAlertId) return;
+    if (!contractAlerts?.some(a => a._id === highlightAlertId)) return;
+    const t = setTimeout(() => {
+      document.getElementById(`alert-${highlightAlertId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 200);
+    return () => clearTimeout(t);
+  }, [highlightAlertId, contractAlerts]);
+
+  // PDF im neuen Tab öffnen statt Download erzwingen. Bewusst SYNCHRON per window.open
+  // (kein fetch+blob davor): nur so bleibt der Klick-Kontext erhalten und Popup-Blocker
+  // greifen nicht. Auth läuft über das Cookie (same-origin /api). Speichern geht
+  // weiterhin direkt aus dem Browser-Viewer, Dateiname bleibt erhalten (inline+filename).
+  const handlePdfExport = useCallback(() => {
+    window.open(`/api/legal-pulse-v2/results/${result._id}/export-pdf?inline=1`, '_blank', 'noopener');
+  }, [result._id]);
 
   const handleFindingStatusChange = useCallback(async (findingIndex: number, status: 'open' | 'resolved' | 'dismissed', comment?: string) => {
     try {
@@ -485,24 +483,24 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           <HealthScoreGauge scores={scoresState} riskTrend={result.context?.riskTrend} />
         </div>
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 4px' }}>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 6px', lineHeight: 1.3, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
             {cleanContractName(result.context?.contractName || '') || 'Vertragsanalyse'}
           </h2>
-          <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>
+          <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 12, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 10px' }}>
             {result.document?.contractType && (
               <span style={{
                 background: '#eff6ff',
                 color: '#1e40af',
                 padding: '2px 8px',
                 borderRadius: 4,
-                marginRight: 8,
                 fontSize: 12,
+                whiteSpace: 'nowrap',
               }}>
                 {safeContractType(result.document.contractType)}
               </span>
             )}
             {result.context?.provider && (
-              <span style={{ marginRight: 12 }}>Anbieter: {safeContractType(result.context.provider)}</span>
+              <span style={{ overflowWrap: 'anywhere' }}>Anbieter: {safeContractType(result.context.provider)}</span>
             )}
             {result.context?.daysUntilExpiry !== null && result.context?.daysUntilExpiry !== undefined && (
               <span style={{
@@ -546,14 +544,14 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           </div>
 
           {/* Meta + PDF Export */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: monitorInfo ? 10 : 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: monitorInfo ? 10 : 0 }}>
             <span style={{ fontSize: 12, color: '#9ca3af' }}>
               Analysiert am {new Date(result.createdAt).toLocaleDateString('de-DE')} um {new Date(result.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
             </span>
             <button
               className={styles.btnSecondary}
               onClick={handlePdfExport}
-              disabled={pdfExporting}
+              title="Analyse-Bericht als PDF in neuem Tab ansehen"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -561,14 +559,14 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 padding: '3px 10px',
                 fontSize: 11,
                 fontWeight: 500,
-                color: pdfExporting ? '#9ca3af' : '#4b5563',
+                color: '#4b5563',
                 background: '#f9fafb',
                 border: '1px solid #e5e7eb',
                 borderRadius: 5,
-                cursor: pdfExporting ? 'default' : 'pointer',
+                cursor: 'pointer',
               }}
             >
-              {pdfExporting ? '\u23F3' : '\uD83D\uDCC4'} {pdfExporting ? 'Exportiert...' : 'PDF'}
+              {'\uD83D\uDCC4'} PDF ansehen
             </button>
             {/* Language toggle (PR 4): only rendered for English-language contracts.
                 German contracts are the main customer base — the German UI is the
@@ -613,47 +611,50 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             )}
           </div>
 
-          {/* Monitoring Status */}
+          {/* Monitoring Status — zwei Zeilen: Label+Pille oben, Beschreibung darunter.
+              So bleibt es in schmaler wie breiter Spalte luftig und nie eingequetscht. */}
           {monitorInfo && (
             <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
               fontSize: 12,
               color: '#15803d',
               background: '#f0fdf4',
               border: '1px solid #bbf7d0',
-              borderRadius: 6,
-              padding: '6px 10px',
+              borderRadius: 8,
+              padding: '9px 12px',
             }}>
-              <span style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: '#22c55e',
-                boxShadow: '0 0 4px rgba(34,197,94,0.5)',
-                flexShrink: 0,
-              }} />
-              <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
-              <span style={{ color: '#16a34a', fontSize: 11 }}>Täglich auf Gesetzesänderungen geprüft · Treffer erscheinen hier und im Dashboard — und per E-Mail, sofern Ihre Benachrichtigungen aktiv sind</span>
-              {monitorInfo.alertCount > 0 && (
-                <span
-                  onClick={() => scrollToSection('contract-alerts')}
-                  style={{
-                    background: '#fef2f2',
-                    color: '#dc2626',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '1px 6px',
-                    borderRadius: 8,
-                    border: '1px solid #fecaca',
-                    marginLeft: 'auto',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {monitorInfo.alertCount} {monitorInfo.alertCount === 1 ? 'Alert' : 'Alerts'}
-                </span>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  boxShadow: '0 0 4px rgba(34,197,94,0.5)',
+                  flexShrink: 0,
+                }} />
+                <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
+                {monitorInfo.alertCount > 0 && (
+                  <span
+                    onClick={() => scrollToSection('contract-alerts')}
+                    style={{
+                      background: '#fef2f2',
+                      color: '#dc2626',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      padding: '1px 8px',
+                      borderRadius: 8,
+                      border: '1px solid #fecaca',
+                      marginLeft: 'auto',
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {monitorInfo.alertCount} {monitorInfo.alertCount === 1 ? 'Alert' : 'Alerts'}
+                  </span>
+                )}
+              </div>
+              <div style={{ color: '#16a34a', fontSize: 11, lineHeight: 1.5, marginTop: 4 }}>
+                Täglich auf Gesetzesänderungen geprüft · Treffer erscheinen hier und im Dashboard — und per E-Mail, sofern Ihre Benachrichtigungen aktiv sind
+              </div>
             </div>
           )}
         </div>
@@ -893,31 +894,33 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             marginBottom: 20,
             boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
           }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
-              <div style={{ fontSize: 16, fontWeight: 600, color: '#111827', paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
-                Empfehlungen
-              </div>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                {resolvedFindingCount > 0 && (
-                  <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>
-                    {resolvedFindingCount}/{actionableFindings.length} Befunde bearbeitet
+            {/* Kapitel-Kopf */}
+            <div style={{ marginBottom: 16 }}>
+              <ChapterHead
+                icon="action"
+                eyebrow="Was zu tun ist"
+                title="Empfehlungen"
+                right={(resolvedFindingCount > 0 || doneCount > 0) ? (
+                  <span style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
+                    {resolvedFindingCount > 0 && (
+                      <span style={{ fontSize: 12, color: '#059669', fontWeight: 600 }}>
+                        {resolvedFindingCount}/{actionableFindings.length} Befunde bearbeitet
+                      </span>
+                    )}
+                    {doneCount > 0 && (
+                      <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
+                        {doneCount}/{totalCount} erledigt
+                      </span>
+                    )}
                   </span>
-                )}
-                {doneCount > 0 && (
-                  <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>
-                    {doneCount}/{totalCount} erledigt
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Subtext — erklärt die Sektion */}
-            <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 16, lineHeight: 1.5 }}>
-              Basierend auf der Analyse aller {clauses.length} Klauseln.
-              {hasCriticalFindings
-                ? ' Beginnen Sie mit dem obersten Punkt — dieser hat die höchste Priorität.'
-                : ' Sortiert nach Relevanz. Beginnen Sie mit dem obersten Punkt.'}
+                ) : undefined}
+                subtitle={<>
+                  Basierend auf der Analyse aller {clauses.length} Klauseln.
+                  {hasCriticalFindings
+                    ? ' Beginnen Sie mit dem obersten Punkt — dieser hat die höchste Priorität.'
+                    : ' Sortiert nach Relevanz. Beginnen Sie mit dem obersten Punkt.'}
+                </>}
+              />
             </div>
 
             {/* Progress bar */}
@@ -1161,28 +1164,30 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           marginTop: 20,
           boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
         }}>
-          <div style={{
-            padding: 24,
-            borderBottom: '1px solid #fef2f2',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}>
-            <span style={{ fontSize: 18 }}>&#9878;&#65039;</span>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#111827' }}>
-                Legal Radar — Gesetzesänderungen
-              </div>
-              <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-                {contractAlerts.length === 1
-                  ? 'Eine aktuelle Rechtsänderung betrifft diesen Vertrag. Nutzen Sie „Klausel automatisch anpassen" um den Vorschlag direkt zu übernehmen.'
-                  : `${contractAlerts.length} aktuelle Rechtsänderungen betreffen diesen Vertrag. Nutzen Sie „Klausel automatisch anpassen" um Vorschläge direkt zu übernehmen.`}
-              </div>
-            </div>
+          <div style={{ padding: 24, borderBottom: '1px solid #f1f5f9' }}>
+            <ChapterHead
+              icon="law"
+              eyebrow="Neue Rechtslage"
+              title="Legal Radar"
+              right={(
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 999, padding: '2px 9px' }}>
+                  {contractAlerts.length} {contractAlerts.length === 1 ? 'Änderung' : 'Änderungen'}
+                </span>
+              )}
+              subtitle={contractAlerts.length === 1
+                ? 'Eine aktuelle Gesetzesänderung oder ein Urteil betrifft diesen Vertrag. Über „Klausel automatisch anpassen" übernehmen Sie den Vorschlag direkt.'
+                : `${contractAlerts.length} aktuelle Gesetzesänderungen oder Urteile betreffen diesen Vertrag. Über „Klausel automatisch anpassen" übernehmen Sie Vorschläge direkt.`}
+            />
           </div>
           <div style={{ padding: 24 }}>
             {contractAlerts.map(alert => (
-              <ImpactGraph key={alert._id} alert={alert} hideContractInfo />
+              <div
+                key={alert._id}
+                id={`alert-${alert._id}`}
+                className={alert._id === highlightAlertId ? styles.alertHighlight : undefined}
+              >
+                <ImpactGraph alert={alert} hideContractInfo initialExpanded={alert._id === highlightAlertId} />
+              </div>
             ))}
           </div>
         </div>
@@ -1215,32 +1220,29 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               onClick={() => setShowAllFindings(!showAllFindings)}
               style={{
                 width: '100%',
-                padding: '14px 24px',
+                padding: '16px 24px',
                 background: showAllFindings ? '#f9fafb' : '#fff',
                 border: 'none',
                 cursor: 'pointer',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                fontSize: 14,
-                fontWeight: 500,
-                color: '#374151',
-                textAlign: 'left',
+                gap: 12,
               }}
             >
-              <div>
-                <div>
-                  Geprüft &amp; unauffällig
-                  <span style={{ color: '#9ca3af', fontWeight: 400, marginLeft: 8, fontSize: 12 }}>
+              <ChapterHead
+                icon="ok"
+                eyebrow="Unbedenklich"
+                title="Geprüft & unauffällig"
+                right={(
+                  <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400 }}>
                     {allCheckedFindings.length} {allCheckedFindings.length === 1 ? 'Klausel' : 'Klauseln'}
                   </span>
-                </div>
-                <div style={{ fontSize: 12, color: '#9ca3af', fontWeight: 400, marginTop: 2 }}>
-                  {contractType
-                    ? `Diese Klauseln sind für einen ${contractType} üblich und erfordern kein Handeln.`
-                    : 'Diese Klauseln wurden geprüft und erfordern kein Handeln.'}
-                </div>
-              </div>
+                )}
+                subtitle={contractType
+                  ? `Diese Klauseln sind für einen ${contractType} üblich und erfordern kein Handeln.`
+                  : 'Diese Klauseln wurden geprüft und erfordern kein Handeln.'}
+              />
               <span style={{
                 fontSize: 12,
                 color: '#9ca3af',
@@ -1304,5 +1306,41 @@ const SeverityDot: React.FC<{ color: string; label: string; count: number }> = (
   <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
     <div style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
     <span style={{ color: '#4b5563' }}>{count} {label}</span>
+  </div>
+);
+
+// ── Einheitliche Kapitel-Kopfzeile für die rechte Spalte (Redesign Runde 10: ruhig/monochrom) ──
+// Struktur statt Farbe: dezente graue Icon-Box + Kategorie-Label (Eyebrow) + Titel + Klartext-Zeile.
+// Sorgt für klare Trennung/Orientierung, ohne bunt zu wirken. Farbe bleibt den Befund-Schweregraden vorbehalten.
+const CHAPTER_ICONS: Record<string, string> = {
+  action: 'M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 2h6a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM9 14l2 2 4-4',
+  // Gerechtigkeitswaage (Lucide „scale"): Ständer + Balken + zwei hängende Waagschalen
+  law: 'M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z',
+  ok: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4',
+};
+
+const ChapterHead: React.FC<{
+  icon: keyof typeof CHAPTER_ICONS;
+  eyebrow: string;
+  title: string;
+  subtitle?: React.ReactNode;
+  right?: React.ReactNode;
+}> = ({ icon, eyebrow, title, subtitle, right }) => (
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, textAlign: 'left' }}>
+    <span style={{
+      width: 38, height: 38, borderRadius: 9, background: '#f8fafc',
+      border: '1px solid #e2e8f0', display: 'inline-flex',
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    }}>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={CHAPTER_ICONS[icon]} /></svg>
+    </span>
+    <div style={{ minWidth: 0, flex: 1 }}>
+      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#94a3b8', marginBottom: 1 }}>{eyebrow}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{title}</span>
+        {right}
+      </div>
+      {subtitle && <div style={{ fontSize: 12.5, color: '#6b7280', marginTop: 4, lineHeight: 1.5 }}>{subtitle}</div>}
+    </div>
   </div>
 );

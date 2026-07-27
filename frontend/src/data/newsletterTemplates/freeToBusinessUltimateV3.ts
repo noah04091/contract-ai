@@ -43,7 +43,7 @@ const body = `<!doctype html>
 <body style="margin:0;padding:0;background-color:#f3f5fa;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1f2937;-webkit-font-smoothing:antialiased;">
 
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f3f5fa;">
-Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &mdash; nur ${PROMO_DAYS} Tage. Im Jahresabo: aufs ganze Jahr.
+Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE}, nur ${PROMO_DAYS} Tage. Im Jahresabo: aufs ganze Jahr.
 </div>
 
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f5fa;">
@@ -74,14 +74,17 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
         <tr>
           <td class="px-inner" style="padding:44px 40px 0;text-align:center;">
             <div style="font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;color:#64748b;letter-spacing:2px;text-transform:uppercase;font-weight:600;">
-              Pers&ouml;nlich f&uuml;r {{firstName}}
+              Pers&ouml;nlich f&uuml;r {{firstName|dich}}
             </div>
             <h1 class="hero-h" style="margin:16px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:38px;line-height:1.12;color:#0f172a;font-weight:800;letter-spacing:-1.2px;">
               Liest du deine Vertr&auml;ge<br><span style="color:#2563eb;">wirklich</span>?
             </h1>
             <p style="margin:18px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.65;color:#475569;">
               Vom ersten Absatz bis zur letzten Klausel? Geht den meisten so.<br class="br-desk">
-              Und genau dort wird es teuer: eine &uuml;bersehene Klausel, eine vergessene Frist, eine Verl&auml;ngerung, die du nie wolltest.
+              Die meisten Probleme entstehen n&auml;mlich nicht beim Unterschreiben, sondern erst Monate sp&auml;ter: eine &uuml;bersehene Klausel, eine vergessene Frist, eine Verl&auml;ngerung, die du nie wolltest.
+            </p>
+            <p style="margin:22px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:20px;line-height:1.35;color:#0f172a;font-weight:700;letter-spacing:-0.4px;">
+              Contract AI liest deine Vertr&auml;ge.<br><span style="color:#2563eb;">Damit du es nicht musst.</span>
             </p>
           </td>
         </tr>
@@ -136,7 +139,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
                           <span style="display:inline-block;padding:2px 8px;margin-left:6px;background-color:#eff6ff;border-radius:10px;font-size:10px;font-weight:700;color:#1d4ed8;vertical-align:middle;">&#10003; W&ouml;rtlich belegt</span>
                         </div>
                         <div class="mock-quote" style="margin-top:6px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;line-height:1.55;color:#64748b;font-style:italic;">
-                          &bdquo;&hellip; verl&auml;ngert sich der Vertrag jeweils um weitere 12 Monate, sofern nicht sp&auml;testens 3 Monate vor Ablauf &hellip;&ldquo; &mdash; &sect;&thinsp;11 Abs.&thinsp;2
+                          &bdquo;&hellip; verl&auml;ngert sich der Vertrag jeweils um weitere 12 Monate, sofern nicht sp&auml;testens 3 Monate vor Ablauf &hellip;&ldquo; &middot; &sect;&thinsp;11 Abs.&thinsp;2
                         </div>
                       </td>
                     </tr>
@@ -153,7 +156,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
                           K&uuml;ndigungsfrist: 3 Monate zum Laufzeitende
                         </div>
                         <div style="margin-top:4px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12.5px;color:#64748b;">
-                          Frist automatisch im Kalender &mdash; Erinnerung rechtzeitig vorher.
+                          Frist automatisch im Kalender, Erinnerung rechtzeitig vorher.
                         </div>
                       </td>
                     </tr>
@@ -174,7 +177,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
               </tr>
             </table>
             <p style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;text-align:center;">
-              So pr&uuml;ft Contract AI jeden Vertrag &mdash; vom Handyvertrag bis zum Gewerbemietvertrag. Beispiel-Analyse.
+              So pr&uuml;ft Contract AI jeden Vertrag, vom Handyvertrag bis zum Gewerbemietvertrag: jede Klausel mit Fundstelle und Begr&uuml;ndung. Beispiel-Analyse.
             </p>
           </td>
         </tr>
@@ -193,7 +196,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
               Was Premium f&uuml;r dich &uuml;bernimmt
             </div>
             <h2 class="section-h" style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:28px;line-height:1.2;color:#0f172a;font-weight:800;letter-spacing:-0.6px;">
-              Drei Dinge, die du<br>sofort sp&uuml;rst.
+              Drei Werkzeuge, die du<br>sofort sp&uuml;rst.
             </h2>
           </td>
         </tr>
@@ -210,7 +213,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
                     W&ouml;rtlich belegt statt behauptet.
                   </h3>
                   <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#475569;">
-                    Jedes gefundene Risiko zeigt dir die Klausel im Wortlaut &mdash; du siehst schwarz auf wei&szlig;, wo es steht. Keine vagen KI-Behauptungen.
+                    Jedes gefundene Risiko zeigt dir die Klausel im Wortlaut. Du siehst schwarz auf wei&szlig;, wo es steht. Keine vagen KI-Behauptungen.
                   </p>
                 </td>
               </tr>
@@ -227,10 +230,10 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
                 </td>
                 <td style="vertical-align:top;">
                   <h3 class="feat-h" style="margin:0 0 6px;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:18px;line-height:1.3;color:#0f172a;font-weight:700;letter-spacing:-0.3px;">
-                    Fristen, bevor sie ablaufen.
+                    Hochladen und vergessen.
                   </h3>
                   <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#475569;">
-                    K&uuml;ndigungsfristen landen automatisch im Kalender. Und bei einer erhaltenen K&uuml;ndigung erkennt Contract AI sogar die 3-Wochen-Klagefrist (&sect;&thinsp;4 KSchG) &mdash; am Tag&thinsp;1, nicht wenn es zu sp&auml;t ist.
+                    Lad einen Vertrag hoch und denk nie wieder an eine Frist. Contract AI tr&auml;gt K&uuml;ndigungsfristen automatisch in den Kalender und meldet sich rechtzeitig, weil <em style="font-style:normal;font-weight:600;color:#0f172a;">es</em> f&uuml;r dich dran denkt. Kein verpasster K&uuml;ndigungstermin, keine ungewollte Verl&auml;ngerung mehr.
                   </p>
                 </td>
               </tr>
@@ -250,7 +253,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
                     Frag deinen Vertrag einfach.
                   </h3>
                   <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#475569;">
-                    &bdquo;Wann kann ich k&uuml;ndigen?&ldquo; &bdquo;Wer haftet bei Verzug?&ldquo; Stell die Fragen, die du sonst einem Anwalt stellst &mdash; Antwort in zwei S&auml;tzen, in deiner Sprache.
+                    &bdquo;Wann kann ich k&uuml;ndigen?&ldquo; &bdquo;Wer haftet bei Verzug?&ldquo; Stell die Fragen, die du sonst einem Anwalt stellst. Antwort in zwei S&auml;tzen, in deiner Sprache.
                   </p>
                 </td>
               </tr>
@@ -360,7 +363,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
               </tr>
             </table>
             <p style="margin:14px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;text-align:center;">
-              Im Jahresabo sparst du zus&auml;tzlich &mdash; und der Code gilt dort aufs ganze Jahr.
+              Im Jahresabo sparst du zus&auml;tzlich, und der Code gilt dort aufs ganze Jahr.
             </p>
           </td>
         </tr>
@@ -466,6 +469,21 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE} &md
               <p style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;font-weight:700;color:#0f172a;">
                 Contract&nbsp;AI
               </p>
+
+              <!-- Rechtlicher Absender-Footer (§5 TMG) -->
+              <p style="margin:22px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.7;color:#94a3b8;">
+                Contract AI &middot; Inhaber Noah Liebold<br>
+                Richard-Oberle-Weg 27 &middot; 76648 Durmersheim &middot; Deutschland<br>
+                <a href="mailto:info@contract-ai.de" style="color:#94a3b8;text-decoration:underline;">info@contract-ai.de</a>
+              </p>
+              <p style="margin:12px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:11px;line-height:1.7;color:#94a3b8;">
+                <a href="https://contract-ai.de/impressum" style="color:#64748b;text-decoration:underline;">Impressum</a>
+                &nbsp;&middot;&nbsp;
+                <a href="https://contract-ai.de/datenschutz" style="color:#64748b;text-decoration:underline;">Datenschutz</a>
+              </p>
+              <p style="margin:14px 0 0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10.5px;line-height:1.6;color:#b8c0cc;">
+                Du erh&auml;ltst diese E-Mail, weil du ein Konto bei Contract AI hast.
+              </p>
             </div>
           </td>
         </tr>
@@ -483,8 +501,8 @@ export const freeToBusinessUltimateV3Template: NewsletterTemplate = {
   id: 'free-to-business-ultimate-v3',
   label: '🚀 Free → Business · ULTIMATE v3 (Fintech-Design)',
   description: 'TOP-EMPFEHLUNG v3. Modernes Stripe/DocuSign-Level-Design (Inter statt Serifen, Produkt-Mock „Dienstleistungsvertrag" statt Stock-Foto, helles Aktion-Panel). Neu vs. v2: echte Preise in der Tarif-Tabelle (19€/29€ + rabattiert), Enterprise als „Meist gewählt" hervorgehoben, Risk-Reversal unter jedem CTA (monatlich kündbar + 14-Tage-Geld-zurück), aktuelle USPs (Wörtlich belegt, Klagefrist §4 KSchG, Foto-Upload), kürzerer Mobile-tauglicher Betreff.',
-  subject: '{{firstName}}, liest du deine Verträge wirklich?',
-  preheader: 'Geht den meisten so. 10% Rabatt mit Code AKTION10 — nur 7 Tage. Im Jahresabo: aufs ganze Jahr.',
+  subject: '{{firstName|Hallo}}, liest du deine Verträge wirklich?',
+  preheader: 'Geht den meisten so. 10% Rabatt mit Code AKTION10, nur 7 Tage. Im Jahresabo: aufs ganze Jahr.',
   title: 'Liest du deine Verträge wirklich?',
   ctaText: 'Verträge absichern',
   ctaUrl: 'https://contract-ai.de/pricing?code=AKTION10',

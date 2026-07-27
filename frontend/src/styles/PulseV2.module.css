@@ -363,8 +363,9 @@
 @media (min-width: 1024px) {
   .detailCols {
     display: grid;
-    grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
-    gap: 18px;
+    /* Etwas breitere Status-Spalte → mehr Luft für lange Namen/Anbieter, nichts gequetscht */
+    grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
+    gap: 20px;
     align-items: start;
   }
   .detailRail {
@@ -383,3 +384,17 @@
 .detailHeaderCard { display: grid; grid-template-columns: auto 1fr; gap: 28px; }
 @media (min-width: 1024px) { .detailHeaderCard { grid-template-columns: 1fr; gap: 14px; } }
 @media (max-width: 560px) { .detailHeaderCard { grid-template-columns: 1fr; gap: 14px; } }
+
+/* ═══ Deep-Link-Highlight (Runde 15): angesprungener Radar-Alert leuchtet kurz auf ═══ */
+.alertHighlight {
+  border-radius: 12px;
+  animation: alertFlash 2.4s ease-out 1;
+}
+@keyframes alertFlash {
+  0% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.55); }
+  70% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); }
+  100% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .alertHighlight { animation: none; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35); }
+}
