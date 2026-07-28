@@ -74,7 +74,7 @@ const NdaPruefen: React.FC = () => {
         "name": "Wie genau ist die KI-Prüfung eines NDA?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen Risiko-Klauseln in Geheimhaltungsvereinbarungen. Sie kennt das Geschäftsgeheimnisgesetz (GeschGehG), die §§ 305 ff. BGB zur AGB-Kontrolle, § 343 BGB zur Vertragsstrafenherabsetzung sowie die einschlägige Rechtsprechung zu Wettbewerbsverboten in Geheimhaltungsvereinbarungen. Bei komplexen internationalen NDAs (Cross-Border, US-Common-Law-Klauseln) empfehlen wir ergänzend einen Fachanwalt für IT- und Wirtschaftsrecht."
+          "text": "Unsere KI prüft jede Risiko-Klausel in Geheimhaltungsvereinbarungen. Sie kennt das Geschäftsgeheimnisgesetz (GeschGehG), die §§ 305 ff. BGB zur AGB-Kontrolle, § 343 BGB zur Vertragsstrafenherabsetzung sowie die einschlägige Rechtsprechung zu Wettbewerbsverboten in Geheimhaltungsvereinbarungen. Bei komplexen internationalen NDAs (Cross-Border, US-Common-Law-Klauseln) empfehlen wir ergänzend einen Fachanwalt für IT- und Wirtschaftsrecht."
         }
       },
       {
@@ -459,12 +459,12 @@ const NdaPruefen: React.FC = () => {
 
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>60%</div>
-                    <div className={styles.problemStatLabel}>der NDAs enthalten unverhältnismäßige Klauseln</div>
+                    <div className={styles.problemStatValue}>§ 343 BGB</div>
+                    <div className={styles.problemStatLabel}>Überhöhte Vertragsstrafen kann ein Gericht herabsetzen</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>15.000 €</div>
-                    <div className={styles.problemStatLabel}>durchschnittlicher Streitwert bei NDA-Auseinandersetzungen</div>
+                    <div className={styles.problemStatValue}>GeschGehG</div>
+                    <div className={styles.problemStatLabel}>Ohne klare Geheimnis-Definition ist der Schutz schwer durchsetzbar</div>
                   </div>
                 </div>
               </div>
@@ -979,16 +979,16 @@ const NdaPruefen: React.FC = () => {
 
             <div className={styles.statsGrid}>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>98 %</div>
-                <div className={styles.statLabel}>Erkennungsgenauigkeit bei Risiko-Klauseln</div>
+                <div className={styles.statNumber}>Täglich</div>
+                <div className={styles.statLabel}>Abgleich mit neuen Gesetzen und Urteilen — Legal Pulse</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>&lt; 60 s</div>
-                <div className={styles.statLabel}>Analysezeit pro NDA</div>
+                <div className={styles.statNumber}>~ 2 Min.</div>
+                <div className={styles.statLabel}>bis zum vollständigen Prüfergebnis</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>10.000+</div>
-                <div className={styles.statLabel}>Verträge in der Trainingsbasis</div>
+                <div className={styles.statNumber}>~ 27</div>
+                <div className={styles.statLabel}>offizielle Rechtsquellen: Gesetzblätter, Bundesgerichte, EU</div>
               </div>
             </div>
           </div>
@@ -1011,8 +1011,7 @@ const NdaPruefen: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen
-                  Risiko-Klauseln in Geheimhaltungsvereinbarungen. Sie kennt das
+                  Unsere KI prüft jede Risiko-Klausel in Geheimhaltungsvereinbarungen. Sie kennt das
                   Geschäftsgeheimnisgesetz (GeschGehG), die §§ 305 ff. BGB zur AGB-Kontrolle,
                   § 343 BGB zur Vertragsstrafenherabsetzung sowie die einschlägige Rechtsprechung
                   zu Wettbewerbsverboten in Geheimhaltungsvereinbarungen. Bei komplexen

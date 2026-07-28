@@ -74,7 +74,7 @@ const AgenturvertragPruefen: React.FC = () => {
         "name": "Wie genau ist die KI-Prüfung eines Agenturvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen Risiko-Klauseln in Agenturverträgen. Sie kennt das Werkvertrags- und Dienstvertragsrecht der §§ 611, 631 ff. BGB, die AGB-Kontrolle der §§ 305 ff. BGB, das Urheberrechtsgesetz (UrhG) zur Übertragung von Nutzungsrechten sowie die einschlägige Rechtsprechung zu Mindestlaufzeiten, automatischen Verlängerungen und Haftungsbeschränkungen. Bei komplexen Konstellationen wie Joint Ventures oder strategischen Markenkooperationen empfehlen wir ergänzend einen Fachanwalt für Wirtschaftsrecht."
+          "text": "Unsere KI prüft jede Risiko-Klausel in Agenturverträgen. Sie kennt das Werkvertrags- und Dienstvertragsrecht der §§ 611, 631 ff. BGB, die AGB-Kontrolle der §§ 305 ff. BGB, das Urheberrechtsgesetz (UrhG) zur Übertragung von Nutzungsrechten sowie die einschlägige Rechtsprechung zu Mindestlaufzeiten, automatischen Verlängerungen und Haftungsbeschränkungen. Bei komplexen Konstellationen wie Joint Ventures oder strategischen Markenkooperationen empfehlen wir ergänzend einen Fachanwalt für Wirtschaftsrecht."
         }
       },
       {
@@ -458,12 +458,12 @@ const AgenturvertragPruefen: React.FC = () => {
 
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>68%</div>
-                    <div className={styles.problemStatLabel}>der Agenturverträge enthalten einseitige Klauseln</div>
+                    <div className={styles.problemStatValue}>§§ 305 ff.</div>
+                    <div className={styles.problemStatLabel}>BGB: Einseitige Standard-Klauseln unterliegen der AGB-Kontrolle</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>12.000 €</div>
-                    <div className={styles.problemStatLabel}>durchschnittlicher Schaden bei vorzeitiger Vertragsauflösung</div>
+                    <div className={styles.problemStatValue}>UrhG</div>
+                    <div className={styles.problemStatLabel}>Pauschale Übertragung aller Nutzungsrechte ist angreifbar</div>
                   </div>
                 </div>
               </div>
@@ -974,16 +974,16 @@ const AgenturvertragPruefen: React.FC = () => {
 
             <div className={styles.statsGrid}>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>98 %</div>
-                <div className={styles.statLabel}>Erkennungsgenauigkeit bei Risiko-Klauseln</div>
+                <div className={styles.statNumber}>Täglich</div>
+                <div className={styles.statLabel}>Abgleich mit neuen Gesetzen und Urteilen — Legal Pulse</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>&lt; 60 s</div>
-                <div className={styles.statLabel}>Analysezeit pro Vertrag</div>
+                <div className={styles.statNumber}>~ 2 Min.</div>
+                <div className={styles.statLabel}>bis zum vollständigen Prüfergebnis</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>10.000+</div>
-                <div className={styles.statLabel}>Verträge in der Trainingsbasis</div>
+                <div className={styles.statNumber}>~ 27</div>
+                <div className={styles.statLabel}>offizielle Rechtsquellen: Gesetzblätter, Bundesgerichte, EU</div>
               </div>
             </div>
           </div>
@@ -1006,8 +1006,7 @@ const AgenturvertragPruefen: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen
-                  Risiko-Klauseln in Agenturverträgen. Sie kennt das Werkvertrags- und
+                  Unsere KI prüft jede Risiko-Klausel in Agenturverträgen. Sie kennt das Werkvertrags- und
                   Dienstvertragsrecht der §§ 611, 631 ff. BGB, die AGB-Kontrolle der §§ 305 ff.
                   BGB, das Urheberrechtsgesetz (UrhG) zur Übertragung von Nutzungsrechten sowie
                   die einschlägige Rechtsprechung zu Mindestlaufzeiten, automatischen
