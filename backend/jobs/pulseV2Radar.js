@@ -127,7 +127,7 @@ function extractLegislationFingerprint(title) {
   //    ohne Fingerprint gab es 4 Mails zum selben OLG-Urteil an 4 Tagen).
   //    Bewusst NUR wenn der Titel klar von einem Gericht stammt (OLG/LG/AG/…-Präfix),
   //    damit Drucksachen-/Gesetzes-Nummern nicht fälschlich matchen.
-  if (/^(OLG|BayObLG|KG|LG|AG|LAG|ArbG|OVG|VGH|VG|FG|SG|LSG)\b/i.test(t)) {
+  if (/^(OLG|BayObLG|KG|LG|AG|LArbG|LAG|ArbG|OVG|VGH|VG|FG|SG|LSG)\b/i.test(t)) {
     const stateCase = t.match(/\b(\d{1,4})\s+([A-Za-z]{1,4})\s+(\d{1,6})[\/\-](\d{2})\b/);
     if (stateCase) return `court_${stateCase[1]}_${stateCase[2].toLowerCase()}_${stateCase[3]}_${stateCase[4]}`;
   }
