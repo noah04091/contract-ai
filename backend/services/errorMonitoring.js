@@ -270,6 +270,25 @@ function errorHandler(err, req, res, next) {
 
   // Response senden (wenn noch nicht gesendet)
   if (!res.headersSent) {
+    // 📦 Multer-Upload-Fehler (z.B. Datei über dem Größen-Limit) tragen keinen .status →
+    // liefen sonst als generischer 500 „interner Fehler" beim User an, obwohl es ein klarer
+    // Eingabe-Fall ist. Hier in eine verständliche 413-Meldung übersetzen (alle Upload-Wege).
+    if (err && err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({
+        success: false,
+        error: 'FILE_TOO_LARGE',
+        message: '📄 Die Datei ist zu groß (max. 50 MB). Bitte lade eine kleinere Datei hoch oder teile das Dokument auf.'
+      });
+    }
+    if (err && typeof err.code === 'string' && err.code.startsWith('LIMIT_')) {
+      // Weitere Multer-Limits (zu viele Dateien/Felder o.ä.) ebenfalls verständlich melden.
+      return res.status(400).json({
+        success: false,
+        error: 'UPLOAD_LIMIT',
+        message: 'Der Upload hat ein Limit überschritten. Bitte prüfe Datei-Anzahl und -Größe und versuche es erneut.'
+      });
+    }
+
     const statusCode = err.status || err.statusCode || 500;
     res.status(statusCode).json({
       success: false,
