@@ -233,7 +233,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE}, nu
                     Hochladen und vergessen.
                   </h3>
                   <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#475569;">
-                    Lad einen Vertrag hoch und denk nie wieder an eine Frist. Contract AI tr&auml;gt K&uuml;ndigungsfristen automatisch in den Kalender und meldet sich rechtzeitig, weil <em style="font-style:normal;font-weight:600;color:#0f172a;">es</em> f&uuml;r dich dran denkt. Kein verpasster K&uuml;ndigungstermin, keine ungewollte Verl&auml;ngerung mehr.
+                    Lad einen Vertrag hoch und denk nie wieder an eine Frist. Contract AI tr&auml;gt K&uuml;ndigungsfristen automatisch in den Kalender und meldet sich rechtzeitig, weil es f&uuml;r dich dran denkt. Kein verpasster K&uuml;ndigungstermin, keine ungewollte Verl&auml;ngerung mehr.
                   </p>
                 </td>
               </tr>
