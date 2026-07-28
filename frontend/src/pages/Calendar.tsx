@@ -794,10 +794,23 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             });
         } else {
           const deadlineKey = cleanDeadlineName(currentEvent.title);
+          // 28.07.2026: Vergangene Vorwarner NICHT mehr wegfiltern (gleiche Ehrlichkeit wie der
+          // Signatur-Zweig oben, Commit 8f93ab57): Nach der "7 Tage vorher"-Mail las sich die
+          // Karte wie "nur am Tag selbst erinnert", obwohl die Mail real rausging. Statusbasiert:
+          // "notified" = Mail bestätigt gesendet; Zukunft = geplant; vergangen ohne notified =
+          // nicht gesendet (Toggle aus / Versand-Miss). NUR im Free-Plan bleibt Vergangenes
+          // ausgeblendet — dort erklärt bereits das 🔒-Banner, dass keine Mails verschickt
+          // werden; eine Wand aus "nicht gesendet" wäre doppelt und wirkt wie ein Fehler.
           list = evs
-            .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && new Date(e.date) > now)
+            .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && (!noEmailReminders || new Date(e.date) > now))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .map(e => ({ id: e.id, label: reminderLeadLabel(e.title) || 'Erinnerung', dateStr: fmt(e.date), kind: 'upcoming' as const }));
+            .map(e => {
+              const kind: 'sent' | 'upcoming' | 'skipped' =
+                e.status === 'notified' ? 'sent'
+                : new Date(e.date) > now ? 'upcoming'
+                : 'skipped';
+              return { id: e.id, label: reminderLeadLabel(e.title) || 'Erinnerung', dateStr: fmt(e.date), kind };
+            });
         }
         // 🔔 Stichtag/Ablauftag selbst (Haupt-Ereignis feuert dann).
         const anchor = getEventDisplayDate(currentEvent);
@@ -819,7 +832,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
       })
       .catch(() => { if (!cancelled) { setDeadlineReminders([]); setRemindersLoading(false); } });
     return () => { cancelled = true; };
-  }, [currentEvent.id, currentEvent.contractId, currentEvent.title, currentEvent.type, currentEvent.metadata?.envelopeId]);
+  }, [currentEvent.id, currentEvent.contractId, currentEvent.title, currentEvent.type, currentEvent.metadata?.envelopeId, noEmailReminders]);
 
   return (
     <motion.div
