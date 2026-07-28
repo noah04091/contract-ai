@@ -262,7 +262,7 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
   );
 
   const subject = criticalContracts.length > 0
-    ? `${criticalContracts.length} Vertrag${criticalContracts.length === 1 ? "" : "e"} mit Risiko nicht geprüft`
+    ? `${criticalContracts.length} ${criticalContracts.length === 1 ? "Vertrag" : "Verträge"} mit Risiko nicht geprüft`
     : `${staleContracts.length} Verträge seit über 14 Tagen nicht geprüft`;
 
   const preheader = criticalContracts.length > 0
