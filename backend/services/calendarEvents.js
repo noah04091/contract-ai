@@ -1,5 +1,6 @@
 // 📅 backend/services/calendarEvents.js - WITH AUTO-RENEWAL SUPPORT
 const { ObjectId } = require("mongodb");
+const { formatProvider } = require("../utils/formatProvider"); // Anbieter-Objekt → String beim SCHREIBEN normalisieren (nie "[object Object]" in metadata)
 
 /**
  * Helper: Erstellt ein Datum in lokaler Timezone (Deutschland/Europa)
@@ -181,7 +182,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               noticePeriodDays,
               suggestedAction: "cancel",
               contractName: contract.name,
@@ -213,7 +214,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               autoRenewMonths,
               suggestedAction: "cancel",
               urgent: true,
@@ -244,7 +245,7 @@ async function generateEventsForContract(db, contract) {
               dataSource: dataSource,
               isEstimated: isEstimated,
               metadata: {
-                provider: contract.provider,
+                provider: formatProvider(contract.provider) || null,
                 daysLeft: 7,
                 suggestedAction: "cancel",
                 contractName: contract.name,
@@ -276,7 +277,7 @@ async function generateEventsForContract(db, contract) {
           dataSource: dataSource,
           isEstimated: isEstimated,
           metadata: {
-            provider: contract.provider,
+            provider: formatProvider(contract.provider) || null,
             autoRenewMonths,
             newExpiryDate: calculateNewExpiryDate(expiryDate, autoRenewMonths),
             suggestedAction: "review",
@@ -306,7 +307,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               oldPrice: contract.amount,
               newPrice: contract.newPrice,
               suggestedAction: "compare",
@@ -336,7 +337,7 @@ async function generateEventsForContract(db, contract) {
               dataSource: dataSource,
               isEstimated: isEstimated,
               metadata: {
-                provider: contract.provider,
+                provider: formatProvider(contract.provider) || null,
                 daysUntilIncrease: 30,
                 suggestedAction: "compare",
                 contractName: contract.name,
@@ -368,7 +369,7 @@ async function generateEventsForContract(db, contract) {
           dataSource: dataSource,
           isEstimated: isEstimated,
           metadata: {
-            provider: contract.provider,
+            provider: formatProvider(contract.provider) || null,
             contractAge: "1 Jahr",
             suggestedAction: "review",
             contractName: contract.name,
@@ -395,7 +396,7 @@ async function generateEventsForContract(db, contract) {
           dataSource: dataSource,
           isEstimated: isEstimated,
           metadata: {
-            provider: contract.provider,
+            provider: formatProvider(contract.provider) || null,
             suggestedAction: isAutoRenewal ? "check" : "archive",
             contractName: contract.name,
             isAutoRenewal
@@ -473,7 +474,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               daysUntilExpiry: setting.days || 0,
               expiryDate: expiryDate,
               suggestedAction: "review",
@@ -522,7 +523,7 @@ async function generateEventsForContract(db, contract) {
           dataSource: dataSource,
           isEstimated: isEstimated,
           metadata: {
-            provider: contract.provider,
+            provider: formatProvider(contract.provider) || null,
             contractName: contract.name,
             suggestedAction: "archive",
             isCancelled: true
@@ -550,7 +551,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               daysUntil: 30,
               suggestedAction: "prepare"
@@ -579,7 +580,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               daysUntil: 7,
               suggestedAction: "finalize"
@@ -615,7 +616,7 @@ async function generateEventsForContract(db, contract) {
           dataSource: dataSource,
           isEstimated: isEstimated,
           metadata: {
-            provider: contract.provider,
+            provider: formatProvider(contract.provider) || null,
             contractName: contract.name,
             minimumTermMonths: contract.minimumTerm?.months || null,
             suggestedAction: "review_cancel"
@@ -643,7 +644,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               daysUntil: 14,
               suggestedAction: "prepare"
@@ -672,7 +673,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               daysUntil: 7,
               suggestedAction: "decide"
@@ -719,7 +720,7 @@ async function generateEventsForContract(db, contract) {
           dataSource: dataSource,
           isEstimated: isEstimated,
           metadata: {
-            provider: contract.provider,
+            provider: formatProvider(contract.provider) || null,
             contractName: contract.name,
             startDate: startDate,
             suggestedAction: "review"
@@ -747,7 +748,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               daysUntil: 14,
               suggestedAction: "prepare"
@@ -789,7 +790,7 @@ async function generateEventsForContract(db, contract) {
           dataSource: dataSource,
           isEstimated: isEstimated,
           metadata: {
-            provider: contract.provider,
+            provider: formatProvider(contract.provider) || null,
             contractName: contract.name,
             purchaseDate: kaufDate,
             suggestedAction: "check"
@@ -817,7 +818,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               daysUntil: 30,
               suggestedAction: "check"
@@ -866,7 +867,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               yearsRented: yearsRented,
               mietbeginn: mietbeginnDate,
@@ -903,7 +904,7 @@ async function generateEventsForContract(db, contract) {
           dataSource: dataSource,
           isEstimated: isEstimated,
           metadata: {
-            provider: contract.provider,
+            provider: formatProvider(contract.provider) || null,
             contractName: contract.name,
             restlaufzeit: contract.restlaufzeit,
             suggestedAction: "review"
@@ -1014,7 +1015,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: importantDate.calculated ? 'ai_calculated' : 'ai_extracted',
             isEstimated: importantDate.calculated || false,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               aiExtracted: true,
               source: importantDate.source || 'KI-Analyse',
@@ -1074,7 +1075,7 @@ async function generateEventsForContract(db, contract) {
                 dataSource: 'ai_reminder',
                 isEstimated: true,
                 metadata: {
-                  provider: contract.provider,
+                  provider: formatProvider(contract.provider) || null,
                   contractName: contract.name,
                   daysUntil: reminder.days,
                   originalEvent: mapping.eventType,
@@ -1115,7 +1116,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: importantDate.calculated ? 'ai_calculated' : 'ai_extracted',
             isEstimated: importantDate.calculated || false,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               aiExtracted: true,
               source: importantDate.source || 'KI-Analyse',
@@ -1234,7 +1235,7 @@ async function generateEventsForContract(db, contract) {
               dataSource: 'ai_calculated',
               isEstimated: true,
               metadata: {
-                provider: contract.provider,
+                provider: formatProvider(contract.provider) || null,
                 contractName: contract.name,
                 aiExtracted: true,           // wichtig für Cleanup-Filter
                 source: 'fristHinweis-recurring',
@@ -1309,7 +1310,7 @@ async function generateEventsForContract(db, contract) {
             dataSource: 'ai_calculated',
             isEstimated: true,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               contractName: contract.name,
               aiExtracted: true,           // wichtig für Cleanup-Filter
               source: 'fristHinweis-anchor',
@@ -1561,7 +1562,7 @@ function generateRecurringPaymentEvents(contract, now, confidence, dataSource, i
         dataSource: dataSource,
         isEstimated: isEstimated,
         metadata: {
-          provider: contract.provider,
+          provider: formatProvider(contract.provider) || null,
           amount: amount,
           paymentFrequency: paymentFrequency,
           suggestedAction: "review",
@@ -1593,7 +1594,7 @@ function generateRecurringPaymentEvents(contract, now, confidence, dataSource, i
             dataSource: dataSource,
             isEstimated: isEstimated,
             metadata: {
-              provider: contract.provider,
+              provider: formatProvider(contract.provider) || null,
               amount: amount,
               daysUntilPayment: 3,
               suggestedAction: "prepare",

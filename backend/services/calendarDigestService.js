@@ -191,7 +191,8 @@ function generateEventCard(event, severity, baseUrl) {
   }
 
   const contractName = event.metadata?.contractName || event.title || "Unbekannter Vertrag";
-  const provider = event.metadata?.provider || "";
+  // formatProvider: Alt-Events tragen den Anbieter teils als Objekt → nie roh interpolieren
+  const provider = require("../utils/formatProvider").formatProvider(event.metadata?.provider);
 
   return `
     <div style="background: ${c.bg}; border-left: 4px solid ${c.border}; padding: 16px 20px; margin-bottom: 12px; border-radius: 8px;">

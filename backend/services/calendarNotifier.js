@@ -6,6 +6,7 @@ const { ObjectId } = require("mongodb");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { queueEmail, processEmailQueue } = require("./emailRetryService");
 const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // gemeinsame Tageszahl-Quelle (Anzeige)
+const { formatProvider } = require("../utils/formatProvider"); // Anbieter kann Objekt sein → nie roh interpolieren ("[object Object]")
 
 /**
  * Maskiert eine E-Mail-Adresse für Logs (DSGVO-Hygiene).
@@ -655,7 +656,7 @@ function generateCancelReminderEmail(event) {
   return `
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Bald kannst du kündigen</h1>
     <p style="margin:0 0 22px 0;">In etwa <strong style="color:#0f172a;">${days} Tagen</strong> öffnet sich das Kündigungsfenster für <strong style="color:#0f172a;">${m.contractName || 'deinen Vertrag'}</strong>. Ein guter Moment, deine Optionen zu prüfen.</p>
-    ${calDetail([['Vertrag', m.contractName], ['Anbieter', m.provider], m.isAutoRenewal ? ['Hinweis', 'Verlängert sich automatisch'] : null].filter(Boolean))}
+    ${calDetail([['Vertrag', m.contractName], ['Anbieter', formatProvider(m.provider)], m.isAutoRenewal ? ['Hinweis', 'Verlängert sich automatisch'] : null].filter(Boolean))}
   `;
 }
 
@@ -668,7 +669,7 @@ function generateCancelWindowEmail(event) {
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Du kannst ${m.contractName || 'deinen Vertrag'} jetzt kündigen</h1>
     <p style="margin:0 0 22px 0;">Das Kündigungsfenster ist ab jetzt offen. Wenn du wechseln oder beenden möchtest, ist jetzt der richtige Zeitpunkt.</p>
     ${calDetail([
-      ['Anbieter', m.provider],
+      ['Anbieter', formatProvider(m.provider)],
       expiry ? ['Vertragsende', expiry.toLocaleDateString('de-DE')] : null,
       m.noticePeriodDays ? ['Kündigungsfrist', `${m.noticePeriodDays} Tage`] : null,
       daysLeft != null ? ['Verbleibend', `${daysLeft} Tage`] : null
@@ -684,7 +685,7 @@ function generateLastCancelDayEmail(event) {
     <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#dc2626; letter-spacing:.3px; text-transform:uppercase;">Heute ist der letzte Tag</p>
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Vertrag'} jetzt kündigen</h1>
     <p style="margin:0 0 22px 0;">Heute ist die letzte Möglichkeit, fristgerecht zu kündigen. Danach verlängert sich der Vertrag automatisch um <strong style="color:#0f172a;">${months} Monate</strong>.</p>
-    ${calDetail([['Anbieter', m.provider], ['Letzter Kündigungstag', 'Heute'], ['Ohne Kündigung', `Verlängerung um ${months} Monate`]].filter(Boolean))}
+    ${calDetail([['Anbieter', formatProvider(m.provider)], ['Letzter Kündigungstag', 'Heute'], ['Ohne Kündigung', `Verlängerung um ${months} Monate`]].filter(Boolean))}
   `;
 }
 
@@ -695,7 +696,7 @@ function generateCancelWarningEmail(event) {
     <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#b45309; letter-spacing:.3px; text-transform:uppercase;">Frist in ${days} Tagen</p>
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Vertrag'} rechtzeitig kündigen</h1>
     <p style="margin:0 0 22px 0;">In <strong style="color:#0f172a;">${days} Tagen</strong> endet die Kündigungsfrist. Danach ist eine fristgerechte Kündigung nicht mehr möglich.</p>
-    ${calDetail([['Anbieter', m.provider], ['Frist endet in', `${days} Tagen`]].filter(Boolean))}
+    ${calDetail([['Anbieter', formatProvider(m.provider)], ['Frist endet in', `${days} Tagen`]].filter(Boolean))}
   `;
 }
 
@@ -706,7 +707,7 @@ function generatePriceIncreaseEmail(event) {
     <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#b45309; letter-spacing:.3px; text-transform:uppercase;">Preisanpassung</p>
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Der Preis für ${m.contractName || 'deinen Vertrag'} steigt</h1>
     <p style="margin:0 0 22px 0;">Dein Anbieter hat eine Preiserhöhung angekündigt. Ein guter Moment, Alternativen zu vergleichen oder zu kündigen.</p>
-    ${calDetail([['Vertrag', m.contractName], ['Anbieter', m.provider], m.newPrice ? ['Neuer Preis', m.newPrice] : null, effDate ? ['Gültig ab', effDate] : null].filter(Boolean))}
+    ${calDetail([['Vertrag', m.contractName], ['Anbieter', formatProvider(m.provider)], m.newPrice ? ['Neuer Preis', m.newPrice] : null, effDate ? ['Gültig ab', effDate] : null].filter(Boolean))}
   `;
 }
 
@@ -717,7 +718,7 @@ function generateAutoRenewalEmail(event) {
   return `
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Dein Vertrag'} verlängert sich bald automatisch</h1>
     <p style="margin:0 0 22px 0;">Ohne Kündigung verlängert sich der Vertrag automatisch um <strong style="color:#0f172a;">${months} Monate</strong>. Wenn du das nicht möchtest, kündige rechtzeitig — wir erstellen dein Schreiben mit einem Klick.</p>
-    ${calDetail([['Anbieter', m.provider], renewDate ? ['Verlängert sich am', renewDate] : null, ['Verlängerung', `um ${months} Monate`]].filter(Boolean))}
+    ${calDetail([['Anbieter', formatProvider(m.provider)], renewDate ? ['Verlängert sich am', renewDate] : null, ['Verlängerung', `um ${months} Monate`]].filter(Boolean))}
   `;
 }
 
@@ -726,14 +727,14 @@ function generateReviewEmail(event) {
   return `
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Zeit für einen Vertrags-Check</h1>
     <p style="margin:0 0 22px 0;">Dein Vertrag <strong style="color:#0f172a;">${m.contractName || ''}</strong> läuft schon eine Weile. Vielleicht gibt es inzwischen ein besseres oder günstigeres Angebot — ein kurzer Vergleich lohnt sich oft.</p>
-    ${calDetail([['Vertrag', m.contractName], ['Anbieter', m.provider]].filter(Boolean))}
+    ${calDetail([['Vertrag', m.contractName], ['Anbieter', formatProvider(m.provider)]].filter(Boolean))}
   `;
 }
 
 function generateCancellationConfirmationCheckEmail(event) {
   const m = event.metadata || {};
   const contractName = m.contractName || event.contractName || "deinen Vertrag";
-  const provider = m.provider || "";
+  const provider = formatProvider(m.provider);
   const isFollowUp = m.isFollowUp;
   return `
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Kündigungsbestätigung erhalten?</h1>
