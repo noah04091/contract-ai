@@ -4612,9 +4612,21 @@ router.post("/", verifyToken, analyzeRateLimiter, async (req, res, next) => {
   uploadMiddleware.single("file")(req, res, async (err) => {
     if (err) {
       console.error("❌ Upload middleware error:", err.message);
+      // 📦 Datei über dem 50-MB-Limit klar benennen (multer LIMIT_FILE_SIZE wird HIER im
+      // Route-Callback gefangen, nicht im globalen Handler).
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({
+          success: false,
+          message: "📄 Die Datei ist zu groß (max. 50 MB). Bitte lade eine kleinere Datei hoch oder teile das Dokument auf.",
+          error: "FILE_TOO_LARGE"
+        });
+      }
+      // Sonstige Upload-Fehler: den bereits verständlichen deutschen Grund (z.B. fileFilter
+      // „Nur PDF-, DOCX- oder Bild-Dateien…") als SICHTBARE Meldung zeigen, nicht das generische
+      // englische „File upload failed".
       return res.status(400).json({
         success: false,
-        message: "File upload failed",
+        message: err.message || "Datei-Upload fehlgeschlagen. Bitte prüfe Format und Größe der Datei.",
         error: "UPLOAD_ERROR",
         details: err.message
       });
@@ -5010,6 +5022,28 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     incrementedUserId = user._id;
     usersCollectionRef = users;
 
+    // 💳 Kontingent-Fairness (28.07.2026): Der Zähler wird oben ATOMAR erhöht (Limit-Gate), aber
+    // danach kann die Analyse aus Gründen abbrechen, die KEINE echte Analyse liefern (Duplikat,
+    // "läuft bereits", Dokument zu groß, Token-Limit, OCR/PDF-Fehler, zu wenig Inhalt). Bisher
+    // rollte NUR der catch (bei Exception) zurück — die sanften 4xx-Returns nicht → der Nutzer
+    // verlor eine Analyse für nichts (besonders bitter bei Free = 3). Dieser Helfer erstattet den
+    // Zähler bei genau diesen Nicht-Auslieferungs-Fällen und setzt das Flag zurück, damit
+    // catch/disconnect nicht doppelt erstatten. Blast-Radius: nur der Zähler, nie die Analyse.
+    const refundAnalysisCountOnce = async (reason) => {
+      if (analysisCountIncremented && incrementedUserId && usersCollectionRef) {
+        try {
+          await usersCollectionRef.updateOne(
+            { _id: incrementedUserId },
+            { $inc: { analysisCount: -1 } }
+          );
+          analysisCountIncremented = false; // verhindert Doppel-Refund (catch/disconnect)
+          console.log(`🔄 [${requestId}] analysisCount erstattet (-1): ${reason}`);
+        } catch (refundErr) {
+          console.error(`❌ [${requestId}] analysisCount-Erstattung fehlgeschlagen:`, refundErr.message);
+        }
+      }
+    };
+
     // User-Referenz aktualisieren für spätere Verwendung
     user.analysisCount = newCount;
 
@@ -5041,6 +5075,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           const forceReanalyze = req.body.forceReanalyze === 'true';
           
           if (!forceReanalyze) {
+            await refundAnalysisCountOnce('Duplikat — keine neue Analyse ausgeliefert');
             return res.status(409).json({
               success: false,
               duplicate: true,
@@ -5076,6 +5111,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         console.warn(`🔒 [${requestId}] Pipeline für gleiche Datei läuft bereits (Alter: ${lockResult.ageSec}s, requestId: ${lockResult.existing.requestId})`);
         // Listener cleanup (kein Pipeline-Start)
         req.removeListener('close', handleClientClose);
+        await refundAnalysisCountOnce('Analyse läuft bereits (Doppelklick) — nicht erneut berechnen');
         return res.status(409).json({
           success: false,
           error: 'ANALYSIS_IN_PROGRESS',
@@ -5130,6 +5166,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           } else if (!pdfData.text || pdfData.text.trim().length === 0) {
             // OCR tried but still no text — return clear error to user
             console.warn(`⚠️ [${requestId}] OCR-Fallback lieferte keinen Text — Scan unleserlich`);
+            await refundAnalysisCountOnce('OCR fand keinen Text — keine Analyse ausgeliefert');
             return res.status(400).json({
               success: false,
               message: "📸 Das gescannte Dokument konnte nicht gelesen werden. Die Texterkennung (OCR) hat keinen lesbaren Text gefunden.",
@@ -5177,6 +5214,27 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       // funktionalen Mehrwert — der Last-Resort-Fallback unten greift sowieso.
       console.error(`❌ [${requestId}] Document parsing error: ${error.message || error}`);
 
+      // 🔒 Passwortgeschützte/verschlüsselte PDF EHRLICH benennen (28.07.2026). pdf-parse (pdfjs)
+      // wirft dafür eine PasswordException; Textract kann verschlüsselte PDFs ohnehin nicht lesen.
+      // Ohne diesen Zweig fällt so eine Datei fälschlich auf "PDF beschädigt" — irreführend für den
+      // Nutzer, der nur den Passwortschutz entfernen müsste.
+      const parseErrStr = `${error?.name || ''} ${error?.message || ''}`.toLowerCase();
+      if (parseErrStr.includes('password') || parseErrStr.includes('encrypt')) {
+        console.warn(`🔒 [${requestId}] PDF ist passwortgeschützt/verschlüsselt`);
+        await refundAnalysisCountOnce('PDF passwortgeschützt — keine Analyse ausgeliefert');
+        return res.status(400).json({
+          success: false,
+          message: "🔒 Diese PDF ist passwortgeschützt und kann nicht analysiert werden.",
+          error: "PDF_PASSWORD_PROTECTED",
+          details: "Bitte entferne den Passwortschutz und lade die Datei erneut hoch.",
+          suggestions: [
+            "PDF im Viewer öffnen, Passwort eingeben und ohne Schutz neu speichern (z.B. Adobe Reader → Speichern unter)",
+            "Alternativ über Drucken → 'Als PDF speichern' eine ungeschützte Kopie erzeugen"
+          ],
+          requestId
+        });
+      }
+
       // Last-Resort: Bei harten pdf-parse-Crashes (z.B. "bad XRef entry",
       // korrupte Streams, defekte Trailer) Textract direkt mit den rohen
       // Bytes versuchen. Textract ruft pdf-parse nicht auf und kann viele
@@ -5205,6 +5263,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             // OCR konnte ebenfalls nichts retten — differenzierte Fehlermeldung
             const ocrLimitWarning = ocrResult.warnings?.find(w => w.type === 'ocr_limit_reached');
             if (ocrLimitWarning) {
+              await refundAnalysisCountOnce('OCR-Kontingent erreicht — keine Analyse ausgeliefert');
               return res.status(400).json({
                 success: false,
                 message: "📸 OCR-Kontingent erreicht",
@@ -5217,6 +5276,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
                 requestId
               });
             }
+            await refundAnalysisCountOnce('PDF beschädigt — keine Analyse ausgeliefert');
             return res.status(400).json({
               success: false,
               message: "📄 PDF-Datei beschädigt",
@@ -5232,6 +5292,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           }
         } catch (ocrErr) {
           console.error(`❌ [${requestId}] OCR-Last-Resort fehlgeschlagen: ${ocrErr.message}`);
+          await refundAnalysisCountOnce('Datei nicht lesbar (PDF+OCR gescheitert) — keine Analyse ausgeliefert');
           return res.status(400).json({
             success: false,
             message: "📄 Datei konnte nicht verarbeitet werden",
@@ -5246,6 +5307,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         }
       } else {
         // Non-PDF (z.B. DOCX): kein OCR-Fallback sinnvoll, klare Meldung
+        await refundAnalysisCountOnce('Datei (Non-PDF) nicht lesbar — keine Analyse ausgeliefert');
         return res.status(400).json({
           success: false,
           message: "📄 Datei konnte nicht verarbeitet werden",
@@ -5264,6 +5326,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.warn(`⚠️ [${requestId}] PDF zu groß: ${pdfData.numpages} Seiten (Limit: ${maxPages}, Plan: ${plan})`);
       const nextTier = !isPremium ? 'Business' : !isEnterprise ? 'Enterprise' : null;
       const nextLimit = !isPremium ? ANALYSIS_LIMITS.BUSINESS_MAX_PDF_PAGES : !isEnterprise ? ANALYSIS_LIMITS.ENTERPRISE_MAX_PDF_PAGES : null;
+      await refundAnalysisCountOnce('Dokument zu groß (Seiten) — keine Analyse ausgeliefert');
       return res.status(400).json({
         success: false,
         message: nextTier
@@ -5291,6 +5354,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.warn(`⚠️ [${requestId}] Zu viele Tokens: ${estimatedInputTokens} (Limit: ${maxInputTokens}, Plan: ${plan})`);
       const nextTier = !isPremium ? 'Business' : !isEnterprise ? 'Enterprise' : null;
       const nextLimit = !isPremium ? ANALYSIS_LIMITS.BUSINESS_MAX_INPUT_TOKENS : !isEnterprise ? ANALYSIS_LIMITS.ENTERPRISE_MAX_INPUT_TOKENS : null;
+      await refundAnalysisCountOnce('Dokument zu groß (Text/Token) — keine Analyse ausgeliefert');
       return res.status(400).json({
         success: false,
         message: nextTier
@@ -5323,7 +5387,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     if (!validationResult.success) {
       console.log(`⚠️ [${requestId}] Document validation failed: ${validationResult.error}`);
-      
+      await refundAnalysisCountOnce('Dokument-Validierung fehlgeschlagen — keine Analyse ausgeliefert');
       return res.status(400).json({
         success: false,
         message: validationResult.message,
