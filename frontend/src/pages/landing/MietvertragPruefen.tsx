@@ -74,7 +74,7 @@ const MietvertragPruefen: React.FC = () => {
         "name": "Wie genau ist die KI-Prüfung eines Mietvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen Risiko-Klauseln in Mietverträgen. Sie kennt die §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere die zentralen Urteile zu Schönheitsreparaturen (BGH, 18.03.2015 – VIII ZR 185/14), Quotenabgeltungsklauseln (VIII ZR 242/13), Kaution (§ 551 BGB) und Kündigungsausschluss (VIII ZR 27/04). Bei komplexen Sondersituationen wie Gewerbemiete, Mischmietverhältnissen oder laufenden Räumungsverfahren empfehlen wir ergänzend einen Fachanwalt für Mietrecht."
+          "text": "Unsere KI prüft jede Risiko-Klausel in Mietverträgen. Sie kennt die §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere die zentralen Urteile zu Schönheitsreparaturen (BGH, 18.03.2015 – VIII ZR 185/14), Quotenabgeltungsklauseln (VIII ZR 242/13), Kaution (§ 551 BGB) und Kündigungsausschluss (VIII ZR 27/04). Bei komplexen Sondersituationen wie Gewerbemiete, Mischmietverhältnissen oder laufenden Räumungsverfahren empfehlen wir ergänzend einen Fachanwalt für Mietrecht."
         }
       },
       {
@@ -456,12 +456,12 @@ const MietvertragPruefen: React.FC = () => {
 
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>70%</div>
-                    <div className={styles.problemStatLabel}>der Mietverträge enthalten mindestens eine unwirksame Klausel</div>
+                    <div className={styles.problemStatValue}>BGH 2015</div>
+                    <div className={styles.problemStatLabel}>Starre Schönheitsreparatur-Klauseln sind unwirksam (VIII ZR 185/14)</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>2.400 €</div>
-                    <div className={styles.problemStatLabel}>durchschnittlicher Schaden durch unberechtigte Renovierungs- und Kautionsansprüche</div>
+                    <div className={styles.problemStatValue}>3 Mieten</div>
+                    <div className={styles.problemStatLabel}>Mehr Kaution als drei Nettokaltmieten ist unzulässig (§ 551 BGB)</div>
                   </div>
                 </div>
               </div>
@@ -976,16 +976,16 @@ const MietvertragPruefen: React.FC = () => {
 
             <div className={styles.statsGrid}>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>98 %</div>
-                <div className={styles.statLabel}>Erkennungsgenauigkeit bei Risiko-Klauseln</div>
+                <div className={styles.statNumber}>Täglich</div>
+                <div className={styles.statLabel}>Abgleich mit neuen Gesetzen und Urteilen — Legal Pulse</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>&lt; 60 s</div>
-                <div className={styles.statLabel}>Analysezeit pro Vertrag</div>
+                <div className={styles.statNumber}>~ 2 Min.</div>
+                <div className={styles.statLabel}>bis zum vollständigen Prüfergebnis</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>10.000+</div>
-                <div className={styles.statLabel}>Verträge in der Trainingsbasis</div>
+                <div className={styles.statNumber}>~ 27</div>
+                <div className={styles.statLabel}>offizielle Rechtsquellen: Gesetzblätter, Bundesgerichte, EU</div>
               </div>
             </div>
           </div>
@@ -1008,8 +1008,7 @@ const MietvertragPruefen: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen
-                  Risiko-Klauseln in Mietverträgen. Sie kennt die §§ 535 ff. BGB, das
+                  Unsere KI prüft jede Risiko-Klausel in Mietverträgen. Sie kennt die §§ 535 ff. BGB, das
                   Mietrechtsanpassungsgesetz und aktuelle BGH-Rechtsprechung — insbesondere
                   die zentralen Urteile zu Schönheitsreparaturen (BGH, 18.03.2015 – VIII ZR 185/14),
                   Quotenabgeltungsklauseln (VIII ZR 242/13), Kaution (§ 551 BGB) und

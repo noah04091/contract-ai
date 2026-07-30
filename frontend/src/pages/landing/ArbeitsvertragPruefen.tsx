@@ -74,7 +74,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
         "name": "Wie genau ist die KI-Prüfung eines Arbeitsvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen Risiko-Klauseln in Arbeitsverträgen. Sie ist auf über 10.000 deutschen Arbeitsverträgen trainiert und nutzt aktuelle BAG-Rechtsprechung sowie die §§ 611a ff., 622 BGB, § 74 HGB und das Allgemeine Gleichbehandlungsgesetz (AGG) als Referenz. Bei juristisch komplexen Sachverhalten wie tariflichen Sonderregelungen empfehlen wir ergänzend einen Fachanwalt für Arbeitsrecht."
+          "text": "Unsere KI prüft jede Risiko-Klausel in Arbeitsverträgen. Sie nutzt aktuelle BAG-Rechtsprechung sowie die §§ 611a ff., 622 BGB, § 74 HGB und das Allgemeine Gleichbehandlungsgesetz (AGG) als Referenz. Bei juristisch komplexen Sachverhalten wie tariflichen Sonderregelungen empfehlen wir ergänzend einen Fachanwalt für Arbeitsrecht."
         }
       },
       {
@@ -455,12 +455,12 @@ const ArbeitsvertragPruefen: React.FC = () => {
 
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>73%</div>
-                    <div className={styles.problemStatLabel}>der Arbeitsverträge enthalten unwirksame Klauseln</div>
+                    <div className={styles.problemStatValue}>§§ 305 ff.</div>
+                    <div className={styles.problemStatLabel}>BGB: Vorformulierte Klauseln unterliegen der AGB-Kontrolle — viele halten ihr nicht stand</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>8.500 €</div>
-                    <div className={styles.problemStatLabel}>durchschnittlicher Schaden bei arbeitsrechtlichem Streit</div>
+                    <div className={styles.problemStatValue}>§ 74 HGB</div>
+                    <div className={styles.problemStatLabel}>Wettbewerbsverbot ohne Karenzentschädigung ist unverbindlich</div>
                   </div>
                 </div>
               </div>
@@ -556,7 +556,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
                 <h2 className={styles.sectionTitleLeft}>Vertragsprüfung im Sekundentakt — auf juristischer Basis</h2>
                 <p className={styles.solutionText}>
-                  Die KI von Contract AI ist auf über 10.000 deutschen Arbeitsverträgen trainiert.
+                  Die KI von Contract AI prüft jede Klausel gegen die einschlägigen Paragraphen und die aktuelle BAG-Rechtsprechung.
                   Sie kennt die §§ 611a ff. BGB, § 622 BGB, § 74 HGB, das AGG und aktuelle
                   BAG-Rechtsprechung — und wendet diese sofort auf jede Klausel deines Vertrags an.
                 </p>
@@ -972,16 +972,16 @@ const ArbeitsvertragPruefen: React.FC = () => {
 
             <div className={styles.statsGrid}>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>98 %</div>
-                <div className={styles.statLabel}>Erkennungsgenauigkeit bei Risiko-Klauseln</div>
+                <div className={styles.statNumber}>Täglich</div>
+                <div className={styles.statLabel}>Abgleich mit neuen Gesetzen und Urteilen — Legal Pulse</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>&lt; 60 s</div>
-                <div className={styles.statLabel}>Analysezeit pro Vertrag</div>
+                <div className={styles.statNumber}>~ 2 Min.</div>
+                <div className={styles.statLabel}>bis zum vollständigen Prüfergebnis</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>10.000+</div>
-                <div className={styles.statLabel}>Verträge in der Trainingsbasis</div>
+                <div className={styles.statNumber}>~ 27</div>
+                <div className={styles.statLabel}>offizielle Rechtsquellen: Gesetzblätter, Bundesgerichte, EU</div>
               </div>
             </div>
           </div>
@@ -1004,9 +1004,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Unsere KI erreicht eine Erkennungsgenauigkeit von 98 % bei klassischen
-                  Risiko-Klauseln in Arbeitsverträgen. Sie ist auf über 10.000 deutschen
-                  Arbeitsverträgen trainiert und nutzt aktuelle BAG-Rechtsprechung sowie die
+                  Unsere KI prüft jede Risiko-Klausel in Arbeitsverträgen. Sie nutzt aktuelle BAG-Rechtsprechung sowie die
                   §§ 611a ff., 622 BGB, § 74 HGB und das AGG als Referenz. Bei juristisch
                   komplexen Sachverhalten wie tariflichen Sonderregelungen empfehlen wir
                   ergänzend einen Fachanwalt für Arbeitsrecht.

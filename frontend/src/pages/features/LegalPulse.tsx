@@ -169,7 +169,7 @@ const LegalPulse: React.FC = () => {
                   <Activity size={20} />
                 </div>
                 <div>
-                  <div className={styles.floatingText}>24/7 aktiv</div>
+                  <div className={styles.floatingText}>Täglich aktiv</div>
                   <div className={styles.floatingSubtext}>Monitoring</div>
                 </div>
               </div>
@@ -179,7 +179,7 @@ const LegalPulse: React.FC = () => {
                   <TrendingUp size={20} />
                 </div>
                 <div>
-                  <div className={styles.floatingText}>100+ Quellen</div>
+                  <div className={styles.floatingText}>~27 Quellen</div>
                   <div className={styles.floatingSubtext}>Überwacht</div>
                 </div>
               </div>
@@ -204,7 +204,7 @@ const LegalPulse: React.FC = () => {
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '11px', fontWeight: 600, color: '#166534' }}>Überwachung aktiv</div>
-                      <div style={{ fontSize: '10px', color: '#64748b' }}>12 Verträge • 100+ Quellen</div>
+                      <div style={{ fontSize: '10px', color: '#64748b' }}>12 Verträge • 27 offizielle Quellen</div>
                     </div>
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', animation: 'pulse 1.5s infinite' }} />
                   </div>
@@ -303,7 +303,7 @@ const LegalPulse: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Kontinuierliches Monitoring</h3>
                 <p className={styles.functionDesc}>
-                  24/7-Überwachung relevanter Rechtsquellen, Rechtsprechung und Compliance-Entwicklungen.
+                  Tägliche Überwachung offizieller Rechtsquellen, Rechtsprechung und Compliance-Entwicklungen.
                 </p>
               </div>
 
@@ -550,7 +550,7 @@ const LegalPulse: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Kontinuierliches Monitoring</h3>
                     <p className={styles.processDesc}>
-                      24/7-Überwachung von Rechtsquellen, Klassifikation relevanter Änderungen
+                      Tägliche Überwachung offizieller Rechtsquellen, Klassifikation relevanter Änderungen
                       und Abgleich mit Ihren Verträgen.
                     </p>
                   </div>
@@ -583,16 +583,16 @@ const LegalPulse: React.FC = () => {
 
             <div className={styles.statsGrid}>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>24/7</div>
-                <div className={styles.statLabel}>Monitoring aktiv</div>
+                <div className={styles.statNumber}>Täglich</div>
+                <div className={styles.statLabel}>automatischer Prüflauf — jeden Morgen</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>48h</div>
-                <div className={styles.statLabel}>Alert-Reaktionszeit</div>
+                <div className={styles.statNumber}>100 %</div>
+                <div className={styles.statLabel}>der Alerts wörtlich am Vertragstext belegt</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>100+</div>
-                <div className={styles.statLabel}>Überwachte Quellen</div>
+                <div className={styles.statNumber}>~ 27</div>
+                <div className={styles.statLabel}>offizielle Quellen: Gesetzblätter, Bundesgerichte, EU</div>
               </div>
             </div>
           </div>

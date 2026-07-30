@@ -46,13 +46,8 @@ try {
 
 const router = express.Router();
 
-/** Provider kann String oder Objekt sein — immer als String normalisieren */
-function normalizeProvider(provider) {
-  if (!provider) return "";
-  if (typeof provider === "string") return provider;
-  if (typeof provider === "object") return provider.displayName || provider.name || "";
-  return String(provider);
-}
+/** Provider kann String oder Objekt sein — immer als String normalisieren (zentraler Helfer, 28.07.2026) */
+const { formatProvider: normalizeProvider } = require("../utils/formatProvider");
 
 /**
  * Upload PDF to S3
@@ -697,13 +692,13 @@ router.post("/confirmation-response", verifyToken, sensitiveLimiter, async (req,
         contractId: cancellation.contractId ? new ObjectId(cancellation.contractId) : null,
         contractName: contractName,
         title: `Kündigungsbestätigung prüfen: ${contractName}`,
-        description: `Erneute Prüfung: Haben Sie mittlerweile eine Bestätigung für die Kündigung von "${contractName}" erhalten? Eine Erinnerung wurde am ${new Date().toLocaleDateString('de-DE')} an ${provider || 'den Anbieter'} gesendet.`,
+        description: `Erneute Prüfung: Haben Sie mittlerweile eine Bestätigung für die Kündigung von "${contractName}" erhalten? Eine Erinnerung wurde am ${new Date().toLocaleDateString('de-DE')} an ${normalizeProvider(provider) || 'den Anbieter'} gesendet.`,
         date: nextReminderDate,
         type: "CANCELLATION_CONFIRMATION_CHECK",
         severity: "warning",
         status: "scheduled",
         metadata: {
-          provider: provider,
+          provider: normalizeProvider(provider) || null,
           cancellationId: cancellationId,
           suggestedAction: "check_confirmation",
           isFollowUp: true
@@ -822,7 +817,7 @@ router.post("/send-reminder", verifyToken, sensitiveLimiter, async (req, res) =>
       severity: "warning",
       status: "scheduled",
       metadata: {
-        provider: provider,
+        provider: normalizeProvider(provider) || null,
         cancellationId: cancellationId,
         suggestedAction: "check_confirmation",
         isFollowUp: true

@@ -233,7 +233,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE}, nu
                     Hochladen und vergessen.
                   </h3>
                   <p style="margin:0;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.65;color:#475569;">
-                    Lad einen Vertrag hoch und denk nie wieder an eine Frist. Contract AI tr&auml;gt K&uuml;ndigungsfristen automatisch in den Kalender und meldet sich rechtzeitig, weil <em style="font-style:normal;font-weight:600;color:#0f172a;">es</em> f&uuml;r dich dran denkt. Kein verpasster K&uuml;ndigungstermin, keine ungewollte Verl&auml;ngerung mehr.
+                    Lad einen Vertrag hoch und denk nie wieder an eine Frist. Contract AI tr&auml;gt K&uuml;ndigungsfristen automatisch in den Kalender und meldet sich rechtzeitig, weil es f&uuml;r dich dran denkt. Kein verpasster K&uuml;ndigungstermin, keine ungewollte Verl&auml;ngerung mehr.
                   </p>
                 </td>
               </tr>
@@ -342,7 +342,7 @@ Geht den meisten so. ${PROMO_PERCENT}&thinsp;% Rabatt mit Code ${PROMO_CODE}, nu
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:2px solid #f59e0b;border-radius:14px;background-color:#ffffff;">
                     <tr>
                       <td style="padding:0;">
-                        <div style="padding:6px 12px;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);background-color:#f59e0b;border-radius:11px 11px 0 0;text-align:center;">
+                        <div style="padding:6px 12px;background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);background-color:#f59e0b;border-radius:12px 12px 0 0;text-align:center;">
                           <span style="color:#ffffff;font-family:'Inter',Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">&#9733; Meist gew&auml;hlt</span>
                         </div>
                         <div style="padding:16px 16px 20px;">

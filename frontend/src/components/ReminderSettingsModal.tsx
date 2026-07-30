@@ -42,6 +42,7 @@ interface AutoEvent {
   date: string;
   type: string;
   severity: string;
+  status?: string; // "notified" = Mail bestätigt gesendet (kommt aus GET /calendar/events)
 }
 
 interface PresetOption {
@@ -107,8 +108,13 @@ export default function ReminderSettingsModal({
           const data = await res.json();
           if (data.success && data.events) {
             const now = new Date();
+            // 28.07.2026: Vergangene Stufen NICHT mehr wegwerfen — bereits gefeuerte Vorwarner
+            // ("7 Tage vorher"-Mail kam real an) sollen als "✓ gesendet" sichtbar bleiben statt
+            // spurlos zu verschwinden (gleiche Ehrlichkeit wie Popup-Karte/Signatur-Zweig).
+            // Voll-vergangene Fristen werden später auf Gruppen-Ebene ausgeblendet (kein Archiv-Müll).
+            // Free-Plan: weiterhin nur Zukunft — dort erklärt das 🔒-Banner, dass keine Mails gehen.
             const filtered = data.events
-              .filter((e: AutoEvent) => e.type !== 'CUSTOM_REMINDER' && new Date(e.date) > now)
+              .filter((e: AutoEvent) => e.type !== 'CUSTOM_REMINDER' && (noEmailReminders ? new Date(e.date) > now : true))
               .sort((a: AutoEvent, b: AutoEvent) => new Date(a.date).getTime() - new Date(b.date).getTime());
             setAutoEvents(filtered);
           }
@@ -120,7 +126,7 @@ export default function ReminderSettingsModal({
       }
     };
     fetchAutoEvents();
-  }, [contractId]);
+  }, [contractId, noEmailReminders]);
 
   const hasExpiry = !!expiryDate;
   const hasKuendigung = !!kuendigung;
@@ -330,11 +336,23 @@ export default function ReminderSettingsModal({
       else if (!g.main) g.main = e;
       else g.reminders.push(e); // zweites Nicht-Reminder-Event (selten) → als Sub-Eintrag
     }
-    return Array.from(map.values()).sort((a, b) =>
+    // 28.07.2026: Seit vergangene Stufen mitgeladen werden (Ehrlichkeits-Anzeige) hier auf
+    // Gruppen-Ebene filtern: Nur Fristen zeigen, die HEUTE oder später noch etwas bedeuten.
+    // Komplett abgelaufene Fristen (Haupt-Termin UND alle Stufen vorbei) bleiben wie bisher
+    // unsichtbar — das Modal ist eine Verwaltung, kein Archiv.
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const isCurrent = (g: { main: AutoEvent | null; reminders: AutoEvent[] }) =>
+      [g.main, ...g.reminders].some(e => e && new Date(e.date) >= todayStart);
+    return Array.from(map.values()).filter(isCurrent).sort((a, b) =>
       new Date(a.main?.date || a.reminders[0]?.date || 0).getTime()
       - new Date(b.main?.date || b.reminders[0]?.date || 0).getTime()
     );
   })();
+
+  // Statusbasierte Einordnung einer automatischen Stufe (wie Popup-Karte/Signatur-Zweig):
+  // "notified" = Mail bestätigt gesendet; Zukunft = geplant; vergangen ohne notified = nicht gesendet.
+  const eventKind = (e: AutoEvent): 'sent' | 'upcoming' | 'skipped' =>
+    e.status === 'notified' ? 'sent' : new Date(e.date) > new Date() ? 'upcoming' : 'skipped';
 
   // Check if a preset is already added for the current type
   const isPresetAdded = (days: number): boolean => {
@@ -366,8 +384,21 @@ export default function ReminderSettingsModal({
   const undoBtn: CSSProperties = { fontSize: '12px', fontWeight: 700, color: '#2563eb', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px', flexShrink: 0, whiteSpace: 'nowrap' };
 
   // Eine automatische Vorwarn-Zeile mit 🗑 (vormerken) bzw. ↩ (zurücknehmen). "Am Tag selbst" nutzt das NICHT.
-  const autoRow = (id: string, label: string) => {
+  // kind (28.07.2026): 'sent' = Mail nachweislich raus (✓, gedämpft), 'skipped' = Termin vorbei ohne
+  // Versand (–), 'upcoming' = geplant. Vergangene Stufen sind reine Historie → kein 🗑 (Entfernen
+  // einer bereits gesendeten Erinnerung wäre sinnlos und würde nur den Dismiss-Flow verwirren).
+  const autoRow = (id: string, label: string, kind: 'sent' | 'upcoming' | 'skipped' = 'upcoming') => {
     const pending = pendingDismiss.includes(id);
+    if (kind !== 'upcoming') {
+      const sent = kind === 'sent';
+      return (
+        <div key={id} style={remRow}>
+          <span style={{ ...remIc, background: sent ? '#ecfdf5' : '#f3f4f6', color: sent ? '#059669' : '#9ca3af' }}>{sent ? '✓' : '–'}</span>
+          <span style={{ ...remWhen, color: '#6b7280' }}>{label}</span>
+          <span style={{ ...pendingTag, ...(sent ? { color: '#059669', background: '#ecfdf5' } : {}) }}>{sent ? '✓ gesendet' : 'nicht gesendet'}</span>
+        </div>
+      );
+    }
     return (
       <div key={id} style={remRow}>
         <span style={remIc}>🔔</span>
@@ -472,20 +503,26 @@ export default function ReminderSettingsModal({
                             </div>
                             {group.reminders.length > 0 && (
                               <>
-                                {labeled.map((r) => autoRow(r.id, reminderLeadLabel(r.title) || 'Erinnerung'))}
+                                {labeled.map((r) => autoRow(r.id, reminderLeadLabel(r.title) || 'Erinnerung', eventKind(r)))}
                                 {fold ? (
                                   <button type="button" style={foldBtn} onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: true }))}>
                                     🔁 {dateOnly.length} weitere Termine anzeigen
                                   </button>
                                 ) : (
                                   <>
-                                    {dateOnly.map((r) => (
-                                      <div key={r.id} style={remRow}>
-                                        <span style={remIc}>🔔</span>
-                                        <span style={remWhen}>{formatAutoEventDate(r.date)}</span>
-                                        <span style={tagAuto}>✉️ automatisch</span>
-                                      </div>
-                                    ))}
+                                    {dateOnly.map((r) => {
+                                      const k = eventKind(r);
+                                      const sent = k === 'sent';
+                                      return (
+                                        <div key={r.id} style={remRow}>
+                                          <span style={k === 'upcoming' ? remIc : { ...remIc, background: sent ? '#ecfdf5' : '#f3f4f6', color: sent ? '#059669' : '#9ca3af' }}>{k === 'upcoming' ? '🔔' : sent ? '✓' : '–'}</span>
+                                          <span style={k === 'upcoming' ? remWhen : { ...remWhen, color: '#6b7280' }}>{formatAutoEventDate(r.date)}</span>
+                                          {k === 'upcoming'
+                                            ? <span style={tagAuto}>✉️ automatisch</span>
+                                            : <span style={{ ...pendingTag, ...(sent ? { color: '#059669', background: '#ecfdf5' } : {}) }}>{sent ? '✓ gesendet' : 'nicht gesendet'}</span>}
+                                        </div>
+                                      );
+                                    })}
                                     {dateOnly.length > 3 && isOpen && (
                                       <button type="button" style={foldBtn} onClick={() => setExpandedRecurring((p) => ({ ...p, [group.name]: false }))}>
                                         weniger
@@ -495,14 +532,21 @@ export default function ReminderSettingsModal({
                                 )}
                               </>
                             )}
-                            {/* Stichtag selbst: Haupt-Ereignis feuert am Frist-Tag (daysSame, Default an) */}
-                            {group.main && (
-                              <div style={remRow}>
-                                <span style={remIc}>🔔</span>
-                                <span style={remWhen}>Am Tag selbst</span>
-                                <span style={tagAuto}>✉️ automatisch</span>
-                              </div>
-                            )}
+                            {/* Stichtag selbst: Haupt-Ereignis feuert am Frist-Tag (daysSame, Default an).
+                                Ist der Tag schon vorbei, ehrlich zeigen ob die Mail rausging (28.07.2026). */}
+                            {group.main && (() => {
+                              const k = eventKind(group.main);
+                              const sent = k === 'sent';
+                              return (
+                                <div style={remRow}>
+                                  <span style={k === 'upcoming' ? remIc : { ...remIc, background: sent ? '#ecfdf5' : '#f3f4f6', color: sent ? '#059669' : '#9ca3af' }}>{k === 'upcoming' ? '🔔' : sent ? '✓' : '–'}</span>
+                                  <span style={k === 'upcoming' ? remWhen : { ...remWhen, color: '#6b7280' }}>Am Tag selbst</span>
+                                  {k === 'upcoming'
+                                    ? <span style={tagAuto}>✉️ automatisch</span>
+                                    : <span style={{ ...pendingTag, ...(sent ? { color: '#059669', background: '#ecfdf5' } : {}) }}>{sent ? '✓ gesendet' : 'nicht gesendet'}</span>}
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })}

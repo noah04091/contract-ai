@@ -355,12 +355,12 @@ const LegalLens: React.FC = () => {
 
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>73%</div>
-                    <div className={styles.problemStatLabel}>verstehen ihre Verträge nicht vollständig</div>
+                    <div className={styles.problemStatValue}>Klartext</div>
+                    <div className={styles.problemStatLabel}>Was du nicht verstehst, kannst du nicht verhandeln</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>42%</div>
-                    <div className={styles.problemStatLabel}>übersehen kritische Klauseln</div>
+                    <div className={styles.problemStatValue}>§ 305c BGB</div>
+                    <div className={styles.problemStatLabel}>Überraschende Klauseln sind unwirksam — man muss sie nur finden</div>
                   </div>
                 </div>
               </div>

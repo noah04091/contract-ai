@@ -574,16 +574,16 @@ const Optimierung: React.FC = () => {
 
             <div className={styles.statsGrid}>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>87%</div>
-                <div className={styles.statLabel}>Fairere Vertragsklauseln</div>
+                <div className={styles.statNumber}>Jede Klausel</div>
+                <div className={styles.statLabel}>einzeln geprüft und konkret verbessert</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>3.5x</div>
-                <div className={styles.statLabel}>Schneller als manuell</div>
+                <div className={styles.statNumber}>~ 2 Min.</div>
+                <div className={styles.statLabel}>bis zu den Optimierungsvorschlägen</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>90%</div>
-                <div className={styles.statLabel}>Direkt umsetzbar</div>
+                <div className={styles.statNumber}>1 Klick</div>
+                <div className={styles.statLabel}>Vorschläge direkt übernehmen</div>
               </div>
             </div>
           </div>

@@ -1703,6 +1703,33 @@ const connectDB = async () => {
         }
       })), { timezone: "Europe/Berlin" });
 
+      // 🕔 ZWEITER Kalender-Versand-Lauf (28.07.2026) — schließt die Same-Day-Lücke:
+      // Events, die NACH dem 09:00-Lauf erzeugt werden und noch HEUTE fällig sind (z.B. Analyse
+      // um 13:22 findet "LETZTER TAG: heute kündigen"), wurden bisher NIE gemailt — der Folgetag
+      // liegt außerhalb getSendWindow (bewusst keine verspäteten Mails) und der 03:00-Cleanup
+      // markiert sie expired. Real passiert 25.07.2026 (AVV, LAST_CANCEL_DAY), historisch 29 Fälle.
+      // Identischer Aufruf wie 09:00 — Doppel-Mail strukturell ausgeschlossen: die Query nimmt nur
+      // status:"scheduled", morgens Versendetes ist per atomarem Claim queued/notified und damit
+      // unsichtbar (belegt durch testReminderRequeueGuards + neuen testReminderSecondRun).
+      // WICHTIG: EIGENER Lock-Key — der Tages-Lock (UTC-Bucket) von 'reminder-calendar' würde
+      // diesen Lauf sonst blockieren. Kill-Switch: REMINDER_SECOND_RUN_ENABLED=false (Render-Env).
+      cron.schedule(process.env.REMINDER_SECOND_RUN_CRON || "0 17 * * *", withDistributedLock('reminder-calendar-pm', withCronLock('reminder-calendar-pm', async () => {
+        if (process.env.REMINDER_SECOND_RUN_ENABLED === 'false') {
+          console.log("🕔 Zweiter Kalender-Versand-Lauf deaktiviert (REMINDER_SECOND_RUN_ENABLED=false)");
+          return;
+        }
+        console.log("🕔 Zweiter Kalender-Versand-Lauf gestartet (Same-Day-Lücke)");
+        try {
+          await withCronLogging('reminder-calendar-pm', async () => {
+            const notificationCount = await checkAndSendNotifications(db);
+            return { notificationsSent: notificationCount || 0 };
+          });
+        } catch (error) {
+          console.error("❌ Zweiter Kalender-Versand-Lauf Error:", error);
+          await captureError(error, { route: 'CRON:reminder-calendar-pm', method: 'SCHEDULED', severity: 'high' });
+        }
+      })), { timezone: "Europe/Berlin" });
+
       // 📧 NEU: E-Mail Queue Retry (alle 15 Minuten)
       cron.schedule("*/15 * * * *", async () => {
         try {
