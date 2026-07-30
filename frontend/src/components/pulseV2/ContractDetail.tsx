@@ -53,7 +53,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [findingsState, setFindingsState] = useState<PulseV2Finding[]>(result.clauseFindings || []);
   const [scoresState, setScoresState] = useState(result.scores);
   const [showAllFindings, setShowAllFindings] = useState(false);
-  const [showActionHistory, setShowActionHistory] = useState(false);
+  // Handlungsempfehlungen: gleiche Reiter-Mechanik wie beim Legal Radar (Einheitlichkeit)
+  const [actionTab, setActionTab] = useState<'open' | 'done' | 'dismissed'>('open');
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
   const [showFindingsInfo, setShowFindingsInfo] = useState(false);
   const [showActionsInfo, setShowActionsInfo] = useState(false);
@@ -229,6 +230,18 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     }, 200);
     return () => clearTimeout(t);
   }, [highlightAlertId, contractAlerts]);
+
+  // Leerer Reiter (letzter Eintrag wiederhergestellt) → automatisch zurück zu "Offen",
+  // sonst strandet man in einer leeren Ansicht, deren Reiter gerade verschwunden ist.
+  useEffect(() => {
+    if (alertTab === 'open' || !contractAlerts) return;
+    const n = contractAlerts.filter(a => a.status === (alertTab === 'resolved' ? 'resolved' : 'dismissed')).length;
+    if (n === 0) setAlertTab('open');
+  }, [alertTab, contractAlerts]);
+  useEffect(() => {
+    if (actionTab === 'open') return;
+    if (actions.filter(a => a.status === actionTab).length === 0) setActionTab('open');
+  }, [actionTab, actions]);
 
   // PDF im neuen Tab öffnen statt Download erzwingen. Bewusst SYNCHRON per window.open
   // (kein fetch+blob davor): nur so bleibt der Klick-Kontext erhalten und Popup-Blocker
@@ -1082,10 +1095,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               </div>
             )}
 
-            {/* ── Handlungsempfehlungen ── */}
-            {openActions.length > 0 && (
+            {/* ── Handlungsempfehlungen — Reiter Offen/Erledigt/Ausgeblendet (wie Legal Radar) ── */}
+            {(openActions.length > 0 || historyActions.length > 0) && (
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, position: 'relative', flexWrap: 'wrap' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1117,6 +1130,30 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   >
                     ?
                   </button>
+                  {/* Reiter erscheinen erst, sobald es Erledigte/Ausgeblendete gibt */}
+                  {historyActions.length > 0 && (
+                    <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 8, padding: 2, marginLeft: 'auto' }}>
+                      {([
+                        { key: 'open' as const, label: 'Offen', n: openActions.length },
+                        { key: 'done' as const, label: 'Erledigt', n: doneActions.length },
+                        { key: 'dismissed' as const, label: 'Ausgeblendet', n: dismissedActions.length },
+                      ]).filter(t => t.key === 'open' || t.n > 0).map(t => (
+                        <button
+                          key={t.key}
+                          onClick={() => setActionTab(t.key)}
+                          style={{
+                            padding: '4px 11px', fontSize: 11.5, fontWeight: 600,
+                            color: actionTab === t.key ? '#0f172a' : '#64748b',
+                            background: actionTab === t.key ? '#ffffff' : 'transparent',
+                            border: 'none', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap',
+                            boxShadow: actionTab === t.key ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                          }}
+                        >
+                          {t.label} ({t.n})
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {showActionsInfo && (
                   <div style={{
@@ -1134,73 +1171,36 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     Das Abhaken dient der Nachverfolgung und ändert nicht den Health Score.
                   </div>
                 )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {[...openActions]
-                    .sort((a, b) => {
-                      const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
-                      return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
-                    })
-                    .map(action => (
-                    <ActionItem
-                      key={action.id}
-                      action={action}
-                      contractId={result.contractId}
-                      resultId={result._id}
-                      onStatusChange={handleActionStatusChange}
-                      onCommentSave={handleActionCommentSave}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Historie — done + dismissed, collapsible */}
-            {historyActions.length > 0 && (
-              <div style={{ marginTop: openActions.length > 0 ? 16 : 0 }}>
-                <button
-                  className={styles.btnCollapse}
-                  onClick={() => setShowActionHistory(!showActionHistory)}
-                  style={{
-                    width: '100%',
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 14px',
-                    background: '#f9fafb', border: '1px solid #e5e7eb',
-                    borderRadius: 8, cursor: 'pointer',
-                    fontSize: 13, fontWeight: 600, color: '#6b7280',
-                  }}
-                >
-                  <span style={{
-                    fontSize: 12,
-                    transform: showActionHistory ? 'rotate(90deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.15s ease',
-                  }}>
-                    &#x203A;
-                  </span>
-                  Erledigte Empfehlungen
-                  {doneActions.length > 0 && (
-                    <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 500 }}>
-                      {doneActions.length} umgesetzt
-                    </span>
-                  )}
-                  {dismissedActions.length > 0 && (
-                    <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
-                      {dismissedActions.length} ausgeblendet
-                    </span>
-                  )}
-                </button>
-                {showActionHistory && (
-                  <div className={styles.expandContent} style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-                    {historyActions.map(action => (
-                      <ActionItem
-                        key={`hist_${action.id}`}
-                        action={action}
-                        contractId={result.contractId}
-                        resultId={result._id}
-                        onStatusChange={handleActionStatusChange}
-                      />
-                    ))}
-                  </div>
-                )}
+                {(() => {
+                  const listMap = { open: openActions, done: doneActions, dismissed: dismissedActions } as const;
+                  const list = actionTab === 'open'
+                    ? [...openActions].sort((a, b) => {
+                        const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
+                        return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
+                      })
+                    : listMap[actionTab];
+                  if (list.length === 0) {
+                    return (
+                      <div style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: 14, background: '#f9fafb', borderRadius: 8 }}>
+                        Keine offenen Empfehlungen — alles abgearbeitet.
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {list.map(action => (
+                        <ActionItem
+                          key={`${actionTab}_${action.id}`}
+                          action={action}
+                          contractId={result.contractId}
+                          resultId={result._id}
+                          onStatusChange={handleActionStatusChange}
+                          onCommentSave={actionTab === 'open' ? handleActionCommentSave : undefined}
+                        />
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -1250,10 +1250,13 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 ? 'Alle Rechtsänderungen zu diesem Vertrag sind abgearbeitet. Neue Treffer erscheinen automatisch hier.'
                 : `${openAlerts.length === 1 ? 'Eine aktuelle Gesetzesänderung oder ein Urteil betrifft' : `${openAlerts.length} aktuelle Gesetzesänderungen oder Urteile betreffen`} diesen Vertrag. Haken setzen = erledigt; „Übernehmen" beim Änderungsvorschlag erledigt den Alert automatisch.`}
             />
-            {/* Reiter + Alle-erledigen */}
+            {/* Reiter + Alle-erledigen — Reiter erst zeigen, wenn es Erledigte/Ausgeblendete gibt
+                (eine Leiste voller (0)-Reiter wäre nur Lärm; identische Regel wie im Dashboard) */}
+            {(resolvedAlerts.length + dismissedAlerts.length > 0 || (openAlerts.length > 1 && onBulkResolveAlerts)) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+              {resolvedAlerts.length + dismissedAlerts.length > 0 && (
               <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 8, padding: 2 }}>
-                {tabs.map(t => (
+                {tabs.filter(t => t.key === 'open' || t.n > 0).map(t => (
                   <button
                     key={t.key}
                     onClick={() => { setAlertTab(t.key); setShowAllAlerts(false); }}
@@ -1269,6 +1272,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   </button>
                 ))}
               </div>
+              )}
               {alertTab === 'open' && openAlerts.length > 1 && onBulkResolveAlerts && (
                 <button
                   onClick={async () => {
@@ -1282,6 +1286,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 </button>
               )}
             </div>
+            )}
           </div>
           <div style={{ padding: 24 }}>
             {current.length === 0 && (
@@ -1294,34 +1299,34 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 key={alert._id}
                 id={`alert-${alert._id}`}
                 className={alert._id === highlightAlertId ? styles.alertHighlight : undefined}
-                style={{ position: 'relative' }}
               >
-                {/* Aktionen oben rechts — über dem zugeklappten Alert-Kopf */}
-                {onAlertStatusChange && (
-                  <div style={{ position: 'absolute', top: 10, right: 34, display: 'flex', gap: 6, zIndex: 1 }}>
-                    {alertTab === 'open' ? (
+                <ImpactGraph
+                  alert={alert}
+                  hideContractInfo
+                  initialExpanded={alert._id === highlightAlertId}
+                  headerActions={onAlertStatusChange ? (
+                    alertTab === 'open' ? (
                       <>
                         <button
                           title="Als erledigt markieren"
-                          onClick={async (e) => { e.stopPropagation(); const ok = await onAlertStatusChange(alert._id, 'resolved'); ok ? toast.success('Alert erledigt.') : toast.error('Fehler — bitte erneut versuchen.'); }}
+                          onClick={async () => { const ok = await onAlertStatusChange(alert._id, 'resolved'); if (ok) toast.success('Alert erledigt.'); else toast.error('Fehler — bitte erneut versuchen.'); }}
                           style={actBtn('#ecfdf5', '#a7f3d0', '#059669')}
                         >✓</button>
                         <button
                           title="Ausblenden (nicht relevant)"
-                          onClick={async (e) => { e.stopPropagation(); const ok = await onAlertStatusChange(alert._id, 'dismissed'); ok ? toast.success('Ausgeblendet — Reiter „Ausgeblendet".') : toast.error('Fehler — bitte erneut versuchen.'); }}
+                          onClick={async () => { const ok = await onAlertStatusChange(alert._id, 'dismissed'); if (ok) toast.success('Ausgeblendet — Reiter „Ausgeblendet".'); else toast.error('Fehler — bitte erneut versuchen.'); }}
                           style={actBtn('#fff', '#e2e8f0', '#94a3b8')}
                         >✕</button>
                       </>
                     ) : (
                       <button
                         title="Wiederherstellen"
-                        onClick={async (e) => { e.stopPropagation(); const ok = await onAlertStatusChange(alert._id, 'unread'); ok ? toast.success('Wiederhergestellt.') : toast.error('Fehler — bitte erneut versuchen.'); }}
+                        onClick={async () => { const ok = await onAlertStatusChange(alert._id, 'unread'); if (ok) toast.success('Wiederhergestellt.'); else toast.error('Fehler — bitte erneut versuchen.'); }}
                         style={actBtn('#ecfdf5', '#a7f3d0', '#059669')}
                       >Wiederherstellen</button>
-                    )}
-                  </div>
-                )}
-                <ImpactGraph alert={alert} hideContractInfo initialExpanded={alert._id === highlightAlertId} />
+                    )
+                  ) : undefined}
+                />
               </div>
             ))}
             {hidden > 0 && (
