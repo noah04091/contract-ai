@@ -137,7 +137,7 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
             {/* 30.07.2026: früher stand hier „Die KI prüft… 1–3 Minuten" — das doppelte die
                 Backend-Etappe (stepLabel), die die Zeit-Erwartung bereits nennt. Jetzt ein
                 komplementärer, beruhigender Hinweis (nutzt die async-Sicherheit). */}
-            Du kannst dieses Fenster geöffnet lassen — das Ergebnis erscheint automatisch, sobald es fertig ist.
+            Du kannst dieses Fenster geöffnet lassen, das Ergebnis erscheint automatisch, sobald es fertig ist.
           </p>
         </div>
       </div>

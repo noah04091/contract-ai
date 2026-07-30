@@ -5697,7 +5697,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document (contractType passed to prompt: ${promptContractType})`);
     // 📶 Die LANGE Etappe beginnt (KI-Tiefenprüfung + Fristen-Suche, 1–3 Min)
-    reportJobProgress(req, 'KI-Tiefenprüfung & Fristen-Suche läuft — je nach Umfang 1–3 Minuten', 40);
+    reportJobProgress(req, 'KI-Tiefenprüfung und Fristen-Suche läuft (je nach Umfang 1 bis 3 Minuten)', 40);
 
     // 🚀 Parallel-Aufruf: Hauptanalyse + Date Hunt Stage gleichzeitig.
     // Date Hunt liefert evidence-validierte importantDates — die Liste der
