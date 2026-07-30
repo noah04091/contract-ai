@@ -41,9 +41,13 @@ interface ContractDetailProps {
   contractAlerts?: PulseV2LegalAlert[];
   /** Deep-Link von einer Legal-Radar-Meldung (?alert=…): zu diesem Alert scrollen + aufklappen */
   highlightAlertId?: string | null;
+  /** Alert erledigen/ausblenden/wiederherstellen (Vertragsseiten-Reiter) */
+  onAlertStatusChange?: (alertId: string, status: 'resolved' | 'dismissed' | 'unread') => Promise<boolean>;
+  /** Alle offenen Alerts dieses Vertrags auf einmal erledigen */
+  onBulkResolveAlerts?: () => Promise<boolean>;
 }
 
-export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts, highlightAlertId }) => {
+export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts, highlightAlertId, onAlertStatusChange, onBulkResolveAlerts }) => {
   const toast = useToast();
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [findingsState, setFindingsState] = useState<PulseV2Finding[]>(result.clauseFindings || []);
@@ -53,6 +57,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
   const [showFindingsInfo, setShowFindingsInfo] = useState(false);
   const [showActionsInfo, setShowActionsInfo] = useState(false);
+  // Vertragsseiten-Radar: Reiter + Anzeige-Limit (bei vielen Alerts)
+  const [alertTab, setAlertTab] = useState<'open' | 'resolved' | 'dismissed'>('open');
+  const [showAllAlerts, setShowAllAlerts] = useState(!!highlightAlertId);
   const juristischeInfoRef = useRef<HTMLDivElement>(null);
 
   // ── Language toggle (PR 4) ──
@@ -212,7 +219,11 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   // fixen Navbar sichtbar. Aufklappen übernimmt initialExpanded am ImpactGraph.
   useEffect(() => {
     if (!highlightAlertId) return;
-    if (!contractAlerts?.some(a => a._id === highlightAlertId)) return;
+    const target = contractAlerts?.find(a => a._id === highlightAlertId);
+    if (!target) return;
+    // Falls der verlinkte Alert schon erledigt/ausgeblendet ist: passenden Reiter öffnen
+    if (target.status === 'resolved') setAlertTab('resolved');
+    else if (target.status === 'dismissed') setAlertTab('dismissed');
     const t = setTimeout(() => {
       document.getElementById(`alert-${highlightAlertId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }, 200);
@@ -1196,8 +1207,27 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         );
       })()}
 
-      {/* ═══ Legal Radar Alerts — laws that affect this contract ═══ */}
-      {contractAlerts && contractAlerts.length > 0 && (
+      {/* ═══ Legal Radar Alerts — mit Reitern (Offen/Erledigt/Ausgeblendet), Aktionen
+          pro Alert und "Alle erledigen" — sonst stapeln sich Dutzende Alerts unverwaltbar ═══ */}
+      {contractAlerts && contractAlerts.length > 0 && (() => {
+        const openAlerts = contractAlerts.filter(a => a.status !== 'resolved' && a.status !== 'dismissed');
+        const resolvedAlerts = contractAlerts.filter(a => a.status === 'resolved');
+        const dismissedAlerts = contractAlerts.filter(a => a.status === 'dismissed');
+        const lists = { open: openAlerts, resolved: resolvedAlerts, dismissed: dismissedAlerts } as const;
+        const current = lists[alertTab];
+        const LIMIT = 8;
+        const visible = showAllAlerts ? current : current.slice(0, LIMIT);
+        const hidden = current.length - visible.length;
+        const tabs: Array<{ key: 'open' | 'resolved' | 'dismissed'; label: string; n: number }> = [
+          { key: 'open', label: 'Offen', n: openAlerts.length },
+          { key: 'resolved', label: 'Erledigt', n: resolvedAlerts.length },
+          { key: 'dismissed', label: 'Ausgeblendet', n: dismissedAlerts.length },
+        ];
+        const actBtn = (bg: string, border: string, color: string): React.CSSProperties => ({
+          padding: '3px 10px', fontSize: 11, fontWeight: 600, borderRadius: 6,
+          border: `1px solid ${border}`, background: bg, color, cursor: 'pointer', flexShrink: 0,
+        });
+        return (
         <div id="contract-alerts" style={{
           background: '#ffffff',
           border: '1px solid rgba(0,0,0,0.05)',
@@ -1212,28 +1242,100 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               eyebrow="Neue Rechtslage"
               title="Legal Radar"
               right={(
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 999, padding: '2px 9px' }}>
-                  {contractAlerts.length} {contractAlerts.length === 1 ? 'Änderung' : 'Änderungen'}
+                <span style={{ fontSize: 11, fontWeight: 600, color: openAlerts.length > 0 ? '#b45309' : '#64748b', background: openAlerts.length > 0 ? '#fffbeb' : '#f1f5f9', border: `1px solid ${openAlerts.length > 0 ? '#fde68a' : '#e2e8f0'}`, borderRadius: 999, padding: '2px 9px' }}>
+                  {openAlerts.length} offen
                 </span>
               )}
-              subtitle={contractAlerts.length === 1
-                ? 'Eine aktuelle Gesetzesänderung oder ein Urteil betrifft diesen Vertrag. Über „Klausel automatisch anpassen" übernehmen Sie den Vorschlag direkt.'
-                : `${contractAlerts.length} aktuelle Gesetzesänderungen oder Urteile betreffen diesen Vertrag. Über „Klausel automatisch anpassen" übernehmen Sie Vorschläge direkt.`}
+              subtitle={openAlerts.length === 0
+                ? 'Alle Rechtsänderungen zu diesem Vertrag sind abgearbeitet. Neue Treffer erscheinen automatisch hier.'
+                : `${openAlerts.length === 1 ? 'Eine aktuelle Gesetzesänderung oder ein Urteil betrifft' : `${openAlerts.length} aktuelle Gesetzesänderungen oder Urteile betreffen`} diesen Vertrag. Haken setzen = erledigt; „Übernehmen" beim Änderungsvorschlag erledigt den Alert automatisch.`}
             />
+            {/* Reiter + Alle-erledigen */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+              <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 8, padding: 2 }}>
+                {tabs.map(t => (
+                  <button
+                    key={t.key}
+                    onClick={() => { setAlertTab(t.key); setShowAllAlerts(false); }}
+                    style={{
+                      padding: '4px 11px', fontSize: 11.5, fontWeight: 600,
+                      color: alertTab === t.key ? '#0f172a' : '#64748b',
+                      background: alertTab === t.key ? '#ffffff' : 'transparent',
+                      border: 'none', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap',
+                      boxShadow: alertTab === t.key ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                    }}
+                  >
+                    {t.label} ({t.n})
+                  </button>
+                ))}
+              </div>
+              {alertTab === 'open' && openAlerts.length > 1 && onBulkResolveAlerts && (
+                <button
+                  onClick={async () => {
+                    const ok = await onBulkResolveAlerts();
+                    if (ok) toast.success(`${openAlerts.length} Alerts als erledigt markiert — im Reiter „Erledigt" jederzeit rückholbar.`);
+                    else toast.error('Konnte nicht alle Alerts erledigen — bitte erneut versuchen.');
+                  }}
+                  style={{ ...actBtn('#ecfdf5', '#a7f3d0', '#059669'), marginLeft: 'auto' }}
+                >
+                  ✓ Alle {openAlerts.length} erledigen
+                </button>
+              )}
+            </div>
           </div>
           <div style={{ padding: 24 }}>
-            {contractAlerts.map(alert => (
+            {current.length === 0 && (
+              <div style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: 14, background: '#f9fafb', borderRadius: 8 }}>
+                {alertTab === 'open' ? 'Keine offenen Alerts — alles abgearbeitet.' : alertTab === 'resolved' ? 'Noch keine erledigten Alerts.' : 'Keine ausgeblendeten Alerts.'}
+              </div>
+            )}
+            {visible.map(alert => (
               <div
                 key={alert._id}
                 id={`alert-${alert._id}`}
                 className={alert._id === highlightAlertId ? styles.alertHighlight : undefined}
+                style={{ position: 'relative' }}
               >
+                {/* Aktionen oben rechts — über dem zugeklappten Alert-Kopf */}
+                {onAlertStatusChange && (
+                  <div style={{ position: 'absolute', top: 10, right: 34, display: 'flex', gap: 6, zIndex: 1 }}>
+                    {alertTab === 'open' ? (
+                      <>
+                        <button
+                          title="Als erledigt markieren"
+                          onClick={async (e) => { e.stopPropagation(); const ok = await onAlertStatusChange(alert._id, 'resolved'); ok ? toast.success('Alert erledigt.') : toast.error('Fehler — bitte erneut versuchen.'); }}
+                          style={actBtn('#ecfdf5', '#a7f3d0', '#059669')}
+                        >✓</button>
+                        <button
+                          title="Ausblenden (nicht relevant)"
+                          onClick={async (e) => { e.stopPropagation(); const ok = await onAlertStatusChange(alert._id, 'dismissed'); ok ? toast.success('Ausgeblendet — Reiter „Ausgeblendet".') : toast.error('Fehler — bitte erneut versuchen.'); }}
+                          style={actBtn('#fff', '#e2e8f0', '#94a3b8')}
+                        >✕</button>
+                      </>
+                    ) : (
+                      <button
+                        title="Wiederherstellen"
+                        onClick={async (e) => { e.stopPropagation(); const ok = await onAlertStatusChange(alert._id, 'unread'); ok ? toast.success('Wiederhergestellt.') : toast.error('Fehler — bitte erneut versuchen.'); }}
+                        style={actBtn('#ecfdf5', '#a7f3d0', '#059669')}
+                      >Wiederherstellen</button>
+                    )}
+                  </div>
+                )}
                 <ImpactGraph alert={alert} hideContractInfo initialExpanded={alert._id === highlightAlertId} />
               </div>
             ))}
+            {hidden > 0 && (
+              <button
+                onClick={() => setShowAllAlerts(true)}
+                style={{ width: '100%', padding: '11px 16px', fontSize: 13, color: '#6b7280', background: '#f9fafb', border: '1px dashed #d1d5db', borderRadius: 10, cursor: 'pointer' }}
+              >
+                + {hidden} weitere anzeigen
+              </button>
+            )}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ═══ Score Timeline ═══ */}
       <ScoreTrend contractId={result.contractId} />

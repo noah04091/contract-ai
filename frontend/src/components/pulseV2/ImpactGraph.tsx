@@ -557,6 +557,9 @@ const FeedbackButtons: React.FC<{
   const [feedback, setFeedback] = useState<boolean | null>(existingFeedback?.useful ?? null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Bereits bewertet (frühere Sitzung): Frage gar nicht mehr stellen — sie ist erledigt.
+  if (existingFeedback) return null;
+
   const handleFeedback = useCallback(async (useful: boolean) => {
     setSubmitting(true);
     try {
@@ -573,6 +576,15 @@ const FeedbackButtons: React.FC<{
       setSubmitting(false);
     }
   }, [alertId]);
+
+  // Gerade bewertet: Buttons verschwinden, nur ein kurzes Danke bleibt stehen.
+  if (feedback !== null) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, paddingTop: 8, borderTop: '1px solid #f3f4f6', fontSize: 12, color: '#059669' }}>
+        &#10003; Danke für dein Feedback
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12, paddingTop: 8, borderTop: '1px solid #f3f4f6' }}>
@@ -603,9 +615,6 @@ const FeedbackButtons: React.FC<{
       >
         &#128078; Nein
       </button>
-      {feedback !== null && (
-        <span style={{ fontSize: 11, color: '#9ca3af' }}>Danke!</span>
-      )}
     </div>
   );
 };

@@ -1314,6 +1314,9 @@ router.get("/alert-metrics", async (req, res) => {
           bySeverity: {
             $push: "$severity",
           },
+          // Nutzer-Feedback (👍/👎) — auswertbar für Qualitäts-Monitoring
+          feedbackHelpful: { $sum: { $cond: [{ $eq: ["$userFeedback.useful", true] }, 1, 0] } },
+          feedbackNotHelpful: { $sum: { $cond: [{ $eq: ["$userFeedback.useful", false] }, 1, 0] } },
           // D2: Impact direction counts
           positiveCount: { $sum: { $cond: [{ $eq: ["$impactDirection", "positive"] }, 1, 0] } },
           negativeCount: { $sum: { $cond: [{ $or: [{ $eq: ["$impactDirection", "negative"] }, { $eq: [{ $ifNull: ["$impactDirection", "negative"] }, "negative"] }] }, 1, 0] } },
@@ -1382,7 +1385,12 @@ router.get("/alert-metrics", async (req, res) => {
       negative: result.negativeCount || 0,
     };
 
-    res.json({ funnel, rates, clauses, severity, direction, avgTimeToActionMs: result.avgTimeToAction || 0 });
+    const feedback = {
+      helpful: result.feedbackHelpful || 0,
+      notHelpful: result.feedbackNotHelpful || 0,
+    };
+
+    res.json({ funnel, rates, clauses, severity, direction, feedback, avgTimeToActionMs: result.avgTimeToAction || 0 });
   } catch (error) {
     console.error("[PulseV2] Alert metrics error:", error);
     res.status(500).json({ error: "Fehler beim Laden der Alert-Metriken" });
@@ -2087,6 +2095,34 @@ router.patch("/legal-alerts/:alertId", async (req, res) => {
   } catch (error) {
     console.error("[PulseV2] Alert update error:", error);
     res.status(500).json({ error: "Fehler beim Aktualisieren des Alerts" });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// PATCH /legal-alerts-bulk — Alle offenen Alerts eines Vertrags auf einmal
+// erledigen/ausblenden (Vertragsseite: "Alle erledigen" bei vielen Alerts).
+// Eigener Pfad (nicht /legal-alerts/bulk), sonst greift die :alertId-Route.
+// ══════════════════════════════════════════════════════════════
+router.patch("/legal-alerts-bulk", async (req, res) => {
+  try {
+    const database = require("../config/database");
+    const db = await database.connect();
+    const { contractId, status } = req.body;
+
+    if (!contractId || !["dismissed", "resolved"].includes(status)) {
+      return res.status(400).json({ error: "contractId und status (resolved|dismissed) erforderlich" });
+    }
+
+    // Nur offene Alerts anfassen — Erledigte/Ausgeblendete bleiben unberührt
+    const result = await db.collection("pulse_v2_legal_alerts").updateMany(
+      { userId: req.user.userId, contractId: String(contractId), status: { $nin: ["dismissed", "resolved"] } },
+      { $set: { status, statusChangedAt: new Date() } }
+    );
+
+    res.json({ success: true, modified: result.modifiedCount });
+  } catch (error) {
+    console.error("[PulseV2] Bulk alert update error:", error);
+    res.status(500).json({ error: "Fehler beim Aktualisieren der Alerts" });
   }
 });
 

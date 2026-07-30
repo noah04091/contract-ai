@@ -102,18 +102,59 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
         ]);
         const monData = monRes.ok ? await monRes.json() : null;
         const alertData = alertRes.ok ? await alertRes.json() : { alerts: [] };
+        // ALLE Status laden (auch erledigt/ausgeblendet) — die Vertragsseite hat
+        // jetzt eigene Reiter dafür. Der Zähler im "Aktiv überwacht"-Band zählt
+        // nur die OFFENEN (sinkt also sichtbar beim Abarbeiten).
         const filteredAlerts = (alertData.alerts || []).filter(
-          (a: PulseV2LegalAlert) => a.contractId === contractId && a.status !== 'dismissed'
+          (a: PulseV2LegalAlert) => a.contractId === contractId
         );
         setContractAlerts(filteredAlerts);
         setMonitorInfo({
           nextRadarScan: monData?.nextRadarScan || null,
-          alertCount: filteredAlerts.length,
+          alertCount: filteredAlerts.filter((a: PulseV2LegalAlert) => a.status !== 'dismissed' && a.status !== 'resolved').length,
         });
       } catch {
         // Non-critical — silently ignore
       }
     })();
+  }, [contractId]);
+
+  // Alert-Status von der Vertragsseite aus ändern (erledigt/ausblenden/wiederherstellen)
+  const handleAlertStatusChange = useCallback(async (alertId: string, status: 'resolved' | 'dismissed' | 'unread') => {
+    try {
+      const res = await fetch(`/api/legal-pulse-v2/legal-alerts/${alertId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) return false;
+      setContractAlerts(prev => {
+        const next = prev.map(a => a._id === alertId ? { ...a, status, statusChangedAt: new Date().toISOString() } : a);
+        setMonitorInfo(m => m ? { ...m, alertCount: next.filter(a => a.status !== 'dismissed' && a.status !== 'resolved').length } : m);
+        return next;
+      });
+      return true;
+    } catch { return false; }
+  }, []);
+
+  // Alle offenen Alerts dieses Vertrags auf einmal erledigen
+  const handleBulkResolve = useCallback(async () => {
+    try {
+      const res = await fetch('/api/legal-pulse-v2/legal-alerts-bulk', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contractId, status: 'resolved' }),
+      });
+      if (!res.ok) return false;
+      const now = new Date().toISOString();
+      setContractAlerts(prev => prev.map(a =>
+        a.status !== 'dismissed' && a.status !== 'resolved' ? { ...a, status: 'resolved' as const, statusChangedAt: now } : a
+      ));
+      setMonitorInfo(m => m ? { ...m, alertCount: 0 } : m);
+      return true;
+    } catch { return false; }
   }, [contractId]);
 
   const handleStartAnalysis = useCallback(() => {
@@ -435,7 +476,14 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
 
       {/* Result — der „Erneut analysieren"-Button sitzt jetzt oben in der Toolbar */}
       {status === 'completed' && result && (
-        <ContractDetail result={result} monitorInfo={monitorInfo} contractAlerts={contractAlerts} highlightAlertId={highlightAlertId} />
+        <ContractDetail
+          result={result}
+          monitorInfo={monitorInfo}
+          contractAlerts={contractAlerts}
+          highlightAlertId={highlightAlertId}
+          onAlertStatusChange={handleAlertStatusChange}
+          onBulkResolveAlerts={handleBulkResolve}
+        />
       )}
 
       {/* No result yet */}
