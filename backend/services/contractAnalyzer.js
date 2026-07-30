@@ -373,7 +373,10 @@ class ContractAnalyzer {
       { pattern: /o2\s*telefonica/gi, name: 'O2 Telefonica', confidence: 95 },
       { pattern: /telefonica\s*germany/gi, name: 'O2 Telefonica', confidence: 95 },
       { pattern: /\baxa\s*(?:versicherung|ag)?/gi, name: 'AXA', confidence: 92 },
-      { pattern: /\bergo\s*(?:versicherung|group|ag)?/gi, name: 'ERGO', confidence: 92 },
+      // ⚠️ 30.07.2026: Zusatz PFLICHT gemacht — vorher matchte /\bergo\s*(...)?/gi schon das
+      // lateinische "ergo" (=also/folglich) in Juristentexten und lieferte fälschlich ERGO (92%).
+      // Jetzt nur noch "ERGO Versicherung/Group/AG". Der GPT-Pfad bleibt Primär; dies ist nur der Fallback.
+      { pattern: /\bergo\s+(?:versicherung|group|ag)\b/gi, name: 'ERGO', confidence: 92 },
       { pattern: /huk[\s\-]?coburg/gi, name: 'HUK-Coburg', confidence: 95 },
       // ⚠️ ENTFERNT: /\bhuk\b/gi war zu kurz und unspezifisch
       { pattern: /debeka\s*(?:versicherung|krankenversicherung)?/gi, name: 'Debeka', confidence: 92 },
