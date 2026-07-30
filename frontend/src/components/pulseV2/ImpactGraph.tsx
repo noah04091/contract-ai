@@ -11,6 +11,9 @@ interface ImpactGraphProps {
   hideContractInfo?: boolean;
   /** Deep-Link: Alert direkt aufgeklappt rendern (z. B. Ankunft via ?alert=…) */
   initialExpanded?: boolean;
+  /** Aktions-Buttons (✓/✕/Wiederherstellen) — fester Teil der Kopfzeile statt
+      absolut darüber zu schweben, damit lange Titel nie überdeckt werden. */
+  headerActions?: React.ReactNode;
 }
 
 const SEVERITY_COLORS: Record<string, { color: string; bg: string }> = {
@@ -33,7 +36,7 @@ const StepRow: React.FC<{ label: string; first?: boolean; strong?: boolean; chil
     <span style={{ color: strong ? '#0f172a' : '#475569', fontWeight: strong ? 600 : 400, minWidth: 0 }}>{children}</span>
   </div>
 );
-export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hideContractInfo, initialExpanded }) => {
+export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hideContractInfo, initialExpanded, headerActions }) => {
   const [expanded, setExpanded] = useState(initialExpanded ?? false);
   const isPositive = alert.impactDirection === 'positive';
   const sev = isPositive ? POSITIVE_COLORS : (SEVERITY_COLORS[alert.severity] || SEVERITY_COLORS.low);
@@ -82,11 +85,22 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
           </div>
         </div>
 
+        {/* Aktionen — im Flex-Layout, reservieren eigenen Platz, überdecken nie den Titel */}
+        {headerActions && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'flex', gap: 6, flexShrink: 0, alignSelf: 'flex-start', marginTop: 1 }}
+          >
+            {headerActions}
+          </div>
+        )}
+
         {/* Expand arrow */}
         <span style={{
           fontSize: 14, color: '#9ca3af',
           transform: expanded ? 'rotate(90deg)' : 'none',
           transition: 'transform 0.15s',
+          flexShrink: 0,
         }}>
           &#8250;
         </span>

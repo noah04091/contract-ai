@@ -716,41 +716,54 @@ const LawGroup: React.FC<{
         <div className={styles.expandContent} style={{ padding: '0 8px 8px', background: '#fff' }}>
           {group.alerts.map(alert => (
             <div key={alert._id} style={{ position: 'relative' }}>
-              <ImpactGraph alert={alert} onNavigate={onNavigate} />
+              <ImpactGraph
+                alert={alert}
+                onNavigate={onNavigate}
+                headerActions={(onResolve || onDismiss || onRestore) ? (
+                  <>
+                    {onResolve && (
+                      <button
+                        onClick={() => onResolve(alert._id)}
+                        title="Als erledigt markieren"
+                        style={{
+                          width: 22, height: 22, borderRadius: 4,
+                          border: '1px solid #a7f3d0', background: '#ecfdf5',
+                          cursor: 'pointer', fontSize: 11, color: '#059669',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >&#10003;</button>
+                    )}
+                    {onDismiss && (
+                      <button
+                        onClick={() => setConfirmDismiss(alert._id)}
+                        title="Ausblenden"
+                        style={{
+                          width: 22, height: 22, borderRadius: 4,
+                          border: '1px solid #d1d5db', background: '#fff',
+                          cursor: 'pointer', fontSize: 11, color: '#9ca3af',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                      >&#10005;</button>
+                    )}
+                    {onRestore && (
+                      <button
+                        onClick={() => onRestore(alert._id)}
+                        title="Wiederherstellen"
+                        style={{
+                          padding: '2px 10px', borderRadius: 4,
+                          border: '1px solid #a7f3d0', background: '#ecfdf5',
+                          cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                          color: '#059669',
+                        }}
+                      >Wiederherstellen</button>
+                    )}
+                  </>
+                ) : undefined}
+              />
 
-              {/* Als erledigt markieren (jederzeit über den Erledigte-Reiter rückholbar) */}
-              {onResolve && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onResolve(alert._id); }}
-                  title="Als erledigt markieren"
-                  style={{
-                    position: 'absolute', top: 14, right: 68,
-                    width: 22, height: 22, borderRadius: 4,
-                    border: '1px solid #a7f3d0', background: '#ecfdf5',
-                    cursor: 'pointer', fontSize: 11, color: '#059669',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    zIndex: 1,
-                  }}
-                >&#10003;</button>
-              )}
-
-              {/* Dismiss button with confirmation */}
+              {/* Bestätigungs-Popup fürs Ausblenden (absolut im relativen Wrapper) */}
               {onDismiss && (
                 <>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setConfirmDismiss(alert._id); }}
-                    title="Ausblenden"
-                    style={{
-                      position: 'absolute', top: 14, right: 40,
-                      width: 22, height: 22, borderRadius: 4,
-                      border: '1px solid #d1d5db', background: '#fff',
-                      cursor: 'pointer', fontSize: 11, color: '#9ca3af',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      zIndex: 1,
-                    }}
-                  >&#10005;</button>
-
-                  {/* Confirmation popup */}
                   {confirmDismiss === alert._id && (
                     <div ref={dismissRef} style={{
                       position: 'absolute', top: 40, right: 20,
@@ -793,21 +806,6 @@ const LawGroup: React.FC<{
                     </div>
                   )}
                 </>
-              )}
-
-              {/* Restore button (dismissed view) */}
-              {onRestore && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onRestore(alert._id); }}
-                  title="Wiederherstellen"
-                  style={{
-                    position: 'absolute', top: 14, right: 40,
-                    padding: '2px 10px', borderRadius: 4,
-                    border: '1px solid #a7f3d0', background: '#ecfdf5',
-                    cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                    color: '#059669', zIndex: 1,
-                  }}
-                >Wiederherstellen</button>
               )}
             </div>
           ))}
