@@ -134,8 +134,10 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
           </div>
           <p className={styles.stepLabel}>{stepLabel}</p>
           <p className={styles.hint}>
-            {/* 📶 24.07.2026: ehrliche Erwartung — die Tiefenprüfung braucht real 1–3 Minuten. */}
-            Die KI prüft Ihren Vertrag gründlich — je nach Umfang ein bis drei Minuten.
+            {/* 30.07.2026: früher stand hier „Die KI prüft… 1–3 Minuten" — das doppelte die
+                Backend-Etappe (stepLabel), die die Zeit-Erwartung bereits nennt. Jetzt ein
+                komplementärer, beruhigender Hinweis (nutzt die async-Sicherheit). */}
+            Du kannst dieses Fenster geöffnet lassen — das Ergebnis erscheint automatisch, sobald es fertig ist.
           </p>
         </div>
       </div>
