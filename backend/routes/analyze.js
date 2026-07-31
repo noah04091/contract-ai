@@ -642,6 +642,60 @@ const mergeImportantDatesMonotonic = (oldValidated, newValidated, requestId = ''
 };
 
 /**
+ * 🧭 Guard C — Unterschriftsdatum-als-Beginn-Fehllabel (31.07.2026)
+ * ------------------------------------------------------------------
+ * PROBLEM (FERCHAU-Live): Die KI labelt das Unterschrifts-/Schreiben-Datum
+ * (korrekt `contract_signed`) ZUSÄTZLICH als Beginn (`service_start`/`start_date`),
+ * obwohl der echte Einsatzbeginn ein anderes, späteres Datum ist. Folge: ein
+ * falscher „Startdatum"-Kalendereintrag.
+ *
+ * REGEL (deterministisch, universell-sicher): Entferne einen Beginn-Termin, dessen
+ * Datum EXAKT einem contract_signed-Datum entspricht, NUR wenn zusätzlich ein
+ * echter, abweichender Beginn-Termin existiert (anderes Datum, das NICHT das
+ * Unterschriftsdatum ist) mit mindestens gleicher Konfidenz.
+ *
+ * NICHT ZU STARR — greift bewusst NICHT, wenn:
+ *  - kein contract_signed vorhanden ist,
+ *  - der Vertrag AM Unterschriftstag beginnt (Signatur = einziger Beginn, sehr
+ *    häufig) → kein abweichender Beginn → unberührt,
+ *  - der abweichende Beginn unsicherer ist als der Verdachts-Eintrag.
+ * Herzstück-Prompt unberührt. Kill-Switch: DATE_SIGNED_START_GUARD_ENABLED=false.
+ */
+const DATE_SIGNED_START_GUARD_ENABLED = process.env.DATE_SIGNED_START_GUARD_ENABLED !== 'false';
+const START_DATE_TYPES = new Set(['start_date', 'service_start']);
+
+const dropSignatureMislabeledStarts = (dates, requestId = '') => {
+  if (!DATE_SIGNED_START_GUARD_ENABLED) return dates;
+  if (!Array.isArray(dates) || dates.length < 2) return dates;
+  const day = (d) => String(d.date || '').slice(0, 10);
+
+  const signedDays = new Set(
+    dates.filter(d => d.type === 'contract_signed' && d.date).map(day)
+  );
+  if (signedDays.size === 0) return dates; // kein Unterschriftsdatum → nichts tun
+
+  const starts = dates.filter(d => START_DATE_TYPES.has(d.type) && d.date);
+  const realStarts = starts.filter(d => !signedDays.has(day(d))); // echter, abweichender Beginn
+  if (realStarts.length === 0) return dates; // same-day-signing → unberührt
+
+  const maxRealStartConf = Math.max(...realStarts.map(d => d.confidence || 0));
+
+  let dropped = 0;
+  const kept = dates.filter(d => {
+    const suspect = START_DATE_TYPES.has(d.type) && d.date
+      && signedDays.has(day(d))                       // liegt auf dem Unterschriftsdatum
+      && (d.confidence || 0) <= maxRealStartConf;      // echter Beginn ist mind. so sicher
+    if (suspect) { dropped++; return false; }
+    return true;
+  });
+
+  if (dropped > 0) {
+    console.log(`🧭 [${requestId}] Guard C: ${dropped} Beginn-Termin auf Unterschriftsdatum entfernt (echter abweichender Beginn existiert, Konf ${maxRealStartConf})`);
+  }
+  return kept;
+};
+
+/**
  * 🔧 FIX: Extract end_date from AI-analyzed importantDates
  * 🔒 NEU: Nur verwenden wenn Regex-Konfidenz niedrig ist!
  * If importantDates contains type='end_date', use that to update expiryDate
@@ -6003,6 +6057,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.log(`📅 [${requestId}] Date Hunt im Fallback — Hauptanalyse-importantDates bleiben, fristHinweise leer`);
     }
 
+    // 🧭 Guard C (31.07.2026): Unterschriftsdatum, das die KI zusätzlich als Beginn
+    // gelabelt hat, entfernen — universell für Erst- UND Re-Analyse (der Fehllabel
+    // entsteht bei jeder frischen Extraktion). Wirkt auf result.importantDates, also
+    // vor DB-Speicherung UND Kalender-Generierung. Kill-Switch DATE_SIGNED_START_GUARD_ENABLED.
+    result.importantDates = dropSignatureMislabeledStarts(result.importantDates, requestId);
+
     // 🆕 Hebel A2 (17.06.2026): Das startDate-FELD nimmt sonst IMMER den Regex-Wert — auch wenn er schwach/falsch
     // ist (Gewerbemiete: Regex-Start 40% griff eine Staffel-Zeile statt des echten Beginns). Wenn die KI einen
     // start_date-Termin mit MINDESTENS so hoher Konfidenz geliefert hat, diesen vorziehen (er treibt eh schon
@@ -7348,6 +7408,8 @@ module.exports.makeRateLimitedGPT4Request = makeRateLimitedGPT4Request; // 🧪 
 // 🛡️ Re-Analyse Anti-Regression (31.07.2026): Export für deterministischen Offline-Beweis
 module.exports.mergeImportantDatesMonotonic = mergeImportantDatesMonotonic;
 module.exports.validateAndFilterImportantDates = validateAndFilterImportantDates;
+// 🧭 Guard C (31.07.2026): Export für deterministischen Offline-Beweis
+module.exports.dropSignatureMislabeledStarts = dropSignatureMislabeledStarts;
 // ⚡ Async-Job-Helfer (27.07.2026): erlauben der Re-Analyse-Route (contracts.js), denselben
 // analysis_jobs-Mechanismus + Polling-Endpunkt zu nutzen wie der Haupt-Upload — gegen den
 // Cloudflare-~100s-Schnitt bei langen Läufen. contracts.js baut seinen eigenen Runner darauf.
