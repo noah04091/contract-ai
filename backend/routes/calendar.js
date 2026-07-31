@@ -390,14 +390,26 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     }
 
     // ✅ NEW: Allow manual editing of all fields
+    // 31.07.2026 (TÜV-Fix): Datum validieren (Invalid Date entkam allen Queries) +
+    // severity-Whitelist (anderer Wert = Termin sichtbar, aber Versand-Cron mailt nie).
     if (date !== undefined) {
-      updateData.date = new Date(date);
+      const parsedPatchDate = new Date(date);
+      if (isNaN(parsedPatchDate.getTime())) {
+        return res.status(400).json({ success: false, error: "Ungültiges Datum" });
+      }
+      updateData.date = parsedPatchDate;
       updateData.manuallyEdited = true; // Mark as manually edited
     }
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
     if (type !== undefined) updateData.type = type;
-    if (severity !== undefined) updateData.severity = severity;
+    if (severity !== undefined) {
+      const ALLOWED_SEVERITIES = ["info", "warning", "critical"];
+      if (!ALLOWED_SEVERITIES.includes(severity)) {
+        return res.status(400).json({ success: false, error: "Ungültige severity (erlaubt: info, warning, critical)" });
+      }
+      updateData.severity = severity;
+    }
     if (notes !== undefined) updateData.notes = notes;
 
     // ✅ Recurrence-Updates
@@ -505,6 +517,20 @@ router.post("/events", verifyToken, async (req, res) => {
       });
     }
 
+    // 31.07.2026 (TÜV-Fix): Eingaben absichern.
+    // (a) Ungültiges Datum ("xxx" → Invalid Date) wurde bisher roh gespeichert und entkam
+    //     danach allen Datums-Queries. (b) Datum wie überall im System auf 12:00 lokal ankern
+    //     (createLocalDate-Konvention) — roh gespeicherte 00:00-UTC-Zeiten kippen an
+    //     Zeitzonen-/DST-Kanten um einen Tag. (c) severity-Whitelist: der Versand-Cron matcht
+    //     NUR info/warning/critical — ein anderer Wert hieße "Termin sichtbar, Mail nie".
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      return res.status(400).json({ success: false, error: "Ungültiges Datum" });
+    }
+    const normalizedDate = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), parsedDate.getDate(), 12, 0, 0, 0);
+    const ALLOWED_SEVERITIES = ["info", "warning", "critical"];
+    const safeSeverity = ALLOWED_SEVERITIES.includes(severity) ? severity : "info";
+
     let contract = null;
     let eventContractId = null;
     let contractName = "Individuelle Erinnerung";
@@ -531,7 +557,8 @@ router.post("/events", verifyToken, async (req, res) => {
       contractName = contract.name;
       metadata = {
         contractName: contract.name,
-        provider: contract.provider
+        // 31.07.2026 (TÜV-Fix): Provider als String normalisieren (Objekt → "[object Object]" in Mails)
+        provider: require("../utils/formatProvider").formatProvider(contract.provider) || null
       };
     }
 
@@ -554,9 +581,9 @@ router.post("/events", verifyToken, async (req, res) => {
       contractName,
       title,
       description: description || '',
-      date: new Date(date),
+      date: normalizedDate,
       type: type || 'CUSTOM',
-      severity: severity || 'info',
+      severity: safeSeverity,
       status: 'scheduled',
       notes: notes || '',
       manuallyCreated: true,

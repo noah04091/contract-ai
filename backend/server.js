@@ -1713,7 +1713,15 @@ const connectDB = async () => {
       // unsichtbar (belegt durch testReminderRequeueGuards + neuen testReminderSecondRun).
       // WICHTIG: EIGENER Lock-Key — der Tages-Lock (UTC-Bucket) von 'reminder-calendar' würde
       // diesen Lauf sonst blockieren. Kill-Switch: REMINDER_SECOND_RUN_ENABLED=false (Render-Env).
-      cron.schedule(process.env.REMINDER_SECOND_RUN_CRON || "0 17 * * *", withDistributedLock('reminder-calendar-pm', withCronLock('reminder-calendar-pm', async () => {
+      // 31.07.2026 (TÜV-Fix): ungültiges Cron-Pattern in der Env würde node-cron beim
+      // Registrieren werfen → Server-Boot-Crash. Validieren, sonst Standard 17:00.
+      const pmCronPattern = (process.env.REMINDER_SECOND_RUN_CRON && cron.validate(process.env.REMINDER_SECOND_RUN_CRON))
+        ? process.env.REMINDER_SECOND_RUN_CRON
+        : "0 17 * * *";
+      if (process.env.REMINDER_SECOND_RUN_CRON && pmCronPattern !== process.env.REMINDER_SECOND_RUN_CRON) {
+        console.warn(`⚠️ REMINDER_SECOND_RUN_CRON="${process.env.REMINDER_SECOND_RUN_CRON}" ungültig — Fallback "0 17 * * *"`);
+      }
+      cron.schedule(pmCronPattern, withDistributedLock('reminder-calendar-pm', withCronLock('reminder-calendar-pm', async () => {
         if (process.env.REMINDER_SECOND_RUN_ENABLED === 'false') {
           console.log("🕔 Zweiter Kalender-Versand-Lauf deaktiviert (REMINDER_SECOND_RUN_ENABLED=false)");
           return;
@@ -1924,8 +1932,14 @@ const connectDB = async () => {
       cron.schedule("0 3 * * *", async () => {
         console.log("🧹 Starte Bereinigung abgelaufener Events...");
         try {
-          const { updateExpiredEvents } = require("./services/calendarEvents");
+          const { updateExpiredEvents, reapStuckQueuedEvents } = require("./services/calendarEvents");
           await updateExpiredEvents(db);
+          // 🧟 31.07.2026 (TÜV-Fix, Standard AUS): hängende "queued"-Events statusehrlich
+          // auflösen (25 Bestands-Zombies + künftige Crash-Reste). Aktivierung bewusst
+          // erst nach gemeinsamem Dry-Run-Check: CALENDAR_QUEUED_REAPER_ENABLED=true.
+          if (process.env.CALENDAR_QUEUED_REAPER_ENABLED === 'true') {
+            await reapStuckQueuedEvents(db);
+          }
         } catch (error) {
           console.error("❌ Event Cleanup Cron Error:", error);
           await captureError(error, { route: 'CRON:event-cleanup', method: 'SCHEDULED', severity: 'medium' });

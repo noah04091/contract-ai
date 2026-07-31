@@ -446,8 +446,11 @@ export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
                           {getNotificationIcon(notification.type, notification.category)}
                         </div>
                         <div className={styles.notificationContent}>
-                          <div className={styles.notificationTitle}>{notification.title}</div>
-                          <div className={styles.notificationMessage}>{notification.message}</div>
+                          {/* 31.07.2026 (TÜV-Fix): Titel/Text durch fixUtf8Display — doppelt kodierte
+                              Umlaute aus Alt-Daten ("BÃ¼ro…") erschienen sonst roh in der Glocke
+                              (die Suche darunter nutzt den Helfer längst). */}
+                          <div className={styles.notificationTitle}>{fixUtf8Display(notification.title)}</div>
+                          <div className={styles.notificationMessage}>{fixUtf8Display(notification.message)}</div>
                           <div className={styles.notificationTime}>{notification.time}</div>
                         </div>
                       </button>

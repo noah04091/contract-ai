@@ -968,9 +968,20 @@ router.get("/", verifyToken, async (req, res) => {
       let type = 'info';
       let title = event.title || 'Vertragserinnerung';
 
-      if (event.type === 'LAST_CANCEL_DAY' || daysUntil <= 1) {
+      // 31.07.2026 (TÜV-Fix): "heute kündigen!" stand auch bei daysUntil===1 (morgen) und
+      // — schlimmer — bei JEDEM morgen fälligen Event (auch Zahlungen o.ä., die mit Kündigen
+      // nichts zu tun haben). Jetzt tagesehrlich und nur bei echten Kündigungs-Events.
+      if (event.type === 'LAST_CANCEL_DAY') {
         type = 'warning';
-        title = `DRINGEND: ${event.metadata?.contractName || 'Vertrag'} heute kündigen!`;
+        const cname = event.metadata?.contractName || 'Vertrag';
+        title = daysUntil <= 0
+          ? `DRINGEND: ${cname} heute kündigen!`
+          : daysUntil === 1
+            ? `DRINGEND: ${cname} bis morgen kündigen!`
+            : `Letzte Kündigungschance in ${daysUntil} Tagen: ${cname}`;
+      } else if (daysUntil <= 1) {
+        type = 'warning';
+        title = `${daysUntil <= 0 ? 'Heute' : 'Morgen'} fällig: ${title}`;
       } else if (event.type === 'CANCEL_WARNING' || daysUntil <= 3) {
         type = 'warning';
         title = `Kündigungsfrist in ${daysUntil} Tagen`;
