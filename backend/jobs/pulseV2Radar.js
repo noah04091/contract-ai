@@ -221,17 +221,59 @@ async function runPulseV2Radar(db, options = {}) {
     { createdAt: 1 },
     { background: true }
   );
+  // Zwei-Stufen-Lebenszyklus (Produktentscheidung Noah, 31.07.2026):
+  //   Erledigt  → nach 90 Tagen automatisch zu Ausgeblendet (Sicherheitsnetz)
+  //   Ausgeblendet → nach weiteren 90 Tagen endgültig entfernt (max. 180 Tage gesamt)
+  // Gilt für Radar-Alerts UND Handlungsempfehlungen. Offenes bleibt unangetastet.
+  // Reihenfolge: erst LÖSCHEN (alte dismissed), dann UMZIEHEN (frisch Umgezogene
+  // bekommen statusChangedAt=jetzt und starten ihre 90 Tage neu).
   try {
+    const now = new Date();
     const cutoff90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
-    const cleanup = await db.collection("pulse_v2_legal_alerts").deleteMany({
-      status: { $in: ["resolved", "dismissed"] },
+    const alertsCol = db.collection("pulse_v2_legal_alerts");
+
+    // ── Alerts: Stufe 2 — Ausgeblendete > 90d endgültig löschen ──
+    const del = await alertsCol.deleteMany({
+      status: "dismissed",
       $or: [
         { statusChangedAt: { $lt: cutoff90 } },
         { statusChangedAt: { $exists: false }, createdAt: { $lt: cutoff90 } },
       ],
     });
-    if (cleanup.deletedCount > 0) {
-      console.log(`[PulseV2Radar] Lifecycle-Cleanup: ${cleanup.deletedCount} bearbeitete Alerts (>90d) gelöscht`);
+    // ── Alerts: Stufe 1 — Erledigte > 90d zu Ausgeblendet umziehen ──
+    const moved = await alertsCol.updateMany(
+      {
+        status: "resolved",
+        $or: [
+          { statusChangedAt: { $lt: cutoff90 } },
+          { statusChangedAt: { $exists: false }, createdAt: { $lt: cutoff90 } },
+        ],
+      },
+      { $set: { status: "dismissed", statusChangedAt: now, autoArchived: true } }
+    );
+
+    // ── Handlungsempfehlungen (im Result-Dokument): gleicher Lebenszyklus ──
+    const resultsCol = db.collection("legal_pulse_v2_results");
+    // Alt-Einträge ohne Zeitstempel: Frist beginnt heute (Grandfathering, nichts verschwindet abrupt)
+    await resultsCol.updateMany(
+      { actions: { $elemMatch: { status: { $in: ["done", "dismissed"] }, statusChangedAt: { $exists: false } } } },
+      { $set: { "actions.$[a].statusChangedAt": now } },
+      { arrayFilters: [{ "a.status": { $in: ["done", "dismissed"] }, "a.statusChangedAt": { $exists: false } }] }
+    );
+    // Stufe 2: ausgeblendete Empfehlungen > 90d entfernen
+    const actDel = await resultsCol.updateMany(
+      { actions: { $elemMatch: { status: "dismissed", statusChangedAt: { $lt: cutoff90 } } } },
+      { $pull: { actions: { status: "dismissed", statusChangedAt: { $lt: cutoff90 } } } }
+    );
+    // Stufe 1: erledigte Empfehlungen > 90d zu Ausgeblendet umziehen
+    const actMoved = await resultsCol.updateMany(
+      { actions: { $elemMatch: { status: "done", statusChangedAt: { $lt: cutoff90 } } } },
+      { $set: { "actions.$[a].status": "dismissed", "actions.$[a].statusChangedAt": now } },
+      { arrayFilters: [{ "a.status": "done", "a.statusChangedAt": { $lt: cutoff90 } }] }
+    );
+
+    if (del.deletedCount + moved.modifiedCount + actDel.modifiedCount + actMoved.modifiedCount > 0) {
+      console.log(`[PulseV2Radar] Lifecycle: Alerts ${moved.modifiedCount} umgezogen / ${del.deletedCount} gelöscht · Empfehlungen ${actMoved.modifiedCount} Docs umgezogen / ${actDel.modifiedCount} Docs bereinigt`);
     }
   } catch (cleanupErr) {
     console.error("[PulseV2Radar] Lifecycle-Cleanup fehlgeschlagen (nicht fatal):", cleanupErr.message);

@@ -292,8 +292,9 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
                 <p style={{ margin: '0 0 8px' }}>
                   <strong>Alerts bleiben sichtbar</strong>, bis Sie sie per &#10003; als <strong>erledigt</strong> markieren
                   oder ausblenden. Erledigte und ausgeblendete Alerts finden Sie in den gleichnamigen Reitern und
-                  k&ouml;nnen sie jederzeit wiederherstellen; 90 Tage nach der Markierung werden sie automatisch
-                  gel&ouml;scht. Offene Alerts bleiben, bis Sie handeln.
+                  k&ouml;nnen sie jederzeit wiederherstellen. Erledigte wandern nach 90 Tagen automatisch zu
+                  &bdquo;Ausgeblendet&ldquo; und werden dort nach weiteren 90 Tagen endg&uuml;ltig gel&ouml;scht.
+                  Offene Alerts bleiben, bis Sie handeln.
                 </p>
                 <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
                   Neue Alerts erscheinen automatisch, sobald relevante Rechts&auml;nderungen erkannt werden.
@@ -435,8 +436,8 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
         }}>
           <span>
-            Erledigte Alerts werden 90 Tage nach der Markierung automatisch gelöscht.
-            Wiederherstellen ist jederzeit möglich.
+            Erledigte Alerts wandern nach 90 Tagen automatisch zu „Ausgeblendet" und werden dort
+            nach weiteren 90 Tagen endgültig gelöscht. Wiederherstellen ist jederzeit möglich.
           </span>
         </div>
       )}

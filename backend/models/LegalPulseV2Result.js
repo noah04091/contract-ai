@@ -143,6 +143,9 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
     confidence: Number,
     nextStep: String,
     status: { type: String, enum: ["open", "done", "dismissed"], default: "open" },
+    // Zeitpunkt der letzten Status-Markierung — Basis für den Lebenszyklus
+    // (done → nach 90 Tagen automatisch dismissed → nach weiteren 90 Tagen entfernt)
+    statusChangedAt: Date,
     userComment: { type: String, maxlength: 500 },
     _id: false,
   }],

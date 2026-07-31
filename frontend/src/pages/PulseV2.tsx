@@ -689,6 +689,11 @@ const ActionCenter: React.FC<{
       {/* Erledigt-/Ausgeblendet-Reiter: Liste mit Wiederherstellen (via ActionItem) */}
       {tab !== 'open' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ fontSize: 12, color: tab === 'done' ? '#166534' : '#6b7280', background: tab === 'done' ? '#f0fdf4' : '#f9fafb', borderRadius: 8, padding: '8px 12px' }}>
+            {tab === 'done'
+              ? 'Erledigte Empfehlungen wandern nach 90 Tagen automatisch zu „Ausgeblendet" und werden dort nach weiteren 90 Tagen entfernt. Wiederherstellen ist jederzeit möglich.'
+              : 'Ausgeblendete Empfehlungen werden 90 Tage nach dem Ausblenden automatisch entfernt. Wiederherstellen ist jederzeit möglich.'}
+          </div>
           {(tab === 'done' ? doneActions : dismissedActions).map(action => (
             <ActionItem key={`${tab}_${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
           ))}

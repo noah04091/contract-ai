@@ -1233,6 +1233,13 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   }
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {actionTab !== 'open' && (
+                        <div style={{ fontSize: 12, color: actionTab === 'done' ? '#166534' : '#6b7280', background: actionTab === 'done' ? '#f0fdf4' : '#f9fafb', borderRadius: 8, padding: '8px 12px' }}>
+                          {actionTab === 'done'
+                            ? 'Erledigte Empfehlungen wandern nach 90 Tagen automatisch zu „Ausgeblendet" und werden dort nach weiteren 90 Tagen entfernt. Wiederherstellen ist jederzeit möglich.'
+                            : 'Ausgeblendete Empfehlungen werden 90 Tage nach dem Ausblenden automatisch entfernt. Wiederherstellen ist jederzeit möglich.'}
+                        </div>
+                      )}
                       {list.map(action => (
                         <ActionItem
                           key={`${actionTab}_${action.id}`}
@@ -1345,7 +1352,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             {alertTab !== 'open' && current.length > 0 && (
               <div style={{ fontSize: 12, color: alertTab === 'resolved' ? '#166534' : '#6b7280', background: alertTab === 'resolved' ? '#f0fdf4' : '#f9fafb', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
                 {alertTab === 'resolved'
-                  ? 'Erledigte Alerts werden 90 Tage nach der Markierung automatisch gelöscht. Wiederherstellen ist jederzeit möglich.'
+                  ? 'Erledigte Alerts wandern nach 90 Tagen automatisch zu „Ausgeblendet" und werden dort nach weiteren 90 Tagen endgültig gelöscht. Wiederherstellen ist jederzeit möglich.'
                   : 'Ausgeblendete Alerts werden 90 Tage nach dem Ausblenden automatisch gelöscht. Wiederherstellen ist jederzeit möglich.'}
               </div>
             )}

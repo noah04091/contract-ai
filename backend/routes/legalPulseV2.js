@@ -564,7 +564,11 @@ router.patch("/results/:id/actions/:actionId", async (req, res) => {
     }
 
     const updateFields = {};
-    if (status) updateFields["actions.$.status"] = status;
+    if (status) {
+      updateFields["actions.$.status"] = status;
+      // Frist-Basis für den Lebenszyklus (90d done→dismissed, 90d dismissed→entfernt)
+      updateFields["actions.$.statusChangedAt"] = new Date();
+    }
     if (comment !== undefined) updateFields["actions.$.userComment"] = (comment || "").substring(0, 500);
 
     if (Object.keys(updateFields).length === 0) {
