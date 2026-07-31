@@ -3017,11 +3017,16 @@ ADAPTIVE FELDER (nur ausgeben wenn substanziell):
              "probation_end" | "warranty_end" | "renewal_date" | "payment_due" |
              "notice_period_start" | "contract_signed" | "delivery_date" | "other",
      "date": "YYYY-MM-DD" (ISO Format!),
-     "label": "Beschreibung (z.B. 'Vertragsbeginn', 'Kündigungsfrist endet', 'Probezeit endet')",
+     "label": "Kurzer Label-Text (z.B. 'Vertragsbeginn', 'Kündigungsfrist endet', 'Probezeit endet')",
      "description": "Kurze Erklärung warum dieses Datum wichtig ist",
      "calculated": true | false,  // true wenn berechnet, false wenn explizit im Vertrag
      "source": "Wo im Vertrag gefunden (z.B. '§ 5 Abs. 2', 'Seite 1', 'Kleingedrucktes')"
    }
+
+   ⚠️ SPRACHE (30.07.2026): "label" UND "description" IMMER auf DEUTSCH — auch wenn der Vertrag
+   englische Fachbegriffe enthält. Beispiel: eine Arbeitnehmerüberlassung labelst du "Beginn/Ende
+   der Überlassung", NIEMALS "Start/End of assignment". Kein englisches Label, keine englische
+   Beschreibung, egal welcher Dokumenttyp.
 
    📅 WICHTIGE DATUMS-TYPEN (alle extrahieren wenn vorhanden!):
    - start_date: Vertragsbeginn, Mietbeginn, Arbeitsbeginn, Kaufdatum, Anmeldedatum, Beitrittsdatum
