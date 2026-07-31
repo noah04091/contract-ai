@@ -1711,6 +1711,54 @@ async function regenerateAllEvents(db, userId) {
 }
 
 /**
+ * 🧟 31.07.2026 (TÜV-Fix, Schalter: CALENDAR_QUEUED_REAPER_ENABLED === 'true', Standard AUS):
+ * Löst für immer hängende "queued"-Events auf. Entstehung: Event wird vom Versand-Cron
+ * atomar scheduled→queued geclaimt, dann verhindert ein harter Crash/dauerhafter Mail-
+ * Fehlschlag den Abschluss → weder der Cron (sucht nur scheduled) noch updateExpiredEvents
+ * (markiert nur scheduled) fasst es je wieder an. Bestand: 25 solcher Zombies (Apr/Mai 2026).
+ * Auflösung statusEHRLICH: gesendete Mail existiert → notified; aktive Mail (pending/
+ * processing) → in Ruhe lassen; sonst: Vergangenheit → expired, Zukunft → zurück auf
+ * scheduled (nächster Lauf versucht es regulär erneut — Claim verhindert Doppel-Mail).
+ */
+async function reapStuckQueuedEvents(db, maxAgeHours = 48) {
+  const cutoff = new Date(Date.now() - maxAgeHours * 3600 * 1000);
+  const now = new Date();
+  const stuck = await db.collection('contract_events')
+    .find({ status: 'queued', queuedAt: { $lt: cutoff } })
+    .project({ _id: 1, date: 1, title: 1 })
+    .toArray();
+
+  const result = { checked: stuck.length, notified: 0, expired: 0, rescheduled: 0, activeMail: 0 };
+  for (const ev of stuck) {
+    const eventIdStr = ev._id.toString();
+    const sentMail = await db.collection('email_queue').findOne({ eventId: eventIdStr, status: 'sent' });
+    if (sentMail) {
+      // Mail ging real raus, nur der notified-Marker fehlte (Crash zwischen Send und Update)
+      await db.collection('contract_events').updateOne(
+        { _id: ev._id, status: 'queued' },
+        { $set: { status: 'notified', notifiedAt: sentMail.sentAt || now, updatedAt: now, reapedAt: now } }
+      );
+      result.notified++;
+      continue;
+    }
+    const activeMail = await db.collection('email_queue').findOne({ eventId: eventIdStr, status: { $in: ['pending', 'processing'] } });
+    if (activeMail) { result.activeMail++; continue; } // Zustellung läuft noch — nicht anfassen
+    const isPast = ev.date && new Date(ev.date) < now;
+    await db.collection('contract_events').updateOne(
+      { _id: ev._id, status: 'queued' },
+      isPast
+        ? { $set: { status: 'expired', expiredAt: now, updatedAt: now, reapedAt: now } }
+        : { $set: { status: 'scheduled', updatedAt: now, reapedAt: now }, $unset: { queuedAt: "" } }
+    );
+    isPast ? result.expired++ : result.rescheduled++;
+  }
+  if (result.checked > 0) {
+    console.log(`🧟 Queued-Reaper: ${result.checked} geprüft → ${result.notified} notified, ${result.expired} expired, ${result.rescheduled} rescheduled, ${result.activeMail} aktiv gelassen`);
+  }
+  return result;
+}
+
+/**
  * Prüft und aktualisiert abgelaufene Events
  */
 async function updateExpiredEvents(db) {
@@ -1808,28 +1856,7 @@ async function cleanAndRegenerateAIEvents(db, contract) {
   // BEWUSST NICHT enthalten (werden NICHT von generateEventsForContract neu erzeugt → sonst verloren):
   // CANCELLATION_CONFIRMATION_CHECK + SIGNATURE_* (Envelope nutzt ohnehin envelopeId, kein contractId).
   // Manuelle (isManual) + ausgeblendete (dismissed) Events bleiben durch die Top-Level-Guards geschützt.
-  const REGENERABLE_LIFECYCLE_TYPES = [
-    'CANCEL_WINDOW_OPEN', 'LAST_CANCEL_DAY', 'CANCEL_WARNING', 'AUTO_RENEWAL',
-    'PRICE_INCREASE', 'PRICE_INCREASE_WARNING', 'REVIEW', 'CONTRACT_EXPIRY',
-    'CUSTOM_REMINDER', 'RECURRING_PAYMENT', 'PAYMENT_REMINDER',
-    'CANCELLATION_DATE', 'CANCELLATION_REMINDER',
-    'MINIMUM_TERM_END', 'MINIMUM_TERM_REMINDER', 'PROBATION_END', 'PROBATION_REMINDER',
-    'WARRANTY_END', 'WARRANTY_REMINDER', 'RENT_ANNIVERSARY', 'REMAINING_TIME_END'
-  ];
-  const cleanupFilter = {
-    contractId: contract._id,
-    isManual: { $ne: true },
-    status: { $ne: 'dismissed' },
-    $or: [
-      // 🆕 07.07.2026: auch die KI-Zweige auf status:'scheduled' begrenzen — vorher löschte die
-      // Re-Analyse AUCH bereits 'notified'/'completed' KI-Events (Verlust der Historie + moegliches
-      // erneutes Senden). Jetzt konsistent mit dem Lifecycle-Zweig: nur aktive/zukuenftige neu bauen,
-      // bereits gefeuerte bleiben als Historie stehen (der additive Save legt kein Duplikat an).
-      { 'metadata.aiExtracted': true, status: 'scheduled' },
-      { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] }, status: 'scheduled' },
-      { type: { $in: REGENERABLE_LIFECYCLE_TYPES }, status: 'scheduled' }
-    ]
-  };
+  const cleanupFilter = buildRegenerableCleanupFilter(contract._id);
 
   const deleteResult = await db.collection('contract_events').deleteMany(cleanupFilter);
   const events = await generateEventsForContract(db, contract);
@@ -1842,6 +1869,36 @@ async function cleanAndRegenerateAIEvents(db, contract) {
   return {
     deleted: deleteResult.deletedCount,
     generated: events.length
+  };
+}
+
+// 🛡️ 31.07.2026 (TÜV-Fix): EIN gemeinsamer Filter für "was löscht die Regeneration"
+// UND "was sichert das Disconnect-Backup" (routes/analyze.js). Vorher las das Backup
+// aus einer nicht existierenden Collection ('calendar_events') mit einem nicht
+// existierenden Feld (source:'ai') → Backup war IMMER leer, das Safety-Net tot.
+// Wer diesen Filter ändert, ändert damit automatisch beide Seiten synchron.
+const REGENERABLE_LIFECYCLE_TYPES = [
+  'CANCEL_WINDOW_OPEN', 'LAST_CANCEL_DAY', 'CANCEL_WARNING', 'AUTO_RENEWAL',
+  'PRICE_INCREASE', 'PRICE_INCREASE_WARNING', 'REVIEW', 'CONTRACT_EXPIRY',
+  'CUSTOM_REMINDER', 'RECURRING_PAYMENT', 'PAYMENT_REMINDER',
+  'CANCELLATION_DATE', 'CANCELLATION_REMINDER',
+  'MINIMUM_TERM_END', 'MINIMUM_TERM_REMINDER', 'PROBATION_END', 'PROBATION_REMINDER',
+  'WARRANTY_END', 'WARRANTY_REMINDER', 'RENT_ANNIVERSARY', 'REMAINING_TIME_END'
+];
+function buildRegenerableCleanupFilter(contractId) {
+  return {
+    contractId: contractId,
+    isManual: { $ne: true },
+    status: { $ne: 'dismissed' },
+    $or: [
+      // 🆕 07.07.2026: auch die KI-Zweige auf status:'scheduled' begrenzen — vorher löschte die
+      // Re-Analyse AUCH bereits 'notified'/'completed' KI-Events (Verlust der Historie + moegliches
+      // erneutes Senden). Jetzt konsistent mit dem Lifecycle-Zweig: nur aktive/zukuenftige neu bauen,
+      // bereits gefeuerte bleiben als Historie stehen (der additive Save legt kein Duplikat an).
+      { 'metadata.aiExtracted': true, status: 'scheduled' },
+      { dataSource: { $in: ['ai_extracted', 'ai_calculated', 'ai_reminder'] }, status: 'scheduled' },
+      { type: { $in: REGENERABLE_LIFECYCLE_TYPES }, status: 'scheduled' }
+    ]
   };
 }
 
@@ -2018,5 +2075,7 @@ module.exports = {
   updateExpiredEvents,
   onContractChange,
   extractNoticePeriod,
-  dedupeSameDayMilestones
+  dedupeSameDayMilestones,
+  buildRegenerableCleanupFilter,
+  reapStuckQueuedEvents
 };

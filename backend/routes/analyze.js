@@ -4880,10 +4880,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     // Calendar-Restore falls cleanAndRegenerateAIEvents bereits Events gelöscht hat
     // aber Contract-Update noch nicht durch ist → User würde sonst Termine verlieren
-    if (calendarEventsBackup && calendarEventsBackupContractId) {
+    if (calendarEventsBackup && calendarEventsBackup.length > 0 && calendarEventsBackupContractId) {
       try {
         const dbConn = await database.connect();
-        await dbConn.collection('calendar_events').insertMany(calendarEventsBackup);
+        // 31.07.2026 (TÜV-Fix): richtige Collection + upsert-artig gegen Halb-Zustände —
+        // falls die Regeneration einzelne Events schon neu angelegt hat, kollidieren keine
+        // _ids (gelöschte Originale sind frei); doppelte Fristen verhindert der Dedup-Check
+        // der nächsten Regeneration. ordered:false = ein Konflikt stoppt nicht den Rest.
+        await dbConn.collection('contract_events').insertMany(calendarEventsBackup, { ordered: false });
         console.log(`↩️ [${requestId}] ${calendarEventsBackup.length} Calendar-Events nach Disconnect wiederhergestellt`);
       } catch (e) {
         console.error(`⚠️ [${requestId}] Calendar-Restore fehlgeschlagen: ${e.message}`);
@@ -6330,10 +6334,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             // (Client-Disconnect, OpenAI-Fehler nach Event-Generation), kann der
             // handleClientClose-Handler die alten Events wiederherstellen.
             try {
-              calendarEventsBackup = await db.collection('calendar_events').find({
-                contractId: contractForCalendar._id,
-                source: 'ai'
-              }).toArray();
+              // 🛡️ 31.07.2026 (TÜV-Fix): Backup war TOT — las aus nicht existenter Collection
+              // 'calendar_events' mit nicht existentem Feld source:'ai' → immer []. Jetzt:
+              // echte Collection 'contract_events' + EXAKT der Filter, den der Cleanup gleich
+              // löscht (geteilter Helfer aus calendarEvents.js → kann nie mehr divergieren).
+              const { buildRegenerableCleanupFilter } = require("../services/calendarEvents");
+              calendarEventsBackup = await db.collection('contract_events')
+                .find(buildRegenerableCleanupFilter(contractForCalendar._id)).toArray();
               calendarEventsBackupContractId = contractForCalendar._id;
             } catch (e) {
               console.warn(`⚠️ [${requestId}] Calendar-Backup konnte nicht erstellt werden: ${e.message}`);

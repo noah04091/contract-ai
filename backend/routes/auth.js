@@ -1752,8 +1752,13 @@ router.get("/export-data", verifyToken, async (req, res) => {
     const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
 
     // Hole Kalender-Events
-    const calendarCollection = dbInstance.collection("calendar_events");
-    const calendarEvents = await calendarCollection.find({ userId: req.user.userId }).toArray();
+    // 31.07.2026 (TÜV-Fix): Der DSGVO-Export las aus der nicht existenten Collection
+    // 'calendar_events' → enthielt IMMER 0 Termine. Echte Collection ist 'contract_events';
+    // userId liegt dort als ObjectId (teils historisch als String) → beide Formen abfragen.
+    const calendarCollection = dbInstance.collection("contract_events");
+    const calendarEvents = await calendarCollection.find({
+      userId: { $in: [req.user.userId, new ObjectId(req.user.userId)] }
+    }).toArray();
 
     // Hole Firmenprofil
     const companyProfilesCollection = dbInstance.collection("company_profiles");
