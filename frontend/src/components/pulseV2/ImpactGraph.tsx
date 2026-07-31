@@ -571,9 +571,6 @@ const FeedbackButtons: React.FC<{
   const [feedback, setFeedback] = useState<boolean | null>(existingFeedback?.useful ?? null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Bereits bewertet (frühere Sitzung): Frage gar nicht mehr stellen — sie ist erledigt.
-  if (existingFeedback) return null;
-
   const handleFeedback = useCallback(async (useful: boolean) => {
     setSubmitting(true);
     try {
@@ -590,6 +587,11 @@ const FeedbackButtons: React.FC<{
       setSubmitting(false);
     }
   }, [alertId]);
+
+  // Early-Returns bewusst NACH allen Hooks (React-Hook-Regel: Hooks müssen in jedem
+  // Render in identischer Reihenfolge laufen — bedingte Returns davor sind verboten).
+  // Bereits bewertet (frühere Sitzung): Frage gar nicht mehr stellen — sie ist erledigt.
+  if (existingFeedback) return null;
 
   // Gerade bewertet: Buttons verschwinden, nur ein kurzes Danke bleibt stehen.
   if (feedback !== null) {
