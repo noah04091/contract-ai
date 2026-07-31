@@ -2,6 +2,11 @@
 const nodemailer = require("nodemailer");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // korrekte Anzeige-Tageszahl
+// 31.07.2026 (TÜV-Fix): Status-Mails gingen OHNE List-Unsubscribe-Header und ohne
+// Abmelde-Link raus (real beobachtet 26.07.) — Gmail/Yahoo-Bulk-Regeln + Konsistenz:
+// Kalender-Mails hatten beides längst. Gleiche Kategorie CALENDAR wie dort, damit
+// EINE Abmeldung beide Fristen-Strecken stoppt (isUnsubscribed prüft der Sender schon).
+const { getUnsubscribeHeaders, generateUnsubscribeUrl, EMAIL_CATEGORIES } = require("./emailUnsubscribeService");
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
@@ -58,7 +63,8 @@ async function notifyExpiringSoon(userEmail, contractName, expiryDate, daysLeft)
       cta: {
         text: "Vertrag jetzt verwalten",
         url: `${process.env.FRONTEND_URL || 'https://contract-ai.de'}/contracts`
-      }
+      },
+      unsubscribeUrl: generateUnsubscribeUrl(userEmail, EMAIL_CATEGORIES.CALENDAR)
     });
 
     const expiringSubject = `${contractName} - Frist in ${displayDays} Tagen`;
@@ -66,7 +72,8 @@ async function notifyExpiringSoon(userEmail, contractName, expiryDate, daysLeft)
       from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
       to: userEmail,
       subject: expiringSubject,
-      html: htmlContent
+      html: htmlContent,
+      headers: getUnsubscribeHeaders(userEmail, EMAIL_CATEGORIES.CALENDAR)
     });
 
     require("../utils/emailLogger").logSentEmail({
@@ -123,7 +130,8 @@ async function notifyExpired(userEmail, contractName, expiryDate) {
       cta: {
         text: "Verträge verwalten",
         url: `${process.env.FRONTEND_URL || 'https://contract-ai.de'}/contracts`
-      }
+      },
+      unsubscribeUrl: generateUnsubscribeUrl(userEmail, EMAIL_CATEGORIES.CALENDAR)
     });
 
     const expiredSubject = `${contractName} - Vertragsstatus`;
@@ -131,7 +139,8 @@ async function notifyExpired(userEmail, contractName, expiryDate) {
       from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
       to: userEmail,
       subject: expiredSubject,
-      html: htmlContent
+      html: htmlContent,
+      headers: getUnsubscribeHeaders(userEmail, EMAIL_CATEGORIES.CALENDAR)
     });
 
     require("../utils/emailLogger").logSentEmail({
@@ -189,7 +198,8 @@ async function notifyAutoRenewed(userEmail, contractName, oldExpiryDate, newExpi
       cta: {
         text: "Vertrag ansehen",
         url: `${process.env.FRONTEND_URL || 'https://contract-ai.de'}/contracts`
-      }
+      },
+      unsubscribeUrl: generateUnsubscribeUrl(userEmail, EMAIL_CATEGORIES.CALENDAR)
     });
 
     const autoRenewedSubject = `${contractName} - Vertragsverlaengerung`;
@@ -197,7 +207,8 @@ async function notifyAutoRenewed(userEmail, contractName, oldExpiryDate, newExpi
       from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
       to: userEmail,
       subject: autoRenewedSubject,
-      html: htmlContent
+      html: htmlContent,
+      headers: getUnsubscribeHeaders(userEmail, EMAIL_CATEGORIES.CALENDAR)
     });
 
     require("../utils/emailLogger").logSentEmail({

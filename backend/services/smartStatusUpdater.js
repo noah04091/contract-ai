@@ -46,8 +46,15 @@ async function updateContractStatuses(db) {
       let shouldUpdate = false;
       let autoRenewed = false;
 
+      // 31.07.2026 (TÜV-Fix): Extern gekündigte Verträge (KI-extrahiertes gekuendigtZum
+      // beim Upload eines bereits gekündigten Vertrags oder laufende In-App-Kündigung via
+      // cancellationId) dürfen NICHT automatisch "verlängert" werden — sonst kommt eine
+      // faktisch falsche "Vertrag automatisch verlängert"-Mail. Solche Verträge laufen
+      // stattdessen normal in den Abgelaufen-Zweig unten.
+      const isCancelled = !!(contract.cancellationId || contract.gekuendigtZum);
+
       // 🔄 AUTO-RENEWAL CHECK
-      if (daysUntilExpiry <= 0 && contract.isAutoRenewal) {
+      if (daysUntilExpiry <= 0 && contract.isAutoRenewal && !isCancelled) {
         console.log(`🔄 Auto-Renewal für "${contract.name}"`);
 
         // Berechne neues Ablaufdatum
@@ -111,8 +118,8 @@ async function updateContractStatuses(db) {
         console.log(`⚠️ "${contract.name}" läuft in ${daysUntilExpiry} Tagen ab → bald_ablaufend`);
       }
 
-      // ❌ ABGELAUFEN (kein Auto-Renewal)
-      if (daysUntilExpiry <= 0 && !contract.isAutoRenewal && oldStatus !== 'abgelaufen') {
+      // ❌ ABGELAUFEN (kein Auto-Renewal — oder gekündigt, dann verlängert nichts mehr)
+      if (daysUntilExpiry <= 0 && (!contract.isAutoRenewal || isCancelled) && oldStatus !== 'abgelaufen') {
         newStatus = 'abgelaufen';
         shouldUpdate = true;
         updated.abgelaufen++;

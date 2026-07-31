@@ -3,6 +3,7 @@ const { getPendingNotifications, markAsSent, markAsFailed } = require("./notific
 const { notifyExpiringSoon, notifyExpired, notifyAutoRenewed } = require("./statusNotifier");
 const { isEmailActive } = require("./emailBounceService");
 const { isUnsubscribed, EMAIL_CATEGORIES } = require("./emailUnsubscribeService");
+const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // 31.07.2026: frische Anzeige-Tageszahl statt 01:00-Snapshot
 
 /**
  * 📤 NOTIFICATION SENDER
@@ -252,7 +253,12 @@ async function sendNotificationEmail(userEmail, contract, notification) {
 
   switch (notification.type) {
     case 'bald_ablaufend':
-      const daysLeft = notification.metadata.daysLeft || 30;
+      // 31.07.2026 (TÜV-Fix): metadata.daysLeft ist der 01:00-Snapshot (Math.ceil, +1-Drift)
+      // mit erfundenem ||30-Fallback. Anzeige-Zahl frisch aus dem Datum rechnen (Kalendertage,
+      // gleiche Quelle wie Einzelmail/Kalender); Snapshot nur noch als Not-Fallback.
+      const daysLeft = (expiryDate && !isNaN(new Date(expiryDate).getTime()))
+        ? calendarDaysUntil(expiryDate)
+        : (notification.metadata.daysLeft || 30);
       await notifyExpiringSoon(userEmail, contractName, expiryDate, daysLeft);
       break;
 
@@ -300,12 +306,19 @@ async function sendGroupedEmail(userEmail, contractDetails) {
     let borderColor = "#3b82f6";
 
     switch (notification.type) {
-      case 'bald_ablaufend':
+      case 'bald_ablaufend': {
+        // 31.07.2026 (TÜV-Fix): frisch rechnen statt 01:00-Snapshot (+1-Drift) / ||30-Erfindung —
+        // dieselbe Kalendertag-Quelle wie Einzelmail und Kalender-Anzeige.
+        const expiry = contract.expiryDate || contract.endDate;
+        const fresh = (expiry && !isNaN(new Date(expiry).getTime()))
+          ? calendarDaysUntil(expiry)
+          : notification.metadata?.daysLeft;
         statusIcon = "⚠️";
-        statusText = `Läuft in ${notification.metadata.daysLeft || 30} Tagen ab`;
+        statusText = fresh != null ? `Läuft in ${fresh} Tagen ab` : "Läuft bald ab";
         backgroundColor = "#fef3c7";
         borderColor = "#f59e0b";
         break;
+      }
       case 'abgelaufen':
         statusIcon = "❌";
         statusText = "Ist abgelaufen";
@@ -336,6 +349,9 @@ async function sendGroupedEmail(userEmail, contractDetails) {
 
   bodyHtml += `<br><p>Sie können alle Verträge im Dashboard verwalten.</p>`;
 
+  // 31.07.2026 (TÜV-Fix): wie statusNotifier — Abmelde-Link + List-Unsubscribe-Header
+  // (fehlten in der gesamten Status-Strecke; Kategorie CALENDAR wie alle Fristen-Mails).
+  const { getUnsubscribeHeaders, generateUnsubscribeUrl } = require("./emailUnsubscribeService");
   const htmlContent = generateEmailTemplate({
     title: `📊 ${contractDetails.length} Vertrags-Updates`,
     preheader: `${contractDetails.length} Verträge wurden aktualisiert`,
@@ -343,7 +359,8 @@ async function sendGroupedEmail(userEmail, contractDetails) {
     cta: {
       text: "Verträge verwalten",
       url: `${process.env.FRONTEND_URL || 'https://contract-ai.de'}/contracts`
-    }
+    },
+    unsubscribeUrl: generateUnsubscribeUrl(userEmail, EMAIL_CATEGORIES.CALENDAR)
   });
 
   const contractUpdatesSubject = `Deine Vertraege - ${contractDetails.length} Updates`;
@@ -351,7 +368,8 @@ async function sendGroupedEmail(userEmail, contractDetails) {
     from: process.env.EMAIL_FROM || '"Contract AI" <info@contract-ai.de>',
     to: userEmail,
     subject: contractUpdatesSubject,
-    html: htmlContent
+    html: htmlContent,
+    headers: getUnsubscribeHeaders(userEmail, EMAIL_CATEGORIES.CALENDAR)
   });
 
   require("../utils/emailLogger").logSentEmail({

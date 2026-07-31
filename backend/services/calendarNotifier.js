@@ -119,7 +119,14 @@ async function checkAndSendNotifications(db) {
     //              Custom-Reminder, manuell angelegte Termine) → NIEMALS vorziehen,
     //              feuern an ihrem eigenen Datum (Fix 04.06.2026: vorher kamen
     //              "7 Tage vorher"-Mails bis zu 7 Tage zu früh = 14 Tage vor dem Termin)
-    const lookaheadDays = parseInt(process.env.REMINDER_LOOKAHEAD_DAYS || "7");
+    // 31.07.2026 (TÜV-Fix): NaN-Landmine entschärft — ein Tippfehler in der Env
+    // ("sieben", "7d ") ergab parseInt=NaN → Invalid-Date-Fenster → die Query fand
+    // still NULL Events → kompletter Kalender-Mailversand aus, ohne Fehler im Log.
+    const lookaheadParsed = parseInt(process.env.REMINDER_LOOKAHEAD_DAYS || "7");
+    const lookaheadDays = Number.isFinite(lookaheadParsed) && lookaheadParsed >= 0 ? lookaheadParsed : 7;
+    if (lookaheadDays !== lookaheadParsed) {
+      console.warn(`⚠️ REMINDER_LOOKAHEAD_DAYS="${process.env.REMINDER_LOOKAHEAD_DAYS}" ungültig — Fallback 7 Tage`);
+    }
     // 🆕 Option A: Fenster ab HEUTE 00:00 (Cron-Robustheit, keine späten Mails) — siehe getSendWindow.
     const { start: windowStart, end: lookaheadDate } = getSendWindow(now, lookaheadDays);
 
@@ -681,11 +688,16 @@ function generateCancelWindowEmail(event) {
 function generateLastCancelDayEmail(event) {
   const m = event.metadata || {};
   const months = m.autoRenewMonths || 12;
+  // 31.07.2026 (TÜV-Fix): "verlängert sich automatisch" stand hier UNBEDINGT — auch bei
+  // Verträgen ohne Auto-Renewal (falsche Rechtsauskunft; die Event-Description verzweigte
+  // längst korrekt). Jetzt wie dort: nur bei metadata.isAutoRenewal === true; fehlt das
+  // Flag (Alt-Events), gilt der neutrale Satz, der nie falsch ist.
+  const renews = m.isAutoRenewal === true;
   return `
     <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#dc2626; letter-spacing:.3px; text-transform:uppercase;">Heute ist der letzte Tag</p>
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Vertrag'} jetzt kündigen</h1>
-    <p style="margin:0 0 22px 0;">Heute ist die letzte Möglichkeit, fristgerecht zu kündigen. Danach verlängert sich der Vertrag automatisch um <strong style="color:#0f172a;">${months} Monate</strong>.</p>
-    ${calDetail([['Anbieter', formatProvider(m.provider)], ['Letzter Kündigungstag', 'Heute'], ['Ohne Kündigung', `Verlängerung um ${months} Monate`]].filter(Boolean))}
+    <p style="margin:0 0 22px 0;">Heute ist die letzte Möglichkeit, fristgerecht zu kündigen. ${renews ? `Danach verlängert sich der Vertrag automatisch um <strong style="color:#0f172a;">${months} Monate</strong>.` : 'Danach ist eine fristgerechte Kündigung nicht mehr möglich.'}</p>
+    ${calDetail([['Anbieter', formatProvider(m.provider)], ['Letzter Kündigungstag', 'Heute'], renews ? ['Ohne Kündigung', `Verlängerung um ${months} Monate`] : null].filter(Boolean))}
   `;
 }
 

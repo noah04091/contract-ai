@@ -234,6 +234,31 @@ async function processEmailQueue(db) {
       continue;
     }
 
+    // 🗑️ 31.07.2026 (TÜV-Fix, Schalter: EMAIL_ORPHAN_GUARD_ENABLED === 'true', Standard AUS):
+    // Löscht der User den Vertrag zwischen Queuing und (Retry-)Versand, verschwinden die
+    // contract_events — der Queue-Eintrag blieb und die Mail zum gelöschten Vertrag ging
+    // trotzdem raus (Links ins Leere). Guard: Event weg → Mail ehrlich skippen.
+    if (process.env.EMAIL_ORPHAN_GUARD_ENABLED === 'true' && email.eventId) {
+      try {
+        const { ObjectId: OId } = require("mongodb");
+        const evFilter = OId.isValid(email.eventId)
+          ? { _id: new OId(email.eventId) }
+          : { _id: email.eventId };
+        const eventExists = await db.collection("contract_events").findOne(evFilter, { projection: { _id: 1 } });
+        if (!eventExists) {
+          console.log(`⏩ Ueberspringe Mail zu geloeschtem Event ${email.eventId}: ${email.subject}`);
+          await db.collection("email_queue").updateOne(
+            { _id: email._id },
+            { $set: { status: "skipped", skipReason: "event_deleted", skippedAt: new Date() } }
+          );
+          continue;
+        }
+      } catch (guardErr) {
+        // Guard darf NIE legitime Mails verhindern — bei Prüf-Fehler normal weitersenden
+        console.warn(`⚠️ Orphan-Guard-Prüfung fehlgeschlagen (sende trotzdem): ${guardErr.message}`);
+      }
+    }
+
     // 🔐 ATOMARES CLAIMING: nur senden, wenn DIESE Instanz die Zeile von pending→processing holt.
     // Filter enthält status:"pending" → bei zwei parallelen Instanzen (Deploy-Overlap) gewinnt genau
     // eine den Claim (modifiedCount=1), die andere bekommt modifiedCount=0 und überspringt → kein Doppel-Send.
