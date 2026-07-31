@@ -22,6 +22,7 @@ const {
 const {
   generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseSection, pulseReassurance, pulseNote,
 } = require("../utils/pulseEmailTemplate");
+const { cleanContractName } = require("../utils/cleanContractName");
 
 const STALENESS_THRESHOLD_DAYS = 14;
 const COOLDOWN_DAYS = 14;
@@ -239,7 +240,7 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
       : `Score ${c.lastScore}`;
     const metaParts = [c.contractType, `zuletzt geprüft vor ${c.daysStale} Tagen`].filter(Boolean);
     body += pulseSection({
-      name: c.name,
+      name: cleanContractName(c.name),
       dotColor: dot,
       statusText,
       statusColor: dot,

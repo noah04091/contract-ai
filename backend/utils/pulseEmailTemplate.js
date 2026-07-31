@@ -43,7 +43,7 @@ function pulseRow(label, value, strong) {
  * Ein Block (Vertrag/Element): Status-Punkt + Name + Status-Wort, optional Meta-Zeile
  * und/oder Detail-Zeilen. Blöcke werden durch feine Linien getrennt (isFirst = keine).
  */
-function pulseSection({ name, statusText, statusColor = "#697386", dotColor, metaText, rows = [], isFirst = false }) {
+function pulseSection({ name, statusText, statusColor = "#697386", dotColor, metaText, rows = [], isFirst = false, linkUrl, linkText }) {
   const sep = isFirst ? "" : "border-top:1px solid #e6e9ee; padding-top:22px; margin-top:22px;";
   const dot = dotColor
     ? `<span style="display:inline-block; width:9px; height:9px; border-radius:50%; background:${dotColor}; vertical-align:middle; margin-right:8px;"></span>`
@@ -55,13 +55,17 @@ function pulseSection({ name, statusText, statusColor = "#697386", dotColor, met
   const rowsHtml = rows.length
     ? `<table width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;">${rows.join("")}</table>`
     : "";
+  // Optionaler Deep-Link (z. B. direkt zum Alert im Vertrag) — dezent unter den Details
+  const linkHtml = linkUrl
+    ? `<div style="margin-top:12px;"><a href="${linkUrl}" style="font-size:13px; font-weight:600; color:#2563eb; text-decoration:none;">${linkText || "Im Vertrag ansehen"} &rarr;</a></div>`
+    : "";
   return `
       <div style="${sep}">
         <table width="100%" cellpadding="0" cellspacing="0"><tr>
           <td style="vertical-align:middle;">${dot}<span style="font-size:16px; font-weight:600; color:#1a1f36; vertical-align:middle;">${name}</span></td>
           ${statusHtml}
         </tr></table>
-        ${metaHtml}${rowsHtml}
+        ${metaHtml}${rowsHtml}${linkHtml}
       </div>`;
 }
 

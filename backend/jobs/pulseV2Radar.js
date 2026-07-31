@@ -1432,6 +1432,11 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
   alerts = alerts.filter((a) => survivingKeys.has(`${a.lawChange._id.toString()}|${String(a.contractId)}`));
   if (alerts.length === 0) return;
 
+  // Deep-Link-Zuordnung: insertMany hat die _id auf den alertDocs gesetzt — damit kann
+  // die Mail pro Treffer direkt zum aufgeklappten Alert im Vertrag verlinken
+  // (/pulse/<contractId>?alert=<id> — identisch zum In-App-Sprung).
+  const alertIdByKey = new Map(alertDocs.filter((d) => d._id).map((d) => [`${d.lawId}|${String(d.contractId)}`, String(d._id)]));
+
   // Still speichern ohne sofortige Mail (z.B. Backlog-Sweep beim Onboarding):
   // Alerts sind persistiert (sichtbar auf /pulse + Glocke, tauchen im naechsten
   // Wach-Bericht auf) — aber keine ueberraschende Extra-Mail direkt nach der Analyse.
@@ -1537,6 +1542,7 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
       if (summary) rows.push(pulseRow("Was sich ändert", summary));
       if (impact) rows.push(pulseRow("Was das für dich heißt", impact));
       if (recommendation) rows.push(pulseRow("Was du tun kannst", recommendation, true));
+      const deepLinkId = alertIdByKey.get(`${contract.lawChange._id.toString()}|${String(contract.contractId)}`);
       body += pulseSection({
         name: cleanName(contract.contractName),
         dotColor: st.dot,
@@ -1544,6 +1550,8 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
         statusColor: st.dot,
         rows,
         isFirst: i === 0,
+        linkUrl: deepLinkId ? `https://contract-ai.de/pulse/${contract.contractId}?alert=${deepLinkId}` : undefined,
+        linkText: "Direkt zum Treffer im Vertrag",
       });
     });
 
