@@ -1484,6 +1484,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     allFindings={actionableFindingSummaries}
                     onFindingStatusChange={handleFindingStatusChange}
                     onQuickFixApplied={handleQuickFixApplied}
+                    hideStatusActions
                   />
                 ))}
               </div>

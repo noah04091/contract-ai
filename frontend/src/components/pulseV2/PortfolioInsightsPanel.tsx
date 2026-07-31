@@ -113,11 +113,19 @@ function InsightCard({
         <div style={{ fontSize: 13, color: '#4b5563', marginTop: 2 }}>
           {cleanInsightText(insight.description)}
         </div>
-        {hasContracts && !expanded && (
-          <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
-            Betrifft: {insight.relatedContracts.map(id => contractNames.get(id) || cleanInsightText(id)).join(', ')}
-          </div>
-        )}
+        {hasContracts && !expanded && (() => {
+          // Nur auflösbare Namen zeigen — "Unbenannter Vertrag, Unbenannter Vertrag, …" hilft niemandem.
+          const names = insight.relatedContracts
+            .map(id => contractNames.get(id) || cleanInsightText(id))
+            .filter(n => n && n !== 'Unbenannter Vertrag');
+          const unnamed = insight.relatedContracts.length - names.length;
+          if (names.length === 0 && unnamed === 0) return null;
+          return (
+            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
+              Betrifft: {names.join(', ')}{names.length > 0 && unnamed > 0 ? ` + ${unnamed} weitere` : names.length === 0 ? `${unnamed} ${unnamed === 1 ? 'Vertrag' : 'Verträge'} — zum Öffnen aufklappen` : ''}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Expanded — individual contracts */}

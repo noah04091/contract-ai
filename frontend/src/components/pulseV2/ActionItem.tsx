@@ -1,7 +1,15 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { PulseV2Action } from '../../types/pulseV2';
+import { cleanContractName } from '../../utils/contractName';
 import styles from '../../styles/PulseV2.module.css';
+
+// KI-generierte Titel enthalten teils rohe Dateinamen ("Vertrag 1776…_test.docx aktualisieren").
+// Dateinamen-Muster im Fließtext durch den bereinigten Vertragsnamen ersetzen.
+function cleanActionTitle(title: string): string {
+  if (!title) return title;
+  return title.replace(/\d{8,14}[-_][\w.\-()]+\.(docx|pdf|doc)|[\w.\-()]+\.(docx|pdf|doc)/gi, (m) => cleanContractName(m) || m);
+}
 
 interface ActionItemProps {
   action: PulseV2Action;
@@ -215,7 +223,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
             color: isDone ? '#16a34a' : '#111827',
             textDecoration: isDone ? 'line-through' : 'none',
           }}>
-            {action.title}
+            {cleanActionTitle(action.title)}
           </div>
 
           <div style={{ fontSize: 13, color: '#4b5563', marginTop: 4 }}>

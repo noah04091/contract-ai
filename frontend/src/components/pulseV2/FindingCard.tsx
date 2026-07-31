@@ -26,6 +26,9 @@ interface FindingCardProps {
   contractId?: string;
   resultId?: string;
   disabled?: boolean;
+  /** „Geprüft & unauffällig": reiner Nachschlage-Bereich — Status-Aktionen (Erledigt/
+      Nicht relevant/Wieder öffnen) ausblenden, Aufklappen & Lesen bleibt möglich. */
+  hideStatusActions?: boolean;
   /** All actionable findings (critical/high/medium) — passed to optimizer for context */
   allFindings?: PulseFindingSummary[];
   onFindingStatusChange?: (findingIndex: number, status: 'open' | 'resolved' | 'dismissed', comment?: string) => void;
@@ -54,7 +57,7 @@ const ENFORCEABILITY_CONFIG: Record<string, { color: string; bg: string; label: 
   unknown: { color: '#6b7280', bg: '#f9fafb', label: 'Unbekannt' },
 };
 
-export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex, clause, contractId, resultId, disabled, allFindings, onFindingStatusChange, onQuickFixApplied }) => {
+export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex, clause, contractId, resultId, disabled, hideStatusActions, allFindings, onFindingStatusChange, onQuickFixApplied }) => {
   const toast = useToast();
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -293,6 +296,32 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
             {finding.description}
           </div>
         </div>
+        {/* Schnell-Aktionen in der Kopfzeile — gleiche 28×28-Norm wie Radar/Empfehlungen.
+            Die ausführlichen Buttons (inkl. Notiz) bleiben in der Detailansicht unten. */}
+        {onFindingStatusChange && resultId && !disabled && !hideStatusActions && !fixApplied && (
+          <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', gap: 6, flexShrink: 0, alignSelf: 'flex-start' }}>
+            {(!isResolved && !isDismissed) ? (
+              <>
+                <button
+                  title="Als erledigt markieren"
+                  onClick={() => onFindingStatusChange(findingIndex, 'resolved')}
+                  style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #a7f3d0', background: '#ecfdf5', cursor: 'pointer', fontSize: 13, color: '#059669', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                >&#10003;</button>
+                <button
+                  title="Ausblenden (nicht relevant)"
+                  onClick={() => onFindingStatusChange(findingIndex, 'dismissed')}
+                  style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid #d1d5db', background: '#fff', cursor: 'pointer', fontSize: 13, color: '#9ca3af', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
+                >&#10005;</button>
+              </>
+            ) : (
+              <button
+                title="Wiederherstellen"
+                onClick={() => onFindingStatusChange(findingIndex, 'open')}
+                style={{ height: 28, padding: '0 12px', borderRadius: 6, border: '1px solid #a7f3d0', background: '#ecfdf5', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#059669', display: 'inline-flex', alignItems: 'center' }}
+              >Wiederherstellen</button>
+            )}
+          </div>
+        )}
         {!disabled && (
           <span style={{ fontSize: 14, color: '#9ca3af', transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
             &#9660;
@@ -689,7 +718,7 @@ export const FindingCard: React.FC<FindingCardProps> = ({ finding, findingIndex,
           )}
 
           {/* ═══ Resolve/Dismiss + Edit ═══ */}
-          {resultId && !disabled && (
+          {resultId && !disabled && !hideStatusActions && (
             <div style={{
               marginTop: 14,
               paddingTop: 12,
