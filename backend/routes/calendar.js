@@ -377,15 +377,13 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     if (status) {
       updateData.status = status;
 
-      // Handle snooze: Datum verschieben (ab JETZT bzw. ab Event-Datum, je nachdem was später ist)
-      // UND als 'scheduled' markieren — NICHT 'snoozed'. Der Versand-Cron sucht nur status:'scheduled';
-      // bei 'snoozed' kam die Erinnerung NIE wieder ("Snooze-Lüge"). Jetzt feuert sie am neuen Tag.
+      // Handle snooze — 31.07.2026 (TÜV Paket B1): geteilter Helfer. Vorwarner werden
+      // verschoben (re-fire am neuen Tag, Juni-Fix bleibt erhalten), echte Frist-Termine
+      // bleiben unantastbar (Zusatz-Erinnerung stattdessen; Datum ändert nur "Bearbeiten").
       if (status === 'snoozed' && snoozeDays) {
-        const newDate = new Date(Math.max(Date.now(), new Date(event.date).getTime()));
-        newDate.setDate(newDate.getDate() + snoozeDays);
-        updateData.date = newDate;
-        updateData.snoozedUntil = newDate;
-        updateData.status = 'scheduled';
+        const { applySnooze } = require("../services/calendarSnooze");
+        await applySnooze(req.db, event, snoozeDays);
+        delete updateData.status; // Helfer hat Status/Datum bzw. Zusatz-Event bereits gesetzt
       }
     }
 
@@ -878,29 +876,18 @@ router.post("/quick-action", verifyToken, async (req, res) => {
         };
         break;
         
-      case "snooze":
-        // Snooze event for X days
-        const snoozeDays = data?.days || 7;
-        const newDate = new Date(Math.max(Date.now(), new Date(event.date).getTime()));
-        newDate.setDate(newDate.getDate() + snoozeDays);
-
-        await req.db.collection("contract_events").updateOne(
-          { _id: event._id },
-          {
-            $set: {
-              date: newDate,
-              status: "scheduled", // 🆕 Fix: re-fire am neuen Tag (NICHT 'snoozed' = kam nie wieder)
-              snoozedUntil: newDate,
-              updatedAt: new Date()
-            }
-          }
-        );
-        
-        result = { 
-          message: `Erinnerung um ${snoozeDays} Tage verschoben` 
+      case "snooze": {
+        // 31.07.2026 (TÜV Paket B1): geteilter Helfer — Vorwarner werden verschoben,
+        // echte Frist-Termine bleiben unantastbar (Zusatz-Erinnerung stattdessen).
+        const { applySnooze } = require("../services/calendarSnooze");
+        const snoozeResult = await applySnooze(req.db, event, data?.days || 7);
+        result = {
+          message: snoozeResult.message,
+          mode: snoozeResult.mode
         };
         break;
-        
+      }
+
       case "dismiss":
         // Dismiss event
         await req.db.collection("contract_events").updateOne(
@@ -989,14 +976,11 @@ router.get("/quick-action", async (req, res) => {
     }
 
     if (action === "snooze") {
-      const snoozeDays = parseInt(days) || 7;
-      const newDate = new Date(Math.max(Date.now(), new Date(event.date).getTime()));
-      newDate.setDate(newDate.getDate() + snoozeDays);
-      await db.collection("contract_events").updateOne(
-        { _id: event._id },
-        { $set: { date: newDate, status: "scheduled", snoozedUntil: newDate, updatedAt: new Date() } } // 🆕 Fix: re-fire
-      );
-      return res.redirect(`${baseUrl}/calendar?success=snoozed&days=${snoozeDays}`);
+      // 31.07.2026 (TÜV Paket B1): geteilter Helfer — Mail-Link "Erinnern in 7 Tagen"
+      // verschiebt keine echten Frist-Termine mehr (Zusatz-Erinnerung stattdessen).
+      const { applySnooze } = require("../services/calendarSnooze");
+      const snoozeResult = await applySnooze(db, event, parseInt(days) || 7);
+      return res.redirect(`${baseUrl}/calendar?success=snoozed&days=${parseInt(days) || 7}&mode=${snoozeResult.mode}`);
     }
 
     if (action === "dismiss") {

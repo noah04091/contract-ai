@@ -3578,12 +3578,15 @@ export default function CalendarPage() {
       }
 
       if (action === "snooze" && snoozeDays) {
-        await snoozeEvent(eventId, snoozeDays);
+        // 31.07.2026 (TÜV Paket B1): Die Botschaft kommt jetzt vom Backend — bei echten
+        // Frist-Terminen heißt sie ehrlich "Zusätzliche Erinnerung angelegt — der Termin
+        // selbst bleibt am …" statt fälschlich "verschoben".
+        const snoozeMessage = await snoozeEvent(eventId, snoozeDays);
         setShowQuickActions(false);
         setShowSnoozeModal(false);
         setSnoozeEventId(null);
         setSelectedEvent(null);
-        toast.success(`Erinnerung um ${snoozeDays} Tage verschoben`);
+        toast.success(typeof snoozeMessage === 'string' && snoozeMessage ? snoozeMessage : `Erinnerung um ${snoozeDays} Tage verschoben`);
         return;
       }
 

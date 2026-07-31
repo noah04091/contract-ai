@@ -90,7 +90,7 @@ interface CalendarState {
   // Actions
   fetchEvents: (force?: boolean) => Promise<void>;
   dismissEvent: (eventId: string) => Promise<void>;
-  snoozeEvent: (eventId: string, days: number) => Promise<void>;
+  snoozeEvent: (eventId: string, days: number) => Promise<string | undefined | void>;
   addEvent: (event: CalendarEvent) => void;
   removeEvent: (eventId: string) => void;
   updateEvent: (eventId: string, updates: Partial<CalendarEvent>) => void;
@@ -234,29 +234,17 @@ export const useCalendarStore = create<CalendarState>()(
           }
         },
 
-        // Snooze event (optimistic update)
+        // Snooze event — 31.07.2026 (TÜV Paket B1): KEIN optimistisches Datums-Verschieben
+        // mehr. Das Backend entscheidet ehrlich: Vorwarner werden verschoben, echte
+        // Frist-Termine bleiben stehen und bekommen eine Zusatz-Erinnerung. Wir zeigen
+        // danach die Wahrheit (fetchEvents) und geben die Backend-Botschaft zurück.
         snoozeEvent: async (eventId: string, days: number) => {
-          const previousEvents = get().events;
-          const event = previousEvents.find(e => e.id === eventId);
-
+          const event = get().events.find(e => e.id === eventId);
           if (!event) return;
-
-          // Calculate new date
-          const newDate = new Date(event.date);
-          newDate.setDate(newDate.getDate() + days);
-
-          // Optimistic update
-          set({
-            events: previousEvents.map(e =>
-              e.id === eventId
-                ? { ...e, date: newDate.toISOString(), status: 'snoozed' }
-                : e
-            )
-          });
 
           try {
             const token = localStorage.getItem('token');
-            await axios.post('/api/calendar/quick-action', {
+            const res = await axios.post<{ result?: { message?: string; mode?: string } }>('/api/calendar/quick-action', {
               eventId,
               action: 'snooze',
               data: { days }
@@ -264,10 +252,10 @@ export const useCalendarStore = create<CalendarState>()(
               headers: { Authorization: `Bearer ${token}` }
             });
             console.log('[CalendarStore] Event snoozed:', eventId, days, 'days');
+            await get().fetchEvents(true); // echten Stand laden (verschoben ODER Zusatz-Erinnerung)
+            return res.data?.result?.message;
           } catch (err) {
-            // Rollback on error
             console.error('[CalendarStore] Error snoozing event:', err);
-            set({ events: previousEvents });
             throw err;
           }
         },
