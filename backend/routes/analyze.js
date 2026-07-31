@@ -551,6 +551,97 @@ const validateAndFilterImportantDates = (importantDates, contract, requestId) =>
 };
 
 /**
+ * 🛡️ Re-Analyse Anti-Regression (31.07.2026)
+ * ------------------------------------------------------------------
+ * PROBLEM: Beim bewussten "Erneut analysieren" läuft die volle Analyse neu und
+ * ÜBERSCHREIBT importantDates wholesale. LLMs sind nicht deterministisch —
+ * derselbe (byte-identische!) Vertrag "verliert" pro Lauf mal 1–3 belegte
+ * Termine. Für den Kunden wirkt das unzuverlässig, und ein verlorener Termin
+ * bedeutet eine verlorene Kalender-/Fristen-Erinnerung.
+ *
+ * LÖSUNG: Der Erneut-Lauf wird MONOTON — er darf Termine ergänzen/aktualisieren,
+ * aber keinen zuvor gefundenen verlieren. Union aus altem + neuem Bestand.
+ *
+ * SICHER, weil:
+ *  - Nur im Re-Analyse-Zweig aufgerufen (Erst-Analyse byte-identisch unberührt).
+ *  - Gleiche Datei (fileHash) → gleicher Inhalt → ein früher belegter Termin ist
+ *    weiterhin belegt; sein Fehlen im neuen Lauf ist Rauschen, keine Korrektur.
+ *  - Alte Einträge werden ZUERST durch den HEUTIGEN Validator geschickt →
+ *    nichts Veraltetes/Ungültiges wird wiederbelebt.
+ *  - Singleton-Typen (nur ein sinnvoller Wert pro Vertrag) werden nie doppelt:
+ *    bei Kollision gewinnt die höhere confidence.
+ *  - KI-Prompt (Herzstück) unberührt; deterministisch offline beweisbar.
+ * Kill-Switch: REANALYZE_ANTIREGRESSION_ENABLED=false → altes Überschreib-Verhalten.
+ */
+const REANALYZE_ANTIREGRESSION_ENABLED = process.env.REANALYZE_ANTIREGRESSION_ENABLED !== 'false';
+
+// Typen, von denen es pro Vertrag nur EINEN sinnvollen Wert gibt → nie doppeln.
+const SINGLETON_DATE_TYPES = new Set([
+  'start_date', 'end_date', 'cancellation_deadline', 'minimum_term_end',
+  'probation_end', 'renewal_date', 'contract_signed'
+]);
+
+// 🎚️ Bewahren wir NUR kalender-relevante Alt-Termine (Konfidenz ≥ niedrigster
+// Kalender-Event-Schwelle). Ein schwacher Alt-Termin (< 30, erzeugt ohnehin nie
+// ein Event) darf ein Neu-Lauf BEREINIGEN statt ihn zu zementieren — so bleibt das
+// System universell/nicht starr und perpetuiert kein "blödes Datum".
+const PRESERVE_MIN_CONFIDENCE = 30;
+
+const importantDateKey = (d) => `${(d.type || 'other')}|${String(d.date || '').slice(0, 10)}`;
+
+/**
+ * Vereint alte + neue (bereits validierte) importantDates monoton.
+ * Alt-Termine, die im neuen Lauf FEHLEN, werden nur bewahrt, wenn ihre Konfidenz
+ * kalender-relevant ist (≥ PRESERVE_MIN_CONFIDENCE); schwächere darf der Neu-Lauf
+ * bereinigen. Termine in BEIDEN Läufen bleiben immer (der Neu-Lauf bestätigt sie).
+ * @returns Array — bei Schlüssel-Kollision höhere confidence; Singletons entdoppelt.
+ */
+const mergeImportantDatesMonotonic = (oldValidated, newValidated, requestId = '') => {
+  const newArr = Array.isArray(newValidated) ? newValidated : [];
+  if (!REANALYZE_ANTIREGRESSION_ENABLED) return newArr;
+  const oldArr = Array.isArray(oldValidated) ? oldValidated : [];
+
+  const byKey = new Map();
+  const put = (d) => {
+    if (!d || !d.date) return;
+    const k = importantDateKey(d);
+    const prev = byKey.get(k);
+    if (!prev || (d.confidence || 0) > (prev.confidence || 0)) byKey.set(k, d);
+  };
+  // Neue zuerst (frischer Stand, immer aufgenommen).
+  newArr.forEach(put);
+  let preserved = 0, cleaned = 0;
+  for (const d of oldArr) {
+    if (!d || !d.date) continue;
+    if (byKey.has(importantDateKey(d))) {
+      put(d); // in beiden Läufen → Kollision, höhere confidence gewinnt
+    } else if ((d.confidence || 0) >= PRESERVE_MIN_CONFIDENCE) {
+      put(d); preserved++; // solider Alt-Termin, im Neu-Lauf verloren → bewahren
+    } else {
+      cleaned++; // schwacher Alt-Termin (< Schwelle) → Neu-Lauf darf bereinigen
+    }
+  }
+
+  // Singleton-Typen auf den confidence-stärksten Eintrag reduzieren (kein "zweites Enddatum").
+  const bestSingleton = new Map(); // type -> beste Entry
+  const rest = [];
+  for (const d of byKey.values()) {
+    if (SINGLETON_DATE_TYPES.has(d.type)) {
+      const cur = bestSingleton.get(d.type);
+      if (!cur || (d.confidence || 0) > (cur.confidence || 0)) bestSingleton.set(d.type, d);
+    } else {
+      rest.push(d);
+    }
+  }
+  const merged = [...bestSingleton.values(), ...rest];
+
+  if (preserved > 0 || cleaned > 0) {
+    console.log(`🛡️ [${requestId}] Anti-Regression: ${preserved} Termin(e) bewahrt, ${cleaned} schwache(r) bereinigt (alt ${oldArr.length} + neu ${newArr.length} → ${merged.length})`);
+  }
+  return merged;
+};
+
+/**
  * 🔧 FIX: Extract end_date from AI-analyzed importantDates
  * 🔒 NEU: Nur verwenden wenn Regex-Konfidenz niedrig ist!
  * If importantDates contains type='end_date', use that to update expiryDate
@@ -6209,13 +6300,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           detailedLegalOpinion: result.detailedLegalOpinion || '',    // PFLICHT (default ''  ok)
           // 🔒 importantDates werden validiert bevor sie gespeichert werden
           // (completeness + documentCategory + documentType durchgereicht für Phantom-Filterung)
-          importantDates: validateAndFilterImportantDates(result.importantDates || [], {
-            startDate: extractedStartDate,
-            expiryDate: extractedEndDate,
-            completeness: result.completeness,
-            documentCategory: extractedDocumentCategory || 'active_contract',
-            documentType: validationResult.documentType
-          }, requestId)
+          // 🛡️ Re-Analyse Anti-Regression (31.07.2026): Union mit den zuvor
+          // gespeicherten Terminen, damit ein rauschender Neu-Lauf keinen belegten
+          // Termin (→ Kalender/Frist) verliert. Alte werden dabei durch den HEUTIGEN
+          // Validator geschickt, nichts Ungültiges wird wiederbelebt. Kill-Switch:
+          // REANALYZE_ANTIREGRESSION_ENABLED=false → altes Überschreib-Verhalten.
+          importantDates: (() => {
+            const validationCtx = {
+              startDate: extractedStartDate,
+              expiryDate: extractedEndDate,
+              completeness: result.completeness,
+              documentCategory: extractedDocumentCategory || 'active_contract',
+              documentType: validationResult.documentType
+            };
+            const newValidated = validateAndFilterImportantDates(result.importantDates || [], validationCtx, requestId);
+            if (!REANALYZE_ANTIREGRESSION_ENABLED) return newValidated;
+            const oldValidated = validateAndFilterImportantDates(existingContract.importantDates || [], validationCtx, requestId);
+            return mergeImportantDatesMonotonic(oldValidated, newValidated, requestId);
+          })()
         };
 
         // 🔧 FIX: Override expiryDate from AI importantDates if available
@@ -7243,6 +7345,9 @@ module.exports.classifyDocumentTypeWithGPT = classifyDocumentTypeWithGPT;
 module.exports.generateLetterAnalysisPrompt = generateLetterAnalysisPrompt;
 module.exports.resolveSystemPrompt = resolveSystemPrompt;
 module.exports.makeRateLimitedGPT4Request = makeRateLimitedGPT4Request; // 🧪 für Modell-Flag-Offline-Test
+// 🛡️ Re-Analyse Anti-Regression (31.07.2026): Export für deterministischen Offline-Beweis
+module.exports.mergeImportantDatesMonotonic = mergeImportantDatesMonotonic;
+module.exports.validateAndFilterImportantDates = validateAndFilterImportantDates;
 // ⚡ Async-Job-Helfer (27.07.2026): erlauben der Re-Analyse-Route (contracts.js), denselben
 // analysis_jobs-Mechanismus + Polling-Endpunkt zu nutzen wie der Haupt-Upload — gegen den
 // Cloudflare-~100s-Schnitt bei langen Läufen. contracts.js baut seinen eigenen Runner darauf.
