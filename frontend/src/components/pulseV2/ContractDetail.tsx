@@ -55,6 +55,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   const [showAllFindings, setShowAllFindings] = useState(false);
   // Handlungsempfehlungen: gleiche Reiter-Mechanik wie beim Legal Radar (Einheitlichkeit)
   const [actionTab, setActionTab] = useState<'open' | 'done' | 'dismissed'>('open');
+  // Klauselbefunde: ebenfalls identische Reiter — erledigte Befunde verlassen die Offen-Liste
+  const [findingTab, setFindingTab] = useState<'open' | 'resolved' | 'dismissed'>('open');
   const [showJuristischeInfo, setShowJuristischeInfo] = useState(false);
   const [showFindingsInfo, setShowFindingsInfo] = useState(false);
   const [showActionsInfo, setShowActionsInfo] = useState(false);
@@ -242,6 +244,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
     if (actionTab === 'open') return;
     if (actions.filter(a => a.status === actionTab).length === 0) setActionTab('open');
   }, [actionTab, actions]);
+  useEffect(() => {
+    if (findingTab === 'open') return;
+    if (findingsState.filter(f => f.userStatus === findingTab).length === 0) setFindingTab('open');
+  }, [findingTab, findingsState]);
 
   // PDF im neuen Tab öffnen statt Download erzwingen. Bewusst SYNCHRON per window.open
   // (kein fetch+blob davor): nur so bleibt der Klick-Kontext erhalten und Popup-Blocker
@@ -380,6 +386,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   // Top findings: only critical + high
   const topFindings = indexedFindings
     .filter(({ finding: f }) => f.severity === 'critical' || f.severity === 'high');
+  // Reiter-Aufteilung nach Bearbeitungsstatus (gleiche Mechanik wie Radar/Empfehlungen)
+  const openTopFindings = topFindings.filter(({ finding: f }) => f.userStatus !== 'resolved' && f.userStatus !== 'dismissed');
+  const resolvedTopFindings = topFindings.filter(({ finding: f }) => f.userStatus === 'resolved');
+  const dismissedTopFindings = topFindings.filter(({ finding: f }) => f.userStatus === 'dismissed');
 
   // Secondary findings: low + info, collapsed by default (medium already covered by Actions)
   const secondaryFindings = indexedFindings.filter(({ finding: f }) => f.severity === 'low' || f.severity === 'info');
@@ -1030,7 +1040,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             {/* ── Klauselbefunde ── */}
             {hasCriticalFindings && (
               <div style={{ marginBottom: openActions.length > 0 ? 20 : 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, position: 'relative', flexWrap: 'wrap' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1045,7 +1055,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     <span style={{ fontSize: 13 }}>&#9888;</span>
                     Klauselbefunde
                     <span style={{ fontWeight: 400, fontSize: 12 }}>
-                      {topFindings.length} {topFindings.length === 1 ? 'Klausel' : 'Klauseln'}
+                      {openTopFindings.length} offen
                     </span>
                   </div>
                   <button
@@ -1062,6 +1072,30 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   >
                     ?
                   </button>
+                  {/* Reiter erst, sobald es Erledigte/Ausgeblendete gibt (einheitliche Regel) */}
+                  {resolvedTopFindings.length + dismissedTopFindings.length > 0 && (
+                    <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 8, padding: 2, marginLeft: 'auto' }}>
+                      {([
+                        { key: 'open' as const, label: 'Offen', n: openTopFindings.length },
+                        { key: 'resolved' as const, label: 'Erledigt', n: resolvedTopFindings.length },
+                        { key: 'dismissed' as const, label: 'Ausgeblendet', n: dismissedTopFindings.length },
+                      ]).filter(t => t.key === 'open' || t.n > 0).map(t => (
+                        <button
+                          key={t.key}
+                          onClick={() => setFindingTab(t.key)}
+                          style={{
+                            padding: '4px 11px', fontSize: 11.5, fontWeight: 600,
+                            color: findingTab === t.key ? '#0f172a' : '#64748b',
+                            background: findingTab === t.key ? '#ffffff' : 'transparent',
+                            border: 'none', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap',
+                            boxShadow: findingTab === t.key ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                          }}
+                        >
+                          {t.label} ({t.n})
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 {showFindingsInfo && (
                   <div style={{
@@ -1079,19 +1113,30 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                     verbesserte Formulierung direkt anwenden. Nur Quick Fixes verbessern den Health Score.
                   </div>
                 )}
-                {topFindings.map(({ finding, originalIndex }) => (
-                  <FindingCard
-                    key={`top-${finding.clauseId}-${originalIndex}`}
-                    finding={finding}
-                    findingIndex={originalIndex}
-                    clause={clauseMap.get(finding.clauseId)}
-                    contractId={result.contractId}
-                    resultId={result._id}
-                    allFindings={actionableFindingSummaries}
-                    onFindingStatusChange={handleFindingStatusChange}
-                    onQuickFixApplied={handleQuickFixApplied}
-                  />
-                ))}
+                {(() => {
+                  const listMap = { open: openTopFindings, resolved: resolvedTopFindings, dismissed: dismissedTopFindings } as const;
+                  const list = listMap[findingTab];
+                  if (list.length === 0) {
+                    return (
+                      <div style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: 14, background: '#f9fafb', borderRadius: 8 }}>
+                        Keine offenen Befunde — alles abgearbeitet.
+                      </div>
+                    );
+                  }
+                  return list.map(({ finding, originalIndex }) => (
+                    <FindingCard
+                      key={`${findingTab}-${finding.clauseId}-${originalIndex}`}
+                      finding={finding}
+                      findingIndex={originalIndex}
+                      clause={clauseMap.get(finding.clauseId)}
+                      contractId={result.contractId}
+                      resultId={result._id}
+                      allFindings={actionableFindingSummaries}
+                      onFindingStatusChange={handleFindingStatusChange}
+                      onQuickFixApplied={handleQuickFixApplied}
+                    />
+                  ));
+                })()}
               </div>
             )}
 
