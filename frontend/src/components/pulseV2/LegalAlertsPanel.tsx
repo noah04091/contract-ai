@@ -15,16 +15,6 @@ interface LegalAlertsPanelProps {
 
 type PanelView = 'active' | 'resolved' | 'dismissed';
 
-// Anzeigedauer erledigter Alerts (Tage); 0 = nie automatisch ausblenden.
-// Reine Anzeige-Einstellung (localStorage) — Daten werden erst durch das
-// 180-Tage-TTL der Collection endgültig gelöscht.
-const RETENTION_KEY = 'pulseResolvedRetentionDays';
-const RETENTION_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 30, label: '30 Tagen' },
-  { value: 90, label: '90 Tagen' },
-  { value: 0, label: 'nie' },
-];
-
 interface AlertGroup {
   lawId: string;
   lawTitle: string;
@@ -201,16 +191,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
   const [showInfo, setShowInfo] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');
   const [collapsedBuckets, setCollapsedBuckets] = useState<Record<string, boolean>>({ older: true });
-  const [retentionDays, setRetentionDays] = useState<number>(() => {
-    const stored = Number(localStorage.getItem(RETENTION_KEY));
-    return Number.isFinite(stored) && RETENTION_OPTIONS.some(o => o.value === stored) ? stored : 90;
-  });
   const infoRef = useRef<HTMLDivElement>(null);
-
-  const changeRetention = (days: number) => {
-    setRetentionDays(days);
-    try { localStorage.setItem(RETENTION_KEY, String(days)); } catch { /* Anzeige-Einstellung, kein harter Fehler */ }
-  };
 
   const lastVisitTs = lastVisit ? new Date(lastVisit).getTime() : 0;
   const isNewAlert = (a: PulseV2LegalAlert): boolean =>
@@ -230,13 +211,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
   const active = alerts.filter(a => a.status !== 'dismissed' && a.status !== 'resolved');
   const dismissed = alerts.filter(a => a.status === 'dismissed');
   const resolvedAll = alerts.filter(a => a.status === 'resolved');
-  // Erledigte nach Ablauf der eingestellten Frist automatisch ausblenden
-  const resolvedAgeDays = (a: PulseV2LegalAlert) => {
-    const ts = new Date(a.statusChangedAt || a.createdAt || 0).getTime();
-    return ts ? (Date.now() - ts) / (1000 * 60 * 60 * 24) : 0;
-  };
-  const resolved = retentionDays === 0 ? resolvedAll : resolvedAll.filter(a => resolvedAgeDays(a) <= retentionDays);
-  const resolvedHiddenCount = resolvedAll.length - resolved.length;
+  const resolved = resolvedAll;
   const resolvedCount = resolvedAll.length;
 
   // Auto-switch back to active view when the current tab has no alerts left
@@ -317,7 +292,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
                 <p style={{ margin: '0 0 8px' }}>
                   <strong>Alerts bleiben sichtbar</strong>, bis Sie sie per &#10003; als <strong>erledigt</strong> markieren
                   oder ausblenden. Erledigte und ausgeblendete Alerts finden Sie in den gleichnamigen Reitern und
-                  k&ouml;nnen sie jederzeit wiederherstellen. Wie lange Erledigte angezeigt werden, stellen Sie dort selbst ein.
+                  k&ouml;nnen sie jederzeit wiederherstellen; 180 Tage nach Erkennung werden sie automatisch gel&ouml;scht.
                 </p>
                 <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
                   Neue Alerts erscheinen automatisch, sobald relevante Rechts&auml;nderungen erkannt werden.
@@ -458,27 +433,9 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           fontSize: 12, color: '#166534',
           display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
         }}>
-          <span>Erledigte Alerts — automatisch ausblenden nach:</span>
-          <select
-            value={retentionDays}
-            onChange={e => changeRetention(Number(e.target.value))}
-            style={{
-              fontSize: 12, fontWeight: 600, color: '#166534',
-              background: '#fff', border: '1px solid #bbf7d0', borderRadius: 6,
-              padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            {RETENTION_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-          {resolvedHiddenCount > 0 && (
-            <span style={{ color: '#4d7c0f' }}>
-              ({resolvedHiddenCount} ältere derzeit ausgeblendet)
-            </span>
-          )}
-          <span style={{ color: '#6b7280', width: '100%' }}>
-            Endgültig gelöscht werden Alerts erst 180 Tage nach ihrer Erkennung.
+          <span>
+            Erledigte Alerts bleiben hier 180 Tage nach ihrer Erkennung sichtbar und werden dann
+            automatisch gelöscht. Wiederherstellen ist jederzeit möglich.
           </span>
         </div>
       )}
@@ -489,9 +446,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           {view === 'dismissed'
             ? 'Keine ausgeblendeten Alerts.'
             : view === 'resolved'
-            ? (resolvedHiddenCount > 0
-                ? `Alle ${resolvedHiddenCount} erledigten Alerts sind älter als ${retentionDays} Tage und daher ausgeblendet.`
-                : 'Keine erledigten Alerts.')
+            ? 'Keine erledigten Alerts.'
             : `Alle Alerts erledigt. ${resolvedCount} Alert(s) wurden abgearbeitet.`
           }
         </div>
