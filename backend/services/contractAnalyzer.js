@@ -362,7 +362,8 @@ class ContractAnalyzer {
     const specialProviders = [
       { pattern: /adam\s*riese/gi, name: 'Adam Riese', confidence: 95 },
       { pattern: /ADAM\s*RIESE/g, name: 'Adam Riese', confidence: 95 },
-      { pattern: /allianz\s*(?:versicherung|direct|ag)?/gi, name: 'Allianz', confidence: 95 },
+      // 30.07.2026: Wortgrenzen ergänzt — vorher matchte /allianz.../ das Teilwort in "Allianzen".
+      { pattern: /\ballianz\b\s*(?:versicherung|direct|ag)?/gi, name: 'Allianz', confidence: 95 },
       { pattern: /ing[\s\-]?diba/gi, name: 'ING-DiBa', confidence: 95 },
       // ⚠️ ENTFERNT: /\bing\b/gi war zu aggressiv - matchte jedes "ing" im Text
       // ING muss jetzt als "ING-DiBa" oder mit Bank-Kontext erkannt werden
@@ -381,8 +382,10 @@ class ContractAnalyzer {
       // ⚠️ ENTFERNT: /\bhuk\b/gi war zu kurz und unspezifisch
       { pattern: /debeka\s*(?:versicherung|krankenversicherung)?/gi, name: 'Debeka', confidence: 92 },
       { pattern: /r\+v\s*versicherung/gi, name: 'R+V Versicherung', confidence: 95 },
-      { pattern: /generali\s*(?:versicherung|deutschland)?/gi, name: 'Generali', confidence: 92 },
-      { pattern: /zurich\s*(?:versicherung|insurance)?/gi, name: 'Zurich', confidence: 92 },
+      // 30.07.2026: Wortgrenzen ergänzt — vorher matchte /generali.../ das Teilwort in "generalisiert".
+      { pattern: /\bgenerali\b\s*(?:versicherung|deutschland)?/gi, name: 'Generali', confidence: 92 },
+      // 30.07.2026: Wortgrenzen ergänzt — vorher matchte /zurich.../ das Teilwort in "einzurichten".
+      { pattern: /\bzurich\b\s*(?:versicherung|insurance)?/gi, name: 'Zurich', confidence: 92 },
       { pattern: /signal\s*iduna/gi, name: 'Signal Iduna', confidence: 95 },
       { pattern: /techniker\s*krankenkasse/gi, name: 'Techniker Krankenkasse', confidence: 95 },
       // ⚠️ ENTFERNT: /\btk\b/gi war zu kurz - "TK" könnte vieles sein
