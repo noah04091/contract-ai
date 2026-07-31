@@ -292,7 +292,8 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
                 <p style={{ margin: '0 0 8px' }}>
                   <strong>Alerts bleiben sichtbar</strong>, bis Sie sie per &#10003; als <strong>erledigt</strong> markieren
                   oder ausblenden. Erledigte und ausgeblendete Alerts finden Sie in den gleichnamigen Reitern und
-                  k&ouml;nnen sie jederzeit wiederherstellen; 180 Tage nach Erkennung werden sie automatisch gel&ouml;scht.
+                  k&ouml;nnen sie jederzeit wiederherstellen; 90 Tage nach der Markierung werden sie automatisch
+                  gel&ouml;scht. Offene Alerts bleiben, bis Sie handeln.
                 </p>
                 <p style={{ margin: 0, color: '#9ca3af', fontSize: 11 }}>
                   Neue Alerts erscheinen automatisch, sobald relevante Rechts&auml;nderungen erkannt werden.
@@ -422,8 +423,8 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           background: '#f9fafb', borderRadius: 8,
           fontSize: 12, color: '#6b7280',
         }}>
-          Ausgeblendete Alerts werden nicht in Ihren Aktionen berücksichtigt.
-          Sie können jeden Alert wiederherstellen.
+          Ausgeblendete Alerts werden nicht in Ihren Aktionen berücksichtigt und
+          90 Tage nach dem Ausblenden automatisch gelöscht. Wiederherstellen ist jederzeit möglich.
         </div>
       )}
       {view === 'resolved' && (
@@ -434,8 +435,8 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
           display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
         }}>
           <span>
-            Erledigte Alerts bleiben hier 180 Tage nach ihrer Erkennung sichtbar und werden dann
-            automatisch gelöscht. Wiederherstellen ist jederzeit möglich.
+            Erledigte Alerts werden 90 Tage nach der Markierung automatisch gelöscht.
+            Wiederherstellen ist jederzeit möglich.
           </span>
         </div>
       )}
@@ -676,14 +677,15 @@ const LawGroup: React.FC<{
                 onNavigate={onNavigate}
                 headerActions={(onResolve || onDismiss || onRestore) ? (
                   <>
+                    {/* Einheitliche Icon-Norm 28×28 (identisch mit den Handlungsbedarf-Buttons) */}
                     {onResolve && (
                       <button
                         onClick={() => onResolve(alert._id)}
                         title="Als erledigt markieren"
                         style={{
-                          width: 22, height: 22, borderRadius: 4,
+                          width: 28, height: 28, borderRadius: 6,
                           border: '1px solid #a7f3d0', background: '#ecfdf5',
-                          cursor: 'pointer', fontSize: 11, color: '#059669',
+                          cursor: 'pointer', fontSize: 13, color: '#059669',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}
                       >&#10003;</button>
@@ -693,9 +695,9 @@ const LawGroup: React.FC<{
                         onClick={() => setConfirmDismiss(alert._id)}
                         title="Ausblenden"
                         style={{
-                          width: 22, height: 22, borderRadius: 4,
+                          width: 28, height: 28, borderRadius: 6,
                           border: '1px solid #d1d5db', background: '#fff',
-                          cursor: 'pointer', fontSize: 11, color: '#9ca3af',
+                          cursor: 'pointer', fontSize: 13, color: '#9ca3af',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}
                       >&#10005;</button>
@@ -705,10 +707,10 @@ const LawGroup: React.FC<{
                         onClick={() => onRestore(alert._id)}
                         title="Wiederherstellen"
                         style={{
-                          padding: '2px 10px', borderRadius: 4,
+                          height: 28, padding: '0 12px', borderRadius: 6,
                           border: '1px solid #a7f3d0', background: '#ecfdf5',
-                          cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                          color: '#059669',
+                          cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                          color: '#059669', display: 'inline-flex', alignItems: 'center',
                         }}
                       >Wiederherstellen</button>
                     )}

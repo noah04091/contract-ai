@@ -1268,9 +1268,16 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           { key: 'resolved', label: 'Erledigt', n: resolvedAlerts.length },
           { key: 'dismissed', label: 'Ausgeblendet', n: dismissedAlerts.length },
         ];
+        // Einheitliche Button-Norm (28 hoch, wie die Handlungsbedarf-Icons überall)
         const actBtn = (bg: string, border: string, color: string): React.CSSProperties => ({
-          padding: '3px 10px', fontSize: 11, fontWeight: 600, borderRadius: 6,
+          height: 28, padding: '0 12px', fontSize: 12, fontWeight: 600, borderRadius: 6,
           border: `1px solid ${border}`, background: bg, color, cursor: 'pointer', flexShrink: 0,
+          display: 'inline-flex', alignItems: 'center',
+        });
+        const iconBtn = (bg: string, border: string, color: string): React.CSSProperties => ({
+          width: 28, height: 28, fontSize: 13, borderRadius: 6,
+          border: `1px solid ${border}`, background: bg, color, cursor: 'pointer', flexShrink: 0,
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0,
         });
         return (
         <div id="contract-alerts" style={{
@@ -1334,6 +1341,14 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             )}
           </div>
           <div style={{ padding: 24 }}>
+            {/* Lebenszyklus-Hinweis — gleiche Regel wie im Dashboard */}
+            {alertTab !== 'open' && current.length > 0 && (
+              <div style={{ fontSize: 12, color: alertTab === 'resolved' ? '#166534' : '#6b7280', background: alertTab === 'resolved' ? '#f0fdf4' : '#f9fafb', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+                {alertTab === 'resolved'
+                  ? 'Erledigte Alerts werden 90 Tage nach der Markierung automatisch gelöscht. Wiederherstellen ist jederzeit möglich.'
+                  : 'Ausgeblendete Alerts werden 90 Tage nach dem Ausblenden automatisch gelöscht. Wiederherstellen ist jederzeit möglich.'}
+              </div>
+            )}
             {current.length === 0 && (
               <div style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', padding: 14, background: '#f9fafb', borderRadius: 8 }}>
                 {alertTab === 'open' ? 'Keine offenen Alerts — alles abgearbeitet.' : alertTab === 'resolved' ? 'Noch keine erledigten Alerts.' : 'Keine ausgeblendeten Alerts.'}
@@ -1355,12 +1370,12 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                         <button
                           title="Als erledigt markieren"
                           onClick={async () => { const ok = await onAlertStatusChange(alert._id, 'resolved'); if (ok) toast.success('Alert erledigt.'); else toast.error('Fehler — bitte erneut versuchen.'); }}
-                          style={actBtn('#ecfdf5', '#a7f3d0', '#059669')}
+                          style={iconBtn('#ecfdf5', '#a7f3d0', '#059669')}
                         >✓</button>
                         <button
                           title="Ausblenden (nicht relevant)"
                           onClick={async () => { const ok = await onAlertStatusChange(alert._id, 'dismissed'); if (ok) toast.success('Ausgeblendet — Reiter „Ausgeblendet".'); else toast.error('Fehler — bitte erneut versuchen.'); }}
-                          style={actBtn('#fff', '#e2e8f0', '#94a3b8')}
+                          style={iconBtn('#fff', '#e2e8f0', '#9ca3af')}
                         >✕</button>
                       </>
                     ) : (

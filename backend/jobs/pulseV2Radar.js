@@ -212,11 +212,30 @@ async function runPulseV2Radar(db, options = {}) {
     { pulseV2Processed: 1, updatedAt: -1 },
     { background: true }
   );
-  // TTL index: auto-delete alerts older than 180 days (keeps DB lean as user base grows)
+  // Lebenszyklus-Bereinigung (ersetzt den alten 180d-TTL-Index ab createdAt):
+  // NUR bearbeitete Alerts (erledigt/ausgeblendet) werden 90 Tage nach der
+  // Markierung endgültig gelöscht. OFFENE Alerts bleiben, bis der Nutzer handelt —
+  // ein Frühwarnsystem darf Unbearbeitetes nicht still wegwerfen.
+  // (Der TTL-Index wurde per Migration entfernt; Index createdAt bleibt ohne TTL.)
   await db.collection("pulse_v2_legal_alerts").createIndex(
     { createdAt: 1 },
-    { expireAfterSeconds: 15552000, background: true }
+    { background: true }
   );
+  try {
+    const cutoff90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const cleanup = await db.collection("pulse_v2_legal_alerts").deleteMany({
+      status: { $in: ["resolved", "dismissed"] },
+      $or: [
+        { statusChangedAt: { $lt: cutoff90 } },
+        { statusChangedAt: { $exists: false }, createdAt: { $lt: cutoff90 } },
+      ],
+    });
+    if (cleanup.deletedCount > 0) {
+      console.log(`[PulseV2Radar] Lifecycle-Cleanup: ${cleanup.deletedCount} bearbeitete Alerts (>90d) gelöscht`);
+    }
+  } catch (cleanupErr) {
+    console.error("[PulseV2Radar] Lifecycle-Cleanup fehlgeschlagen (nicht fatal):", cleanupErr.message);
+  }
 
   // 1. Find recent law changes (from V1 RSS sync)
   const lawChanges = await fetchRecentLawChanges(db);

@@ -536,7 +536,8 @@ const ActionCenter: React.FC<{
 }> = ({ actions, actionsRef, contractNames, contractLastAnalysisMap, onStatusChange }) => {
   const [showAll, setShowAll] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
+  // Einheitliche Reiter-Mechanik (wie Legal Radar): Offen/Erledigt/Ausgeblendet
+  const [tab, setTab] = useState<'open' | 'done' | 'dismissed'>('open');
   const infoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -556,6 +557,12 @@ const ActionCenter: React.FC<{
   const dismissedActions = actions.filter(a => a.status === 'dismissed');
   const historyCount = doneActions.length + dismissedActions.length;
 
+  // Leerer Reiter (letzter Eintrag wiederhergestellt) → zurück zu "Offen"
+  useEffect(() => {
+    if (tab === 'open') return;
+    if (actions.filter(a => a.status === tab).length === 0) setTab('open');
+  }, [tab, actions]);
+
   const sorted = [...openActions].sort((a, b) => {
     const order: Record<string, number> = { now: 0, plan: 1, watch: 2 };
     return (order[a.priority] ?? 2) - (order[b.priority] ?? 2);
@@ -574,7 +581,7 @@ const ActionCenter: React.FC<{
       padding: 24,
       marginBottom: 24,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 800, color: '#0f172a', marginBottom: 16, letterSpacing: '-0.3px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 18, fontWeight: 800, color: '#0f172a', marginBottom: 16, letterSpacing: '-0.3px', flexWrap: 'wrap' }}>
         Handlungsbedarf
         <span style={{ fontSize: 12, color: '#64748b', fontWeight: 500 }}>
           {openActions.length} offen
@@ -636,6 +643,30 @@ const ActionCenter: React.FC<{
             </div>
           )}
         </div>
+        {/* Reiter erst, sobald es Erledigte/Ausgeblendete gibt (einheitliche Regel) */}
+        {historyCount > 0 && (
+          <div style={{ display: 'inline-flex', background: '#f1f5f9', borderRadius: 8, padding: 2, marginLeft: 'auto' }}>
+            {([
+              { key: 'open' as const, label: 'Offen', n: openActions.length },
+              { key: 'done' as const, label: 'Erledigt', n: doneActions.length },
+              { key: 'dismissed' as const, label: 'Ausgeblendet', n: dismissedActions.length },
+            ]).filter(t => t.key === 'open' || t.n > 0).map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                style={{
+                  padding: '4px 11px', fontSize: 11.5, fontWeight: 600,
+                  color: tab === t.key ? '#0f172a' : '#64748b',
+                  background: tab === t.key ? '#ffffff' : 'transparent',
+                  border: 'none', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap',
+                  boxShadow: tab === t.key ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                }}
+              >
+                {t.label} ({t.n})
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Summary bar */}
@@ -655,8 +686,17 @@ const ActionCenter: React.FC<{
         </div>
       )}
 
+      {/* Erledigt-/Ausgeblendet-Reiter: Liste mit Wiederherstellen (via ActionItem) */}
+      {tab !== 'open' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {(tab === 'done' ? doneActions : dismissedActions).map(action => (
+            <ActionItem key={`${tab}_${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
+          ))}
+        </div>
+      )}
+
       {/* Open actions */}
-      {openActions.length > 0 ? (
+      {tab === 'open' && (openActions.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {displayActions.map(action => (
             <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
@@ -707,50 +747,7 @@ const ActionCenter: React.FC<{
             Keine offenen Handlungsempfehlungen vorhanden.
           </div>
         </div>
-      )}
-
-      {/* Historie — collapsible section for done + dismissed actions */}
-      {historyCount > 0 && (
-        <div style={{ marginTop: 16 }}>
-          <button
-            onClick={() => setShowHistory(!showHistory)}
-            style={{
-              width: '100%',
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '10px 14px',
-              background: '#f9fafb', border: '1px solid #e5e7eb',
-              borderRadius: 8, cursor: 'pointer',
-              fontSize: 13, fontWeight: 600, color: '#6b7280',
-            }}
-          >
-            <span style={{
-              fontSize: 12,
-              transform: showHistory ? 'rotate(90deg)' : 'rotate(0deg)',
-              transition: 'transform 0.15s ease',
-            }}>
-              &#x203A;
-            </span>
-            Historie
-            {doneActions.length > 0 && (
-              <span style={{ fontSize: 11, color: '#16a34a', fontWeight: 500 }}>
-                {doneActions.length} erledigt
-              </span>
-            )}
-            {dismissedActions.length > 0 && (
-              <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 500 }}>
-                {dismissedActions.length} ausgeblendet
-              </span>
-            )}
-          </button>
-          {showHistory && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 10 }}>
-              {[...doneActions, ...dismissedActions].map(action => (
-                <ActionItem key={`hist_${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      ))}
     </div>
   );
 };
