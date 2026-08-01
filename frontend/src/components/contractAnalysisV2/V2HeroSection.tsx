@@ -367,7 +367,10 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   // damit LETTER eigene Rating-Wörter bekommt (Welle 1).
   const docClass: DocClass = classifyDocType(d.documentType, d.contractType);
   const variant = getScoreVariant(score, docClass);
-  const [laymanMode, setLaymanMode] = useState(false);
+  // 🗣️ 01.08.2026 (Noah): Klartext-Zusammenfassung ist als erster Eindruck wertvoller
+  // als der generische Kurzsatz → Standard = Layman-Modus (fällt via hasLayman-Guard
+  // sauber auf den Kurztext zurück, wenn die Analyse keine laymanSummary hat).
+  const [laymanMode, setLaymanMode] = useState(true);
   const [heroSubExpanded, setHeroSubExpanded] = useState(false);
   const [scoreDrawerOpen, setScoreDrawerOpen] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
@@ -477,8 +480,11 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   let heroSub: string;
   if (laymanMode && hasLayman) {
     heroSubFull = laymanArr.join(" ");
-    isHeroSubTruncated = heroSubFull.length > 600;
-    heroSub = heroSubExpanded || !isHeroSubTruncated ? heroSubFull : truncateAtWord(heroSubFull, 600);
+    // 🗣️ 01.08.2026: Schwelle 600→900, damit ein normaler Klartext-Absatz (≈1 Paragraph)
+    // vollständig erscheint (Standard-Ansicht seit Layman-Default); nur echte Langtexte
+    // werden gekürzt mit "Mehr anzeigen", damit der Kopfbereich nicht ausufert.
+    isHeroSubTruncated = heroSubFull.length > 900;
+    heroSub = heroSubExpanded || !isHeroSubTruncated ? heroSubFull : truncateAtWord(heroSubFull, 900);
   } else {
     heroSubFull = buildHeroSubtext(d, docClass);
     isHeroSubTruncated = false;
