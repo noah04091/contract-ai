@@ -755,10 +755,15 @@ router.get("/ics", async (req, res) => {
 
     const userId = new ObjectId(decoded.userId);
 
-    // Get ALL events for this user — same simple query as debug endpoint
-    // Step 1: Find all events (identical to debug which finds 24)
+    // 03.08.2026 (TÜV-Nachzügler, Noah-Wunsch): Derselbe Sichtbarkeits-Filter wie in
+    // ALLEN App-Ansichten (Kalender, "Bald fällig", Glocke) — der Filter-Kommentar in
+    // calendarVisibility.js nannte den ICS-Export von Anfang an als Ziel, er war nur
+    // nie angeschlossen. Ohne ihn erschien JEDE Frist im externen Google/Apple-Kalender
+    // als 3-4 Einzeltermine ("In 2 Wochen: …", "7 Tage vorher: …"). Die Weck-Funktion
+    // bleibt: Haupt-Termine tragen im ICS eigene VALARM-Alarme (24h/1h vorher), eigene
+    // Erinnerungen (custom/manuell) bleiben als Termine sichtbar. Reine Anzeige.
     const allEvents = await req.db.collection("contract_events")
-      .find({ userId, status: { $ne: "dismissed" } })
+      .find({ userId, status: { $ne: "dismissed" }, ...VISIBLE_EVENT_MATCH })
       .sort({ date: 1 })
       .toArray();
 
