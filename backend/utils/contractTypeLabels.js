@@ -77,6 +77,46 @@ const DOCUMENT_TYPE_LABELS = Object.freeze({
 // bekommt IMMER pilotTypeToLabel(contractType), auch geratene Typen bei Nicht-Verträgen).
 const HONEST_DOCTYPE_LABEL_ENABLED = process.env.HONEST_DOCTYPE_LABEL_ENABLED !== 'false';
 
+// 🧠 Phase 2 (03.08.2026): Für UNKNOWN-Dokumente das Label aus der KI-EIGENEN
+// Einschätzung (documentCharacterization.description) ableiten, statt „Unbekannt".
+// Kein Prompt-Eingriff — nutzt nur das Feld, das die KI ohnehin liefert.
+const AI_TYPE_LABEL_ENABLED = process.env.AI_TYPE_LABEL_ENABLED !== 'false';
+
+// 🎚️ Verteidigungs-Gate: die KI-Ableitung nur bei ausreichender Klassifikator-Konfidenz
+// nutzen. Das Doc-Gate lässt zwar nur ≥0.65 als UNKNOWN durch (echte Dokumente); dieser
+// Zusatz-Deckel hält Phase 2 auch dann ehrlich, falls je ein Niedrig-Konfidenz-Schrott
+// (Rezept/Flyer: Klassifikator-Konfidenz ~0) den UNKNOWN-Pfad erreicht → „Unbekannt".
+const AI_TYPE_MIN_CONFIDENCE = 0.5;
+function normConfidence(c) {
+  if (typeof c !== 'number' || isNaN(c)) return null;
+  return c > 1 ? c / 100 : c; // 0-100 ODER 0-1 akzeptieren
+}
+
+// Signalisiert die KI SELBST Unsicherheit? Dann bleibt es ehrlich „unbekannt"
+// (echter Schrott behält den Banner + „Unbekannter Dokumenttyp").
+const UNCERTAIN_CHARACTERIZATION_RE = /(unbekannt|unklar|nicht eindeutig|nicht sicher|nicht.{0,14}(erkenn|zuordn|bestimm|klassifiz|identifiz)|l[aä]sst sich nicht|kein(e|en)?\s+(klar|eindeutig|zuordn)|schwer.{0,12}zuzuordnen|kann.{0,20}nicht.{0,20}(zuordn|einordn))/i;
+
+function isUncertainCharacterization(description) {
+  if (!description || typeof description !== 'string') return true;
+  const s = description.trim();
+  if (!s) return true;
+  return UNCERTAIN_CHARACTERIZATION_RE.test(s);
+}
+
+// Leitet aus der freien KI-Beschreibung ein kurzes, ehrliches Typ-Label ab.
+// "Entgeltabrechnung / Lohnabrechnung Februar 2026" → "Entgeltabrechnung".
+function deriveTypeLabelFromCharacterization(description) {
+  if (!description || typeof description !== 'string') return null;
+  let s = description.replace(/\s+/g, ' ').trim();
+  if (!s) return null;
+  // Ersten Sinnabschnitt vor einem Trenner nehmen (/, (, Gedankenstrich, Doppelpunkt, Komma)
+  s = s.split(/\s*[/(–—:,]\s*/)[0].trim();
+  // Nachlaufende Zeit-/Monatsangaben abschneiden ("… Februar 2026", "… zum 30.09.2026")
+  s = s.replace(/\s+(vom|zum|für|per|ab)\s+.*$/i, '').trim();
+  if (s.length > 42) s = s.slice(0, 42).replace(/\s+\S*$/, '').trim();
+  return s || null;
+}
+
 /**
  * 🎯 Phase 1 (03.08.2026) — Ehrliches Anzeige-Label für den Dokumenttyp.
  * Grundsatz: NIE einen Vertragstyp raten. Ein „…vertrag"-Label gibt es nur, wenn das
@@ -88,12 +128,24 @@ const HONEST_DOCTYPE_LABEL_ENABLED = process.env.HONEST_DOCTYPE_LABEL_ENABLED !=
  * Berührt NUR die Anzeige (Label/Name), nicht die Analyse-Qualität oder das interne
  * contractType-Feld. Bei Flag=false: exakt altes Verhalten.
  */
-function resolveDisplayTypeLabel({ documentType, contractType, letterType } = {}) {
+function resolveDisplayTypeLabel({ documentType, contractType, letterType, characterizationDescription, classificationConfidence } = {}) {
   const dt = typeof documentType === 'string' ? documentType.toUpperCase().trim() : '';
   if (dt === 'LETTER') return letterTypeToLabel(letterType);
   if (!HONEST_DOCTYPE_LABEL_ENABLED) return pilotTypeToLabel(contractType) || null;
   if (dt === 'CONTRACT') return pilotTypeToLabel(contractType) || null;
-  return DOCUMENT_TYPE_LABELS[dt] || DOCUMENT_TYPE_LABELS.UNKNOWN;
+  // Erkannter Nicht-Vertrag (INVOICE/RECEIPT/TABLE/FINANCIAL) → ehrliches Enum-Label.
+  const enumLabel = DOCUMENT_TYPE_LABELS[dt];
+  if (enumLabel && dt !== 'UNKNOWN') return enumLabel;
+  // 🧠 Phase 2: UNKNOWN → aus KI-EIGENER Einschätzung ableiten, außer (a) die KI ist selbst
+  // unsicher ODER (b) die Klassifikator-Konfidenz ist zu niedrig (Schrott-Verdacht). So wird
+  // eine Lohnabrechnung positiv als „Entgeltabrechnung" gelabelt; echter Schrott bleibt „Unbekannt".
+  const conf = normConfidence(classificationConfidence);
+  const confOk = conf == null || conf >= AI_TYPE_MIN_CONFIDENCE;
+  if (AI_TYPE_LABEL_ENABLED && confOk && !isUncertainCharacterization(characterizationDescription)) {
+    const aiLabel = deriveTypeLabelFromCharacterization(characterizationDescription);
+    if (aiLabel) return aiLabel;
+  }
+  return DOCUMENT_TYPE_LABELS.UNKNOWN;
 }
 
 module.exports = {
@@ -102,5 +154,7 @@ module.exports = {
   LETTER_TYPE_LABELS,
   letterTypeToLabel,
   DOCUMENT_TYPE_LABELS,
-  resolveDisplayTypeLabel
+  resolveDisplayTypeLabel,
+  isUncertainCharacterization,
+  deriveTypeLabelFromCharacterization
 };

@@ -366,6 +366,16 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   // 🎯 DocClass für typspezifische UI (20.05.2026) — vor getScoreVariant,
   // damit LETTER eigene Rating-Wörter bekommt (Welle 1).
   const docClass: DocClass = classifyDocType(d.documentType, d.contractType);
+  // 🧠 Phase 2 (03.08.2026): Hat die KI SELBST einen Typ erkannt? Dann ist das Dokument
+  // nicht „unbekannt" — nur unsere Enum-Schublade kennt es nicht (z.B. Lohnabrechnung).
+  // Dann keinen „nicht eindeutig erkannt"-Banner zeigen. Spiegelt die Backend-Logik
+  // (isUncertainCharacterization); echter Schrott mit KI-„weiß nicht" behält den Banner.
+  const aiCharDesc = (d.documentCharacterization?.description || "").trim();
+  // Konfidenz-Gate (spiegelt Backend): Klassifikator-Konfidenz normalisieren (0-1 ODER 0-100);
+  // fehlt sie, erlauben (das Doc-Gate lässt nur ≥0.65 als UNKNOWN durch → echtes Dokument).
+  const aiConfRaw = typeof d.confidence === "number" ? (d.confidence > 1 ? d.confidence / 100 : d.confidence) : null;
+  const aiConfOk = aiConfRaw == null || aiConfRaw >= 0.5;
+  const aiRecognizedType = !!aiCharDesc && aiConfOk && !/(unbekannt|unklar|nicht eindeutig|nicht sicher|nicht.{0,14}(erkenn|zuordn|bestimm|klassifiz|identifiz)|l[aä]sst sich nicht|kein(e|en)?\s+(klar|eindeutig|zuordn)|schwer.{0,12}zuzuordnen)/i.test(aiCharDesc);
   const variant = getScoreVariant(score, docClass);
   // 🗣️ 01.08. + 03.08.2026 (Noah): Der Kopf zeigt IMMER die ausführliche Klartext-
   // Zusammenfassung (laymanSummary); fehlt sie, fällt er via hasLayman-Guard auf den
@@ -727,7 +737,7 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
           gezeigt (Inhalt wurde ja analysiert), aber der User bekommt klare Info
           über die Klassifikations-Unsicherheit + Action-Buttons.
           Mutex: bei Min-Text-Banner (<300 chars) wird dieser Banner suppressed. */}
-      {docClass === "UNKNOWN" && !(typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200) && (
+      {docClass === "UNKNOWN" && !aiRecognizedType && !(typeof d.textLength === "number" && d.textLength > 0 && d.textLength < 200) && (
         <div className={styles.unknownBanner} role="alert">
           <div className={styles.unknownIcon} aria-hidden="true">🤔</div>
           <div className={styles.unknownBody}>

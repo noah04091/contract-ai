@@ -4489,7 +4489,10 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
       contractTypeLabel: resolveDisplayTypeLabel({
         documentType: analysisData.documentType,
         contractType: analysisData.contractType,
-        letterType: analysisData.letterType
+        letterType: analysisData.letterType,
+        // 🧠 Phase 2: bei UNKNOWN aus der KI-eigenen Einschätzung ableiten (+ Konfidenz-Gate)
+        characterizationDescription: analysisData.documentCharacterization && analysisData.documentCharacterization.description,
+        classificationConfidence: analysisData.confidence
       }),
       // 📨 Welle 1: letterType persistieren (Anzeige/Status; null bei Verträgen).
       letterType: analysisData.letterType || null,
@@ -6276,7 +6279,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           contractTypeLabel: resolveDisplayTypeLabel({
             documentType: validationResult.documentType,
             contractType: extractedContractType,
-            letterType: validationResult.letterType
+            letterType: validationResult.letterType,
+            // 🧠 Phase 2: bei UNKNOWN aus der KI-eigenen Einschätzung ableiten (+ Konfidenz-Gate)
+            characterizationDescription: result.documentCharacterization && result.documentCharacterization.description,
+            classificationConfidence: validationResult.confidence
           }),
           // 📨 Welle 1: letterType persistieren (Status-Logik + Anzeige).
           letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
