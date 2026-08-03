@@ -1039,10 +1039,12 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 className={`${styles.laymanToggle} ${laymanMode ? styles.laymanToggleActive : ""}`}
                 onClick={() => setLaymanMode(v => !v)}
                 aria-pressed={laymanMode}
-                title={laymanMode ? "Zurück zur Anwalts-Sprache" : "In einfacher Sprache erklären"}
+                title={laymanMode ? "Zur juristischen Bewertung wechseln" : "In einfache Sprache wechseln"}
               >
                 <Sparkles size={13} />
-                {laymanMode ? "Anwalts-Sprache" : "In einfachen Worten"}
+                {/* 🗣️ 03.08.2026: Verb dran — Button ist ein Umschalter (Aktion), nicht
+                    ein Label des aktuellen Texts. Zeigt, WOHIN der Klick wechselt. */}
+                {laymanMode ? "Anwalts-Sprache anzeigen" : "In einfachen Worten anzeigen"}
               </button>
             )}
           </div>
