@@ -39,7 +39,7 @@ const dateHuntService = require("../services/dateHuntService"); // 📅 Stufe 2:
 const pilotCheckService = require("../services/pilotCheck"); // 🎯 Isolierte Pilot-Tiefenanalyse (typeSpecificFindings) — abgekapselt wie DateHunt, berührt Hauptanalyse nicht
 const PILOT_MAX_TEXT_CHARS = pilotCheckService.MAX_TEXT_CHARS; // 🛡️ Welle 3: pilotTruncated-Flag nutzt DIESELBE Konstante
 const { verifyAnalysisEvidence } = require("../utils/analysisEvidence"); // 🛡️ Welle 3: „✓ Im Dokument belegt"-Verifikation (DateHunt-Validator)
-const { pilotTypeToLabel, letterTypeToLabel } = require("../utils/contractTypeLabels"); // 🏷️ A1 (28.05.2026): KI-Vertragstyp → deutsche Bezeichnung | 📨 Welle 1: letterType → Label
+const { pilotTypeToLabel, letterTypeToLabel, resolveDisplayTypeLabel } = require("../utils/contractTypeLabels"); // 🏷️ A1 (28.05.2026): KI-Vertragstyp → deutsche Bezeichnung | 📨 Welle 1: letterType → Label | 🎯 Phase 1 (03.08.2026): ehrliches Typ-Label (nie raten)
 
 const router = express.Router();
 
@@ -4438,7 +4438,8 @@ function sanitizeContractName(rawName, analysisData) {
   const fallback =
     (ad.documentCharacterization && typeof ad.documentCharacterization.description === 'string'
       ? ad.documentCharacterization.description.trim() : '') ||
-    pilotTypeToLabel(ad.contractType) ||
+    // 🎯 Phase 1 (03.08.2026): kein geratener Vertragstyp im Namen — nur ehrliches Label.
+    resolveDisplayTypeLabel({ documentType: ad.documentType, contractType: ad.contractType, letterType: ad.letterType }) ||
     (typeof ad.documentType === 'string' && !/^[A-Z_]+$/.test(ad.documentType) ? ad.documentType : '') ||
     'Dokument';
   return fallback || 'Dokument';
@@ -4482,9 +4483,14 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
       // 🆕 A1 (28.05.2026): Deutsche KI-Bezeichnung des Vertragstyps für V2-Liste.
       // Mapping englisch→deutsch via pilotTypeToLabel (rental→Mietvertrag etc.).
       // 📨 Welle 1: bei LETTER stattdessen letterType-Label („Abmahnung" etc.).
-      contractTypeLabel: analysisData.documentType === 'LETTER'
-        ? letterTypeToLabel(analysisData.letterType)
-        : (pilotTypeToLabel(analysisData.contractType) || null),
+      // 🎯 Phase 1 (03.08.2026): ehrliches Typ-Label — ein „…vertrag"-Typ nur, wenn das
+      // Dokument WIRKLICH als Vertrag erkannt wurde; sonst ehrlicher Dokumenttyp oder
+      // „Unbekannter Dokumenttyp". Nie raten. Kill-Switch HONEST_DOCTYPE_LABEL_ENABLED.
+      contractTypeLabel: resolveDisplayTypeLabel({
+        documentType: analysisData.documentType,
+        contractType: analysisData.contractType,
+        letterType: analysisData.letterType
+      }),
       // 📨 Welle 1: letterType persistieren (Anzeige/Status; null bei Verträgen).
       letterType: analysisData.letterType || null,
       // 🛡️ TÜV M1: documentCategory='letter' schon bei Neu-Anlage persistieren
@@ -6265,9 +6271,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
           // 🆕 A1 (28.05.2026): Deutsche KI-Bezeichnung für V2-Liste.
           // 📨 Welle 1: bei LETTER aus letterType („Kündigungsschreiben (erhalten)" etc.).
-          contractTypeLabel: validationResult.documentType === 'LETTER'
-            ? letterTypeToLabel(validationResult.letterType)
-            : (pilotTypeToLabel(extractedContractType) || null),
+          // 🎯 Phase 1 (03.08.2026): ehrliches Typ-Label — nie einen Vertragstyp raten
+          // (siehe resolveDisplayTypeLabel). Kill-Switch HONEST_DOCTYPE_LABEL_ENABLED.
+          contractTypeLabel: resolveDisplayTypeLabel({
+            documentType: validationResult.documentType,
+            contractType: extractedContractType,
+            letterType: validationResult.letterType
+          }),
           // 📨 Welle 1: letterType persistieren (Status-Logik + Anzeige).
           letterType: validationResult.documentType === 'LETTER' ? (validationResult.letterType || 'sonstiges_schreiben') : null,
           // 🛡️ Welle 3: Vertrauens-Flags IMMER explizit schreiben (Stale-Schutz —

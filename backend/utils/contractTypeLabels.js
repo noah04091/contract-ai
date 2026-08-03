@@ -62,9 +62,45 @@ function letterTypeToLabel(letterType) {
   return LETTER_TYPE_LABELS[key] || LETTER_TYPE_LABELS.sonstiges_schreiben;
 }
 
+// 🎯 03.08.2026 (Ehrlichkeits-Prinzip): Deutsche Bezeichnungen für ERKANNTE Nicht-
+// Vertrags-Dokumenttypen. Diese sind ehrliche Benennungen dessen, was tatsächlich
+// erkannt wurde — KEINE geratenen Vertragstypen. UNKNOWN bleibt ehrlich „unbekannt".
+const DOCUMENT_TYPE_LABELS = Object.freeze({
+  INVOICE: 'Rechnung',
+  RECEIPT: 'Quittung',
+  TABLE_DOCUMENT: 'Tabellen-Dokument',
+  FINANCIAL_DOCUMENT: 'Finanzdokument',
+  UNKNOWN: 'Unbekannter Dokumenttyp'
+});
+
+// Kill-Switch: HONEST_DOCTYPE_LABEL_ENABLED=false → altes Verhalten (Nicht-LETTER
+// bekommt IMMER pilotTypeToLabel(contractType), auch geratene Typen bei Nicht-Verträgen).
+const HONEST_DOCTYPE_LABEL_ENABLED = process.env.HONEST_DOCTYPE_LABEL_ENABLED !== 'false';
+
+/**
+ * 🎯 Phase 1 (03.08.2026) — Ehrliches Anzeige-Label für den Dokumenttyp.
+ * Grundsatz: NIE einen Vertragstyp raten. Ein „…vertrag"-Label gibt es nur, wenn das
+ * Dokument auch WIRKLICH als Vertrag (CONTRACT) erkannt wurde.
+ *  - LETTER   → letterTypeToLabel (wie bisher)
+ *  - CONTRACT → pilotTypeToLabel(contractType) (KI-Vertragstyp; null → Frontend zeigt '—')
+ *  - erkannter Nicht-Vertrag (INVOICE/RECEIPT/TABLE/FINANCIAL) → ehrlicher Dokumenttyp
+ *  - UNKNOWN / alles andere → „Unbekannter Dokumenttyp" (kein Rateversuch!)
+ * Berührt NUR die Anzeige (Label/Name), nicht die Analyse-Qualität oder das interne
+ * contractType-Feld. Bei Flag=false: exakt altes Verhalten.
+ */
+function resolveDisplayTypeLabel({ documentType, contractType, letterType } = {}) {
+  const dt = typeof documentType === 'string' ? documentType.toUpperCase().trim() : '';
+  if (dt === 'LETTER') return letterTypeToLabel(letterType);
+  if (!HONEST_DOCTYPE_LABEL_ENABLED) return pilotTypeToLabel(contractType) || null;
+  if (dt === 'CONTRACT') return pilotTypeToLabel(contractType) || null;
+  return DOCUMENT_TYPE_LABELS[dt] || DOCUMENT_TYPE_LABELS.UNKNOWN;
+}
+
 module.exports = {
   CONTRACT_TYPE_LABELS,
   pilotTypeToLabel,
   LETTER_TYPE_LABELS,
-  letterTypeToLabel
+  letterTypeToLabel,
+  DOCUMENT_TYPE_LABELS,
+  resolveDisplayTypeLabel
 };
