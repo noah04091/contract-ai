@@ -97,6 +97,15 @@ function statTiles(tiles) {
   return `<table width="100%" cellpadding="0" cellspacing="0" style="margin:4px 0 22px;"><tr>${cells}</tr></table>`;
 }
 
+/** Kürzt lange Gesetzes-/Urteilstitel am Wortende mit „…" statt mitten im Wort. */
+function truncateTitle(title, max = 120) {
+  const t = String(title).trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).replace(/[,;:\s]+$/, "") + " …";
+}
+
 /** Baut Betreff + HTML des Wach-Berichts. */
 function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats }) {
   const clean = (name) => {
@@ -109,7 +118,7 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
   let body = pulseHeadline(
     allClear ? "Deine Verträge sind aktuell. Nichts zu tun." : "Dein Wochen-Überblick von Legal Pulse"
   );
-  body += pulseLead(`Hallo ${userName},`);
+  body += pulseLead(userName ? `Hallo ${userName},` : "Hallo,");
   body += pulseLead(
     "wir haben diese Woche im Hintergrund für dich weitergearbeitet. Hier dein Überblick in drei Zahlen:"
   );
@@ -150,7 +159,7 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
         dotColor: st.dot,
         statusText: st.text,
         statusColor: st.dot,
-        metaText: a.lawTitle ? String(a.lawTitle).slice(0, 120) : undefined,
+        metaText: a.lawTitle ? truncateTitle(a.lawTitle) : undefined,
         isFirst: idx === 0,
       });
     });
@@ -206,7 +215,7 @@ async function runWeeklyReport(db, options = {}) {
     const user = await findUserRobust(db, userId, { email: 1, name: 1, firstName: 1 });
     const stats = await computeUserStats(db, userId, weekAgo);
     const { subject, html } = buildWeeklyReportEmail({
-      userName: user?.firstName || user?.name || (user?.email ? String(user.email).split("@")[0] : "Nutzer"),
+      userName: user?.firstName || user?.name || null,
       monitoredCount: stats.monitoredCount,
       changesEvaluated,
       stats,
@@ -263,7 +272,7 @@ async function runWeeklyReport(db, options = {}) {
       if (stats.monitoredCount === 0) { skipped++; continue; } // nichts zu berichten
 
       const { subject, html } = buildWeeklyReportEmail({
-        userName: user.firstName || user.name || (user.email ? String(user.email).split("@")[0] : "Nutzer"),
+        userName: user.firstName || user.name || null,
         monitoredCount: stats.monitoredCount,
         changesEvaluated,
         stats,
