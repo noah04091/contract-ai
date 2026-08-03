@@ -20,6 +20,7 @@ import {
   Pencil // ✏️ QuickFact Inline-Edit Icon
 } from "lucide-react";
 import styles from "../styles/ContractsV2.module.css";
+import { isRiskScoreMeaningful } from "../utils/scoreDisplay";
 import ContractAnalysis from "../components/ContractAnalysisSwitch";
 import MultiUploadResultNavigator from "../components/MultiUploadResultNavigator"; // 🆕 29.05.2026: Navigator-View ("X von N") ersetzt Grid-View
 import NewContractDetailsModal from "../components/NewContractDetailsModal"; // 🎨 NEW: Professional Contract Details Modal
@@ -6255,8 +6256,27 @@ export default function Contracts() {
                   </div>
                 )}
 
-                {/* 🎨 Mockup-1:1 Score-Ring via CSS conic-gradient */}
-                {previewContract.contractScore !== undefined && previewContract.contractScore !== null && (
+                {/* 🎯 03.08.2026: Neutraler „kein Score"-Zustand bei Nicht-Verträgen (Lohnabrechnung,
+                    Rechnung, Quittung, Tabelle, Unbekannt) — ein Risiko-Score wäre dort irreführend. */}
+                {previewContract.contractScore != null && !isRiskScoreMeaningful(previewContract.documentType, previewContract.contractType) && (
+                  <div className={styles.previewSection}>
+                    <div className={styles.previewSectionHeader}>
+                      <h5>Bewertung</h5>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 2px' }}>
+                      <div style={{ width: 46, height: 46, borderRadius: '50%', border: '2px dashed #cbd5e1', color: '#94a3b8', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                        <FileText size={18} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#475569', fontSize: 14 }}>Kein Risiko-Score</div>
+                        <div style={{ fontSize: 12.5, color: '#94a3b8' }}>Kein Vertragsdokument</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 🎨 Mockup-1:1 Score-Ring via CSS conic-gradient — nur für Verträge/AGB/Schreiben */}
+                {previewContract.contractScore !== undefined && previewContract.contractScore !== null && isRiskScoreMeaningful(previewContract.documentType, previewContract.contractType) && (
                   <div className={styles.previewSection}>
                     <div className={styles.previewSectionHeader}>
                       <h5>Vertragsbewertung</h5>

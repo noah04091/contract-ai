@@ -4,7 +4,7 @@
 // Anti-Halluzination: nur Felder rendern die tatsächlich Daten haben. Wenn KI etwas
 // nicht geliefert hat, weglassen — kein „Nicht angegeben"-Default.
 
-import { X, Scale, ShieldCheck, Sparkles } from "lucide-react";
+import { X, Scale, ShieldCheck, Sparkles, FileText, Check } from "lucide-react";
 import { useEffect } from "react";
 import { classifyDocType, getAnalysisLabel } from "./v2TabLabels";
 
@@ -22,6 +22,10 @@ interface Props {
   // 🎯 NEU 20.05.2026 — für typspezifische Drawer-Headline
   documentType?: string | null;
   contractType?: string | null;
+  // 🎯 03.08.2026 — bei Nicht-Verträgen ehrlicher „kein Risiko-Score"-Hinweis
+  // statt Score-Zusammensetzung.
+  notMeaningful?: boolean;
+  docTypeLabel?: string | null;
 }
 
 const ASYM_LABELS: Record<string, string> = {
@@ -51,6 +55,8 @@ export default function V2ScoreDetailDrawer({
   qualityScore,
   documentType,
   contractType,
+  notMeaningful,
+  docTypeLabel,
 }: Props) {
   // 🎯 Typspezifische Drawer-Headline (20.05.2026)
   const docClass = classifyDocType(documentType, contractType);
@@ -69,6 +75,73 @@ export default function V2ScoreDetailDrawer({
   }, [open, onClose]);
 
   if (!open) return null;
+
+  // 🎯 03.08.2026: Nicht-Vertrag → ehrlicher Hinweis statt Score-Zusammensetzung.
+  if (notMeaningful) {
+    return (
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="score-drawer-title"
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)",
+          backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", zIndex: 100,
+          display: "flex", alignItems: "flex-start", justifyContent: "center",
+          paddingTop: "10vh", animation: "v2ScoreFadeIn 200ms ease-out",
+        }}
+      >
+        <style>{`@keyframes v2ScoreFadeIn{from{opacity:0}to{opacity:1}}@keyframes v2ScoreSlideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}`}</style>
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            background: "#fff", borderRadius: 16, width: "min(520px, 92vw)", maxHeight: "80vh",
+            overflow: "auto", boxShadow: "0 24px 48px -12px rgba(15, 23, 42, 0.25)",
+            animation: "v2ScoreSlideUp 250ms cubic-bezier(0.16, 1, 0.3, 1)",
+          }}
+        >
+          {/* Header */}
+          <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
+              <div style={{ width: 56, height: 56, borderRadius: 14, background: "#f1f5f9", border: "2px dashed #cbd5e1", color: "#94a3b8", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                <FileText size={24} aria-hidden="true" />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <h3 id="score-drawer-title" style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#0f172a", letterSpacing: "-0.015em" }}>
+                  Warum kein Risiko-Score?
+                </h3>
+                <div style={{ fontSize: 12.5, color: "#64748b", fontWeight: 600, marginTop: 3 }}>
+                  Kein Vertragsdokument{docTypeLabel ? ` · erkannt als ${docTypeLabel}` : ""}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button" onClick={onClose} aria-label="Schließen"
+              style={{ border: "1px solid #e5e7eb", background: "#fff", borderRadius: 8, padding: 6, cursor: "pointer", color: "#64748b", display: "grid", placeItems: "center", flexShrink: 0 }}
+            >
+              <X size={16} aria-hidden="true" />
+            </button>
+          </div>
+          {/* Body */}
+          <div style={{ padding: "18px 24px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+            <p style={{ margin: 0, fontSize: 13.5, color: "#475569", lineHeight: 1.6 }}>
+              Dieses Dokument ist kein Vertrag{docTypeLabel ? <>, sondern <strong style={{ color: "#0f172a", fontWeight: 600 }}>{docTypeLabel}</strong></> : ""}. Ein
+              Vertrags-Risiko-Score (0–100) bewertet Klauseln und Vertragsbedingungen — für ein
+              Nicht-Vertragsdokument wäre so eine Zahl nicht aussagekräftig. Wir zeigen sie deshalb
+              bewusst nicht.
+            </p>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 9, background: "#f0fdf4", border: "1px solid #dcfce7", borderRadius: 12, padding: "12px 14px" }}>
+              <Check size={16} style={{ color: "#16a34a", flexShrink: 0, marginTop: 1 }} aria-hidden="true" />
+              <span style={{ fontSize: 12.75, color: "#15803d", fontWeight: 600, lineHeight: 1.5 }}>
+                Deine inhaltliche Analyse ist vollständig — Zusammenfassung, Auffälligkeiten und
+                Empfehlungen findest du in den Abschnitten dieser Seite.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const asymKey = asymmetry?.rating ? String(asymmetry.rating).toLowerCase().replace(/_/g, "-") : "";
   const asymLabel = ASYM_LABELS[asymKey];

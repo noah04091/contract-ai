@@ -52,6 +52,7 @@ import {
   Wallet
 } from "lucide-react";
 import styles from "../styles/ContractDetailsV2.module.css";
+import { isRiskScoreMeaningful } from "../utils/scoreDisplay";
 import { fixUtf8Display } from "../utils/textUtils";
 import ContractEditModal from "../components/ContractEditModal";
 import SmartContractInfo from "../components/SmartContractInfo";
@@ -1582,6 +1583,13 @@ export default function ContractDetailsV2() {
   const riskInfo = getRiskLevel(contract.legalPulse?.riskScore);
   const scoreInfo = getScoreInfo(contract.contractScore);
   const hasContractScore = contract.contractScore !== null && contract.contractScore !== undefined;
+  // 🎯 03.08.2026: Risiko-Score nur bei vertragsartigen Dokumenten anzeigen. Bei
+  // Nicht-Verträgen (Lohnabrechnung, Rechnung, …) neutraler „kein Score"-Zustand.
+  // documentType/contractTypeLabel liefert das Backend zur Laufzeit, fehlen aber im
+  // (unvollständigen) Contract-Typ → lokaler Zugriff.
+  const cDoc = contract as { documentType?: string | null; contractTypeLabel?: string | null };
+  const scoreMeaningful = isRiskScoreMeaningful(cDoc.documentType, contract.contractType);
+  const showRiskScore = hasContractScore && scoreMeaningful;
   const hasAnalysis = contract.analysis && (
     contract.analysis.summary ||
     contract.analysis.positiveAspects?.length ||
@@ -1940,7 +1948,7 @@ export default function ContractDetailsV2() {
                     })()}
 
                     {/* Contract Score Hero Card */}
-                    {hasContractScore && (
+                    {showRiskScore && (
                       <div className={`${styles.card} ${styles.scoreHeroCard} ${styles.fadeIn}`}>
                         <div className={styles.scoreHeroContent}>
                           <div className={styles.scoreCircleContainer}>
@@ -2005,6 +2013,32 @@ export default function ContractDetailsV2() {
                                 {contract.scoreReasoning}
                               </div>
                             )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 🎯 03.08.2026: Nicht-Vertrag → neutraler „kein Risiko-Score"-Zustand
+                        statt irreführender Zahl (Lohnabrechnung, Rechnung, Quittung, …). */}
+                    {hasContractScore && !scoreMeaningful && (
+                      <div className={`${styles.card} ${styles.scoreHeroCard} ${styles.fadeIn}`}>
+                        <div className={styles.scoreHeroContent}>
+                          <div className={styles.scoreCircleContainer}>
+                            <div style={{ width: 96, height: 96, borderRadius: '50%', border: '2px dashed #cbd5e1', color: '#94a3b8', display: 'grid', placeItems: 'center' }}>
+                              <FileText size={30} />
+                            </div>
+                          </div>
+                          <div className={styles.scoreDetails}>
+                            <div className={styles.scoreHeader}>
+                              <FileText size={20} style={{ color: '#94a3b8' }} />
+                              <h3 className={styles.scoreTitle}>Bewertung</h3>
+                            </div>
+                            <div className={styles.scoreStatus} style={{ color: '#64748b', background: '#f1f5f9' }}>
+                              Kein Risiko-Score
+                            </div>
+                            <div style={{ marginTop: 12, fontSize: 13.5, lineHeight: 1.55, color: '#475569' }}>
+                              Dies ist kein Vertragsdokument{cDoc.contractTypeLabel ? <>, sondern <strong style={{ fontWeight: 600, color: '#0f172a' }}>{cDoc.contractTypeLabel}</strong></> : ''}. Ein Vertrags-Risiko-Score wäre hier nicht aussagekräftig — die inhaltliche Analyse findest du unten.
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -2658,7 +2692,7 @@ export default function ContractDetailsV2() {
                     {/* Analysis Stats Header */}
                     {hasAnalysis && (
                       <div className={`${styles.analysisStatsHeader} ${styles.fadeIn}`}>
-                        {hasContractScore && (
+                        {showRiskScore && (
                           <div className={styles.statBadge} style={{ background: scoreInfo.bgColor, color: scoreInfo.color }}>
                             <Shield size={16} />
                             <span>Score: {contract.contractScore}</span>
@@ -2686,7 +2720,7 @@ export default function ContractDetailsV2() {
                     )}
 
                     {/* Contract Score Hero Card */}
-                    {hasContractScore && (
+                    {showRiskScore && (
                       <div className={`${styles.card} ${styles.scoreHeroCard} ${styles.fadeIn}`}>
                         <div className={styles.scoreHeroContent}>
                           <div className={styles.scoreCircleContainer}>

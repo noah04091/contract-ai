@@ -12,6 +12,7 @@
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, FileText, RefreshCw, WifiOff, Scale, Eye, AlertTriangle, PenLine, MessageSquare } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
+import { isRiskScoreMeaningful } from "../../utils/scoreDisplay";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
 import V2PdfViewerModal from "./V2PdfViewerModal";
@@ -370,6 +371,11 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   // nicht „unbekannt" — nur unsere Enum-Schublade kennt es nicht (z.B. Lohnabrechnung).
   // Dann keinen „nicht eindeutig erkannt"-Banner zeigen. Spiegelt die Backend-Logik
   // (isUncertainCharacterization); echter Schrott mit KI-„weiß nicht" behält den Banner.
+  // 🎯 03.08.2026: Risiko-Score nur bei vertragsartigen Dokumenten (CONTRACT/AGB/LETTER)
+  // sinnvoll. Bei Nicht-Verträgen (Rechnung, Quittung, Lohnabrechnung, Tabelle, Unbekannt)
+  // zeigen wir statt „18 Kritisch" einen neutralen „Kein Risiko-Score"-Zustand. Nur Anzeige,
+  // der Score-Wert bleibt unangetastet.
+  const scoreNotMeaningful = !isRiskScoreMeaningful(docClass);
   const aiCharDesc = (d.documentCharacterization?.description || "").trim();
   // Konfidenz-Gate (spiegelt Backend): Klassifikator-Konfidenz normalisieren (0-1 ODER 0-100);
   // fehlt sie, erlauben (das Doc-Gate lässt nur ≥0.65 als UNKNOWN durch → echtes Dokument).
@@ -924,9 +930,11 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
             <button
               type="button"
               onClick={() => setScoreDrawerOpen(true)}
-              aria-label={`Score ${displayScore} von 100, klicken für Details zur Zusammensetzung`}
+              aria-label={scoreNotMeaningful
+                ? "Kein Risiko-Score — dies ist kein Vertragsdokument. Klicken für die Erklärung."
+                : `Score ${displayScore} von 100, klicken für Details zur Zusammensetzung`}
               title={[
-                "So setzt sich dein Score zusammen — klick für Details",
+                scoreNotMeaningful ? "Kein Vertragsdokument — warum kein Score? Klick für Details" : "So setzt sich dein Score zusammen — klick für Details",
                 conf && `Konfidenz: ${conf}`,
                 qual && `Qualität: ${qual}`,
                 d.requestId && `ID: ${d.requestId}`,
@@ -944,6 +952,18 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
             >
             <div className={styles.scoreDonut} style={{ position: "relative", width: 160, height: 160 }}>
+              {scoreNotMeaningful ? (
+                <svg viewBox="0 0 160 160" role="img" aria-label="Kein Risiko-Score, kein Vertragsdokument" style={{ width: "100%", height: "100%", position: "relative", zIndex: 1 }}>
+                  <circle cx="80" cy="80" r={radius} fill="none" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="5 9" strokeLinecap="round" opacity="0.55" />
+                  <g transform="translate(54,40) scale(2.2)" fill="none" stroke="#94a3b8" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                    <path d="M18 21H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h8l5 5v11a1 1 0 0 1-1 1Z" />
+                    <path d="M9 13h6" />
+                    <path d="M9 17h4" />
+                  </g>
+                  <text x="80" y="116" textAnchor="middle" dominantBaseline="middle" fill="#94a3b8" fontSize="11" fontWeight="700" style={{ letterSpacing: "1.5px" }}>n/a</text>
+                </svg>
+              ) : (
               <svg viewBox="0 0 160 160" role="img" aria-label={`${docClass === "LETTER" ? "Einschätzung" : "Vertragsscore"}: ${displayScore} von 100, Bewertung: ${variant.rating}`} style={{ width: "100%", height: "100%", position: "relative", zIndex: 1 }}>
                 <circle cx="80" cy="80" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="11" />
                 <circle
@@ -987,12 +1007,27 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                   VON 100
                 </text>
               </svg>
+              )}
             </div>
             </button>
-            <div className={`${styles.scoreRating} ${variant.cls}`}>{variant.rating}</div>
-            <div style={{ fontSize: 10.5, color: "#94a3b8", fontWeight: 600, letterSpacing: 0.5, textAlign: "center", marginTop: 4 }}>
-              ⓘ Klick für Details
-            </div>
+            {scoreNotMeaningful ? (
+              <>
+                <div className={styles.scoreRating} style={{ color: "#94a3b8" }}>Kein Risiko-Score</div>
+                <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500, textAlign: "center", marginTop: 2, maxWidth: 190, marginLeft: "auto", marginRight: "auto", lineHeight: 1.35 }}>
+                  Kein Vertragsdokument{docTypeLabel ? ` · erkannt als ${docTypeLabel}` : ""}
+                </div>
+                <div style={{ fontSize: 10.5, color: "#94a3b8", fontWeight: 600, letterSpacing: 0.5, textAlign: "center", marginTop: 5 }}>
+                  ⓘ Warum kein Score?
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={`${styles.scoreRating} ${variant.cls}`}>{variant.rating}</div>
+                <div style={{ fontSize: 10.5, color: "#94a3b8", fontWeight: 600, letterSpacing: 0.5, textAlign: "center", marginTop: 4 }}>
+                  ⓘ Klick für Details
+                </div>
+              </>
+            )}
           </div>
           <div>
             <div className={styles.heroEye}>Zusammenfassung</div>
@@ -1230,6 +1265,8 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
         qualityScore={d.qualityScore}
         documentType={d.documentType}
         contractType={d.contractType}
+        notMeaningful={scoreNotMeaningful}
+        docTypeLabel={docTypeLabel}
       />
 
       {/* PDF-Viewer-Modal — öffnet beim Klick auf "PDF anzeigen" */}
