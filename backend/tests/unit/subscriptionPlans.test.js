@@ -88,11 +88,17 @@ describe('Subscription Plans - Unit Tests', () => {
       expect(PLAN_LIMITS[PLANS.FREE].analyze).toBe(3);
     });
 
-    test('Free Plan hat keine Premium Features', () => {
+    test('Free Plan hat keine voll-gesperrten Premium Features (Kontingent 0)', () => {
       expect(PLAN_LIMITS[PLANS.FREE].optimize).toBe(0);
       expect(PLAN_LIMITS[PLANS.FREE].generate).toBe(0);
       expect(PLAN_LIMITS[PLANS.FREE].compare).toBe(0);
-      expect(PLAN_LIMITS[PLANS.FREE].chat).toBe(0);
+      expect(PLAN_LIMITS[PLANS.FREE].envelopes).toBe(0);
+    });
+
+    // 📨 Welle 2 (08.07.2026, Noahs Entscheidung): Free bekommt bewusst ein Chat-
+    // Kontingent (5/Monat, Freemium-Tease) — daher NICHT 0 wie die anderen Premium-Features.
+    test('Free Plan hat ein Chat-Kontingent (Welle 2 Freemium-Tease)', () => {
+      expect(PLAN_LIMITS[PLANS.FREE].chat).toBe(5);
     });
 
     test('Business Plan hat 25 Analysen', () => {
@@ -239,7 +245,13 @@ describe('Subscription Plans - Unit Tests', () => {
 
     test('gibt 0 für nicht-verfügbare Features zurück', () => {
       expect(getFeatureLimit('free', 'optimize')).toBe(0);
-      expect(getFeatureLimit('free', 'chat')).toBe(0);
+      // 📨 chat ist für Free NICHT mehr 0 (Welle 2: 5er-Kontingent) → generate als voll-gesperrtes Beispiel
+      expect(getFeatureLimit('free', 'generate')).toBe(0);
+      expect(getFeatureLimit('free', 'compare')).toBe(0);
+    });
+
+    test('gibt das Free-Chat-Kontingent (5) zurück (Welle 2)', () => {
+      expect(getFeatureLimit('free', 'chat')).toBe(5);
     });
 
     test('behandelt null/undefined Plan als Free', () => {
