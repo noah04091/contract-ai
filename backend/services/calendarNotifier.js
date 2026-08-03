@@ -7,6 +7,7 @@ const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { queueEmail, processEmailQueue } = require("./emailRetryService");
 const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // gemeinsame Tageszahl-Quelle (Anzeige)
 const { formatProvider } = require("../utils/formatProvider"); // Anbieter kann Objekt sein → nie roh interpolieren ("[object Object]")
+const { cleanContractName } = require("../utils/cleanContractName"); // Betreff-Anzeige: Mojibake + Datei-Präfixe raus (wie Pulse-Mails)
 
 /**
  * Maskiert eine E-Mail-Adresse für Logs (DSGVO-Hygiene).
@@ -469,7 +470,7 @@ async function queueEventNotification(event, db) {
 
   switch (event.type) {
     case "CANCEL_REMINDER":
-      subject = `${event.metadata.contractName} - Erinnerung: Kündigungsfrist naht`;
+      subject = `${cleanContractName(event.metadata.contractName)} - Erinnerung: Kündigungsfrist naht`;
       emailContent = generateCancelReminderEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Vertrag ansehen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "primary" },
@@ -478,7 +479,7 @@ async function queueEventNotification(event, db) {
       break;
 
     case "CANCEL_WINDOW_OPEN":
-      subject = `${event.metadata.contractName} - Vertragsinformation`;
+      subject = `${cleanContractName(event.metadata.contractName)} - Vertragsinformation`;
       emailContent = generateCancelWindowEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
@@ -487,7 +488,7 @@ async function queueEventNotification(event, db) {
       break;
 
     case "LAST_CANCEL_DAY":
-      subject = `${event.metadata.contractName} - Frist heute`;
+      subject = `${cleanContractName(event.metadata.contractName)} - Frist heute`;
       emailContent = generateLastCancelDayEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" }
@@ -495,7 +496,7 @@ async function queueEventNotification(event, db) {
       break;
 
     case "CANCEL_WARNING":
-      subject = `${event.metadata.contractName} - Frist in ${event.metadata.daysLeft} Tagen`;
+      subject = `${cleanContractName(event.metadata.contractName)} - Frist in ${event.metadata.daysLeft} Tagen`;
       emailContent = generateCancelWarningEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
@@ -504,7 +505,7 @@ async function queueEventNotification(event, db) {
       break;
 
     case "PRICE_INCREASE":
-      subject = `${event.metadata.contractName} - Preisanpassung`;
+      subject = `${cleanContractName(event.metadata.contractName)} - Preisanpassung`;
       emailContent = generatePriceIncreaseEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Angebote vergleichen", url: `${baseUrl}/compare?contractId=${event.contractId}&reason=price_increase`, style: "primary" },
@@ -513,7 +514,7 @@ async function queueEventNotification(event, db) {
       break;
 
     case "AUTO_RENEWAL":
-      subject = `${event.metadata.contractName} - Vertragsverlaengerung`;
+      subject = `${cleanContractName(event.metadata.contractName)} - Vertragsverlaengerung`;
       emailContent = generateAutoRenewalEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Jetzt kündigen", url: `${baseUrl}/cancel/${event.contractId}?token=${actionToken}&action=cancel`, style: "primary" },
@@ -522,7 +523,7 @@ async function queueEventNotification(event, db) {
       break;
 
     case "REVIEW":
-      subject = `${event.metadata.contractName} - Vertragsinfo`;
+      subject = `${cleanContractName(event.metadata.contractName)} - Vertragsinfo`;
       emailContent = generateReviewEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Optimieren", url: `${baseUrl}/optimize/${event.contractId}`, style: "primary" },
@@ -531,7 +532,7 @@ async function queueEventNotification(event, db) {
       break;
 
     case "CANCELLATION_CONFIRMATION_CHECK":
-      subject = `${event.metadata?.contractName || event.contractName} — Kündigungsbestätigung erhalten?`;
+      subject = `${cleanContractName(event.metadata?.contractName || event.contractName)} — Kündigungsbestätigung erhalten?`;
       emailContent = generateCancellationConfirmationCheckEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Im Kalender prüfen", url: `${baseUrl}/calendar`, style: "primary" },
@@ -565,7 +566,7 @@ async function queueEventNotification(event, db) {
     }
 
     default:
-      subject = `${event.metadata?.contractName || event.title} - Vertragsinformation`;
+      subject = `${cleanContractName(event.metadata?.contractName || event.title)} - Vertragsinformation`;
       emailContent = generateGenericEmail(event, actionToken, baseUrl);
       ctaButtons = [
         { text: "Details ansehen", url: `${baseUrl}/contracts?view=${event.contractId}`, style: "primary" }
