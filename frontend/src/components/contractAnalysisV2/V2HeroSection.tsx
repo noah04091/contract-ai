@@ -10,7 +10,7 @@
 // Liest sowohl result als auch initialResult. Pipeline unangetastet.
 
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle, FileText, RefreshCw, WifiOff, Sparkles, Scale, Eye, AlertTriangle, PenLine, MessageSquare } from "lucide-react";
+import { CheckCircle, FileText, RefreshCw, WifiOff, Scale, Eye, AlertTriangle, PenLine, MessageSquare } from "lucide-react";
 import styles from "./V2HeroSection.module.css";
 import V2ConversionBanner from "./V2ConversionBanner";
 import V2ScoreDetailDrawer from "./V2ScoreDetailDrawer";
@@ -367,10 +367,12 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
   // damit LETTER eigene Rating-Wörter bekommt (Welle 1).
   const docClass: DocClass = classifyDocType(d.documentType, d.contractType);
   const variant = getScoreVariant(score, docClass);
-  // 🗣️ 01.08.2026 (Noah): Klartext-Zusammenfassung ist als erster Eindruck wertvoller
-  // als der generische Kurzsatz → Standard = Layman-Modus (fällt via hasLayman-Guard
-  // sauber auf den Kurztext zurück, wenn die Analyse keine laymanSummary hat).
-  const [laymanMode, setLaymanMode] = useState(true);
+  // 🗣️ 01.08. + 03.08.2026 (Noah): Der Kopf zeigt IMMER die ausführliche Klartext-
+  // Zusammenfassung (laymanSummary); fehlt sie, fällt er via hasLayman-Guard auf den
+  // kurzen Status-Satz zurück. Der frühere „Anwalts-Sprache"-Umschalter war
+  // missverständlich (schaltete nur auf denselben Kurz-Status, keine echte Juristik —
+  // die steht in den Abschnitten unten) und redundant zur Zahlen-Zeile → entfernt.
+  const laymanMode = true;
   const [heroSubExpanded, setHeroSubExpanded] = useState(false);
   const [scoreDrawerOpen, setScoreDrawerOpen] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
@@ -1033,20 +1035,9 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 </div>
               )}
             </div>
-            {hasLayman && (
-              <button
-                type="button"
-                className={`${styles.laymanToggle} ${laymanMode ? styles.laymanToggleActive : ""}`}
-                onClick={() => setLaymanMode(v => !v)}
-                aria-pressed={laymanMode}
-                title={laymanMode ? "Zur juristischen Bewertung wechseln" : "In einfache Sprache wechseln"}
-              >
-                <Sparkles size={13} />
-                {/* 🗣️ 03.08.2026: Verb dran — Button ist ein Umschalter (Aktion), nicht
-                    ein Label des aktuellen Texts. Zeigt, WOHIN der Klick wechselt. */}
-                {laymanMode ? "Anwalts-Sprache anzeigen" : "In einfachen Worten anzeigen"}
-              </button>
-            )}
+            {/* 🗣️ 03.08.2026: Umschalter entfernt — er wechselte nur auf einen kurzen
+                Status-Satz (keine echte Anwalts-Sprache), war missverständlich und
+                redundant zur Zahlen-Zeile darüber. Kopf zeigt jetzt nur den Klartext. */}
           </div>
         </div>
 
