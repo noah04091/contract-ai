@@ -2068,6 +2068,18 @@ const connectDB = async () => {
           console.error("[PulseV2WeeklyReport] Error:", error);
           await captureError(error, { route: 'CRON:pulse-v2-weekly-report', method: 'SCHEDULED', severity: 'low' });
         }
+
+        // Betreiber-Feedback-Bilanz — NACH dem Kundenversand, eigener Schalter
+        // (PULSE_ADMIN_FEEDBACK_DIGEST_ENABLED) + eigener try/catch: kann den
+        // Kundenpfad nie stören. Rein lesend, 1 Mail an den Betreiber, kein Lärm
+        // (sendet nur bei neuem Feedback in 7 Tagen).
+        try {
+          const { runAdminFeedbackDigest } = require("./jobs/pulseV2AdminFeedbackDigest");
+          const cronDb = await database.connect();
+          await runAdminFeedbackDigest(cronDb);
+        } catch (error) {
+          console.error("[PulseV2AdminFeedbackDigest] Error:", error);
+        }
       })));
 
       // Legal Pulse V2 WATCHDOG ("Herz-Monitor") — täglich 08:45 UTC (nach Radar 07:00)
