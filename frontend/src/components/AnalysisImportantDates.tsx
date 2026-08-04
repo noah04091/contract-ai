@@ -58,6 +58,17 @@ interface CancellationPeriod {
   type?: string;
 }
 
+// 📅 Phase 2 (04.08.2026): Von der KI erkannte konkrete Termine (importantDates).
+// Gleiche Quelle wie Detailseite ("KI-Vorschläge") + Modal ("Wichtige Termine").
+// Werden hier nur als read-only Info gezeigt, wenn es 0 Kalender-Termine gibt —
+// damit alle drei Ansichten dasselbe zeigen. Verträge (mit Events) bleiben unberührt.
+interface ImportantDate {
+  type?: string;
+  date: string;
+  label: string;
+  description?: string;
+}
+
 // Icon-Mapping je Frist-Typ. Nicht aufgeführte Typen → Default-Icon.
 // Universal: alle möglichen Frist-Typen aus dem Date Hunt Service.
 const FRIST_ICON: Record<string, string> = {
@@ -121,6 +132,10 @@ export default function AnalysisImportantDates({
   // (Whitelist im Backend filtert Metadaten-Lärm raus).
   const [fristHinweise, setFristHinweise] = useState<FristHinweis[]>([]);
   const [cancellationPeriod, setCancellationPeriod] = useState<CancellationPeriod | null>(null);
+
+  // 📅 Phase 2 (04.08.2026): importantDates aus dem Contract-Document — nur für die
+  // read-only Anzeige-Angleichung (unten), wenn keine Kalender-Termine existieren.
+  const [importantDates, setImportantDates] = useState<ImportantDate[]>([]);
 
   // Standardmäßig erste 4 Fristen anzeigen, Rest hinter Toggle. Verhindert
   // visuelle Überladung bei komplexen Verträgen (Factoring etc. mit 12+ Fristen).
@@ -206,6 +221,11 @@ export default function AnalysisImportantDates({
       } else {
         setCancellationPeriod(null);
       }
+
+      // 📅 Phase 2: importantDates (KI-erkannte konkrete Termine) — gleiche Quelle wie
+      // Detailseite/Modal. Nur für die Anzeige-Angleichung, wenn 0 Kalender-Termine da sind.
+      const ids = Array.isArray(contract?.importantDates) ? contract.importantDates : [];
+      setImportantDates(ids);
     } catch (err) {
       console.error("Error fetching contract meta for fristHinweise:", err);
     }
@@ -407,6 +427,17 @@ export default function AnalysisImportantDates({
       ? [cancellationFallback]
       : [];
 
+  // 📅 Phase 2 (04.08.2026) — Anzeige-Angleichung: Wenn KEINE Kalender-Termine existieren,
+  // aber die KI konkrete Termine erkannt hat (importantDates), zeigen wir diese unten als
+  // read-only Hinweis — genau wie Modal ("Wichtige Termine") und Detailseite ("KI-Vorschläge").
+  // So sagen alle drei Ansichten dasselbe. Kill-Switch: false setzen → exakt altes Verhalten.
+  // Verträge haben i.d.R. Kalender-Termine → dieser Zweig greift dort nicht (unberührt).
+  const SHOW_KI_DATE_SUGGESTIONS = true;
+  const suggestedDates: ImportantDate[] =
+    SHOW_KI_DATE_SUGGESTIONS && sortedEvents.length === 0
+      ? importantDates.filter((d) => d && d.date && d.label)
+      : [];
+
   const todayStr = new Date().toISOString().split("T")[0];
 
   return (
@@ -432,7 +463,16 @@ export default function AnalysisImportantDates({
                   // gesamte termin-relevante Menge sofort sehen.
                   const fhCount = fristHinweise.length;
                   const evCount = sortedEvents.length;
-                  if (evCount === 0 && fhCount === 0) return "Noch keine Termine hinterlegt";
+                  const sdCount = suggestedDates.length;
+                  if (evCount === 0 && fhCount === 0) {
+                    // 📅 Phase 2: 0 Termine/Fristen, aber KI-erkannte Termine da → diese
+                    // ehrlich zählen (statt „Noch keine Termine hinterlegt").
+                    if (sdCount > 0) {
+                      const sdPart = sdCount === 1 ? "1 erkannter Termin" : `${sdCount} erkannte Termine`;
+                      return `${sdPart} für ${docRef}`;
+                    }
+                    return "Noch keine Termine hinterlegt";
+                  }
                   const evPart = `${evCount} Termin${evCount !== 1 ? "e" : ""}`;
                   if (fhCount === 0) return `${evPart} für ${docRef}`;
                   return `${evPart} + ${fhCount} Frist${fhCount !== 1 ? "en" : ""} für ${docRef}`;
@@ -503,24 +543,56 @@ export default function AnalysisImportantDates({
 
           {/* Termine-Block (existing) */}
           {sortedEvents.length === 0 ? (
-            <div className={styles.emptyState}>
-              <div className={styles.emptyIconWrap}>
-                <Calendar size={28} />
+            suggestedDates.length > 0 ? (
+              /* 📅 Phase 2 (04.08.2026): Anzeige-Angleichung — KI-erkannte Termine
+                 (importantDates) read-only zeigen, wenn 0 Kalender-Termine existieren.
+                 Gleiche Termine wie Modal/Detailseite. Verträge mit Events kommen hier
+                 nicht an (unberührt). Kill-Switch: SHOW_KI_DATE_SUGGESTIONS=false. */
+              <div className={styles.fristenBlock}>
+                <div className={styles.subBlockHeader}>
+                  <span className={styles.subBlockIcon}>📅</span>
+                  <span className={styles.subBlockTitle}>Von der KI erkannte Termine</span>
+                </div>
+                <div className={styles.fristenList}>
+                  {suggestedDates.map((d, idx) => (
+                    <div key={`kidate-${idx}`} className={styles.fristItem}>
+                      <div className={styles.fristIconWrap}>📌</div>
+                      <div className={styles.fristContent}>
+                        <div className={styles.fristTitle}>{d.label}</div>
+                        <div className={styles.fristDescription}>
+                          {formatDate(d.date)}{d.description ? ` • ${d.description}` : ""}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className={styles.emptySubtitle} style={{ marginTop: 10 }}>
+                  {`Diese Termine hat die KI in ${docRef} erkannt — es sind noch keine Kalender-Erinnerungen.`}
+                  {canCreate
+                    ? " Du kannst oben einen eigenen Termin dazu anlegen."
+                    : " Termin-Erstellung ist ein Business/Enterprise-Feature."}
+                </p>
               </div>
-              <p className={styles.emptyTitle}>
-                {displayedFristHinweise.length > 0
-                  ? "Keine konkreten Kalendertermine"
-                  : "Keine Termine gefunden"}
-              </p>
-              <p className={styles.emptySubtitle}>
-                {displayedFristHinweise.length > 0
-                  ? `${docClass === "CONTRACT" ? "Dieser Vertrag" : docClass === "AGB" ? "Diese AGB" : docClass === "INVOICE" ? "Diese Rechnung" : docClass === "RECEIPT" ? "Dieser Beleg" : docClass === "TABLE_DOCUMENT" ? "Diese Tabelle" : docClass === "FINANCIAL_DOCUMENT" ? "Dieses Finanzdokument" : "Dieses Dokument"} enthält keine konkreten Datumsangaben — die wichtigsten Fristen siehst du oben.`
-                  : `Die KI hat für ${docRef} keine automatischen Termine erkannt.`}
-                {canCreate
-                  ? " Du kannst oben einen eigenen Termin hinzufügen."
-                  : " Termin-Erstellung ist ein Business/Enterprise-Feature."}
-              </p>
-            </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <div className={styles.emptyIconWrap}>
+                  <Calendar size={28} />
+                </div>
+                <p className={styles.emptyTitle}>
+                  {displayedFristHinweise.length > 0
+                    ? "Keine konkreten Kalendertermine"
+                    : "Keine Termine gefunden"}
+                </p>
+                <p className={styles.emptySubtitle}>
+                  {displayedFristHinweise.length > 0
+                    ? `${docClass === "CONTRACT" ? "Dieser Vertrag" : docClass === "AGB" ? "Diese AGB" : docClass === "INVOICE" ? "Diese Rechnung" : docClass === "RECEIPT" ? "Dieser Beleg" : docClass === "TABLE_DOCUMENT" ? "Diese Tabelle" : docClass === "FINANCIAL_DOCUMENT" ? "Dieses Finanzdokument" : "Dieses Dokument"} enthält keine konkreten Datumsangaben — die wichtigsten Fristen siehst du oben.`
+                    : `Die KI hat für ${docRef} keine automatischen Termine erkannt.`}
+                  {canCreate
+                    ? " Du kannst oben einen eigenen Termin hinzufügen."
+                    : " Termin-Erstellung ist ein Business/Enterprise-Feature."}
+                </p>
+              </div>
+            )
           ) : (
             <>
               {/* View-Toggle: Liste (Detail-Karten) vs Zeitstrahl (vertikale Linie + HEUTE-Divider) */}
