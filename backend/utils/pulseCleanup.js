@@ -39,13 +39,15 @@ function buildIdFilter(field, value) {
  */
 async function cleanupPulseData({ contractId, userId } = {}) {
   if (!contractId && !userId) return;
-
-  const filter = contractId
-    ? buildIdFilter("contractId", contractId)
-    : buildIdFilter("userId", userId);
   const label = contractId ? `contractId=${contractId}` : `userId=${userId}`;
 
   try {
+    // Auch der Filter-Aufbau gehört in den try-Block: die Löschung des Vertrags/Accounts
+    // ist zu diesem Zeitpunkt bereits passiert — ein Fehler hier darf dem Client nie
+    // einen 500er für eine in Wahrheit erfolgreiche Löschung liefern.
+    const filter = contractId
+      ? buildIdFilter("contractId", contractId)
+      : buildIdFilter("userId", userId);
     const db = mongoose.connection.db;
     const [results, alerts] = await Promise.all([
       db.collection("legal_pulse_v2_results").deleteMany(filter),

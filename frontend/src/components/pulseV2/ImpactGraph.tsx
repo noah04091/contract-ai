@@ -146,10 +146,12 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
                 {alert.supportingLaws!.map((s, i) => (
                   <div key={s.lawId || i} style={{ fontSize: 12, color: '#64748b', padding: '2px 0', display: 'flex', gap: 6, alignItems: 'baseline' }}>
                     <span style={{ color: '#94a3b8', flexShrink: 0 }}>•</span>
+                    {/* minWidth:0 + overflowWrap: lange Urteilstitel brechen sauber um,
+                        statt am overflow:hidden der Karte abgeschnitten zu werden */}
                     {s.lawSource && s.lawSource.startsWith('http') ? (
-                      <a href={s.lawSource} target="_blank" rel="noopener noreferrer" style={{ color: '#475569', textDecoration: 'underline', textUnderlineOffset: 2 }}>{s.lawTitle}</a>
+                      <a href={s.lawSource} target="_blank" rel="noopener noreferrer" style={{ color: '#475569', textDecoration: 'underline', textUnderlineOffset: 2, minWidth: 0, overflowWrap: 'anywhere' }}>{s.lawTitle}</a>
                     ) : (
-                      <span>{s.lawTitle}</span>
+                      <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{s.lawTitle}</span>
                     )}
                   </div>
                 ))}

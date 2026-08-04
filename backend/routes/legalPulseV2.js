@@ -1924,7 +1924,8 @@ router.post("/apply-fix", requirePremium, async (req, res) => {
         $set: {
           status: allResolved ? "resolved" : "read",
           lastFixAppliedAt: new Date(),
-          ...(allResolved ? { statusChangedAt: new Date() } : {}),
+          // Jeder Status-Wechsel wird gestempelt (Konsistenz mit PATCH-Routen + Lebenszyklus)
+          statusChangedAt: new Date(),
         },
       }
     );

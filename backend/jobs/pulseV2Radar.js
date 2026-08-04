@@ -1428,7 +1428,7 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
         contractId: { $in: cidVariants },
         status: { $in: ["unread", "read"] },
         affectedClauseIds: { $exists: true, $ne: [] },
-      }).project({ contractId: 1, affectedClauseIds: 1, severity: 1, impactDirection: 1, supportingLaws: 1 }).toArray();
+      }).project({ contractId: 1, lawId: 1, affectedClauseIds: 1, severity: 1, impactDirection: 1, supportingLaws: 1 }).toArray();
 
       if (openExisting.length > 0) {
         const SEV_RANK = { critical: 3, high: 2, medium: 1, low: 0 };
@@ -1442,6 +1442,9 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
             (ex.impactDirection || "negative") === (doc.impactDirection || "negative") &&
             ex.affectedClauseIds.length > 0 &&
             clauses.every((id) => ex.affectedClauseIds.includes(id)) &&
+            // TÜV-Fix 04.08.: Re-Alert desselben Gesetzes darf sich nicht SELBST als
+            // "weitere Quelle" bestätigen — den fing vorher der Unique-Index beim Insert ab.
+            String(ex.lawId) !== String(doc.lawId) &&
             // dasselbe Gesetz nicht doppelt anhängen
             !(ex.supportingLaws || []).some((s) => s.lawId === doc.lawId)
           ) : null;
@@ -1469,6 +1472,9 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
           }
           await db.collection("pulse_v2_legal_alerts").updateOne({ _id: host._id }, update);
           host.supportingLaws = [...(host.supportingLaws || []), { lawId: doc.lawId }];
+          // TÜV-Fix 04.08.: lokalen Severity-Stand nachführen — sonst kann ein zweiter
+          // Bündelungs-Treffer im selben Lauf die gerade erhöhte Schwere wieder senken.
+          if (update.$set.severity) host.severity = update.$set.severity;
           bundled++;
         }
         if (bundled > 0) {

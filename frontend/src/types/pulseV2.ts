@@ -292,7 +292,7 @@ export interface PulseV2LegalAlert {
     lawId: string;
     lawTitle: string;
     lawSource?: string;
-    severity?: string;
+    severity?: 'critical' | 'high' | 'medium' | 'low';
     deepVerified?: boolean;
     evidenceQuote?: string;
     addedAt: string;

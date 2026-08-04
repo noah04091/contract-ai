@@ -4168,26 +4168,33 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
     // IDs zu ObjectId konvertieren
     const objectIds = contractIds.map(id => new ObjectId(id));
 
-    // 1️⃣ Calendar Events löschen (für alle Verträge)
+    // 🔐 TÜV-Fix 04.08.: ZUERST die wirklich besitz-/org-geprüfte Teilmenge ermitteln.
+    // Alle Mit-Löschungen (Events, Legal Lens, Legal Pulse) dürfen NIE mit den rohen
+    // Client-IDs laufen — sonst könnte ein Nutzer über fremde IDs im Request-Body
+    // Kalender-/Analyse-/Alert-Daten fremder Accounts löschen.
+    const deleteFilter = {
+      _id: { $in: objectIds },
+      ...orgFilter
+    };
+    const ownedDocs = await contractsCollection.find(deleteFilter).project({ _id: 1 }).toArray();
+    const ownedIds = ownedDocs.map((d) => d._id);
+
+    // 1️⃣ Calendar Events löschen (nur für besitz-geprüfte Verträge)
     try {
-      const eventsResult = await eventsCollection.deleteMany({
-        contractId: { $in: objectIds }
+      await eventsCollection.deleteMany({
+        contractId: { $in: ownedIds }
       });
     } catch (eventError) {
       console.warn('⚠️ [CALENDAR] Bulk event deletion failed:', eventError.message);
     }
 
     // 2️⃣ Verträge löschen (nur eigene + Org-Verträge)
-    const deleteFilter = {
-      _id: { $in: objectIds },
-      ...orgFilter
-    };
-    const result = await contractsCollection.deleteMany(deleteFilter);
+    const result = await contractsCollection.deleteMany({ _id: { $in: ownedIds }, ...orgFilter });
 
     // 🧹 DSGVO: Legal-Lens-Daten aller gelöschten Verträge mitlöschen
-    await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: objectIds });
+    await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: ownedIds });
     // 🧹 Legal-Pulse-Daten (Analysen + Radar-Alerts) mitlöschen — sonst Geister-Überwachung
-    await require('../utils/pulseCleanup').cleanupPulseData({ contractId: objectIds });
+    await require('../utils/pulseCleanup').cleanupPulseData({ contractId: ownedIds });
 
     res.json({
       success: true,
