@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Plus, X, Loader, Crown, Trash2 } from "lucide-react";
+import { Calendar, Plus, X, Loader, Crown, Trash2, CalendarPlus } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import { useCalendarStore } from "../stores/calendarStore";
 import type { CalendarEvent, CalendarAccess } from "../stores/calendarStore";
@@ -133,9 +133,11 @@ export default function AnalysisImportantDates({
   const [fristHinweise, setFristHinweise] = useState<FristHinweis[]>([]);
   const [cancellationPeriod, setCancellationPeriod] = useState<CancellationPeriod | null>(null);
 
-  // 📅 Phase 2 (04.08.2026): importantDates aus dem Contract-Document — nur für die
-  // read-only Anzeige-Angleichung (unten), wenn keine Kalender-Termine existieren.
+  // 📅 Phase 2 (04.08.2026): importantDates aus dem Contract-Document — für die Anzeige-
+  // Angleichung (unten): KI-erkannte Termine, die noch nicht im Kalender sind.
   const [importantDates, setImportantDates] = useState<ImportantDate[]>([]);
+  // 📅 Phase 2b: welcher KI-Termin wird gerade in den Kalender übernommen (Spinner-Index).
+  const [convertingIdx, setConvertingIdx] = useState<number | null>(null);
 
   // Standardmäßig erste 4 Fristen anzeigen, Rest hinter Toggle. Verhindert
   // visuelle Überladung bei komplexen Verträgen (Factoring etc. mit 12+ Fristen).
@@ -364,6 +366,52 @@ export default function AnalysisImportantDates({
     }
   };
 
+  // 📅 Phase 2b: KI-erkannten Termin als echten Kalender-Event übernehmen. Spiegelt
+  // ContractDetailsV2 handleConvertImportantDate 1:1 (POST /api/calendar/events). Backend
+  // erlaubt manuelle Events für JEDEN Doku-Typ (nur Plan-gated, kein Doku-Typ-Verbot) —
+  // funktioniert also auch bei Belegen. Danach fetchEvents → Termin wandert in die Liste.
+  const handleConvertSuggestion = async (d: ImportantDate, idx: number) => {
+    if (!canCreate) {
+      toast.info("In Kalender übernehmen ist ein Business/Enterprise-Feature");
+      navigate("/pricing");
+      return;
+    }
+    setConvertingIdx(idx);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch("/api/calendar/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          contractId,
+          title: d.label,
+          date: d.date,
+          description: d.description || `Übernommen aus KI-erkannten Terminen (Typ: ${d.type || "other"})`,
+          type: "DEADLINE",
+          severity: "warning",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success !== false) {
+        toast.success("In Kalender übernommen");
+        clearCalendarCache();
+        await fetchEvents();
+      } else if (res.status === 403 && data.upgradeRequired) {
+        toast.error(data.error || "Business/Enterprise-Plan erforderlich");
+      } else {
+        toast.error(data.error || "Fehler beim Übernehmen");
+      }
+    } catch (err) {
+      console.error("Convert suggestion error:", err);
+      toast.error("Netzwerkfehler beim Übernehmen");
+    } finally {
+      setConvertingIdx(null);
+    }
+  };
+
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleDateString("de-DE", {
@@ -427,15 +475,36 @@ export default function AnalysisImportantDates({
       ? [cancellationFallback]
       : [];
 
-  // 📅 Phase 2 (04.08.2026) — Anzeige-Angleichung: Wenn KEINE Kalender-Termine existieren,
-  // aber die KI konkrete Termine erkannt hat (importantDates), zeigen wir diese unten als
-  // read-only Hinweis — genau wie Modal ("Wichtige Termine") und Detailseite ("KI-Vorschläge").
-  // So sagen alle drei Ansichten dasselbe. Kill-Switch: false setzen → exakt altes Verhalten.
-  // Verträge haben i.d.R. Kalender-Termine → dieser Zweig greift dort nicht (unberührt).
+  // Heuristik (1:1 gespiegelt von ContractDetailsV2 isImportantDateInCalendar): Ist dieser
+  // KI-Termin bereits als Kalender-Event vorhanden? ±1 Tag + Titel-Enthaltensein. So zeigen
+  // wir unten nur die Termine, die noch NICHT im Kalender sind (keine Doppelanzeige).
+  const isImportantDateInCalendar = (d: ImportantDate): boolean => {
+    if (!events || events.length === 0) return false;
+    const targetTime = new Date(d.date).getTime();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    const labelLower = (d.label || "").toLowerCase();
+    return events.some((ev) => {
+      const dateDiff = Math.abs(new Date(ev.date).getTime() - targetTime);
+      if (dateDiff > oneDayMs) return false;
+      const titleLower = (ev.title || "").toLowerCase();
+      if (!labelLower) return true;
+      return titleLower.includes(labelLower) || labelLower.includes(titleLower);
+    });
+  };
+
+  // 📅 Phase 2/2b (04.08.2026) — Anzeige-Angleichung: KI-erkannte Termine (importantDates),
+  // die noch NICHT im Kalender sind, zeigen wir unten als aktionierbare Vorschläge — genau
+  // wie die Detailseite ("KI-Vorschläge") und das Modal. So sagen alle Ansichten dasselbe UND
+  // der User kann jeden Termin einzeln in den Kalender übernehmen (statt „toter" Anzeige).
+  // Kill-Switch: false → exakt altes Verhalten. Verträge: bereits-im-Kalender-Termine fallen
+  // raus (isImportantDateInCalendar) → dort erscheint höchstens ein noch offener Vorschlag,
+  // identisch zur Detailseite (kein Widerspruch, keine Regression).
   const SHOW_KI_DATE_SUGGESTIONS = true;
-  const suggestedDates: ImportantDate[] =
-    SHOW_KI_DATE_SUGGESTIONS && sortedEvents.length === 0
-      ? importantDates.filter((d) => d && d.date && d.label)
+  const pendingImportantDates: { d: ImportantDate; idx: number }[] =
+    SHOW_KI_DATE_SUGGESTIONS
+      ? importantDates
+          .map((d, idx) => ({ d, idx }))
+          .filter(({ d }) => d && d.date && d.label && !isImportantDateInCalendar(d))
       : [];
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -463,7 +532,7 @@ export default function AnalysisImportantDates({
                   // gesamte termin-relevante Menge sofort sehen.
                   const fhCount = fristHinweise.length;
                   const evCount = sortedEvents.length;
-                  const sdCount = suggestedDates.length;
+                  const sdCount = pendingImportantDates.length;
                   if (evCount === 0 && fhCount === 0) {
                     // 📅 Phase 2: 0 Termine/Fristen, aber KI-erkannte Termine da → diese
                     // ehrlich zählen (statt „Noch keine Termine hinterlegt").
@@ -541,59 +610,29 @@ export default function AnalysisImportantDates({
             </div>
           )}
 
-          {/* Termine-Block (existing) */}
-          {sortedEvents.length === 0 ? (
-            suggestedDates.length > 0 ? (
-              /* 📅 Phase 2 (04.08.2026): Anzeige-Angleichung — KI-erkannte Termine
-                 (importantDates) read-only zeigen, wenn 0 Kalender-Termine existieren.
-                 Gleiche Termine wie Modal/Detailseite. Verträge mit Events kommen hier
-                 nicht an (unberührt). Kill-Switch: SHOW_KI_DATE_SUGGESTIONS=false. */
-              <div className={styles.fristenBlock}>
-                <div className={styles.subBlockHeader}>
-                  <span className={styles.subBlockIcon}>📅</span>
-                  <span className={styles.subBlockTitle}>Von der KI erkannte Termine</span>
-                </div>
-                <div className={styles.fristenList}>
-                  {suggestedDates.map((d, idx) => (
-                    <div key={`kidate-${idx}`} className={styles.fristItem}>
-                      <div className={styles.fristIconWrap}>📌</div>
-                      <div className={styles.fristContent}>
-                        <div className={styles.fristTitle}>{d.label}</div>
-                        <div className={styles.fristDescription}>
-                          {formatDate(d.date)}{d.description ? ` • ${d.description}` : ""}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className={styles.emptySubtitle} style={{ marginTop: 10 }}>
-                  {`Diese Termine hat die KI in ${docRef} erkannt — es sind noch keine Kalender-Erinnerungen.`}
-                  {canCreate
-                    ? " Du kannst oben einen eigenen Termin dazu anlegen."
-                    : " Termin-Erstellung ist ein Business/Enterprise-Feature."}
-                </p>
+          {/* Termine-Block: „leer"-Zustand NUR, wenn WEDER Kalender-Termine NOCH offene
+              KI-Vorschläge existieren. Sonst rendert der Vorschlags-Block weiter unten. */}
+          {sortedEvents.length === 0 && pendingImportantDates.length === 0 && (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyIconWrap}>
+                <Calendar size={28} />
               </div>
-            ) : (
-              <div className={styles.emptyState}>
-                <div className={styles.emptyIconWrap}>
-                  <Calendar size={28} />
-                </div>
-                <p className={styles.emptyTitle}>
-                  {displayedFristHinweise.length > 0
-                    ? "Keine konkreten Kalendertermine"
-                    : "Keine Termine gefunden"}
-                </p>
-                <p className={styles.emptySubtitle}>
-                  {displayedFristHinweise.length > 0
-                    ? `${docClass === "CONTRACT" ? "Dieser Vertrag" : docClass === "AGB" ? "Diese AGB" : docClass === "INVOICE" ? "Diese Rechnung" : docClass === "RECEIPT" ? "Dieser Beleg" : docClass === "TABLE_DOCUMENT" ? "Diese Tabelle" : docClass === "FINANCIAL_DOCUMENT" ? "Dieses Finanzdokument" : "Dieses Dokument"} enthält keine konkreten Datumsangaben — die wichtigsten Fristen siehst du oben.`
-                    : `Die KI hat für ${docRef} keine automatischen Termine erkannt.`}
-                  {canCreate
-                    ? " Du kannst oben einen eigenen Termin hinzufügen."
-                    : " Termin-Erstellung ist ein Business/Enterprise-Feature."}
-                </p>
-              </div>
-            )
-          ) : (
+              <p className={styles.emptyTitle}>
+                {displayedFristHinweise.length > 0
+                  ? "Keine konkreten Kalendertermine"
+                  : "Keine Termine gefunden"}
+              </p>
+              <p className={styles.emptySubtitle}>
+                {displayedFristHinweise.length > 0
+                  ? `${docClass === "CONTRACT" ? "Dieser Vertrag" : docClass === "AGB" ? "Diese AGB" : docClass === "INVOICE" ? "Diese Rechnung" : docClass === "RECEIPT" ? "Dieser Beleg" : docClass === "TABLE_DOCUMENT" ? "Diese Tabelle" : docClass === "FINANCIAL_DOCUMENT" ? "Dieses Finanzdokument" : "Dieses Dokument"} enthält keine konkreten Datumsangaben — die wichtigsten Fristen siehst du oben.`
+                  : `Die KI hat für ${docRef} keine automatischen Termine erkannt.`}
+                {canCreate
+                  ? " Du kannst oben einen eigenen Termin hinzufügen."
+                  : " Termin-Erstellung ist ein Business/Enterprise-Feature."}
+              </p>
+            </div>
+          )}
+          {sortedEvents.length > 0 && (
             <>
               {/* View-Toggle: Liste (Detail-Karten) vs Zeitstrahl (vertikale Linie + HEUTE-Divider) */}
               <div className={styles.viewToggle} role="tablist" aria-label="Termine-Ansicht">
@@ -819,6 +858,71 @@ export default function AnalysisImportantDates({
                 })()
               )}
             </>
+          )}
+
+          {/* 📅 Phase 2b (04.08.2026): KI-erkannte Termine, die noch NICHT im Kalender sind —
+              aktionierbar wie die Detailseite („KI-Vorschläge"). Nicht mehr „tot": pro Termin
+              „In Kalender übernehmen". Gilt für ALLE Doku-Typen (nur nicht-im-Kalender). */}
+          {pendingImportantDates.length > 0 && (
+            <div className={styles.fristenBlock}>
+              <div className={styles.subBlockHeader}>
+                <span className={styles.subBlockIcon}>📅</span>
+                <span className={styles.subBlockTitle}>Von der KI erkannte Termine</span>
+              </div>
+              <div>
+                {pendingImportantDates.map(({ d, idx }, i) => (
+                  <div
+                    key={`kidate-${idx}`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 0",
+                      borderBottom: i < pendingImportantDates.length - 1 ? "1px solid #f1f5f9" : "none",
+                    }}
+                  >
+                    <div style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }} aria-hidden="true">📌</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{d.label}</div>
+                      <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 2 }}>
+                        {formatDate(d.date)}{d.description ? ` • ${d.description}` : ""}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleConvertSuggestion(d, idx)}
+                      disabled={convertingIdx === idx}
+                      title={canCreate ? "Diesen Termin in den Kalender übernehmen" : "Business/Enterprise-Feature"}
+                      style={{
+                        flexShrink: 0,
+                        alignSelf: "center",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 6,
+                        padding: "7px 12px",
+                        borderRadius: 8,
+                        border: "1px solid #cbd5e1",
+                        background: "#fff",
+                        color: "#2563eb",
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: convertingIdx === idx ? "wait" : "pointer",
+                        fontFamily: "inherit",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {canCreate ? <CalendarPlus size={14} aria-hidden="true" /> : <Crown size={14} aria-hidden="true" />}
+                      <span>{convertingIdx === idx ? "..." : canCreate ? "In Kalender" : "Upgrade"}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className={styles.emptySubtitle} style={{ marginTop: 10 }}>
+                {canCreate
+                  ? `Diese Termine hat die KI in ${docRef} erkannt. Übernimm sie einzeln in deinen Kalender — oder lass sie einfach als Hinweis stehen.`
+                  : `Diese Termine hat die KI in ${docRef} erkannt. In den Kalender übernehmen ist ein Business/Enterprise-Feature.`}
+              </p>
+            </div>
           )}
 
           {/* Vertragshistorie-Block ENTFERNT (Doppelung beseitigt):

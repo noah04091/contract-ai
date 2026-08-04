@@ -132,6 +132,38 @@ function isEmptyValue(value: string | undefined | null): boolean {
 }
 
 // ----------------------------------------
+// 🎯 04.08.2026 — Ehrlichkeits-Prinzip: Vertrags-Lebenszyklus-Felder bei Nicht-Verträgen ausblenden
+// ----------------------------------------
+// Eine Rechnung/Quittung/Tabelle/Finanzdokument hat KEINEN „Vertragsbeginn", keine „Laufzeit",
+// kein „Enddatum", keine „Kündigungsfrist". Der alte deterministische Regex-Extraktor erfindet dort
+// aber teils Werte (z.B. „1 Jahr Versicherungslaufzeit", Belegdatum als „Vertragsbeginn"). Statt diese
+// erfundenen Contract-Felder anzuzeigen, blenden wir sie NUR bei eindeutigen Nicht-Verträgen aus —
+// die ehrlichen Beleg-Daten (Belegdatum/Betrag/Belegtyp) stehen ohnehin in der „Eckdaten"-Box.
+//
+// WICHTIG (kein Regressionsrisiko): CONTRACT, LETTER, UNKNOWN und fehlender documentType bleiben
+// UNBERÜHRT (könnten echte Verträge sein → alle Felder wie bisher). Nur reine Anzeige, nicht die
+// Factory/Edit-Logik. Kill-Switch: HIDE_CONTRACT_FIELDS_FOR_BELEGE=false → altes Verhalten.
+const HIDE_CONTRACT_FIELDS_FOR_BELEGE = true;
+const NON_CONTRACT_DOC_TYPES = ['INVOICE', 'RECEIPT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'];
+const CONTRACT_LIFECYCLE_FIELD_KEYS = ['laufzeit', 'startDate', 'expiryDate', 'kuendigung', 'gekuendigtZum'];
+
+/**
+ * Soll dieses Eckdaten-Feld für den gegebenen Dokumenttyp AUSGEBLENDET werden?
+ * true nur, wenn (a) documentType ein eindeutiger Nicht-Vertrag ist UND (b) das Feld ein
+ * Vertrags-Lebenszyklus-Feld ist. Sonst immer false (= anzeigen, unverändertes Verhalten).
+ */
+export function isContractLifecycleFieldHiddenForDocType(
+  fieldKey: string,
+  documentType?: string | null
+): boolean {
+  if (!HIDE_CONTRACT_FIELDS_FOR_BELEGE) return false;
+  if (!documentType) return false;
+  const dt = documentType.toUpperCase().trim();
+  if (!NON_CONTRACT_DOC_TYPES.includes(dt)) return false;
+  return CONTRACT_LIFECYCLE_FIELD_KEYS.includes(fieldKey);
+}
+
+// ----------------------------------------
 // FACTORY
 // ----------------------------------------
 /**

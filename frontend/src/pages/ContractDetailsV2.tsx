@@ -59,7 +59,7 @@ import SmartContractInfo from "../components/SmartContractInfo";
 import ContractShareModal from "../components/ContractShareModal";
 import { useAuth } from "../hooks/useAuth";
 import { isBusinessOrHigher } from "../utils/authUtils";
-import { createEditableFields, type EditableField } from "../utils/contractEditableFields";
+import { createEditableFields, isContractLifecycleFieldHiddenForDocType, type EditableField } from "../utils/contractEditableFields";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -2156,6 +2156,10 @@ export default function ContractDetailsV2() {
                           {EDITABLE_FIELDS.map((field) => {
                             const isBeingEdited = editingField === field.key;
                             if (!field.hasValue() && !isBeingEdited) return null;
+                            // 🎯 04.08.2026: Vertrags-Lebenszyklus-Felder (Laufzeit/Vertragsbeginn/…)
+                            // bei eindeutigen Nicht-Verträgen ausblenden (erfundene Regex-Werte).
+                            // Verträge/Letter/Unknown unberührt. Nur wenn nicht gerade editiert.
+                            if (isContractLifecycleFieldHiddenForDocType(field.key, cDoc.documentType) && !isBeingEdited) return null;
                             return renderEditableMetricCard(field);
                           })}
 

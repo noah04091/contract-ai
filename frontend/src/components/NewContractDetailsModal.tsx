@@ -13,7 +13,7 @@ import { fixUtf8Display } from "../utils/textUtils";
 import { cleanDeadlineName, isReminderEntry, stripFileName } from "../utils/reminderGrouping";
 import { apiCall } from "../utils/api";
 import { useToast } from "../context/ToastContext";
-import { createEditableFields, type EditableField } from "../utils/contractEditableFields";
+import { createEditableFields, isContractLifecycleFieldHiddenForDocType, type EditableField } from "../utils/contractEditableFields";
 // 🎨 V2: Analyse-Tab nutzt das gleiche Layout wie der Hochlad-Direkt-Flow (hinter Beta-Toggle)
 import { useAuth } from "../hooks/useAuth";
 import { isAnalysisV2Enabled } from "../utils/featureFlags";
@@ -1318,6 +1318,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           {EDITABLE_FIELDS.map((field) => {
             const isBeingEdited = editingField === field.key;
             if (!field.hasValue() && !isBeingEdited) return null;
+            // 🎯 04.08.2026: Vertrags-Lebenszyklus-Felder (Laufzeit/Vertragsbeginn/…) bei
+            // eindeutigen Nicht-Verträgen (Rechnung/Quittung/…) ausblenden — dort erfindet der
+            // Regex-Extraktor sonst Werte. Verträge/Letter/Unknown unberührt. Nur wenn nicht editiert.
+            if (isContractLifecycleFieldHiddenForDocType(field.key, contract.documentType) && !isBeingEdited) return null;
             return (
               <React.Fragment key={field.key}>
                 {renderInlineField(field.key, field.label, field.displayValue(), field.rawValue(), field.type, field.options)}
