@@ -258,22 +258,29 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
             }}>
               <span style={{ fontSize: 14 }}>{getImpactIcon(action.estimatedImpact)}</span>
               {action.estimatedImpact}
+              <span style={{ fontSize: 11, color: '#9ca3af' }}>· KI-Schätzung</span>
             </div>
           )}
 
-          {/* Related contracts — clickable links to Pulse detail */}
-          {action.relatedContracts && action.relatedContracts.length > 0 && contractNames && !contractId && (
+          {/* Related contracts — clickable links to Pulse detail.
+              04.08.: Liste VOR dem Rendern filtern — sonst steht ein leeres "Betrifft:"
+              da, wenn alle Einträge unauflösbare rohe DB-IDs waren. */}
+          {(() => {
+            if (!action.relatedContracts || !contractNames || contractId) return null;
+            const shownContracts = action.relatedContracts.filter((id) => {
+              // UX-Fix 21.07.: unauflösbare rohe DB-IDs (24-Hex) NIE dem Nutzer zeigen
+              const resolvedId = resolveContractId(id);
+              const hasName = (resolvedId && contractNames.get(resolvedId)) || contractNames.get(id);
+              return !!hasName || !/^[a-f0-9]{24}$/i.test(id);
+            });
+            if (shownContracts.length === 0) return null;
+            return (
             <div style={{
               marginTop: 8,
               display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center',
             }}>
               <span style={{ fontSize: 12, color: '#9ca3af' }}>Betrifft:</span>
-              {action.relatedContracts.filter((id) => {
-                // UX-Fix 21.07.: unauflösbare rohe DB-IDs (24-Hex) NIE dem Nutzer zeigen
-                const resolvedId = resolveContractId(id);
-                const hasName = (resolvedId && contractNames.get(resolvedId)) || contractNames.get(id);
-                return !!hasName || !/^[a-f0-9]{24}$/i.test(id);
-              }).map((id) => {
+              {shownContracts.map((id) => {
                 const resolvedId = resolveContractId(id);
                 const name = (resolvedId && contractNames.get(resolvedId)) || contractNames.get(id) || id;
                 return (
@@ -300,7 +307,8 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
                 );
               })}
             </div>
-          )}
+            );
+          })()}
         </div>
 
         {/* Status Buttons — open actions: checkmark + dismiss + edit */}

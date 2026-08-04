@@ -526,6 +526,8 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
 
     // 🧹 DSGVO: Legal-Lens-Daten (Analysen + Fortschritt/Notizen) des Users mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId });
+    // 🧹 DSGVO: Legal-Pulse-Daten (Analysen + Radar-Alerts) des Users mitlöschen
+    await require('../utils/pulseCleanup').cleanupPulseData({ userId });
 
     // Delete user's calendar events
     const eventsResult = await db.collection("contract_events").deleteMany({ userId: { $in: uidVariants } });
@@ -649,6 +651,8 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
 
     // 🧹 DSGVO: Legal-Lens-Daten aller gelöschten User mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId: userIdsToDelete });
+    // 🧹 DSGVO: Legal-Pulse-Daten aller gelöschten User mitlöschen
+    await require('../utils/pulseCleanup').cleanupPulseData({ userId: userIdsToDelete });
 
     // Delete calendar events
     await db.collection("contract_events").deleteMany({

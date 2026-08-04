@@ -71,7 +71,13 @@ async function computeUserStats(db, userId, weekAgo) {
   try { if (ObjectId.isValid(idStr)) candidates.push(new ObjectId(idStr)); } catch { /* ignore */ }
 
   const monitored = await LegalPulseV2Result.distinct("contractId", { userId: { $in: candidates }, status: "completed" });
-  const monitoredCount = monitored.length;
+  // Geister-Schutz (04.08.): nur Verträge zählen, die noch EXISTIEREN. Vorher zählte der
+  // Bericht auch Analyse-Ergebnisse gelöschter Verträge mit ("14 überwacht" vs. 7 echte
+  // auf der Seite) — Zahlen-Widerspruch untergräbt genau das Vertrauen, das er aufbauen soll.
+  const monitoredOids = monitored.map(String).filter((s) => ObjectId.isValid(s)).map((s) => new ObjectId(s));
+  const livingContracts = await db.collection("contracts")
+    .find({ _id: { $in: monitoredOids } }).project({ _id: 1 }).toArray();
+  const monitoredCount = livingContracts.length;
 
   const alerts = await db.collection("pulse_v2_legal_alerts").find({
     userId: { $in: candidates },

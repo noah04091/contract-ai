@@ -286,6 +286,17 @@ export interface PulseV2LegalAlert {
     comment?: string;
     feedbackAt: string;
   };
+  /** Klausel-Bündelung (04.08.): weitere Urteile/Gesetze, die denselben Befund bestätigen —
+      angehängt statt als eigene Karte wiederholt. */
+  supportingLaws?: Array<{
+    lawId: string;
+    lawTitle: string;
+    lawSource?: string;
+    severity?: string;
+    deepVerified?: boolean;
+    evidenceQuote?: string;
+    addedAt: string;
+  }>;
   createdAt: string;
 }
 

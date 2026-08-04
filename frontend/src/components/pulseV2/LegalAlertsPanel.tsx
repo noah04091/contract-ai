@@ -317,7 +317,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
               background: criticalCount > 0 ? '#fef2f2' : '#f1f5f9',
               padding: '2px 8px', borderRadius: 10,
             }}>
-              {groups.length} {groups.length === 1 ? 'Gesetz' : 'Gesetze'} &middot; {active.length} {active.length === 1 ? 'Vertrag' : 'Verträge'}
+              {groups.length} {groups.length === 1 ? 'Gesetz' : 'Gesetze'} &middot; {active.length} {active.length === 1 ? 'Meldung' : 'Meldungen'}
             </span>
           )}
           {!showDismissed && newCount > 0 && (

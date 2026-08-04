@@ -1408,6 +1408,80 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
 
   if (alertDocs.length === 0) return; // All duplicates — skip insert + email
 
+  // ── Klausel-Bündelung (04.08.2026): "+1 weiteres Urteil bestätigt diesen Befund" ──
+  // Trifft ein NEUES Gesetz/Urteil exakt die Klausel(n), zu denen bereits ein OFFENER
+  // Alert desselben Vertrags (gleiche Richtung) existiert, entsteht KEINE neue Karte
+  // und KEINE Mail — die neue Quelle wird als supportingLaws an den bestehenden Alert
+  // angehängt. Grund (Prod-Beweis 04.08.): dieselbe defekte Klausel wurde von 8
+  // verschiedenen Urteilen als 8 identische Karten gemeldet — für den Nutzer reine
+  // Wiederholung ohne neue Handlung. Konservativ: nur bei Klausel-TEILMENGE, nur in
+  // offene (unread/read) Alerts; dismissed/resolved bleiben unberührt (Fix-Fälle
+  // verhindert ohnehin Deep-Verify am currentText). Kill-Switch:
+  // PULSE_CLAUSE_BUNDLING_ENABLED='false' stellt exakt das alte Verhalten wieder her.
+  if (process.env.PULSE_CLAUSE_BUNDLING_ENABLED !== "false") {
+    try {
+      const { ObjectId } = require("mongodb");
+      const cids = [...new Set(alertDocs.map((d) => String(d.contractId)))];
+      const cidVariants = cids.flatMap((c) => (ObjectId.isValid(c) ? [c, new ObjectId(c)] : [c]));
+      const openExisting = await db.collection("pulse_v2_legal_alerts").find({
+        userId,
+        contractId: { $in: cidVariants },
+        status: { $in: ["unread", "read"] },
+        affectedClauseIds: { $exists: true, $ne: [] },
+      }).project({ contractId: 1, affectedClauseIds: 1, severity: 1, impactDirection: 1, supportingLaws: 1 }).toArray();
+
+      if (openExisting.length > 0) {
+        const SEV_RANK = { critical: 3, high: 2, medium: 1, low: 0 };
+        const now = new Date();
+        const keep = [];
+        let bundled = 0;
+        for (const doc of alertDocs) {
+          const clauses = doc.affectedClauseIds || [];
+          const host = clauses.length > 0 ? openExisting.find((ex) =>
+            String(ex.contractId) === String(doc.contractId) &&
+            (ex.impactDirection || "negative") === (doc.impactDirection || "negative") &&
+            ex.affectedClauseIds.length > 0 &&
+            clauses.every((id) => ex.affectedClauseIds.includes(id)) &&
+            // dasselbe Gesetz nicht doppelt anhängen
+            !(ex.supportingLaws || []).some((s) => s.lawId === doc.lawId)
+          ) : null;
+          if (!host) { keep.push(doc); continue; }
+          const update = {
+            $push: {
+              supportingLaws: {
+                $each: [{
+                  lawId: doc.lawId,
+                  lawTitle: doc.lawTitle,
+                  lawSource: doc.lawSource,
+                  severity: doc.severity,
+                  deepVerified: doc.deepVerified,
+                  evidenceQuote: doc.evidenceQuote || "",
+                  addedAt: now,
+                }],
+                $slice: -20,
+              },
+            },
+            $set: { updatedAt: now },
+          };
+          // Schwere darf durch neue Quelle steigen, nie sinken
+          if ((SEV_RANK[doc.severity] ?? 0) > (SEV_RANK[host.severity] ?? 0)) {
+            update.$set.severity = doc.severity;
+          }
+          await db.collection("pulse_v2_legal_alerts").updateOne({ _id: host._id }, update);
+          host.supportingLaws = [...(host.supportingLaws || []), { lawId: doc.lawId }];
+          bundled++;
+        }
+        if (bundled > 0) {
+          console.log(`[PulseV2Radar] Klausel-Bündelung: ${bundled} neue Quelle(n) an bestehende Alerts angehängt (statt neuer Karten) für user ${userId}`);
+          alertDocs = keep;
+        }
+        if (alertDocs.length === 0) return; // alles gebündelt — keine neue Karte, keine Mail
+      }
+    } catch (bundleErr) {
+      console.warn(`[PulseV2Radar] Klausel-Bündelung Fehler (nicht fatal, Alerts laufen normal):`, bundleErr.message);
+    }
+  }
+
   // Insert with ordered:false to skip duplicates (unique index prevents re-alerts).
   // Dedup-Fix 21.07.: Vorher ging die MAIL trotzdem raus, auch wenn die DB ALLE Docs
   // als Duplikate abgewiesen hat (Urlaubswoche: 4 Mails zum selben OLG-Urteil).

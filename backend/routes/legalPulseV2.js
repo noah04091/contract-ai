@@ -1750,6 +1750,50 @@ function generateWordDiffs(original, fixed) {
   return diffs;
 }
 
+/**
+ * Klausel-Gedächtnis (04.08.2026): Ein Klausel-Fix gilt für ALLE offenen Alerts,
+ * die auf dieselbe Klausel zeigen — nicht nur für den angeklickten. Vorher blieben
+ * die Geschwister-Alerts offen und meldeten den längst behobenen Befund weiter
+ * (in Produktion bewiesen: 17 offene Alerts zeigten auf bereits gefixte Klauseln).
+ * Deterministisch, kein KI-Eingriff. Best-effort: Fehler brechen den Fix nie ab.
+ */
+async function resolveClauseAcrossAlerts(db, { userId, contractId, clauseId, excludeAlertId }) {
+  try {
+    const now = new Date();
+    const siblings = await db.collection("pulse_v2_legal_alerts").find({
+      userId,
+      contractId: { $in: [contractId, String(contractId)] },
+      status: { $in: ["unread", "read"] },
+      affectedClauseIds: clauseId,
+      ...(excludeAlertId ? { _id: { $ne: excludeAlertId } } : {}),
+    }).project({ affectedClauseIds: 1, resolvedClauseIds: 1 }).toArray();
+
+    let fullyResolved = 0;
+    for (const sib of siblings) {
+      const resolvedSet = new Set([...(sib.resolvedClauseIds || []), clauseId]);
+      const all = (sib.affectedClauseIds || []).length > 0 &&
+        sib.affectedClauseIds.every((id) => resolvedSet.has(id));
+      await db.collection("pulse_v2_legal_alerts").updateOne(
+        { _id: sib._id },
+        {
+          $addToSet: { resolvedClauseIds: clauseId },
+          $set: all
+            ? { status: "resolved", statusChangedAt: now, lastFixAppliedAt: now, autoResolvedBy: "clause_fix" }
+            : { lastFixAppliedAt: now },
+        }
+      );
+      if (all) fullyResolved++;
+    }
+    if (siblings.length > 0) {
+      console.log(`[PulseV2] Klausel-Gedächtnis: Fix für ${clauseId} auf ${siblings.length} Geschwister-Alerts übertragen (${fullyResolved} vollständig gelöst)`);
+    }
+    return fullyResolved;
+  } catch (err) {
+    console.warn("[PulseV2] Klausel-Gedächtnis Fehler (nicht fatal):", err.message);
+    return 0;
+  }
+}
+
 // ══════════════════════════════════════════════════════════════
 // POST /apply-fix — Save auto-fixed clause to V2 result (one-click apply)
 // ══════════════════════════════════════════════════════════════
@@ -1880,9 +1924,18 @@ router.post("/apply-fix", requirePremium, async (req, res) => {
         $set: {
           status: allResolved ? "resolved" : "read",
           lastFixAppliedAt: new Date(),
+          ...(allResolved ? { statusChangedAt: new Date() } : {}),
         },
       }
     );
+
+    // 8b. Klausel-Gedächtnis: derselbe Fix gilt für alle Geschwister-Alerts dieser Klausel
+    await resolveClauseAcrossAlerts(db, {
+      userId,
+      contractId: alert.contractId,
+      clauseId,
+      excludeAlertId: new ObjectId(alertId),
+    });
 
     // 9. Track contract-level last update timestamp
     await LegalPulseV2Result.updateOne(
@@ -2016,6 +2069,17 @@ router.post("/apply-quick-fix", requirePremium, async (req, res) => {
       { _id: v2Result._id },
       { $set: { lastClauseFixAt: new Date() } }
     );
+
+    // 7b. Klausel-Gedächtnis: offene Radar-Alerts auf diese Klausel gelten damit als behoben
+    {
+      const database = require("../config/database");
+      const dbConn = await database.connect();
+      await resolveClauseAcrossAlerts(dbConn, {
+        userId,
+        contractId: v2Result.contractId,
+        clauseId,
+      });
+    }
 
     console.log(`[PulseV2] Quick-fix applied: ${clauseId} v${nextVersion} (result ${resultId})`);
 

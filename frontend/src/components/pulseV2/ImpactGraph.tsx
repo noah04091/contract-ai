@@ -136,6 +136,26 @@ export const ImpactGraph: React.FC<ImpactGraphProps> = ({ alert, onNavigate, hid
               </div>
             )}
 
+            {/* Klausel-Bündelung: weitere Quellen, die denselben Befund bestätigen —
+                statt jede als eigene (identische) Karte zu wiederholen. */}
+            {(alert.supportingLaws?.length ?? 0) > 0 && (
+              <div style={{ margin: '10px 0 2px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 10, padding: '9px 13px' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', marginBottom: 6 }}>
+                  &#10003; {alert.supportingLaws!.length} weitere {alert.supportingLaws!.length === 1 ? 'Quelle bestätigt' : 'Quellen bestätigen'} diesen Befund
+                </div>
+                {alert.supportingLaws!.map((s, i) => (
+                  <div key={s.lawId || i} style={{ fontSize: 12, color: '#64748b', padding: '2px 0', display: 'flex', gap: 6, alignItems: 'baseline' }}>
+                    <span style={{ color: '#94a3b8', flexShrink: 0 }}>•</span>
+                    {s.lawSource && s.lawSource.startsWith('http') ? (
+                      <a href={s.lawSource} target="_blank" rel="noopener noreferrer" style={{ color: '#475569', textDecoration: 'underline', textUnderlineOffset: 2 }}>{s.lawTitle}</a>
+                    ) : (
+                      <span>{s.lawTitle}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* Aktionen */}
             <div style={{ display: 'flex', gap: 8, margin: '12px 0 4px', alignItems: 'center', flexWrap: 'wrap' }}>
               {!hideContractInfo && onNavigate && (

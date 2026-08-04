@@ -822,6 +822,8 @@ router.delete("/delete", verifyToken, async (req, res) => {
     await dbInstance.collection("cost_tracking").deleteMany({ userId: { $in: uidVariants } });
     // 🧹 DSGVO: Legal-Lens-Daten (Analysen + Fortschritt/Notizen) des Accounts mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId: req.user.userId });
+    // 🧹 DSGVO: Legal-Pulse-Daten (Analysen + Radar-Alerts) des Accounts mitlöschen
+    await require('../utils/pulseCleanup').cleanupPulseData({ userId: req.user.userId });
     await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
 
     res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);

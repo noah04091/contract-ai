@@ -2155,6 +2155,8 @@ router.delete("/:id", verifyToken, async (req, res) => {
 
     // 🧹 DSGVO: Legal-Lens-Daten (Klausel-Analysen + Fortschritt/Notizen) des Vertrags mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: id });
+    // 🧹 Legal-Pulse-Daten (Analysen + Radar-Alerts) mitlöschen — sonst Geister-Überwachung
+    await require('../utils/pulseCleanup').cleanupPulseData({ contractId: id });
 
     // 📋 Activity Log: Vertrag gelöscht
     try {
@@ -4184,6 +4186,8 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
 
     // 🧹 DSGVO: Legal-Lens-Daten aller gelöschten Verträge mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: objectIds });
+    // 🧹 Legal-Pulse-Daten (Analysen + Radar-Alerts) mitlöschen — sonst Geister-Überwachung
+    await require('../utils/pulseCleanup').cleanupPulseData({ contractId: objectIds });
 
     res.json({
       success: true,
