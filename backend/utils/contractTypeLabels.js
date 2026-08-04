@@ -109,8 +109,9 @@ function deriveTypeLabelFromCharacterization(description) {
   if (!description || typeof description !== 'string') return null;
   let s = description.replace(/\s+/g, ' ').trim();
   if (!s) return null;
-  // Ersten Sinnabschnitt vor einem Trenner nehmen (/, (, Gedankenstrich, Doppelpunkt, Komma)
-  s = s.split(/\s*[/(–—:,]\s*/)[0].trim();
+  // Ersten Sinnabschnitt vor einem Trenner nehmen (/, (, Gedankenstrich, Doppelpunkt,
+  // Komma) ODER vor einer Konjunktion ("A beziehungsweise/bzw./oder B" → A).
+  s = s.split(/\s*[/(–—:,]\s*|\s+(?:beziehungsweise|bzw\.?|oder)\s+/i)[0].trim();
   // Nachlaufende Zeit-/Monatsangaben abschneiden ("… Februar 2026", "… zum 30.09.2026")
   s = s.replace(/\s+(vom|zum|für|per|ab)\s+.*$/i, '').trim();
   if (s.length > 42) s = s.slice(0, 42).replace(/\s+\S*$/, '').trim();

@@ -330,6 +330,10 @@ function pickDocTypeLabel(d: AnalysisData): string {
     const cleanDesc = cleanOcrSpacing(desc)
       .replace(/^aktiver,?\s*beidseitig\s*unterzeichneter\s*/i, "")
       .replace(/\s+über\s+.*/i, "")
+      // 🎯 04.08.2026: bei alternativen Typ-Nennungen den ERSTEN Begriff nehmen
+      // ("Entgeltabrechnung beziehungsweise Lohnabrechnung" → "Entgeltabrechnung"),
+      // damit das Label nicht mitten im Wort ("beziehungswe…") abgeschnitten wird.
+      .split(/\s*\/\s*|\s+(?:beziehungsweise|bzw\.?|oder)\s+/i)[0]
       .trim();
     if (cleanDesc.length > 0) {
       // Cap 30 für KI-descriptions (knackiger als 40, weniger Layout-Risiko).
