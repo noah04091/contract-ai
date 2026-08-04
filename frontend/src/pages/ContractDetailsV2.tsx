@@ -1587,7 +1587,7 @@ export default function ContractDetailsV2() {
   // Nicht-Verträgen (Lohnabrechnung, Rechnung, …) neutraler „kein Score"-Zustand.
   // documentType/contractTypeLabel liefert das Backend zur Laufzeit, fehlen aber im
   // (unvollständigen) Contract-Typ → lokaler Zugriff.
-  const cDoc = contract as { documentType?: string | null; contractTypeLabel?: string | null };
+  const cDoc = contract as { documentType?: string | null; contractTypeLabel?: string | null; documentCategory?: string | null };
   const scoreMeaningful = isRiskScoreMeaningful(cDoc.documentType, contract.contractType);
   const showRiskScore = hasContractScore && scoreMeaningful;
   const hasAnalysis = contract.analysis && (
@@ -2159,7 +2159,7 @@ export default function ContractDetailsV2() {
                             // 🎯 04.08.2026: Vertrags-Lebenszyklus-Felder (Laufzeit/Vertragsbeginn/…)
                             // bei eindeutigen Nicht-Verträgen ausblenden (erfundene Regex-Werte).
                             // Verträge/Letter/Unknown unberührt. Nur wenn nicht gerade editiert.
-                            if (isContractLifecycleFieldHiddenForDocType(field.key, cDoc.documentType) && !isBeingEdited) return null;
+                            if (isContractLifecycleFieldHiddenForDocType(field.key, cDoc.documentType, cDoc.documentCategory) && !isBeingEdited) return null;
                             return renderEditableMetricCard(field);
                           })}
 

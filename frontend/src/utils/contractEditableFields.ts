@@ -148,19 +148,27 @@ const NON_CONTRACT_DOC_TYPES = ['INVOICE', 'RECEIPT', 'TABLE_DOCUMENT', 'FINANCI
 const CONTRACT_LIFECYCLE_FIELD_KEYS = ['laufzeit', 'startDate', 'expiryDate', 'kuendigung', 'gekuendigtZum'];
 
 /**
- * Soll dieses Eckdaten-Feld für den gegebenen Dokumenttyp AUSGEBLENDET werden?
- * true nur, wenn (a) documentType ein eindeutiger Nicht-Vertrag ist UND (b) das Feld ein
- * Vertrags-Lebenszyklus-Feld ist. Sonst immer false (= anzeigen, unverändertes Verhalten).
+ * Soll dieses Eckdaten-Feld AUSGEBLENDET werden, weil es ein Vertrags-Lebenszyklus-Feld ist,
+ * das Dokument aber kein Vertrag? true nur für Lebenszyklus-Felder UND ein Nicht-Vertrag.
+ * Zwei Signale (beide sicher für echte Verträge → dort immer false):
+ *  1) documentCategory === 'invoice' — DETERMINISTISCH pro Dokument von JEDEM Beleg gesetzt
+ *     (Rechnung/Quittung/Lohnabrechnung), unabhängig vom schwankenden documentType. Echte
+ *     Verträge = 'active_contract' → nie betroffen. Deckt auch UNKNOWN-klassifizierte Belege ab.
+ *  2) Fallback: eindeutiger Nicht-Vertrags-documentType (INVOICE/RECEIPT/TABLE/FINANCIAL).
+ * CONTRACT/LETTER/UNKNOWN mit category='active_contract'/leer → false (unverändert).
  */
 export function isContractLifecycleFieldHiddenForDocType(
   fieldKey: string,
-  documentType?: string | null
+  documentType?: string | null,
+  documentCategory?: string | null
 ): boolean {
   if (!HIDE_CONTRACT_FIELDS_FOR_BELEGE) return false;
+  if (!CONTRACT_LIFECYCLE_FIELD_KEYS.includes(fieldKey)) return false;
+  // Signal 1: doc-genaue Kategorie (schwankt nicht mit der documentType-Klassifikation).
+  if ((documentCategory || '').toLowerCase().trim() === 'invoice') return true;
+  // Signal 2: eindeutiger Nicht-Vertrags-documentType.
   if (!documentType) return false;
-  const dt = documentType.toUpperCase().trim();
-  if (!NON_CONTRACT_DOC_TYPES.includes(dt)) return false;
-  return CONTRACT_LIFECYCLE_FIELD_KEYS.includes(fieldKey);
+  return NON_CONTRACT_DOC_TYPES.includes(documentType.toUpperCase().trim());
 }
 
 // ----------------------------------------

@@ -1321,7 +1321,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             // 🎯 04.08.2026: Vertrags-Lebenszyklus-Felder (Laufzeit/Vertragsbeginn/…) bei
             // eindeutigen Nicht-Verträgen (Rechnung/Quittung/…) ausblenden — dort erfindet der
             // Regex-Extraktor sonst Werte. Verträge/Letter/Unknown unberührt. Nur wenn nicht editiert.
-            if (isContractLifecycleFieldHiddenForDocType(field.key, contract.documentType) && !isBeingEdited) return null;
+            if (isContractLifecycleFieldHiddenForDocType(field.key, contract.documentType, (contract as { documentCategory?: string | null }).documentCategory) && !isBeingEdited) return null;
             return (
               <React.Fragment key={field.key}>
                 {renderInlineField(field.key, field.label, field.displayValue(), field.rawValue(), field.type, field.options)}
