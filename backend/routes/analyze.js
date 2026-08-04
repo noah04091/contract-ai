@@ -880,6 +880,17 @@ if (ANALYZE_MODEL !== 'gpt-4o') {
   console.log(`🧪 [ANALYZE] Herzstück-Modell via ANALYZE_MODEL übersteuert: ${ANALYZE_MODEL} (reasoning=${ANALYZE_MODEL_IS_REASONING})`);
 }
 
+// 🗓️ 04.08.2026: EINE Quelle der Wahrheit — welche Dokumenttypen einen Kalender bekommen
+// (Termine + Erinnerungen). Genutzt für (a) die Kalender-Event-Erzeugung UND (b) das
+// Überspringen der teuren Datumssuche bei Nicht-Verträgen (Kosten + Konsistenz). Vorher
+// war die Liste an 2 Stellen dupliziert. Nicht-eligible Typen (INVOICE/RECEIPT/UNKNOWN)
+// bekommen weder Events noch die teure Suche — die günstigen Haupt-Analyse-Datums bleiben
+// als optionale Vorschläge erhalten. Verträge/Schreiben/Tabellen/Finanz: unverändert.
+const CALENDAR_ELIGIBLE_DOC_TYPES = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT', 'LETTER'];
+const isCalendarEligibleDocType = (dt) => CALENDAR_ELIGIBLE_DOC_TYPES.includes(dt);
+// Kill-Switch: =false → Datumssuche läuft wieder für JEDEN Typ (altes Verhalten).
+const DATEHUNT_SKIP_NONCONTRACT_ENABLED = process.env.DATEHUNT_SKIP_NONCONTRACT_ENABLED !== 'false';
+
 // ✅ FIXED: Updated Token limits for different models
 const MODEL_LIMITS = {
   'gpt-4': 8192,                    // ❌ Original GPT-4 (problematic)
@@ -5876,6 +5887,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       // gedeckelt unter dem 10-Min-Frontend-Polling (Reasoning: 520s ≈ 2 volle
       // Timeout-Versuche + Puffer; klassisch: unverändert 185s).
       const OUTER_RACE_MS = ANALYZE_MODEL_IS_REASONING ? 520_000 : 185_000;
+      // 💸 04.08.2026: Bei Nicht-Verträgen die teure Datumssuche überspringen — diese Typen
+      // bekommen keinen Kalender, das Ergebnis würde eh verworfen. Die günstigen Haupt-
+      // Analyse-Datums bleiben (der Merge unten fällt bei fallback:true auf sie zurück).
+      // Verträge/Schreiben/Tabellen/Finanz: Suche läuft voll wie bisher.
+      const skipDateHunt = DATEHUNT_SKIP_NONCONTRACT_ENABLED && !isCalendarEligibleDocType(validationResult.documentType);
+      if (skipDateHunt) {
+        console.log(`💸 [${requestId}] Datumssuche übersprungen — documentType=${validationResult.documentType} (kein Kalender; Haupt-Analyse-Datums bleiben; teuersten Analyse-Teil gespart)`);
+      }
       const [completionResult, dateHuntPromiseResult] = await Promise.all([
         Promise.race([
           makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI(), 3, validationResult.documentType, extractedContractType, analysisMaxTokens),
@@ -5884,23 +5903,25 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             setTimeout(() => reject(new Error(`OpenAI API timeout after ${Math.round(OUTER_RACE_MS / 1000)}s`)), OUTER_RACE_MS)
           )
         ]),
-        dateHuntService.huntDates(
-          fullTextContent,
-          createTrackedOpenAI(getOpenAI(), { userId: req.user.userId, feature: 'date-hunt', requestId }),
-          requestId,
-          {
-            signal: abortController.signal, // 🛑 Stufe 2: bei Client-Disconnect bricht DateHunt zwischen Stages ab
-            // 📨 Welle 1: LETTER-Modus — DateHunt sucht Reaktions-/Klage-/Widerspruchs-
-            // fristen statt Vertragslaufzeiten. Ohne Modus würde der Vertrags-Prompt
-            // genau diese Fristen als "nicht kalenderwürdig" entschärfen.
-            documentType: validationResult.documentType,
-            letterType: validationResult.letterType || null
-          }
-        )
-          .catch(err => {
-            console.warn(`⚠️ [${requestId}] [DateHunt] unerwarteter Fehler: ${err.message} — Fallback auf leere Datums-Liste`);
-            return { importantDates: [], stats: { fallback: true, error: err.message } };
-          })
+        skipDateHunt
+          ? Promise.resolve({ importantDates: [], stats: { fallback: true, skipped: true } })
+          : dateHuntService.huntDates(
+              fullTextContent,
+              createTrackedOpenAI(getOpenAI(), { userId: req.user.userId, feature: 'date-hunt', requestId }),
+              requestId,
+              {
+                signal: abortController.signal, // 🛑 Stufe 2: bei Client-Disconnect bricht DateHunt zwischen Stages ab
+                // 📨 Welle 1: LETTER-Modus — DateHunt sucht Reaktions-/Klage-/Widerspruchs-
+                // fristen statt Vertragslaufzeiten. Ohne Modus würde der Vertrags-Prompt
+                // genau diese Fristen als "nicht kalenderwürdig" entschärfen.
+                documentType: validationResult.documentType,
+                letterType: validationResult.letterType || null
+              }
+            )
+              .catch(err => {
+                console.warn(`⚠️ [${requestId}] [DateHunt] unerwarteter Fehler: ${err.message} — Fallback auf leere Datums-Liste`);
+                return { importantDates: [], stats: { fallback: true, error: err.message } };
+              })
       ]);
       completion = completionResult;
       dateHuntResult = dateHuntPromiseResult;
@@ -6505,7 +6526,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           // (expiryDate/gekuendigtZum/canCancelAfter/paymentTerms sind genullt) — es
           // bleiben nur die validierten importantDates. Wichtig auch für Re-Analyse
           // CONTRACT→LETTER: der Cleanup löscht dann die alten falschen Vertrags-Events.
-          const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT', 'LETTER'].includes(validationResult.documentType);
+          const canCreateEvents = isCalendarEligibleDocType(validationResult.documentType);
           if (canCreateEvents) {
             // 🛡️ Stufe 2 (22.05.2026): Calendar-Backup vor Cleanup. Falls Pipeline
             // zwischen "alte Events gelöscht" und "neue Events erzeugt" abbricht
@@ -6529,7 +6550,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             calendarEventsBackup = null;
             calendarEventsBackupContractId = null;
           } else {
-            console.log(`⏭️ [${requestId}] Calendar-Sync übersprungen — documentType=${validationResult.documentType} (nur CONTRACT/TABLE/FINANCIAL erlaubt)`);
+            console.log(`⏭️ [${requestId}] Calendar-Sync übersprungen — documentType=${validationResult.documentType} (nur ${CALENDAR_ELIGIBLE_DOC_TYPES.join('/')})`);
           }
         } catch (eventError) {
           console.warn(`⚠️ [${requestId}] Calendar Events konnten nicht regeneriert werden:`, eventError.message);
@@ -6878,7 +6899,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           // (expiryDate/gekuendigtZum/canCancelAfter/paymentTerms sind genullt) — es
           // bleiben nur die validierten importantDates. Wichtig auch für Re-Analyse
           // CONTRACT→LETTER: der Cleanup löscht dann die alten falschen Vertrags-Events.
-          const canCreateEvents = ['CONTRACT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT', 'LETTER'].includes(validationResult.documentType);
+          const canCreateEvents = isCalendarEligibleDocType(validationResult.documentType);
           if (canCreateEvents) {
             const db = await database.connect();
             // 🛡️ TÜV m6: savedContract stammt aus saveContractWithUpload und trägt die
@@ -6894,7 +6915,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               severity: e.severity
             })));
           } else {
-            console.log(`⏭️ Calendar Events übersprungen für ${savedContract.name} — documentType=${validationResult.documentType} (nur CONTRACT/TABLE/FINANCIAL erlaubt)`);
+            console.log(`⏭️ Calendar Events übersprungen für ${savedContract.name} — documentType=${validationResult.documentType} (nur ${CALENDAR_ELIGIBLE_DOC_TYPES.join('/')})`);
           }
         } catch (eventError) {
           console.warn(`⚠️ Calendar Events konnten nicht generiert werden:`, eventError.message);
@@ -7426,6 +7447,9 @@ module.exports.mergeImportantDatesMonotonic = mergeImportantDatesMonotonic;
 module.exports.validateAndFilterImportantDates = validateAndFilterImportantDates;
 // 🧭 Guard C (31.07.2026): Export für deterministischen Offline-Beweis
 module.exports.dropSignatureMislabeledStarts = dropSignatureMislabeledStarts;
+// 🗓️ 04.08.2026: Export der Kalender-Eligibilität für deterministischen Offline-Beweis
+module.exports.isCalendarEligibleDocType = isCalendarEligibleDocType;
+module.exports.CALENDAR_ELIGIBLE_DOC_TYPES = CALENDAR_ELIGIBLE_DOC_TYPES;
 // ⚡ Async-Job-Helfer (27.07.2026): erlauben der Re-Analyse-Route (contracts.js), denselben
 // analysis_jobs-Mechanismus + Polling-Endpunkt zu nutzen wie der Haupt-Upload — gegen den
 // Cloudflare-~100s-Schnitt bei langen Läufen. contracts.js baut seinen eigenen Runner darauf.
