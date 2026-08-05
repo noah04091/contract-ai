@@ -12,6 +12,8 @@ import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprove
 import { PulseCommandCenter } from '../components/pulseV2/PulseCommandCenter';
 // Redesign 21.07.: alter Hero bleibt für Rollback erhalten — Import inaktiv
 // import { PulseCheckHero } from '../components/pulseV2/PulseCheckHero';
+// Klartext-Redesign 05.08. (Phase 1, HINTER SCHALTER ?ansicht=neu — Standard bleibt die alte Ansicht):
+import { usePulseLayoutV3, PulseStatusHeroV3, RechtsCheckStage } from '../components/pulseV2/PulseKlartextV3';
 import { SystemStatusPanel } from '../components/pulseV2/SystemStatusPanel';
 import { useRadarHealth } from '../components/pulseV2/RadarHealthCard';
 import type { PulseV2DashboardItem, PulseV2PortfolioInsight, PulseV2Action, PulseV2LegalAlert, PulseV2Finding, PulseV2Clause } from '../types/pulseV2';
@@ -784,6 +786,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
   const actionsRef = useRef<HTMLDivElement>(null);
   const contractsRef = useRef<HTMLDivElement>(null);
   const { data: radarData } = useRadarHealth();
+  const layoutV3 = usePulseLayoutV3(); // Klartext-Ansicht nur per Schalter, Standard: alte Ansicht
 
   // "Last visit" tracking — captured on mount, updated on unmount
   const [lastVisit, setLastVisit] = useState<string | null>(null);
@@ -970,6 +973,71 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
     }
   };
 
+  // Klartext-Redesign: das Panel wird in BEIDEN Ansichten identisch verwendet —
+  // in der neuen Ansicht nur zusätzlich von der Rechts-Check-Bühne umrahmt.
+  const legalAlertsPanelEl = (
+    <LegalAlertsPanel
+      alerts={legalAlerts}
+      lastVisit={lastVisit}
+      onDismiss={async (alertId) => {
+        try {
+          const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'dismissed' }),
+          });
+          if (res.ok) {
+            setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'dismissed' } : a));
+          } else {
+            toast.error('Alert konnte nicht ausgeblendet werden.');
+          }
+        } catch (err) {
+          console.error('[PulseV2] Alert dismiss failed:', err);
+          toast.error('Verbindungsfehler — bitte erneut versuchen.');
+        }
+      }}
+      onResolve={async (alertId) => {
+        try {
+          const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'resolved' }),
+          });
+          if (res.ok) {
+            setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'resolved', statusChangedAt: new Date().toISOString() } : a));
+            toast.success('Alert als erledigt markiert.');
+          } else {
+            toast.error('Alert konnte nicht als erledigt markiert werden.');
+          }
+        } catch (err) {
+          console.error('[PulseV2] Alert resolve failed:', err);
+          toast.error('Verbindungsfehler — bitte erneut versuchen.');
+        }
+      }}
+      onRestore={async (alertId) => {
+        try {
+          const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'unread' }),
+          });
+          if (res.ok) {
+            setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'unread' } : a));
+          } else {
+            toast.error('Alert konnte nicht wiederhergestellt werden.');
+          }
+        } catch (err) {
+          console.error('[PulseV2] Alert restore failed:', err);
+          toast.error('Verbindungsfehler — bitte erneut versuchen.');
+        }
+      }}
+      onNavigate={(contractId, alertId) => onSelectContract(contractId, alertId)}
+    />
+  );
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>Lade Dashboard...</div>;
   }
@@ -1044,87 +1112,52 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
         </div>
       ) : (
         <>
-          <PulseCommandCenter
-            stats={stats}
-            alerts={legalAlerts}
-            criticalContractCount={alertStats.criticalContracts.length}
-            openActionCount={alertStats.openActions.length}
-            renewalSoonCount={alertStats.renewalSoon.length}
-            unanalyzedCount={alertStats.unanalyzed.length}
-            severityCounts={monitoringStatus?.severityCounts ?? { critical: 0, high: 0, medium: 0, low: 0 }}
-            recentAlertsCount={monitoringStatus?.recentAlertsCount ?? 0}
-            lastVisit={lastVisit}
-            avgScore={alertStats.avgScore}
-            radarData={radarData ?? null}
-            lastScan={monitoringStatus?.lastScheduledScan ?? monitoringStatus?.lastScan ?? null}
-            lastRadarScan={monitoringStatus?.lastRadarScan ?? null}
-            lastRadarRun={monitoringStatus?.lastRadarRun ?? null}
-            nextRadarScan={monitoringStatus?.nextRadarScan ?? null}
-            onAnalyzeFirst={startFirstAnalysis}
-          />
+          {layoutV3 ? (
+            /* Klartext-Ansicht (Schalter ?ansicht=neu): Ein-Satz-Verdikt statt KPI-Kacheln */
+            <PulseStatusHeroV3
+              alerts={legalAlerts}
+              actions={actions}
+              monitoredCount={monitoringStatus?.contractsMonitored ?? stats.analyzed}
+              avgScore={alertStats.avgScore}
+              insightsCount={insights.length}
+              analyzedCount={stats.analyzed}
+              lastRadarRun={monitoringStatus?.lastRadarRun ?? null}
+            />
+          ) : (
+            <PulseCommandCenter
+              stats={stats}
+              alerts={legalAlerts}
+              criticalContractCount={alertStats.criticalContracts.length}
+              openActionCount={alertStats.openActions.length}
+              renewalSoonCount={alertStats.renewalSoon.length}
+              unanalyzedCount={alertStats.unanalyzed.length}
+              severityCounts={monitoringStatus?.severityCounts ?? { critical: 0, high: 0, medium: 0, low: 0 }}
+              recentAlertsCount={monitoringStatus?.recentAlertsCount ?? 0}
+              lastVisit={lastVisit}
+              avgScore={alertStats.avgScore}
+              radarData={radarData ?? null}
+              lastScan={monitoringStatus?.lastScheduledScan ?? monitoringStatus?.lastScan ?? null}
+              lastRadarScan={monitoringStatus?.lastRadarScan ?? null}
+              lastRadarRun={monitoringStatus?.lastRadarRun ?? null}
+              nextRadarScan={monitoringStatus?.nextRadarScan ?? null}
+              onAnalyzeFirst={startFirstAnalysis}
+            />
+          )}
 
           {/* ══════════ Zone 2: Legal Radar (Herzstück) ══════════ */}
           <div ref={radarRef} id="legal-alerts" />
-          <LegalAlertsPanel
-            alerts={legalAlerts}
-            lastVisit={lastVisit}
-            onDismiss={async (alertId) => {
-              try {
-                const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
-                  method: 'PATCH',
-                  credentials: 'include',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ status: 'dismissed' }),
-                });
-                if (res.ok) {
-                  setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'dismissed' } : a));
-                } else {
-                  toast.error('Alert konnte nicht ausgeblendet werden.');
-                }
-              } catch (err) {
-                console.error('[PulseV2] Alert dismiss failed:', err);
-                toast.error('Verbindungsfehler — bitte erneut versuchen.');
-              }
-            }}
-            onResolve={async (alertId) => {
-              try {
-                const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
-                  method: 'PATCH',
-                  credentials: 'include',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ status: 'resolved' }),
-                });
-                if (res.ok) {
-                  setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'resolved', statusChangedAt: new Date().toISOString() } : a));
-                  toast.success('Alert als erledigt markiert.');
-                } else {
-                  toast.error('Alert konnte nicht als erledigt markiert werden.');
-                }
-              } catch (err) {
-                console.error('[PulseV2] Alert resolve failed:', err);
-                toast.error('Verbindungsfehler — bitte erneut versuchen.');
-              }
-            }}
-            onRestore={async (alertId) => {
-              try {
-                const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
-                  method: 'PATCH',
-                  credentials: 'include',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ status: 'unread' }),
-                });
-                if (res.ok) {
-                  setLegalAlerts(prev => prev.map(a => a._id === alertId ? { ...a, status: 'unread' } : a));
-                } else {
-                  toast.error('Alert konnte nicht wiederhergestellt werden.');
-                }
-              } catch (err) {
-                console.error('[PulseV2] Alert restore failed:', err);
-                toast.error('Verbindungsfehler — bitte erneut versuchen.');
-              }
-            }}
-            onNavigate={(contractId, alertId) => onSelectContract(contractId, alertId)}
-          />
+          {layoutV3 ? (
+            <RechtsCheckStage
+              alerts={legalAlerts}
+              monitoredCount={monitoringStatus?.contractsMonitored ?? stats.analyzed}
+              lastRadarRun={monitoringStatus?.lastRadarRun ?? null}
+              lawChangesLastRun={radarData?.recentRuns?.[0]?.lawChanges ?? null}
+              lawsNewThisWeek={radarData?.laws?.newThisWeek ?? null}
+              alertsThisWeek={radarData?.alertsThisWeek?.total ?? null}
+            >
+              {legalAlertsPanelEl}
+            </RechtsCheckStage>
+          ) : legalAlertsPanelEl}
 
           <div id="pulse-tasks" />
           {/* Action Center */}
