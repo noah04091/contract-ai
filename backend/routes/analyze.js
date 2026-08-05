@@ -5776,6 +5776,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // TABLE_DOCUMENT, FINANCIAL_DOCUMENT UND LETTER in einem Rutsch aus (diese dürfen echte Fristen
     // tragen). Feuert also nur für INVOICE/RECEIPT/UNKNOWN — und dort auch nur, wenn isBelegDocument.
     // Kill-Switch: BELEG_LIFECYCLE_GUARD_ENABLED=false → exakt altes Verhalten.
+    let belegGuardFired = false; // TÜV-Signal: hat der BELEG-Guard gefeuert? (steuert Status + Ablauf-Ableitung)
     const BELEG_LIFECYCLE_GUARD_ENABLED = process.env.BELEG_LIFECYCLE_GUARD_ENABLED !== 'false';
     const isBelegDocument =
       validationResult.documentType === 'INVOICE'
@@ -5800,6 +5801,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       extractedContractDuration = null;
       extractedMinimumTerm = null;
       extractedContractType = null;
+      // 🧾 TÜV 05.08.: documentCategory ehrlich auf 'invoice' setzen (wie der LETTER-Guard 'letter' setzt).
+      // Ohne das blieb es bei Quittungen / „Vertrag"-erwähnenden Rechnungen auf 'active_contract' (Regex-
+      // Klassifikator ist quittungs-blind + „vertrag"-scheu) → Status-Rechner zeigte fälschlich „Aktiv".
+      extractedDocumentCategory = 'invoice';
+      belegGuardFired = true; // → nachgelagert kein Vertrags-Ende aus importantDates re-ableiten (Ablaufmail-Leck).
       // startDate/startDateConfidence + importantDates + paymentTerms bewusst NICHT angetastet.
       console.log(`🧾 [${requestId}] BELEG-Guard: erfundene Vertrags-Lebenszyklus-Felder genullt${clearedBeleg.length ? ` (verworfen: ${clearedBeleg.join(', ')})` : ''} — documentType=${validationResult.documentType}, documentCategory=${extractedDocumentCategory || 'null'} (startDate + Termine behalten)`);
     }
@@ -6477,7 +6483,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // 📨 Welle 1: für LETTER komplett überspringen — ein Schreiben hat KEIN
         // Vertragsende; der Guard oben hat expiryDate bereits genullt und nichts
         // darf es hier über den importantDates-Pfad wieder hereinholen.
-        let aiEndDate = validationResult.documentType === 'LETTER'
+        let aiEndDate = (validationResult.documentType === 'LETTER' || belegGuardFired)
           ? null
           : extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
         // 🆕 Hebel A1 (17.06.2026): Behielt das 70%-Gate den Regex-Wert, ist dieser aber IMPLAUSIBEL
@@ -6605,7 +6611,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             calendarEventsBackup = null;
             calendarEventsBackupContractId = null;
           } else {
-            console.log(`⏭️ [${requestId}] Calendar-Sync übersprungen — documentType=${validationResult.documentType} (nur ${CALENDAR_ELIGIBLE_DOC_TYPES.join('/')})`);
+            // 🧹 TÜV 05.08. (Waisen-Schutz): Wurde ein früher als Vertrag analysiertes Dokument jetzt
+            // als Beleg/Nicht-Vertrag erkannt, werden KEINE neuen Events erzeugt — aber die ALTEN
+            // regenerierbaren AI-Events müssen weg, sonst verschicken sie weiter Erinnerungen. Manuelle
+            // Termine bleiben (Filter schließt isManual aus, geteilter Helfer = kann nie divergieren).
+            try {
+              const { buildRegenerableCleanupFilter } = require("../services/calendarEvents");
+              const orphanDel = await db.collection('contract_events').deleteMany(buildRegenerableCleanupFilter(contractForCalendar._id));
+              console.log(`🧹 [${requestId}] Calendar-Sync übersprungen — documentType=${validationResult.documentType}; ${orphanDel.deletedCount} alte AI-Events aufgeräumt (Waisen-Schutz)`);
+            } catch (e) {
+              console.warn(`⚠️ [${requestId}] Waisen-Cleanup fehlgeschlagen: ${e.message}`);
+            }
           }
         } catch (eventError) {
           console.warn(`⚠️ [${requestId}] Calendar Events konnten nicht regeneriert werden:`, eventError.message);
@@ -6781,7 +6797,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // Termine. Bewusst NACH dem Objekt-Bau (kein Eingriff in die importantDates-Filterung).
         {
           // 📨 Welle 1: LETTER hat kein Vertragsende — Override komplett überspringen.
-          let aiEndDateNew = validationResult.documentType === 'LETTER'
+          let aiEndDateNew = (validationResult.documentType === 'LETTER' || belegGuardFired)
             ? null
             : extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
           // 🆕 Hebel A1 (17.06.2026): implausibles Regex-Ende darf GPT-Ende nicht blockieren (s. Re-Analyse-Pfad).
@@ -6821,7 +6837,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         // 🔧 FIX: Extract AI end date for new contracts too
         // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
         // 📨 Welle 1: LETTER hat kein Vertragsende — Override komplett überspringen.
-        let aiEndDateNew = validationResult.documentType === 'LETTER'
+        let aiEndDateNew = (validationResult.documentType === 'LETTER' || belegGuardFired)
           ? null
           : extractEndDateFromImportantDates(result.importantDates, endDateConfidence, requestId);
         // 🆕 Hebel A1 (17.06.2026): implausibles Regex-Ende darf GPT-Ende nicht blockieren (s. Re-Analyse-Pfad).
