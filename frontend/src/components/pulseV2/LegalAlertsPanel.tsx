@@ -11,6 +11,9 @@ interface LegalAlertsPanelProps {
   onRestore?: (alertId: string) => void;
   onNavigate?: (contractId: string, alertId?: string) => void;
   lastVisit?: string | null;
+  /** Klartext-Redesign (05.08., nur neue Ansicht): verständliche Zusammenfassung als
+      Überschrift, Gesetzes-/Urteilstitel als kleines ⚖-Etikett darunter. */
+  klartext?: boolean;
 }
 
 type PanelView = 'active' | 'resolved' | 'dismissed';
@@ -186,7 +189,7 @@ function groupByTime(groups: AlertGroup[]): TimeBucket[] {
   return all.filter(b => b.groups.length > 0);
 }
 
-export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDismiss, onResolve, onRestore, onNavigate, lastVisit }) => {
+export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDismiss, onResolve, onRestore, onNavigate, lastVisit, klartext }) => {
   const [view, setView] = useState<PanelView>('active');
   const [showInfo, setShowInfo] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('timeline');
@@ -494,6 +497,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
                     onRestore={undefined}
                     onNavigate={onNavigate}
                     isNew={group.alerts.some(isNewAlert)}
+                    klartext={klartext}
                   />
                 ))}
               </div>
@@ -511,6 +515,7 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
               onRestore={view !== 'active' ? onRestore : undefined}
               onNavigate={onNavigate}
               isNew={view === 'active' && group.alerts.some(isNewAlert)}
+              klartext={klartext}
             />
           ))}
           {groups.length > 8 && (
@@ -544,7 +549,8 @@ const LawGroup: React.FC<{
   onRestore?: (alertId: string) => void;
   onNavigate?: (contractId: string, alertId?: string) => void;
   isNew?: boolean;
-}> = ({ group, onDismiss, onResolve, onRestore, onNavigate, isNew }) => {
+  klartext?: boolean;
+}> = ({ group, onDismiss, onResolve, onRestore, onNavigate, isNew, klartext }) => {
   const [expanded, setExpanded] = useState(false);
   const [confirmDismiss, setConfirmDismiss] = useState<string | null>(null);
   const dismissRef = useRef<HTMLDivElement>(null);
@@ -588,9 +594,17 @@ const LawGroup: React.FC<{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={sevColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/></svg></div>
           <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {cleanLawTitle(group.lawTitle)}
-            </span>
+            {/* Klartext-Ansicht: verständliche Zusammenfassung als Überschrift (2 Zeilen),
+                sonst wie bisher der Gesetzes-/Urteilstitel (1 Zeile) */}
+            {klartext && group.plainSummary ? (
+              <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.35 }}>
+                {group.plainSummary}
+              </span>
+            ) : (
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {cleanLawTitle(group.lawTitle)}
+              </span>
+            )}
             {isNew && (
               <span
                 title="Seit Ihrem letzten Besuch erkannt"
@@ -636,10 +650,18 @@ const LawGroup: React.FC<{
           }}>&#8250;</span>
         </div>
 
-        {group.plainSummary && (
-          <div style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.5, paddingLeft: 16 }}>
-            {group.plainSummary}
+        {klartext ? (
+          /* Klartext-Ansicht: der juristische Titel wandert vom Kopf in ein ruhiges ⚖-Etikett */
+          <div style={{ display: 'inline-flex', gap: 6, alignItems: 'baseline', marginLeft: 16, marginTop: 2, fontSize: 11.5, fontWeight: 600, color: '#3730a3', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 6, padding: '2px 8px', maxWidth: 'calc(100% - 32px)' }}>
+            <span style={{ flexShrink: 0 }}>⚖</span>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanLawTitle(group.lawTitle)}</span>
           </div>
+        ) : (
+          group.plainSummary && (
+            <div style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.5, paddingLeft: 16 }}>
+              {group.plainSummary}
+            </div>
+          )
         )}
 
         {(() => {

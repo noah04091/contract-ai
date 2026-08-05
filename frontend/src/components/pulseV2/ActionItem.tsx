@@ -44,7 +44,7 @@ function formatAgeDe(iso: string): { text: string; days: number } {
 /**
  * Detect if an action was triggered by legal changes (Gesetz/BGH/DSGVO/Urteil etc.).
  */
-function isLegallyMotivated(action: PulseV2Action): boolean {
+export function isLegallyMotivated(action: PulseV2Action): boolean {
   const haystack = `${action.title || ''} ${action.description || ''} ${action.nextStep || ''}`.toLowerCase();
   return /\b(gesetz|gesetzes|bgh|dsgvo|urteil|bag|eugh|bverfg|§\s*\d|paragraph)\b/i.test(haystack);
 }

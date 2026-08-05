@@ -6,7 +6,7 @@ import { AnalysisPipeline } from '../components/pulseV2/AnalysisPipeline';
 import { ContractDetail } from '../components/pulseV2/ContractDetail';
 import { FindingCard } from '../components/pulseV2/FindingCard';
 import { PortfolioInsightsPanel } from '../components/pulseV2/PortfolioInsightsPanel';
-import { ActionItem } from '../components/pulseV2/ActionItem';
+import { ActionItem, isLegallyMotivated } from '../components/pulseV2/ActionItem';
 import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
 import { PulseCommandCenter } from '../components/pulseV2/PulseCommandCenter';
@@ -535,9 +535,13 @@ const ActionCenter: React.FC<{
   contractNames: Map<string, string>;
   contractLastAnalysisMap?: Map<string, string>;
   onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed', resultId?: string) => void;
-}> = ({ actions, actionsRef, contractNames, contractLastAnalysisMap, onStatusChange }) => {
+  /** Klartext-Ansicht: dringende Aufgaben als Karten, Rest als schlanke Zeilen (Klick klappt auf) */
+  klartext?: boolean;
+}> = ({ actions, actionsRef, contractNames, contractLastAnalysisMap, onStatusChange, klartext }) => {
   const [showAll, setShowAll] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  // Klartext-Ansicht: welche „Zum Einplanen"-Zeilen sind zur vollen Karte aufgeklappt?
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   // Einheitliche Reiter-Mechanik (wie Legal Radar): Offen/Erledigt/Ausgeblendet
   const [tab, setTab] = useState<'open' | 'done' | 'dismissed'>('open');
   const infoRef = useRef<HTMLDivElement>(null);
@@ -703,7 +707,48 @@ const ActionCenter: React.FC<{
       )}
 
       {/* Open actions */}
-      {tab === 'open' && (openActions.length > 0 ? (
+      {tab === 'open' && klartext && openActions.length > 0 && (
+        /* Klartext-Ansicht: Dringendes (priority now) als volle Karten, der Rest als
+           schlanke Zeilen — Klick auf eine Zeile klappt die volle Karte auf. */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {sorted.filter(a => a.priority === 'now').map(action => (
+            <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
+          ))}
+          {sorted.some(a => a.priority !== 'now') && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#94a3b8', letterSpacing: '0.8px', textTransform: 'uppercase', margin: '6px 0 4px' }}>
+                Zum Einplanen — ohne Eile
+              </div>
+              {sorted.filter(a => a.priority !== 'now').map(action => {
+                const rowKey = `${action.resultId || ''}_${action.id}`;
+                if (expandedRows.has(rowKey)) {
+                  return <div key={rowKey} style={{ margin: '6px 0' }}><ActionItem action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} /></div>;
+                }
+                const firstContract = (action.relatedContracts || []).map(id => contractNames.get(id)).find(Boolean);
+                return (
+                  <div
+                    key={rowKey}
+                    onClick={() => setExpandedRows(prev => new Set(prev).add(rowKey))}
+                    style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '10px 6px', borderBottom: '1px solid #f1f5f9', fontSize: 13.5, borderRadius: 8, cursor: 'pointer' }}
+                  >
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
+                    <span style={{ flex: 1, color: '#0f172a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {action.title}
+                      {isLegallyMotivated(action) && (
+                        <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: '#3730a3', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 5, padding: '1px 6px', verticalAlign: '1px' }}>§ GESETZLICH</span>
+                      )}
+                    </span>
+                    {firstContract && <span style={{ color: '#94a3b8', fontSize: 12, flexShrink: 0, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{firstContract}</span>}
+                    <span style={{ color: '#cbd5e1', fontWeight: 700 }}>&#8250;</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+      {/* Klassische Ansicht — UND der Leer-Zustand (gilt für beide Ansichten) */}
+      {tab === 'open' && (!klartext || openActions.length === 0) && (openActions.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {displayActions.map(action => (
             <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
@@ -979,6 +1024,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
     <LegalAlertsPanel
       alerts={legalAlerts}
       lastVisit={lastVisit}
+      klartext={layoutV3}
       onDismiss={async (alertId) => {
         try {
           const res = await fetch(`${API_BASE}/legal-pulse-v2/legal-alerts/${alertId}`, {
@@ -1168,6 +1214,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
               contractNames={contractNames}
               contractLastAnalysisMap={contractLastAnalysisMap}
               onStatusChange={handleActionStatusChange}
+              klartext={layoutV3}
             />
           )}
 
