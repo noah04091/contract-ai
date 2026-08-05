@@ -7,6 +7,16 @@ interface HealthScoreGaugeProps {
   scores: PulseV2Scores;
   riskTrend?: string;
   size?: 'small' | 'large';
+  /** Klartext-Ansicht: Teilwerte als gleichgerichtete Balken mit Wort statt Zahlen-Chips */
+  klartext?: boolean;
+}
+
+/** Wort-Deutung für Laien — dieselben Schwellen wie getScoreColor */
+function scoreWord(score: number): string {
+  if (score >= 80) return 'sehr gut';
+  if (score >= 60) return 'gut';
+  if (score >= 40) return 'mittel';
+  return 'schwach';
 }
 
 function getScoreColor(score: number): string {
@@ -29,7 +39,7 @@ function getTrendArrow(trend?: string): string {
   return '\u2192';
 }
 
-export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, riskTrend, size = 'large' }) => {
+export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, riskTrend, size = 'large', klartext }) => {
   const [showScoreInfo, setShowScoreInfo] = useState(false);
   const gaugeRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -192,7 +202,32 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
         document.body
       )}
 
-      {isLarge && (
+      {isLarge && klartext && (
+        /* Klartext-Ansicht: Balken mit Wort-Deutung — alle Werte in DIESELBE Richtung
+           (je höher, desto besser), damit nie wieder geraten werden muss. */
+        <div style={{ marginTop: 14, width: '100%' }}>
+          {([
+            ['Risiko-Absicherung', scores.risk],
+            ['Rechts-Konformität', scores.compliance],
+            ['Konditionen', scores.terms],
+            ['Vollständigkeit', scores.completeness],
+          ] as Array<[string, number]>).map(([label, value]) => (
+            <div key={label} style={{ margin: '10px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#475569', marginBottom: 4 }}>
+                <span style={{ fontWeight: 600, color: '#0f172a' }}>{label}</span>
+                <span style={{ fontWeight: 700, color: getScoreColor(value) }}>{scoreWord(value)} · {value}</span>
+              </div>
+              <div style={{ height: 7, borderRadius: 5, background: '#f1f5f9', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: 5, width: `${Math.max(0, Math.min(100, value))}%`, background: getScoreColor(value) }} />
+              </div>
+            </div>
+          ))}
+          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
+            Je höher, desto besser. Der Gesamtwert folgt dem schwächsten Bereich.
+          </div>
+        </div>
+      )}
+      {isLarge && !klartext && (
         <div style={{
           display: 'flex',
           flexWrap: 'wrap',

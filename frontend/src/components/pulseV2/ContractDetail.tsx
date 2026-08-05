@@ -8,6 +8,8 @@ import { ScoreTrend } from './ScoreTrend';
 import { PortfolioInsightsPanel } from './PortfolioInsightsPanel';
 import { ActionItem } from './ActionItem';
 import { ImpactGraph } from './ImpactGraph';
+// Klartext-Redesign 05.08. (nur bei ?ansicht=neu aktiv, Standard: alte Ansicht)
+import { usePulseLayoutV3 } from './PulseKlartextV3';
 import styles from '../../styles/PulseV2.module.css';
 
 /** Smooth scroll to a section by id */
@@ -48,6 +50,7 @@ interface ContractDetailProps {
 }
 
 export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts, highlightAlertId, onAlertStatusChange, onBulkResolveAlerts }) => {
+  const layoutV3 = usePulseLayoutV3(); // Klartext-Ansicht nur per Schalter
   const toast = useToast();
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
   const [findingsState, setFindingsState] = useState<PulseV2Finding[]>(result.clauseFindings || []);
@@ -536,7 +539,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         overflow: 'visible',
       }}>
         <div>
-          <HealthScoreGauge scores={scoresState} riskTrend={result.context?.riskTrend} />
+          <HealthScoreGauge scores={scoresState} riskTrend={result.context?.riskTrend} klartext={layoutV3} />
         </div>
         <div>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: '#111827', margin: '0 0 6px', lineHeight: 1.3, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
@@ -1412,11 +1415,15 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
       {/* ═══ Score Timeline ═══ */}
       <ScoreTrend contractId={result.contractId} />
 
-      {/* ═══ Portfolio Insights ═══ */}
-      <PortfolioInsightsPanel
-        insights={portfolioInsightsDisplay}
-        contractNames={contractNames}
-      />
+      {/* ═══ Portfolio Insights — Klartext-Ansicht: portfolioweite Themen gehören aufs
+          Dashboard, nicht auf die Einzelvertrags-Seite (verwirrt Laien: „was hat das
+          mit DIESEM Vertrag zu tun?") ═══ */}
+      {!layoutV3 && (
+        <PortfolioInsightsPanel
+          insights={portfolioInsightsDisplay}
+          contractNames={contractNames}
+        />
+      )}
 
       {/* ═══ Geprüft & unauffällig — low + info only, collapsed ═══ */}
       {secondaryFindings.length > 0 && (() => {
