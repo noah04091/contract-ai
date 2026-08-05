@@ -5755,6 +5755,48 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.log(`📨 [${requestId}] LETTER-Guard: Vertrags-Lebenszyklus-Felder genullt${clearedFields.length ? ` (verworfen: ${clearedFields.join(', ')})` : ''} — documentCategory='letter', letterType=${validationResult.letterType || 'sonstiges_schreiben'}`);
     }
 
+    // 🧾 05.08.2026 — BELEG-Guard (Ehrlichkeits-Prinzip, Zwilling des LETTER-Guards oben).
+    // Eine Rechnung/Quittung/Lohnabrechnung ist KEIN Vertrag. Der deterministische Regex-
+    // Extraktor erfindet dort aber Vertrags-Lebenszyklus-Werte (Stichwort 'versicherung' →
+    // contractType 'insurance' + hart erfundene 1-Jahr-Laufzeit; Belegdatum als endDate; usw.).
+    // Wir nullen sie an EINER Stelle, VOR jeder Persistenz → alle nachgelagerten Systeme
+    // (Anzeige, PDF-Export, Kalender, Status/Mails, Kosten-Hochrechnung) bekommen saubere
+    // Daten, ohne pro Fläche zu flicken (systematisch statt Whack-a-Mole).
+    //
+    // WICHTIG — anders als der LETTER-Guard BEHALTEN wir extractedStartDate + importantDates:
+    //   • extractedStartDate ist (a) der Plausibilitäts-Anker der importantDates-Prüfung und
+    //     (b) das ehrliche Belegdatum in der Eckdaten-Box. Nullen würde die erkannten Termine
+    //     verfälschen (bewiesen: validateImportantDate nutzt startDate als Anker).
+    //   • importantDates + paymentTerms sind echte, aus dem Beleg gelesene Daten → bleiben.
+    // Trigger: eindeutige Nicht-Verträge (documentType INVOICE/RECEIPT ODER category 'invoice').
+    // Ein echter Vertrag hat documentType CONTRACT + documentCategory 'active_contract' → der
+    // Guard feuert dort NIE → Verträge byte-identisch, kein Regressionsrisiko am Herzstück.
+    // Kill-Switch: BELEG_LIFECYCLE_GUARD_ENABLED=false → exakt altes Verhalten.
+    const BELEG_LIFECYCLE_GUARD_ENABLED = process.env.BELEG_LIFECYCLE_GUARD_ENABLED !== 'false';
+    const isBelegDocument =
+      validationResult.documentType === 'INVOICE'
+      || validationResult.documentType === 'RECEIPT'
+      || extractedDocumentCategory === 'invoice';
+    if (BELEG_LIFECYCLE_GUARD_ENABLED && validationResult.documentType !== 'LETTER' && isBelegDocument) {
+      const clearedBeleg = [];
+      if (extractedContractType) clearedBeleg.push(`contractType=${extractedContractType}`);
+      if (extractedContractDuration) clearedBeleg.push('laufzeit');
+      if (extractedEndDate) clearedBeleg.push(`endDate=${extractedEndDate}`);
+      if (extractedGekuendigtZum) clearedBeleg.push(`gekuendigtZum=${extractedGekuendigtZum}`);
+      if (extractedCancellationPeriod) clearedBeleg.push('cancellationPeriod');
+      extractedEndDate = null;
+      endDateConfidence = 0;
+      extractedGekuendigtZum = null;
+      extractedCanCancelAfterDate = null;
+      extractedCancellationPeriod = null;
+      extractedIsAutoRenewal = false;
+      extractedContractDuration = null;
+      extractedMinimumTerm = null;
+      extractedContractType = null;
+      // startDate/startDateConfidence + importantDates + paymentTerms bewusst NICHT angetastet.
+      console.log(`🧾 [${requestId}] BELEG-Guard: erfundene Vertrags-Lebenszyklus-Felder genullt${clearedBeleg.length ? ` (verworfen: ${clearedBeleg.join(', ')})` : ''} — documentType=${validationResult.documentType}, documentCategory=${extractedDocumentCategory || 'null'} (startDate + Termine behalten)`);
+    }
+
     reportJobProgress(req, 'Dokumenttyp erkannt & Vertragsdaten extrahiert', 28); // 📶
     console.log(`🛠️ [${requestId}] Document analysis successful - proceeding with FIXED DEEP LAWYER-LEVEL analysis:`, {
       documentType: validationResult.documentType,
