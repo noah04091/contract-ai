@@ -1239,7 +1239,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
               {portfolioSummary && (layoutV3 ? (
                 /* Klartext-Ansicht: Entwicklung als kompakte Zeile statt großer Karte */
                 portfolioSummary.hasData ? (
-                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '13px 18px', display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', fontSize: 13, color: '#475569', boxShadow: '0 1px 2px rgba(15,23,42,.04)' }}>
+                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '13px 18px', display: 'flex', gap: 14, alignItems: 'center', alignContent: 'flex-start', alignSelf: 'flex-start', flexWrap: 'wrap', fontSize: 13, color: '#475569', boxShadow: '0 1px 2px rgba(15,23,42,.04)' }}>
                     <span style={{ background: portfolioSummary.delta >= 0 ? '#ecfdf5' : '#fef2f2', border: `1px solid ${portfolioSummary.delta >= 0 ? '#a7f3d0' : '#fecaca'}`, color: portfolioSummary.delta >= 0 ? '#059669' : '#dc2626', fontSize: 12, fontWeight: 700, borderRadius: 6, padding: '2px 10px' }}>
                       📈 Entwicklung: {portfolioSummary.avgScorePrevious ?? '–'} → {portfolioSummary.avgScoreNow ?? '–'} ({portfolioSummary.delta >= 0 ? '+' : ''}{portfolioSummary.delta})
                     </span>
