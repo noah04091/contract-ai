@@ -938,6 +938,18 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
     return { criticalContracts, renewalSoon, avgScore, openActions, unanalyzed };
   }, [items, actions]);
 
+  // Klartext-Ansicht: offene Radar-Meldungen je Vertrag (für die Ampel-Aussage der Karten)
+  const openAlertsByContract = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of legalAlerts) {
+      if (a.status === 'unread' || a.status === 'read') {
+        const key = String(a.contractId);
+        m.set(key, (m.get(key) || 0) + 1);
+      }
+    }
+    return m;
+  }, [legalAlerts]);
+
   // Filtered + searched + sorted items
   const filteredItems = useMemo(() => {
     let result = items;
@@ -1224,13 +1236,29 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
           {/* Portfolio: Trend + Insights nebeneinander (Mockup-Zweispalter) */}
           {(portfolioSummary || insights.length > 0) && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px, 100%), 1fr))', gap: 14, alignItems: 'stretch', marginBottom: 20 }}>
-              {portfolioSummary && (
+              {portfolioSummary && (layoutV3 ? (
+                /* Klartext-Ansicht: Entwicklung als kompakte Zeile statt großer Karte */
+                portfolioSummary.hasData ? (
+                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '13px 18px', display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', fontSize: 13, color: '#475569', boxShadow: '0 1px 2px rgba(15,23,42,.04)' }}>
+                    <span style={{ background: portfolioSummary.delta >= 0 ? '#ecfdf5' : '#fef2f2', border: `1px solid ${portfolioSummary.delta >= 0 ? '#a7f3d0' : '#fecaca'}`, color: portfolioSummary.delta >= 0 ? '#059669' : '#dc2626', fontSize: 12, fontWeight: 700, borderRadius: 6, padding: '2px 10px' }}>
+                      📈 Entwicklung: {portfolioSummary.avgScorePrevious ?? '–'} → {portfolioSummary.avgScoreNow ?? '–'} ({portfolioSummary.delta >= 0 ? '+' : ''}{portfolioSummary.delta})
+                    </span>
+                    <span><b style={{ color: '#059669' }}>{portfolioSummary.contractsImproved} verbessert</b> · <b style={{ color: '#dc2626' }}>{portfolioSummary.contractsWorsened} verschlechtert</b></span>
+                    {portfolioSummary.topImprovement && (
+                      <span style={{ color: '#94a3b8', fontSize: 12 }}>Beste: {cleanContractName(portfolioSummary.topImprovement.name)} (+{portfolioSummary.topImprovement.delta})</span>
+                    )}
+                    {portfolioSummary.topDecline && (
+                      <span style={{ color: '#94a3b8', fontSize: 12 }}>Rückgang: {cleanContractName(portfolioSummary.topDecline.name)} ({portfolioSummary.topDecline.delta})</span>
+                    )}
+                  </div>
+                ) : null
+              ) : (
                 <PortfolioImprovementCard
                   summary={portfolioSummary}
                   lastAnalysisMap={contractLastAnalysisMap}
                   onNavigate={(id) => onSelectContract(id)}
                 />
-              )}
+              ))}
               {insights.length > 0 && (
                 <PortfolioInsightsPanel insights={insights} contractNames={contractNames} />
               )}
@@ -1419,7 +1447,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
                 gap: 14,
               }}>
                 {(showAllUnanalyzed ? [...analyzed, ...unanalyzed] : analyzed).map(item => (
-                  <ContractCard key={item.contractId} item={item} onClick={() => onSelectContract(item.contractId)} />
+                  <ContractCard key={item.contractId} item={item} onClick={() => onSelectContract(item.contractId)} klartext={layoutV3} openAlertCount={openAlertsByContract.get(String(item.contractId)) ?? 0} />
                 ))}
               </div>
               {collapseUnanalyzed && unanalyzed.length > 0 && !showAllUnanalyzed && (
@@ -1437,7 +1465,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
                     cursor: 'pointer',
                   }}
                 >
-                  + {unanalyzed.length} nicht analysierte Dokumente anzeigen (werden nicht überwacht)
+                  {layoutV3
+                    ? `💤 ${unanalyzed.length} hochgeladene Dokumente werden noch nicht überwacht — die Überwachung beginnt mit der Analyse. Anzeigen ›`
+                    : `+ ${unanalyzed.length} nicht analysierte Dokumente anzeigen (werden nicht überwacht)`}
                 </button>
               )}
             </>
@@ -1459,7 +1489,13 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
 // ═══════════════════════════════════════════════════════════
 // Contract Card
 // ═══════════════════════════════════════════════════════════
-const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }> = ({ item, onClick }) => {
+const ContractCard: React.FC<{
+  item: PulseV2DashboardItem;
+  onClick: () => void;
+  /** Klartext-Ansicht: Ampel-Status in Alltagssprache statt „N Befunde" */
+  klartext?: boolean;
+  openAlertCount?: number;
+}> = ({ item, onClick, klartext, openAlertCount = 0 }) => {
   const score = item.v2Score;
   const scoreColor = score === null ? '#cbd5e1' : score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : score >= 40 ? '#f97316' : '#ef4444';
   const now = Date.now();
@@ -1543,10 +1579,22 @@ const ContractCard: React.FC<{ item: PulseV2DashboardItem; onClick: () => void }
         <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
           {item.contractType && <span>{safeStr(item.contractType)} · </span>}
           {item.provider && <span>{safeStr(item.provider)} · </span>}
-          {item.hasV2Result
-            ? `${item.v2FindingsCount} Befunde`
-            : 'Noch nicht analysiert'
-          }
+          {klartext ? (
+            /* Klartext-Ansicht: Ampel-Aussage statt Befund-Zahl */
+            !item.hasV2Result ? (
+              <span>Noch nicht analysiert — wird nicht überwacht</span>
+            ) : item.v2CriticalCount > 0 ? (
+              <span style={{ color: '#dc2626', fontWeight: 600 }}>{item.v2CriticalCount} kritische{item.v2CriticalCount === 1 ? 'r Punkt' : ' Punkte'} offen</span>
+            ) : openAlertCount > 0 ? (
+              <span style={{ color: '#d97706', fontWeight: 600 }}>{openAlertCount} {openAlertCount === 1 ? 'Punkt' : 'Punkte'} offen</span>
+            ) : (
+              <span style={{ color: '#059669', fontWeight: 600 }}>Alles ruhig — wird überwacht</span>
+            )
+          ) : (
+            item.hasV2Result
+              ? `${item.v2FindingsCount} Befunde`
+              : 'Noch nicht analysiert'
+          )}
         </div>
         {daysUntilExpiry !== null && (
           <div style={{
