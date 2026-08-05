@@ -5768,22 +5768,29 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     //     (b) das ehrliche Belegdatum in der Eckdaten-Box. Nullen würde die erkannten Termine
     //     verfälschen (bewiesen: validateImportantDate nutzt startDate als Anker).
     //   • importantDates + paymentTerms sind echte, aus dem Beleg gelesene Daten → bleiben.
-    // Trigger: eindeutige Nicht-Verträge (documentType INVOICE/RECEIPT ODER category 'invoice').
-    // Ein echter Vertrag hat documentType CONTRACT + documentCategory 'active_contract' → der
-    // Guard feuert dort NIE → Verträge byte-identisch, kein Regressionsrisiko am Herzstück.
+    // Trigger: eindeutige Nicht-Verträge. WICHTIG (TÜV-Härtung 05.08.): der documentCategory-
+    // ODER-Zweig darf NICHT bei vertrags-artigen Typen feuern. Ein echter CONTRACT, dessen Text
+    // zufällig „Rechnung"-Vokabular ohne das Wort „Vertrag" enthält, bekäme sonst category='invoice'
+    // vom Regex-Klassifikator und würde fälschlich seine Lebenszyklus-Felder verlieren. Deshalb:
+    // Guard NUR bei NICHT-kalender-fähigen Typen — `!isCalendarEligibleDocType` schließt CONTRACT,
+    // TABLE_DOCUMENT, FINANCIAL_DOCUMENT UND LETTER in einem Rutsch aus (diese dürfen echte Fristen
+    // tragen). Feuert also nur für INVOICE/RECEIPT/UNKNOWN — und dort auch nur, wenn isBelegDocument.
     // Kill-Switch: BELEG_LIFECYCLE_GUARD_ENABLED=false → exakt altes Verhalten.
     const BELEG_LIFECYCLE_GUARD_ENABLED = process.env.BELEG_LIFECYCLE_GUARD_ENABLED !== 'false';
     const isBelegDocument =
       validationResult.documentType === 'INVOICE'
       || validationResult.documentType === 'RECEIPT'
       || extractedDocumentCategory === 'invoice';
-    if (BELEG_LIFECYCLE_GUARD_ENABLED && validationResult.documentType !== 'LETTER' && isBelegDocument) {
+    if (BELEG_LIFECYCLE_GUARD_ENABLED && !isCalendarEligibleDocType(validationResult.documentType) && isBelegDocument) {
       const clearedBeleg = [];
       if (extractedContractType) clearedBeleg.push(`contractType=${extractedContractType}`);
       if (extractedContractDuration) clearedBeleg.push('laufzeit');
       if (extractedEndDate) clearedBeleg.push(`endDate=${extractedEndDate}`);
       if (extractedGekuendigtZum) clearedBeleg.push(`gekuendigtZum=${extractedGekuendigtZum}`);
       if (extractedCancellationPeriod) clearedBeleg.push('cancellationPeriod');
+      if (extractedMinimumTerm) clearedBeleg.push('minimumTerm');
+      if (extractedCanCancelAfterDate) clearedBeleg.push('canCancelAfterDate');
+      if (extractedIsAutoRenewal) clearedBeleg.push('isAutoRenewal');
       extractedEndDate = null;
       endDateConfidence = 0;
       extractedGekuendigtZum = null;
@@ -6365,7 +6372,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             ? { documentCategory: 'letter' }
             : (existingContract.documentCategory === 'letter'
                 ? { documentCategory: extractedDocumentCategory || 'active_contract' }
-                : {})),
+                // 🧾 TÜV 05.08.: Belege ehrlich als 'invoice' persistieren, damit die Anzeige
+                // (isContractLifecycleFieldHiddenForDocType) sie zuverlässig erkennt — auch wenn
+                // documentType schwankt (mal RECEIPT, mal UNKNOWN). Verträge (active_contract) bekommen
+                // KEINEN Write → byte-identisch. Nur der klar erkannte Beleg wird angefasst.
+                : (extractedDocumentCategory === 'invoice'
+                    ? { documentCategory: 'invoice' }
+                    : {}))),
           // 🛡️ TÜV M2: bei LETTER ALLE Lifecycle-Schwesterfelder AKTIV nullen —
           // Altwerte aus einer früheren (Fehl-)Analyse als Vertrag dürfen nicht
           // überleben (endDate → „läuft ab"-Mail via smartStatusUpdater/statusNotifier;

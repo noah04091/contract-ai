@@ -481,8 +481,8 @@ export default function ContractDetailsV2() {
 
     // 🎯 04.08.2026: dieselbe geteilte Prädikat-Funktion wie in der UI — erfundene Vertrags-
     // Lebenszyklus-Felder bei Belegen (documentCategory='invoice') NICHT ins Gutachten-PDF.
-    const pdfDoc = contract as { documentType?: string | null; documentCategory?: string | null };
-    const hideLc = (key: string) => isContractLifecycleFieldHiddenForDocType(key, pdfDoc.documentType, pdfDoc.documentCategory);
+    const pdfDoc = contract as { documentType?: string | null; documentCategory?: string | null; contractType?: string | null };
+    const hideLc = (key: string) => isContractLifecycleFieldHiddenForDocType(key, pdfDoc.documentType, pdfDoc.documentCategory, pdfDoc.contractType);
 
     // ✅ Eckdaten sammeln (gleiche Felder wie EDITABLE_FIELDS)
     const eckdatenRows = [
@@ -680,8 +680,8 @@ export default function ContractDetailsV2() {
           <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
             <p style="margin: 5px 0;"><strong>Status:</strong> ${contract.status || 'Unbekannt'}</p>
             <p style="margin: 5px 0;"><strong>Hochgeladen:</strong> ${contract.uploadedAt ? new Date(contract.uploadedAt).toLocaleDateString('de-DE') : 'Unbekannt'}</p>
-            ${!isContractLifecycleFieldHiddenForDocType('laufzeit', (contract as { documentType?: string | null; documentCategory?: string | null }).documentType, (contract as { documentCategory?: string | null }).documentCategory) && contract.laufzeit ? `<p style="margin: 5px 0;"><strong>Laufzeit:</strong> ${contract.laufzeit}</p>` : ''}
-            ${!isContractLifecycleFieldHiddenForDocType('kuendigung', (contract as { documentType?: string | null; documentCategory?: string | null }).documentType, (contract as { documentCategory?: string | null }).documentCategory) && contract.kuendigung ? `<p style="margin: 5px 0;"><strong>Kündigungsfrist:</strong> ${contract.kuendigung}</p>` : ''}
+            ${!isContractLifecycleFieldHiddenForDocType('laufzeit', (contract as { documentType?: string | null; documentCategory?: string | null }).documentType, (contract as { documentCategory?: string | null }).documentCategory, contract.contractType) && contract.laufzeit ? `<p style="margin: 5px 0;"><strong>Laufzeit:</strong> ${contract.laufzeit}</p>` : ''}
+            ${!isContractLifecycleFieldHiddenForDocType('kuendigung', (contract as { documentType?: string | null; documentCategory?: string | null }).documentType, (contract as { documentCategory?: string | null }).documentCategory, contract.contractType) && contract.kuendigung ? `<p style="margin: 5px 0;"><strong>Kündigungsfrist:</strong> ${contract.kuendigung}</p>` : ''}
           </div>
 
           <div style="line-height: 1.7;">
@@ -2164,7 +2164,7 @@ export default function ContractDetailsV2() {
                             // 🎯 04.08.2026: Vertrags-Lebenszyklus-Felder (Laufzeit/Vertragsbeginn/…)
                             // bei eindeutigen Nicht-Verträgen ausblenden (erfundene Regex-Werte).
                             // Verträge/Letter/Unknown unberührt. Nur wenn nicht gerade editiert.
-                            if (isContractLifecycleFieldHiddenForDocType(field.key, cDoc.documentType, cDoc.documentCategory) && !isBeingEdited) return null;
+                            if (isContractLifecycleFieldHiddenForDocType(field.key, cDoc.documentType, cDoc.documentCategory, contract.contractType) && !isBeingEdited) return null;
                             return renderEditableMetricCard(field);
                           })}
 

@@ -144,35 +144,41 @@ function isEmptyValue(value: string | undefined | null): boolean {
 // UNBERÜHRT (könnten echte Verträge sein → alle Felder wie bisher). Nur reine Anzeige, nicht die
 // Factory/Edit-Logik. Kill-Switch: HIDE_CONTRACT_FIELDS_FOR_BELEGE=false → altes Verhalten.
 const HIDE_CONTRACT_FIELDS_FOR_BELEGE = true;
-// Nur diese Typen SIND vertrags-artig und dürfen Lebenszyklus-Felder zeigen. Alles andere
-// (INVOICE/RECEIPT/TABLE_DOCUMENT/FINANCIAL_DOCUMENT/UNKNOWN) ist kein Vertrag → ausblenden.
-// Deckungsgleich mit der Score-Logik (isRiskScoreMeaningful behandelt genau diese als „echtes
-// Dokument"). LETTER hat seine Felder ohnehin schon backend-seitig genullt (LETTER-Guard).
-const CONTRACT_LIKE_DOC_TYPES = ['CONTRACT', 'AGB', 'LETTER'];
+// Typen, die legitim Vertrags-Lebenszyklus-Datums tragen dürfen → Felder NIE ausblenden.
+// Enthält bewusst FINANCIAL_DOCUMENT + TABLE_DOCUMENT (kalender-fähig im Backend, können echte
+// Verträge sein — z.B. Darlehen/Tabellen-Verträge) und LETTER (Felder ohnehin backend-genullt).
+// Deckungsgleich mit der Backend-Kalender-Eligibilität (isCalendarEligibleDocType) + CONTRACT/AGB.
+const LIFECYCLE_OK_DOC_TYPES = ['CONTRACT', 'AGB', 'LETTER', 'FINANCIAL_DOCUMENT', 'TABLE_DOCUMENT'];
 const CONTRACT_LIFECYCLE_FIELD_KEYS = ['laufzeit', 'startDate', 'expiryDate', 'kuendigung', 'gekuendigtZum'];
 
 /**
  * Soll dieses Eckdaten-Feld AUSGEBLENDET werden, weil es ein Vertrags-Lebenszyklus-Feld ist,
- * das Dokument aber kein Vertrag? true nur für Lebenszyklus-Felder UND ein Nicht-Vertrag.
- * Zwei Signale (beide sicher für echte Verträge → dort immer false):
- *  1) documentCategory === 'invoice' — DETERMINISTISCH pro Dokument von JEDEM Beleg gesetzt.
- *  2) documentType ist bekannt UND NICHT vertrags-artig (nicht CONTRACT/AGB/LETTER). Deckt
- *     auch UNKNOWN-klassifizierte Belege ab (z.B. Lohnabrechnung → UNKNOWN) — konsistent mit
- *     der Score-Logik, die UNKNOWN ebenfalls als „kein Vertragsdokument" behandelt.
- * Fehlender documentType (Altdaten) → false (anzeigen; nie ein echter Vertrag betroffen).
+ * das Dokument aber KEIN Vertrag? Grundsatz (TÜV-gehärtet 05.08.): im Zweifel ANZEIGEN — nur
+ * bei EINDEUTIGEM Beleg ausblenden, damit ein echter Vertrag nie Felder verliert.
+ *  - Vertrags-artiger documentType (CONTRACT/AGB/LETTER/FINANCIAL/TABLE) ODER contractType==='agb'
+ *    → immer anzeigen (documentType/contractType schlagen die schwankende Regex-Kategorie).
+ *  - Sonst nur ausblenden bei eindeutigem Beleg-Signal: documentCategory==='invoice' ODER
+ *    documentType INVOICE/RECEIPT.
+ *  - UNKNOWN/fehlend OHNE invoice-Signal → anzeigen (könnte ein echter, nur schlecht erkannter
+ *    Vertrag sein, z.B. schlechter Scan/fremdsprachig → darf keine Felder verlieren).
  */
 export function isContractLifecycleFieldHiddenForDocType(
   fieldKey: string,
   documentType?: string | null,
-  documentCategory?: string | null
+  documentCategory?: string | null,
+  contractType?: string | null
 ): boolean {
   if (!HIDE_CONTRACT_FIELDS_FOR_BELEGE) return false;
   if (!CONTRACT_LIFECYCLE_FIELD_KEYS.includes(fieldKey)) return false;
-  // Signal 1: doc-genaue Kategorie (schwankt nicht mit der documentType-Klassifikation).
+  const dt = documentType ? documentType.toUpperCase().trim() : '';
+  // Vertrags-artig? → immer anzeigen (nie ausblenden). documentType/contractType sind
+  // verlässlicher als die Regex-Kategorie und schützen echte, nur schlecht erkannte Verträge.
+  if (dt && LIFECYCLE_OK_DOC_TYPES.includes(dt)) return false;
+  if ((contractType || '').toLowerCase().trim() === 'agb') return false;
+  // Ab hier: kein vertrags-artiger Typ. Nur bei EINDEUTIGEM Beleg ausblenden.
   if ((documentCategory || '').toLowerCase().trim() === 'invoice') return true;
-  // Signal 2: documentType bekannt UND nicht vertrags-artig → ausblenden.
-  if (!documentType) return false;
-  return !CONTRACT_LIKE_DOC_TYPES.includes(documentType.toUpperCase().trim());
+  if (dt === 'INVOICE' || dt === 'RECEIPT') return true;
+  return false; // UNKNOWN/leer ohne invoice-Signal → anzeigen (könnte echter Vertrag sein)
 }
 
 // ----------------------------------------

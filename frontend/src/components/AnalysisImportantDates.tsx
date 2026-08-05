@@ -376,6 +376,13 @@ export default function AnalysisImportantDates({
       navigate("/pricing");
       return;
     }
+    // 🛡️ TÜV-Härtung: keine parallele Übernahme (verhindert Doppel-Klick-Duplikate über mehrere
+    // Buttons) UND Dedup-Schutz wie auf der Detailseite (schon im Kalender → nicht nochmal anlegen).
+    if (convertingIdx !== null) return;
+    if (isImportantDateInCalendar(d)) {
+      toast.info("Dieser Termin ist bereits im Kalender");
+      return;
+    }
     setConvertingIdx(idx);
     try {
       const token = localStorage.getItem("token");
@@ -481,6 +488,9 @@ export default function AnalysisImportantDates({
   const isImportantDateInCalendar = (d: ImportantDate): boolean => {
     if (!events || events.length === 0) return false;
     const targetTime = new Date(d.date).getTime();
+    // 🛡️ TÜV-Härtung: ungültiges Datum → NICHT als „im Kalender" werten (sonst würde die
+    // Datums-Schranke wegen NaN übersprungen und allein per Titel gematcht = Fehl-Treffer).
+    if (isNaN(targetTime)) return false;
     const oneDayMs = 24 * 60 * 60 * 1000;
     const labelLower = (d.label || "").toLowerCase();
     return events.some((ev) => {
@@ -504,7 +514,8 @@ export default function AnalysisImportantDates({
     SHOW_KI_DATE_SUGGESTIONS
       ? importantDates
           .map((d, idx) => ({ d, idx }))
-          .filter(({ d }) => d && d.date && d.label && !isImportantDateInCalendar(d))
+          // 🛡️ TÜV-Härtung: nur gültige Datums als Vorschlag (kein „Invalid Date", kein NaN-Konvertieren).
+          .filter(({ d }) => d && d.date && d.label && !isNaN(new Date(d.date).getTime()) && !isImportantDateInCalendar(d))
       : [];
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -891,7 +902,7 @@ export default function AnalysisImportantDates({
                     <button
                       type="button"
                       onClick={() => handleConvertSuggestion(d, idx)}
-                      disabled={convertingIdx === idx}
+                      disabled={convertingIdx !== null}
                       title={canCreate ? "Diesen Termin in den Kalender übernehmen" : "Business/Enterprise-Feature"}
                       style={{
                         flexShrink: 0,
