@@ -144,18 +144,22 @@ function isEmptyValue(value: string | undefined | null): boolean {
 // UNBERÜHRT (könnten echte Verträge sein → alle Felder wie bisher). Nur reine Anzeige, nicht die
 // Factory/Edit-Logik. Kill-Switch: HIDE_CONTRACT_FIELDS_FOR_BELEGE=false → altes Verhalten.
 const HIDE_CONTRACT_FIELDS_FOR_BELEGE = true;
-const NON_CONTRACT_DOC_TYPES = ['INVOICE', 'RECEIPT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'];
+// Nur diese Typen SIND vertrags-artig und dürfen Lebenszyklus-Felder zeigen. Alles andere
+// (INVOICE/RECEIPT/TABLE_DOCUMENT/FINANCIAL_DOCUMENT/UNKNOWN) ist kein Vertrag → ausblenden.
+// Deckungsgleich mit der Score-Logik (isRiskScoreMeaningful behandelt genau diese als „echtes
+// Dokument"). LETTER hat seine Felder ohnehin schon backend-seitig genullt (LETTER-Guard).
+const CONTRACT_LIKE_DOC_TYPES = ['CONTRACT', 'AGB', 'LETTER'];
 const CONTRACT_LIFECYCLE_FIELD_KEYS = ['laufzeit', 'startDate', 'expiryDate', 'kuendigung', 'gekuendigtZum'];
 
 /**
  * Soll dieses Eckdaten-Feld AUSGEBLENDET werden, weil es ein Vertrags-Lebenszyklus-Feld ist,
  * das Dokument aber kein Vertrag? true nur für Lebenszyklus-Felder UND ein Nicht-Vertrag.
  * Zwei Signale (beide sicher für echte Verträge → dort immer false):
- *  1) documentCategory === 'invoice' — DETERMINISTISCH pro Dokument von JEDEM Beleg gesetzt
- *     (Rechnung/Quittung/Lohnabrechnung), unabhängig vom schwankenden documentType. Echte
- *     Verträge = 'active_contract' → nie betroffen. Deckt auch UNKNOWN-klassifizierte Belege ab.
- *  2) Fallback: eindeutiger Nicht-Vertrags-documentType (INVOICE/RECEIPT/TABLE/FINANCIAL).
- * CONTRACT/LETTER/UNKNOWN mit category='active_contract'/leer → false (unverändert).
+ *  1) documentCategory === 'invoice' — DETERMINISTISCH pro Dokument von JEDEM Beleg gesetzt.
+ *  2) documentType ist bekannt UND NICHT vertrags-artig (nicht CONTRACT/AGB/LETTER). Deckt
+ *     auch UNKNOWN-klassifizierte Belege ab (z.B. Lohnabrechnung → UNKNOWN) — konsistent mit
+ *     der Score-Logik, die UNKNOWN ebenfalls als „kein Vertragsdokument" behandelt.
+ * Fehlender documentType (Altdaten) → false (anzeigen; nie ein echter Vertrag betroffen).
  */
 export function isContractLifecycleFieldHiddenForDocType(
   fieldKey: string,
@@ -166,9 +170,9 @@ export function isContractLifecycleFieldHiddenForDocType(
   if (!CONTRACT_LIFECYCLE_FIELD_KEYS.includes(fieldKey)) return false;
   // Signal 1: doc-genaue Kategorie (schwankt nicht mit der documentType-Klassifikation).
   if ((documentCategory || '').toLowerCase().trim() === 'invoice') return true;
-  // Signal 2: eindeutiger Nicht-Vertrags-documentType.
+  // Signal 2: documentType bekannt UND nicht vertrags-artig → ausblenden.
   if (!documentType) return false;
-  return NON_CONTRACT_DOC_TYPES.includes(documentType.toUpperCase().trim());
+  return !CONTRACT_LIKE_DOC_TYPES.includes(documentType.toUpperCase().trim());
 }
 
 // ----------------------------------------
