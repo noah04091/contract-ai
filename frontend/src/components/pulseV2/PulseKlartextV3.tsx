@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { PulseV2LegalAlert, PulseV2Action } from '../../types/pulseV2';
+import styles from '../../styles/PulseV2.module.css';
 
 // ─── Schalter ────────────────────────────────────────────────────────────────
 // Hinweis zur Stabilität (TÜV 06.08.): Der Hook liest nur beim MOUNT. Das ist heute
@@ -109,7 +110,12 @@ export const PulseStatusHeroV3: React.FC<StatusHeroProps> = ({
     sub = <>Der Rechts-Check hat Neues gefunden — Details unten, das Dringendste zuerst.</>;
   } else {
     title = points === 1 ? '1 Punkt braucht deine Aufmerksamkeit' : `${points} Punkte brauchen deine Aufmerksamkeit`;
-    sub = <>Details unten — beginn mit dem obersten. Alles andere ist in Ordnung, <b style={{ color: '#0f172a' }}>{monitoredCount} {monitoredCount === 1 ? 'Vertrag steht' : 'Verträge stehen'}</b> unter Beobachtung{lastRadarRun ? <> — zuletzt geprüft {isToday(lastRadarRun) ? `heute ${fmtTime(lastRadarRun)}` : `am ${fmtDate(lastRadarRun)}`}</> : null}.</>;
+    // Eigenfund 06.08.: Die Zusammensetzung erklären — sonst kann niemand die Kopf-Zahl
+    // mit den Zahlen der Sektionen darunter zusammenrechnen (7 vs. 4 vs. 9).
+    const composition = openAlerts.length > 0 && urgentActions > 0
+      ? <> ({openAlerts.length} Gesetzes-{openAlerts.length === 1 ? 'Treffer' : 'Treffer'} + {urgentActions} dringende Aufgabe{urgentActions === 1 ? '' : 'n'})</>
+      : null;
+    sub = <>Details unten — beginn mit dem obersten{composition}. Alles andere ist in Ordnung, <b style={{ color: '#0f172a' }}>{monitoredCount} {monitoredCount === 1 ? 'Vertrag steht' : 'Verträge stehen'}</b> unter Beobachtung{lastRadarRun ? <> — zuletzt geprüft {isToday(lastRadarRun) ? `heute ${fmtTime(lastRadarRun)}` : `am ${fmtDate(lastRadarRun)}`}</> : null}.</>;
   }
 
   const scoreDeutung = avgScore === null ? '' : avgScore >= 67 ? 'gut' : avgScore >= 40 ? 'mittel' : 'schwach';
@@ -212,8 +218,10 @@ export const RechtsCheckStage: React.FC<StageProps> = ({
       <div style={{ display: 'flex', alignItems: 'stretch', flexWrap: 'wrap', margin: '14px 0 2px' }}>
         {steps.map((s, i) => (
           <div key={i} style={{ flex: 1, minWidth: 200, padding: '10px 18px', position: 'relative' }}>
+            {/* Eigenfund 06.08. (Mobile): Pfeil nur nebeneinander sinnvoll — beim
+                vertikalen Stapeln per CSS-Klasse pipeArrowV3 ausgeblendet. */}
             {i < steps.length - 1 && (
-              <span style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', color: '#93c5fd', fontSize: 17, fontWeight: 700 }}>→</span>
+              <span className={styles.pipeArrowV3} style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', color: '#93c5fd', fontSize: 17, fontWeight: 700 }}>→</span>
             )}
             <div style={{ fontSize: 21, fontWeight: 800, color: s.color || '#0f172a' }}>
               {s.k} <span style={{ fontSize: 12.5, fontWeight: 600, color: '#475569' }}>{s.label}</span>

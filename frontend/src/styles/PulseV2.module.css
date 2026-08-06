@@ -398,3 +398,9 @@
 @media (prefers-reduced-motion: reduce) {
   .alertHighlight { animation: none; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35); }
 }
+
+/* Klartext-Ansicht (06.08.): Prozess-Pfeile der Rechts-Check-Bühne nur nebeneinander
+   sinnvoll — beim vertikalen Stapeln auf Schmal-Viewports ausblenden. */
+@media (max-width: 860px) {
+  .pipeArrowV3 { display: none !important; }
+}

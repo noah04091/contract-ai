@@ -259,8 +259,10 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
       marginBottom: 28,
       boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.03)',
     }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+      {/* Header — Klartext: darf auf Schmal-Viewports sauber umbrechen (Eigenfund 06.08.) */}
+      <div style={klartext
+        ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 10 }
+        : { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
           <span style={{ fontSize: 18 }}>&#9878;&#65039;</span>
           <span style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>
