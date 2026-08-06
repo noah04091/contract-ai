@@ -21,7 +21,9 @@ function findMatchingOpenAction(insight: PulseV2PortfolioInsight, openActions?: 
   const kw = insight.type === 'concentration_risk'
     ? /konzentration|klumpen|anbieter|abhängigkeit/i
     : insight.type === 'renewal_cluster'
-      ? /auslauf|frist|verläng|kündig/i
+      // TÜV-Fix 06.08.: „frist" allein war zu breit (jede DSGVO-Nachbesserungsfrist hätte
+      // gematcht) — nur noch eindeutige Ablauf-/Verlängerungs-Wörter.
+      ? /auslauf|ablauf|verläng|kündig/i
       : null;
   if (!kw) return null;
   const insightContracts = new Set((insight.relatedContracts || []).map(String));

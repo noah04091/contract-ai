@@ -211,17 +211,28 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
             ['Rechts-Konformität', scores.compliance],
             ['Konditionen', scores.terms],
             ['Vollständigkeit', scores.completeness],
-          ] as Array<[string, number]>).map(([label, value]) => (
-            <div key={label} style={{ margin: '10px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#475569', marginBottom: 4 }}>
-                <span style={{ fontWeight: 600, color: '#0f172a' }}>{label}</span>
-                <span style={{ fontWeight: 700, color: getScoreColor(value) }}>{scoreWord(value)} · {value}</span>
+          ] as Array<[string, number | undefined]>).map(([label, raw]) => {
+            // TÜV-Fix 06.08.: fehlender Teilwert (ältere Analysen) darf NICHT als „schwach/rot"
+            // erscheinen — das wäre eine erfundene schlechteste Note. Stattdessen neutral.
+            const value = typeof raw === 'number' && isFinite(raw) ? raw : null;
+            return (
+              <div key={label} style={{ margin: '10px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#475569', marginBottom: 4 }}>
+                  <span style={{ fontWeight: 600, color: '#0f172a' }}>{label}</span>
+                  {value === null ? (
+                    <span style={{ fontWeight: 600, color: '#94a3b8' }}>keine Angabe</span>
+                  ) : (
+                    <span style={{ fontWeight: 700, color: getScoreColor(value) }}>{scoreWord(value)} · {value}</span>
+                  )}
+                </div>
+                <div style={{ height: 7, borderRadius: 5, background: '#f1f5f9', overflow: 'hidden' }}>
+                  {value !== null && (
+                    <div style={{ height: '100%', borderRadius: 5, width: `${Math.max(0, Math.min(100, value))}%`, background: getScoreColor(value) }} />
+                  )}
+                </div>
               </div>
-              <div style={{ height: 7, borderRadius: 5, background: '#f1f5f9', overflow: 'hidden' }}>
-                <div style={{ height: '100%', borderRadius: 5, width: `${Math.max(0, Math.min(100, value))}%`, background: getScoreColor(value) }} />
-              </div>
-            </div>
-          ))}
+            );
+          })}
           <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
             Je höher, desto besser. Der Gesamtwert folgt dem schwächsten Bereich.
           </div>

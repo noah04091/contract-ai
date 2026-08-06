@@ -242,7 +242,16 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
   ].filter(t => t.key === 'active' || t.n > 0) as Array<{ key: PanelView; label: string; n: number }>;
 
   return (
-    <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={{
+    <div className={`${styles.sectionCard} ${styles.fadeIn}`} style={klartext ? {
+      // Klartext-Ansicht (TÜV-Fix 06.08.): Das Panel steckt in der Rechts-Check-Bühne,
+      // die schon Rahmen/Schatten/Hintergrund mitbringt — keine Karte-in-Karte-Optik.
+      background: 'transparent',
+      border: 'none',
+      borderRadius: 0,
+      padding: '10px 0 0',
+      marginBottom: 0,
+      boxShadow: 'none',
+    } : {
       background: '#ffffff',
       border: '1px solid rgba(0,0,0,0.05)',
       borderRadius: 16,

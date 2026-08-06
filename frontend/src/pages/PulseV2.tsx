@@ -546,6 +546,10 @@ const ActionCenter: React.FC<{
   const [tab, setTab] = useState<'open' | 'done' | 'dismissed'>('open');
   const infoRef = useRef<HTMLDivElement>(null);
 
+  // TÜV 06.08.: Aufgeklappte Klartext-Zeilen beim Reiter-Wechsel zurücksetzen —
+  // liegen gelassener State könnte sonst später unerwartet vorexpandierte Zeilen zeigen.
+  useEffect(() => { setExpandedRows(new Set()); }, [tab]);
+
   useEffect(() => {
     if (!showInfo) return;
     const handler = (e: MouseEvent) => {
@@ -941,6 +945,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
   // Klartext-Ansicht: offene Radar-Meldungen je Vertrag (für die Ampel-Aussage der Karten)
   const openAlertsByContract = useMemo(() => {
     const m = new Map<string, number>();
+    if (!layoutV3) return m; // TÜV 06.08.: bei alter Ansicht keine unnötige Rechenarbeit
     for (const a of legalAlerts) {
       if (a.status === 'unread' || a.status === 'read') {
         const key = String(a.contractId);
@@ -948,7 +953,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
       }
     }
     return m;
-  }, [legalAlerts]);
+  }, [legalAlerts, layoutV3]);
 
   // Filtered + searched + sorted items
   const filteredItems = useMemo(() => {
@@ -1234,7 +1239,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
 
           <div id="pulse-portfolio" />
           {/* Portfolio: Trend + Insights nebeneinander (Mockup-Zweispalter) */}
-          {(portfolioSummary || insights.length > 0) && (
+          {/* TÜV 06.08.: In der Klartext-Ansicht zählt die Entwicklungs-Zeile nur mit,
+              wenn sie auch Daten hat — sonst bliebe eine leere Grid-Spalte zurück. */}
+          {(insights.length > 0 || (portfolioSummary && (!layoutV3 || portfolioSummary.hasData))) && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px, 100%), 1fr))', gap: 14, alignItems: 'stretch', marginBottom: 20 }}>
               {portfolioSummary && (layoutV3 ? (
                 /* Klartext-Ansicht: Entwicklung als kompakte Zeile statt großer Karte */

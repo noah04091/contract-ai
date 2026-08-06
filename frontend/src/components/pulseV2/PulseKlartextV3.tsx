@@ -11,23 +11,38 @@
 // bleiben parallele Arbeiten anderer Terminals in jedem Fall unberührt.
 // Mockup-Referenz: Artifact „pulse-klartext-mockup" v6 (echte Daten, von Noah iteriert).
 
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { PulseV2LegalAlert, PulseV2Action } from '../../types/pulseV2';
 
 // ─── Schalter ────────────────────────────────────────────────────────────────
+// Hinweis zur Stabilität (TÜV 06.08.): Der Hook liest nur beim MOUNT. Das ist heute
+// sicher, weil PulseV2.tsx beim Wechsel Dashboard↔Vertragsseite immer voll re-mountet
+// (verschiedene Komponententypen an derselben Position). Wer künftig Query-only-
+// Navigation auf derselben Route einführt, muss diesen Hook auf Location-Changes hören lassen.
 const LS_KEY = 'pulse.layoutV3';
 
 export function usePulseLayoutV3(): boolean {
-  return useMemo(() => {
+  // Lesen beim Mount (kein Seiteneffekt im Render) …
+  const [enabled] = useState(() => {
     try {
       const param = new URLSearchParams(window.location.search).get('ansicht');
-      if (param === 'neu') { localStorage.setItem(LS_KEY, '1'); return true; }
-      if (param === 'alt') { localStorage.setItem(LS_KEY, '0'); return false; }
+      if (param === 'neu') return true;
+      if (param === 'alt') return false;
       return localStorage.getItem(LS_KEY) === '1';
-    } catch {
+    } catch (err) {
+      console.warn('[PulseV2] Ansicht-Schalter nicht lesbar (z. B. Private Mode) — nutze bewährte Ansicht.', err);
       return false; // im Zweifel IMMER die bewährte Ansicht
     }
+  });
+  // … Persistieren als echter Effekt (TÜV-Fix: setItem gehört nicht in den Render-Pfad)
+  useEffect(() => {
+    try {
+      const param = new URLSearchParams(window.location.search).get('ansicht');
+      if (param === 'neu') localStorage.setItem(LS_KEY, '1');
+      else if (param === 'alt') localStorage.setItem(LS_KEY, '0');
+    } catch { /* Private Mode o. ä. — Schalter gilt dann nur für diesen Aufruf */ }
   }, []);
+  return enabled;
 }
 
 // ─── Helfer ──────────────────────────────────────────────────────────────────
@@ -89,7 +104,9 @@ export const PulseStatusHeroV3: React.FC<StatusHeroProps> = ({
     sub = <>Der tägliche Rechts-Check hat keine offenen Punkte für dich. <b style={{ color: '#0f172a' }}>{monitoredCount} {monitoredCount === 1 ? 'Vertrag steht' : 'Verträge stehen'}</b> unter Beobachtung — wir melden uns, wenn sich etwas ändert.</>;
   } else if (newToday > 0) {
     title = newToday === 1 ? '1 neuer Punkt seit heute Morgen' : `${newToday} neue Punkte seit heute Morgen`;
-    sub = <>Der Rechts-Check von heute hat Neues gefunden — Details unten, das Dringendste zuerst. Du hast dazu auch eine E-Mail bekommen.</>;
+    {/* TÜV-Fix 06.08.: kein „Du hast eine E-Mail bekommen"-Versprechen — Alerts aus der
+        Nachprüfung neuer Analysen laufen bewusst OHNE Mail (skipEmail), der Satz wäre gelogen. */}
+    sub = <>Der Rechts-Check hat Neues gefunden — Details unten, das Dringendste zuerst.</>;
   } else {
     title = points === 1 ? '1 Punkt braucht deine Aufmerksamkeit' : `${points} Punkte brauchen deine Aufmerksamkeit`;
     sub = <>Details unten — beginn mit dem obersten. Alles andere ist in Ordnung, <b style={{ color: '#0f172a' }}>{monitoredCount} {monitoredCount === 1 ? 'Vertrag steht' : 'Verträge stehen'}</b> unter Beobachtung{lastRadarRun ? <> — zuletzt geprüft {isToday(lastRadarRun) ? `heute ${fmtTime(lastRadarRun)}` : `am ${fmtDate(lastRadarRun)}`}</> : null}.</>;
@@ -168,9 +185,11 @@ export const RechtsCheckStage: React.FC<StageProps> = ({
       k: monitoredCount, label: `${monitoredCount === 1 ? 'Vertrag' : 'Verträge'} dagegen geprüft`,
       d: 'jeder Verdacht wird am echten Klauseltext gegengelesen — gemeldet wird nur mit wörtlichem Beleg.',
     },
+    // TÜV-Fix 06.08.: Zählung basiert auf createdAt=heute — „heute" ist damit immer korrekt,
+    // egal ob der Treffer aus dem Tages-Check oder der Nachprüfung einer frischen Analyse stammt.
     newToday > 0
-      ? { k: newToday, label: `neue Treffer ${ranToday ? 'heute' : 'im letzten Check'}`, d: 'unten mit NEU markiert — das Dringendste zuerst.', color: '#dc2626' }
-      : { k: 0, label: `neue Treffer ${ranToday ? 'heute' : 'im letzten Check'}`, d: 'deine Verträge sind von den jüngsten Änderungen nicht betroffen. Morgen früh geht\'s weiter.', color: '#059669' },
+      ? { k: newToday, label: 'neue Treffer heute', d: 'unten mit NEU markiert — das Dringendste zuerst.', color: '#dc2626' }
+      : { k: 0, label: 'neue Treffer heute', d: 'deine Verträge sind von den jüngsten Änderungen nicht betroffen. Morgen früh geht\'s weiter.', color: '#059669' },
   ];
 
   return (
@@ -212,7 +231,7 @@ export const RechtsCheckStage: React.FC<StageProps> = ({
           <span>
             {lawsNewThisWeek !== null ? `${lawsNewThisWeek} neue Rechtsänderungen erfasst` : ''}
             {lawsNewThisWeek !== null && alertsThisWeek !== null ? ' · ' : ''}
-            {alertsThisWeek !== null ? `${alertsThisWeek} ${alertsThisWeek === 1 ? 'Treffer' : 'Treffer'} — nur mit Beleg am Vertragstext` : ''}
+            {alertsThisWeek !== null ? `${alertsThisWeek} Treffer — nur mit Beleg am Vertragstext` : ''}
           </span>
           <span style={{ color: '#94a3b8' }}>Treffer bekommst du zusätzlich per E-Mail.</span>
         </div>
