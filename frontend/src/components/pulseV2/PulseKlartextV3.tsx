@@ -206,9 +206,10 @@ export const RechtsCheckStage: React.FC<StageProps> = ({
     <div style={{ background: 'linear-gradient(180deg,#f5f9ff,#ffffff)', border: '1px solid #bfdbfe', borderRadius: 16, padding: '20px 20px 8px', marginBottom: 20, boxShadow: '0 1px 2px rgba(15,23,42,.04), 0 10px 28px rgba(15,23,42,.06)' }}>
       <div style={{ display: 'flex', gap: 11, alignItems: 'center', flexWrap: 'wrap' }}>
         {/* Icon-Entscheidung 06.08.: gezeichnete Waage (SVG, identisch zu den Radar-Karten)
-            statt Emoji — rendert auf jedem Gerät gleich */}
+            statt Emoji. ACHTUNG bekannte Repo-Falle: globales [aria-hidden]{display:none}
+            (siehe Login-Redesign-Memory) — deshalb hier KEIN aria-hidden-Attribut! */}
         <div style={{ width: 36, height: 36, borderRadius: 10, background: '#dbeafe', border: '1px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18M7 21h10M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1zM2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/></svg>
         </div>
         <div>
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '1.1px', color: '#94a3b8', textTransform: 'uppercase' }}>Das Herzstück — läuft jeden Morgen automatisch</div>
