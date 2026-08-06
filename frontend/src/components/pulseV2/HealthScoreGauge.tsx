@@ -129,10 +129,15 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
           transform: 'translate(-50%, -50%)',
           textAlign: 'center',
         }}>
-          <div className={isLarge ? styles.scoreNumber : undefined} style={{ fontSize: isLarge ? 36 : 18, fontWeight: 700, color }}>
+          {/* Klartext (Noah 06.08.): „Bedenklich" klebte an der Zahl und wirkte verbuggt —
+              im Kreis nur noch Zahl + „von 100", die Deutung wandert UNTER den Kreis. */}
+          <div className={isLarge ? styles.scoreNumber : undefined} style={{ fontSize: isLarge ? (klartext ? 30 : 36) : 18, fontWeight: klartext ? 800 : 700, color, lineHeight: 1.1 }}>
             {scores.overall}
           </div>
-          {isLarge && (
+          {isLarge && klartext && (
+            <div style={{ fontSize: 10, color: '#94a3b8', fontWeight: 600 }}>von 100</div>
+          )}
+          {isLarge && !klartext && (
             <div style={{ fontSize: 12, color: '#6b7280' }}>
               {getScoreLabel(scores.overall)}
               {riskTrend && (
@@ -147,6 +152,16 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
           )}
         </div>
       </div>
+      {isLarge && klartext && (
+        <div style={{ fontSize: 12, color: '#475569', fontWeight: 600, marginTop: 8, textAlign: 'center' }}>
+          Zustand: {getScoreLabel(scores.overall).toLowerCase()}
+          {riskTrend && (
+            <span style={{ marginLeft: 4, color: riskTrend === 'improving' ? '#22c55e' : riskTrend === 'declining' ? '#ef4444' : '#94a3b8' }}>
+              {getTrendArrow(riskTrend)}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Score explanation popup — rendered via Portal into document.body */}
       {isLarge && showScoreInfo && createPortal(
@@ -215,25 +230,26 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
             // TÜV-Fix 06.08.: fehlender Teilwert (ältere Analysen) darf NICHT als „schwach/rot"
             // erscheinen — das wäre eine erfundene schlechteste Note. Stattdessen neutral.
             const value = typeof raw === 'number' && isFinite(raw) ? raw : null;
+            /* Noah 06.08.: dezenter — dünnere Balken, ruhigere Typo, gedämpfte Farben */
             return (
-              <div key={label} style={{ margin: '10px 0' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#475569', marginBottom: 4 }}>
-                  <span style={{ fontWeight: 600, color: '#0f172a' }}>{label}</span>
+              <div key={label} style={{ margin: '8px 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11.5, color: '#64748b', marginBottom: 3 }}>
+                  <span style={{ fontWeight: 500 }}>{label}</span>
                   {value === null ? (
-                    <span style={{ fontWeight: 600, color: '#94a3b8' }}>keine Angabe</span>
+                    <span style={{ color: '#b0b9c6' }}>keine Angabe</span>
                   ) : (
-                    <span style={{ fontWeight: 700, color: getScoreColor(value) }}>{scoreWord(value)} · {value}</span>
+                    <span style={{ fontWeight: 600, color: getScoreColor(value), opacity: 0.85 }}>{scoreWord(value)} · {value}</span>
                   )}
                 </div>
-                <div style={{ height: 7, borderRadius: 5, background: '#f1f5f9', overflow: 'hidden' }}>
+                <div style={{ height: 4, borderRadius: 4, background: '#f1f5f9', overflow: 'hidden' }}>
                   {value !== null && (
-                    <div style={{ height: '100%', borderRadius: 5, width: `${Math.max(0, Math.min(100, value))}%`, background: getScoreColor(value) }} />
+                    <div style={{ height: '100%', borderRadius: 4, width: `${Math.max(0, Math.min(100, value))}%`, background: getScoreColor(value), opacity: 0.8 }} />
                   )}
                 </div>
               </div>
             );
           })}
-          <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 8 }}>
+          <div style={{ fontSize: 10.5, color: '#b0b9c6', marginTop: 8 }}>
             Je höher, desto besser. Der Gesamtwert folgt dem schwächsten Bereich.
           </div>
         </div>

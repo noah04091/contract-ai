@@ -526,7 +526,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
       {/* ═══ Zweispalter: links Status-Rail (sticky), rechts Arbeitsliste — <1024px eine Spalte ═══ */}
       <div className={styles.detailCols}>
-      <div className={styles.detailRail}>
+      {/* Klartext (Noah 06.08.): kein zweiter Scrollbalken in der Seitenleiste — die Rail
+          ist in der neuen Ansicht schlank genug, um komplett sichtbar zu kleben; die Seite
+          scrollt dadurch als EIN Ganzes statt links/rechts getrennt. */}
+      <div className={styles.detailRail} style={layoutV3 ? { maxHeight: 'none', overflowY: 'visible' } : undefined}>
 
       {/* ═══ Header: Score + Contract Overview ═══ */}
       <div className={`${styles.sectionCard} ${styles.fadeIn} ${styles.detailHeaderCard}`} style={{
@@ -602,9 +605,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             {scoreDescription}
           </div>
 
-          {/* Meta + PDF Export */}
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginBottom: monitorInfo ? 10 : 0 }}>
-            <span style={{ fontSize: 12, color: '#9ca3af' }}>
+          {/* Meta + PDF Export — Klartext (Noah 06.08.): Datum auf eigener Zeile,
+              die beiden Buttons sauber NEBENEINANDER darunter */}
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: layoutV3 ? 8 : 10, marginBottom: monitorInfo ? 10 : 0 }}>
+            <span style={{ fontSize: 12, color: '#9ca3af', ...(layoutV3 ? { width: '100%', marginBottom: 2 } : {}) }}>
               Analysiert am {new Date(result.createdAt).toLocaleDateString('de-DE')} um {new Date(result.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
             </span>
             <button
