@@ -725,25 +725,35 @@ const ActionCenter: React.FC<{
               </div>
               {sorted.filter(a => a.priority !== 'now').map(action => {
                 const rowKey = `${action.resultId || ''}_${action.id}`;
-                if (expandedRows.has(rowKey)) {
-                  return <div key={rowKey} style={{ margin: '6px 0' }}><ActionItem action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} /></div>;
-                }
+                const isExpanded = expandedRows.has(rowKey);
                 const firstContract = (action.relatedContracts || []).map(id => contractNames.get(id)).find(Boolean);
+                // Noah-Feedback 06.08.: Die Zeile bleibt IMMER sichtbar und klappt per Klick
+                // auf UND wieder zu (vorher konnte man nur öffnen, nie schließen).
                 return (
-                  <div
-                    key={rowKey}
-                    onClick={() => setExpandedRows(prev => new Set(prev).add(rowKey))}
-                    style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '10px 6px', borderBottom: '1px solid #f1f5f9', fontSize: 13.5, borderRadius: 8, cursor: 'pointer' }}
-                  >
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
-                    <span style={{ flex: 1, color: '#0f172a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {action.title}
-                      {isLegallyMotivated(action) && (
-                        <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: '#3730a3', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 5, padding: '1px 6px', verticalAlign: '1px' }}>§ GESETZLICH</span>
-                      )}
-                    </span>
-                    {firstContract && <span style={{ color: '#94a3b8', fontSize: 12, flexShrink: 0, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{firstContract}</span>}
-                    <span style={{ color: '#cbd5e1', fontWeight: 700 }}>&#8250;</span>
+                  <div key={rowKey}>
+                    <div
+                      onClick={() => setExpandedRows(prev => {
+                        const next = new Set(prev);
+                        if (next.has(rowKey)) next.delete(rowKey); else next.add(rowKey);
+                        return next;
+                      })}
+                      style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '10px 6px', borderBottom: isExpanded ? 'none' : '1px solid #f1f5f9', fontSize: 13.5, borderRadius: 8, cursor: 'pointer', background: isExpanded ? '#f8fafc' : undefined }}
+                    >
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
+                      <span style={{ flex: 1, color: '#0f172a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {action.title}
+                        {isLegallyMotivated(action) && (
+                          <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: '#3730a3', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 5, padding: '1px 6px', verticalAlign: '1px' }}>§ GESETZLICH</span>
+                        )}
+                      </span>
+                      {firstContract && !isExpanded && <span style={{ color: '#94a3b8', fontSize: 12, flexShrink: 0, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{firstContract}</span>}
+                      <span style={{ color: '#cbd5e1', fontWeight: 700, transform: isExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>&#8250;</span>
+                    </div>
+                    {isExpanded && (
+                      <div style={{ margin: '2px 0 10px' }}>
+                        <ActionItem action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -1239,33 +1249,18 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
 
           <div id="pulse-portfolio" />
           {/* Portfolio: Trend + Insights nebeneinander (Mockup-Zweispalter) */}
-          {/* TÜV 06.08.: In der Klartext-Ansicht zählt die Entwicklungs-Zeile nur mit,
-              wenn sie auch Daten hat — sonst bliebe eine leere Grid-Spalte zurück. */}
-          {(insights.length > 0 || (portfolioSummary && (!layoutV3 || portfolioSummary.hasData))) && (
+          {/* Noah-Feedback 06.08.: Die kompakte Entwicklungs-Zeile war Verschlimmbesserung
+              („kurze Info, kein Mehrwert") — die bewährte volle Karte mit klickbaren
+              Verbessert/Verschlechtert-Listen gilt wieder für BEIDE Ansichten. */}
+          {(portfolioSummary || insights.length > 0) && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(380px, 100%), 1fr))', gap: 14, alignItems: 'stretch', marginBottom: 20 }}>
-              {portfolioSummary && (layoutV3 ? (
-                /* Klartext-Ansicht: Entwicklung als kompakte Zeile statt großer Karte */
-                portfolioSummary.hasData ? (
-                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '13px 18px', display: 'flex', gap: 14, alignItems: 'center', alignContent: 'flex-start', alignSelf: 'flex-start', flexWrap: 'wrap', fontSize: 13, color: '#475569', boxShadow: '0 1px 2px rgba(15,23,42,.04)' }}>
-                    <span style={{ background: portfolioSummary.delta >= 0 ? '#ecfdf5' : '#fef2f2', border: `1px solid ${portfolioSummary.delta >= 0 ? '#a7f3d0' : '#fecaca'}`, color: portfolioSummary.delta >= 0 ? '#059669' : '#dc2626', fontSize: 12, fontWeight: 700, borderRadius: 6, padding: '2px 10px' }}>
-                      📈 Entwicklung: {portfolioSummary.avgScorePrevious ?? '–'} → {portfolioSummary.avgScoreNow ?? '–'} ({portfolioSummary.delta >= 0 ? '+' : ''}{portfolioSummary.delta})
-                    </span>
-                    <span><b style={{ color: '#059669' }}>{portfolioSummary.contractsImproved} verbessert</b> · <b style={{ color: '#dc2626' }}>{portfolioSummary.contractsWorsened} verschlechtert</b></span>
-                    {portfolioSummary.topImprovement && (
-                      <span style={{ color: '#94a3b8', fontSize: 12 }}>Beste: {cleanContractName(portfolioSummary.topImprovement.name)} (+{portfolioSummary.topImprovement.delta})</span>
-                    )}
-                    {portfolioSummary.topDecline && (
-                      <span style={{ color: '#94a3b8', fontSize: 12 }}>Rückgang: {cleanContractName(portfolioSummary.topDecline.name)} ({portfolioSummary.topDecline.delta})</span>
-                    )}
-                  </div>
-                ) : null
-              ) : (
+              {portfolioSummary && (
                 <PortfolioImprovementCard
                   summary={portfolioSummary}
                   lastAnalysisMap={contractLastAnalysisMap}
                   onNavigate={(id) => onSelectContract(id)}
                 />
-              ))}
+              )}
               {insights.length > 0 && (
                 <PortfolioInsightsPanel insights={insights} contractNames={contractNames} openActions={layoutV3 ? actions.filter(a => a.status === 'open') : undefined} />
               )}
