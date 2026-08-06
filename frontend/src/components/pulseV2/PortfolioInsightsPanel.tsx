@@ -1,11 +1,35 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { PulseV2PortfolioInsight } from '../../types/pulseV2';
+import type { PulseV2PortfolioInsight, PulseV2Action } from '../../types/pulseV2';
 import styles from '../../styles/PulseV2.module.css';
 
 interface PortfolioInsightsPanelProps {
   insights: PulseV2PortfolioInsight[];
   contractNames?: Map<string, string>;
+  /** Klartext-Redesign (05.08.): OFFENE Aufgaben zum Abgleich — trägt eine Auffälligkeit
+      dasselbe Thema wie eine offene Aufgabe, zeigt sie „✓ steht bereits in deinen Aufgaben".
+      REINE ANZEIGE-KOPPLUNG: Wird die Aufgabe erledigt/ausgeblendet, fällt sie aus der
+      Liste und das Etikett verschwindet automatisch — die Auffälligkeit steht dann wieder
+      eigenständig da. Es geht nie Information verloren. */
+  openActions?: PulseV2Action[];
+}
+
+/** Konservativer Themen-Abgleich: nur bei klarem Stichwort-Typ UND mindestens einem
+    gemeinsamen Vertrag. Im Zweifel KEIN Match (Etikett fehlt lieber, als falsch zu sein). */
+function findMatchingOpenAction(insight: PulseV2PortfolioInsight, openActions?: PulseV2Action[]): PulseV2Action | null {
+  if (!openActions || openActions.length === 0) return null;
+  const kw = insight.type === 'concentration_risk'
+    ? /konzentration|klumpen|anbieter|abhängigkeit/i
+    : insight.type === 'renewal_cluster'
+      ? /auslauf|frist|verläng|kündig/i
+      : null;
+  if (!kw) return null;
+  const insightContracts = new Set((insight.relatedContracts || []).map(String));
+  if (insightContracts.size === 0) return null;
+  return openActions.find(a =>
+    kw.test(`${a.title || ''} ${a.description || ''}`) &&
+    (a.relatedContracts || []).some(id => insightContracts.has(String(id)))
+  ) || null;
 }
 
 const INSIGHT_TYPE_CONFIG: Record<string, { icon: string; label: string; tooltip?: string }> = {
@@ -47,9 +71,11 @@ const SEVERITY_COLORS: Record<string, string> = {
 function InsightCard({
   insight,
   contractNames,
+  matchedAction,
 }: {
   insight: PulseV2PortfolioInsight;
   contractNames?: Map<string, string>;
+  matchedAction?: PulseV2Action | null;
 }) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
@@ -113,6 +139,13 @@ function InsightCard({
         <div style={{ fontSize: 13, color: '#4b5563', marginTop: 2 }}>
           {cleanInsightText(insight.description)}
         </div>
+        {matchedAction && (
+          <div style={{ marginTop: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 6, padding: '2px 8px' }}>
+              ✓ steht bereits in deinen Aufgaben
+            </span>
+          </div>
+        )}
         {hasContracts && !expanded && (() => {
           // Nur auflösbare Namen zeigen — "Unbenannter Vertrag, Unbenannter Vertrag, …" hilft niemandem.
           const names = insight.relatedContracts
@@ -170,7 +203,7 @@ function InsightCard({
   );
 }
 
-export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ insights, contractNames }) => {
+export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ insights, contractNames, openActions }) => {
   const [showInfo, setShowInfo] = useState(false);
   const infoRef = useRef<HTMLDivElement>(null);
 
@@ -272,6 +305,7 @@ export const PortfolioInsightsPanel: React.FC<PortfolioInsightsPanelProps> = ({ 
             key={idx}
             insight={insight}
             contractNames={contractNames}
+            matchedAction={findMatchingOpenAction(insight, openActions)}
           />
         ))}
       </div>

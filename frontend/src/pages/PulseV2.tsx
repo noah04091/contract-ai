@@ -1260,7 +1260,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
                 />
               ))}
               {insights.length > 0 && (
-                <PortfolioInsightsPanel insights={insights} contractNames={contractNames} />
+                <PortfolioInsightsPanel insights={insights} contractNames={contractNames} openActions={layoutV3 ? actions.filter(a => a.status === 'open') : undefined} />
               )}
             </div>
           )}
