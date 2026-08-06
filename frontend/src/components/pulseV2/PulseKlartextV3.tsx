@@ -113,7 +113,7 @@ export const PulseStatusHeroV3: React.FC<StatusHeroProps> = ({
     // Eigenfund 06.08.: Die Zusammensetzung erklären — sonst kann niemand die Kopf-Zahl
     // mit den Zahlen der Sektionen darunter zusammenrechnen (7 vs. 4 vs. 9).
     const composition = openAlerts.length > 0 && urgentActions > 0
-      ? <> ({openAlerts.length} Gesetzes-{openAlerts.length === 1 ? 'Treffer' : 'Treffer'} + {urgentActions} dringende Aufgabe{urgentActions === 1 ? '' : 'n'})</>
+      ? <> ({openAlerts.length} Gesetzes-Treffer + {urgentActions} dringende Aufgabe{urgentActions === 1 ? '' : 'n'})</>
       : null;
     sub = <>Details unten — beginn mit dem obersten{composition}. Alles andere ist in Ordnung, <b style={{ color: '#0f172a' }}>{monitoredCount} {monitoredCount === 1 ? 'Vertrag steht' : 'Verträge stehen'}</b> unter Beobachtung{lastRadarRun ? <> — zuletzt geprüft {isToday(lastRadarRun) ? `heute ${fmtTime(lastRadarRun)}` : `am ${fmtDate(lastRadarRun)}`}</> : null}.</>;
   }
@@ -121,11 +121,13 @@ export const PulseStatusHeroV3: React.FC<StatusHeroProps> = ({
   const scoreDeutung = avgScore === null ? '' : avgScore >= 67 ? 'gut' : avgScore >= 40 ? 'mittel' : 'schwach';
   const scoreColor = avgScore === null ? '#94a3b8' : avgScore >= 67 ? '#059669' : avgScore >= 40 ? '#d97706' : '#dc2626';
 
+  // UI-Audit 06.08.: Chips ohne Inhalt (0 Aufgaben / 0 Auffälligkeiten) nicht anbieten —
+  // ein Klick würde ins Leere scrollen, weil die Ziel-Sektion dann gar nicht rendert.
   const chips: Array<{ label: string; id: string }> = [
     { label: '⚖ Rechts-Check', id: 'legal-alerts' },
-    { label: `📋 Aufgaben (${openActions})`, id: 'pulse-tasks' },
+    ...(openActions > 0 ? [{ label: `📋 Aufgaben (${openActions})`, id: 'pulse-tasks' }] : []),
     { label: `📄 Verträge (${analyzedCount})`, id: 'pulse-contracts' },
-    { label: `🔎 Auffälligkeiten (${insightsCount})`, id: 'pulse-portfolio' },
+    ...(insightsCount > 0 ? [{ label: `🔎 Auffälligkeiten (${insightsCount})`, id: 'pulse-portfolio' }] : []),
   ];
 
   return (
@@ -155,7 +157,7 @@ export const PulseStatusHeroV3: React.FC<StatusHeroProps> = ({
       </div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 16, paddingTop: 14, borderTop: '1px dashed #e2e8f0', alignItems: 'center' }}>
         {chips.map(c => (
-          <button key={c.id} onClick={() => scrollToId(c.id)} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6, padding: '3px 10px', fontWeight: 600, color: '#475569', fontSize: 11.5, cursor: 'pointer' }}>
+          <button key={c.id} className={styles.klartextChip} onClick={() => scrollToId(c.id)} style={{ background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: 6, padding: '3px 10px', fontWeight: 600, color: '#475569', fontSize: 11.5, cursor: 'pointer' }}>
             {c.label}
           </button>
         ))}

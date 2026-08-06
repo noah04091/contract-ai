@@ -76,11 +76,12 @@ export const ScoreTrend: React.FC<ScoreTrendProps> = ({ contractId }) => {
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          {/* UI-Audit 06.08.: „→ 0" wirkte wie ein Fehler — „± 0 Punkte" sagt klar: unverändert */}
           <span style={{ fontSize: 24, fontWeight: 700, color: trendColor }}>
-            {trendArrow} {delta > 0 ? '+' : ''}{delta}
+            {delta === 0 ? '±' : trendArrow} {delta > 0 ? '+' : ''}{delta}
           </span>
           <div style={{ fontSize: 12, color: '#9ca3af' }}>
-            seit letzter Analyse
+            {delta === 0 ? 'Punkte — unverändert seit letzter Analyse' : 'seit letzter Analyse'}
           </div>
         </div>
       </div>

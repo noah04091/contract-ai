@@ -397,6 +397,12 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
   // Secondary findings: low + info, collapsed by default (medium already covered by Actions)
   const secondaryFindings = indexedFindings.filter(({ finding: f }) => f.severity === 'low' || f.severity === 'info');
 
+  // UI-Audit 06.08. (Blocker 1–5): Sprung-Links dürfen nur klickbar AUSSEHEN und SEIN,
+  // wenn ihre Ziel-Sektion bei dieser Datenlage überhaupt gerendert wird — vorher gab es
+  // stille Klicks ins Nichts (z. B. guter Vertrag ohne Empfehlungen).
+  const hasEmpfehlungenSection = displayActions.length > 0 || topFindings.length > 0;
+  const hasGeprueftSection = secondaryFindings.length > 0;
+
   // Finding progress tracking
   const actionableFindings = findings.filter(f => f.severity === 'critical' || f.severity === 'high' || f.severity === 'medium');
   const resolvedFindingCount = actionableFindings.filter(f => f.userStatus === 'resolved' || f.userStatus === 'dismissed').length;
@@ -586,8 +592,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             {scoreLabel}
             {findings.length > 0 && (
               <span
-                onClick={() => scrollToSection('empfehlungen')}
-                style={{ fontWeight: 400, color: '#6b7280', fontSize: 13, marginLeft: 8, ...clickableStyle }}
+                onClick={hasEmpfehlungenSection ? () => scrollToSection('empfehlungen') : undefined}
+                style={{ fontWeight: 400, color: '#6b7280', fontSize: 13, marginLeft: 8, ...(hasEmpfehlungenSection ? clickableStyle : {}) }}
               >
                 &mdash; {findings.length} {isEN ? 'findings in' : 'Befunde in'} {result.coverage ? `${result.coverage.analyzed}/${result.coverage.total}` : String(clauses.length)} {isEN ? 'clauses' : 'Klauseln'}
                 {result.coverage && result.coverage.percentage < 100 && (
@@ -599,8 +605,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
           {/* Score context */}
           <div
-            onClick={() => scrollToSection('empfehlungen')}
-            style={{ fontSize: 13, color: '#6b7280', marginBottom: 8, ...clickableStyle }}
+            onClick={hasEmpfehlungenSection ? () => scrollToSection('empfehlungen') : undefined}
+            style={{ fontSize: 13, color: '#6b7280', marginBottom: 8, ...(hasEmpfehlungenSection ? clickableStyle : {}) }}
           >
             {scoreDescription}
           </div>
@@ -619,8 +625,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 5,
-                padding: '3px 10px',
-                fontSize: 11,
+                /* UI-Audit 06.08.: bei Klartext ordentliches Touch-Ziel statt 19px-Mini-Button */
+                padding: layoutV3 ? '7px 13px' : '3px 10px',
+                fontSize: layoutV3 ? 12.5 : 11,
                 fontWeight: 500,
                 color: '#4b5563',
                 background: '#f9fafb',
@@ -639,8 +646,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 5,
-                padding: '3px 10px',
-                fontSize: 11,
+                padding: layoutV3 ? '7px 13px' : '3px 10px',
+                fontSize: layoutV3 ? 12.5 : 11,
                 fontWeight: 500,
                 color: '#4b5563',
                 background: '#f9fafb',
@@ -768,8 +775,12 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
         <div style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8, position: 'relative', paddingLeft: 14, borderLeft: '3px solid #3b82f6' }}>
           <span style={{ fontSize: 16 }}>&#x2696;&#xFE0F;</span>
           Juristische Einschätzung
-          <span
+          {/* UI-Audit 06.08.: echter <button> wie seine zwei baugleichen Geschwister —
+              vorher als <span> ohne Tastatur-Zugang */}
+          <button
+            type="button"
             className={styles.btnInfo}
+            aria-label="Was ist die Juristische Einschätzung?"
             onClick={() => setShowJuristischeInfo(!showJuristischeInfo)}
             style={{
               width: 18,
@@ -785,10 +796,11 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               cursor: 'pointer',
               fontWeight: 700,
               lineHeight: 1,
+              padding: 0,
             }}
           >
             ?
-          </span>
+          </button>
           {showJuristischeInfo && (
             <div ref={juristischeInfoRef} style={{
               position: 'absolute',
@@ -882,11 +894,13 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             if (scores && scores.completeness < 50) riskAreas.push('Vollständigkeit');
             if (scores && scores.risk < 50) riskAreas.push('Risikoabsicherung');
             if (riskAreas.length > 0) {
+              // Ziel „Risiko-Übersicht" existiert nur bei findings.length > 0
+              const canJump = findings.length > 0;
               lines.push(
                 <span
                   key="risk-areas-link"
-                  onClick={() => scrollToSection('risiko-uebersicht')}
-                  style={{ ...clickableStyle, color: '#3b82f6' }}
+                  onClick={canJump ? () => scrollToSection('risiko-uebersicht') : undefined}
+                  style={canJump ? { ...clickableStyle, color: '#3b82f6' } : undefined}
                 >
                   Besonderer Prüfungsbedarf besteht in den Bereichen: {riskAreas.join(', ')}.
                 </span>
@@ -900,11 +914,14 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               if (highCount > 0) parts.push(`${highCount} hoch`);
               if (mediumCount > 0) parts.push(`${mediumCount} mittel`);
               if (lowCount + infoCount > 0) parts.push(`${lowCount + infoCount} gering`);
+              const jumpTarget = criticalCount + highCount > 0
+                ? (hasEmpfehlungenSection ? 'empfehlungen' : null)
+                : (hasGeprueftSection ? 'geprueft' : null);
               lines.push(
                 <span
                   key="findings-link"
-                  onClick={() => scrollToSection(criticalCount + highCount > 0 ? 'empfehlungen' : 'geprueft')}
-                  style={{ ...clickableStyle, color: '#3b82f6' }}
+                  onClick={jumpTarget ? () => scrollToSection(jumpTarget) : undefined}
+                  style={jumpTarget ? { ...clickableStyle, color: '#3b82f6' } : undefined}
                 >
                   Insgesamt {findings.length} Befunde: {parts.join(', ')}.
                 </span>
@@ -950,11 +967,11 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
           {/* Legend — clickable to scroll to section */}
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 12 }}>
-            {criticalCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ cursor: 'pointer' }}><SeverityDot color="#dc2626" label="Kritisch" count={criticalCount} /></span>}
-            {highCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ cursor: 'pointer' }}><SeverityDot color="#ea580c" label="Hoch" count={highCount} /></span>}
-            {mediumCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ cursor: 'pointer' }}><SeverityDot color="#d97706" label="Mittel" count={mediumCount} /></span>}
-            {lowCount > 0 && <span onClick={() => scrollToSection('geprueft')} style={{ cursor: 'pointer' }}><SeverityDot color="#9ca3af" label="Niedrig" count={lowCount} /></span>}
-            {infoCount > 0 && <span onClick={() => scrollToSection('geprueft')} style={{ cursor: 'pointer' }}><SeverityDot color="#d1d5db" label="Info" count={infoCount} /></span>}
+            {criticalCount > 0 && <span onClick={hasEmpfehlungenSection ? () => scrollToSection('empfehlungen') : undefined} style={hasEmpfehlungenSection ? { cursor: 'pointer' } : undefined}><SeverityDot color="#dc2626" label="Kritisch" count={criticalCount} /></span>}
+            {highCount > 0 && <span onClick={hasEmpfehlungenSection ? () => scrollToSection('empfehlungen') : undefined} style={hasEmpfehlungenSection ? { cursor: 'pointer' } : undefined}><SeverityDot color="#ea580c" label="Hoch" count={highCount} /></span>}
+            {mediumCount > 0 && <span onClick={hasEmpfehlungenSection ? () => scrollToSection('empfehlungen') : undefined} style={hasEmpfehlungenSection ? { cursor: 'pointer' } : undefined}><SeverityDot color="#d97706" label="Mittel" count={mediumCount} /></span>}
+            {lowCount > 0 && <span onClick={hasGeprueftSection ? () => scrollToSection('geprueft') : undefined} style={hasGeprueftSection ? { cursor: 'pointer' } : undefined}><SeverityDot color="#9ca3af" label="Niedrig" count={lowCount} /></span>}
+            {infoCount > 0 && <span onClick={hasGeprueftSection ? () => scrollToSection('geprueft') : undefined} style={hasGeprueftSection ? { cursor: 'pointer' } : undefined}><SeverityDot color="#d1d5db" label="Info" count={infoCount} /></span>}
             <span style={{ color: '#d1d5db' }}>|</span>
             {riskCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ color: '#6b7280', cursor: 'pointer' }}>{riskCount} Risiken</span>}
             {complianceCount > 0 && <span onClick={() => scrollToSection('empfehlungen')} style={{ color: '#6b7280', cursor: 'pointer' }}>{complianceCount} Compliance</span>}

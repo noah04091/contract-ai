@@ -715,8 +715,8 @@ const ActionCenter: React.FC<{
         /* Klartext-Ansicht: Dringendes (priority now) als volle Karten, der Rest als
            schlanke Zeilen — Klick auf eine Zeile klappt die volle Karte auf. */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {sorted.filter(a => a.priority === 'now').map(action => (
-            <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} />
+          {sorted.filter(a => a.priority === 'now').map((action, idx) => (
+            <ActionItem key={`${action.resultId || ''}_${action.id}`} action={action} resultId={action.resultId} contractNames={contractNames} contractLastAnalysisMap={contractLastAnalysisMap} onStatusChange={onStatusChange} suppressAgeWarning={idx > 0} />
           ))}
           {sorted.some(a => a.priority !== 'now') && (
             <div>
@@ -729,14 +729,20 @@ const ActionCenter: React.FC<{
                 const firstContract = (action.relatedContracts || []).map(id => contractNames.get(id)).find(Boolean);
                 // Noah-Feedback 06.08.: Die Zeile bleibt IMMER sichtbar und klappt per Klick
                 // auf UND wieder zu (vorher konnte man nur öffnen, nie schließen).
+                const toggleRow = () => setExpandedRows(prev => {
+                  const next = new Set(prev);
+                  if (next.has(rowKey)) next.delete(rowKey); else next.add(rowKey);
+                  return next;
+                });
                 return (
                   <div key={rowKey}>
+                    {/* UI-Audit 06.08.: Hover-Feedback + Tastatur-Zugang (Enter/Space) */}
                     <div
-                      onClick={() => setExpandedRows(prev => {
-                        const next = new Set(prev);
-                        if (next.has(rowKey)) next.delete(rowKey); else next.add(rowKey);
-                        return next;
-                      })}
+                      role="button"
+                      tabIndex={0}
+                      onClick={toggleRow}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleRow(); } }}
+                      className={styles.klartextRow}
                       style={{ display: 'flex', gap: 11, alignItems: 'center', padding: '10px 6px', borderBottom: isExpanded ? 'none' : '1px solid #f1f5f9', fontSize: 13.5, borderRadius: 8, cursor: 'pointer', background: isExpanded ? '#f8fafc' : undefined }}
                     >
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
@@ -1218,7 +1224,9 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
           )}
 
           {/* ══════════ Zone 2: Legal Radar (Herzstück) ══════════ */}
-          <div ref={radarRef} id="legal-alerts" />
+          {/* UI-Audit 06.08.: scrollMarginTop — sonst landet die Ziel-Überschrift beim
+              Anker-Sprung hinter der Sticky-Navbar */}
+          <div ref={radarRef} id="legal-alerts" style={{ scrollMarginTop: 90 }} />
           {layoutV3 ? (
             <RechtsCheckStage
               alerts={legalAlerts}
@@ -1232,7 +1240,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
             </RechtsCheckStage>
           ) : legalAlertsPanelEl}
 
-          <div id="pulse-tasks" />
+          <div id="pulse-tasks" style={{ scrollMarginTop: 90 }} />
           {/* Action Center */}
           {actions.length > 0 && (
             <ActionCenter
@@ -1247,7 +1255,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
 
           {/* Zone 3: Contract Health + Radar — now consolidated into PulseCheckHero above */}
 
-          <div id="pulse-portfolio" />
+          <div id="pulse-portfolio" style={{ scrollMarginTop: 90 }} />
           {/* Portfolio: Trend + Insights nebeneinander (Mockup-Zweispalter) */}
           {/* Noah-Feedback 06.08.: Die kompakte Entwicklungs-Zeile war Verschlimmbesserung
               („kurze Info, kein Mehrwert") — die bewährte volle Karte mit klickbaren
@@ -1299,6 +1307,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
               id="pulse-contracts"
               placeholder="Vertrag suchen..."
               style={{
+                scrollMarginTop: 90,
                 width: '100%',
                 padding: '8px 12px 8px 34px',
                 fontSize: 13,
@@ -1454,6 +1463,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
               </div>
               {collapseUnanalyzed && unanalyzed.length > 0 && !showAllUnanalyzed && (
                 <button
+                  className={styles.btnShowMore}
                   onClick={() => setShowAllUnanalyzed(true)}
                   style={{
                     marginTop: 14,
@@ -1554,15 +1564,18 @@ const ContractCard: React.FC<{
           fontSize: 14,
           fontWeight: 600,
           color: '#0f172a',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
           letterSpacing: '-0.2px',
+          minWidth: 0,
         }}>
-          {cleanContractName(item.name)}
+          {/* UI-Audit 06.08.: Ellipsis gehört auf den Text-SPAN (mit minWidth:0), nicht auf
+              den Flex-Container — sonst wird bei langen Namen hart abgeschnitten und das
+              KRITISCH-Badge kann aus der Karte gedrängt werden. */}
+          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {cleanContractName(item.name)}
+          </span>
           {item.v2CriticalCount > 0 && (
             <span style={{
               fontSize: 10,

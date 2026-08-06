@@ -665,7 +665,8 @@ const LawGroup: React.FC<{
           /* Klartext-Ansicht: der juristische Titel wandert vom Kopf in ein ruhiges ⚖-Etikett */
           <div style={{ display: 'inline-flex', gap: 6, alignItems: 'baseline', marginLeft: 16, marginTop: 2, fontSize: 11.5, fontWeight: 600, color: '#3730a3', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 6, padding: '2px 8px', maxWidth: 'calc(100% - 32px)' }}>
             <span style={{ flexShrink: 0 }}>⚖</span>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanLawTitle(group.lawTitle)}</span>
+            {/* UI-Audit 06.08.: minWidth:0, sonst greift die Ellipse bei langen Titeln nicht */}
+            <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cleanLawTitle(group.lawTitle)}</span>
           </div>
         ) : (
           group.plainSummary && (

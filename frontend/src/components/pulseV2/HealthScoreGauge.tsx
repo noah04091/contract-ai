@@ -155,8 +155,10 @@ export const HealthScoreGauge: React.FC<HealthScoreGaugeProps> = ({ scores, risk
       {isLarge && klartext && (
         <div style={{ fontSize: 12, color: '#475569', fontWeight: 600, marginTop: 8, textAlign: 'center' }}>
           Zustand: {getScoreLabel(scores.overall).toLowerCase()}
-          {riskTrend && (
-            <span style={{ marginLeft: 4, color: riskTrend === 'improving' ? '#22c55e' : riskTrend === 'declining' ? '#ef4444' : '#94a3b8' }}>
+          {/* UI-Audit 06.08.: „→" bei stabilem Trend wirkte wie ein abgeschnittener Link —
+              Pfeil nur noch, wenn er wirklich etwas sagt (auf/ab). */}
+          {(riskTrend === 'improving' || riskTrend === 'declining') && (
+            <span style={{ marginLeft: 4, color: riskTrend === 'improving' ? '#22c55e' : '#ef4444' }} title={riskTrend === 'improving' ? 'Tendenz: verbessert sich' : 'Tendenz: verschlechtert sich'}>
               {getTrendArrow(riskTrend)}
             </span>
           )}

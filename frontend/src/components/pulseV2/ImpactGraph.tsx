@@ -619,7 +619,8 @@ const FeedbackButtons: React.FC<{
   if (feedback !== null) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12, paddingTop: 8, borderTop: '1px solid #f3f4f6', fontSize: 12, color: '#059669' }}>
-        &#10003; Danke für dein Feedback
+        {/* UI-Audit 06.08.: neutrale Form — die Karte mischte „dein Feedback" mit „Ihr Vorteil" */}
+        &#10003; Danke für das Feedback
       </div>
     );
   }

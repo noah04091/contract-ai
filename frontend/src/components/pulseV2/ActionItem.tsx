@@ -19,6 +19,9 @@ interface ActionItemProps {
   contractLastAnalysisMap?: Map<string, string>;
   onStatusChange?: (actionId: string, status: 'open' | 'done' | 'dismissed', resultId?: string) => void;
   onCommentSave?: (actionId: string, comment: string) => void;
+  /** UI-Audit 06.08.: Bei mehreren alten dringenden Aufgaben untereinander wirkte die
+      gelbe Mahnzeile 3× wiederholt wie Schimpfen — nur die erste Karte zeigt sie. */
+  suppressAgeWarning?: boolean;
 }
 
 const PRIORITY_CONFIG: Record<string, { color: string; bg: string; label: string; icon: string; deadline: string }> = {
@@ -69,7 +72,7 @@ const PRIORITY_ICON_PATHS: Record<string, string> = {
   plan: 'M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z',
   watch: 'M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z',
 };
-export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resultId, contractNames, contractLastAnalysisMap, onStatusChange, onCommentSave }) => {
+export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resultId, contractNames, contractLastAnalysisMap, onStatusChange, onCommentSave, suppressAgeWarning }) => {
   const navigate = useNavigate();
   const priority = PRIORITY_CONFIG[action.priority] || PRIORITY_CONFIG.watch;
   const isDone = action.status === 'done';
@@ -199,7 +202,7 @@ export const ActionItem: React.FC<ActionItemProps> = ({ action, contractId, resu
           </div>
 
           {/* Stagnation warning */}
-          {isStagnating && ageInfo && (
+          {isStagnating && ageInfo && !suppressAgeWarning && (
             <div style={{
               marginTop: 4,
               padding: '6px 10px',
