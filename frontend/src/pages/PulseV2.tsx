@@ -1478,7 +1478,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
                   }}
                 >
                   {layoutV3
-                    ? `💤 ${unanalyzed.length} hochgeladene Dokumente werden noch nicht überwacht — die Überwachung beginnt mit der Analyse. Anzeigen ›`
+                    ? `${unanalyzed.length} hochgeladene Dokumente werden noch nicht überwacht — die Überwachung beginnt mit der Analyse. Anzeigen ›`
                     : `+ ${unanalyzed.length} nicht analysierte Dokumente anzeigen (werden nicht überwacht)`}
                 </button>
               )}

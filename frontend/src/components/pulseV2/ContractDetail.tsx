@@ -603,13 +603,16 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
             )}
           </div>
 
-          {/* Score context */}
-          <div
-            onClick={hasEmpfehlungenSection ? () => scrollToSection('empfehlungen') : undefined}
-            style={{ fontSize: 13, color: '#6b7280', marginBottom: 8, ...(hasEmpfehlungenSection ? clickableStyle : {}) }}
-          >
-            {scoreDescription}
-          </div>
+          {/* Score context — Klartext (Redundanz-Kürzung 06.08.): dieser Satz wiederholte
+              nur die Statuszeile darüber in anderen Worten → in der neuen Ansicht weg. */}
+          {!layoutV3 && (
+            <div
+              onClick={hasEmpfehlungenSection ? () => scrollToSection('empfehlungen') : undefined}
+              style={{ fontSize: 13, color: '#6b7280', marginBottom: 8, ...(hasEmpfehlungenSection ? clickableStyle : {}) }}
+            >
+              {scoreDescription}
+            </div>
+          )}
 
           {/* Meta + PDF Export — Klartext (Noah 06.08.): Datum auf eigener Zeile,
               die beiden Buttons sauber NEBENEINANDER darunter */}
@@ -756,7 +759,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 )}
               </div>
               <div style={{ color: '#16a34a', fontSize: 11, lineHeight: 1.5, marginTop: 4 }}>
-                Täglich auf Gesetzesänderungen geprüft · Treffer erscheinen hier und im Dashboard — und per E-Mail, sofern Ihre Benachrichtigungen aktiv sind
+                Täglich auf Gesetzesänderungen geprüft · Treffer erscheinen hier und im Dashboard — und per E-Mail, sofern {layoutV3 ? 'deine' : 'Ihre'} Benachrichtigungen aktiv sind
               </div>
             </div>
           )}
@@ -865,8 +868,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               if (durationParts.length > 0) lines.push(durationParts.join(' \u2014 ') + '.');
             }
 
-            // Line 3: Overall assessment
-            if (scores) {
+            // Line 3: Overall assessment — Klartext: entfällt (Redundanz-Kürzung 06.08.:
+            // Score-Ring + Statuszeile sagen dasselbe bereits zweimal darüber)
+            if (scores && !layoutV3) {
               const overall = scores.overall ?? 0;
               if (overall >= 80) {
                 lines.push(`Die Analyse ergibt eine insgesamt solide vertragliche Gestaltung (Score: ${overall}/100). ${criticalCount === 0 && highCount === 0 ? 'Es wurden keine kritischen Mängel festgestellt.' : ''}`);
@@ -907,8 +911,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               );
             }
 
-            // Line 5: Findings breakdown — clickable
-            if (findings.length > 0) {
+            // Line 5: Findings breakdown — Klartext: entfällt (die Risiko-Übersicht direkt
+            // darunter zeigt exakt diese Zahlen als Balken + Legende)
+            if (findings.length > 0 && !layoutV3) {
               const parts: string[] = [];
               if (criticalCount > 0) parts.push(`${criticalCount} kritisch`);
               if (highCount > 0) parts.push(`${highCount} hoch`);
@@ -1030,8 +1035,8 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 subtitle={<>
                   Basierend auf der Analyse aller {clauses.length} Klauseln.
                   {hasCriticalFindings
-                    ? ' Beginnen Sie mit dem obersten Punkt — dieser hat die höchste Priorität.'
-                    : ' Sortiert nach Relevanz. Beginnen Sie mit dem obersten Punkt.'}
+                    ? (layoutV3 ? ' Beginn mit dem obersten Punkt — dieser hat die höchste Priorität.' : ' Beginnen Sie mit dem obersten Punkt — dieser hat die höchste Priorität.')
+                    : (layoutV3 ? ' Sortiert nach Relevanz. Beginn mit dem obersten Punkt.' : ' Sortiert nach Relevanz. Beginnen Sie mit dem obersten Punkt.')}
                 </>}
               />
             </div>
