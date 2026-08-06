@@ -526,10 +526,10 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
 
       {/* ═══ Zweispalter: links Status-Rail (sticky), rechts Arbeitsliste — <1024px eine Spalte ═══ */}
       <div className={styles.detailCols}>
-      {/* Klartext (Noah 06.08.): kein zweiter Scrollbalken in der Seitenleiste — die Rail
-          ist in der neuen Ansicht schlank genug, um komplett sichtbar zu kleben; die Seite
-          scrollt dadurch als EIN Ganzes statt links/rechts getrennt. */}
-      <div className={styles.detailRail} style={layoutV3 ? { maxHeight: 'none', overflowY: 'visible' } : undefined}>
+      {/* Klartext (Noah 06.08., 2. Iteration): Die Leiste klebt NICHT mehr — beide Spalten
+          scrollen gemeinsam wie EIN Dokument. Das „links steht still, rechts fährt"-Gefühl
+          war störender als der Nutzen des Klebens (Muster: klassische Dokument-Seite). */}
+      <div className={styles.detailRail} style={layoutV3 ? { position: 'static', maxHeight: 'none', overflowY: 'visible' } : undefined}>
 
       {/* ═══ Header: Score + Contract Overview ═══ */}
       <div className={`${styles.sectionCard} ${styles.fadeIn} ${styles.detailHeaderCard}`} style={{
@@ -715,7 +715,20 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                   flexShrink: 0,
                 }} />
                 <span style={{ fontWeight: 600 }}>Aktiv überwacht</span>
-                {monitorInfo.alertCount > 0 && (
+                {/* Eigenfund 06.08.: Bei Klartext zählt der Badge nur OFFENE Meldungen —
+                    ein roter „9 Alerts"-Alarm in der grünen Beruhigungsbox, obwohl alle
+                    längst erledigt sind, ist ein Widerspruch, der Vertrauen kostet. */}
+                {layoutV3 ? (() => {
+                  const openHere = (contractAlerts || []).filter(a => a.status === 'unread' || a.status === 'read').length;
+                  return openHere > 0 ? (
+                    <span
+                      onClick={() => scrollToSection('contract-alerts')}
+                      style={{ background: '#fef2f2', color: '#dc2626', fontSize: 11, fontWeight: 600, padding: '1px 8px', borderRadius: 8, border: '1px solid #fecaca', marginLeft: 'auto', cursor: 'pointer', flexShrink: 0 }}
+                    >
+                      {openHere} offen{openHere === 1 ? '' : 'e'}
+                    </span>
+                  ) : null;
+                })() : monitorInfo.alertCount > 0 && (
                   <span
                     onClick={() => scrollToSection('contract-alerts')}
                     style={{
