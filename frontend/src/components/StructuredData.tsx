@@ -62,7 +62,7 @@ export default function StructuredData({ type, data, breadcrumbs }: StructuredDa
           "@type": "Organization",
           "@id": "https://www.contract-ai.de/#organization",
           name: "Contract AI",
-          legalName: "Contract AI GmbH",
+          legalName: "Contract AI",
           description: "KI-gestützte Vertragsanalyse und -optimierung für Unternehmen und Privatpersonen",
           url: "https://www.contract-ai.de",
           logo: {
