@@ -362,7 +362,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Wo werden meine Vertragsdaten gespeichert?',
-        answer: 'Contract AI speichert und verarbeitet alle Daten ausschließlich auf Servern in Deutschland. Kein Transfer in Drittländer. Ende-zu-Ende-Verschlüsselung mit 256-bit Standard bei Übertragung und Speicherung.'
+        answer: 'Contract AI speichert und verarbeitet alle Vertragsdaten ausschließlich auf Servern innerhalb der EU. Verschlüsselung mit 256-bit-Standard bei Übertragung und Speicherung, kein Training mit Ihren Daten.'
       },
       {
         question: 'Kann ich meine Vertragsdaten vollständig löschen lassen?',

@@ -1012,10 +1012,10 @@ const KiVertragsanalyse: React.FC = () => {
             <div className={styles.securityGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.functionIcon}><Shield size={24} /></div>
-                <h3 className={styles.functionTitle}>Deutsche Server</h3>
+                <h3 className={styles.functionTitle}>Server in der EU</h3>
                 <p className={styles.functionDesc}>
-                  Alle Daten werden ausschließlich auf Servern in Deutschland verarbeitet
-                  und gespeichert. Kein Transfer in Drittländer.
+                  Alle Vertragsdaten werden ausschließlich auf Servern innerhalb der EU
+                  verarbeitet und gespeichert. Kein Training mit Ihren Daten.
                 </p>
               </div>
 

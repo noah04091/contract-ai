@@ -625,10 +625,10 @@ const FuerAgenturen: React.FC = () => {
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <MapPin size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Server in Frankfurt</h3>
+                <h3 className={styles.functionTitle}>Server in der EU</h3>
                 <p className={styles.functionDesc}>
-                  Alle Verarbeitung und Speicherung ausschließlich auf deutschen Rechenzentren —
-                  kein Datenabfluss in die USA, keine Drittstaaten-Übermittlung.
+                  Verarbeitung und Speicherung in europäischen Rechenzentren — AVV nach
+                  Art. 28 DSGVO mit vollständiger Unterauftragnehmer-Liste öffentlich abrufbar.
                 </p>
               </div>
 
