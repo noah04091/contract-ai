@@ -24,6 +24,8 @@ const {
 } = require("../utils/pulseEmailTemplate");
 // Gemeinsame Text-Helfer: Ein-/Mehrzahl + Anrede (siehe utils/mailText.js).
 const { plural, greetingName } = require("../utils/mailText");
+// Legal Pulse ist ein Business+-Feature — Zugang inkl. Org-Vererbung (siehe utils/pulseAccess.js).
+const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
 
 const MAX_PER_USER = 5;
 const MAX_PER_RUN = 20;
@@ -93,12 +95,18 @@ async function findUsersForMonitoring(db) {
   for (const userId of userIds) {
     const user = await db.collection("users").findOne(
       { $or: [{ _id: userId }, { _id: require("mongodb").ObjectId.createFromHexString(userId) }] },
-      { projection: { email: 1, name: 1, firstName: 1, subscriptionPlan: 1 } }
+      { projection: { email: 1, name: 1, firstName: 1, ...PULSE_ACCESS_PROJECTION } }
     );
-    if (user && user.email) {
-      // null = kein Name hinterlegt → die Mail grüßt dann neutral mit "Hallo,"
-      users.push({ userId, email: user.email, name: greetingName(user) });
-    }
+    if (!user || !user.email) continue;
+
+    // Plan-Guard (10.08.2026): Ohne diese Pruefung hat der Monitor auch Vertraege
+    // GEKUENDIGTER Konten weiter re-analysiert — echte KI-Kosten fuer Nicht-Zahler.
+    // Belegt am 09.08.2026: zwei Konten mit subscriptionStatus "canceled" wurden
+    // im Sonntags-Lauf erneut durch die Pipeline geschickt.
+    if (!(await hasPulseAccess(db, user))) continue;
+
+    // null = kein Name hinterlegt → die Mail grüßt dann neutral mit "Hallo,"
+    users.push({ userId, email: user.email, name: greetingName(user) });
   }
 
   return users;

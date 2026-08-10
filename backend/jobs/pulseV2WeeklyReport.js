@@ -18,7 +18,11 @@
 
 const LegalPulseV2Result = require("../models/LegalPulseV2Result");
 const { queueEmail } = require("../services/emailRetryService");
-const { isBusinessOrHigher } = require("../constants/subscriptionPlans");
+// Zugang inkl. Org-Vererbung (siehe utils/pulseAccess.js). Vorher stand hier ein
+// reiner Feld-Check auf subscriptionPlan — der sperrte Mitglieder zahlender
+// Organisationen aus, deren eigenes Feld auf "free" steht (real: 5 Konten der
+// hs-niederrhein.de-Org mit Org-Plan enterprise).
+const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
 const {
   generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseSection, pulseReassurance, pulseNote,
 } = require("../utils/pulseEmailTemplate");
@@ -270,11 +274,11 @@ async function runWeeklyReport(db, options = {}) {
   let sent = 0, skipped = 0;
   for (const userId of eligible.slice(0, MAX_USERS_PER_RUN)) {
     try {
-      const user = await findUserRobust(db, userId, { email: 1, name: 1, firstName: 1, subscriptionPlan: 1, legalPulseSettings: 1 });
+      const user = await findUserRobust(db, userId, { email: 1, name: 1, firstName: 1, legalPulseSettings: 1, ...PULSE_ACCESS_PROJECTION });
       if (!user?.email) { skipped++; continue; }
 
-      // Nur zahlende Pläne (Legal Pulse = Business+)
-      if (!isBusinessOrHigher(user.subscriptionPlan || "free")) { skipped++; continue; }
+      // Nur zahlende Pläne (Legal Pulse = Business+), Org-Mitglieder eingeschlossen
+      if (!(await hasPulseAccess(db, user))) { skipped++; continue; }
 
       // Opt-out respektieren (fail-open: fehlende Einstellung = senden)
       const s = user.legalPulseSettings;

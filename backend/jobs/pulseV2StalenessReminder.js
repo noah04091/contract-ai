@@ -25,6 +25,8 @@ const {
 const { cleanContractName } = require("../utils/cleanContractName");
 // Gemeinsame Text-Helfer: Ein-/Mehrzahl + Anrede (siehe utils/mailText.js).
 const { plural, greetingName } = require("../utils/mailText");
+// Legal Pulse ist ein Business+-Feature — Zugang inkl. Org-Vererbung (siehe utils/pulseAccess.js).
+const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
 
 const STALENESS_THRESHOLD_DAYS = 14;
 const COOLDOWN_DAYS = 14;
@@ -92,10 +94,15 @@ async function runStalenessReminder(db) {
       try { if (ObjectId.isValid(String(userId))) idCandidates.push(new ObjectId(String(userId))); } catch { /* ignore */ }
       const user = await db.collection("users").findOne(
         { _id: { $in: idCandidates } },
-        { projection: { email: 1, name: 1, firstName: 1 } }
+        { projection: { email: 1, name: 1, firstName: 1, ...PULSE_ACCESS_PROJECTION } }
       );
 
       if (!user?.email) continue;
+
+      // Plan-Guard (10.08.2026): Diese Mail sagt woertlich, Contract AI ueberwache
+      // die Vertraege automatisch — im Free-Plan stimmt das nicht. Sie ging real an
+      // ein gekuendigtes Konto (27.07. und nochmal 10.08.).
+      if (!(await hasPulseAccess(db, user))) continue;
 
       // Send reminder — null = kein Name hinterlegt, die Mail grüßt dann neutral mit "Hallo,"
       const userName = greetingName(user);

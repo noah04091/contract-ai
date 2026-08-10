@@ -34,6 +34,8 @@ const {
 // Der frühere lokale plural()-Helfer lebt jetzt dort — gleiche Signatur, damit ihn
 // auch die anderen Pulse-Mails nutzen können (er fehlte ihnen vorher).
 const { plural, greetingName, capitalizeFirst } = require("../utils/mailText");
+// Legal Pulse ist ein Business+-Feature — Zugang inkl. Org-Vererbung (siehe utils/pulseAccess.js).
+const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
 
 // B3: Lazy-load vector services for semantic matching (fail-safe)
 let _vectorStore = null;
@@ -1535,16 +1537,26 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
   try {
     user = await db.collection("users").findOne(
       { $or: [{ _id: userId }, { _id: ObjectId.createFromHexString(userId) }] },
-      { projection: { email: 1, name: 1, firstName: 1 } }
+      { projection: { email: 1, name: 1, firstName: 1, ...PULSE_ACCESS_PROJECTION } }
     );
   } catch {
     user = await db.collection("users").findOne(
       { _id: userId },
-      { projection: { email: 1, name: 1, firstName: 1 } }
+      { projection: { email: 1, name: 1, firstName: 1, ...PULSE_ACCESS_PROJECTION } }
     );
   }
 
   if (!user || !user.email) return;
+
+  // Plan-Guard (10.08.2026): Legal Pulse ist Business+. Ohne aktives Business+ keine
+  // Radar-Mail. BEWUSST erst hier, nach dem Speichern: Die Alerts bleiben in der DB
+  // erhalten (kein Datenverlust, sofort wieder da, wenn jemand zurueckkommt) — es
+  // entfaellt nur die Benachrichtigung, also die kostenpflichtige Leistung.
+  // Die Treffer-Erkennung selbst ist bewusst NICHT angefasst (Herzstueck).
+  if (!(await hasPulseAccess(db, user))) {
+    console.log(`[PulseV2Radar] Mail uebersprungen fuer ${userId}: Plan ohne Legal Pulse (${user.subscriptionPlan || "free"})`);
+    return;
+  }
 
   // Fallback-Kette 21.07.: manche users-Docs haben keine Namensfelder → statt „Hallo Nutzer"
   // den E-Mail-Lokalteil verwenden (z.B. „liebold.noah") — persönlicher, nie falsch.

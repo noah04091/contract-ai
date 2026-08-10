@@ -10,6 +10,9 @@ interface MonitoringStatus {
   lastRadarScan: string | null;
   nextMonitorScan: string;
   nextRadarScan: string;
+  /** false = Plan ohne Legal Pulse → keine laufende Überwachung (Backend 10.08.2026).
+   *  Optional, damit ein älteres Backend ohne dieses Feld unverändert weiterläuft. */
+  pulseAccess?: boolean;
   alertsTotal: number;
   severityCounts: { critical: number; high: number; medium: number; low: number };
   recentAlertsCount: number;
@@ -255,15 +258,46 @@ export const MonitoringStatusCard: React.FC<MonitoringStatusCardProps> = ({ moni
               {scanResult ? 'Gerade eben' : formatRelativeTime(monitoring.lastScan)}
             </span>
           </div>
+          {/* Ehrlichkeit (10.08.2026): Ohne aktives Business+ findet keine Überwachung
+              mehr statt — dann keinen Termin nennen, der nie eintritt. `!== false`,
+              damit ein Backend ohne dieses Feld die Anzeige unverändert lässt. */}
+          {monitoring.pulseAccess !== false ? (
+            <div>
+              <span style={{ color: '#9ca3af' }}>Nächste: </span>
+              <span style={{ fontWeight: 500 }}>{formatNextScan(nextScanDate)}</span>
+              <span style={{ color: '#9ca3af', fontSize: 11, marginLeft: 4 }}>({nextScanType})</span>
+            </div>
+          ) : (
+            <div>
+              <span style={{ color: '#9ca3af' }}>Nächste: </span>
+              <span style={{ fontWeight: 500, color: '#b45309' }}>pausiert</span>
+            </div>
+          )}
           <div>
-            <span style={{ color: '#9ca3af' }}>Nächste: </span>
-            <span style={{ fontWeight: 500 }}>{formatNextScan(nextScanDate)}</span>
-            <span style={{ color: '#9ca3af', fontSize: 11, marginLeft: 4 }}>({nextScanType})</span>
+            <span style={{ color: '#9ca3af' }}>{monitoring.pulseAccess === false ? 'Gespeichert: ' : 'Überwacht: '}</span>
+            <span style={{ fontWeight: 500 }}>
+              {monitoring.contractsMonitored} {monitoring.contractsMonitored === 1 ? 'Vertrag' : 'Verträge'}
+            </span>
           </div>
-          <div>
-            <span style={{ color: '#9ca3af' }}>Überwacht: </span>
-            <span style={{ fontWeight: 500 }}>{monitoring.contractsMonitored} Verträge</span>
-          </div>
+        </div>
+      )}
+
+      {/* Ehrlichkeits-Hinweis (10.08.2026): Ohne aktives Business+ laufen weder
+          Radar noch Re-Analyse. Vorher versprach die Seite hier weiter Überwachung. */}
+      {monitoring.pulseAccess === false && (
+        <div style={{
+          padding: '10px 12px',
+          background: '#fffbeb',
+          border: '1px solid #fde68a',
+          borderRadius: 8,
+          marginBottom: 8,
+          fontSize: 13,
+          color: '#92400e',
+          lineHeight: 1.5,
+        }}>
+          <strong>Überwachung pausiert.</strong> Legal Pulse gehört zum Business-Abo.
+          Deine bisherigen Ergebnisse bleiben gespeichert — neue Gesetzesänderungen
+          prüfen wir für diese Verträge aktuell nicht.
         </div>
       )}
 

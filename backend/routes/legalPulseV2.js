@@ -10,6 +10,9 @@ const { ipKeyGenerator } = require("express-rate-limit"); // IPv6-sicherer IP-Sc
 const LegalPulseV2Result = require("../models/LegalPulseV2Result");
 const { runPipeline } = require("../services/legalPulseV2");
 const requirePremium = require("../middleware/requirePremium");
+// Zugang inkl. Org-Vererbung (siehe utils/pulseAccess.js) — fuer Anzeige-Ehrlichkeit
+// und fuer Routen, die KI-Kosten ausloesen, aber kein requirePremium tragen.
+const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
 const verifyAdmin = require("../middleware/verifyAdmin");
 const { fixUtf8Filename } = require("../utils/fixUtf8");
 const { t } = require("../services/legalPulseV2/i18n");
@@ -164,6 +167,32 @@ router.post("/result/:id/translate", async (req, res) => {
   try {
     const { id } = req.params;
     const targetLang = (req.query.to || "").toString().toLowerCase();
+
+    // Plan-Guard (10.08.2026): Diese Route loest bei Cache-Miss einen echten
+    // KI-Aufruf aus, trug aber als einzige kostenverursachende Pulse-Route KEIN
+    // Gate — ein gekuendigtes Konto konnte darueber weiter KI-Leistung ausloesen.
+    // Bewusst hasPulseAccess statt requirePremium: nur so kommen Mitglieder
+    // zahlender Organisationen durch (requirePremium kennt die Vererbung nicht).
+    try {
+      const { ObjectId: OID } = require("mongodb");
+      // Diese Route arbeitet sonst ueber Mongoose — der native Treiber wird hier
+      // eigens geholt (wie an den anderen Stellen der Datei auch).
+      const db0 = await require("../config/database").connect();
+      const me = await db0.collection("users").findOne(
+        { _id: new OID(String(req.user.userId)) },
+        { projection: PULSE_ACCESS_PROJECTION }
+      );
+      if (!(await hasPulseAccess(db0, me))) {
+        return res.status(403).json({
+          error: "Diese Funktion erfordert ein Business-Abo oder höher",
+          requiresUpgrade: true,
+          upgradeUrl: "/pricing",
+        });
+      }
+    } catch (gateErr) {
+      console.error("[PulseV2] Zugangspruefung /translate fehlgeschlagen:", gateErr.message);
+      return res.status(500).json({ error: "Zugangsprüfung fehlgeschlagen" });
+    }
 
     if (targetLang !== "de" && targetLang !== "en") {
       return res.status(400).json({ error: "Ungültige Zielsprache. Erlaubt: de, en" });
@@ -2445,14 +2474,35 @@ router.get("/monitoring-status", async (req, res) => {
       statusLabel = "Scan überfällig";
     }
 
+    // 🆕 10.08.2026 Ehrlichkeit: Seit die Jobs den Plan pruefen (utils/pulseAccess.js)
+    // werden Vertraege ohne aktives Business+ NICHT mehr ueberwacht. Ohne dieses Flag
+    // wuerde die Seite weiter "wird ueberwacht" und einen naechsten Scan-Termin zeigen,
+    // der fuer diesen Nutzer nie eintritt. Kuenftige Scan-Termine daher nur bei Zugang.
+    let pulseAccess = true;
+    try {
+      const { ObjectId: OID } = require("mongodb");
+      const me = await db.collection("users").findOne(
+        { _id: new OID(String(req.user.userId)) },
+        { projection: PULSE_ACCESS_PROJECTION }
+      );
+      pulseAccess = await hasPulseAccess(db, me);
+    } catch (e) {
+      console.warn("[PulseV2] Zugangspruefung im monitoring-status fehlgeschlagen (zeige optimistisch an):", e.message);
+    }
+
     res.json({
       status,
       statusLabel,
+      pulseAccess, // false = Plan ohne Legal Pulse → keine laufende Ueberwachung
       contractsMonitored: contractsMonitored.length,
       lastScan: lastAnyScan,
       lastScheduledScan,
       lastRadarScan: lastRadarAlert,
       lastRadarRun, // echter letzter Radar-Lauf (für ehrliches "Zuletzt geprüft")
+      // Bewusst weiterhin echte Termine (kein null): Das Frontend rechnet mit
+      // `new Date(...)` — bei null ergaebe das 1970 in der Anzeige. Ob die Termine
+      // fuer diesen Nutzer ueberhaupt gelten, sagt `pulseAccess`. Wichtig auch,
+      // weil Backend (Render) und Frontend (Vercel) nie gleichzeitig live gehen.
       nextMonitorScan: nextMonitorScan.toISOString(),
       nextRadarScan: nextRadarScan.toISOString(),
       alertsTotal: recentAlerts.length,
