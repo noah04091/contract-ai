@@ -12,6 +12,19 @@ function createLocalDate(dateString) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
 }
 
+// 🩹 10.08.2026: KI-Labels enden gelegentlich auf einer hängenden Präposition
+// ("Kündigungseingang bis" — als Feld-Beschriftung zum Datum gedacht). In den
+// Satz-Templates ("⚠️ In 2 Wochen: Kündigungseingang bis") liest sich das wie
+// abgeschnitten. Deterministisch vervollständigen: Frist-Datum anhängen
+// ("Kündigungseingang bis 23.08.2026"). Ohne gültiges Datum: Präposition kappen.
+const DANGLING_PREPOSITION = /\s(bis|zum|am|ab|vor|für|von|spätestens)\s*$/i;
+function completeDanglingLabel(label, date) {
+  if (!label || typeof label !== 'string' || !DANGLING_PREPOSITION.test(label)) return label;
+  const d = date instanceof Date ? date : new Date(date);
+  if (isNaN(d.getTime())) return label.replace(DANGLING_PREPOSITION, '').trim() || label;
+  return `${label.trim()} ${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
+}
+
 // 🔒 KONFIDENZ-SCHWELLENWERTE für Event-Generierung
 // Abgesenkt 26.05.2026 (Problem F, Schritt 1): von 50/60 auf 30/40.
 // Begründung: andere Validatoren (Phantom-Filter, Evidence-Validator,
@@ -981,6 +994,8 @@ async function generateEventsForContract(db, contract) {
 
         const dateObj = createLocalDate(importantDate.date);
         const mapping = typeMapping[importantDate.type] || typeMapping['other'];
+        // Hängende Präposition im KI-Label mit dem Frist-Datum vervollständigen
+        const displayLabel = completeDanglingLabel(importantDate.label, dateObj);
 
         // 🔒 KONFIDENZ-CHECK: Nur Events erstellen wenn Konfidenz ausreichend
         const dateConfidence = importantDate.confidence || (importantDate.calculated ? 70 : 90);
@@ -1006,7 +1021,7 @@ async function generateEventsForContract(db, contract) {
             userId: contract.userId,
             contractId: contract._id,
             type: mapping.eventType,
-            title: `${mapping.emoji} ${importantDate.label}: ${contract.name}`,
+            title: `${mapping.emoji} ${displayLabel}: ${contract.name}`,
             description: importantDate.description || `KI-erkanntes Datum für "${contract.name}"`,
             date: dateObj,
             severity: mapping.severity,
@@ -1066,8 +1081,8 @@ async function generateEventsForContract(db, contract) {
                 userId: contract.userId,
                 contractId: contract._id,
                 type: `${mapping.eventType}_REMINDER_${reminder.days}D`,
-                title: `${reminder.emoji} ${reminder.label}: ${importantDate.label}`,
-                description: `"${contract.name}": ${importantDate.description || importantDate.label} - Noch ${reminder.days} Tage!`,
+                title: `${reminder.emoji} ${reminder.label}: ${displayLabel}`,
+                description: `"${contract.name}": ${importantDate.description || displayLabel} - Noch ${reminder.days} Tage!`,
                 date: createLocalDate(reminderDate),
                 severity: reminder.urgency,
                 status: "scheduled",
@@ -1106,7 +1121,7 @@ async function generateEventsForContract(db, contract) {
             userId: contract.userId,
             contractId: contract._id,
             type: mapping.eventType,
-            title: `📜 ${importantDate.label}: ${contract.name}`,
+            title: `📜 ${displayLabel}: ${contract.name}`,
             description: importantDate.description || `Historisches Datum für "${contract.name}"`,
             date: dateObj,
             severity: 'info',
@@ -1226,7 +1241,7 @@ async function generateEventsForContract(db, contract) {
               userId: contract.userId,
               contractId: contract._id,
               type: mapping.eventType,
-              title: `${mapping.emoji} ${frist.title}`,
+              title: `${mapping.emoji} ${completeDanglingLabel(frist.title, localDate)}`,
               description: frist.description || `Wiederkehrende ${frist.type}-Erinnerung für "${contract.name}".`,
               date: localDate,
               severity: mapping.severity,
@@ -1301,7 +1316,7 @@ async function generateEventsForContract(db, contract) {
             userId: contract.userId,
             contractId: contract._id,
             type: mapping.eventType,
-            title: `${mapping.emoji} ${frist.title}`,
+            title: `${mapping.emoji} ${completeDanglingLabel(frist.title, eventDate)}`,
             description: frist.description || `${frist.type}-Termin für "${contract.name}".`,
             date: createLocalDate(eventDate),
             severity: mapping.severity,
@@ -2077,5 +2092,6 @@ module.exports = {
   extractNoticePeriod,
   dedupeSameDayMilestones,
   buildRegenerableCleanupFilter,
-  reapStuckQueuedEvents
+  reapStuckQueuedEvents,
+  completeDanglingLabel
 };

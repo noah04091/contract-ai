@@ -1001,7 +1001,15 @@
 .premium-modal {
   background: white;
   border-radius: 20px;
-  overflow: hidden;
+  /* Desktop-Schutz: Modal darf nie höher als der Viewport werden (Overlay-Padding
+     20px oben+unten). Ohne Deckel schneidet das flex-zentrierte Overlay den
+     Modal-KOPF unerreichbar ab, sobald der Inhalt (z.B. "Deine Erinnerungen"-
+     Karte mit 5 Stufen) den Bildschirm sprengt. Mobile (≤768px) hat eigenes
+     Bottom-Sheet-Verhalten und überschreibt diese Regeln. */
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow-x: hidden;
+  overflow-y: auto;
   box-shadow:
     0 24px 48px rgba(0, 0, 0, 0.12),
     0 0 0 1px rgba(0, 0, 0, 0.04);
