@@ -97,6 +97,15 @@ function shouldDeferToOwnDay(event, daysUntilEventDay, hasReminderCoverage) {
  * WICHTIG: nur ab HEUTE — vergangene Tage werden NICHT nachgefasst → respektiert die Entscheidung
  * „keine verspäteten Mails" (driver-6-fix). Obergrenze = jetzt + lookaheadDays (unverändert).
  */
+/**
+ * 🔓 Retention Stufe 1: Sind Erinnerungs-Mails für Free-Nutzer aktiv?
+ * Bewusst als Funktion (nicht Konstante), damit der Env-Schalter zur Laufzeit
+ * greift und in Tests umschaltbar ist. Default: AUS (Verhalten wie vor dem 10.08.2026).
+ */
+function freeReminderMailsEnabled() {
+  return process.env.FREE_REMINDER_MAILS_ENABLED === "true";
+}
+
 function getSendWindow(now, lookaheadDays) {
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
@@ -317,10 +326,15 @@ async function checkAndSendNotifications(db) {
         continue;
       }
 
-      // Skip free users - Email reminders are Business+ only
+      // 🔓 Retention Stufe 1 (10.08.2026): Erinnerungs-Mails auch für Free-Nutzer —
+      // hinter Env-Schalter FREE_REMINDER_MAILS_ENABLED (Rollback = Render-Env auf
+      // "false"/löschen, kein Deploy). Begründung: Der Fristen-Wächter ist der einzige
+      // Kanal, der Ein-Tages-Nutzer von selbst zurückholt (Dry-Run 10.08.: ~19 Nutzer
+      // im 7-Tage-Fenster, ~172 übers Jahr — kein Massen-Blast). Free-Mails tragen
+      // einen dezenten Business-Hinweis (upgradeHint im Template).
       const userPlan = event.user?.subscriptionPlan || "free";
-      if (userPlan === "free") {
-        console.log(`Skipping free user ${maskEmail(event.user.email)} - Email reminders require Business+`);
+      if (userPlan === "free" && !freeReminderMailsEnabled()) {
+        console.log(`Skipping free user ${maskEmail(event.user.email)} - FREE_REMINDER_MAILS_ENABLED nicht aktiv`);
         continue;
       }
 
@@ -584,7 +598,8 @@ async function queueEventNotification(event, db) {
     ctaButtons: ctaButtons,
     quickActions: generateQuickActionLinks(event, actionToken, baseUrl),
     recipientEmail: event.user.email,  // Fuer personalisierte Unsubscribe-Links
-    recipientName: event.user?.name || ''  // v2: persönliche Anrede
+    recipientName: event.user?.name || '',  // v2: persönliche Anrede
+    upgradeHint: (event.user?.subscriptionPlan || "free") === "free"  // 🔓 dezenter Business-Hinweis nur in Free-Mails
   });
 
   // Zur Queue hinzufuegen (mit Retry-Mechanismus)
@@ -812,7 +827,7 @@ function generateQuickActionLinks(event, token, baseUrl) {
 // EIN primärer Button + dezenter Sekundär-Link, ruhige Schnellaktionen, sauberer Footer.
 // Bewusst NICHT die geteilte Basis (generateEmailTemplate) — der v2-Look gilt nur für Kalender-Mails.
 function generateCalendarEmailTemplate(params) {
-  const { title, preheader, content, ctaButtons = [], quickActions = [], recipientEmail, recipientName } = params;
+  const { title, preheader, content, ctaButtons = [], quickActions = [], recipientEmail, recipientName, upgradeHint = false } = params;
   const FRONTEND = process.env.FRONTEND_URL || "https://www.contract-ai.de";
   const logoUrl = `${FRONTEND}/logo.png`;
   const firstName = (recipientName && String(recipientName).trim().split(/\s+/)[0]) || "";
@@ -835,6 +850,16 @@ function generateCalendarEmailTemplate(params) {
   const unsubscribeUrl = `${FRONTEND}/api/email/unsubscribe?email=${encodeURIComponent(recipientEmail)}&category=CALENDAR`;
   const preheaderHtml = preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${preheader}</div>` : "";
 
+  // 🔓 Dezenter Business-Hinweis in Free-Mails (Retention Stufe 1, 10.08.2026).
+  // Bewusst zurückhaltend: gedämpfte Farbe, unter den Aktionen, über dem Footer —
+  // die Mail bleibt eine Service-Mail, kein Werbebrief.
+  const upgradeHtml = upgradeHint ? `
+    <tr><td class="cal-pad" style="padding:22px 44px 0 44px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="background-color:#f8fafc; border:1px solid #eef2f6; border-radius:8px; padding:14px 18px;">
+        <p style="margin:0; font-size:13px; line-height:1.6; color:#8a94a6;">Diese Erinnerung ist Teil deines kostenlosen Fristen-Wächters. Mit <strong style="color:#64748b;">Business</strong> überwacht Contract AI deine Verträge zusätzlich laufend auf Gesetzesänderungen und rechtliche Risiken. <a href="${FRONTEND}/pricing" target="_blank" style="color:#3b82f6; text-decoration:none;">Mehr erfahren</a></p>
+      </td></tr></table>
+    </td></tr>` : "";
+
   return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>@media only screen and (max-width:480px){ .cal-pad{ padding-left:24px !important; padding-right:24px !important; } }</style></head>
 <body style="margin:0; padding:0; background-color:#f4f6f8; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
@@ -848,6 +873,7 @@ ${preheaderHtml}
       <div style="margin-top:26px;">${primaryHtml}${secondaryHtml}</div>
     </td></tr>
     ${quickHtml}
+    ${upgradeHtml}
     <tr><td class="cal-pad" style="padding:26px 44px 30px 44px;">
       <table width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #eaecef; padding-top:18px;">
         <p style="margin:0 0 6px 0; font-size:12.5px; color:#9aa3b2;">© ${new Date().getFullYear()} Contract AI</p>
@@ -872,6 +898,7 @@ module.exports = {
   firesOnOwnDay,
   shouldDeferToOwnDay,
   getSendWindow,
+  freeReminderMailsEnabled,
   // Reine Render-Funktionen (für Vorschau/Tests; keine Seiteneffekte)
   __render: {
     generateCalendarEmailTemplate,
