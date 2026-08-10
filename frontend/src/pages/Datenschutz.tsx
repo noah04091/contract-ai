@@ -126,7 +126,7 @@ export default function Datenschutz() {
               gemäß DSGVO und BDSG.
             </p>
             <div className={styles.heroMeta}>
-              <span className={styles.heroMetaItem}><Calendar size={15} /> Stand: Februar 2025</span>
+              <span className={styles.heroMetaItem}><Calendar size={15} /> Stand: August 2026</span>
               <span className={styles.heroMetaDot} />
               <span className={styles.heroMetaItem}><ClockMeta size={15} /> ca. 8 Min. Lesezeit</span>
               <span className={styles.heroMetaDot} />
@@ -522,7 +522,7 @@ export default function Datenschutz() {
                   um sie an geänderte Rechtslagen oder bei Änderungen unserer Dienste anzupassen.
                 </p>
                 <p style={{ color: "var(--muted)" }}>
-                  <strong>Stand:</strong> Februar 2025
+                  <strong>Stand:</strong> August 2026
                 </p>
               </div>
             </section>

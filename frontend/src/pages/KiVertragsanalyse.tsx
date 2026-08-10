@@ -131,7 +131,7 @@ const KiVertragsanalyse: React.FC = () => {
     },
     {
       question: "Sind meine Vertragsdaten bei der KI-Analyse sicher?",
-      answer: "Ja. Bei Contract AI werden alle Daten auf deutschen Servern verarbeitet, Ende-zu-Ende verschlüsselt (256-bit) und DSGVO-konform behandelt. Ihre Vertragsdaten werden nicht für KI-Training verwendet und können jederzeit vollständig gelöscht werden. Wir geben keine Daten an Dritte weiter."
+      answer: "Ja. Bei Contract AI werden alle Daten mit 256-Bit verschlüsselt übertragen und gespeichert und DSGVO-konform behandelt. Ihre Vertragsdaten werden nicht für KI-Training verwendet und können jederzeit vollständig gelöscht werden. Wir geben keine Daten an Dritte weiter."
     },
     {
       question: "Wie schnell ist KI-Vertragsanalyse?",
@@ -1023,7 +1023,7 @@ const KiVertragsanalyse: React.FC = () => {
                 <div className={styles.functionIcon}><Lock size={24} /></div>
                 <h3 className={styles.functionTitle}>256-bit Verschlüsselung</h3>
                 <p className={styles.functionDesc}>
-                  Ende-zu-Ende-Verschlüsselung bei Übertragung und Speicherung.
+                  256-Bit-Verschlüsselung bei Übertragung und Speicherung.
                   Bankingstandard-Sicherheit für Ihre Verträge.
                 </p>
               </div>

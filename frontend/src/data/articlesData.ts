@@ -422,7 +422,7 @@ export const articles: Article[] = [
 
       <ul>
         <li><strong>Deutsche Server:</strong> Alle Daten werden ausschließlich auf Servern in Deutschland verarbeitet und gespeichert.</li>
-        <li><strong>256-bit Verschlüsselung:</strong> Ende-zu-Ende-Verschlüsselung bei Übertragung und Speicherung.</li>
+        <li><strong>256-bit Verschlüsselung:</strong> Verschlüsselt bei Übertragung und Speicherung.</li>
         <li><strong>Kein KI-Training:</strong> Ihre Vertragsdaten werden nicht zum Training von KI-Modellen verwendet.</li>
         <li><strong>Jederzeit löschbar:</strong> Verträge können jederzeit vollständig gelöscht werden.</li>
         <li><strong>Keine Weitergabe:</strong> Keine Weitergabe von Daten an Dritte.</li>
