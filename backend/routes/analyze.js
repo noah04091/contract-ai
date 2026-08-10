@@ -5098,7 +5098,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // 🔐 ATOMIC ANALYSIS COUNT INCREMENT - Race Condition Fix!
     // Statt: 1) Read count, 2) Check limit, 3) Later increment
     // Jetzt: 1) Atomic increment-and-check in ONE operation
-    const plan = user.subscriptionPlan || "free";
+    // 👥 Org-Vererbung (10.08.2026): checkSubscription läuft auf dieser Route (server.js:736)
+    // und legt den EFFEKTIVEN Plan in req.user.plan ab — inkl. Org-Plan-Vererbung für
+    // Free-User in zahlenden Organisationen und Admin-Safeguard. Vorher wurde hier der
+    // rohe User-Plan gelesen → zahlende Org-Mitglieder liefen ins Free-Limit (3).
+    const plan = req.user.plan || user.subscriptionPlan || "free";
 
     // ✅ KORRIGIERT: Limits aus zentraler Konfiguration (subscriptionPlans.js)
     // - Free: 3 Analysen (einmalig, KEIN monatlicher Reset)
@@ -5174,7 +5178,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message: "❌ Monatliches Analyse-Limit erreicht. Bitte upgraden Sie Ihr Paket.",
+        // ✏️ 10.08.2026: Free-Limit ist einmalig (kein Monats-Reset, vgl. cron/resetAnalysisCount.js)
+        // — "Monatlich" war für Free sachlich falsch. Frontend matcht auf "Limit erreicht" (beibehalten).
+        message: plan === 'free'
+          ? "❌ Analyse-Limit erreicht: Die 3 kostenlosen Analysen sind aufgebraucht. Bitte upgraden Sie Ihr Paket."
+          : "❌ Monatliches Analyse-Limit erreicht. Bitte upgraden Sie Ihr Paket.",
         error: "LIMIT_EXCEEDED",
         currentCount: user.analysisCount ?? 0,
         limit: limit,
