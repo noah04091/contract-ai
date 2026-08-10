@@ -23,6 +23,8 @@ const {
   generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseSection, pulseReassurance, pulseNote,
 } = require("../utils/pulseEmailTemplate");
 const { cleanContractName } = require("../utils/cleanContractName");
+// Gemeinsame Text-Helfer: Ein-/Mehrzahl + Anrede (siehe utils/mailText.js).
+const { plural, greetingName } = require("../utils/mailText");
 
 const STALENESS_THRESHOLD_DAYS = 14;
 const COOLDOWN_DAYS = 14;
@@ -95,8 +97,8 @@ async function runStalenessReminder(db) {
 
       if (!user?.email) continue;
 
-      // Send reminder
-      const userName = user.firstName || user.name || "Nutzer";
+      // Send reminder — null = kein Name hinterlegt, die Mail grüßt dann neutral mit "Hallo,"
+      const userName = greetingName(user);
       await sendStalenessEmail(db, user.email, userName, userId, staleContracts);
 
       // Log reminder
@@ -228,15 +230,20 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
       ? "Ein Vertrag sollte neu geprüft werden"
       : "Ein paar Verträge sollten neu geprüft werden"
   );
-  body += pulseLead(`Hallo ${userName},`);
+  body += pulseLead(userName ? `Hallo ${userName},` : "Hallo,");
   body += pulseLead(
     `<strong style="color:#1a1f36;">${staleContracts.length} deiner Verträge</strong> ${staleContracts.length === 1 ? "wurde" : "wurden"} seit über 14 Tagen nicht mehr geprüft. Neue Gesetze oder Risiken könnten unbemerkt bleiben &mdash; eine kurze erneute Prüfung schafft Sicherheit.`
   );
 
   topContracts.forEach((c, idx) => {
     const dot = c.riskLevel === "critical" ? "#dc2626" : c.riskLevel === "high" ? "#ea580c" : "#d97706";
-    const statusText = c.riskLevel === "critical" ? "Erhöhtes Risiko"
-      : c.riskLevel === "high" ? "Hohes Risiko"
+    // Wortwahl bewusst identisch zu pulseV2Monitor.js (dort: "Kritisch"/"Hoch").
+    // Vorher standen die Stufen andersherum ("critical" hieß "Erhöhtes Risiko",
+    // "high" hieß "Hohes Risiko") — das war gegenüber riskOrder (in findStaleContracts) und
+    // der Risiko-Skala im Frontend genau verkehrt: der schlimmste Vertrag stand
+    // oben in der Liste, trug aber das harmlosere Etikett.
+    const statusText = c.riskLevel === "critical" ? "Kritisch"
+      : c.riskLevel === "high" ? "Hoch"
       : `Score ${c.lastScore}`;
     const metaParts = [c.contractType, `zuletzt geprüft vor ${c.daysStale} Tagen`].filter(Boolean);
     body += pulseSection({
@@ -250,7 +257,8 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
   });
 
   if (staleContracts.length > MAX_CONTRACTS_IN_EMAIL) {
-    body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${staleContracts.length - MAX_CONTRACTS_IN_EMAIL} weitere Verträge</span>`);
+    const rest = staleContracts.length - MAX_CONTRACTS_IN_EMAIL;
+    body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${rest} ${plural(rest, "weiterer Vertrag", "weitere Verträge")}</span>`);
   }
 
   body += pulseReassurance({
@@ -263,12 +271,12 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
   );
 
   const subject = criticalContracts.length > 0
-    ? `${criticalContracts.length} ${criticalContracts.length === 1 ? "Vertrag" : "Verträge"} mit Risiko nicht geprüft`
-    : `${staleContracts.length} Verträge seit über 14 Tagen nicht geprüft`;
+    ? `${criticalContracts.length} ${plural(criticalContracts.length, "Vertrag", "Verträge")} mit Risiko nicht geprüft`
+    : `${staleContracts.length} ${plural(staleContracts.length, "Vertrag", "Verträge")} seit über 14 Tagen nicht geprüft`;
 
   const preheader = criticalContracts.length > 0
-    ? `${criticalContracts.length} Verträge mit erhöhtem Risiko warten auf Prüfung`
-    : `${staleContracts.length} Verträge sollten erneut geprüft werden`;
+    ? `${criticalContracts.length} ${plural(criticalContracts.length, "Vertrag", "Verträge")} mit erhöhtem Risiko ${plural(criticalContracts.length, "wartet", "warten")} auf Prüfung`
+    : `${staleContracts.length} ${plural(staleContracts.length, "Vertrag", "Verträge")} ${plural(staleContracts.length, "sollte", "sollten")} erneut geprüft werden`;
 
   const html = generatePulseEmailTemplate({
     body,

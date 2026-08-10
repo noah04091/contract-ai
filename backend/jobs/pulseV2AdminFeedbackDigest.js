@@ -21,6 +21,8 @@
 
 const { queueEmail } = require("../services/emailRetryService");
 const { cleanContractName } = require("../utils/cleanContractName");
+// Gemeinsame Text-Helfer: Ein-/Mehrzahl (siehe utils/mailText.js).
+const { plural } = require("../utils/mailText");
 const {
   generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseSection,
 } = require("../utils/pulseEmailTemplate");
@@ -124,7 +126,7 @@ async function runAdminFeedbackDigest(db, options = {}) {
   body += pulseLead(
     `Betreiber-Übersicht der 👍/👎-Stimmen zu Legal-Pulse-Alerts. Diese Woche: ` +
     `<strong>${freshUp}× hilfreich</strong>, <strong>${freshDown}× nicht hilfreich</strong>. ` +
-    `Gesamt seit Start: ${t.withFeedback} Stimmen zu ${t.alertsTotal} Alerts` +
+    `Gesamt seit Start: ${t.withFeedback} ${plural(t.withFeedback, "Stimme", "Stimmen")} zu ${t.alertsTotal} ${plural(t.alertsTotal, "Alert", "Alerts")}` +
     (usefulRate === null ? "." : ` — Hilfreich-Rate <strong>${usefulRate}%</strong> (${t.useful}👍/${t.notUseful}👎).`)
   );
 
@@ -143,7 +145,8 @@ async function runAdminFeedbackDigest(db, options = {}) {
     });
   });
   if (fresh.length > MAX_ITEMS_IN_EMAIL) {
-    body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${fresh.length - MAX_ITEMS_IN_EMAIL} weitere Stimmen diese Woche</span>`);
+    const rest = fresh.length - MAX_ITEMS_IN_EMAIL;
+    body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${rest} ${plural(rest, "weitere Stimme", "weitere Stimmen")} diese Woche</span>`);
   }
   body += pulseLead(
     `<span style="color:#8792a2; font-size:13px;">Interne Betreiber-Mail — kommt nur montags und nur, wenn es neues Feedback gab. ` +

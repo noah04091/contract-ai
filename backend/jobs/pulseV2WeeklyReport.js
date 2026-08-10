@@ -22,6 +22,8 @@ const { isBusinessOrHigher } = require("../constants/subscriptionPlans");
 const {
   generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseSection, pulseReassurance, pulseNote,
 } = require("../utils/pulseEmailTemplate");
+// Gemeinsame Text-Helfer: Ein-/Mehrzahl + Anrede (siehe utils/mailText.js).
+const { plural, greetingName } = require("../utils/mailText");
 
 const WEEK_DAYS = 7;
 const COOLDOWN_DAYS = 6;          // verhindert Doppel-Versand (z.B. bei Deploy-Overlap)
@@ -170,7 +172,8 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
       });
     });
     if (stats.alerts.length > MAX_FINDINGS_IN_EMAIL) {
-      body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${stats.alerts.length - MAX_FINDINGS_IN_EMAIL} weitere im Dashboard</span>`);
+      const restPunkte = stats.alerts.length - MAX_FINDINGS_IN_EMAIL;
+      body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${restPunkte} ${plural(restPunkte, "weiterer Punkt", "weitere Punkte")} im Dashboard</span>`);
     }
     body += pulseReassurance({
       text: "&Ouml;ffne Legal Pulse: Wir zeigen dir zu jedem Punkt genau die betroffene Stelle und f&uuml;hren dich durch das, was zu tun ist.",
@@ -187,8 +190,11 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
     ? "🛡️ Deine Woche: alle Verträge aktuell"
     : `⚖️ Deine Woche: ${findingCount} ${findingCount === 1 ? "Punkt" : "Punkte"} für dich`;
   const preheader = allClear
-    ? `${monitoredCount} Verträge überwacht · ${changesEvaluated} Änderungen geprüft · nichts zu tun`
-    : `${findingCount} neue Hinweise aus ${changesEvaluated} geprüften Änderungen`;
+    ? `${monitoredCount} ${plural(monitoredCount, "Vertrag", "Verträge")} überwacht · ${changesEvaluated} ${plural(changesEvaluated, "Änderung", "Änderungen")} geprüft · nichts zu tun`
+    // "aus" verlangt den Dativ; mit der impliziten "einer" gilt die gemischte
+    // Deklination → das Adjektiv bleibt in BEIDEN Fällen "geprüften"
+    // ("aus 1 geprüften Änderung" / "aus 2 geprüften Änderungen").
+    : `${findingCount} ${plural(findingCount, "neuer Hinweis", "neue Hinweise")} aus ${changesEvaluated} geprüften ${plural(changesEvaluated, "Änderung", "Änderungen")}`;
 
   const html = generatePulseEmailTemplate({
     body,
@@ -221,7 +227,7 @@ async function runWeeklyReport(db, options = {}) {
     const user = await findUserRobust(db, userId, { email: 1, name: 1, firstName: 1 });
     const stats = await computeUserStats(db, userId, weekAgo);
     const { subject, html } = buildWeeklyReportEmail({
-      userName: user?.firstName || user?.name || null,
+      userName: greetingName(user),
       monitoredCount: stats.monitoredCount,
       changesEvaluated,
       stats,
@@ -278,7 +284,7 @@ async function runWeeklyReport(db, options = {}) {
       if (stats.monitoredCount === 0) { skipped++; continue; } // nichts zu berichten
 
       const { subject, html } = buildWeeklyReportEmail({
-        userName: user.firstName || user.name || null,
+        userName: greetingName(user),
         monitoredCount: stats.monitoredCount,
         changesEvaluated,
         stats,

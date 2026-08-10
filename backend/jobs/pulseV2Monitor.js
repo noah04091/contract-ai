@@ -22,6 +22,8 @@ const {
 const {
   generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseRow, pulseSection, pulseReassurance, pulseNote,
 } = require("../utils/pulseEmailTemplate");
+// Gemeinsame Text-Helfer: Ein-/Mehrzahl + Anrede (siehe utils/mailText.js).
+const { plural, greetingName } = require("../utils/mailText");
 
 const MAX_PER_USER = 5;
 const MAX_PER_RUN = 20;
@@ -94,7 +96,8 @@ async function findUsersForMonitoring(db) {
       { projection: { email: 1, name: 1, firstName: 1, subscriptionPlan: 1 } }
     );
     if (user && user.email) {
-      users.push({ userId, email: user.email, name: user.firstName || user.name || "Nutzer" });
+      // null = kein Name hinterlegt → die Mail grüßt dann neutral mit "Hallo,"
+      users.push({ userId, email: user.email, name: greetingName(user) });
     }
   }
 
@@ -276,9 +279,9 @@ async function sendAlertEmail(db, user, contractSummaries) {
       ? "Neue Punkte in einem deiner Verträge"
       : "Neue Punkte in deinen überwachten Verträgen"
   );
-  body += pulseLead(`Hallo ${user.name},`);
+  body += pulseLead(user.name ? `Hallo ${user.name},` : "Hallo,");
   body += pulseLead(
-    `bei der automatischen Überprüfung deiner Verträge haben wir <strong style="color:#1a1f36;">${totalFindings} neue ${totalFindings === 1 ? "Befund" : "Befunde"}</strong> in ${contractSummaries.length} ${contractSummaries.length === 1 ? "Vertrag" : "Verträgen"} gefunden, die du dir ansehen solltest.`
+    `bei der automatischen Überprüfung deiner Verträge haben wir <strong style="color:#1a1f36;">${totalFindings} ${plural(totalFindings, "neuen Befund", "neue Befunde")}</strong> in ${contractSummaries.length} ${plural(contractSummaries.length, "Vertrag", "Verträgen")} gefunden, ${plural(totalFindings, "den", "die")} du dir ansehen solltest.`
   );
 
   contractSummaries.forEach((contract, idx) => {
@@ -292,7 +295,8 @@ async function sendAlertEmail(db, user, contractSummaries) {
       pulseRow(f.severity === "critical" ? "Kritisch" : "Hoch", f.title)
     );
     if (contract.findings.length > 3) {
-      rows.push(pulseRow("", `+ ${contract.findings.length - 3} weitere ${contract.findings.length - 3 === 1 ? "Befund" : "Befunde"}`));
+      const restBefunde = contract.findings.length - 3;
+      rows.push(pulseRow("", `+ ${restBefunde} ${plural(restBefunde, "weiterer Befund", "weitere Befunde")}`));
     }
     body += pulseSection({
       name: contract.contractName,
@@ -316,13 +320,13 @@ async function sendAlertEmail(db, user, contractSummaries) {
   const html = generatePulseEmailTemplate({
     body,
     badge: "Legal Pulse",
-    preheader: `${totalFindings} neue Risiken in ${contractSummaries.length} Verträgen erkannt`,
+    preheader: `${totalFindings} ${plural(totalFindings, "neues Risiko", "neue Risiken")} in ${contractSummaries.length} ${plural(contractSummaries.length, "Vertrag", "Verträgen")} erkannt`,
     unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
   });
 
   await queueEmail(db, {
     to: user.email,
-    subject: `\u26a0\ufe0f Legal Pulse: ${totalFindings} neue Befunde in ${contractSummaries.length} Verträgen`,
+    subject: `\u26a0\ufe0f Legal Pulse: ${totalFindings} ${plural(totalFindings, "neuer Befund", "neue Befunde")} in ${contractSummaries.length} ${plural(contractSummaries.length, "Vertrag", "Verträgen")}`,
     html,
     userId: user.userId,
     emailType: "legal_pulse_v2_alert",

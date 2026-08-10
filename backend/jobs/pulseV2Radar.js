@@ -30,6 +30,10 @@ const {
 const {
   generatePulseEmailTemplate, pulseHeadline, pulseLead, pulsePanel, pulseRow, pulseSection, pulseReassurance, pulseNote,
 } = require("../utils/pulseEmailTemplate");
+// Gemeinsame Text-Helfer: Ein-/Mehrzahl + Anrede (siehe utils/mailText.js).
+// Der frühere lokale plural()-Helfer lebt jetzt dort — gleiche Signatur, damit ihn
+// auch die anderen Pulse-Mails nutzen können (er fehlte ihnen vorher).
+const { plural, greetingName, capitalizeFirst } = require("../utils/mailText");
 
 // B3: Lazy-load vector services for semantic matching (fail-safe)
 let _vectorStore = null;
@@ -1544,10 +1548,14 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
 
   // Fallback-Kette 21.07.: manche users-Docs haben keine Namensfelder → statt „Hallo Nutzer"
   // den E-Mail-Lokalteil verwenden (z.B. „liebold.noah") — persönlicher, nie falsch.
-  const userName = user.firstName || user.name || (user.email ? String(user.email).split("@")[0] : "Nutzer");
+  // greetingName() liefert den Namen groß geschrieben oder null; der E-Mail-Lokalteil
+  // bleibt als bewährter Zwischenschritt erhalten (Entscheidung 21.07.), wird aber
+  // ebenfalls groß geschrieben statt roh übernommen.
+  const userName = greetingName(user)
+    || (user.email ? capitalizeFirst(String(user.email).split("@")[0]) : null);
 
   // -- Helpers for email formatting --
-  const plural = (n, singular, pluralForm) => n === 1 ? singular : pluralForm;
+  // plural() kommt jetzt aus utils/mailText.js (Modul-Import oben) — identische Signatur.
   // 11.07.: gemeinsamer Helfer statt eigener Mini-Säuberung — repariert auch Mojibake
   // ("Obst & GemÃ¼se" → "Obst & Gemüse") via fixUtf8; Glocke nutzt ihn bereits (QA-#1),
   // damit zeigen Mail und Glocke jetzt denselben sauberen Namen.
@@ -1594,7 +1602,7 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
       ? "Eine Gesetzesänderung betrifft deinen Vertrag"
       : "Gesetzesänderungen betreffen deine Verträge"
   );
-  body += pulseLead(`Hallo ${userName},`);
+  body += pulseLead(userName ? `Hallo ${userName},` : "Hallo,");
   body += pulseLead(
     `Contract&nbsp;AI prüft deine Verträge automatisch jeden Tag auf neue Gesetze und Urteile. Heute haben wir <strong style="color:#1a1f36;">${alertCount} Treffer</strong> gefunden, die du dir ansehen solltest. Hier in einfachen Worten, was sich ändert und was du tun kannst:`
   );
@@ -1636,12 +1644,12 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
     });
 
     if (contractCount > 3) {
-      body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${contractCount - 3} weitere ${plural(contractCount - 3, "Vertrag", "Verträge")}</span>`);
+      body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${contractCount - 3} ${plural(contractCount - 3, "weiterer Vertrag", "weitere Verträge")}</span>`);
     }
   }
 
   if (emailCappedCount > 0) {
-    body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${emailCappedCount} weitere ${plural(emailCappedCount, "Alert", "Alerts")} &mdash; im Dashboard einsehbar</span>`);
+    body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${emailCappedCount} ${plural(emailCappedCount, "weiterer Alert", "weitere Alerts")} &mdash; im Dashboard einsehbar</span>`);
   }
 
   body += pulseReassurance({
@@ -1656,7 +1664,7 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
   const html = generatePulseEmailTemplate({
     body,
     badge: "Legal Radar",
-    preheader: `${alertCount} Verträge von Gesetzesänderungen betroffen`,
+    preheader: `${alertCount} ${plural(alertCount, "Vertrag", "Verträge")} von Gesetzesänderungen betroffen`,
     unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
   });
 
