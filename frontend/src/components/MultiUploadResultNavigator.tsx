@@ -113,6 +113,7 @@ export default function MultiUploadResultNavigator({ uploadFiles, onReset }: Mul
             file={onlyFile.file}
             onReset={onReset}
             initialResult={onlyFile.result}
+            hideProtectionCard // 🛡️ Multi-Upload-Kontext (Enterprise): Karte hier sinnlos
           />
         </div>
       );
@@ -207,6 +208,7 @@ export default function MultiUploadResultNavigator({ uploadFiles, onReset }: Mul
             file={currentFile.file}
             onReset={onReset}
             initialResult={currentFile.result}
+            hideProtectionCard // 🛡️ Multi-Upload-Kontext: pro Datei gerendert — Karte hier sinnlos
           />
         ) : currentFile.status === 'analyzing' || currentFile.status === 'uploading' ? (
           <div className={styles.placeholder}>

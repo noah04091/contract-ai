@@ -27,6 +27,11 @@ interface ContractAnalysisProps {
   onReset: () => void;
   onNavigateToContract?: (contractId: string) => void;
   initialResult?: AnalysisResult;
+  // 🛡️ Stufe 1c (11.08.2026): nur von V2 genutzt — hier deklariert, weil der
+  // ContractAnalysisSwitch seine Props aus DIESEM Interface ableitet (ComponentProps).
+  protectedContractsCount?: number;
+  onUploadAnother?: () => void;
+  hideProtectionCard?: boolean;
 }
 
 // ✅ ENHANCED: Erweiterte Interfaces für 7-Punkte-Struktur

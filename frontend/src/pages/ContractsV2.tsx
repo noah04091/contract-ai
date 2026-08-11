@@ -3025,6 +3025,11 @@ export default function Contracts() {
         const analysisResultData = {
           success: true,
           originalContractId: updatedContract._id,
+          // 🛡️ Stufe 1c (Audit-Fund 10.08.): documentType/contractType fehlten im
+          // Quick-Analyse-Objekt → classifyDocType fiel auf CONTRACT zurück und die
+          // Schutz-Karte wäre auch bei re-analysierten Rechnungen erschienen.
+          documentType: updatedContract.documentType,
+          contractType: updatedContract.contractType,
           contractScore: updatedContract.analysis?.contractScore ?? updatedContract.contractScore,
           summary: updatedContract.analysis?.summary || updatedContract.summary,
           legalAssessment: updatedContract.analysis?.legalAssessment || updatedContract.legalAssessment,
@@ -3199,6 +3204,9 @@ export default function Contracts() {
           const analysisResultData = {
             success: true,
             originalContractId: fresh._id,
+            // 🛡️ Stufe 1c: documentType/contractType durchreichen (s. Builder oben)
+            documentType: fresh.documentType,
+            contractType: fresh.contractType,
             contractScore: fresh.analysis?.contractScore ?? fresh.contractScore,
             summary: fresh.analysis?.summary || fresh.summary,
             legalAssessment: fresh.analysis?.legalAssessment || fresh.legalAssessment,
@@ -4880,6 +4888,17 @@ export default function Contracts() {
                         contractId={quickAnalysisModal.contractId}
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         initialResult={quickAnalysisModal.analysisResult as any}
+                        // 🛡️ Schutz-Karte (Stufe 1c): echte Zahl + direkter Weg zur Upload-Fläche.
+                        // Quick-Analyse-Modal muss vorher geschlossen werden, sonst blockt
+                        // `!quickAnalysisModal.show` die Upload-Sektion (Audit-Falle 10.08.).
+                        protectedContractsCount={contracts.filter(c => c.analyzed !== false).length}
+                        onUploadAnother={() => {
+                          setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
+                          try { sessionStorage.removeItem('contractai_quickAnalysis'); } catch { /* egal */ }
+                          clearAllUploadFiles();
+                          setActiveSection('upload');
+                          navigate('/contracts', { replace: true });
+                        }}
                         onReset={closeQuickAnalysis}
                         onNavigateToContract={async (navContractId) => {
                           const analyzedContractId = quickAnalysisModal.contractId;
@@ -5298,6 +5317,10 @@ export default function Contracts() {
                           file={selectedFile}
                           onReset={handleReset}
                           initialResult={uploadFiles[0].result}
+                          // 🛡️ Schutz-Karte (Stufe 1c): frisch analysierter Vertrag ist evtl. noch
+                          // nicht in `contracts` nachgeladen → Karte selbst sichert min. 1 ab.
+                          protectedContractsCount={contracts.filter(c => c.analyzed !== false).length}
+                          onUploadAnother={() => { clearAllUploadFiles(); setActiveSection('upload'); }}
                           onNavigateToContract={async (navContractId) => {
                             const refreshedContracts = await silentRefreshContracts(navContractId);
                             const contract = refreshedContracts?.find((c: Contract) => c._id === navContractId);

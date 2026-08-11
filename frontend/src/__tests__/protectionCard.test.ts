@@ -1,0 +1,67 @@
+// 🛡️ Beweis-Tests für die Schutz-Status-Karte (Retention Stufe 1c, 11.08.2026).
+// Testet die pure Entscheidungslogik — die Leitplanken aus dem 3-Agent-Audit vom 10.08.
+
+import {
+  isProtectableDocType,
+  resolveProtectionVariant,
+  remainingAnalyses,
+} from "../components/contractAnalysisV2/protectionCardLogic";
+
+describe("isProtectableDocType — Karte nur bei Vertragsartigen (Audit-Leitplanke)", () => {
+  test("CONTRACT und AGB: Karte erlaubt", () => {
+    expect(isProtectableDocType("CONTRACT")).toBe(true);
+    expect(isProtectableDocType("contract")).toBe(true);
+    expect(isProtectableDocType("CONTRACT", "agb")).toBe(true); // AGB via contractType
+  });
+
+  test("Rechnung/Lohnzettel/Tabelle/Finanz: KEINE Karte — nichts zu überwachen", () => {
+    expect(isProtectableDocType("INVOICE")).toBe(false);
+    expect(isProtectableDocType("RECEIPT")).toBe(false);
+    expect(isProtectableDocType("TABLE_DOCUMENT")).toBe(false);
+    expect(isProtectableDocType("FINANCIAL_DOCUMENT")).toBe(false);
+  });
+
+  test("fehlender documentType fällt auf CONTRACT zurück (bewusst: Quick-Analyse-Altbestand)", () => {
+    // Die beiden Quick-Analyse-Builder reichen documentType seit Stufe 1c durch —
+    // für Altbestand ohne Feld gilt der classifyDocType-Fallback CONTRACT.
+    expect(isProtectableDocType(undefined)).toBe(true);
+    expect(isProtectableDocType(null)).toBe(true);
+  });
+});
+
+describe("resolveProtectionVariant — drei Plan-Varianten (Audit-Leitplanke)", () => {
+  test("zahlende Kunden: Portfolio-Variante ohne Upsell", () => {
+    expect(resolveProtectionVariant(true, 22)).toBe("paid");
+    expect(resolveProtectionVariant(true, 0)).toBe("paid"); // Limit irrelevant für paid-Variante
+  });
+
+  test("Free mit Rest: Upload-Variante", () => {
+    expect(resolveProtectionVariant(false, 2)).toBe("free");
+    expect(resolveProtectionVariant(false, Number.POSITIVE_INFINITY)).toBe("free");
+  });
+
+  test("Free am Limit: Upgrade-Variante statt totem Upload-Knopf", () => {
+    expect(resolveProtectionVariant(false, 0)).toBe("freeLimit");
+  });
+});
+
+describe("remainingAnalyses — Infinity-sicher, nie negativ", () => {
+  test("normale Fälle", () => {
+    expect(remainingAnalyses(1, 3)).toBe(2);
+    expect(remainingAnalyses(3, 3)).toBe(0);
+    expect(remainingAnalyses(0, 3)).toBe(3);
+    expect(remainingAnalyses(undefined, 3)).toBe(3);
+  });
+
+  test("Überzahlung (Altdaten count > limit) wird nicht negativ", () => {
+    expect(remainingAnalyses(5, 3)).toBe(0);
+  });
+
+  test("Enterprise: Infinity-Limit bleibt Infinity (Chip wird dann gar nicht gerendert)", () => {
+    expect(remainingAnalyses(100, Number.POSITIVE_INFINITY)).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  test("fehlendes Limit: 0 übrig (defensiv — kein Upload-Versprechen ohne Datenbasis)", () => {
+    expect(remainingAnalyses(1, undefined)).toBe(0);
+  });
+});

@@ -1,0 +1,85 @@
+/* 🛡️ V2ProtectionCard — V2-Sektions-Pattern (wie AnalysisImportantDates):
+   weiße Sektion im Container, getrennt per border-top, KEIN eigener Kartenrahmen. */
+
+.card {
+  position: relative;
+  border-top: 1px solid #f1f5f9;
+  padding: 22px 28px 24px;
+  background: #ffffff;
+}
+
+.dismiss {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  border: 0;
+  background: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 6px;
+}
+.dismiss:hover { color: #94a3b8; background: #f8fafc; }
+
+.head { display: flex; gap: 14px; align-items: flex-start; }
+
+.icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex: 0 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #22c55e, #16a34a); /* Grün = Zustand „geschützt" */
+  color: #fff;
+}
+
+.headText { min-width: 0; padding-right: 24px; }
+.title { margin: 0; font-size: 16px; font-weight: 600; color: #0f172a; }
+.subtitle { margin: 3px 0 0; font-size: 13px; color: #64748b; line-height: 1.55; }
+.subtitle strong { color: #334155; }
+
+.chips { display: flex; gap: 10px; margin: 14px 0 0 54px; flex-wrap: wrap; }
+.chip {
+  font-size: 12.5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  color: #475569;
+}
+.chipGreen { background: #f0fdf4; border-color: #bbf7d0; color: #16a34a; font-weight: 600; }
+.chipAmber { background: #fffbeb; border-color: #fde68a; color: #b45309; font-weight: 600; }
+
+.actions { margin: 16px 0 0 54px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #2563eb; /* Marken-Blau bleibt der Aktionsfarbe vorbehalten */
+  color: #fff;
+}
+.primary:hover { background: #1d4ed8; }
+.ghost {
+  border: 0;
+  background: none;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 10px 4px;
+}
+.ghost:hover { color: #475569; }
+
+@media (max-width: 640px) {
+  .card { padding: 18px 18px 20px; }
+  .chips, .actions { margin-left: 0; }
+}

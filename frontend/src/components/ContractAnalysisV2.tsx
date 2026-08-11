@@ -18,6 +18,7 @@ import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 import { useAuth } from "../context/AuthContext"; // 💬 User subscription check
 import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine & Erinnerungen im Analyse-Ergebnis
+import V2ProtectionCard from "./contractAnalysisV2/V2ProtectionCard"; // 🛡️ Schutz-Status-Karte (Retention Stufe 1c)
 import V2HeroSection, { isFailedAnalysis } from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
 import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css"; // für v2UnifiedContainer-Wrapper
 import V2StickyMiniHeader from "./contractAnalysisV2/V2StickyMiniHeader"; // 🎨 V2 — Mini-Header beim Scrollen
@@ -34,6 +35,10 @@ interface ContractAnalysisProps {
   onReset: () => void;
   onNavigateToContract?: (contractId: string) => void;
   initialResult?: AnalysisResult;
+  // 🛡️ Schutz-Status-Karte (Retention Stufe 1c, 11.08.2026)
+  protectedContractsCount?: number; // echte Zahl analysierter Verträge (vom Parent gezählt)
+  onUploadAnother?: () => void;     // öffnet die Upload-Fläche direkt
+  hideProtectionCard?: boolean;     // true im Mehrfach-Upload-Kontext (Navigator)
 }
 
 // ✅ ENHANCED: Erweiterte Interfaces für 7-Punkte-Struktur
@@ -145,7 +150,7 @@ function isPlaceholderDocName(n: string | undefined | null): boolean {
   return !t || /[${}]/.test(t) || /^(undefined|null)(\.|$)/i.test(t) || /^\.[a-z0-9]{1,5}$/i.test(t);
 }
 
-export default function ContractAnalysisV2({ file, contractName, contractId: propContractId, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
+export default function ContractAnalysisV2({ file, contractName, contractId: propContractId, onReset, onNavigateToContract, initialResult, protectedContractsCount, onUploadAnother, hideProtectionCard }: ContractAnalysisProps) {
   // Nutze file.name oder contractName als Fallback
   const displayName = file?.name || contractName || 'Vertrag';
   const displaySize = file ? (file.size / 1024 / 1024).toFixed(2) : null;
@@ -1626,6 +1631,19 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
           {/* 📅 Wichtige Termine & Erinnerungen — bei kaputter Analyse ausblenden,
               um nach dem Fehler-Banner keine verwirrenden alten Termine zu zeigen.
               V2: Wrapper neutralisiert das gelbe fristenBlock-Styling. */}
+          {/* 🛡️ Schutz-Status-Karte (Retention Stufe 1c) — gleicher Guard wie der
+              Termine-Block darunter: nur bei echter, nicht fehlgeschlagener Analyse.
+              Doc-Typ-Gate, Plan-Varianten und Dismiss stecken in der Komponente. */}
+          {(result?.originalContractId || initialResult?.originalContractId)
+            && !isFailedAnalysis((result || initialResult) as Parameters<typeof isFailedAnalysis>[0]) && (
+            <V2ProtectionCard
+              docType={((result || initialResult) as { documentType?: string | null })?.documentType}
+              protectedCount={protectedContractsCount}
+              onUploadAnother={onUploadAnother}
+              hidden={hideProtectionCard}
+            />
+          )}
+
           {(result?.originalContractId || initialResult?.originalContractId)
             && !isFailedAnalysis((result || initialResult) as Parameters<typeof isFailedAnalysis>[0]) && (
             <div className={datesWrapperStyles.v2DatesWrapper} ref={datesSectionRef}>

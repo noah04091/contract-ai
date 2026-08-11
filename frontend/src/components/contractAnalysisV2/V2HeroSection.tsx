@@ -585,6 +585,22 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                 {docTypeLabel}
                 {d.pageCount ? ` · ${d.pageCount} Seiten` : ""}
               </span>
+              {/* 🛡️ Wächter-Pille (Retention Stufe 1c, 11.08.2026): macht den Schutz-Status
+                  above-the-fold sichtbar — die Schutz-Karte selbst liegt auf Mobile unterm
+                  Fold (UX-Audit 10.08.). Klick scrollt zur Karte. Nur bei Vertragsartigen. */}
+              {(() => {
+                const cls = classifyDocType(d.documentType, d.contractType);
+                return (cls === "CONTRACT" || cls === "AGB") ? (
+                  <span
+                    className={styles.fcStatusPill}
+                    style={{ background: "#f0fdf4", color: "#16a34a", cursor: "pointer" }}
+                    title="Dieser Vertrag ist im Fristen-Wächter — wir erinnern dich rechtzeitig per E-Mail. Klick für Details."
+                    onClick={() => document.getElementById("v2-protection-card")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                  >
+                    🛡 Wird überwacht
+                  </span>
+                ) : null;
+              })()}
               {d.provider?.name && (
                 <span
                   className={styles.fcStatusPill}
