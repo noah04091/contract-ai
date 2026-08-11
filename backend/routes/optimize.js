@@ -3836,7 +3836,11 @@ router.post("/", verifyToken, uploadLimiter, analyzeLimiter, upload.single("file
     }
 
     // Plan-Limits prüfen
-    const plan = (user.subscriptionPlan || "free").toLowerCase();
+    // 11.08.2026: `req.user.plan` stammt aus checkSubscription (Mount in server.js) und
+    // enthaelt bereits den ORG-VERERBTEN Plan. Das rohe Feld bleibt bei Mitgliedern
+    // zahlender Organisationen auf "free" → Limit 0 → 403, obwohl die Org zahlt.
+    // Der Fallback haelt das Verhalten unveraendert, falls checkSubscription mal fehlt.
+    const plan = (req.user?.plan || user.subscriptionPlan || "free").toLowerCase();
     const optimizationCount = user.optimizationCount ?? 0;
 
     // Limits aus zentraler Konfiguration (subscriptionPlans.js)

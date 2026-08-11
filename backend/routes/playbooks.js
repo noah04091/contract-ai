@@ -92,7 +92,14 @@ router.post("/:type/generate", verifyToken, requirePremium, async (req, res) => 
         return res.status(401).json({ success: false, message: "Benutzer nicht gefunden." });
       }
 
-      const plan = (user.subscriptionPlan || user.subscription?.plan || user.plan || "free").toLowerCase();
+      // 11.08.2026: Dieser zweite Check hat den requirePremium-Guard davor still
+      // entwertet — der Nutzer kam durch die erste Tuer und lief hier in ein
+      // "Limit 0"-403 mit irrefuehrender Meldung. Diese Route haengt NICHT an
+      // checkSubscription (server.js), daher `req.user.plan` hier nicht verfuegbar
+      // → Org-Plan selbst aufloesen.
+      const { resolveEffectivePlan } = require("../utils/planAccess");
+      const plan = (await resolveEffectivePlan(dbCheck, user))
+        || (user.subscriptionPlan || user.subscription?.plan || user.plan || "free").toLowerCase();
       const { checkContractLimit } = require("../services/contractUsage");
       const { allowed, count, limit } = await checkContractLimit(req.user.userId, plan);
 

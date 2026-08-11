@@ -4,6 +4,10 @@
 
 const { ObjectId } = require("mongodb");
 const { isBusinessOrHigher } = require("../constants/subscriptionPlans");
+// 11.08.2026: Plan inkl. Org-Vererbung. Vorher las diese Middleware nur das rohe
+// Feld user.subscriptionPlan und sperrte damit Mitglieder ZAHLENDER Organisationen
+// aus (deren eigenes Feld bleibt "free"). Siehe utils/planAccess.js.
+const { resolveEffectivePlan } = require("../utils/planAccess");
 const database = require("../config/database");
 require('dotenv').config();
 
@@ -31,7 +35,9 @@ const requirePremium = async (req, res, next) => {
       });
     }
 
-    const userPlan = user.subscriptionPlan || 'free';
+    // Effektiver Plan = eigener bezahlter Plan ODER geerbter Org-Plan.
+    // Faellt der Org-Lookup aus, kommt der eigene Plan zurueck = bisheriges Verhalten.
+    const userPlan = await resolveEffectivePlan(db, user);
 
     // Prüft ob User Business oder höher hat
     if (!isBusinessOrHigher(userPlan)) {

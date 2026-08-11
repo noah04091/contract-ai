@@ -728,7 +728,10 @@ router.post("/", verifyToken, upload.fields([
     activeComparisons.set(userId, currentActive + 1);
 
     // Check usage limits
-    const plan = user.subscriptionPlan || "free";
+    // 11.08.2026: `req.user.plan` kommt aus checkSubscription (Mount in server.js) und
+    // enthaelt den ORG-VERERBTEN Plan. Ohne ihn blieb ein Mitglied einer zahlenden
+    // Organisation auf "free" haengen → Limit 0 → sofortiger 403.
+    const plan = req.user?.plan || user.subscriptionPlan || "free";
     const compareCount = user.compareCount || 0;
 
     // Limit aus zentraler Konfiguration (subscriptionPlans.js)

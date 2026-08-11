@@ -2409,7 +2409,9 @@ router.post("/", verifyToken, async (req, res) => {
 
     // Nutzer & Limit prüfen
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-    const plan = (user.subscriptionPlan || "free").toLowerCase();
+    // 11.08.2026: `req.user.plan` kommt aus checkSubscription (Mount in server.js) und
+    // enthaelt den ORG-VERERBTEN Plan — das rohe Feld bleibt bei Org-Mitgliedern "free".
+    const plan = (req.user?.plan || user.subscriptionPlan || "free").toLowerCase();
     const count = user.generateCount ?? 0; // Separater Counter für Generate
 
     // Limits aus zentraler Konfiguration (subscriptionPlans.js)

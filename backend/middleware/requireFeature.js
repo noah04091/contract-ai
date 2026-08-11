@@ -4,6 +4,9 @@
 
 const { ObjectId } = require("mongodb");
 const { hasFeatureAccess, FEATURE_ACCESS } = require("../constants/subscriptionPlans");
+// 11.08.2026: Plan inkl. Org-Vererbung — siehe utils/planAccess.js. Vorher las diese
+// Middleware nur das rohe Feld und sperrte Mitglieder zahlender Organisationen aus.
+const { resolveEffectivePlan } = require("../utils/planAccess");
 const database = require("../config/database");
 require('dotenv').config();
 
@@ -45,7 +48,9 @@ function requireFeature(featureName) {
         });
       }
 
-      const userPlan = (user.subscriptionPlan || 'free').toLowerCase();
+      // Effektiver Plan = eigener bezahlter Plan ODER geerbter Org-Plan.
+      // Faellt der Org-Lookup aus, kommt der eigene Plan zurueck = bisheriges Verhalten.
+      const userPlan = await resolveEffectivePlan(db, user);
       const allowedPlans = FEATURE_ACCESS[featureName];
 
       // Feature-Zugriff prüfen
