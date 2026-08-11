@@ -855,10 +855,15 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
         style={{
           maxWidth: isMobile ? undefined : '600px',
           width: isMobile ? undefined : '600px',
-          maxHeight: isMobile ? '90dvh' : 'auto',
-          overflowY: isMobile ? undefined : ('visible' as const),
-          overflowX: isMobile ? 'hidden' : undefined,
-          overscrollBehavior: isMobile ? 'contain' : undefined,
+          // Desktop-Deckel: Overlay hat inline 40px Padding pro Seite → Modal darf
+          // maximal Viewport − 80px hoch werden, sonst schneidet das flex-zentrierte
+          // Overlay den Modal-Kopf unerreichbar ab. Vorher stand hier 'auto'
+          // (ungültig für max-height, wurde vom Browser verworfen) bzw. 'visible' —
+          // der Deckel wirkte nur zufällig über die CSS-Backstop-Regel.
+          maxHeight: isMobile ? '90dvh' : 'calc(100dvh - 80px)',
+          overflowY: 'auto' as const,
+          overflowX: 'hidden' as const,
+          overscrollBehavior: 'contain' as const,
           touchAction: isMobile ? 'auto' : undefined
         }}
       >

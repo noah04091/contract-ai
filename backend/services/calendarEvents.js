@@ -16,12 +16,17 @@ function createLocalDate(dateString) {
 // ("Kündigungseingang bis" — als Feld-Beschriftung zum Datum gedacht). In den
 // Satz-Templates ("⚠️ In 2 Wochen: Kündigungseingang bis") liest sich das wie
 // abgeschnitten. Deterministisch vervollständigen: Frist-Datum anhängen
-// ("Kündigungseingang bis 23.08.2026"). Ohne gültiges Datum: Präposition kappen.
+// ("Kündigungseingang bis 23.08.2026").
+// Ohne gültiges Datum bleibt das Label UNVERÄNDERT (kein Kappen!): die
+// "Ist schon im Kalender?"-Heuristik (ContractDetailsV2/AnalysisImportantDates)
+// matcht per title.includes(label) — ein gekapptes Label würde den Abgleich
+// brechen und Duplikat-Vorschläge erzeugen. Idempotent: ein Label, das bereits
+// auf ein Datum endet, matcht die Regex nicht mehr (kein Doppel-Anhängen).
 const DANGLING_PREPOSITION = /\s(bis|zum|am|ab|vor|für|von|spätestens)\s*$/i;
 function completeDanglingLabel(label, date) {
   if (!label || typeof label !== 'string' || !DANGLING_PREPOSITION.test(label)) return label;
-  const d = date instanceof Date ? date : new Date(date);
-  if (isNaN(d.getTime())) return label.replace(DANGLING_PREPOSITION, '').trim() || label;
+  const d = date instanceof Date ? date : (date ? new Date(date) : null);
+  if (!d || isNaN(d.getTime())) return label;
   return `${label.trim()} ${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
 }
 
@@ -1241,7 +1246,12 @@ async function generateEventsForContract(db, contract) {
               userId: contract.userId,
               contractId: contract._id,
               type: mapping.eventType,
-              title: `${mapping.emoji} ${completeDanglingLabel(frist.title, localDate)}`,
+              // BEWUSST OHNE completeDanglingLabel: Serien-Instanzen bekämen pro
+              // Vorkommen ein anderes Datum im Titel → der Gruppierungs-Schlüssel
+              // (cleanDeadlineName, Frontend) fächert die Serie in bis zu 12
+              // Einzelkarten auf und der "🔁 N weitere Termine"-Aufklapper stirbt.
+              // Serien-Titel bleiben datumsfrei; das Instanz-Datum steht im date-Feld.
+              title: `${mapping.emoji} ${frist.title}`,
               description: frist.description || `Wiederkehrende ${frist.type}-Erinnerung für "${contract.name}".`,
               date: localDate,
               severity: mapping.severity,

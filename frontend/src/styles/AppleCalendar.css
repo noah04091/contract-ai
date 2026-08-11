@@ -1001,13 +1001,18 @@
 .premium-modal {
   background: white;
   border-radius: 20px;
-  /* Desktop-Schutz: Modal darf nie höher als der Viewport werden (Overlay-Padding
-     20px oben+unten). Ohne Deckel schneidet das flex-zentrierte Overlay den
-     Modal-KOPF unerreichbar ab, sobald der Inhalt (z.B. "Deine Erinnerungen"-
-     Karte mit 5 Stufen) den Bildschirm sprengt. Mobile (≤768px) hat eigenes
-     Bottom-Sheet-Verhalten und überschreibt diese Regeln. */
-  max-height: calc(100vh - 40px);
-  max-height: calc(100dvh - 40px);
+  /* Desktop-Backstop: Modal darf nie höher als der Viewport werden. Alle
+     Modal-Overlays setzen INLINE 40px Padding pro Seite (Calendar.tsx und
+     CalendarView.tsx), daher Viewport − 80px. Ohne Deckel schneidet das
+     flex-zentrierte Overlay den Modal-KOPF unerreichbar ab, sobald der Inhalt
+     (z.B. "Deine Erinnerungen"-Karte mit 5 Stufen) den Bildschirm sprengt.
+     Primär wirkt der Deckel inline in Calendar.tsx (maxHeight/overflowY);
+     diese Regel ist der Fallback (u.a. für Browser ohne dvh — im React-Style-
+     Objekt ist der vh/dvh-Doppeldeklarations-Trick unmöglich). Mobile (≤768px)
+     überschreibt max-height per eigener Bottom-Sheet-Regel; overflow kommt
+     dort aus den Inline-Styles. */
+  max-height: calc(100vh - 80px);
+  max-height: calc(100dvh - 80px);
   overflow-x: hidden;
   overflow-y: auto;
   box-shadow:
