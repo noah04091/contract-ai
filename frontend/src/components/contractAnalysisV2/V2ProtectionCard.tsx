@@ -1,21 +1,23 @@
-// 🛡️ V2ProtectionCard — Schutz-Status-Karte nach dem Analyse-Ergebnis (Retention Stufe 1c, 11.08.2026)
+// 🛡️ V2ProtectionCard — Schutz-Status-Kopf über den Terminen (Retention Stufe 1c, Redesign 11.08.2026)
 //
 // Zweck: Die erste Sitzung soll mit einem Portfolio enden, nicht mit einer Analyse.
 // Gemessen (10.08.): 91 % Ein-Tages-Nutzer, nur 21,9 % laden je ein zweites Dokument —
 // und im Produkt existierte kein einziger Anstoß, weitere Verträge hochzuladen.
-// Diese Karte sitzt am Vertrauens-Moment (direkt nach dem Ergebnis) und arbeitet mit
-// dem Schutz-Frame („Fristen-Wächter") statt mit einer Arbeits-Aufforderung („lade hoch").
 //
-// Leitplanken (aus dem 3-Agent-Audit vom 10.08.):
-// - NUR bei Vertragsartigen Dokumenten (CONTRACT/AGB) — bei Rechnung/Lohnzettel gibt es
-//   nichts zu überwachen (classifyDocType-Gate).
-// - Drei Plan-Varianten: Free-mit-Rest (Upload-CTA), Free-am-Limit (ehrlicher Upgrade-
-//   Hinweis statt totem Upload-Knopf), Bezahlt (reine Portfolio-Botschaft, null Upsell).
-// - Im Enterprise-Mehrfach-Upload unterdrückt (hideProtectionCard) — „lade mehr hoch"
-//   wäre absurd, wenn gerade 5 Verträge hochgeladen wurden.
-// - Wegklickbar (localStorage, wie V2ConversionBanner) — Fluchtweg senkt Reaktanz.
-// - Nordstern-Metrik: „Nutzer mit ≥2 Verträgen nach Sitzung 1" (Basis 21,9 %) —
-//   bewegt die Karte die Zahl nicht, fliegt sie wieder raus.
+// Redesign (Noahs Mockup-Abnahme 11.08., „Variante 2 — Integriert"): Die Karte ist kein
+// frei schwebender Streifen mehr, sondern der GRÜNE KOPF der Termine-Karte — beide leben
+// in einem gemeinsamen Container (`sectionGroup`, gerendert vom Parent), weil sie inhaltlich
+// zusammengehören: „wird überwacht → hier die Termine als Beweis".
+//
+// Leitplanken (3-Agent-Audit 10.08. + Live-Tests):
+// - NUR bei Vertragsartigen (CONTRACT/AGB) — bei Rechnung/Lohnzettel gibt es nichts zu überwachen.
+// - Drei Plan-Varianten: Free-mit-Rest (Upload-CTA) / Free-am-Limit (Pläne statt totem Upload) /
+//   Bezahlt (kompakte Einzeiler-Statuszeile, null Werbeton).
+// - Im Enterprise-Mehrfach-Upload unterdrückt (hideProtectionCard).
+// - Ehrliches Ausblenden (Feedback-Runde 11.08.): „Später" = nur diese Sitzung (sessionStorage),
+//   ✕ = dauerhaft (localStorage). Vorher log „Später" — es versteckte für immer.
+// - Zahlen frisch aus result.usage (Live-Test-Fund: AuthContext hinkt nach einer Analyse hinterher).
+// - Nordstern-Metrik: „Nutzer mit ≥2 Verträgen nach Sitzung 1" (Basis 21,9 %).
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +26,16 @@ import { useAuth } from "../../context/AuthContext";
 import { isProtectableDocType, resolveProtectionVariant, remainingAnalyses, effectiveAnalysisNumbers } from "./protectionCardLogic";
 import styles from "./V2ProtectionCard.module.css";
 
-const DISMISS_KEY = "contractai_protectionCardDismissed";
+const DISMISS_FOREVER_KEY = "contractai_protectionCardDismissed";
+const DISMISS_SESSION_KEY = "contractai_protectionCardLater";
+
+function readDismissed(): boolean {
+  try {
+    if (localStorage.getItem(DISMISS_FOREVER_KEY) === "1") return true;
+    if (sessionStorage.getItem(DISMISS_SESSION_KEY) === "1") return true;
+  } catch { /* privater Modus o.ä. */ }
+  return false;
+}
 
 interface V2ProtectionCardProps {
   docType?: string | null;
@@ -34,94 +45,118 @@ interface V2ProtectionCardProps {
   onUploadAnother?: () => void;
   /** true im Mehrfach-Upload-Kontext (MultiUploadResultNavigator) — Karte ergibt dort keinen Sinn. */
   hidden?: boolean;
-  /** Frische Zähler aus der Analyse-Antwort (result.usage) — AuthContext ist nach einer Analyse veraltet (Live-Test-Fund 11.08.). */
+  /** Frische Zähler aus der Analyse-Antwort (result.usage) — AuthContext ist nach einer Analyse veraltet. */
   usage?: { count?: number; limit?: number } | null;
 }
 
 export default function V2ProtectionCard({ docType, protectedCount, onUploadAnother, hidden, usage }: V2ProtectionCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [dismissed, setDismissed] = useState<boolean>(() => {
-    try { return localStorage.getItem(DISMISS_KEY) === "1"; } catch { return false; }
-  });
+  const [dismissed, setDismissed] = useState<boolean>(readDismissed);
 
-  // 🔒 TÜV-Fund (11.08.): Ohne geladenen User wäre isPaid=false und left=0 →
-  // die Karte würde kurz die "Analysen aufgebraucht"-Variante flackern. Erst
-  // rendern, wenn die Auth-Daten da sind.
+  // 🔒 TÜV-Fund (11.08.): Ohne geladenen User würde kurz die "aufgebraucht"-Variante flackern.
   if (!user || hidden || dismissed || !isProtectableDocType(docType)) return null;
 
   const isPaid = user?.subscriptionPlan === "business" || user?.subscriptionPlan === "enterprise";
-  // 🐛 Live-Test-Fund 11.08.: usage (frisch, aus der Analyse-Antwort) hat Vorrang vor
-  // dem AuthContext (vor der Analyse geladen → zählt einen zu wenig).
   const nums = effectiveAnalysisNumbers(usage, user?.analysisCount, user?.analysisLimit);
   const left = remainingAnalyses(nums.count, nums.limit);
   const variant = resolveProtectionVariant(isPaid, left);
   const count = Math.max(1, protectedCount ?? 1); // der gerade analysierte Vertrag zählt immer
 
-  const handleDismiss = () => {
-    try { localStorage.setItem(DISMISS_KEY, "1"); } catch { /* privater Modus o.ä. */ }
+  const dismissForever = () => {
+    try { localStorage.setItem(DISMISS_FOREVER_KEY, "1"); } catch { /* egal */ }
+    setDismissed(true);
+  };
+  const dismissForSession = () => {
+    try { sessionStorage.setItem(DISMISS_SESSION_KEY, "1"); } catch { /* egal */ }
     setDismissed(true);
   };
 
-  return (
-    <div className={styles.card} id="v2-protection-card" data-variant={variant}>
-      <button type="button" className={styles.dismiss} onClick={handleDismiss} aria-label="Hinweis ausblenden" title="Ausblenden">
-        <X size={16} />
-      </button>
+  const protectedChip = (
+    <span className={`${styles.chip} ${styles.chipGreen}`}>
+      🛡 {count === 1 ? "1 Vertrag geschützt" : `${count} Verträge geschützt`}
+    </span>
+  );
 
-      <div className={styles.head}>
-        <div className={styles.icon}><ShieldCheck size={21} /></div>
-        <div className={styles.headText}>
-          <h4 className={styles.title}>Dieser Vertrag ist jetzt im Fristen-Wächter</h4>
-          {variant === "free" && (
-            <p className={styles.subtitle}>
-              Kündigungsfristen, Verlängerungen, Termine — wir erinnern dich{" "}
-              <strong>rechtzeitig per E-Mail</strong>, kostenlos.{" "}
-              <strong>Verträge, die nicht hier liegen, laufen unbewacht.</strong>
-            </p>
-          )}
-          {variant === "freeLimit" && (
-            <p className={styles.subtitle}>
-              Deine Fristen bleiben geschützt. Deine <strong>3 kostenlosen Analysen sind aufgebraucht</strong>{" "}
-              — weitere Verträge können aktuell nicht geprüft werden. Mit Business analysierst du bis zu
-              25 Verträge im Monat, und <strong>Legal Pulse</strong> überwacht sie zusätzlich auf Gesetzesänderungen.
-            </p>
-          )}
-          {variant === "paid" && (
-            <p className={styles.subtitle}>
-              <strong>{count === 1 ? "1 Vertrag ist" : `${count} deiner Verträge sind`}</strong> im Fristen-Wächter.
-              Je vollständiger dein Vertragsordner, desto lückenloser der Schutz.
-            </p>
+  // 💼 Bezahlte Pläne: kompakte Status-Zeile — Titel + Chip inline, Knopf rechts.
+  // Kein Werbeton, minimale Höhe (nach dem 27. Vertrag darf es nicht nerven).
+  if (variant === "paid") {
+    return (
+      <div className={`${styles.header} ${styles.headerCompact}`} id="v2-protection-card" data-variant={variant}>
+        <button type="button" className={styles.dismiss} onClick={dismissForever} aria-label="Dauerhaft ausblenden" title="Dauerhaft ausblenden">
+          <X size={15} />
+        </button>
+        <div className={styles.compactRow}>
+          <div className={styles.icon}><ShieldCheck size={20} /></div>
+          <div className={styles.compactText}>
+            <div className={styles.titleRow}>
+              <h4 className={styles.title}>Dieser Vertrag ist jetzt im Fristen-Wächter</h4>
+              {protectedChip}
+            </div>
+            <p className={styles.subtitle}>Je vollständiger dein Vertragsordner, desto lückenloser der Schutz.</p>
+          </div>
+          {onUploadAnother && (
+            <button type="button" className={styles.primary} onClick={onUploadAnother}>
+              <Plus size={15} />
+              Weitere Verträge schützen
+            </button>
           )}
         </div>
       </div>
+    );
+  }
 
-      <div className={styles.chips}>
-        <span className={`${styles.chip} ${styles.chipGreen}`}>
-          🛡 {count === 1 ? "1 Vertrag geschützt" : `${count} Verträge geschützt`}
-        </span>
-        {variant === "free" && Number.isFinite(left) && (
-          <span className={styles.chip}>{left} von {nums.limit ?? 3} kostenlosen Analysen übrig</span>
-        )}
-        {variant === "freeLimit" && (
-          <span className={`${styles.chip} ${styles.chipAmber}`}>0 von {nums.limit ?? 3} Analysen übrig</span>
-        )}
-      </div>
+  // 🆓 Free (mit Rest / am Limit): voller Kopf mit Verlust-Satz bzw. Pulse-Treppe.
+  return (
+    <div className={styles.header} id="v2-protection-card" data-variant={variant}>
+      <button type="button" className={styles.dismiss} onClick={dismissForever} aria-label="Dauerhaft ausblenden" title="Dauerhaft ausblenden">
+        <X size={15} />
+      </button>
 
-      <div className={styles.actions}>
-        {variant === "freeLimit" ? (
-          <button type="button" className={styles.primary} onClick={() => navigate("/pricing")}>
-            Pläne ansehen
-          </button>
-        ) : (
-          onUploadAnother && (
-            <button type="button" className={styles.primary} onClick={onUploadAnother}>
-              <Plus size={16} />
-              {variant === "paid" ? "Weitere Verträge schützen" : "Weiteren Vertrag schützen"}
+      <div className={styles.head}>
+        <div className={styles.icon}><ShieldCheck size={20} /></div>
+        <div className={styles.headText}>
+          <h4 className={styles.title}>Dieser Vertrag ist jetzt im Fristen-Wächter</h4>
+          {variant === "free" ? (
+            <p className={styles.subtitle}>
+              Kündigungsfristen, Verlängerungen, Termine — wir erinnern dich{" "}
+              <strong>rechtzeitig per E-Mail, kostenlos</strong>.{" "}
+              <strong>Verträge, die nicht hier liegen, laufen unbewacht.</strong>
+            </p>
+          ) : (
+            <p className={styles.subtitle}>
+              Deine Fristen bleiben geschützt. Deine <strong>3 kostenlosen Analysen sind aufgebraucht</strong>{" "}
+              — mit Business analysierst du bis zu 25 Verträge im Monat, und{" "}
+              <strong>Legal Pulse</strong> überwacht sie zusätzlich auf Gesetzesänderungen.
+            </p>
+          )}
+
+          <div className={styles.bottomRow}>
+            {protectedChip}
+            {variant === "free" && Number.isFinite(left) && (
+              <span className={styles.chip}>{left} von {nums.limit ?? 3} kostenlosen Analysen übrig</span>
+            )}
+            {variant === "freeLimit" && (
+              <span className={`${styles.chip} ${styles.chipAmber}`}>0 von {nums.limit ?? 3} Analysen übrig</span>
+            )}
+            <span className={styles.spacer} />
+            {variant === "freeLimit" ? (
+              <button type="button" className={styles.primary} onClick={() => navigate("/pricing")}>
+                Pläne ansehen
+              </button>
+            ) : (
+              onUploadAnother && (
+                <button type="button" className={styles.primary} onClick={onUploadAnother}>
+                  <Plus size={15} />
+                  Weiteren Vertrag schützen
+                </button>
+              )
+            )}
+            <button type="button" className={styles.ghost} onClick={dismissForSession} title="Für diese Sitzung ausblenden">
+              Später
             </button>
-          )
-        )}
-        <button type="button" className={styles.ghost} onClick={handleDismiss}>Später</button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -569,16 +569,21 @@ export default function AnalysisImportantDates({
             </p>
           )}
         </div>
-        <button
-          type="button"
-          className={`${styles.addButton} ${!canCreate ? styles.addButtonUpgrade : ""}`}
-          onClick={handleAddClick}
-          disabled={loading}
-          title={canCreate ? "Termin hinzufügen" : "Business/Enterprise-Feature"}
-        >
-          {canCreate ? <Plus size={16} /> : <Crown size={16} />}
-          <span>{canCreate ? "Termin hinzufügen" : "Upgrade"}</span>
-        </button>
+        {/* 🧹 Redesign 11.08. (Noahs Feedback): Der orange „Upgrade"-Knopf im Kopf ist
+            raus — der Kopf bleibt ruhig. Für Free übernimmt die Upsell-Zeile unten
+            (upsellRow) den einen, klaren Upgrade-Ort. Zahlende behalten ihren Knopf. */}
+        {canCreate && (
+          <button
+            type="button"
+            className={styles.addButton}
+            onClick={handleAddClick}
+            disabled={loading}
+            title="Termin hinzufügen"
+          >
+            <Plus size={16} />
+            <span>Termin hinzufügen</span>
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -954,10 +959,20 @@ export default function AnalysisImportantDates({
         </>
       )}
 
-      {!canCreate && !loading && sortedEvents.length > 0 && (
-        <div className={styles.upgradeHint}>
-          <Crown size={14} />
-          <span>Manuelle Termine hinzufügen ist ein Business/Enterprise-Feature</span>
+      {/* 👑 Redesign 11.08.: Aus der blassen Hinweiszeile wird DIE eine Upsell-Zeile
+          des Termine-Blocks (ersetzt zugleich den entfernten Kopf-Knopf). Wichtig:
+          KEINE „Erinnerungen"-Behauptung — E-Mail-Erinnerungen sind seit Stufe 1a
+          kostenlos; ab Business gibt es Kalender-Übernahme, eigene Termine und Sync. */}
+      {!canCreate && !loading && (sortedEvents.length > 0 || pendingImportantDates.length > 0) && (
+        <div className={styles.upsellRow}>
+          <div className={styles.upsellIcon}><Crown size={15} /></div>
+          <span className={styles.upsellText}>
+            <strong>Termine in deinen Kalender übernehmen</strong>, eigene Termine anlegen und
+            Kalender-Sync (Google, Apple, Outlook) — ab Business.
+          </span>
+          <button type="button" className={styles.upsellButton} onClick={handleAddClick}>
+            Jetzt upgraden
+          </button>
         </div>
       )}
 

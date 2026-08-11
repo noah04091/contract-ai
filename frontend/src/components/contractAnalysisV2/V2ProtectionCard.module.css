@@ -1,17 +1,36 @@
-/* 🛡️ V2ProtectionCard — V2-Sektions-Pattern (wie AnalysisImportantDates):
-   weiße Sektion im Container, getrennt per border-top, KEIN eigener Kartenrahmen. */
+/* 🛡️ V2ProtectionCard — Redesign 11.08.2026 („Variante 2 — Integriert").
+   Die Karte ist der GRÜNE KOPF der Termine-Karte. Beide leben im gemeinsamen
+   Container `.sectionGroup` (gerendert vom Parent ContractAnalysisV2) — vorher
+   schwebte die Karte rahmenlos zwischen zwei abgerundeten Containern. */
 
-.card {
-  position: relative;
-  border-top: 1px solid #f1f5f9;
-  padding: 22px 28px 24px;
+/* Gemeinsamer Container für Schutz-Kopf + Termine (Optik wie die Nachbar-Karten) */
+.sectionGroup {
   background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  overflow: hidden;
+  margin-top: 18px;
 }
+/* Wenn die Karte ausgeblendet ist, steht der Termine-Block an erster Stelle —
+   seine eigene border-top würde mit dem Container-Rand doppeln. */
+.sectionGroup > *:first-child :global([class*="container"]) {
+  border-top: 0 !important;
+}
+
+/* Grüner Kopf — sanfter Verlauf, läuft in Weiß aus; die Trennlinie zum
+   Termine-Block liefert dessen eigene border-top (keine Doppel-Linie). */
+.header {
+  position: relative;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
+  padding: 18px 26px 16px;
+}
+.headerCompact { padding: 15px 26px 13px; }
 
 .dismiss {
   position: absolute;
-  top: 14px;
-  right: 16px;
+  top: 12px;
+  right: 14px;
   border: 0;
   background: none;
   color: #cbd5e1;
@@ -20,15 +39,15 @@
   line-height: 1;
   border-radius: 6px;
 }
-.dismiss:hover { color: #94a3b8; background: #f8fafc; }
+.dismiss:hover { color: #94a3b8; background: rgba(248, 250, 252, 0.9); }
 
 .head { display: flex; gap: 14px; align-items: flex-start; }
 
 .icon {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 10px;
-  flex: 0 0 40px;
+  flex: 0 0 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,38 +55,49 @@
   color: #fff;
 }
 
-.headText { min-width: 0; padding-right: 24px; }
-.title { margin: 0; font-size: 16px; font-weight: 600; color: #0f172a; }
+.headText { min-width: 0; flex: 1; padding-right: 22px; }
+.title { margin: 0; font-size: 15.5px; font-weight: 700; color: #0f172a; }
 .subtitle { margin: 3px 0 0; font-size: 13px; color: #64748b; line-height: 1.55; }
 .subtitle strong { color: #334155; }
 
-.chips { display: flex; gap: 10px; margin: 14px 0 0 54px; flex-wrap: wrap; }
+/* Untere Zeile: Chips links, Aktionen rechts — eine Zeile statt drei Etagen */
+.bottomRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.spacer { flex: 1 1 0; min-width: 8px; }
+
 .chip {
   font-size: 12.5px;
-  padding: 5px 11px;
+  padding: 4px 11px;
   border-radius: 999px;
   background: #f8fafc;
   border: 1px solid #eef2f6;
   color: #475569;
+  white-space: nowrap;
 }
 .chipGreen { background: #f0fdf4; border-color: #bbf7d0; color: #16a34a; font-weight: 600; }
 .chipAmber { background: #fffbeb; border-color: #fde68a; color: #b45309; font-weight: 600; }
 
-.actions { margin: 16px 0 0 54px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .primary {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   border: 0;
   border-radius: 9px;
-  padding: 10px 18px;
-  font-size: 14px;
+  padding: 9px 16px;
+  font-size: 13.5px;
   font-weight: 600;
   cursor: pointer;
   background: #2563eb; /* Marken-Blau bleibt der Aktionsfarbe vorbehalten */
   color: #fff;
+  white-space: nowrap;
 }
 .primary:hover { background: #1d4ed8; }
+
 .ghost {
   border: 0;
   background: none;
@@ -75,11 +105,19 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  padding: 10px 4px;
+  padding: 9px 2px;
 }
 .ghost:hover { color: #475569; }
 
+/* 💼 Kompakte Bezahl-Variante: Icon | Titel+Chip / Subzeile | Knopf rechts */
+.compactRow { display: flex; align-items: center; gap: 14px; }
+.compactText { min-width: 0; flex: 1; padding-right: 22px; }
+.titleRow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.titleRow .title { font-size: 15px; }
+
 @media (max-width: 640px) {
-  .card { padding: 18px 18px 20px; }
-  .chips, .actions { margin-left: 0; }
+  .header { padding: 16px 18px 14px; }
+  .headerCompact { padding: 14px 18px 12px; }
+  .compactRow { flex-wrap: wrap; }
+  .compactRow .primary { margin-left: 52px; }
 }

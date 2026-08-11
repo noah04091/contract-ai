@@ -18,7 +18,8 @@ import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
 import { useAuth } from "../context/AuthContext"; // 💬 User subscription check
 import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine & Erinnerungen im Analyse-Ergebnis
-import V2ProtectionCard from "./contractAnalysisV2/V2ProtectionCard"; // 🛡️ Schutz-Status-Karte (Retention Stufe 1c)
+import V2ProtectionCard from "./contractAnalysisV2/V2ProtectionCard"; // 🛡️ Schutz-Status-Kopf (Retention Stufe 1c)
+import protectionStyles from "./contractAnalysisV2/V2ProtectionCard.module.css"; // gemeinsamer Container Schutz+Termine
 import V2HeroSection, { isFailedAnalysis } from "./contractAnalysisV2/V2HeroSection"; // 🎨 V2 — neuer Top-Bereich nach v6-Mockup
 import v2HeroStyles from "./contractAnalysisV2/V2HeroSection.module.css"; // für v2UnifiedContainer-Wrapper
 import V2StickyMiniHeader from "./contractAnalysisV2/V2StickyMiniHeader"; // 🎨 V2 — Mini-Header beim Scrollen
@@ -452,6 +453,17 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
 
   // 💬 Handler: Mit KI-Rechtsbot besprechen
   const handleOpenInChat = async () => {
+    // 💬 Ehrlicher Hinweis statt Fehlermeldung (Noahs Test-Fund 11.08.): Free-Nutzer
+    // liefen in die Business-Sperre (403) und bekamen "Chat konnte nicht geöffnet
+    // werden. Bitte versuche es erneut." — klang nach kaputtem Produkt.
+    if (!isBusinessOrHigher) {
+      const goPricing = window.confirm(
+        'Der KI-Chat ist ab Business verfügbar — damit besprichst du deinen Vertrag direkt mit dem Rechts-Assistenten.\n\nJetzt Pläne ansehen?'
+      );
+      if (goPricing) window.location.href = '/pricing';
+      return;
+    }
+
     const analysisData = result || initialResult;
     const contractId = analysisData?.originalContractId || propContractId;
 
@@ -1634,26 +1646,29 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
           {/* 🛡️ Schutz-Status-Karte (Retention Stufe 1c) — gleicher Guard wie der
               Termine-Block darunter: nur bei echter, nicht fehlgeschlagener Analyse.
               Doc-Typ-Gate, Plan-Varianten und Dismiss stecken in der Komponente. */}
+          {/* Redesign 11.08. („Variante 2 — Integriert", Noahs Mockup-Abnahme): Schutz-Kopf
+              und Termine leben in EINEM Container — sie gehören inhaltlich zusammen
+              („wird überwacht → hier die Termine als Beweis"). Vorher schwebte die Karte
+              rahmenlos zwischen zwei runden Containern. Ist die Karte ausgeblendet
+              (Doc-Gate/Dismiss), trägt der Container die Termine allein. */}
           {(result?.originalContractId || initialResult?.originalContractId)
             && !isFailedAnalysis((result || initialResult) as Parameters<typeof isFailedAnalysis>[0]) && (
-            <V2ProtectionCard
-              docType={((result || initialResult) as { documentType?: string | null })?.documentType}
-              protectedCount={protectedContractsCount}
-              onUploadAnother={onUploadAnother}
-              hidden={hideProtectionCard}
-              usage={result?.usage || initialResult?.usage}
-            />
-          )}
-
-          {(result?.originalContractId || initialResult?.originalContractId)
-            && !isFailedAnalysis((result || initialResult) as Parameters<typeof isFailedAnalysis>[0]) && (
-            <div className={datesWrapperStyles.v2DatesWrapper} ref={datesSectionRef}>
-              <AnalysisImportantDates
-                contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
-                contractName={displayName}
-                documentType={((result || initialResult) as { documentType?: string | null })?.documentType}
-                contractType={((result || initialResult) as { contractType?: string | null })?.contractType}
+            <div className={protectionStyles.sectionGroup}>
+              <V2ProtectionCard
+                docType={((result || initialResult) as { documentType?: string | null })?.documentType}
+                protectedCount={protectedContractsCount}
+                onUploadAnother={onUploadAnother}
+                hidden={hideProtectionCard}
+                usage={result?.usage || initialResult?.usage}
               />
+              <div className={datesWrapperStyles.v2DatesWrapper} ref={datesSectionRef}>
+                <AnalysisImportantDates
+                  contractId={(result?.originalContractId || initialResult?.originalContractId) as string}
+                  contractName={displayName}
+                  documentType={((result || initialResult) as { documentType?: string | null })?.documentType}
+                  contractType={((result || initialResult) as { contractType?: string | null })?.contractType}
+                />
+              </div>
             </div>
           )}
 
