@@ -309,12 +309,12 @@ const useIsWideScreen = (minWidth: number): boolean => {
 // und der "base" überschrieben wurde (ein Termin verschwand). Jetzt trennt der Frist-Name sauber.
 // Eigene (isManual) bleiben separat oben. Defensive: nichts wird verworfen — alles landet sichtbar.
 type CalEventLite = { id: string; title: string; date: string; type: string; severity: 'info' | 'warning' | 'critical'; isManual?: boolean };
-const groupCalendarEvents = (events: CalEventLite[]) => {
+const groupCalendarEvents = (events: CalEventLite[], contractName?: string) => {
   const customs: CalEventLite[] = [];
   const famMap = new Map<string, { family: string; base: CalEventLite | null; reminders: CalEventLite[] }>();
   for (const ev of events) {
     if (ev.isManual) { customs.push(ev); continue; }
-    const fam = cleanDeadlineName(ev.title) || ev.type || `__${ev.id}`;
+    const fam = cleanDeadlineName(ev.title, contractName) || ev.type || `__${ev.id}`;
     if (!famMap.has(fam)) famMap.set(fam, { family: fam, base: null, reminders: [] });
     const g = famMap.get(fam)!;
     if (isReminderEntry(ev)) g.reminders.push(ev);
@@ -327,7 +327,7 @@ const groupCalendarEvents = (events: CalEventLite[]) => {
     const head = g.base || (g.reminders.length ? g.reminders[g.reminders.length - 1] : null);
     return {
       family: g.family,
-      label: stripFileName(cleanDeadlineName(g.base ? g.base.title : (g.reminders[0]?.title || 'Termin'))) || 'Termin',
+      label: stripFileName(cleanDeadlineName(g.base ? g.base.title : (g.reminders[0]?.title || 'Termin'), contractName)) || 'Termin',
       severity: (head?.severity || 'info') as 'info' | 'warning' | 'critical',
       date: head?.date || (g.reminders[0]?.date ?? ''),
       count: rows.length,
@@ -1735,7 +1735,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             </span>
           </p>
         ) : (() => {
-          const { customs, groups } = groupCalendarEvents(calendarEvents);
+          const { customs, groups } = groupCalendarEvents(calendarEvents, contract.name);
           const groupColor = (sev: 'info' | 'warning' | 'critical') =>
             sev === 'critical' ? '#ef4444' : sev === 'warning' ? '#f59e0b' : '#2563eb';
           const subLabel = (t: string) => (

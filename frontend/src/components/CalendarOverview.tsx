@@ -90,7 +90,7 @@ export default function CalendarOverview({
     );
     const remByKey = new Map<string, CalendarEvent[]>();
     for (const r of reminderEvents) {
-      const key = `${r.contractId}|${cleanDeadlineName(r.title)}`;
+      const key = `${r.contractId}|${cleanDeadlineName(r.title, r.contractName)}`;
       const arr = remByKey.get(key);
       if (arr) arr.push(r);
       else remByKey.set(key, [r]);
@@ -98,7 +98,7 @@ export default function CalendarOverview({
 
     const enriched: EnrichedItem[] = deadlines
       .map(d => {
-        const key = `${d.contractId}|${cleanDeadlineName(d.title)}`;
+        const key = `${d.contractId}|${cleanDeadlineName(d.title, d.contractName)}`;
         const reminders = (remByKey.get(key) || [])
           .slice()
           .sort((a, b) => startOfDay(a.date) - startOfDay(b.date));
@@ -179,7 +179,7 @@ export default function CalendarOverview({
     const contractName = formatContractName
       ? formatContractName(event.contractName)
       : stripFileName(event.contractName || 'Vertrag');
-    const title = cleanDeadlineName(event.title) || stripFileName(event.title);
+    const title = cleanDeadlineName(event.title, event.contractName) || stripFileName(event.title);
 
     return (
       <div key={event.id} className={`${styles.card} ${stripeCls}`}>

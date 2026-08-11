@@ -668,7 +668,7 @@ function calDetail(rows) {
   const items = (rows || []).filter(r => r && r[1] != null && r[1] !== '');
   if (!items.length) return '';
   const trs = items.map((r, i) =>
-    `<tr><td style="padding:13px 18px;${i < items.length - 1 ? ' border-bottom:1px solid #f1f3f5;' : ''}"><span style="font-size:13px; color:#8a94a6;">${r[0]}</span><br><span style="font-size:14.5px; color:#0f172a;">${r[1]}</span></td></tr>`
+    `<tr><td style="padding:13px 18px;${i < items.length - 1 ? ' border-bottom:1px solid #f1f3f5;' : ''}"><span style="font-size:13px; color:#8a94a6;">${r[0]}</span><br><span style="font-size:14.5px; color:#0f172a;">${escapeHtml(r[1])}</span></td></tr>`
   ).join('');
   return `<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #eaecef; border-radius:10px; margin:0 0 22px 0;">${trs}</table>`;
 }
@@ -678,7 +678,7 @@ function generateCancelReminderEmail(event) {
   const days = m.daysUntilWindow || 30;
   return `
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Bald kannst du kündigen</h1>
-    <p style="margin:0 0 22px 0;">In etwa <strong style="color:#0f172a;">${days} Tagen</strong> öffnet sich das Kündigungsfenster für <strong style="color:#0f172a;">${m.contractName || 'deinen Vertrag'}</strong>. Ein guter Moment, deine Optionen zu prüfen.</p>
+    <p style="margin:0 0 22px 0;">In etwa <strong style="color:#0f172a;">${days} Tagen</strong> öffnet sich das Kündigungsfenster für <strong style="color:#0f172a;">${escapeHtml(m.contractName) || 'deinen Vertrag'}</strong>. Ein guter Moment, deine Optionen zu prüfen.</p>
     ${calDetail([['Vertrag', m.contractName], ['Anbieter', formatProvider(m.provider)], m.isAutoRenewal ? ['Hinweis', 'Verlängert sich automatisch'] : null].filter(Boolean))}
   `;
 }
@@ -689,7 +689,7 @@ function generateCancelWindowEmail(event) {
   // Kalendertage statt Math.ceil (Bruch-Tage) — siehe calendarDaysUntil (Wurzel-Fix 28.06.2026).
   const daysLeft = expiry ? calendarDaysUntil(expiry) : null;
   return `
-    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Du kannst ${m.contractName || 'deinen Vertrag'} jetzt kündigen</h1>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Du kannst ${escapeHtml(m.contractName) || 'deinen Vertrag'} jetzt kündigen</h1>
     <p style="margin:0 0 22px 0;">Das Kündigungsfenster ist ab jetzt offen. Wenn du wechseln oder beenden möchtest, ist jetzt der richtige Zeitpunkt.</p>
     ${calDetail([
       ['Anbieter', formatProvider(m.provider)],
@@ -711,7 +711,7 @@ function generateLastCancelDayEmail(event) {
   const renews = m.isAutoRenewal === true;
   return `
     <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#dc2626; letter-spacing:.3px; text-transform:uppercase;">Heute ist der letzte Tag</p>
-    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Vertrag'} jetzt kündigen</h1>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${escapeHtml(m.contractName) || 'Vertrag'} jetzt kündigen</h1>
     <p style="margin:0 0 22px 0;">Heute ist die letzte Möglichkeit, fristgerecht zu kündigen. ${renews ? `Danach verlängert sich der Vertrag automatisch um <strong style="color:#0f172a;">${months} Monate</strong>.` : 'Danach ist eine fristgerechte Kündigung nicht mehr möglich.'}</p>
     ${calDetail([['Anbieter', formatProvider(m.provider)], ['Letzter Kündigungstag', 'Heute'], renews ? ['Ohne Kündigung', `Verlängerung um ${months} Monate`] : null].filter(Boolean))}
   `;
@@ -722,7 +722,7 @@ function generateCancelWarningEmail(event) {
   const days = m.daysLeft != null ? m.daysLeft : 7;
   return `
     <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#b45309; letter-spacing:.3px; text-transform:uppercase;">Frist in ${days} Tagen</p>
-    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Vertrag'} rechtzeitig kündigen</h1>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${escapeHtml(m.contractName) || 'Vertrag'} rechtzeitig kündigen</h1>
     <p style="margin:0 0 22px 0;">In <strong style="color:#0f172a;">${days} Tagen</strong> endet die Kündigungsfrist. Danach ist eine fristgerechte Kündigung nicht mehr möglich.</p>
     ${calDetail([['Anbieter', formatProvider(m.provider)], ['Frist endet in', `${days} Tagen`]].filter(Boolean))}
   `;
@@ -733,7 +733,7 @@ function generatePriceIncreaseEmail(event) {
   const effDate = event.date ? new Date(event.date).toLocaleDateString('de-DE') : null;
   return `
     <p style="margin:0 0 6px 0; font-size:13px; font-weight:600; color:#b45309; letter-spacing:.3px; text-transform:uppercase;">Preisanpassung</p>
-    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Der Preis für ${m.contractName || 'deinen Vertrag'} steigt</h1>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Der Preis für ${escapeHtml(m.contractName) || 'deinen Vertrag'} steigt</h1>
     <p style="margin:0 0 22px 0;">Dein Anbieter hat eine Preiserhöhung angekündigt. Ein guter Moment, Alternativen zu vergleichen oder zu kündigen.</p>
     ${calDetail([['Vertrag', m.contractName], ['Anbieter', formatProvider(m.provider)], m.newPrice ? ['Neuer Preis', m.newPrice] : null, effDate ? ['Gültig ab', effDate] : null].filter(Boolean))}
   `;
@@ -744,7 +744,7 @@ function generateAutoRenewalEmail(event) {
   const months = m.autoRenewMonths || 12;
   const renewDate = event.date ? new Date(event.date).toLocaleDateString('de-DE') : null;
   return `
-    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${m.contractName || 'Dein Vertrag'} verlängert sich bald automatisch</h1>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${escapeHtml(m.contractName) || 'Dein Vertrag'} verlängert sich bald automatisch</h1>
     <p style="margin:0 0 22px 0;">Ohne Kündigung verlängert sich der Vertrag automatisch um <strong style="color:#0f172a;">${months} Monate</strong>. Wenn du das nicht möchtest, kündige rechtzeitig — wir erstellen dein Schreiben mit einem Klick.</p>
     ${calDetail([['Anbieter', formatProvider(m.provider)], renewDate ? ['Verlängert sich am', renewDate] : null, ['Verlängerung', `um ${months} Monate`]].filter(Boolean))}
   `;
@@ -754,15 +754,15 @@ function generateReviewEmail(event) {
   const m = event.metadata || {};
   return `
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Zeit für einen Vertrags-Check</h1>
-    <p style="margin:0 0 22px 0;">Dein Vertrag <strong style="color:#0f172a;">${m.contractName || ''}</strong> läuft schon eine Weile. Vielleicht gibt es inzwischen ein besseres oder günstigeres Angebot — ein kurzer Vergleich lohnt sich oft.</p>
+    <p style="margin:0 0 22px 0;">Dein Vertrag <strong style="color:#0f172a;">${escapeHtml(m.contractName) || ''}</strong> läuft schon eine Weile. Vielleicht gibt es inzwischen ein besseres oder günstigeres Angebot — ein kurzer Vergleich lohnt sich oft.</p>
     ${calDetail([['Vertrag', m.contractName], ['Anbieter', formatProvider(m.provider)]].filter(Boolean))}
   `;
 }
 
 function generateCancellationConfirmationCheckEmail(event) {
   const m = event.metadata || {};
-  const contractName = m.contractName || event.contractName || "deinen Vertrag";
-  const provider = formatProvider(m.provider);
+  const contractName = escapeHtml(m.contractName || event.contractName) || "deinen Vertrag";
+  const provider = escapeHtml(formatProvider(m.provider));
   const isFollowUp = m.isFollowUp;
   return `
     <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">Kündigungsbestätigung erhalten?</h1>
@@ -808,10 +808,22 @@ function generateSignatureReminderEmail(event, daysUntilExpiry) {
   `;
 }
 
+// 11.08.2026: Titel/Beschreibung stammen aus Upload-Dateinamen + KI-Labels —
+// beim Einsetzen ins Mail-HTML neutralisieren (&<>"'), sonst zerschießt ein
+// Dateiname mit HTML-Zeichen das Layout. Umlaute/Emojis bleiben unberührt.
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function generateGenericEmail(event) {
   return `
-    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${event.title || 'Vertragsinformation'}</h1>
-    <p style="margin:0 0 8px 0;">${event.description || ''}</p>
+    <h1 style="margin:0 0 14px 0; font-size:21px; line-height:1.35; color:#0f172a; font-weight:700;">${escapeHtml(event.title) || 'Vertragsinformation'}</h1>
+    <p style="margin:0 0 8px 0;">${escapeHtml(event.description)}</p>
   `;
 }
 
@@ -831,7 +843,7 @@ function generateCalendarEmailTemplate(params) {
   const FRONTEND = process.env.FRONTEND_URL || "https://www.contract-ai.de";
   const logoUrl = `${FRONTEND}/logo.png`;
   const firstName = (recipientName && String(recipientName).trim().split(/\s+/)[0]) || "";
-  const greeting = firstName ? `Hallo ${firstName},` : "Hallo,";
+  const greeting = firstName ? `Hallo ${escapeHtml(firstName)},` : "Hallo,";
 
   const primary = ctaButtons.find(b => b.style === "primary") || ctaButtons[0] || null;
   const secondaries = ctaButtons.filter(b => b !== primary);
@@ -848,7 +860,7 @@ function generateCalendarEmailTemplate(params) {
     </td></tr>` : "";
 
   const unsubscribeUrl = `${FRONTEND}/api/email/unsubscribe?email=${encodeURIComponent(recipientEmail)}&category=CALENDAR`;
-  const preheaderHtml = preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${preheader}</div>` : "";
+  const preheaderHtml = preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(preheader)}</div>` : "";
 
   // 🔓 Dezenter Business-Hinweis in Free-Mails (Retention Stufe 1, 10.08.2026).
   // Bewusst zurückhaltend: gedämpfte Farbe, unter den Aktionen, über dem Footer —

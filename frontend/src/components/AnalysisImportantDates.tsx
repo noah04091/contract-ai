@@ -7,6 +7,7 @@ import { useCalendarStore } from "../stores/calendarStore";
 import type { CalendarEvent, CalendarAccess } from "../stores/calendarStore";
 import styles from "../styles/AnalysisImportantDates.module.css";
 import { classifyDocType, type DocClass } from "./contractAnalysisV2/v2TabLabels";
+import { completeDanglingLabel } from "../utils/reminderGrouping";
 
 interface AnalysisImportantDatesProps {
   contractId: string;
@@ -903,7 +904,7 @@ export default function AnalysisImportantDates({
                   >
                     <div style={{ fontSize: 18, flexShrink: 0, lineHeight: 1 }} aria-hidden="true">📌</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{d.label}</div>
+                      <div style={{ fontSize: 13.5, fontWeight: 600, color: "#0f172a" }}>{completeDanglingLabel(d.label, d.date)}</div>
                       <div style={{ fontSize: 12.5, color: "#64748b", marginTop: 2 }}>
                         {formatDate(d.date)}{d.description ? ` • ${d.description}` : ""}
                       </div>

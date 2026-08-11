@@ -23,12 +23,54 @@ export interface ReminderLike {
 const OLD_LEAD_PREFIX = /^In\s+(\d+)\s*(Tagen?|Wochen?|Monaten?)(?:\s*-\s*DRINGEND)?\s*:\s*/i;
 
 // Normalisiert einen Event-Titel auf den reinen Frist-Namen (Zuordnungs-Schlüssel).
-export const cleanDeadlineName = (title: string): string => {
+// Optionaler zweiter Parameter (11.08.2026): der Vertragsname. Haupt-Event-Titel
+// enden auf ": {Vertragsname}" — ist der Name bekannt (event.contractName /
+// contract.name), wird EXAKT dieses Suffix entfernt. Das deckt auch Vertrags-
+// namen OHNE Datei-Endung ab ("Bürogebäude Mietvertrag"), bei denen die
+// Endungs-Regex unten nicht greift (gemessen: 12 von 437 Verträgen mit Events).
+// Bewusst NUR exakter Suffix-Match: ein generisches ":-Strippen" würde echte
+// Frist-Titel wie "Aufbewahrungsdauer der Backups: 30 Tage" verstümmeln
+// (14 solcher Titel in der DB gemessen). Vorwarner-Titel enden nie auf den
+// Vertragsnamen — der Parameter ist für sie ein No-op, beide Seiten eines
+// Vergleichs können ihn also immer gefahrlos übergeben.
+export const cleanDeadlineName = (title: string, contractName?: string): string => {
   let t = title.replace(/^[^0-9A-Za-zÀ-ÿ]+/, '');                            // führende Emojis/Symbole weg
   t = t.replace(/^\d+\s*(?:Tage?|Wochen?|Monate?)\s*vorher\s*:\s*/i, '');     // "N ... vorher:" weg (Vorwarnung)
   t = t.replace(OLD_LEAD_PREFIX, '');                                         // Alt-Format "In N Tagen:" weg
+  const name = contractName?.trim();
+  if (name) {
+    const suffix = `: ${name}`.toLowerCase();
+    if (t.toLowerCase().endsWith(suffix) && t.length > suffix.length) {
+      t = t.slice(0, t.length - suffix.length);
+    }
+  }
   t = t.replace(/\s*:\s*[^:]*\.(?:pdf|docx?|xlsx?|pptx?|png|jpe?g)\s*$/i, ''); // ": datei.pdf" weg (Haupt-Event)
   return t.trim();
+};
+
+// Anzeige-Spiegel des Backend-Helfers completeDanglingLabel (calendarEvents.js):
+// Endet ein KI-Label auf hängender Präposition ("Kündigungseingang bis"), wird
+// das zugehörige Datum angehängt — rein für die Darstellung in der Vertrags-
+// detail-Ansicht (die gespeicherten Analyse-Daten bleiben unverändert).
+// Ohne gültiges Datum bleibt das Label unverändert (nie kappen).
+// Regex-Spiegel des Backends: bewusst OHNE Satzzeichen-Toleranz (Label muss
+// wörtlich im Titel erhalten bleiben — includes()-Duplikat-Heuristik) und
+// OHNE vor/für/von ("liegt vor" wäre eine Bedeutungs-Umkehrung).
+const DANGLING_PREPOSITION = /\s(bis|zum|am|ab|spätestens)\s*$/i;
+export const completeDanglingLabel = (label: string, date?: string | Date | null): string => {
+  if (!label || !DANGLING_PREPOSITION.test(label)) return label;
+  let d: Date | null = null;
+  if (date instanceof Date) {
+    d = date;
+  } else if (typeof date === 'string' && date) {
+    // Datums-Strings ("2026-08-23") auf 12:00 LOKAL ankern (createLocalDate-
+    // Konvention des Backends) — new Date("YYYY-MM-DD") wäre UTC-Mitternacht
+    // und kippt in West-Zeitzonen auf den Vortag.
+    const m = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    d = m ? new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0, 0) : new Date(date);
+  }
+  if (!d || isNaN(d.getTime())) return label;
+  return `${label.trim()} ${d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}`;
 };
 
 // "📅 2 Wochen vorher: ..." → "2 Wochen vorher"; Haupt-Event (ohne "vorher") → null.

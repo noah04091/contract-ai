@@ -329,7 +329,7 @@ export default function ReminderSettingsModal({
   const autoEventGroups = (() => {
     const map = new Map<string, { name: string; main: AutoEvent | null; reminders: AutoEvent[] }>();
     for (const e of autoEvents) {
-      const name = cleanDeadlineName(e.title) || e.title;
+      const name = cleanDeadlineName(e.title, contractName) || e.title;
       if (!map.has(name)) map.set(name, { name, main: null, reminders: [] });
       const g = map.get(name)!;
       if (isReminderEntry(e)) g.reminders.push(e);

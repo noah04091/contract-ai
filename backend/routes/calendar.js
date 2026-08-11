@@ -4,8 +4,8 @@ const { ObjectId } = require("mongodb");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const verifyToken = require("../middleware/verifyToken");
-const { generateEventsForContract, cleanAndRegenerateAIEvents, regenerateAllEvents } = require("../services/calendarEvents");
-const { generateICSFeed, generateCalendarLinks } = require("../utils/icsGenerator");
+const { generateEventsForContract, cleanAndRegenerateAIEvents, regenerateAllEvents, completeDanglingLabel } = require("../services/calendarEvents");
+const { generateICSFeed, generateCalendarLinks, foldICSLine, escapeICS } = require("../utils/icsGenerator");
 const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
 
 const router = express.Router();
@@ -572,12 +572,26 @@ router.post("/events", verifyToken, async (req, res) => {
       };
     }
 
+    // 11.08.2026: Titel durch completeDanglingLabel — schließt den Bypass, dass
+    // "In Kalender übernehmen" ein hängendes KI-Label ("Kündigungseingang bis")
+    // ungeprüft als Termin-Titel speichert. Vollständige Titel bleiben unverändert.
+    // Deckt POST ab (PATCH/Titel-Edit bewusst nicht — explizite User-Eingabe).
+    // AUSNAHMEN (adversarialer Review 11.08.):
+    //  - Serien (recurrenceData): der Master-Titel wird in ALLE Instanzen
+    //    gespreadet — ein eingefrorenes Erst-Datum wäre ab Instanz 2 falsch.
+    //    Serien-Titel bleiben datumsfrei (gleiche Regel wie calendarEvents.js Pfad A).
+    //  - REMINDER-Typen: deren Datum ist das VORWARN-Datum, nicht die Frist —
+    //    Anhängen würde das falsche Datum in den Titel schreiben.
+    const completedTitle = (recurrenceData || /REMINDER/i.test(type || ''))
+      ? title
+      : completeDanglingLabel(title, normalizedDate);
+
     // Create new event
     const newEvent = {
       userId,
       ...(eventContractId && { contractId: eventContractId }),
       contractName,
-      title,
+      title: completedTitle,
       description: description || '',
       date: normalizedDate,
       type: type || 'CUSTOM',
@@ -814,12 +828,13 @@ function generateEmptyICS(message) {
     `DTSTAMP:${dateStr}`,
     `DTSTART:${dateStr}`,
     `DTEND:${dateStr}`,
-    `SUMMARY:Contract AI - ${message}`,
+    `SUMMARY:Contract AI - ${escapeICS(message)}`,
     `DESCRIPTION:Bitte öffnen Sie contract-ai.de und synchronisieren Sie den Kalender erneut.`,
     'STATUS:CONFIRMED',
     'END:VEVENT',
     'END:VCALENDAR'
-  ].join('\r\n');
+    // 11.08.2026: auch der Fehlerpfad muss RFC-5545-konform falten (75 Oktette)
+  ].map(foldICSLine).join('\r\n');
 }
 
 // POST /api/calendar/quick-action - Quick Actions aus dem Kalender

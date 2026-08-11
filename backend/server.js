@@ -582,6 +582,9 @@ const connectDB = async () => {
 
       // Helper für leeres ICS
       function generateEmptyICSHelper(message) {
+        // 11.08.2026: message kann error.message sein (beliebige Länge/Zeichen) —
+        // ICS-escapen + RFC-5545-konform falten (75 Oktette), wie der Haupt-Feed.
+        const { foldICSLine, escapeICS } = require("./utils/icsGenerator");
         const now = new Date();
         const dateStr = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
         return [
@@ -596,11 +599,11 @@ const connectDB = async () => {
           `DTSTAMP:${dateStr}`,
           `DTSTART:${dateStr}`,
           `DTEND:${dateStr}`,
-          `SUMMARY:Contract AI - ${message}`,
+          `SUMMARY:Contract AI - ${escapeICS(message)}`,
           `DESCRIPTION:Bitte öffnen Sie contract-ai.de und synchronisieren Sie den Kalender erneut.`,
           'END:VEVENT',
           'END:VCALENDAR'
-        ].join('\r\n');
+        ].map(foldICSLine).join('\r\n');
       }
 
       console.log("✅ ICS-Endpoint registriert (ohne Auth) unter /api/calendar/ics");

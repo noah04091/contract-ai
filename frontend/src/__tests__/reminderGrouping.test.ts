@@ -14,6 +14,7 @@ import {
   reminderLeadLabel,
   isReminderEntry,
   stripFileName,
+  completeDanglingLabel,
 } from '../utils/reminderGrouping';
 
 // Die 8 real in der Prod-DB stehenden Titel (Stand 10.08.2026)
@@ -65,6 +66,81 @@ describe('cleanDeadlineName — Gruppierungs-Schlüssel mit Datum im Label', () 
     // ".2026" ist keine bekannte Endung — nichts darf gestrippt werden
     expect(cleanDeadlineName('📅 Netzanschluss spätestens 30.09.2027'))
       .toBe(FAMILIE_B_KEY);
+  });
+});
+
+describe('cleanDeadlineName — Vertragsname als Kontext (11.08.2026)', () => {
+  test('Vertragsname OHNE Datei-Endung wird per Kontext gestrippt', () => {
+    // Gemessen: 12 von 437 Verträgen mit Events haben Namen ohne bekannte Endung
+    expect(cleanDeadlineName('⚠️ Kündigungseingang bis 23.08.2026: Bürogebäude Mietvertrag', 'Bürogebäude Mietvertrag'))
+      .toBe('Kündigungseingang bis 23.08.2026');
+  });
+
+  test('Ohne Kontext bleibt der endungslose Name hängen (dokumentierter Alt-Zustand)', () => {
+    expect(cleanDeadlineName('⚠️ Kündigungseingang bis: Bürogebäude Mietvertrag'))
+      .toBe('Kündigungseingang bis: Bürogebäude Mietvertrag');
+  });
+
+  test('Kontext-Strip auch bei Namen mit Datums-Endung ("Kaufvertrag - 26.2.2026")', () => {
+    expect(cleanDeadlineName('📅 Vertrag endet: Kaufvertrag - 26.2.2026', 'Kaufvertrag - 26.2.2026'))
+      .toBe('Vertrag endet');
+  });
+
+  test('Vorwarner-Titel: Kontext-Parameter ist ein No-op', () => {
+    expect(cleanDeadlineName('🚨 7 Tage vorher: Kündigungseingang bis 23.08.2026', 'rechnung-FM.F26008865870.pdf'))
+      .toBe(FAMILIE_A_KEY);
+  });
+
+  test('Frist-Titel mit Doppelpunkt im Satz wird NICHT verstümmelt', () => {
+    // Gemessen: 14 solcher Titel in der DB — genereller ":-Strip" wäre falsch
+    expect(cleanDeadlineName('🔧 Aufbewahrungsdauer der Backups: 30 Tage', 'SaaS-Vertrag'))
+      .toBe('Aufbewahrungsdauer der Backups: 30 Tage');
+  });
+
+  test('Beide Seiten eines Vergleichs mit Kontext → identischer Schlüssel', () => {
+    const name = 'Bürogebäude Mietvertrag';
+    const main = cleanDeadlineName('⚠️ Kündigungseingang bis 23.08.2026: Bürogebäude Mietvertrag', name);
+    const reminder = cleanDeadlineName('🚨 7 Tage vorher: Kündigungseingang bis 23.08.2026', name);
+    expect(main).toBe(reminder);
+  });
+});
+
+describe('completeDanglingLabel — Anzeige-Vervollständigung (Frontend-Spiegel)', () => {
+  test('hängende Präposition + Datums-String', () => {
+    expect(completeDanglingLabel('Kündigungseingang bis', '2026-08-23'))
+      .toBe('Kündigungseingang bis 23.08.2026');
+  });
+
+  test('Doppelpunkt-Form bleibt UNVERÄNDERT (includes()-Duplikat-Heuristik)', () => {
+    expect(completeDanglingLabel('Kündigungseingang bis:', '2026-08-23'))
+      .toBe('Kündigungseingang bis:');
+  });
+
+  test('Semantik-Schutz: "liegt vor" bleibt unverändert', () => {
+    expect(completeDanglingLabel('Kündigung liegt vor', '2026-08-23'))
+      .toBe('Kündigung liegt vor');
+  });
+
+  test('Datums-String wird lokal geankert (kein UTC-Vortag-Kipp)', () => {
+    // "2026-01-01" darf in keiner Zeitzone als 31.12.2025 erscheinen
+    expect(completeDanglingLabel('Zahlbar bis', '2026-01-01'))
+      .toBe('Zahlbar bis 01.01.2026');
+  });
+
+  test('vollständiges Label bleibt unverändert', () => {
+    expect(completeDanglingLabel('Mindestlaufzeit endet', '2026-08-23'))
+      .toBe('Mindestlaufzeit endet');
+  });
+
+  test('ohne/mit ungültigem Datum bleibt das Label unverändert (nie kappen)', () => {
+    expect(completeDanglingLabel('Kündigungseingang bis', undefined)).toBe('Kündigungseingang bis');
+    expect(completeDanglingLabel('Kündigungseingang bis', 'quatsch')).toBe('Kündigungseingang bis');
+    expect(completeDanglingLabel('Kündigungseingang bis', null)).toBe('Kündigungseingang bis');
+  });
+
+  test('Idempotenz: Datum am Ende → kein Doppel-Anhängen', () => {
+    expect(completeDanglingLabel('Kündigungseingang bis 23.08.2026', '2026-08-23'))
+      .toBe('Kündigungseingang bis 23.08.2026');
   });
 });
 

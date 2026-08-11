@@ -151,7 +151,8 @@ function generateICSFeed(events) {
   lines.push('END:VCALENDAR');
   
   // Join with CRLF as per ICS specification
-  return lines.join('\r\n');
+  // Faltung erst hier auf die KOMPLETTE physische Zeile (inkl. "SUMMARY:" etc.)
+  return lines.map(foldICSLine).join('\r\n');
 }
 
 /**
@@ -205,16 +206,37 @@ function escapeICS(text) {
     .replace(/;/g, '\\;')
     .replace(/,/g, '\\,')
     .replace(/\n/g, '\\n')
-    .replace(/\r/g, '')
-    .split('')
-    .map((char, i) => {
-      // Wrap at 75 characters (ICS line length limit)
-      if (i > 0 && i % 70 === 0) {
-        return '\r\n ' + char;
-      }
-      return char;
-    })
-    .join('');
+    .replace(/\r/g, '');
+}
+
+/**
+ * RFC-5545-konforme Zeilenfaltung (§3.1): max. 75 OKTETTE pro physischer Zeile,
+ * Fortsetzungszeilen beginnen mit einem Leerzeichen (zählt mit).
+ * 11.08.2026: Ersetzt die alte Faltung in escapeICS, die (a) nur den WERT statt
+ * der ganzen Zeile faltete ("SUMMARY:" zählte nicht mit) und (b) Zeichen statt
+ * Bytes zählte (Umlaute = 2, Emojis = 4 Oktette) — lange Titel überschritten
+ * damit das Limit. Iteriert über Codepoints, schneidet also nie ein
+ * UTF-8-Zeichen oder Surrogate-Paar auseinander.
+ */
+function foldICSLine(line) {
+  const LIMIT = 75;
+  if (Buffer.byteLength(line, 'utf8') <= LIMIT) return line;
+  const out = [];
+  let cur = '';
+  let curBytes = 0;
+  for (const ch of line) {
+    const b = Buffer.byteLength(ch, 'utf8');
+    if (curBytes + b > LIMIT) {
+      out.push(cur);
+      cur = ' ' + ch;
+      curBytes = 1 + b;
+    } else {
+      cur += ch;
+      curBytes += b;
+    }
+  }
+  if (cur) out.push(cur);
+  return out.join('\r\n');
 }
 
 /**
@@ -383,5 +405,6 @@ module.exports = {
   generateWebcalLink,
   generateCalendarLinks,
   formatICSDate,
-  escapeICS
+  escapeICS,
+  foldICSLine
 };

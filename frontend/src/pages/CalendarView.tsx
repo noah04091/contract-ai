@@ -124,10 +124,10 @@ interface QuickActionsProps {
 }
 
 function QuickActionsModal({ event, onAction, onClose, onEdit, navigate, onOpenSnooze, showNavigation, currentIndex, totalEvents, onNavigatePrev, onNavigateNext }: QuickActionsProps) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -1054,10 +1054,10 @@ interface StatsDetailModalProps {
 }
 
 function StatsDetailModal({ isOpen, onClose, title, events, onEventClick, filterType }: StatsDetailModalProps) {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -1462,7 +1462,7 @@ export default function CalendarPage() {
   const [filterType, setFilterType] = useState<string>("all");
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [urgentEventsPage, setUrgentEventsPage] = useState(0);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "past" | "cancellable" | "autoRenewal">("total");
@@ -1496,7 +1496,7 @@ export default function CalendarPage() {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth <= 768);
       setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
     };
     window.addEventListener('resize', handleResize);

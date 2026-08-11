@@ -639,7 +639,7 @@ interface QuickActionsModalProps {
 function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit, onManageReminders, noEmailReminders }: QuickActionsModalProps) {
   useEscapeKey(onClose);
   const navigate = useNavigate();
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [currentIndex, setCurrentIndex] = useState(() => {
     if (allEvents && allEvents.length > 1) {
       return allEvents.findIndex(e => e.id === event.id);
@@ -673,7 +673,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
   };
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -793,7 +793,10 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               return { id: e.id, label: sigLabel(e.type), dateStr: fmt(e.date), kind };
             });
         } else {
-          const deadlineKey = cleanDeadlineName(currentEvent.title);
+          // 11.08.2026: Vertragsname als Kontext — deckt Vertragsnamen ohne
+          // Datei-Endung ab ("Bürogebäude Mietvertrag"), bei denen der
+          // Endungs-Strip im Schlüssel nicht greift.
+          const deadlineKey = cleanDeadlineName(currentEvent.title, currentEvent.contractName);
           // 28.07.2026: Vergangene Vorwarner NICHT mehr wegfiltern (gleiche Ehrlichkeit wie der
           // Signatur-Zweig oben, Commit 8f93ab57): Nach der "7 Tage vorher"-Mail las sich die
           // Karte wie "nur am Tag selbst erinnert", obwohl die Mail real rausging. Statusbasiert:
@@ -802,7 +805,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
           // ausgeblendet — dort erklärt bereits das 🔒-Banner, dass keine Mails verschickt
           // werden; eine Wand aus "nicht gesendet" wäre doppelt und wirkt wie ein Fehler.
           list = evs
-            .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title) === deadlineKey && (!noEmailReminders || new Date(e.date) > now))
+            .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title, currentEvent.contractName) === deadlineKey && (!noEmailReminders || new Date(e.date) > now))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .map(e => {
               const kind: 'sent' | 'upcoming' | 'skipped' =
@@ -1393,14 +1396,14 @@ const STATS_MODAL_INCREMENT = 50;
 
 function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: StatsDetailModalProps) {
   useEscapeKey(onClose);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   // Such-Filter (Free-Text über contractName + title + description)
   const [searchTerm, setSearchTerm] = useState('');
   // Lazy-Pagination: erst 50 zeigen, „Weitere anzeigen" lädt +50
   const [displayLimit, setDisplayLimit] = useState(STATS_MODAL_INITIAL_LIMIT);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -1756,10 +1759,10 @@ interface DayEventsModalProps {
 
 function DayEventsModal({ date, events, onEventClick, onClose }: DayEventsModalProps) {
   useEscapeKey(onClose);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -1965,7 +1968,7 @@ interface SimpleContractForCreate {
 
 function CreateEventModal({ date, onClose, onEventCreated, initialContractId, initialContractName }: CreateEventModalProps) {
   useEscapeKey(onClose);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showForm, setShowForm] = useState(true);
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContractForCreate[]>([]);
@@ -1988,7 +1991,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
   });
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -2062,6 +2065,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           _id?: string;
           id?: string;
           contractId?: string;
+          title?: string;
         };
       }
 
@@ -2095,7 +2099,9 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
           id: response.data.event._id?.toString() || response.data.event.id || Date.now().toString(),
           contractId: formData.contractId || '',
           contractName: hasContract ? formData.contractName : formData.title,
-          title: formData.title,
+          // Server kann den Titel normalisiert haben (completeDanglingLabel) —
+          // Server-Antwort ist die Wahrheit, sonst springt der Titel beim Refetch um
+          title: response.data.event.title || formData.title,
           description: formData.description,
           date: eventDate.toISOString(),
           type: formData.type,
@@ -2611,12 +2617,12 @@ interface SnoozeModalProps {
 
 function SnoozeModal({ isOpen, onClose, onSnooze, eventDate }: SnoozeModalProps) {
   useEscapeKey(onClose);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customDays, setCustomDays] = useState('');
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -2894,7 +2900,7 @@ interface SimpleContract {
 
 function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProps) {
   useEscapeKey(onClose);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [saving, setSaving] = useState(false);
   const [contracts, setContracts] = useState<SimpleContract[]>([]);
   const [loadingContracts, setLoadingContracts] = useState(false);
@@ -2911,7 +2917,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
   });
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -3390,7 +3396,7 @@ export default function CalendarPage() {
   const [upgradeAction, setUpgradeAction] = useState<string>(''); // Welche Aktion wurde versucht
 
   // ===== MOBILE STATE =====
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [showBottomSheet, setShowBottomSheet] = useState(false);
 
   const EVENTS_PER_PAGE = 5;
@@ -3398,7 +3404,7 @@ export default function CalendarPage() {
   // ===== MOBILE: Nur Erkennung, KEIN Auto-View-Switch mehr =====
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth <= 768);
     };
     handleResize();
     window.addEventListener('resize', handleResize);

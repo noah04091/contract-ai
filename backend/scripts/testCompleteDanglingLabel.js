@@ -39,6 +39,21 @@ const cases = [
   ['null-Datum → unverändert (nicht 01.01.1970!)', 'Kündigungseingang bis', null, 'Kündigungseingang bis'],
   ['undefined-Datum → unverändert', 'Kündigungseingang bis', undefined, 'Kündigungseingang bis'],
 
+  // BEWUSSTE Entscheidung (adversarialer Review 11.08.2026): KEINE Satzzeichen-
+  // Toleranz. Das Anhängen müsste das Satzzeichen kappen → der Titel enthielte
+  // das Label nicht mehr wörtlich → title.includes(label)-Duplikat-Heuristik
+  // (ContractDetailsV2/AnalysisImportantDates) bräche → Duplikat-Termine.
+  ['Präposition mit Doppelpunkt bleibt UNVERÄNDERT', 'Kündigungseingang bis:', D, 'Kündigungseingang bis:'],
+  ['Präposition mit Punkt bleibt UNVERÄNDERT', 'Kündigungseingang bis.', D, 'Kündigungseingang bis.'],
+  ['Satzzeichen ohne Präposition bleibt', 'Mindestlaufzeit endet:', D, 'Mindestlaufzeit endet:'],
+  ['Datum am Ende + Punkt bleibt unangetastet', 'Kündigungseingang bis 23.08.2026.', D, 'Kündigungseingang bis 23.08.2026.'],
+
+  // BEWUSSTE Entscheidung: vor/für/von NICHT in der Präpositions-Liste —
+  // "liegt vor" = "ist eingegangen"; ein Datum dahinter kehrt die Bedeutung um.
+  ['Semantik-Schutz: "liegt vor" bleibt', 'Kündigung liegt vor', D, 'Kündigung liegt vor'],
+  ['Semantik-Schutz: "für" bleibt', 'Zahlung für', D, 'Zahlung für'],
+  ['Semantik-Schutz: "von" bleibt', 'Vollmacht von', D, 'Vollmacht von'],
+
   // Defensive Eingaben
   ['Leerstring', '', D, ''],
   ['null-Label', null, D, null],

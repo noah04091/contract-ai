@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { completeDanglingLabel } from '../utils/reminderGrouping';
 import styles from '../styles/ImportantDatesSection.module.css';
 
 // Interface für wichtige Datums aus der KI-Analyse
@@ -184,7 +185,7 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
                   {config.emoji}
                 </div>
                 <div className={styles.dateContent}>
-                  <div className={styles.dateLabel}>{dateItem.label}</div>
+                  <div className={styles.dateLabel}>{completeDanglingLabel(dateItem.label, dateItem.date)}</div>
                   <div className={styles.dateValue}>{formatDate(dateItem.date)}</div>
                 </div>
                 <div className={styles.dateCountdown}>
@@ -234,7 +235,7 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
                 <span className={styles.modalEmoji}>
                   {dateTypeConfig[selectedDate.type]?.emoji || '📌'}
                 </span>
-                <h3>{selectedDate.label}</h3>
+                <h3>{completeDanglingLabel(selectedDate.label, selectedDate.date)}</h3>
               </div>
               <button
                 className={styles.closeButton}

@@ -22,7 +22,15 @@ function createLocalDate(dateString) {
 // matcht per title.includes(label) — ein gekapptes Label würde den Abgleich
 // brechen und Duplikat-Vorschläge erzeugen. Idempotent: ein Label, das bereits
 // auf ein Datum endet, matcht die Regex nicht mehr (kein Doppel-Anhängen).
-const DANGLING_PREPOSITION = /\s(bis|zum|am|ab|vor|für|von|spätestens)\s*$/i;
+// ⚠️ BEWUSST KEINE Satzzeichen-Toleranz ("bis:" bleibt unangetastet): das
+// Anhängen dürfte dann das Satzzeichen nicht entfernen, sonst enthält der
+// Titel das Label nicht mehr wörtlich und title.includes(label) oben bricht
+// (Duplikat-Vorschläge). Gemessen 11.08.2026: 0 solcher Labels im Bestand.
+// ⚠️ Liste bewusst OHNE vor/für/von: "Kündigung liegt vor" würde zu
+// "… liegt vor 23.08.2026" — Bedeutungs-Umkehrung (liegt vor = eingegangen).
+// Gemessen: 0 Labels mit diesen Endungen; nur bis/zum/am/ab/spätestens sind
+// echte Feld-Beschriftungs-Formen.
+const DANGLING_PREPOSITION = /\s(bis|zum|am|ab|spätestens)\s*$/i;
 function completeDanglingLabel(label, date) {
   if (!label || typeof label !== 'string' || !DANGLING_PREPOSITION.test(label)) return label;
   const d = date instanceof Date ? date : (date ? new Date(date) : null);
