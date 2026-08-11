@@ -43,7 +43,10 @@ export default function V2ProtectionCard({ docType, protectedCount, onUploadAnot
     try { return localStorage.getItem(DISMISS_KEY) === "1"; } catch { return false; }
   });
 
-  if (hidden || dismissed || !isProtectableDocType(docType)) return null;
+  // 🔒 TÜV-Fund (11.08.): Ohne geladenen User wäre isPaid=false und left=0 →
+  // die Karte würde kurz die "Analysen aufgebraucht"-Variante flackern. Erst
+  // rendern, wenn die Auth-Daten da sind.
+  if (!user || hidden || dismissed || !isProtectableDocType(docType)) return null;
 
   const isPaid = user?.subscriptionPlan === "business" || user?.subscriptionPlan === "enterprise";
   const left = remainingAnalyses(user?.analysisCount, user?.analysisLimit);

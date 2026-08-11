@@ -595,7 +595,10 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                     className={styles.fcStatusPill}
                     style={{ background: "#f0fdf4", color: "#16a34a", cursor: "pointer" }}
                     title="Dieser Vertrag ist im Fristen-Wächter — wir erinnern dich rechtzeitig per E-Mail. Klick für Details."
+                    role="button"
+                    tabIndex={0}
                     onClick={() => document.getElementById("v2-protection-card")?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); document.getElementById("v2-protection-card")?.scrollIntoView({ behavior: "smooth", block: "center" }); } }}
                   >
                     🛡 Wird überwacht
                   </span>

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractsV2.module.css";
 import { isRiskScoreMeaningful } from "../utils/scoreDisplay";
+import { isProtectableDocType } from "../components/contractAnalysisV2/protectionCardLogic"; // 🛡️ Stufe 1c: ehrliche "geschützt"-Zählung (keine Rechnungen mitzählen)
 import ContractAnalysis from "../components/ContractAnalysisSwitch";
 import MultiUploadResultNavigator from "../components/MultiUploadResultNavigator"; // 🆕 29.05.2026: Navigator-View ("X von N") ersetzt Grid-View
 import NewContractDetailsModal from "../components/NewContractDetailsModal"; // 🎨 NEW: Professional Contract Details Modal
@@ -4891,7 +4892,7 @@ export default function Contracts() {
                         // 🛡️ Schutz-Karte (Stufe 1c): echte Zahl + direkter Weg zur Upload-Fläche.
                         // Quick-Analyse-Modal muss vorher geschlossen werden, sonst blockt
                         // `!quickAnalysisModal.show` die Upload-Sektion (Audit-Falle 10.08.).
-                        protectedContractsCount={contracts.filter(c => c.analyzed !== false).length}
+                        protectedContractsCount={contracts.filter(c => c.analyzed !== false && isProtectableDocType(c.documentType, c.contractType)).length}
                         onUploadAnother={() => {
                           setQuickAnalysisModal({ show: false, contractName: '', contractId: '', analysisResult: null });
                           try { sessionStorage.removeItem('contractai_quickAnalysis'); } catch { /* egal */ }
@@ -5319,7 +5320,7 @@ export default function Contracts() {
                           initialResult={uploadFiles[0].result}
                           // 🛡️ Schutz-Karte (Stufe 1c): frisch analysierter Vertrag ist evtl. noch
                           // nicht in `contracts` nachgeladen → Karte selbst sichert min. 1 ab.
-                          protectedContractsCount={contracts.filter(c => c.analyzed !== false).length}
+                          protectedContractsCount={contracts.filter(c => c.analyzed !== false && isProtectableDocType(c.documentType, c.contractType)).length}
                           onUploadAnother={() => { clearAllUploadFiles(); setActiveSection('upload'); }}
                           onNavigateToContract={async (navContractId) => {
                             const refreshedContracts = await silentRefreshContracts(navContractId);
