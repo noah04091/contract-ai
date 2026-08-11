@@ -65,3 +65,22 @@ describe("remainingAnalyses — Infinity-sicher, nie negativ", () => {
     expect(remainingAnalyses(1, undefined)).toBe(0);
   });
 });
+
+describe("effectiveAnalysisNumbers — frische usage-Zahl schlägt veralteten AuthContext (Live-Test-Fund 11.08.)", () => {
+  const { effectiveAnalysisNumbers } = require("../components/contractAnalysisV2/protectionCardLogic");
+
+  test("Reproduktion des Bugs: AuthContext sagt 0 verbraucht, Analyse-Antwort sagt 1 → usage gewinnt", () => {
+    // Vorher zeigte die Karte "3 von 3 übrig" nach der 1. Analyse (Footer korrekt "1 von 3")
+    const nums = effectiveAnalysisNumbers({ count: 1, limit: 3 }, 0, 3);
+    expect(nums).toEqual({ count: 1, limit: 3 });
+  });
+
+  test("ohne usage (Quick-Analyse-Pfad ohne Verbrauch): AuthContext-Werte", () => {
+    expect(effectiveAnalysisNumbers(undefined, 2, 3)).toEqual({ count: 2, limit: 3 });
+    expect(effectiveAnalysisNumbers(null, 2, 3)).toEqual({ count: 2, limit: 3 });
+  });
+
+  test("teilweise usage: fehlende Felder fallen einzeln auf den User zurück", () => {
+    expect(effectiveAnalysisNumbers({ count: 1 }, 0, 3)).toEqual({ count: 1, limit: 3 });
+  });
+});

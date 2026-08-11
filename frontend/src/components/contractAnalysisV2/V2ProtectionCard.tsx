@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Plus, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { isProtectableDocType, resolveProtectionVariant, remainingAnalyses } from "./protectionCardLogic";
+import { isProtectableDocType, resolveProtectionVariant, remainingAnalyses, effectiveAnalysisNumbers } from "./protectionCardLogic";
 import styles from "./V2ProtectionCard.module.css";
 
 const DISMISS_KEY = "contractai_protectionCardDismissed";
@@ -34,9 +34,11 @@ interface V2ProtectionCardProps {
   onUploadAnother?: () => void;
   /** true im Mehrfach-Upload-Kontext (MultiUploadResultNavigator) — Karte ergibt dort keinen Sinn. */
   hidden?: boolean;
+  /** Frische Zähler aus der Analyse-Antwort (result.usage) — AuthContext ist nach einer Analyse veraltet (Live-Test-Fund 11.08.). */
+  usage?: { count?: number; limit?: number } | null;
 }
 
-export default function V2ProtectionCard({ docType, protectedCount, onUploadAnother, hidden }: V2ProtectionCardProps) {
+export default function V2ProtectionCard({ docType, protectedCount, onUploadAnother, hidden, usage }: V2ProtectionCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState<boolean>(() => {
@@ -49,7 +51,10 @@ export default function V2ProtectionCard({ docType, protectedCount, onUploadAnot
   if (!user || hidden || dismissed || !isProtectableDocType(docType)) return null;
 
   const isPaid = user?.subscriptionPlan === "business" || user?.subscriptionPlan === "enterprise";
-  const left = remainingAnalyses(user?.analysisCount, user?.analysisLimit);
+  // 🐛 Live-Test-Fund 11.08.: usage (frisch, aus der Analyse-Antwort) hat Vorrang vor
+  // dem AuthContext (vor der Analyse geladen → zählt einen zu wenig).
+  const nums = effectiveAnalysisNumbers(usage, user?.analysisCount, user?.analysisLimit);
+  const left = remainingAnalyses(nums.count, nums.limit);
   const variant = resolveProtectionVariant(isPaid, left);
   const count = Math.max(1, protectedCount ?? 1); // der gerade analysierte Vertrag zählt immer
 
@@ -96,10 +101,10 @@ export default function V2ProtectionCard({ docType, protectedCount, onUploadAnot
           🛡 {count === 1 ? "1 Vertrag geschützt" : `${count} Verträge geschützt`}
         </span>
         {variant === "free" && Number.isFinite(left) && (
-          <span className={styles.chip}>{left} von {user?.analysisLimit ?? 3} kostenlosen Analysen übrig</span>
+          <span className={styles.chip}>{left} von {nums.limit ?? 3} kostenlosen Analysen übrig</span>
         )}
         {variant === "freeLimit" && (
-          <span className={`${styles.chip} ${styles.chipAmber}`}>0 von {user?.analysisLimit ?? 3} Analysen übrig</span>
+          <span className={`${styles.chip} ${styles.chipAmber}`}>0 von {nums.limit ?? 3} Analysen übrig</span>
         )}
       </div>
 

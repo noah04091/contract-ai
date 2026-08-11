@@ -27,3 +27,20 @@ export function remainingAnalyses(count?: number, limit?: number): number {
   if (!Number.isFinite(limit)) return Number.POSITIVE_INFINITY;
   return Math.max(0, limit - (count ?? 0));
 }
+
+/**
+ * Zähler-Quelle wählen (Live-Test-Fund 11.08.): Der AuthContext wird VOR der Analyse
+ * geladen und nicht automatisch aktualisiert — nach der 1. Analyse zeigte die Karte
+ * „3 von 3 übrig" statt „2 von 3". Die Analyse-Antwort (result.usage) trägt die
+ * FRISCHE Zahl (dieselbe Quelle wie der „X von Y"-Footer). Vorrang: usage → user.
+ */
+export function effectiveAnalysisNumbers(
+  usage: { count?: number; limit?: number } | null | undefined,
+  userCount?: number,
+  userLimit?: number
+): { count: number | undefined; limit: number | undefined } {
+  return {
+    count: usage?.count ?? userCount,
+    limit: usage?.limit ?? userLimit,
+  };
+}

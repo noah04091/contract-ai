@@ -1641,6 +1641,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               protectedCount={protectedContractsCount}
               onUploadAnother={onUploadAnother}
               hidden={hideProtectionCard}
+              usage={result?.usage || initialResult?.usage}
             />
           )}
 
