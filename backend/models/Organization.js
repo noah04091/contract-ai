@@ -20,10 +20,20 @@ const organizationSchema = new mongoose.Schema({
   },
 
   // Subscription vom Owner geerbt
+  //
+  // Default 11.08.2026 von 'enterprise' auf 'free' geaendert (sicherer Ausgangswert):
+  // Seit die Org-Vererbung an den Zugangs-Gates greift (utils/planAccess.js), wuerde
+  // eine ohne expliziten Plan angelegte Organisation ihren Mitgliedern SOFORT
+  // Enterprise-Rechte vererben. Aktuell gibt es genau einen Schreibpfad
+  // (routes/organizations.js:63), der den Plan immer explizit aus dem geprueften Plan
+  // des Erstellers setzt — der Default wird dort nie benutzt. Er ist damit reine
+  // Absicherung fuer den Fall, dass je ein zweiter Schreibpfad entsteht.
+  // Bestehende Organisationen sind nicht betroffen: Mongoose-Defaults greifen nur
+  // beim Anlegen, und alle vorhandenen Dokumente haben den Plan gespeichert (geprueft).
   subscriptionPlan: {
     type: String,
     enum: ['free', 'business', 'enterprise'],
-    default: 'enterprise'
+    default: 'free'
   },
 
   // Team-Limits
