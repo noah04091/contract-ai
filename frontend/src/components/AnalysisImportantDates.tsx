@@ -966,9 +966,12 @@ export default function AnalysisImportantDates({
       {!canCreate && !loading && (sortedEvents.length > 0 || pendingImportantDates.length > 0) && (
         <div className={styles.upsellRow}>
           <div className={styles.upsellIcon}><Crown size={15} /></div>
+          {/* Wording-Iteration (Noahs Feedback 11.08.): Frage-Haken statt Feature-Liste.
+              Ehrlich bleiben: BENACHRICHTIGT wird Free seit Stufe 1a kostenlos — Business
+              verkauft den EIGENEN Kalender (Sync Google/Apple/Outlook + eigene Termine). */}
           <span className={styles.upsellText}>
-            <strong>Termine in deinen Kalender übernehmen</strong>, eigene Termine anlegen und
-            Kalender-Sync (Google, Apple, Outlook) — ab Business.
+            <strong>Deine Fristen auch in Google, Apple oder Outlook?</strong> Mit Business landen
+            alle Termine automatisch in deinem Kalender — und du ergänzt eigene mit einem Klick.
           </span>
           <button type="button" className={styles.upsellButton} onClick={handleAddClick}>
             Jetzt upgraden

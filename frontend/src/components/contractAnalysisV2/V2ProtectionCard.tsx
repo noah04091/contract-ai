@@ -115,10 +115,15 @@ export default function V2ProtectionCard({ docType, protectedCount, onUploadAnot
         <X size={15} />
       </button>
 
-      <div className={styles.head}>
-        <div className={styles.icon}><ShieldCheck size={20} /></div>
-        <div className={styles.headText}>
-          <h4 className={styles.title}>Dieser Vertrag ist jetzt im Fristen-Wächter</h4>
+      {/* Iteration 3 (Noahs Feedback 11.08.): Auch im Free-Kopf KEINE Icon-Kachel mehr —
+          das Schild ist Inline-Symbol neben dem Titel (gleiche Formsprache wie das
+          Paid-Band). Die einzige Icon-Kachel der Seite bleibt der Kalender-Anker
+          des Termine-Kopfs → kein "Icon unter Icon" mehr. */}
+      <div className={styles.headText}>
+        <h4 className={styles.titleInline}>
+          <ShieldCheck size={17} className={styles.inlineShield} aria-hidden="true" />
+          Dieser Vertrag ist jetzt im Fristen-Wächter
+        </h4>
           {variant === "free" ? (
             <p className={styles.subtitle}>
               Kündigungsfristen, Verlängerungen, Termine — wir erinnern dich{" "}
@@ -158,7 +163,6 @@ export default function V2ProtectionCard({ docType, protectedCount, onUploadAnot
               Später
             </button>
           </div>
-        </div>
       </div>
     </div>
   );

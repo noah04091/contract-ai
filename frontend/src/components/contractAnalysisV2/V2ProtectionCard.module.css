@@ -166,3 +166,16 @@
 @media (max-width: 640px) {
   .statusStrip { padding: 8px 18px; flex-wrap: wrap; }
 }
+
+/* Iteration 3 (11.08.): Free-Kopf ohne Icon-Kachel — Schild inline neben dem Titel
+   (gleiche Formsprache wie das Paid-Band). Einzige Kachel der Seite = Kalender-Anker. */
+.titleInline {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.inlineShield { color: #16a34a; flex: 0 0 auto; }
