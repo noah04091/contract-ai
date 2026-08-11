@@ -1,14 +1,16 @@
 // 📁 PulseKlartextV3.tsx — „Klartext-Redesign" (05.08.2026), Phase 1
 //
-// Neue Übersichts-Bausteine hinter einem SCHALTER, parallel zur bestehenden Ansicht:
-//   - usePulseLayoutV3(): ?ansicht=neu / ?ansicht=alt → localStorage. Standard: AUS.
+// Übersichts-Bausteine der Klartext-Ansicht:
+//   - usePulseLayoutV3(): ?ansicht=neu / ?ansicht=alt → localStorage.
+//     ⚡ STANDARD SEIT 11.08.2026: AN (scharfgeschaltet nach Noahs Alltagstest).
 //   - PulseStatusHeroV3:  Ein-Satz-Verdikt (Ampel) + Score mit Deutung + Anker-Chips.
 //   - RechtsCheckStage:   „Bühne" um das bestehende LegalAlertsPanel — Eyebrow +
 //                         sichtbare Prozess-Kette (X Gesetze → Y Verträge → Z Treffer).
 //
-// WICHTIG: Die alte Ansicht (PulseCommandCenter etc.) bleibt unangetastet und ist
-// weiterhin Standard für alle Nutzer. Rückweg = Schalter, nie Git-Revert — damit
-// bleiben parallele Arbeiten anderer Terminals in jedem Fall unberührt.
+// WICHTIG: Die alte Ansicht (PulseCommandCenter etc.) bleibt vollständig im Code und
+// ist über `?ansicht=alt` jederzeit erreichbar — der Rückbau erfolgt bewusst erst nach
+// einer Bewährungszeit. Rückweg = Schalter, NIE Git-Revert; damit bleiben parallele
+// Arbeiten anderer Terminals in jedem Fall unberührt.
 // Mockup-Referenz: Artifact „pulse-klartext-mockup" v6 (echte Daten, von Noah iteriert).
 
 import React, { useState, useEffect } from 'react';
@@ -29,10 +31,14 @@ export function usePulseLayoutV3(): boolean {
       const param = new URLSearchParams(window.location.search).get('ansicht');
       if (param === 'neu') return true;
       if (param === 'alt') return false;
-      return localStorage.getItem(LS_KEY) === '1';
+      // SCHARFGESCHALTET 11.08.2026 (Noahs Abnahme nach Alltagstest seit 06.08.):
+      // Standard ist jetzt die Klartext-Ansicht. Nur wer sie ausdrücklich per
+      // `?ansicht=alt` abgewählt hat (localStorage '0'), bekommt weiterhin die alte.
+      // Rückweg bleibt der Schalter — NIE per Git-Revert (Parallel-Terminal-sicher).
+      return localStorage.getItem(LS_KEY) !== '0';
     } catch (err) {
-      console.warn('[PulseV2] Ansicht-Schalter nicht lesbar (z. B. Private Mode) — nutze bewährte Ansicht.', err);
-      return false; // im Zweifel IMMER die bewährte Ansicht
+      console.warn('[PulseV2] Ansicht-Schalter nicht lesbar (z. B. Private Mode) — nutze Standard-Ansicht.', err);
+      return true; // Private Mode o. ä.: Standard = Klartext, wie für alle anderen auch
     }
   });
   // … Persistieren als echter Effekt (TÜV-Fix: setItem gehört nicht in den Render-Pfad)
