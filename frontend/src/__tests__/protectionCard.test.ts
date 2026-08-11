@@ -5,6 +5,7 @@ import {
   isProtectableDocType,
   resolveProtectionVariant,
   remainingAnalyses,
+  effectiveAnalysisNumbers,
 } from "../components/contractAnalysisV2/protectionCardLogic";
 
 describe("isProtectableDocType — Karte nur bei Vertragsartigen (Audit-Leitplanke)", () => {
@@ -67,8 +68,6 @@ describe("remainingAnalyses — Infinity-sicher, nie negativ", () => {
 });
 
 describe("effectiveAnalysisNumbers — frische usage-Zahl schlägt veralteten AuthContext (Live-Test-Fund 11.08.)", () => {
-  const { effectiveAnalysisNumbers } = require("../components/contractAnalysisV2/protectionCardLogic");
-
   test("Reproduktion des Bugs: AuthContext sagt 0 verbraucht, Analyse-Antwort sagt 1 → usage gewinnt", () => {
     // Vorher zeigte die Karte "3 von 3 übrig" nach der 1. Analyse (Footer korrekt "1 von 3")
     const nums = effectiveAnalysisNumbers({ count: 1, limit: 3 }, 0, 3);
