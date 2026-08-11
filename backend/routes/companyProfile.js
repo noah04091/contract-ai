@@ -86,7 +86,10 @@ const requireEnterprise = async (req, res, next) => {
     }
 
     const user = await req.db.collection("users").findOne({ _id: new ObjectId(userId) });
-    const plan = user?.subscriptionPlan || 'free';
+    // 11.08.2026: Effektiver Plan inkl. Org-Vererbung — Mitglieder einer zahlenden
+    // Organisation haben ihr eigenes Feld auf "free" und wurden hier ausgesperrt.
+    const { resolveEffectivePlan } = require('../utils/planAccess');
+    const plan = await resolveEffectivePlan(req.db, user);
 
     // Nur Enterprise hat Zugriff auf Firmenprofil/White-Label
     if (!isEnterpriseOrHigher(plan)) {

@@ -21,7 +21,11 @@ const requireEnterprisePlan = async (req, res, next) => {
   try {
     const usersCollection = req.db?.collection("users") || req.usersCollection;
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-    const plan = user?.subscriptionPlan || 'free';
+    // 11.08.2026: Effektiver Plan inkl. Org-Vererbung — Mitglieder einer zahlenden
+    // Organisation haben ihr eigenes Feld auf "free" und wurden hier ausgesperrt.
+    const { resolveEffectivePlan } = require('../utils/planAccess');
+    const dbConn = req.db || await require('../config/database').connect();
+    const plan = await resolveEffectivePlan(dbConn, user);
 
     if (!isEnterpriseOrHigher(plan)) {
       return res.status(403).json({

@@ -30,14 +30,19 @@ async function checkCalendarAccess(db, userId) {
   try {
     const user = await db.collection("users").findOne(
       { _id: new ObjectId(userId) },
-      { projection: { subscriptionPlan: 1, subscriptionActive: 1 } }
+      // `role` fuer den Admin-Safeguard in resolveEffectivePlan, `_id` liefert Mongo per Default
+      { projection: { subscriptionPlan: 1, subscriptionActive: 1, role: 1 } }
     );
 
     if (!user) {
       return { hasAccess: false, plan: null, message: "Benutzer nicht gefunden" };
     }
 
-    const plan = user.subscriptionPlan || "free";
+    // 11.08.2026: Effektiver Plan inkl. Org-Vererbung — Mitglieder einer zahlenden
+    // Organisation haben ihr eigenes Feld auf "free" und hatten daher nur Lese-Zugriff
+    // auf den Kalender, obwohl ihre Organisation zahlt.
+    const { resolveEffectivePlan } = require("../utils/planAccess");
+    const plan = await resolveEffectivePlan(db, user);
     const isActive = user.subscriptionActive !== false; // Default true für Legacy
     const hasAccess = isActive && CALENDAR_FULL_ACCESS_PLANS.includes(plan);
 

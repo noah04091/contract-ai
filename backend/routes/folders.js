@@ -11,7 +11,11 @@ const OpenAI = require('openai');
 const requireBusinessPlan = async (req, res, next) => {
   try {
     const user = await req.usersCollection.findOne({ _id: new ObjectId(req.userId) });
-    const plan = user?.subscriptionPlan || 'free';
+    // 11.08.2026: Effektiver Plan inkl. Org-Vererbung — Mitglieder einer zahlenden
+    // Organisation haben ihr eigenes Feld auf "free" und wurden hier ausgesperrt.
+    const { resolveEffectivePlan } = require('../utils/planAccess');
+    const db = await require('../config/database').connect();
+    const plan = await resolveEffectivePlan(db, user);
 
     if (plan === 'free') {
       return res.status(403).json({
