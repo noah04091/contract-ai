@@ -558,6 +558,15 @@ export default function AnalysisImportantDates({
                   return `${evPart} + ${fhCount} Frist${fhCount !== 1 ? "en" : ""} für ${docRef}`;
                 })()}
           </p>
+          {/* 🛡️ Wächter-Satz (Retention Stufe 1b, 11.08.2026): Das Zukunftsversprechen,
+              das den Grund liefert, Verträge hier liegen zu lassen. Seit Stufe 1a
+              (FREE_REMINDER_MAILS_ENABLED) für ALLE Pläne wahr. Nur bei mindestens
+              einem ZUKÜNFTIGEN Termin — für vergangene verschickt der Wächter nichts. */}
+          {!loading && sortedEvents.some((e) => getDaysUntil(e.date) >= 0) && (
+            <p className={styles.subtitle} style={{ marginTop: 3, color: "#16a34a" }}>
+              Fristen-Wächter aktiv — wir erinnern dich rechtzeitig per E-Mail.
+            </p>
+          )}
         </div>
         <button
           type="button"
