@@ -81,27 +81,29 @@ export default function V2ProtectionCard({ docType, protectedCount, onUploadAnot
   // 💼 Bezahlte Pläne: kompakte Status-Zeile — Titel + Chip inline, Knopf rechts.
   // Kein Werbeton, minimale Höhe (nach dem 27. Vertrag darf es nicht nerven).
   if (variant === "paid") {
+    // Redesign-Iteration 2 (Noahs Screenshot-Feedback 11.08. abends): Die kompakte
+    // Kopfzeile wirkte wie eine ZWEITE Überschrift über dem Termine-Kopf — Icon-Kachel
+    // über Icon-Kachel, Primär-Knopf über Primär-Knopf. Jetzt: schmales STATUS-BAND
+    // ohne Kachel und ohne Primär-Knopf — liest sich als grünes Band der Termine-Karte,
+    // nicht als konkurrierender Header. Aktion ist ein dezenter Text-Link.
     return (
-      <div className={`${styles.header} ${styles.headerCompact}`} id="v2-protection-card" data-variant={variant}>
-        <button type="button" className={styles.dismiss} onClick={dismissForever} aria-label="Dauerhaft ausblenden" title="Dauerhaft ausblenden">
-          <X size={15} />
+      <div className={styles.statusStrip} id="v2-protection-card" data-variant={variant}>
+        <ShieldCheck size={15} className={styles.stripShield} aria-hidden="true" />
+        <span className={styles.stripText}>
+          <strong>Im Fristen-Wächter</strong>
+          <span className={styles.stripDot}>·</span>
+          {count === 1 ? "1 Vertrag geschützt" : `${count} Verträge geschützt`}
+        </span>
+        <span className={styles.spacer} />
+        {onUploadAnother && (
+          <button type="button" className={styles.stripLink} onClick={onUploadAnother}>
+            <Plus size={13} />
+            Weitere Verträge schützen
+          </button>
+        )}
+        <button type="button" className={styles.stripDismiss} onClick={dismissForever} aria-label="Dauerhaft ausblenden" title="Dauerhaft ausblenden">
+          <X size={14} />
         </button>
-        <div className={styles.compactRow}>
-          <div className={styles.icon}><ShieldCheck size={20} /></div>
-          <div className={styles.compactText}>
-            <div className={styles.titleRow}>
-              <h4 className={styles.title}>Dieser Vertrag ist jetzt im Fristen-Wächter</h4>
-              {protectedChip}
-            </div>
-            <p className={styles.subtitle}>Je vollständiger dein Vertragsordner, desto lückenloser der Schutz.</p>
-          </div>
-          {onUploadAnother && (
-            <button type="button" className={styles.primary} onClick={onUploadAnother}>
-              <Plus size={15} />
-              Weitere Verträge schützen
-            </button>
-          )}
-        </div>
       </div>
     );
   }

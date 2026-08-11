@@ -121,3 +121,48 @@
   .compactRow { flex-wrap: wrap; }
   .compactRow .primary { margin-left: 52px; }
 }
+
+/* 💼 Status-Band für bezahlte Pläne (Iteration 2, 11.08. abends):
+   KEINE zweite Kopfzeile — ein schmales grünes Band oben an der Termine-Karte.
+   Ohne Icon-Kachel, ohne Primär-Knopf → kein "Icon unter Icon, Button unter Button". */
+.statusStrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 26px;
+  background: #f0fdf4;
+  /* Trennlinie zum Termine-Kopf liefert dessen eigene border-top — hier keine. */
+}
+.stripShield { color: #16a34a; flex: 0 0 auto; }
+.stripText { font-size: 13px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stripText strong { color: #166534; font-weight: 700; }
+.stripDot { margin: 0 7px; color: #a7c9b2; }
+.stripLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: none;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 2px;
+  white-space: nowrap;
+}
+.stripLink:hover { color: #1d4ed8; text-decoration: underline; }
+.stripDismiss {
+  border: 0;
+  background: none;
+  color: #b7ceba;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 6px;
+  flex: 0 0 auto;
+}
+.stripDismiss:hover { color: #6b8f74; }
+
+@media (max-width: 640px) {
+  .statusStrip { padding: 8px 18px; flex-wrap: wrap; }
+}
