@@ -529,6 +529,12 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     // 🧹 DSGVO: Legal-Pulse-Daten (Analysen + Radar-Alerts) des Users mitlöschen
     await require('../utils/pulseCleanup').cleanupPulseData({ userId });
 
+    // 🏢 11.08.2026: War dieser Nutzer INHABER einer Organisation, faellt deren Plan auf
+    // "free" — sonst erben die verbliebenen Mitglieder dauerhaft einen bezahlten Plan,
+    // obwohl niemand mehr zahlt. Der Stripe-Webhook greift hier nicht (Loeschung loest
+    // kein Abo-Ereignis aus). Laeuft vor dem eigentlichen Loeschen des Kontos.
+    await require('../utils/syncOrgPlan').syncOrgPlan(db, user, 'free');
+
     // Delete user's calendar events
     const eventsResult = await db.collection("contract_events").deleteMany({ userId: { $in: uidVariants } });
     console.log(`   📅 Deleted ${eventsResult.deletedCount} calendar events`);
@@ -653,6 +659,18 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId: userIdsToDelete });
     // 🧹 DSGVO: Legal-Pulse-Daten aller gelöschten User mitlöschen
     await require('../utils/pulseCleanup').cleanupPulseData({ userId: userIdsToDelete });
+
+    // 🏢 11.08.2026: Organisationen nachziehen, deren INHABER hier geloescht wird —
+    // sonst erben deren Mitglieder dauerhaft einen bezahlten Plan ohne Zahler.
+    // syncOrgPlan wirft nie und tut nichts, wenn der Nutzer kein Inhaber ist.
+    {
+      const { syncOrgPlan } = require('../utils/syncOrgPlan');
+      const { ObjectId: OID } = require('mongodb');
+      for (const uid of userIdsToDelete) {
+        const oid = /^[0-9a-fA-F]{24}$/.test(String(uid)) ? new OID(String(uid)) : null;
+        if (oid) await syncOrgPlan(db, { _id: oid }, 'free');
+      }
+    }
 
     // Delete calendar events
     await db.collection("contract_events").deleteMany({

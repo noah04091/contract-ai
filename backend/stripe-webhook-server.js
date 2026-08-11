@@ -49,6 +49,9 @@ const generateInvoicePdf = require('./utils/generateInvoicePdf');
 const generateInvoiceNumber = require('./utils/generateInvoiceNumber');
 // ✨ White-Label PDF Export (Enterprise)
 const { getCompanyLogo } = require('./utils/getCompanyLogo');
+// 11.08.2026: Haelt den Plan einer Organisation mit dem ihres Inhabers im Gleichklang.
+// Wirft nie — ein fehlgeschlagener Abgleich darf den Zahlungs-Webhook nicht stoeren.
+const { syncOrgPlan } = require('./utils/syncOrgPlan');
 
 // Event Idempotency Repository
 const eventsRepo = {
@@ -553,6 +556,11 @@ async function handleStripeEvent(event) {
         { $set: updateData }
       );
 
+      // Organisation nachziehen (nur wenn dieser Nutzer ihr Inhaber ist).
+      // Deckt BEIDE Faelle ab: Kuendigung (Plan wurde oben auf "free" gesetzt)
+      // und Herabstufung/Heraufstufung (Plan kommt aus der Stripe-Price-Map).
+      await syncOrgPlan(db, user, updateData.subscriptionPlan);
+
       console.log(`✅ User ${user.email} Subscription aktualisiert:`, updateData);
 
       return;
@@ -592,6 +600,9 @@ async function handleStripeEvent(event) {
           }
         }
       );
+
+      // Organisation nachziehen (nur wenn dieser Nutzer ihr Inhaber ist)
+      await syncOrgPlan(db, user, 'free');
 
       console.log(`✅ User ${user.email} auf Free downgraded (Subscription gelöscht)`);
 
@@ -781,6 +792,15 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
         },
       }
     );
+
+    // Organisation nachziehen (nur wenn dieser Nutzer ihr Inhaber ist).
+    // WICHTIG (TUEV-Fund 11.08.2026): Ohne diesen Aufruf blieb die Organisation nach
+    // einem NEUABSCHLUSS auf "free" haengen — Ablauf: Inhaber kuendigt (Org faellt
+    // korrekt auf free), bucht spaeter neu → checkout.session.completed setzt nur IHN
+    // zurueck auf business/enterprise, das zahlende Team blieb ausgesperrt, bis
+    // zufaellig irgendwann ein subscription.updated-Ereignis kam.
+    // processStripeEvent() bekommt kein `db` uebergeben → hier eigens holen.
+    await syncOrgPlan(await database.connect(), user, plan);
 
     console.log(`✅ User ${email || user.email} auf ${plan} aktualisiert`);
 
@@ -999,6 +1019,18 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
         },
       }
     );
+
+    // Organisation nachziehen (nur wenn dieser Nutzer ihr Inhaber ist).
+    // Hier wird oben subscriptionPlan auf null gesetzt — der Helfer normalisiert das auf "free".
+    //
+    // HINWEIS (TUEV 11.08.2026): Dieser Zweig ist derzeit NICHT ERREICHBAR.
+    // processStripeEvent() wird ausschliesslich aus dem Case "checkout.session.completed"
+    // aufgerufen, `eventType` ist hier also immer genau das — der Vergleich auf
+    // "customer.subscription.deleted" trifft nie zu. Der echte Loesch-Pfad liegt im
+    // Switch von handleStripeEvent und ist dort abgesichert. Der Aufruf bleibt als
+    // Absicherung stehen, falls die Aufrufstruktur spaeter geaendert wird.
+    // processStripeEvent() bekommt kein `db` uebergeben → hier eigens holen.
+    await syncOrgPlan(await database.connect(), user, null);
 
     console.log(`❌ Abo von ${user.email} gekündigt`);
 

@@ -824,6 +824,15 @@ router.delete("/delete", verifyToken, async (req, res) => {
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId: req.user.userId });
     // 🧹 DSGVO: Legal-Pulse-Daten (Analysen + Radar-Alerts) des Accounts mitlöschen
     await require('../utils/pulseCleanup').cleanupPulseData({ userId: req.user.userId });
+    // 🏢 11.08.2026: War dieser Nutzer INHABER einer Organisation, muss deren Plan auf
+    // "free" fallen — sonst erben die verbliebenen Mitglieder dauerhaft weiter einen
+    // bezahlten Plan, obwohl niemand mehr zahlt. Der Stripe-Webhook greift hier NICHT:
+    // ein geloeschtes Konto loest kein Abo-Ereignis aus. Muss VOR dem Loeschen laufen.
+    await require('../utils/syncOrgPlan').syncOrgPlan(
+      dbInstance,
+      { _id: new ObjectId(req.user.userId), email: req.user.email },
+      'free'
+    );
     await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
 
     res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
