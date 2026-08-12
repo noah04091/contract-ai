@@ -1,3 +1,14 @@
+// ⚠️ NICHT IN BENUTZUNG (festgestellt 12.08.2026).
+// Diese Komponente wird NIRGENDS importiert — `git grep -rn "MonitoringStatusCard" frontend/src`
+// liefert ausschliesslich diese Datei selbst. Sie landet daher auch in keinem Bundle.
+//
+// Das hat schon einmal Arbeit gekostet: Der Ehrlichkeits-Hinweis „Überwachung pausiert"
+// wurde am 10.08. hier eingebaut und war wirkungslos — die tatsächlich angezeigte
+// Vertrags-Statuszeile lebt in `pages/PulseV2.tsx` (Komponente ContractCard).
+//
+// Bevor hier irgendetwas geaendert wird: erst pruefen, ob die Komponente inzwischen
+// eingebunden ist. Sonst aendert man Code, den niemand sieht.
+
 import React, { useState, useCallback } from 'react';
 import styles from '../../styles/PulseV2.module.css';
 

@@ -1458,7 +1458,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
                 gap: 14,
               }}>
                 {(showAllUnanalyzed ? [...analyzed, ...unanalyzed] : analyzed).map(item => (
-                  <ContractCard key={item.contractId} item={item} onClick={() => onSelectContract(item.contractId)} klartext={layoutV3} openAlertCount={openAlertsByContract.get(String(item.contractId)) ?? 0} />
+                  <ContractCard key={item.contractId} item={item} onClick={() => onSelectContract(item.contractId)} klartext={layoutV3} openAlertCount={openAlertsByContract.get(String(item.contractId)) ?? 0} pulseAccess={monitoringStatus?.pulseAccess} />
                 ))}
               </div>
               {collapseUnanalyzed && unanalyzed.length > 0 && !showAllUnanalyzed && (
@@ -1507,7 +1507,10 @@ const ContractCard: React.FC<{
   /** Klartext-Ansicht: Ampel-Status in Alltagssprache statt „N Befunde" */
   klartext?: boolean;
   openAlertCount?: number;
-}> = ({ item, onClick, klartext, openAlertCount = 0 }) => {
+  /** false = Plan ohne Legal Pulse → dieser Vertrag wird NICHT mehr überwacht.
+   *  Optional, damit ein älteres Backend ohne das Feld die Anzeige unverändert lässt. */
+  pulseAccess?: boolean;
+}> = ({ item, onClick, klartext, openAlertCount = 0, pulseAccess }) => {
   const score = item.v2Score;
   const scoreColor = score === null ? '#cbd5e1' : score >= 80 ? '#22c55e' : score >= 60 ? '#eab308' : score >= 40 ? '#f97316' : '#ef4444';
   const now = Date.now();
@@ -1602,6 +1605,11 @@ const ContractCard: React.FC<{
               <span style={{ color: '#dc2626', fontWeight: 600 }}>{item.v2CriticalCount} kritische{item.v2CriticalCount === 1 ? 'r Punkt' : ' Punkte'} offen</span>
             ) : openAlertCount > 0 ? (
               <span style={{ color: '#d97706', fontWeight: 600 }}>{openAlertCount} {openAlertCount === 1 ? 'Punkt' : 'Punkte'} offen</span>
+            ) : pulseAccess === false ? (
+              /* Ehrlichkeit (12.08.2026): Ohne aktives Business+ läuft für diesen Vertrag
+                 weder Radar noch Re-Analyse. Vorher stand hier auch dann „wird überwacht" —
+                 seit dem Plan-Guard (8a538994) wäre das schlicht unwahr. */
+              <span style={{ color: '#b45309', fontWeight: 600 }}>Keine offenen Punkte — Überwachung pausiert</span>
             ) : (
               <span style={{ color: '#059669', fontWeight: 600 }}>Alles ruhig — wird überwacht</span>
             )
