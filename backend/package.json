@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint .",
     "test": "jest --coverage --detectOpenHandles",
     "test:watch": "jest --watch",
     "test:unit": "jest --testPathPattern=tests/unit",
@@ -62,6 +63,7 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
+    "eslint": "^9.37.0",
     "jest": "^30.2.0",
     "supertest": "^7.1.4"
   },

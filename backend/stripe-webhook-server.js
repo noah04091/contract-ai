@@ -927,7 +927,13 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     let customLogoBase64 = null;
     try {
       const userPlan = user?.subscriptionPlan || 'free';
-      const logoData = await getCompanyLogo(db, userId.toString(), userPlan);
+      // 12.08.2026 (ESLint-Erstfund): Hier standen `db` und `userId` — beide gibt es in
+      // processStripeEvent() gar nicht (die Funktion bekommt nur die Collections).
+      // Der ReferenceError lief still in den catch-Block darunter: Das White-Label-Logo
+      // wurde NIE geladen, jede Rechnung nutzte das Standard-Logo — auch bei Enterprise-
+      // Kunden, die eigens eines hochgeladen haben. `user` ist hier verfuegbar.
+      const dbConn = await database.connect();
+      const logoData = await getCompanyLogo(dbConn, String(user._id), userPlan);
 
       if (logoData.hasLogo && logoData.logoBase64) {
         customLogoBase64 = logoData.logoBase64;
