@@ -1617,7 +1617,7 @@ const ContractCard: React.FC<{
             )
           ) : (
             item.hasV2Result
-              ? `${item.v2FindingsCount} Befunde`
+              ? `${item.v2FindingsCount} ${plural(item.v2FindingsCount, 'Befund', 'Befunde')}`
               : 'Noch nicht analysiert'
           )}
         </div>

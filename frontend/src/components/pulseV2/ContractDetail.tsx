@@ -6,6 +6,7 @@ import { HealthScoreGauge } from './HealthScoreGauge';
 import { FindingCard } from './FindingCard';
 import { ScoreTrend } from './ScoreTrend';
 import { PortfolioInsightsPanel } from './PortfolioInsightsPanel';
+import { plural } from '../../utils/plural';
 import { ActionItem } from './ActionItem';
 import { ImpactGraph } from './ImpactGraph';
 // Klartext-Redesign 05.08. (nur bei ?ansicht=neu aktiv, Standard: alte Ansicht)
@@ -576,7 +577,9 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
               }}>
                 {(result.context.daysUntilExpiry ?? 0) < 0
                   ? 'Abgelaufen'
-                  : `${result.context.daysUntilExpiry} Tage bis Ablauf`
+                  /* TÜV 12.08.2026: „1 Tage bis Ablauf" am Vortag — Zwilling der Stelle
+                     in PulseV2.tsx, die bereits behoben wurde. */
+                  : `${result.context.daysUntilExpiry} ${plural(result.context.daysUntilExpiry ?? 0, 'Tag', 'Tage')} bis Ablauf`
                 }
               </span>
             )}
@@ -1378,7 +1381,7 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
                 <button
                   onClick={async () => {
                     const ok = await onBulkResolveAlerts();
-                    if (ok) toast.success(`${openAlerts.length} Alerts als erledigt markiert — im Reiter „Erledigt" jederzeit rückholbar.`);
+                    if (ok) toast.success(`${openAlerts.length} ${plural(openAlerts.length, 'Meldung', 'Meldungen')} als erledigt markiert — im Reiter „Erledigt" jederzeit rückholbar.`);
                     else toast.error('Konnte nicht alle Alerts erledigen — bitte erneut versuchen.');
                   }}
                   style={{ ...actBtn('#ecfdf5', '#a7f3d0', '#059669'), marginLeft: 'auto' }}
