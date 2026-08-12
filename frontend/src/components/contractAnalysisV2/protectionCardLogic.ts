@@ -9,6 +9,27 @@ export function isProtectableDocType(docType?: string | null, contractType?: str
   return cls === "CONTRACT" || cls === "AGB";
 }
 
+/** Schreiben (Kündigung, Widerspruch, …) — kalender-berechtigt, aber kein Vertrag. */
+export function isLetterDocType(docType?: string | null, contractType?: string | null): boolean {
+  return classifyDocType(docType, contractType) === "LETTER";
+}
+
+/**
+ * Feinschliff (12.08.2026): Ob die Karte überhaupt erscheint.
+ * - CONTRACT/AGB: immer (Wortlaut passt sich an, siehe Karte).
+ * - LETTER: NUR bei nachweislich anstehender Frist (hasFutureDates === true) — ein frisches
+ *   Kündigungsschreiben mit laufender Klagefrist ist der dringendste Wächter-Fall überhaupt;
+ *   ohne Zukunftstermin bleibt die Karte wie bisher weg (null = Termine noch nicht geladen → weg).
+ */
+export function shouldShowProtectionCard(
+  protectable: boolean,
+  isLetter: boolean,
+  hasFutureDates: boolean | null
+): boolean {
+  if (protectable) return true;
+  return isLetter && hasFutureDates === true;
+}
+
 export type ProtectionVariant = "paid" | "free" | "freeLimit";
 
 /**

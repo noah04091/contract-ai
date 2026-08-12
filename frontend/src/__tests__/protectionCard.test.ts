@@ -3,6 +3,8 @@
 
 import {
   isProtectableDocType,
+  isLetterDocType,
+  shouldShowProtectionCard,
   resolveProtectionVariant,
   remainingAnalyses,
   effectiveAnalysisNumbers,
@@ -27,6 +29,34 @@ describe("isProtectableDocType — Karte nur bei Vertragsartigen (Audit-Leitplan
     // für Altbestand ohne Feld gilt der classifyDocType-Fallback CONTRACT.
     expect(isProtectableDocType(undefined)).toBe(true);
     expect(isProtectableDocType(null)).toBe(true);
+  });
+});
+
+describe("isLetterDocType + shouldShowProtectionCard — Schreiben-Variante (Feinschliff 12.08.)", () => {
+  test("LETTER wird als Schreiben erkannt, Vertragsartiges nicht", () => {
+    expect(isLetterDocType("LETTER")).toBe(true);
+    expect(isLetterDocType("CONTRACT")).toBe(false);
+    expect(isLetterDocType("INVOICE")).toBe(false);
+  });
+
+  test("CONTRACT/AGB: Karte immer — Wortlaut regelt die Termine-Lage, nicht die Sichtbarkeit", () => {
+    expect(shouldShowProtectionCard(true, false, true)).toBe(true);
+    expect(shouldShowProtectionCard(true, false, false)).toBe(true);
+    expect(shouldShowProtectionCard(true, false, null)).toBe(true); // Termine noch nicht geladen
+  });
+
+  test("LETTER: Karte NUR bei nachweislich anstehender Frist (Klagefrist-Fall)", () => {
+    expect(shouldShowProtectionCard(false, true, true)).toBe(true);
+    // Noahs Kündigungsschreiben-Test 11.08.: beide Fristen vergangen → keine Karte (wie bisher)
+    expect(shouldShowProtectionCard(false, true, false)).toBe(false);
+    // Termine noch nicht geladen → keine Karte (kein Aufblitzen vor Datenlage)
+    expect(shouldShowProtectionCard(false, true, null)).toBe(false);
+  });
+
+  test("Rechnung & Co.: nie eine Karte, egal was die Termine sagen", () => {
+    expect(shouldShowProtectionCard(false, false, true)).toBe(false);
+    expect(shouldShowProtectionCard(false, false, false)).toBe(false);
+    expect(shouldShowProtectionCard(false, false, null)).toBe(false);
   });
 });
 

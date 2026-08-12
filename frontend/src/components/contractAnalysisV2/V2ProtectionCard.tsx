@@ -23,7 +23,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ShieldCheck, Plus, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { isProtectableDocType, resolveProtectionVariant, remainingAnalyses, effectiveAnalysisNumbers } from "./protectionCardLogic";
+import { isProtectableDocType, isLetterDocType, shouldShowProtectionCard, resolveProtectionVariant, remainingAnalyses, effectiveAnalysisNumbers } from "./protectionCardLogic";
 import styles from "./V2ProtectionCard.module.css";
 
 const DISMISS_FOREVER_KEY = "contractai_protectionCardDismissed";
@@ -39,6 +39,8 @@ function readDismissed(): boolean {
 
 interface V2ProtectionCardProps {
   docType?: string | null;
+  /** Zweite Klassifikations-Quelle (classifyDocType-Fallback, wie beim Termine-Block). */
+  contractType?: string | null;
   /** Anzahl analysierter Verträge des Nutzers (echte Zahl vom Parent — nie behaupten, immer zählen). */
   protectedCount?: number;
   /** Öffnet die Upload-Fläche direkt (Parent: clearAllUploadFiles + setActiveSection('upload')). */
@@ -47,15 +49,23 @@ interface V2ProtectionCardProps {
   hidden?: boolean;
   /** Frische Zähler aus der Analyse-Antwort (result.usage) — AuthContext ist nach einer Analyse veraltet. */
   usage?: { count?: number; limit?: number } | null;
+  /** 🛡️ Feinschliff 12.08.2026: Gibt es anstehende Termine? Signal aus AnalysisImportantDates
+   *  (gleiche Quelle wie der grüne Wächter-Satz). null = noch nicht geladen → Standard-Wortlaut;
+   *  false = ehrlicher Wortlaut ohne Erinnerungs-Versprechen; true + LETTER = Schreiben-Variante. */
+  hasFutureDates?: boolean | null;
 }
 
-export default function V2ProtectionCard({ docType, protectedCount, onUploadAnother, hidden, usage }: V2ProtectionCardProps) {
+export default function V2ProtectionCard({ docType, contractType, protectedCount, onUploadAnother, hidden, usage, hasFutureDates }: V2ProtectionCardProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [dismissed, setDismissed] = useState<boolean>(readDismissed);
 
+  const protectable = isProtectableDocType(docType, contractType);
+  const isLetter = isLetterDocType(docType, contractType);
+
   // 🔒 TÜV-Fund (11.08.): Ohne geladenen User würde kurz die "aufgebraucht"-Variante flackern.
-  if (!user || hidden || dismissed || !isProtectableDocType(docType)) return null;
+  // Feinschliff: LETTER erscheint nur mit nachweislich anstehender Frist (Klagefrist-Fall).
+  if (!user || hidden || dismissed || !shouldShowProtectionCard(protectable, isLetter, hasFutureDates ?? null)) return null;
 
   const isPaid = user?.subscriptionPlan === "business" || user?.subscriptionPlan === "enterprise";
   const nums = effectiveAnalysisNumbers(usage, user?.analysisCount, user?.analysisLimit);
@@ -122,14 +132,33 @@ export default function V2ProtectionCard({ docType, protectedCount, onUploadAnot
       <div className={styles.headText}>
         <h4 className={styles.titleInline}>
           <ShieldCheck size={17} className={styles.inlineShield} aria-hidden="true" />
-          Dieser Vertrag ist jetzt im Fristen-Wächter
+          {isLetter ? "Dieses Schreiben ist im Fristen-Wächter" : "Dieser Vertrag ist jetzt im Fristen-Wächter"}
         </h4>
           {variant === "free" ? (
+            isLetter ? (
+              // 📨 Schreiben-Variante (nur mit anstehender Frist sichtbar, s. Gate): Ein frisches
+              // Kündigungsschreiben mit laufender Klage-/Widerspruchsfrist ist der dringendste Fall.
+              <p className={styles.subtitle}>
+                Die enthaltenen Fristen (z.&nbsp;B. Klage- oder Widerspruchsfrist) werden überwacht —
+                wir erinnern dich <strong>rechtzeitig per E-Mail, kostenlos</strong>.{" "}
+                <strong>Verträge, die nicht hier liegen, laufen unbewacht.</strong>
+              </p>
+            ) : hasFutureDates === false ? (
+              // 🤝 Ehrlichkeits-Variante (Feinschliff 12.08.): z. B. AVV ohne konkrete Termine —
+              // kein Erinnerungs-Versprechen für DIESEN Vertrag, das Prinzip bleibt erklärt.
+              <p className={styles.subtitle}>
+                In diesem Vertrag haben wir <strong>keine anstehenden Fristen</strong> gefunden — bei
+                Verträgen mit Kündigungsfristen oder Laufzeiten erinnern wir dich{" "}
+                <strong>rechtzeitig per E-Mail, kostenlos</strong>.{" "}
+                <strong>Verträge, die nicht hier liegen, laufen unbewacht.</strong>
+              </p>
+            ) : (
             <p className={styles.subtitle}>
               Kündigungsfristen, Verlängerungen, Termine — wir erinnern dich{" "}
               <strong>rechtzeitig per E-Mail, kostenlos</strong>.{" "}
               <strong>Verträge, die nicht hier liegen, laufen unbewacht.</strong>
             </p>
+            )
           ) : (
             <p className={styles.subtitle}>
               Deine Fristen bleiben geschützt. Deine <strong>3 kostenlosen Analysen sind aufgebraucht</strong>{" "}

@@ -15,6 +15,10 @@ interface AnalysisImportantDatesProps {
   // 🎯 22.05.2026 — typspezifische User-Texte ("diesen Vertrag" / "diese Rechnung" / etc.)
   documentType?: string | null;
   contractType?: string | null;
+  /** 🛡️ Feinschliff 12.08.2026: meldet nach dem Laden, ob mindestens ein ZUKÜNFTIGER Termin
+   *  existiert — exakt dasselbe Prädikat wie der grüne Wächter-Satz (1b). Die Schutz-Karte
+   *  darüber passt damit ihren Wortlaut an (kein Überversprechen bei 0 anstehenden Fristen). */
+  onFutureDates?: (has: boolean) => void;
 }
 
 // 🎯 22.05.2026 — typspezifische Dokument-Referenz für User-Texte
@@ -114,6 +118,7 @@ export default function AnalysisImportantDates({
   contractName,
   documentType,
   contractType,
+  onFutureDates,
 }: AnalysisImportantDatesProps) {
   // 🎯 22.05.2026 — DocClass für typspezifische User-Texte
   const docClass = classifyDocType(documentType, contractType);
@@ -463,6 +468,14 @@ export default function AnalysisImportantDates({
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
 
+  // 🛡️ Feinschliff 12.08.2026: EINE Wahrheit für "gibt es anstehende Termine?" — speist den
+  // grünen Wächter-Satz (unten) UND via onFutureDates die Schutz-Karte im Parent. Bewusst nur
+  // echte Kalender-Events (wie der 1b-Satz), keine KI-Vorschläge: Der Wächter mailt nur zu Events.
+  const hasFutureEvents = !loading && sortedEvents.some((e) => getDaysUntil(e.date) >= 0);
+  useEffect(() => {
+    if (!loading) onFutureDates?.(hasFutureEvents);
+  }, [loading, hasFutureEvents, onFutureDates]);
+
   // Fallback-Hinweis aus cancellationPeriod, wenn KEINE fristHinweise da sind
   // UND eine Kündigungsfrist deterministisch erkannt wurde. So sieht der User
   // bei einem komplexen Vertrag (Factoring etc.), bei dem GPT konservativ ist,
@@ -563,7 +576,7 @@ export default function AnalysisImportantDates({
               das den Grund liefert, Verträge hier liegen zu lassen. Seit Stufe 1a
               (FREE_REMINDER_MAILS_ENABLED) für ALLE Pläne wahr. Nur bei mindestens
               einem ZUKÜNFTIGEN Termin — für vergangene verschickt der Wächter nichts. */}
-          {!loading && sortedEvents.some((e) => getDaysUntil(e.date) >= 0) && (
+          {hasFutureEvents && (
             <p className={styles.subtitle} style={{ marginTop: 3, color: "#16a34a" }}>
               Fristen-Wächter aktiv — wir erinnern dich rechtzeitig per E-Mail.
             </p>

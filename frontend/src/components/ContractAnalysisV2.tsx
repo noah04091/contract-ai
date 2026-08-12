@@ -164,6 +164,10 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  // 🛡️ Feinschliff 12.08.2026: Signal aus AnalysisImportantDates ("gibt es anstehende
+  // Termine?") für die Schutz-Karte — GLEICHE Datenquelle wie der grüne Wächter-Satz,
+  // damit Karte und Satz nie widersprechen. null = Termine noch nicht geladen.
+  const [datesHaveFuture, setDatesHaveFuture] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [serviceHealth, setServiceHealth] = useState<boolean | null>(null);
@@ -171,6 +175,13 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
   const [optimizationResult, setOptimizationResult] = useState<string | null>(null);
   const [isOptimizationExpanded, setIsOptimizationExpanded] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  // 🛡️ Feinschliff: Beim Wechsel auf einen anderen Vertrag zurück auf "unbekannt" —
+  // sonst würde die Karte kurz mit dem Termine-Stand des VORHERIGEN Vertrags urteilen.
+  const protectionContractId = (result?.originalContractId || (initialResult as { originalContractId?: string } | null | undefined)?.originalContractId) as string | undefined;
+  useEffect(() => {
+    setDatesHaveFuture(null);
+  }, [protectionContractId]);
 
   // ✅ NEU: States für bessere UX-Behandlung
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
@@ -1656,10 +1667,12 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             <div className={protectionStyles.sectionGroup}>
               <V2ProtectionCard
                 docType={((result || initialResult) as { documentType?: string | null })?.documentType}
+                contractType={((result || initialResult) as { contractType?: string | null })?.contractType}
                 protectedCount={protectedContractsCount}
                 onUploadAnother={onUploadAnother}
                 hidden={hideProtectionCard}
                 usage={result?.usage || initialResult?.usage}
+                hasFutureDates={datesHaveFuture}
               />
               <div className={datesWrapperStyles.v2DatesWrapper} ref={datesSectionRef}>
                 <AnalysisImportantDates
@@ -1667,6 +1680,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                   contractName={displayName}
                   documentType={((result || initialResult) as { documentType?: string | null })?.documentType}
                   contractType={((result || initialResult) as { contractType?: string | null })?.contractType}
+                  onFutureDates={setDatesHaveFuture}
                 />
               </div>
             </div>
