@@ -317,7 +317,7 @@ export default function Pricing() {
     { feature: "Mehrfach-Upload (Batch)", free: "–", business: "–", premium: "✓ Bis zu 10 Verträge" },
     { feature: "Ordner-Organisation", free: "–", business: "✓ + KI-Vorschläge", premium: "✓ + KI-Vorschläge" },
     { feature: "Kalender & Fristen", free: "✓ Nur ansehen", business: "✓ Vollzugriff", premium: "✓ Vollzugriff" },
-    { feature: "Email-Erinnerungen", free: "–", business: "✓", premium: "✓" },
+    { feature: "Email-Erinnerungen", free: "✓", business: "✓", premium: "✓" }, // 🔓 Stufe 1a (11.08.2026): Fristen-Wächter mailt auch Free — "–" wäre falsch
     { feature: "Kalender-Sync", free: "–", business: "–", premium: "✓ Google/Outlook" },
     { feature: "Legal Pulse Feed", free: "✓ Nur ansehen", business: "✓ Aktiv", premium: "✓ Aktiv" },
     { feature: "Legal Radar", free: "–", business: "✓", premium: "✓" },

@@ -1,6 +1,7 @@
 import { useState, useEffect, type CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 import styles from './ReminderSettingsModal.module.css';
 import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from '../utils/reminderGrouping';
 import {
@@ -31,7 +32,7 @@ interface ReminderSettingsModalProps {
   currentReminderDays?: number[];
   expiryDate?: string;
   kuendigung?: string;
-  noEmailReminders?: boolean; // true = Free-Plan → bekommt keine Erinnerungs-Mails (Upgrade-Hinweis)
+  noEmailReminders?: boolean; // ⚠️ Seit Stufe 1a (11.08.2026) überall false — Free bekommt Erinnerungs-Mails. Nur als Rollback-Pfad behalten.
   onClose: () => void;
   onSuccess?: () => void;
 }
@@ -75,6 +76,12 @@ export default function ReminderSettingsModal({
   onClose,
   onSuccess
 }: ReminderSettingsModalProps) {
+
+  // 🔒 Einzelne automatische Erinnerungen abbestellen (dismiss) ist Business+ — das Backend blockt
+  // die quick-action für Free (RESTRICTED_ACTIONS, calendar.js). Ohne dieses Gate würde der 🗑 für
+  // Free still per 403 scheitern (allSettled schluckt den Fehler) → Toggle wirkt, Mail kommt trotzdem.
+  const { user } = useAuth();
+  const canDismiss = !!user?.subscriptionPlan && user.subscriptionPlan !== 'free';
 
   // Initialize reminders from new format or legacy
   const initialReminders: ReminderSetting[] = currentReminderSettings.length > 0
@@ -411,8 +418,9 @@ export default function ReminderSettingsModal({
         ) : (
           <>
             <span style={tagAuto}>✉️ automatisch</span>
-            {/* Nur echte DB-Events (24-stellige ObjectId) entfernbar — NIE virtuelle Recurrence-Instanzen */}
-            {/^[a-f0-9]{24}$/i.test(id) && (
+            {/* Nur echte DB-Events (24-stellige ObjectId) entfernbar — NIE virtuelle Recurrence-Instanzen.
+                canDismiss: Free sieht die Liste, aber keinen 🗑 (Backend blockt dismiss für Free mit 403). */}
+            {canDismiss && /^[a-f0-9]{24}$/i.test(id) && (
               <button type="button" style={delBtn} onClick={() => setPendingDismiss((p) => [...p, id])} title="Diese Erinnerung einmalig entfernen">
                 <Trash2 size={13} />
               </button>
@@ -458,7 +466,7 @@ export default function ReminderSettingsModal({
 
           {/* Content */}
           <div className={styles.content}>
-            {/* 🔒 Free-Plan: bekommt KEINE Erinnerungs-Mails (calendarNotifier überspringt free) → ehrlicher Upgrade-Hinweis */}
+            {/* ⚠️ Toter Zweig seit Stufe 1a (11.08.2026): noEmailReminders ist überall false, Free bekommt Mails. Nur Rollback-Pfad. */}
             {noEmailReminders && (
               <div style={{ display: 'flex', gap: '10px', background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '12px 14px', marginBottom: '16px' }}>
                 <span style={{ fontSize: '16px', flexShrink: 0 }}>🔒</span>

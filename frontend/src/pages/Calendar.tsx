@@ -633,7 +633,7 @@ interface QuickActionsModalProps {
   onEventChange?: (event: CalendarEvent) => void; // Callback when navigating to different event
   onEdit?: (event: CalendarEvent) => void; // Callback to open edit modal
   onManageReminders?: (event: CalendarEvent) => void; // 3c: Erinnerungen des Vertrags verwalten
-  noEmailReminders?: boolean; // true = Free-Plan → keine Erinnerungs-Mails (Upgrade-Hinweis)
+  noEmailReminders?: boolean; // ⚠️ Seit Stufe 1a (11.08.2026) hart false — Free bekommt Mails (FREE_REMINDER_MAILS_ENABLED). Nur Rollback-Pfad.
 }
 
 function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange, onEdit, onManageReminders, noEmailReminders }: QuickActionsModalProps) {
@@ -4366,7 +4366,7 @@ export default function CalendarPage() {
         {showQuickActions && selectedEvent && (
           <QuickActionsModal
             event={selectedEvent}
-            noEmailReminders={access?.plan === 'free'}
+            noEmailReminders={false} /* 🔓 Stufe 1a (11.08.2026): Free bekommt Erinnerungs-Mails (FREE_REMINDER_MAILS_ENABLED) — Warnbox wäre falsch */
             allEvents={allDayEventsForPagination.length > 1 ? allDayEventsForPagination : undefined}
             onAction={handleQuickAction}
             onClose={() => {
@@ -4394,7 +4394,7 @@ export default function CalendarPage() {
           <ReminderSettingsModal
             contractId={reminderSettingsData.contractId}
             contractName={reminderSettingsData.contractName}
-            noEmailReminders={access?.plan === 'free'}
+            noEmailReminders={false} /* 🔓 Stufe 1a (11.08.2026): Free bekommt Erinnerungs-Mails (FREE_REMINDER_MAILS_ENABLED) — Warnbox wäre falsch */
             currentReminderSettings={reminderSettingsData.reminderSettings}
             currentReminderDays={reminderSettingsData.reminderDays}
             expiryDate={reminderSettingsData.expiryDate}
