@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { PulseV2LegalAlert } from '../../types/pulseV2';
 import { ImpactGraph } from './ImpactGraph';
 import { cleanContractName } from '../../utils/contractName';
+import { plural } from '../../utils/plural';
 import styles from '../../styles/PulseV2.module.css';
 
 interface LegalAlertsPanelProps {
@@ -463,7 +464,12 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
             ? 'Keine ausgeblendeten Alerts.'
             : view === 'resolved'
             ? 'Keine erledigten Alerts.'
-            : `Alle Alerts erledigt. ${resolvedCount} Alert(s) wurden abgearbeitet.`
+            /* TÜV 12.08.2026: Vorher stand hier immer „Alle Alerts erledigt. N Alert(s) wurden
+               abgearbeitet." — bei N=0 (alles nur ausgeblendet) ein widersprüchlicher Satz,
+               bei N=1 falsche Verbform, und „Alert(s)" ist keine deutsche Mehrzahl. */
+            : resolvedCount === 0
+            ? 'Zurzeit nichts zu tun.'
+            : `Zurzeit nichts zu tun. ${resolvedCount} ${plural(resolvedCount, 'Meldung wurde', 'Meldungen wurden')} erledigt.`
           }
         </div>
       ) : viewMode === 'timeline' && !showDismissed ? (

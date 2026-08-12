@@ -16,6 +16,8 @@
 import React, { useState, useEffect } from 'react';
 import type { PulseV2LegalAlert, PulseV2Action } from '../../types/pulseV2';
 import styles from '../../styles/PulseV2.module.css';
+// Deutsche Ein-/Mehrzahl — siehe utils/plural.ts (TÜV-Befund 12.08.2026).
+import { plural } from '../../utils/plural';
 
 // ─── Schalter ────────────────────────────────────────────────────────────────
 // Hinweis zur Stabilität (TÜV 06.08.): Der Hook liest nur beim MOUNT. Das ist heute
@@ -28,7 +30,9 @@ export function usePulseLayoutV3(): boolean {
   // Lesen beim Mount (kein Seiteneffekt im Render) …
   const [enabled] = useState(() => {
     try {
-      const param = new URLSearchParams(window.location.search).get('ansicht');
+      // TÜV 12.08.2026: Vergleich war Gross-/Kleinschreibungs-empfindlich — „?ansicht=Alt"
+      // führte nicht zurück. Jetzt tolerant (und Leerzeichen-fest).
+      const param = new URLSearchParams(window.location.search).get('ansicht')?.trim().toLowerCase();
       if (param === 'neu') return true;
       if (param === 'alt') return false;
       // SCHARFGESCHALTET 11.08.2026 (Noahs Abnahme nach Alltagstest seit 06.08.):
@@ -44,7 +48,8 @@ export function usePulseLayoutV3(): boolean {
   // … Persistieren als echter Effekt (TÜV-Fix: setItem gehört nicht in den Render-Pfad)
   useEffect(() => {
     try {
-      const param = new URLSearchParams(window.location.search).get('ansicht');
+      // gleiche Toleranz wie beim Lesen oben, sonst wird „?ansicht=Alt" nicht gemerkt
+      const param = new URLSearchParams(window.location.search).get('ansicht')?.trim().toLowerCase();
       if (param === 'neu') localStorage.setItem(LS_KEY, '1');
       else if (param === 'alt') localStorage.setItem(LS_KEY, '0');
     } catch { /* Private Mode o. ä. — Schalter gilt dann nur für diesen Aufruf */ }
@@ -85,6 +90,9 @@ interface StatusHeroProps {
   insightsCount: number;
   analyzedCount: number;
   lastRadarRun: string | null;
+  /** false = Plan ohne Legal Pulse → es findet KEINE Überwachung statt.
+   *  Optional: bei undefined (älteres Backend/Ladezustand) bleibt die Aussage wie bisher. */
+  pulseAccess?: boolean;
 }
 
 const AMPEL = {
@@ -94,7 +102,7 @@ const AMPEL = {
 };
 
 export const PulseStatusHeroV3: React.FC<StatusHeroProps> = ({
-  alerts, actions, monitoredCount, avgScore, insightsCount, analyzedCount, lastRadarRun,
+  alerts, actions, monitoredCount, avgScore, insightsCount, analyzedCount, lastRadarRun, pulseAccess,
 }) => {
   const openAlerts = alerts.filter(isOpen);
   const newToday = openAlerts.filter(a => isToday(a.createdAt)).length;
@@ -108,7 +116,12 @@ export const PulseStatusHeroV3: React.FC<StatusHeroProps> = ({
   let sub: React.ReactNode;
   if (points === 0) {
     title = 'Alles in Ordnung — nichts zu tun';
-    sub = <>Der tägliche Rechts-Check hat keine offenen Punkte für dich. <b style={{ color: '#0f172a' }}>{monitoredCount} {monitoredCount === 1 ? 'Vertrag steht' : 'Verträge stehen'}</b> unter Beobachtung — wir melden uns, wenn sich etwas ändert.</>;
+    // Ehrlichkeit (TÜV 12.08.2026): Ohne aktives Business+ läuft KEINE Überwachung.
+    // Vorher versprach der Status-Satz auch dann „stehen unter Beobachtung" — dieselbe
+    // Unwahrheit, die für die Vertragskarten bereits behoben wurde.
+    sub = pulseAccess === false
+      ? <>Es sind keine offenen Punkte da. <b style={{ color: '#b45309' }}>Die laufende Überwachung ist pausiert</b> — Legal Pulse gehört zum Business-Abo. Deine bisherigen Ergebnisse bleiben gespeichert.</>
+      : <>Der tägliche Rechts-Check hat keine offenen Punkte für dich. <b style={{ color: '#0f172a' }}>{monitoredCount} {monitoredCount === 1 ? 'Vertrag steht' : 'Verträge stehen'}</b> unter Beobachtung — wir melden uns, wenn sich etwas ändert.</>;
   } else if (newToday > 0) {
     title = newToday === 1 ? '1 neuer Punkt seit heute Morgen' : `${newToday} neue Punkte seit heute Morgen`;
     {/* TÜV-Fix 06.08.: kein „Du hast eine E-Mail bekommen"-Versprechen — Alerts aus der
@@ -194,7 +207,7 @@ export const RechtsCheckStage: React.FC<StageProps> = ({
 
   const steps: Array<{ k: React.ReactNode; label: string; d: string; color?: string }> = [
     {
-      k: lawChangesLastRun ?? '–', label: 'neue Gesetze & Urteile',
+      k: lawChangesLastRun ?? '–', label: `${plural(lawChangesLastRun ?? 0, 'neues Gesetz / Urteil', 'neue Gesetze & Urteile')}`,
       d: 'aus 27 amtlichen Quellen geholt — Gerichte, Gesetzblätter, Ministerien. Keine Zeitungen.',
     },
     {
@@ -204,7 +217,7 @@ export const RechtsCheckStage: React.FC<StageProps> = ({
     // TÜV-Fix 06.08.: Zählung basiert auf createdAt=heute — „heute" ist damit immer korrekt,
     // egal ob der Treffer aus dem Tages-Check oder der Nachprüfung einer frischen Analyse stammt.
     newToday > 0
-      ? { k: newToday, label: 'neue Treffer heute', d: 'unten mit NEU markiert — das Dringendste zuerst.', color: '#dc2626' }
+      ? { k: newToday, label: plural(newToday, 'neuer Treffer heute', 'neue Treffer heute'), d: 'unten mit NEU markiert — das Dringendste zuerst.', color: '#dc2626' }
       : { k: 0, label: 'neue Treffer heute', d: 'deine Verträge sind von den jüngsten Änderungen nicht betroffen. Morgen früh geht\'s weiter.', color: '#059669' },
   ];
 
@@ -252,7 +265,7 @@ export const RechtsCheckStage: React.FC<StageProps> = ({
         <div style={{ fontSize: 12, color: '#475569', margin: '2px 0 12px', display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ background: '#dbeafe', color: '#1d4ed8', fontSize: 11, fontWeight: 700, letterSpacing: '.6px', borderRadius: 8, padding: '4px 11px', textTransform: 'uppercase' }}>Diese Woche</span>
           <span>
-            {lawsNewThisWeek !== null ? `${lawsNewThisWeek} neue Rechtsänderungen erfasst` : ''}
+            {lawsNewThisWeek !== null ? `${lawsNewThisWeek} ${plural(lawsNewThisWeek, 'neue Rechtsänderung erfasst', 'neue Rechtsänderungen erfasst')}` : ''}
             {lawsNewThisWeek !== null && alertsThisWeek !== null ? ' · ' : ''}
             {alertsThisWeek !== null ? `${alertsThisWeek} Treffer — nur mit Beleg am Vertragstext` : ''}
           </span>

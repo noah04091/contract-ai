@@ -12,7 +12,7 @@ const sendEmail = require('../utils/sendEmail');
 const { generateEmailTemplate } = require('../utils/emailTemplate');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { isEnterpriseOrHigher } = require('../constants/subscriptionPlans'); // 📊 Zentrale Plan-Definitionen
+const { isEnterpriseOrHigher, normalizePlan } = require('../constants/subscriptionPlans'); // 📊 Zentrale Plan-Definitionen
 const { logActivity, ActivityTypes } = require('../services/activityLogger');
 
 /**
@@ -63,7 +63,13 @@ router.post('/', verifyToken, async (req, res) => {
     const organization = new Organization({
       name: name.trim(),
       ownerId: new ObjectId(userId),
-      subscriptionPlan: plan,
+      // TUEV-Fund 12.08.2026: Hier stand der ROHE Plan des Erstellers. Das
+      // Organization-Schema erlaubt aber nur ['free','business','enterprise'] —
+      // ein Konto mit dem Alt-Plan "premium"/"legendary" kam durch den
+      // isEnterpriseOrHigher-Check oben und liess dann `organization.save()` mit
+      // einem Mongoose-ValidationError scheitern. normalizePlan() bildet die
+      // Alt-Namen auf enterprise ab.
+      subscriptionPlan: normalizePlan(plan),
       companyLogo: companyLogo || null,
       maxMembers: 10
     });

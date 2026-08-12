@@ -1,3 +1,14 @@
+// ⚠️ NICHT IN BENUTZUNG (festgestellt 12.08.2026).
+// `git grep -n "requireFeature(" backend/routes` liefert 0 Treffer — weder requireFeature
+// noch das daraus abgeleitete requireEnterprise wird von einer Route eingebunden.
+// Die Enterprise-Gates leben stattdessen als LOKALE Funktionen in den Routen selbst
+// (bulkDownload.js, companyProfile.js, exportContracts.js).
+//
+// Das hat schon Arbeit gekostet: Die Org-Vererbung wurde am 11.08. hier eingebaut und
+// war wirkungslos — dasselbe Muster wie bei components/pulseV2/MonitoringStatusCard.tsx.
+// Bevor hier etwas geaendert wird: erst pruefen, ob die Middleware inzwischen
+// irgendwo eingebunden ist. Sonst aendert man Code, den niemand ausfuehrt.
+//
 // 📁 backend/middleware/requireFeature.js
 // 🔐 Feature-spezifische Middleware für granulare Berechtigungsprüfung
 // Nutzt zentrale FEATURE_ACCESS Definitionen

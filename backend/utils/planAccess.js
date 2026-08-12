@@ -21,17 +21,15 @@
 // zurueckgegeben. Das entspricht exakt dem bisherigen Verhalten; ein Ausfall der
 // Org-Suche kann also niemanden schlechter stellen als vorher.
 //
-// ⚠️ BEKANNTE LUECKE (11.08.2026 gefunden, bewusst NICHT hier geloest):
-// `organizations.subscriptionPlan` wird NUR beim Anlegen gesetzt (routes/organizations.js:66)
-// und bei einer Kuendigung nirgends zurueckgestuft — der Stripe-Webhook fasst
-// Organisationen gar nicht an. Kuendigt der Org-Inhaber, erben seine Mitglieder den
-// alten Plan also weiter. Diese Luecke ist NICHT neu: `middleware/checkSubscription.js`
-// vererbt schon laenger genauso; dieser Helfer weitet sie nur auf mehr Gates aus.
-// Der richtige Ort fuer die Reparatur ist der Stripe-Webhook (Org beim Kuendigen
-// mit herunterstufen) — NICHT hier: ein Live-Check auf den Zahlungsstatus des
-// Inhabers wuerde bei voruebergehenden Zahlungsproblemen (past_due) sofort das
-// ganze Team aussperren, und das trifft dann einen zahlenden Kunden.
-// Aktuell kein Schaden: der einzige echte Org-Inhaber hat eine aktive Subscription.
+// ✅ ERLEDIGT (11.08.2026, Commit 60d8422a): Frueher wurde `organizations.subscriptionPlan`
+// nur beim Anlegen gesetzt und bei einer Kuendigung nie zurueckgestuft — Mitglieder erbten
+// den alten Plan dann unbefristet weiter. Seit `utils/syncOrgPlan.js` folgt der Org-Plan
+// dem Plan seines Inhabers (Stripe-Webhook an 4 Stellen + beide Konto-Loesch-Pfade).
+// Bewusst NICHT eingebaut: ein Live-Check auf den Zahlungsstatus des Inhabers — bei
+// voruebergehendem `past_due` wuerde der sofort das ganze Team eines zahlenden Kunden
+// aussperren. Verbleibende Randfaelle (dokumentiert, kein aktiver Schaden): manuelles
+// Plan-Setzen im Admin-Panel, Ablauf eines Beta-Zugangs, sowie Organisationen, deren
+// Inhaber-Konto nicht mehr existiert (aktuell 1 solche Org, ohne lebende Mitglieder).
 
 /**
  * Liefert den effektiven Plan (kleingeschrieben): eigener bezahlter Plan,

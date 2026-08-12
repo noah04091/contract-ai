@@ -7,6 +7,10 @@ const verifyToken = require("../middleware/verifyToken");
 const { generateEventsForContract, cleanAndRegenerateAIEvents, regenerateAllEvents, completeDanglingLabel } = require("../services/calendarEvents");
 const { generateICSFeed, generateCalendarLinks, foldICSLine, escapeICS } = require("../utils/icsGenerator");
 const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
+// Plan-Entscheidungen zentral: normalisiert Alt-Namen (premium/legendary) mit.
+const { isBusinessOrHigher } = require("../constants/subscriptionPlans");
+// Effektiver Plan inkl. Org-Vererbung (siehe utils/planAccess.js).
+const { resolveEffectivePlan } = require("../utils/planAccess");
 
 const router = express.Router();
 
@@ -18,7 +22,12 @@ const router = express.Router();
  * Pläne mit vollem Kalender-Zugriff (erstellen, bearbeiten, löschen, Benachrichtigungen)
  * Free User können nur Events ANSEHEN
  */
-const CALENDAR_FULL_ACCESS_PLANS = ["business", "enterprise", "legendary"];
+// Nur noch fuer die Anzeige in Fehlermeldungen ("requiredPlans"). Die ENTSCHEIDUNG
+// faellt ueber isBusinessOrHigher() aus constants/subscriptionPlans.js — TUEV-Fund
+// 12.08.2026: In dieser Liste fehlte "premium" (Alt-Name fuer enterprise), wodurch
+// legacy-Premium-Konten den Kalender-Vollzugriff verloren, obwohl sie ueberall sonst
+// als business-or-higher gelten. normalizePlan() deckt solche Alt-Namen zentral ab.
+const CALENDAR_FULL_ACCESS_PLANS = ["business", "enterprise"];
 
 /**
  * Prüft ob User vollen Kalender-Zugriff hat
@@ -41,10 +50,9 @@ async function checkCalendarAccess(db, userId) {
     // 11.08.2026: Effektiver Plan inkl. Org-Vererbung — Mitglieder einer zahlenden
     // Organisation haben ihr eigenes Feld auf "free" und hatten daher nur Lese-Zugriff
     // auf den Kalender, obwohl ihre Organisation zahlt.
-    const { resolveEffectivePlan } = require("../utils/planAccess");
     const plan = await resolveEffectivePlan(db, user);
     const isActive = user.subscriptionActive !== false; // Default true für Legacy
-    const hasAccess = isActive && CALENDAR_FULL_ACCESS_PLANS.includes(plan);
+    const hasAccess = isActive && isBusinessOrHigher(plan);
 
     return {
       hasAccess,
@@ -1259,7 +1267,8 @@ router.get("/email-preferences", verifyToken, async (req, res) => {
 
     const user = await req.db.collection("users").findOne(
       { _id: userId },
-      { projection: { emailDigestMode: 1, subscriptionPlan: 1, subscriptionActive: 1 } }
+      // `role` fuer den Admin-Safeguard in resolveEffectivePlan; `_id` liefert Mongo per Default
+      { projection: { emailDigestMode: 1, subscriptionPlan: 1, subscriptionActive: 1, role: 1 } }
     );
 
     if (!user) {
@@ -1270,7 +1279,15 @@ router.get("/email-preferences", verifyToken, async (req, res) => {
     }
 
     // 🔒 E-Mail Digest ist nur für Business/Enterprise verfügbar
-    const hasFullAccess = user.subscriptionActive && CALENDAR_FULL_ACCESS_PLANS.includes(user.subscriptionPlan);
+    // TUEV-Fund 12.08.2026: Diese Stelle las das ROHE Feld und widersprach damit dem
+    // PUT-Handler derselben Datei (der ueber checkCalendarAccess laeuft): Ein Mitglied
+    // einer zahlenden Organisation bekam hier isPremiumOrHigher:false, durfte die
+    // Einstellung per PUT aber sehr wohl aendern. Ausserdem war `subscriptionActive`
+    // hier strikt truthy geprueft statt `!== false` wie in checkCalendarAccess —
+    // Konten ohne dieses Feld fielen dadurch zusaetzlich durch.
+    const effektiverPlan = await resolveEffectivePlan(req.db, user);
+    const istAktiv = user.subscriptionActive !== false; // Default true fuer Legacy, wie in checkCalendarAccess
+    const hasFullAccess = istAktiv && isBusinessOrHigher(effektiverPlan);
     const isPremiumOrHigher = hasFullAccess; // Alias für Abwärtskompatibilität
 
     res.json({

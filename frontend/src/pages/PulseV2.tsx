@@ -10,6 +10,7 @@ import { ActionItem, isLegallyMotivated } from '../components/pulseV2/ActionItem
 import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
 import { PulseCommandCenter } from '../components/pulseV2/PulseCommandCenter';
+import { plural } from '../utils/plural';
 // Redesign 21.07.: alter Hero bleibt für Rollback erhalten — Import inaktiv
 // import { PulseCheckHero } from '../components/pulseV2/PulseCheckHero';
 // Klartext-Redesign 05.08. (Phase 1, HINTER SCHALTER ?ansicht=neu — Standard bleibt die alte Ansicht):
@@ -1201,6 +1202,7 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
               insightsCount={insights.length}
               analyzedCount={stats.analyzed}
               lastRadarRun={monitoringStatus?.lastRadarRun ?? null}
+              pulseAccess={monitoringStatus?.pulseAccess}
             />
           ) : (
             <PulseCommandCenter
@@ -1626,7 +1628,8 @@ const ContractCard: React.FC<{
             color: daysUntilExpiry < 0 ? '#dc2626' : daysUntilExpiry < 30 ? '#d97706' : '#94a3b8',
             fontWeight: daysUntilExpiry < 30 ? 600 : 400,
           }}>
-            {daysUntilExpiry < 0 ? 'Abgelaufen' : daysUntilExpiry === 0 ? 'Läuft heute ab' : `${daysUntilExpiry} Tage bis Ablauf`}
+            {/* TÜV 12.08.2026: Der Fall „1" fehlte — am Vortag des Ablaufs stand „1 Tage bis Ablauf". */}
+            {daysUntilExpiry < 0 ? 'Abgelaufen' : daysUntilExpiry === 0 ? 'Läuft heute ab' : `${daysUntilExpiry} ${plural(daysUntilExpiry, 'Tag', 'Tage')} bis Ablauf`}
           </div>
         )}
       </div>
