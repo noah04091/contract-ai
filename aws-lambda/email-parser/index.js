@@ -89,53 +89,57 @@ exports.handler = async (event) => {
     });
 
     // 3. Anhänge extrahieren
+    // 13.08.2026: PDF + Word (.docx) — das Backend beherrscht beide (mammoth-Extraktion).
+    // Aussortierte Anhänge werden NICHT mehr still verschluckt, sondern als
+    // rejectedAttachments ans Backend gemeldet, das dem Nutzer eine Hinweis-Mail schickt
+    // (Vorfall 12.08.: 3 Word-Mails verschwanden ohne jedes Feedback).
     const attachments = [];
+    const rejectedAttachments = [];
+
+    const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
     if (email.attachments && email.attachments.length > 0) {
       for (const att of email.attachments) {
-        // Nur PDFs im MVP (kann später erweitert werden)
-        const isPDF = att.contentType === 'application/pdf' ||
-                      att.filename?.toLowerCase().endsWith('.pdf');
+        const nameLower = (att.filename || '').toLowerCase();
+        const isPDF = att.contentType === 'application/pdf' || nameLower.endsWith('.pdf');
+        const isDOCX = att.contentType === DOCX_MIME || nameLower.endsWith('.docx');
 
-        if (isPDF) {
+        if (isPDF || isDOCX) {
           const sizeMB = att.content.length / (1024 * 1024);
 
-          // Filter: max 15 MB
+          // Filter: max 15 MB (Backend prüft dieselbe Grenze nochmal)
           if (sizeMB <= 15) {
             attachments.push({
-              filename: att.filename || 'unnamed.pdf',
+              filename: att.filename || (isDOCX ? 'unnamed.docx' : 'unnamed.pdf'),
               contentType: att.contentType,
               data: att.content.toString('base64') // Als Base64 übertragen
             });
 
-            console.log(`✅ PDF-Anhang hinzugefügt: ${att.filename} (${sizeMB.toFixed(2)} MB)`);
+            console.log(`✅ Anhang hinzugefügt: ${att.filename} (${sizeMB.toFixed(2)} MB, ${isDOCX ? 'DOCX' : 'PDF'})`);
           } else {
-            console.warn(`⚠️ PDF zu groß: ${att.filename} (${sizeMB.toFixed(2)} MB)`);
+            console.warn(`⚠️ Anhang zu groß: ${att.filename} (${sizeMB.toFixed(2)} MB)`);
+            rejectedAttachments.push({ filename: `${att.filename} (${sizeMB.toFixed(1)} MB — größer als 15 MB)`, contentType: att.contentType });
           }
         } else {
-          console.log(`ℹ️ Nicht-PDF-Anhang übersprungen: ${att.filename} (${att.contentType})`);
+          console.log(`ℹ️ Nicht unterstützter Anhang: ${att.filename} (${att.contentType})`);
+          rejectedAttachments.push({ filename: att.filename || 'Unbenannt', contentType: att.contentType });
         }
       }
     }
 
     if (attachments.length === 0) {
-      console.warn('⚠️ Keine gültigen PDF-Anhänge gefunden');
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          message: 'E-Mail empfangen, aber keine gültigen PDFs',
-          messageId
-        })
-      };
+      console.warn(`⚠️ Keine gültigen PDF-/DOCX-Anhänge (${rejectedAttachments.length} aussortiert) — Backend informiert den Nutzer`);
     }
 
-    // 4. API-Call zu Backend (mit Retry-Logik)
+    // 4. API-Call zu Backend (mit Retry-Logik) — auch bei 0 gültigen Anhängen,
+    // damit das Backend die Hinweis-Mail an den Nutzer schicken kann.
     const payload = {
       recipientEmail,
       senderEmail,
       subject,
       bodyText,
       attachments,
+      rejectedAttachments,
       messageId
     };
 

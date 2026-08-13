@@ -3339,7 +3339,10 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
       subject,         // Betreff
       bodyText,        // E-Mail Text
       attachments,     // Array von { filename, contentType, data: base64 }
-      messageId        // SES Message ID (für Idempotenz)
+      messageId,       // SES Message ID (für Idempotenz)
+      // 📧 13.08.2026: Von der Lambda aussortierte Anhänge (z. B. Bilder, Excel) —
+      // damit der Nutzer eine ehrliche Hinweis-Mail bekommt statt stillem Verschlucken.
+      rejectedAttachments // optional: Array von { filename, contentType }
     } = req.body;
 
 
@@ -3495,8 +3498,69 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
       senderEmail: senderEmail
     };
 
+    // 📧 Ehrlichkeits-Mail (13.08.2026): Wenn nichts Importierbares dabei war, erfährt
+    // der Nutzer WARUM — vorher wurde z. B. eine Word-Mail (alte Lambda) oder ein Bild
+    // still verschluckt (Vorfall 12.08.: 3 Test-Mails mit .docx, null Feedback).
+    // Antwort ist bewusst 200, damit die Lambda nicht sinnlos retried.
+    const sendRejectionMail = async (rejectedList, reasonTitle) => {
+      try {
+        const rejectionHtml = generateEmailTemplate({
+          title: "Import nicht möglich",
+          preheader: "Deine E-Mail konnte nicht importiert werden",
+          body: `
+            <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px; margin-bottom: 25px;">
+              <p style="color: #b45309; font-size: 16px; font-weight: 600; margin: 0;">${reasonTitle}</p>
+            </div>
+            ${rejectedList.length > 0 ? `
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border-radius: 12px; margin-bottom: 25px;">
+              <tr><td style="padding: 20px;">
+                <p style="margin: 0 0 12px 0; font-size: 15px; font-weight: 600; color: #1a1a1a;">Nicht unterstützte Anhänge:</p>
+                ${rejectedList.map(r => `<p style="margin: 0 0 8px 0; font-size: 14px; color: #555;">• ${String(r.filename || 'Unbenannt').replace(/[<>]/g, '')}</p>`).join('')}
+              </td></tr>
+            </table>` : ''}
+            <p style="font-size: 14px; color: #666; text-align: center;">
+              Unterstützt werden <strong>PDF-Dateien</strong> und <strong>Word-Dateien (.docx)</strong> bis 15 MB.
+              Bitte hänge dein Dokument in einem dieser Formate an und sende die E-Mail erneut.
+            </p>
+          `,
+          cta: { text: "Oder direkt hochladen", url: "https://www.contract-ai.de/contracts" }
+        });
+        await emailTransporter.sendMail({
+          from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+          to: user.email,
+          subject: "Contract AI - E-Mail-Import nicht möglich",
+          html: rejectionHtml
+        });
+        require("../utils/emailLogger").logSentEmail({
+          to: user.email,
+          subject: "Contract AI - E-Mail-Import nicht möglich",
+          category: 'import_rejected',
+          userId: user._id ? String(user._id) : null,
+          source: 'routes/contracts.js'
+        }).catch(() => {});
+      } catch (mailErr) {
+        console.error('❌ Rejection-Mail fehlgeschlagen:', mailErr.message);
+      }
+    };
+
     // 3. Attachments validieren und filtern
     if (!attachments || attachments.length === 0) {
+      // Neue Lambda schickt rejectedAttachments mit (auch leer = "Mail ohne Anhang") →
+      // Hinweis-Mail + 200. Alte Lambda ohne das Feld → Verhalten unverändert (400).
+      if (Array.isArray(rejectedAttachments)) {
+        const hadFiles = rejectedAttachments.length > 0;
+        await sendRejectionMail(
+          rejectedAttachments,
+          hadFiles
+            ? '📎 Die angehängten Dateien haben ein nicht unterstütztes Format.'
+            : '📎 In deiner E-Mail wurde kein Anhang gefunden.'
+        );
+        return res.status(200).json({
+          success: false,
+          imported: 0,
+          message: hadFiles ? "Keine unterstützten Anhänge — Hinweis-Mail versendet" : "Kein Anhang — Hinweis-Mail versendet"
+        });
+      }
       return res.status(400).json({
         success: false,
         message: "Keine Anhänge gefunden"
@@ -3526,9 +3590,16 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
     }
 
     if (validAttachments.length === 0) {
-      return res.status(400).json({
+      // 13.08.2026: Auch hier Hinweis-Mail statt stillem 400 — der Nutzer sieht sonst nie,
+      // warum sein Anhang (falsches Format / zu groß / kaputt) nicht angekommen ist.
+      await sendRejectionMail(
+        errors.map(e => ({ filename: `${e.filename} — ${e.error}` })),
+        '📎 Deine Anhänge konnten nicht importiert werden.'
+      );
+      return res.status(200).json({
         success: false,
-        message: "Keine gültigen PDF-Anhänge (max 15 MB)",
+        imported: 0,
+        message: "Keine gültigen PDF-/Word-Anhänge (max 15 MB) — Hinweis-Mail versendet",
         errors
       });
     }
@@ -3582,7 +3653,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
         // Contract-Dokument erstellen
         const newContract = {
           userId: user._id,
-          name: isPlaceholderDocName(sanitizedFilename) ? 'Dokument' : fixUtf8Encoding(sanitizedFilename.replace('.pdf', '')),
+          name: isPlaceholderDocName(sanitizedFilename) ? 'Dokument' : fixUtf8Encoding(sanitizedFilename.replace(/\.(pdf|docx)$/i, '')),
           s3Key: s3Key,
           s3Bucket: process.env.S3_BUCKET_NAME,
           uploadType: 'EMAIL_IMPORT',
@@ -3727,7 +3798,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
             </table>
 
             <p style="font-size: 14px; color: #666; text-align: center;">
-              <strong>Tipp:</strong> Stellen Sie sicher, dass Ihre Dateien im PDF-Format vorliegen und nicht passwortgeschützt sind.
+              <strong>Tipp:</strong> Stellen Sie sicher, dass Ihre Dateien im PDF- oder Word-Format (.docx) vorliegen und nicht passwortgeschützt sind.
             </p>
           `,
           cta: { text: "Erneut versuchen", url: "https://www.contract-ai.de/contracts" }

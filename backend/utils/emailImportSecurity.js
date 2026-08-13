@@ -124,11 +124,18 @@ function validateAttachment(attachment, maxSizeMB = 15) {
     };
   }
 
-  // 4. Nur PDFs erlauben (MVP)
-  if (detectedMimeType !== 'application/pdf') {
+  // 4. Erlaubte Formate: PDF + Word (.docx) — 13.08.2026: DOCX freigeschaltet.
+  // Die Analyse-Pipeline beherrscht DOCX längst (mammoth in analyze.js); die alte
+  // "Nur PDFs (MVP)"-Sperre hier war Altbestand und hat Word-Mails still verworfen.
+  // Erkennung läuft über Magic Bytes (detectMimeType oben), nie über den Dateinamen.
+  const ALLOWED_MIMETYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+  if (!ALLOWED_MIMETYPES.includes(detectedMimeType)) {
     return {
       valid: false,
-      error: `Nur PDFs erlaubt (erkannt: ${detectedMimeType})`,
+      error: `Nur PDF- oder Word-Dateien (.docx) erlaubt (erkannt: ${detectedMimeType})`,
       sanitizedFilename,
       detectedMimeType
     };
