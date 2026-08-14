@@ -1506,129 +1506,17 @@ const connectDB = async () => {
     // Damit konnte sich jeder eine Sitzung ausstellen. Kein Aufrufer im Projekt
     // (Frontend, Tests, Skripte, CI). Router-Datei backend/testAuth.js ebenfalls entfernt.
 
-    // ✅ 18. DEBUG ROUTE
-    app.get("/api/debug", (req, res) => {
-      console.log("Cookies:", req.cookies);
-      res.cookie("debug_cookie", "test-value", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: "Lax", // ✅ CSRF-Schutz
-        path: "/",
-      });
-      
-      const s3Status = {
-        configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),
-        bucket: process.env.AWS_S3_BUCKET || 'Not set',
-        region: process.env.AWS_REGION || 'Not set',
-        servicesLoaded: !!(s3Upload && generateSignedUrl)
-      };
-      
-      res.json({ 
-        cookies: req.cookies,
-        timestamp: new Date().toISOString(),
-        status: "working",
-        mongodb: db ? 'ZENTRAL VERBUNDEN' : 'NICHT VERBUNDEN',
-        jsonLimit: '50mb',
-        routeStructure: "✅ ALLE ROUTEN UNTER /api - EINHEITLICH!",
-        authRoute: "/api/auth/* (FIXED!)",
-        emailVerificationRoute: "/api/email-verification/* (NEW!)",
-        contractsRoute: "/api/contracts/* (FIXED!)",
-        generateRoute: "/api/contracts/generate (FIXED!)",
-        smartContractRoute: "/api/contracts/:id/generate-optimized (FIXED!)",
-        analyzeRoute: "/api/analyze (FIXED!)",
-        optimizeRoute: "/api/optimize (FIXED!)",
-        s3Routes: "/api/s3/* (FIXED + ENHANCED!)",
-        uploadRoute: "/api/upload (FIXED!)",
-        stripeRoutes: "/api/stripe/* (FIXED!)",
-        invoiceRoutes: "/api/invoices/* (ADDED!)",
-        betterContractsRoute: "/api/better-contracts (ADDED!)",
-        migrationRoutes: "/api/contracts/migrate-legacy & migration-status (NEW!)",
-        calendarRoutes: "/api/calendar/* (NEW!)",
-        cancellationsRoutes: "/api/cancellations/* (NEW!)",
-        calendarFeatures: {
-          eventGeneration: "✅ Automatisch bei Upload/Edit",
-          notifications: "✅ Täglicher Check um 8 Uhr",
-          quickActions: "✅ Cancel, Compare, Optimize, Snooze",
-          oneClickCancel: "✅ Direkt aus Calendar oder E-Mail"
-        },
-        s3Status: s3Status,
-        partnerIntegration: {
-          check24PartnerId: process.env.CHECK24_PARTNER_ID || 'NOT SET',
-          tarifcheckPartnerId: process.env.TARIFCHECK_PARTNER_ID || 'NOT SET',
-          widgetSecurity: 'CSP configured for partner domains',
-          allowedPartnerDomains: [
-            '*.check24.de',
-            '*.tarifcheck.de',
-            'files.check24.net',
-            'form.partner-versicherung.de'
-          ]
-        },
-        message: "🎉 PFAD-CHAOS BEHOBEN + CALENDAR INTEGRATION ACTIVE + 50MB LIMIT + PARTNER SECURITY!"
-      });
-    });
-
-    // ✅ 19. DEBUG ROUTES LIST
-    app.get("/api/debug/routes", (req, res) => {
-      const routes = [];
-      
-      function extractRoutes(stack, basePath = '') {
-        stack.forEach((middleware) => {
-          if (middleware.route) {
-            routes.push({
-              path: basePath + middleware.route.path,
-              methods: Object.keys(middleware.route.methods),
-              type: 'route'
-            });
-          } else if (middleware.name === 'router' && middleware.handle?.stack) {
-            const routerBasePath = middleware.regexp.source
-              .replace(/^\^\\?/, '')
-              .replace(/\$.*/, '')
-              .replace(/\\\//g, '/')
-              .replace(/\(\?\:\\\/\)\?\(\?\=\\\/\|\$\)/, '')
-              .replace(/\\\//g, '/');
-            
-            extractRoutes(middleware.handle.stack, basePath + routerBasePath);
-          }
-        });
-      }
-      
-      try {
-        extractRoutes(app._router.stack);
-      } catch (error) {
-        console.error("❌ Route extraction error:", error);
-      }
-      
-      const apiRoutes = routes.filter(r => r.path.startsWith('/api'));
-      const nonApiRoutes = routes.filter(r => !r.path.startsWith('/api'));
-      
-      res.json({
-        success: true,
-        message: "📁 Route Debug Info - WITH CALENDAR INTEGRATION",
-        totalRoutes: routes.length,
-        apiRoutes: apiRoutes,
-        nonApiRoutes: nonApiRoutes,
-        fixedStructure: {
-          auth: "/api/auth/*",
-          emailVerification: "/api/email-verification/*",
-          contracts: "/api/contracts/*",
-          generate: "/api/contracts/generate",
-          generateOptimized: "/api/contracts/:contractId/generate-optimized", 
-          analyze: "/api/analyze",
-          optimize: "/api/optimize",
-          s3: "/api/s3/*",
-          upload: "/api/upload",
-          stripe: "/api/stripe/*",
-          invoices: "/api/invoices/*",
-          betterContracts: "/api/better-contracts",
-          migrationRoutes: "/api/contracts/migrate-legacy & migration-status",
-          calendar: "/api/calendar/* (NEW!)",
-          cancellations: "/api/cancellations/* (NEW!)",
-          companyProfile: "/api/company-profile/* (NEW!)"
-        },
-        warning: nonApiRoutes.length > 0 ? "⚠️ Es gibt noch non-/api Routen!" : "✅ Alle Routen unter /api!",
-        timestamp: new Date().toISOString()
-      });
-    });
+    // 🔒 18. DIAGNOSE-ROUTEN ENTFERNT (14.08.2026)
+    // Entfernt wurden GET /api/debug und GET /api/debug/routes. Beide waren ohne
+    // Authentifizierung erreichbar:
+    //   - /api/debug echote die Cookies des Aufrufers als JSON zurueck (hob damit den
+    //     httpOnly-Schutz des Sitzungs-Cookies auf) und gab AWS_S3_BUCKET, AWS_REGION
+    //     sowie die Check24-/Tarifcheck-Partner-IDs preis.
+    //   - /api/debug/routes lieferte die vollstaendige Routen-Landkarte (586 Eintraege).
+    // Beide entstanden im April/Juni 2025 als Werkzeuge fuer die Cookie-Auth-Diagnose
+    // bzw. die Pfad-Vereinheitlichung; beide Aufgaben sind seit Juni 2025 erledigt.
+    // Nachweislich kein Aufrufer im Projekt (Frontend, Tests, Skripte, CI).
+    // Gesundheitspruefung laeuft unveraendert ueber /health und /api/health.
 
     // 🔄 Cron Retry-Wrapper: Retry bei transienten MongoDB-Fehlern
     const RETRYABLE_ERRORS = ['MongoNetworkTimeoutError', 'MongoServerSelectionError', 'ECONNRESET'];
