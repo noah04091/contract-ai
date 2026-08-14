@@ -97,8 +97,18 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-// 🆕 NEUE ÖFFENTLICHE ROUTE für Better Contracts (OHNE verifyToken, OHNE DB-Speicherung)
-router.post("/public", async (req, res) => {
+// 🔒 Route für Better Contracts (ohne DB-Speicherung, ohne Kontingent-Zählung)
+//
+// 14.08.2026: verifyToken ergänzt. Die Route war seit Juni 2025 ohne jede
+// Anmeldung erreichbar und rief GPT-4 auf (~2,3 ct pro Aufruf, ohne Drosselung,
+// ohne Kosten-Zuordnung). Live nachgewiesen: ein anonymer Aufruf wurde
+// durchgelassen und scheiterte nur am zu kurzen Text.
+//
+// Aufgerufen wird sie ausschliesslich von BetterContracts.tsx, einer Seite
+// hinter RequireAuth und Premium-Gate, die ihre Anmeldedaten bereits
+// mitsendet (credentials: "include"). verifyToken liest zuerst das Cookie.
+// Der Name "/public" bleibt, damit der Frontend-Aufruf unveraendert passt.
+router.post("/public", verifyToken, async (req, res) => {
   console.log("🔍 Public Analyze-Type Request für Better Contracts");
   
   try {

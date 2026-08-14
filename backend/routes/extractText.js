@@ -47,8 +47,18 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   }
 });
 
-// 🆕 NEUE ÖFFENTLICHE ROUTE für Better Contracts (OHNE verifyToken!)
-router.post("/public", upload.single("file"), async (req, res) => {
+// 🔒 Route für Better Contracts (ohne DB-Speicherung)
+//
+// 14.08.2026: verifyToken ergänzt. Die Route nahm seit Juni 2025 ohne jede
+// Anmeldung Datei-Uploads entgegen und liess pdf-parse darauf los, ohne
+// Groessen- oder Typpruefung (multer ohne limits/fileFilter). Live
+// nachgewiesen: anonymer Aufruf wurde durchgelassen, Antwort war lediglich
+// "Keine Datei hochgeladen".
+//
+// Aufgerufen wird sie ausschliesslich von BetterContracts.tsx (RequireAuth +
+// Premium-Gate, sendet credentials: "include"). Der Name "/public" bleibt,
+// damit der Frontend-Aufruf unveraendert passt.
+router.post("/public", verifyToken, upload.single("file"), async (req, res) => {
   console.log("📄 Public Extract-Text Request für Better Contracts");
   
   if (!req.file) {
