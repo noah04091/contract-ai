@@ -1500,13 +1500,11 @@ const connectDB = async () => {
       console.log("✅ Upload-Route geladen unter /api/upload");
     }
 
-    // ✅ 17. TEST & DEBUG ROUTES
-    try {
-      app.use("/api/test", require("./testAuth"));
-      console.log("✅ Test-Route geladen unter /api/test");
-    } catch (err) {
-      console.error("❌ Fehler bei Test-Route:", err);
-    }
+    // 🔒 17. TEST-ROUTE ENTFERNT (14.08.2026)
+    // Die Route /api/test/test-login stellte OHNE Authentifizierung ein gültig
+    // signiertes Produktions-JWT aus und setzte es als Cookie auf .contract-ai.de.
+    // Damit konnte sich jeder eine Sitzung ausstellen. Kein Aufrufer im Projekt
+    // (Frontend, Tests, Skripte, CI). Router-Datei backend/testAuth.js ebenfalls entfernt.
 
     // ✅ 18. DEBUG ROUTE
     app.get("/api/debug", (req, res) => {
