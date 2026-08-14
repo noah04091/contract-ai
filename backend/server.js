@@ -2443,9 +2443,18 @@ const connectDB = async () => {
       try {
         const { to, subject, html, attachments } = req.body;
 
-        // Security Check
+        // 🔒 Security Check (14.08.2026: Literal entfernt)
+        // Vorher stand das Passwort fest im Quelltext und das Repository ist
+        // oeffentlich — damit konnte jeder Mails unter no-reply@contract-ai.de
+        // versenden. Jetzt ausschliesslich aus der Umgebung, ohne Rueckfall:
+        // fehlt INTERNAL_API_SECRET, bleibt der Endpunkt geschlossen statt offen.
+        const erwartetesSecret = process.env.INTERNAL_API_SECRET;
         const secret = req.headers['x-internal-secret'];
-        if (secret !== 'webhook-to-main-server') {
+        if (!erwartetesSecret) {
+          console.error('❌ [INTERNAL API] INTERNAL_API_SECRET ist nicht gesetzt — Endpunkt bleibt geschlossen');
+          return res.status(503).json({ error: 'Service unavailable' });
+        }
+        if (secret !== erwartetesSecret) {
           return res.status(401).json({ error: 'Unauthorized' });
         }
 

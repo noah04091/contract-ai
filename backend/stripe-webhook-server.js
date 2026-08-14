@@ -28,7 +28,9 @@ const sendEmail = async ({ to, subject, html, attachments = [] }) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Internal-Secret': process.env.INTERNAL_API_SECRET || 'webhook-to-main-server'
+        // 14.08.2026: Rueckfall auf das feste Passwort entfernt (Repo ist oeffentlich).
+        // Der Empfaenger prueft ausschliesslich gegen INTERNAL_API_SECRET.
+        'X-Internal-Secret': process.env.INTERNAL_API_SECRET || ''
       },
       body: JSON.stringify(emailData)
     });
