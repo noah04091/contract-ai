@@ -4,10 +4,33 @@
 const express = require("express");
 const { ObjectId } = require("mongodb");
 const { OpenAI } = require("openai");
-const verifyToken = require("../middleware/verifyToken");
+const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+/**
+ * 🔒 Optionale Anmeldung (14.08.2026)
+ *
+ * Der Assistent muss oeffentlich bleiben: auf der Startseite beraet er
+ * nicht angemeldete Besucher im Verkaufs-Modus. Gleichzeitig darf der
+ * Vertrags-Kontext nur an den Eigentuemer gehen.
+ *
+ * Diese Middleware erkennt einen angemeldeten Nutzer, wenn ein gueltiges
+ * Cookie oder ein Bearer-Token vorliegt, und laesst alle anderen als Gast
+ * weiterlaufen. Gleiches Muster wie in routes/email.js.
+ */
+const optionalAuth = (req, res, next) => {
+  const token = req.cookies?.token || req.headers.authorization?.replace("Bearer ", "");
+  if (token) {
+    try {
+      req.user = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+      // Token ungueltig oder abgelaufen: Nutzer bleibt Gast, kein Fehler
+    }
+  }
+  next();
+};
 
 // ============================================
 // CONTRACT AI SYSTEM KNOWLEDGE BASE
@@ -548,7 +571,7 @@ SO ANTWORTEST DU:
 // POST /api/assistant/message
 // ============================================
 
-router.post("/message", async (req, res) => {
+router.post("/message", optionalAuth, async (req, res) => {
   try {
     const { message, context, history } = req.body;
 
@@ -611,12 +634,29 @@ router.post("/message", async (req, res) => {
           currentContractId,
         };
 
-        // ✅ VERTRAGS-CONTEXT LADEN (falls Contract ID vorhanden)
-        if (currentContractId && req.db) {
+        // ✅ VERTRAGS-CONTEXT LADEN (nur fuer den Eigentuemer, 14.08.2026)
+        //
+        // Vorher wurde der Vertrag allein ueber seine ID geladen, ohne jede
+        // Eigentumspruefung, und die Route war unauthentifiziert. Damit konnte
+        // jeder, der eine Vertrags-ID kannte (sie steht in der Adresszeile und
+        // damit in jedem Screenshot), Name, Score, Risiken, Fristen, Klauseln
+        // und 2000 Zeichen Vertragstext abrufen.
+        //
+        // Jetzt: nur mit erkanntem Nutzer (optionalAuth) und nur der eigene
+        // Vertrag. Der $or-Filter deckt beide gespeicherten Formen der
+        // Besitzer-ID ab (ObjectId und String) - siehe routes/contracts.js:335.
+        // Ohne Anmeldung oder bei fremdem Vertrag laeuft der Chat normal
+        // weiter, nur ohne Vertragsdaten.
+        const anfragenderNutzer = req.user?.userId;
+        if (currentContractId && req.db && anfragenderNutzer && ObjectId.isValid(currentContractId)) {
           try {
             const contractsCollection = req.db.collection("contracts");
+            const besitzerFilter = ObjectId.isValid(anfragenderNutzer)
+              ? { $or: [{ userId: new ObjectId(anfragenderNutzer) }, { userId: anfragenderNutzer }] }
+              : { userId: anfragenderNutzer };
             const contract = await contractsCollection.findOne({
               _id: new ObjectId(currentContractId),
+              ...besitzerFilter,
             });
 
             if (contract) {
