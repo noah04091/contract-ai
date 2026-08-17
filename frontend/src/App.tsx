@@ -82,6 +82,7 @@ const MietvertragPruefen = lazy(() => import("./pages/landing/MietvertragPruefen
 const NdaPruefen = lazy(() => import("./pages/landing/NdaPruefen"));
 const KaufvertragPruefen = lazy(() => import("./pages/landing/KaufvertragPruefen"));
 const AgenturvertragPruefen = lazy(() => import("./pages/landing/AgenturvertragPruefen"));
+const VertragErstellen = lazy(() => import("./pages/landing/VertragErstellen")); // ✍️ Money-Keyword "Vertrag erstellen" (17.08.2026)
 
 // 📖 Öffentliches Rechtslexikon (Register + Einzelseiten)
 const Rechtslexikon = lazy(() => import("./pages/landing/Rechtslexikon"));
@@ -237,6 +238,7 @@ function AppWithLoader() {
             <Route path="/nda-pruefen" element={<NdaPruefen />} />
             <Route path="/kaufvertrag-pruefen" element={<KaufvertragPruefen />} />
             <Route path="/agenturvertrag-pruefen" element={<AgenturvertragPruefen />} />
+            <Route path="/vertrag-erstellen" element={<VertragErstellen />} />
 
             {/* 📖 Öffentliches Rechtslexikon */}
             <Route path="/rechtslexikon" element={<Rechtslexikon />} />

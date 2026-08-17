@@ -49,7 +49,7 @@ export default function LandingFooter() {
           </div>
           {[
             { h: "Funktionen", links: [["KI-Vertragsanalyse", "/ki-vertragsanalyse"], ["Vertragsanalyse", "/features/vertragsanalyse"], ["Optimierung", "/features/optimierung"], ["Fristen", "/features/fristen"], ["Vergleich", "/features/vergleich"], ["Generator", "/features/generator"], ["Legal Pulse", "/features/legalpulse"], ["Vertragsverwaltung", "/features/vertragsverwaltung"], ["Digitale Signatur", "/features/digitalesignatur"], ["E-Mail Upload", "/features/email-upload"], ["Contract Builder", "/features/contract-builder"], ["Legal Lens", "/features/legal-lens"]] },
-            { h: "Verträge prüfen", links: [["Arbeitsvertrag prüfen", "/arbeitsvertrag-pruefen"], ["Mietvertrag prüfen", "/mietvertrag-pruefen"], ["NDA prüfen", "/nda-pruefen"], ["Kaufvertrag prüfen", "/kaufvertrag-pruefen"], ["Agenturvertrag prüfen", "/agenturvertrag-pruefen"], ["Rechtslexikon", "/rechtslexikon"]] },
+            { h: "Verträge prüfen", links: [["Arbeitsvertrag prüfen", "/arbeitsvertrag-pruefen"], ["Mietvertrag prüfen", "/mietvertrag-pruefen"], ["NDA prüfen", "/nda-pruefen"], ["Kaufvertrag prüfen", "/kaufvertrag-pruefen"], ["Agenturvertrag prüfen", "/agenturvertrag-pruefen"], ["Vertrag erstellen", "/vertrag-erstellen"], ["Rechtslexikon", "/rechtslexikon"]] },
           ].map((col, ci) => (
             <div key={ci} style={s("flex:1 1 150px")}>
               <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>{col.h}</h4>
