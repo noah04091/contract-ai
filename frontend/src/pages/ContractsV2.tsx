@@ -1008,17 +1008,59 @@ export default function Contracts() {
       } catch { /* Webhook setzt es ohnehin — dies ist nur ein Fallback */ }
       try { toast.success('Freigeschaltet — viel Erfolg!'); } catch { /* ignore */ }
       await fetchContracts();
-      // 🔓 Nach der Verifikation den JETZT freigeschalteten Vertrag voll laden und das Detail
-      // öffnen — so landet der User zuverlässig auf dem vollständig sichtbaren Vertrag
-      // (kein Race: erst unlock.paid setzen, dann den vollen Detail-Stand holen).
+      // 🔓 17.08.2026 (Noahs Klicktest): Nach der Zahlung landete der Kunde im
+      // Vertrags-Detail-Modal — erwartet hat er die AUSFÜHRLICHE Analyse-Ansicht,
+      // vor der er den Kauf gestartet hat (jetzt ohne Schlösser). Also: frischen,
+      // nach dem Unlock ungegateten Stand laden und das Schnellanalyse-Modal
+      // öffnen — exakt das Muster der Duplikat-Reanalyse (~:3244). Das
+      // Detail-Modal bleibt Fallback, falls der Load scheitert (view=-Logik).
       try {
         const detail = await apiCall(`/contracts/${cid}`);
         const full = (detail as { contract?: Contract })?.contract || (detail as Contract);
         if (full && full._id) {
-          setSelectedContract(full);
-          setShowDetails(true);
+          const analysisResultData = {
+            success: true,
+            originalContractId: full._id,
+            documentType: full.documentType,
+            contractType: full.contractType,
+            contractScore: full.analysis?.contractScore ?? full.contractScore,
+            summary: full.analysis?.summary || full.summary,
+            legalAssessment: full.analysis?.legalAssessment || full.legalAssessment,
+            suggestions: full.analysis?.suggestions || full.suggestions,
+            comparison: full.analysis?.comparison,
+            positiveAspects: full.analysis?.positiveAspects,
+            criticalIssues: full.analysis?.criticalIssues,
+            recommendations: full.analysis?.recommendations,
+            detailedLegalOpinion: full.analysis?.detailedLegalOpinion || full.detailedLegalOpinion,
+            analysisCoverage: full.analysis?.analysisCoverage ?? full.analysisCoverage,
+            jurisdictionWarning: full.analysis?.jurisdictionWarning ?? full.jurisdictionWarning,
+            ocrNotice: full.analysis?.ocrNotice ?? full.ocrNotice,
+            pilotTruncated: full.analysis?.pilotTruncated ?? full.pilotTruncated,
+            usedFallbackFormat: full.analysis?.usedFallbackFormat ?? full.usedFallbackFormat,
+            kuendigung: full.kuendigung,
+            laufzeit: full.laufzeit,
+            risiken: full.risiken,
+            optimierungen: full.optimierungen,
+            gated: (full as { gated?: boolean }).gated,
+            gatedCounts: (full as { gatedCounts?: unknown }).gatedCounts,
+          };
+          setShowDetails(false); // falls die view=-Logik das Detail-Modal schon geöffnet hat
+          setQuickAnalysisModal({
+            show: true,
+            contractName: full.name,
+            contractId: full._id,
+            analysisResult: analysisResultData,
+          });
+          try {
+            sessionStorage.setItem('contractai_quickAnalysis', JSON.stringify({
+              contractName: full.name,
+              contractId: full._id,
+              analysisResult: analysisResultData,
+            }));
+          } catch { /* sessionStorage voll oder nicht verfügbar */ }
+          navigate(`/contracts?quickAnalysis=${full._id}`, { replace: true });
         }
-      } catch { /* Fallback: die view=-Logik öffnet den Vertrag ohnehin */ }
+      } catch { /* Fallback: die view=-Logik öffnet das Detail-Modal ohnehin */ }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
