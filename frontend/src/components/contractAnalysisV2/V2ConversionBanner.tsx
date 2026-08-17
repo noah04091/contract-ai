@@ -13,6 +13,10 @@ import { ArrowRight, X } from "lucide-react";
 import { classifyDocType, getDocNounPlural } from "./v2TabLabels";
 
 interface UsageData {
+  // 🩹 17.08.2026: Das Backend liefert `usage.count` (analyze.js-Response, usage:{count,limit,plan}) —
+  // der Banner las bisher nur `analysisCount` (existiert dort nicht) → die Zahl war IMMER leer
+  // und statt "Free-Account · 1 von 3 Analysen" stand nur "Free-Account". Beide Namen akzeptieren.
+  count?: number;
   analysisCount?: number;
   limit?: number;
   plan?: string;
@@ -52,7 +56,7 @@ export default function V2ConversionBanner({ usage, userPlan, documentType, cont
   const docClass = classifyDocType(documentType, contractType);
   const docPlural = getDocNounPlural(docClass);
   const plan = (usage?.plan || userPlan || "").toLowerCase();
-  const count = usage?.analysisCount;
+  const count = usage?.count ?? usage?.analysisCount;
   const limit = usage?.limit;
   const limitDisplay = limit && isFinite(limit) ? limit : "∞";
 

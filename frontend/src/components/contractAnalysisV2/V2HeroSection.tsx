@@ -82,7 +82,8 @@ interface Props {
   // gezeigt. Backend liefert via /api/s3/view?contractId=X die signed S3-URL.
   contractId?: string | null;
   // Conversion-Banner inline im Hero (Free→Business/Business→Enterprise)
-  usage?: { analysisCount?: number; limit?: number; plan?: string } | null;
+  // 🩹 17.08.2026: Backend liefert `count` (usage:{count,limit,plan}) — Typ akzeptiert beide Namen.
+  usage?: { count?: number; analysisCount?: number; limit?: number; plan?: string } | null;
   userPlan?: string | null;
 }
 

@@ -2883,7 +2883,10 @@ export default function Contracts() {
                   ...item,
                   status: 'error' as const,
                   progress: 0,
-                  errorMessage: errorMessage
+                  // 🩹 17.08.2026: Feld hieß fälschlich `errorMessage` (existiert im Typ
+                  // UploadFileItem nicht; der Spread ließ tsc das durch) — die Anzeige
+                  // liest aber `item.error` (~:3900) → Kunde sah wörtlich "Fehler: undefined".
+                  error: errorMessage
                 }
               : item
           ));
