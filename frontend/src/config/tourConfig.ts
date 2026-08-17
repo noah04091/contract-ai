@@ -124,7 +124,9 @@ export const contractsTour: TourConfig = {
     },
     {
       target: '[data-tour="contracts-upload-btn"]',
-      content: 'Klicke hier um neue Verträge hochzuladen. Unterstützt werden PDF und DOCX bis 10 MB. Einfach per Drag & Drop!',
+      // 🩹 17.08.2026: Text sagte „PDF und DOCX bis 10 MB" — real akzeptiert das
+      // Backend PDF, DOCX und Fotos bis 50 MB (analyze.js multer-Limit).
+      content: 'Klicke hier um neue Verträge hochzuladen. Unterstützt werden PDF, DOCX und Fotos bis 50 MB. Einfach per Drag & Drop!',
       title: '📄 Vertrag hochladen',
       placement: 'center',
     },

@@ -383,6 +383,16 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
   const handleOptimize = () => {
     if (!result && !initialResult) return;
 
+    // 🩹 17.08.2026: Für Free-Nutzer war der Primär-CTA eine verzögerte Absage —
+    // blinde Navigation nach /optimizer, erst DORT kam „Business Feature"
+    // (Optimizer.tsx, Plan-Limit optimize: 0 für Free). Jetzt ehrlich vorab
+    // fragen, gleiches Muster wie der Chat-Hinweis weiter unten.
+    if (!isBusinessOrHigher) {
+      const go = window.confirm('Der Vertragsoptimierer ist ab Business verfügbar. Er formuliert riskante Klauseln deines Vertrags direkt um.\n\nJetzt Pläne ansehen?');
+      if (go) navigate('/pricing');
+      return;
+    }
+
     // Loading-Indikator für V2ActionBar — beim Navigieren visuelles Feedback geben
     setOptimizing(true);
 

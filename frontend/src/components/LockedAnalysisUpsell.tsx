@@ -186,8 +186,11 @@ const LockedAnalysisUpsell: React.FC<Props> = ({ counts = {}, variant = "default
         <div className={styles.lockBadge}><Lock size={22} /></div>
         <h3 className={styles.title}>Vollständige Analyse freischalten</h3>
         <p className={styles.sub}>{summaryLine}</p>
+        {/* 🩹 17.08.2026: Preis sichtbar machen — der Knopf führte blind in den
+            Stripe-Checkout, die 4,90 € standen nur im Code (startAnalysisUnlock.ts)
+            und im Admin-Dashboard. Ohne onUnlock geht es zu /pricing → kein Fixpreis. */}
         <button className={styles.cta} onClick={handle}>
-          Jetzt freischalten <ArrowRight size={17} />
+          {onUnlock ? 'Jetzt für 4,90 € freischalten' : 'Jetzt freischalten'} <ArrowRight size={17} />
         </button>
         <div className={styles.note}>
           {onUnlock

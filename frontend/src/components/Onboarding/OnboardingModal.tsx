@@ -224,9 +224,11 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       return;
     }
 
-    // Validate file size (max 10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('Datei ist zu groß (max. 10 MB)');
+    // Validate file size — 🩹 17.08.2026: an das echte Backend-Limit angeglichen
+    // (50 MB, upload.js/analyze.js multer). Vorher wies das Onboarding Dateien
+    // ab, die der Rest des Produkts problemlos annimmt.
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError('Datei ist zu groß (max. 50 MB)');
       setUploadState('error');
       return;
     }
@@ -554,7 +556,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                     <Upload className={styles.uploadIconLarge} size={48} />
                   </motion.div>
                   <p className={styles.uploadTitle}>Drag & Drop oder klicken</p>
-                  <p className={styles.uploadHint}>PDF, DOCX (max. 10 MB)</p>
+                  <p className={styles.uploadHint}>PDF, DOCX (max. 50 MB)</p>
                 </>
               )}
 
