@@ -1,6 +1,7 @@
 // 📁 backend/services/errorMonitoring.js
 // 🚨 Eigenes Error Monitoring System - ohne externe Abhängigkeiten
 
+const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
 const { generateEmailTemplate } = require('../utils/emailTemplate');
 
@@ -21,7 +22,17 @@ const CONFIG = {
 
   // Fehler-Zähler
   errorCountThisHour: 0,
-  hourStartTime: Date.now()
+  hourStartTime: Date.now(),
+
+  // 🚨 17.08.2026: Eigener, deutlich strengerer Deckel NUR für Alarme aus
+  // 5xx-Antworten der Routen (siehe captureHttpErrorResponse). Grund: Bis heute
+  // erreichte KEIN Routen-Fehler dieses System, es gibt also keinen Erfahrungswert
+  // für das normale Fehleraufkommen. Der globale 50er-Deckel wäre als einzige
+  // Bremse zu locker. Wichtig: Der Deckel drosselt ausschließlich den MAILVERSAND,
+  // in error_logs (und damit ins Admin-Dashboard) wandert weiterhin JEDER Fall.
+  maxRouteAlertMailsPerHour: 5,
+  routeAlertMailsThisHour: 0,
+  routeAlertHourStart: Date.now()
 };
 
 // Severity-Level
@@ -51,15 +62,29 @@ function initErrorCollection(db) {
 
 /**
  * Generiert einen Fingerprint für Fehler-Gruppierung
+ *
+ * 🐛 17.08.2026 KORREKTUR: Vorher `Buffer.from(parts.join('|')).toString('base64')
+ * .substring(0, 32)`. Base64 kürzt NICHT den Text, sondern die Kodierung — 32
+ * Base64-Zeichen entsprechen exakt 24 Byte Klartext. Vom Fingerabdruck übrig blieb
+ * damit nur `"MongoNetworkTimeoutError|"` bzw. `"HttpErrorResponse|HTTP 5"`:
+ * Fehlermeldung, Route und Methode fielen vollständig weg. Folge im Altbestand:
+ * Zwei verschiedene Cron-Jobs mit demselben Fehlertyp (real vorgekommen:
+ * `MongoNetworkTimeoutError` in smart-status-update und in event-generation) galten
+ * als DERSELBE Fehler — der zweite wurde innerhalb der Ruhezeit stillschweigend
+ * verschluckt statt gemeldet.
+ *
+ * Jetzt: echter Hash über alle vier Teile. Gleiche Rückgabeform (String, 32 Zeichen),
+ * gleiche Aufrufer. Alte Fingerabdrücke in error_logs bleiben lesbar, sie werden nur
+ * nicht mehr fortgeschrieben — bei 15 Einträgen Gesamtbestand ohne Bedeutung.
  */
 function generateFingerprint(error, context = {}) {
   const parts = [
-    error.name || 'Error',
-    error.message?.substring(0, 100) || 'Unknown',
+    error?.name || 'Error',
+    error?.message?.substring(0, 100) || 'Unknown',
     context.route || 'unknown',
     context.method || 'unknown'
   ];
-  return Buffer.from(parts.join('|')).toString('base64').substring(0, 32);
+  return crypto.createHash('sha1').update(parts.join('|')).digest('hex').substring(0, 32);
 }
 
 /**
@@ -250,12 +275,138 @@ async function captureError(error, context = {}) {
 }
 
 /**
+ * 🔤 Reduziert einen Anfragepfad auf sein Muster.
+ *
+ * Warum das PFLICHT und nicht Kosmetik ist: generateFingerprint() bildet den
+ * Fingerabdruck aus Fehlername + Meldung + ROUTE + Methode. Steckt in der Route
+ * eine echte Vertrags-/Job-/Token-ID, ist jede Anfrage ein eigener Fingerabdruck
+ * → der 15-Minuten-Cooldown greift nie und aus EINER Störung würden bis zum
+ * Deckel viele Einzelmails. Mit Muster fallen alle Fälle derselben Route
+ * zusammen und werden zu einer Mail mit Zähler.
+ *
+ * Zwei Wege, bewusst in dieser Reihenfolge:
+ *  1. Das Express-Routen-Muster (benennt jeden Parameter korrekt: :id, :token, …).
+ *  2. Ersatz: Pfad selbst bereinigen — nötig, weil Express bei Antworten aus dem
+ *     globalen Error-Handler req.baseUrl zurücksetzt und das Muster dann nur einen
+ *     Teilpfad abdeckt (im eigenständigen Mini-Test am 17.08. belegt). Erkannt wird
+ *     das über den Segmentvergleich unten.
+ */
+function normalizeRoutePath(req) {
+  const roherPfad = String(req?.originalUrl || req?.url || '').split('?')[0];
+  const segmente = roherPfad.split('/').filter(Boolean);
+
+  // 1) Express-Muster, aber nur wenn es den GANZEN Pfad abdeckt.
+  const routenPfad = req?.route?.path;
+  if (routenPfad && typeof routenPfad === 'string') {
+    const muster = ((req.baseUrl || '') + routenPfad).replace(/\/+$/, '') || '/';
+    if (muster.split('/').filter(Boolean).length === segmente.length) return muster;
+  }
+
+  // 2) Ersatz: jedes Segment, das wie eine ID/ein Token aussieht, generalisieren.
+  const bereinigt = segmente.map((seg) => {
+    if (/^[0-9a-f]{24}$/i.test(seg)) return ':id';                                  // Mongo-ObjectId
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg)) return ':uuid';
+    if (/^job_/.test(seg)) return ':jobId';                                          // generateJobId()
+    if (/^\d+$/.test(seg)) return ':n';
+    if (/^[0-9a-f]{16,}$/i.test(seg)) return ':hex';                                 // Hex-Token beliebiger Länge
+    if (seg.length >= 20 && /\d/.test(seg) && /^[A-Za-z0-9._~+/=-]+$/.test(seg)) return ':token';
+    return seg;
+  });
+
+  return '/' + bereinigt.join('/');
+}
+
+/**
+ * 🚦 Nur der MAILVERSAND für Routen-Alarme wird gedrosselt, nie die Erfassung.
+ * Gibt true zurück, wenn für diesen Fall noch eine Mail rausgehen darf.
+ */
+function routeAlertMailBudgetOk() {
+  const jetzt = Date.now();
+  if (jetzt - CONFIG.routeAlertHourStart > 60 * 60 * 1000) {
+    CONFIG.routeAlertMailsThisHour = 0;
+    CONFIG.routeAlertHourStart = jetzt;
+  }
+  if (CONFIG.routeAlertMailsThisHour >= CONFIG.maxRouteAlertMailsPerHour) return false;
+  CONFIG.routeAlertMailsThisHour++;
+  return true;
+}
+
+/**
+ * 🚨 17.08.2026: Meldet eine 5xx-Antwort, die eine Route SELBST erzeugt hat.
+ *
+ * Hintergrund: 578 Stellen in 61 Routendateien beantworten ihren Fehler mit
+ * res.status(5xx) und geben ihn an NIEMANDEN weiter (next(err): 0 Treffer im
+ * gesamten routes/-Verzeichnis). Der globale errorHandler unten hing damit ins
+ * Leere — Beleg: error_logs enthielt über die gesamte Laufzeit 15 Einträge, kein
+ * einziger davon ein Routen-Fehler. Aufgerufen wird diese Funktion aus dem
+ * bestehenden Beobachter in utils/logger.js, der ohnehin jede Antwort sieht.
+ *
+ * Sicherheitszusagen:
+ *  - Läuft in res.on('finish'), also NACH dem vollständigen Senden der Antwort.
+ *    Status, Body und Laufzeit sind zu diesem Zeitpunkt unveränderlich.
+ *  - Wirft nie. Jeder Fehler hier bleibt hier.
+ *  - Der Aufrufer wartet nicht: die Erfassung läuft im Hintergrund weiter. Die
+ *    zurückgegebene Promise existiert ausschließlich für die Tests (sie ist bereits
+ *    abgesichert und kann nicht abgelehnt werden); übersprungene Fälle liefern null.
+ */
+function captureHttpErrorResponse(req, res) {
+  try {
+    // Notbremse ohne Code-Änderung (Umgebungsvariable auf Render; Neustart nötig).
+    if (process.env.ROUTE_ERROR_ALERTS_ENABLED === 'false') return null;
+    if (!res || res.statusCode < 500) return null;
+
+    // Doppelmeldung verhindern: Ging der Fehler bereits durch errorHandler
+    // (z.B. Multer-Uploadfehler), ist er dort schon erfasst. Im Mini-Test belegt,
+    // dass 'finish' auch nach dem Error-Handler noch feuert.
+    if (res.__caErrorCaptured) return null;
+
+    const route = normalizeRoutePath(req);
+
+    // Synthetischer Fehler: Das echte Fehlerobjekt existiert an dieser Stelle nicht
+    // mehr, die Route hat es selbst gefangen. Der HTTP-Status trägt die Severity —
+    // determineSeverity() stuft >= 500 als 'high' ein, also mailwürdig.
+    const fehler = new Error(`HTTP ${res.statusCode} auf ${req?.method || '?'} ${route}`);
+    fehler.name = 'HttpErrorResponse';
+    fehler.status = res.statusCode;
+
+    // Deckel greift NUR für die Mail. Ohne Budget wird auf 'medium' herabgestuft:
+    // Eintrag in error_logs + Admin-Dashboard bleibt, die Mail entfällt.
+    const severity = routeAlertMailBudgetOk() ? 'high' : 'medium';
+
+    return captureError(fehler, {
+      route,
+      method: req?.method || null,
+      userId: req?.user?.userId || null,
+      userEmail: req?.user?.email || null,
+      ip: req?.ip || null,
+      userAgent: req?.headers?.['user-agent'] || null,
+      // Bewusst KEIN body/query: die Anfragen tragen Vertragsinhalte und
+      // personenbezogene Daten, die nichts in einer Fehlermeldung zu suchen haben.
+      severity
+    }).catch(() => null);
+  } catch (_) {
+    // Alarmierung darf niemals auf den Request-Pfad zurückschlagen.
+    return null;
+  }
+}
+
+/**
  * Express Error Handler Middleware
  */
 function errorHandler(err, req, res, next) {
+  // 🚩 17.08.2026: Markierung gegen Doppelmeldung. Dieser Fehler wird gleich unten
+  // erfasst; der 5xx-Beobachter in utils/logger.js läuft danach trotzdem noch
+  // (res.on('finish') feuert auch nach dem Error-Handler, im Mini-Test belegt) und
+  // muss ihn an dieser Marke erkennen und überspringen.
+  try { res.__caErrorCaptured = true; } catch (_) { /* niemals blockieren */ }
+
   // Kontext aus Request extrahieren
   const context = {
-    route: req.originalUrl || req.url,
+    // 17.08.2026: auch hier das Muster statt der rohen URL — sonst trägt jeder
+    // Upload-Fehler die echte Vertrags-ID im Fingerabdruck und in error_logs
+    // (real vorhanden: `/api/contract-builder/6a280389d416583998d2d74f`), womit
+    // die Gruppierung wirkungslos wäre und IDs unnötig protokolliert würden.
+    route: normalizeRoutePath(req),
     method: req.method,
     userId: req.user?.userId || null,
     userEmail: req.user?.email || null,
@@ -373,6 +524,8 @@ async function resolveError(fingerprint) {
 module.exports = {
   initErrorCollection,
   captureError,
+  captureHttpErrorResponse,
+  normalizeRoutePath,
   errorHandler,
   getErrorStats,
   resolveError,

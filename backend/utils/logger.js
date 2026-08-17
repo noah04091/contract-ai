@@ -132,6 +132,25 @@ const logger = {
       // Log-Level basierend auf Status-Code
       if (res.statusCode >= 500) {
         logger.error(`${req.method} ${req.originalUrl}`, meta);
+
+        // 🚨 17.08.2026: Bis heute endete ein Routen-Fehler GENAU HIER — im Logfile
+        // und sonst nirgends. 578 Stellen in 61 Routendateien beantworten ihren
+        // Fehler selbst mit res.status(5xx), keine einzige reicht ihn weiter
+        // (next(err): 0 Treffer in routes/). Das fertige Alarmsystem in
+        // services/errorMonitoring.js bekam davon nie etwas mit: error_logs enthielt
+        // über die gesamte Laufzeit 15 Einträge, kein einziger ein Routen-Fehler.
+        // Ein Ausfall von OpenAI wäre nur über Kundenmails aufgefallen.
+        //
+        // Dieser Block hängt in res.on('finish') und läuft damit NACH dem
+        // vollständigen Senden der Antwort — Status, Body und Laufzeit sind hier
+        // unveränderlich (im eigenständigen Mini-Test belegt: ein res.status(999)
+        // an dieser Stelle blieb beim Client wirkungslos).
+        //
+        // Verzögertes require: hält logger.js beim Modulstart abhängigkeitsfrei.
+        // Eigenes catch: die Alarmierung darf nie auf den Request-Pfad zurückschlagen.
+        try {
+          require('../services/errorMonitoring').captureHttpErrorResponse(req, res);
+        } catch (_) { /* Alarmierung ist nie wichtiger als die Anfrage */ }
       } else if (res.statusCode >= 400) {
         logger.warn(`${req.method} ${req.originalUrl}`, meta);
       } else {
