@@ -6241,6 +6241,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       contractName: cleanFileName(req.file.originalname),
       createdAt: new Date(),
       requestId,
+      // 🔗 17.08.2026: Rückverweis Analyse→Vertrag. Bisher kannte das analyses-Dokument
+      // seinen Vertrag nicht (Verknüpfung lief nur Vertrag→Analyse und liegt komplett im
+      // fehlbaren Save-Block ab ~6320) — schlug der Vertrags-Save fehl, war die Analyse
+      // unauffindbar verwaist. Update-Zweig: ID ist hier schon bekannt (Duplikat-Check
+      // ~5252; existingContract impliziert forceReanalyze, sonst wäre bei 409 returned).
+      // Neuanlage: null, wird direkt nach saveContractWithUpload nachgetragen. Rein additiv.
+      contractId: existingContract?._id || null,
       fullText: fullTextContent,
       extractedText: fullTextContent,
       originalFileName: fixUtf8Filename(req.file.originalname),
@@ -6842,6 +6849,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           fileHash
         );
 
+        // 🔗 17.08.2026: Rückverweis Analyse→Vertrag nachtragen (Neuanlage — die
+        // Vertrags-ID existiert erst jetzt). Fire-and-forget mit eigenem catch:
+        // darf den Save-Fluss nie beeinflussen, ein Fehlschlag lässt nur das
+        // contractId-Feld auf null (= alter Zustand, kein Regress).
+        analysisCollection.updateOne(
+          { _id: inserted.insertedId },
+          { $set: { contractId: savedContract._id } }
+        ).catch(() => {});
+
         // 🔧 FIX: Extract AI end date for new contracts too
         // 🔒 NEU: Nur wenn Regex-Konfidenz niedrig ist (< 70%)!
         // 📨 Welle 1: LETTER hat kein Vertragsende — Override komplett überspringen.
@@ -7122,7 +7138,34 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     } catch (saveError) {
       console.error(`❌ [${requestId}] Contract save error:`, saveError.message);
+      console.error(`❌ [${requestId}] Contract save stack:`, saveError.stack);
       console.warn(`⚠️ [${requestId}] FIXED Deep lawyer-level analysis was successful, but contract saving failed`);
+      // 🚨 17.08.2026: Dieser catch verschluckte den Fehler seit 27.06.2025 spurlos —
+      // die Analyse wird trotzdem als success:true ausgeliefert, aber die Vertragsakte
+      // trägt den ALTEN Stand (Update-Zweig, dominanter Weg) bzw. der Vertrag fehlt in
+      // der Liste (Neuanlage). Ab jetzt: Meldung an das bestehende Alarmsystem
+      // (error_logs + Mail ab severity high an ERROR_ALERT_EMAIL). Bewusst KEIN
+      // throw/return — Kundenverhalten bleibt byte-identisch; erst messen, ob der Fall
+      // in Produktion real auftritt, dann (nur bei Treffern) das success-Signal
+      // reparieren. Eigenes try/catch: die Alarmierung darf die Antwort nie gefährden.
+      try {
+        const { captureError } = require('../services/errorMonitoring');
+        await captureError(saveError, {
+          route: 'POST /api/analyze [contract-save]',
+          method: 'POST',
+          userId: req.user?.userId,
+          severity: 'high',
+          body: {
+            requestId,
+            zweig: existingContract ? 'update' : 'neuanlage',
+            contractId: existingContract?._id?.toString() || savedContract?._id?.toString() || null,
+            analysisId: inserted?.insertedId?.toString() || null,
+            filename: req.file?.originalname
+          }
+        });
+      } catch (monitorErr) {
+        console.warn(`⚠️ [${requestId}] Alarmierung des Save-Fehlers fehlgeschlagen: ${monitorErr.message}`);
+      }
     }
 
     // ✅ Counter wurde bereits atomar am Anfang erhöht (Race Condition Fix)
@@ -7289,9 +7332,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   } catch (error) {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.error(`❌ [ANALYSIS] Error after ${duration}s | user=${req.user?.userId} | file="${req.file?.originalname}" | requestId=${requestId}`);
-    // 🆕 29.05.2026 Watch-Item-Fix: Stack-Trace nicht mehr loggen.
-    // Bei echten Pipeline-Fehlern (vs pdf-parse-Crashes) reicht die error.message —
-    // requestId reicht zum Auffinden im Log + Sentry hat den vollen Stack ohnehin.
+    // 🩹 17.08.2026: Der Kommentar vom 29.05. („Sentry hat den vollen Stack ohnehin")
+    // war falsch — Sentry ist in diesem Projekt nicht installiert (weder package.json
+    // noch node_modules), der Stack ging seitdem ersatzlos verloren. In 7500 Zeilen ist
+    // der Stack die einzige Spur zur Fehlerzeile → wieder loggen (reine Log-Änderung).
+    console.error(`❌ [${requestId}] Pipeline error stack:`, error.stack);
     console.error(`❌ [${requestId}] Error in FIXED enhanced deep lawyer-level analysis:`, {
       message: error.message,
       userId: req.user?.userId,
