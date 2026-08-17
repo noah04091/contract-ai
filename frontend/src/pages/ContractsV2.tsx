@@ -38,7 +38,7 @@ import FristHinweiseSection from "../components/FristHinweiseSection"; // ⏰ Un
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { apiCall, uploadAndAnalyze, uploadOnly, reanalyzeExistingContract } from "../utils/api"; // ✅ NEU: uploadOnly + async Re-Analyse
+import { apiCall, uploadAndAnalyze, uploadOnly, reanalyzeExistingContract, getPendingAnalysisJobs, pollAnalysisJob } from "../utils/api"; // ✅ NEU: uploadOnly + async Re-Analyse + 🔄 17.08.2026 Job-Wiederaufnahme nach Reload
 import { useAuth } from "../hooks/useAuth"; // 🏢 Org-Rolle für Rollen-Awareness
 import { useToast } from "../context/ToastContext"; // 🔔 Toast-Benachrichtigungen
 import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
@@ -223,6 +223,13 @@ interface UploadFileItem {
   // zurückgibt und das Duplikat-Modal nicht in einer Endlos-Schleife wieder auftaucht.
   forceReanalyze?: boolean;
 }
+
+// 🔄 17.08.2026: Merker auf Modul-Ebene, welche Hintergrund-Analysen dieses Tab
+// bereits wiederaufgenommen pollt. Überlebt Komponenten-Remounts (Navigation
+// weg und zurück) und verhindert so doppelte Poller + doppelte Toasts für
+// denselben Job. Der localStorage-Eintrag selbst bleibt bis zum Job-Ende
+// bestehen (pollAnalysisJob räumt ihn bei done/failed auf).
+const resumedAnalysisJobIds = new Set<string>();
 
 // ✅ User Info Interface
 interface UserInfo {
@@ -890,6 +897,35 @@ export default function Contracts() {
     if (params.has('quickAnalysis') && !quickAnalysisModal.show) {
       navigate('/contracts', { replace: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 🔄 17.08.2026: Wiederaufnahme laufender Analysen nach Reload/Navigation.
+  // Serverseitig läuft der Job entkoppelt weiter (analysis_jobs, TTL 24h) und
+  // api.ts persistiert ihn seit 29.05. in localStorage (pendingAnalysisJobs) —
+  // aber getPendingAnalysisJobs hatte im ganzen Frontend NULL Aufrufer: nach F5
+  // war die Analyse für den Kunden spurlos verschwunden (Kontingent verbraucht,
+  // Ergebnis lag fertig auf dem Server). Jetzt: beim Mount weiterpollen; fertig
+  // → Liste still aktualisieren + Hinweis; fehlgeschlagen → ehrliche Meldung.
+  useEffect(() => {
+    const pending = getPendingAnalysisJobs().filter(j => !resumedAnalysisJobIds.has(j.jobId));
+    if (pending.length === 0) return;
+    pending.forEach(j => resumedAnalysisJobIds.add(j.jobId));
+    toast.info(pending.length === 1
+      ? `Deine Analyse von „${pending[0].fileName}" läuft noch im Hintergrund. Wir sagen Bescheid, sobald sie fertig ist.`
+      : `${pending.length} Analysen laufen noch im Hintergrund. Wir sagen Bescheid, sobald sie fertig sind.`);
+    pending.forEach((job) => {
+      pollAnalysisJob(job.jobId)
+        .then(async () => {
+          await silentRefreshContracts();
+          toast.success(`Analyse von „${job.fileName}" ist fertig. Dein Vertrag ist in der Liste aktualisiert.`);
+        })
+        .catch((err: unknown) => {
+          const msg = err instanceof Error ? err.message : 'Analyse fehlgeschlagen';
+          toast.error(`Analyse von „${job.fileName}": ${msg}`);
+        })
+        .finally(() => { resumedAnalysisJobIds.delete(job.jobId); });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
