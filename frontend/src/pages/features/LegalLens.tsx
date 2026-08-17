@@ -90,14 +90,14 @@ const LegalLens: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Vertragsklauseln verstehen – Kleingedrucktes erklärt | Contract AI</title>
-        <meta name="description" content="Vertragsklauseln verstehen mit einem Klick: Kompliziertes Kleingedrucktes einfach erklärt. Risikobewertung, Bedeutung, Verhandlungstipps. Nie wieder im Dunkeln tappen! ✓ Jetzt testen" />
-        <meta name="keywords" content="Vertragsklauseln verstehen, Kleingedrucktes verstehen, Klausel Bedeutung, was bedeutet diese Klausel, Vertrag verstehen, Legal Lens, Contract AI" />
+        <title>Vertrag verstehen: Klauseln & Kleingedrucktes erklärt | Contract AI</title>
+        <meta name="description" content="Vertrag verstehen mit einem Klick: Jede Klausel und das Kleingedruckte einfach erklärt. Risikobewertung, Bedeutung, Verhandlungstipps. Nie wieder im Dunkeln tappen! ✓ Jetzt testen" />
+        <meta name="keywords" content="Vertrag verstehen, Vertrag erklären lassen, Vertragsklauseln verstehen, Kleingedrucktes verstehen, Klausel Bedeutung, was bedeutet diese Klausel, Legal Lens, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/legal-lens" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Vertragsklauseln verstehen – Kleingedrucktes erklärt | Contract AI" />
+        <meta property="og:title" content="Vertrag verstehen: Klauseln & Kleingedrucktes erklärt | Contract AI" />
         <meta property="og:description" content="Vertragsklauseln verstehen mit einem Klick: Kleingedrucktes einfach erklärt, Risikobewertung inklusive. ✓ Jetzt testen" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/legal-lens" />
@@ -106,7 +106,7 @@ const LegalLens: React.FC = () => {
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Vertragsklauseln verstehen – Kleingedrucktes erklärt | Contract AI" />
+        <meta name="twitter:title" content="Vertrag verstehen: Klauseln & Kleingedrucktes erklärt | Contract AI" />
         <meta name="twitter:description" content="Vertragsklauseln verstehen mit einem Klick: Kleingedrucktes einfach erklärt, Risikobewertung inklusive. ✓ Jetzt testen" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-legal-lens.png" />
 

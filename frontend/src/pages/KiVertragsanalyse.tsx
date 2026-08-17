@@ -168,6 +168,14 @@ const KiVertragsanalyse: React.FC = () => {
     {
       question: "Ist KI-Vertragsprüfung wirklich kostenlos?",
       answer: "Ja — Ihre erste vollständige Vertragsanalyse ist kostenlos und ohne Kreditkarte. Bei weiteren Verträgen sehen Sie gratis den Risiko-Score und einen Überblick der gefundenen Punkte; die vollständigen Details schalten Sie im Business-Tarif (19 EUR/Monat, 25 Analysen) oder Enterprise-Tarif (29 EUR/Monat, unbegrenzt) frei. Zum Vergleich: Eine vergleichbare Vertragsprüfung beim Anwalt kostet typischerweise 100–400 EUR pro Vertrag. Sie können Contract AI also risikofrei testen und sehen, ob die KI für Ihre Bedürfnisse passt."
+    },
+    {
+      question: "Kann ich meinen Vertrag einfach online checken lassen?",
+      answer: "Ja. Für den Vertrags-Check laden Sie Ihren Vertrag als PDF oder Word hoch — oder fotografieren ihn einfach mit dem Handy ab. Die KI checkt das Dokument in rund 60 Sekunden auf Risiken, Fristen und problematische Klauseln und liefert eine verständliche Einschätzung mit wörtlichen Belegen aus Ihrem Vertrag. Der erste Check ist kostenlos."
+    },
+    {
+      question: "Kann ich auch AGB prüfen lassen?",
+      answer: "Ja. AGB sind Vertragsdokumente und lassen sich genauso hochladen und prüfen wie jeder andere Vertrag. Gerade beim AGB-Check lohnt der genaue Blick: Vorformulierte Klauseln unterliegen der AGB-Kontrolle der §§ 305 ff. BGB, und überraschende oder unangemessen benachteiligende Klauseln (§ 305c, § 307 BGB) sind unwirksam. Die KI markiert solche Problemstellen und erklärt verständlich, was sie für Sie bedeuten."
     }
   ];
 
@@ -189,7 +197,7 @@ const KiVertragsanalyse: React.FC = () => {
       <Helmet>
         <title>KI-Vertragsanalyse: Vertrag in 60 Sek. prüfen | Contract AI</title>
         <meta name="description" content="KI-Vertragsanalyse: Vertrag hochladen und in 60 Sekunden Risiken erkennen. DSGVO-konform, deutsche Server. Der komplette Guide: Funktionsweise, Kosten, KI vs. Anwalt." />
-        <meta name="keywords" content="KI Vertragsanalyse, KI Vertragsprüfung, Vertragsanalyse KI, automatische Vertragsanalyse, KI Vertragscheck, Vertragsanalyse Software, Vertrag KI prüfen, Contract AI, Vertragsanalyse online, KI Vertragsmanagement" />
+        <meta name="keywords" content="KI Vertragsanalyse, KI Vertragsprüfung, Vertragsanalyse KI, automatische Vertragsanalyse, KI Vertragscheck, Vertrags-Check, Vertrag checken lassen, AGB prüfen, Vertragsanalyse Software, Vertrag KI prüfen, Contract AI, Vertragsanalyse online, KI Vertragsmanagement" />
 
         <link rel="canonical" href="https://www.contract-ai.de/ki-vertragsanalyse" />
         <meta name="robots" content="index,follow" />
