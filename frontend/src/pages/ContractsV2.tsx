@@ -1007,17 +1007,31 @@ export default function Contracts() {
         });
       } catch { /* Webhook setzt es ohnehin — dies ist nur ein Fallback */ }
       try { toast.success('Freigeschaltet — viel Erfolg!'); } catch { /* ignore */ }
-      await fetchContracts();
       // 🔓 17.08.2026 (Noahs Klicktest): Nach der Zahlung landete der Kunde im
       // Vertrags-Detail-Modal — erwartet hat er die AUSFÜHRLICHE Analyse-Ansicht,
       // vor der er den Kauf gestartet hat (jetzt ohne Schlösser). Also: frischen,
       // nach dem Unlock ungegateten Stand laden und das Schnellanalyse-Modal
       // öffnen — exakt das Muster der Duplikat-Reanalyse (~:3244). Das
       // Detail-Modal bleibt Fallback, falls der Load scheitert (view=-Logik).
+      // ⚠️ 18.08.2026 (Noahs Testkauf, leere Reiter): Datenquelle MUSS die Liste
+      // sein — die Listen-Route reichert contract.analysis voll an
+      // (contracts.js ~890: criticalIssues, recommendations, importantDates, …),
+      // die Einzel-Route GET /contracts/:id nur mit 7 Feldern (contracts.js
+      // ~1150, ohne criticalIssues/recommendations) → Reiter zeigten 0, obwohl
+      // das Detail-Modal (liest Root-Felder) 5/5 hatte. Einzel-GET nur noch als
+      // Fallback bei Pagination, dann greifen die Root-Fallbacks im Mapping.
+      const refreshed = await fetchContracts();
       try {
-        const detail = await apiCall(`/contracts/${cid}`);
-        const full = (detail as { contract?: Contract })?.contract || (detail as Contract);
+        let full: Contract | null = refreshed?.find(c => String(c._id) === String(cid)) || null;
+        if (!full) {
+          const detail = await apiCall(`/contracts/${cid}`);
+          full = (detail as { contract?: Contract })?.contract || (detail as Contract);
+        }
         if (full && full._id) {
+          // Root-Fallbacks: analyze.js schreibt die Analyse-Inhaltsfelder auch
+          // direkt aufs Contract-Dokument — je nach Anreicherungs-Route liegen
+          // sie in full.analysis ODER auf Root. Beide Quellen akzeptieren.
+          const raw = full as unknown as Record<string, unknown>;
           const analysisResultData = {
             success: true,
             originalContractId: full._id,
@@ -1027,16 +1041,25 @@ export default function Contracts() {
             summary: full.analysis?.summary || full.summary,
             legalAssessment: full.analysis?.legalAssessment || full.legalAssessment,
             suggestions: full.analysis?.suggestions || full.suggestions,
-            comparison: full.analysis?.comparison,
-            positiveAspects: full.analysis?.positiveAspects,
-            criticalIssues: full.analysis?.criticalIssues,
-            recommendations: full.analysis?.recommendations,
+            comparison: full.analysis?.comparison ?? raw.comparison,
+            positiveAspects: full.analysis?.positiveAspects ?? raw.positiveAspects,
+            criticalIssues: full.analysis?.criticalIssues ?? raw.criticalIssues,
+            recommendations: full.analysis?.recommendations ?? raw.recommendations,
             detailedLegalOpinion: full.analysis?.detailedLegalOpinion || full.detailedLegalOpinion,
             analysisCoverage: full.analysis?.analysisCoverage ?? full.analysisCoverage,
             jurisdictionWarning: full.analysis?.jurisdictionWarning ?? full.jurisdictionWarning,
             ocrNotice: full.analysis?.ocrNotice ?? full.ocrNotice,
             pilotTruncated: full.analysis?.pilotTruncated ?? full.pilotTruncated,
             usedFallbackFormat: full.analysis?.usedFallbackFormat ?? full.usedFallbackFormat,
+            // 18.08.2026: Felder, die das Modal zusätzlich speist (Hero-Zähler,
+            // Termine-Zähler, „Auf einen Blick", Score-Begründung, Brief-Tabs)
+            importantDates: raw.importantDates,
+            fristHinweise: raw.fristHinweise,
+            quickFacts: raw.quickFacts,
+            laymanSummary: raw.laymanSummary,
+            scoreReasoning: raw.scoreReasoning,
+            typeSpecificFindings: raw.typeSpecificFindings,
+            letterType: raw.letterType,
             kuendigung: full.kuendigung,
             laufzeit: full.laufzeit,
             risiken: full.risiken,
