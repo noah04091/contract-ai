@@ -7,6 +7,13 @@ import { getAcquisition } from "../utils/acquisition";
 import logoDark from "../assets/logo-register-dark.png";   // weißes Logo für die blaue Spalte
 import logoLight from "../assets/logo-register-light.webp"; // dunkles Logo für hellen Mobile-Header
 
+// 18.08.2026: Registrierung ruft die API direkt auf, nicht mehr relativ über die
+// Vercel-Weiterleitung. Grund: auf dem Umweg kommt die Kundenadresse nicht am Server
+// an, dadurch teilten sich ALLE Registrierungen einen gemeinsamen Zähler von 20 pro
+// 15 Minuten. Bei einer Kampagne hätte der 21. Interessent "Bitte warten Sie 15
+// Minuten" gesehen. Identisches Muster wie in Login.tsx, dort seit langem bewährt.
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Register() {
@@ -93,7 +100,7 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch(`${API_BASE}/api/auth/register`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
