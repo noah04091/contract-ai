@@ -105,6 +105,36 @@ describe('cleanDeadlineName — Vertragsname als Kontext (11.08.2026)', () => {
   });
 });
 
+describe('cleanDeadlineName — NEU-Format mit "– DRINGEND" (17.08.2026)', () => {
+  // Wurzel des Realitätscheck-Befunds: Der Generator (calendarEvents.js:1075) baut
+  // die kritische Stufe als "1 Tag vorher – DRINGEND: {Frist}" (GEDANKENSTRICH).
+  // Der Neu-Format-Strip kannte den Zusatz nicht — nur OLD_LEAD_PREFIX tolerierte
+  // ihn (Bindestrich). Folge in Prod: 54 fehlende Zeilen, 55 Phantom-Karten.
+  test('Gedankenstrich-Variante (Generator-Original) → Frist-Schlüssel', () => {
+    // 1:1 der belmoto/TerraTech-Titel aus der Prod-DB
+    expect(cleanDeadlineName('🔴 1 Tag vorher – DRINGEND: Kündigungseingang bis 20.08.2026'))
+      .toBe('Kündigungseingang bis 20.08.2026');
+  });
+
+  test('Bindestrich-Variante → derselbe Schlüssel', () => {
+    expect(cleanDeadlineName('🔴 3 Tage vorher - DRINGEND: Ende der Mindestmietdauer'))
+      .toBe('Ende der Mindestmietdauer');
+  });
+
+  test('Haupt-Event und DRINGEND-Vorwarner landen in derselben Familie', () => {
+    const name = 'belmoto_GmbH.pdf';
+    const main = cleanDeadlineName('⚠️ Kündigungseingang bis 14.08.2026: belmoto_GmbH.pdf', name);
+    const reminder = cleanDeadlineName('🔴 1 Tag vorher – DRINGEND: Kündigungseingang bis 14.08.2026', name);
+    expect(reminder).toBe(main);
+  });
+
+  test('"DRINGEND" mitten im Frist-Namen wird NICHT angetastet', () => {
+    // Der Zusatz darf nur direkt nach "N Tage vorher" entfernt werden
+    expect(cleanDeadlineName('🚨 7 Tage vorher: DRINGEND zu klärende Nachzahlung'))
+      .toBe('DRINGEND zu klärende Nachzahlung');
+  });
+});
+
 describe('completeDanglingLabel — Anzeige-Vervollständigung (Frontend-Spiegel)', () => {
   test('hängende Präposition + Datums-String', () => {
     expect(completeDanglingLabel('Kündigungseingang bis', '2026-08-23'))

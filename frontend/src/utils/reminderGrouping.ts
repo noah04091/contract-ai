@@ -35,7 +35,11 @@ const OLD_LEAD_PREFIX = /^In\s+(\d+)\s*(Tagen?|Wochen?|Monaten?)(?:\s*-\s*DRINGE
 // Vergleichs können ihn also immer gefahrlos übergeben.
 export const cleanDeadlineName = (title: string, contractName?: string): string => {
   let t = title.replace(/^[^0-9A-Za-zÀ-ÿ]+/, '');                            // führende Emojis/Symbole weg
-  t = t.replace(/^\d+\s*(?:Tage?|Wochen?|Monate?)\s*vorher\s*:\s*/i, '');     // "N ... vorher:" weg (Vorwarnung)
+  // "N ... vorher:" weg (Vorwarnung). "– DRINGEND" (kritische 1-Tag-Stufe, calendarEvents.js
+  // reminderConfig) wird mittoleriert — Gedanken- UND Bindestrich, wie OLD_LEAD_PREFIX es fürs
+  // Alt-Format längst tut. Ohne das blieb der Zusatz im Schlüssel hängen: Vorwarner fiel aus
+  // der Frist-Karte und bildete eine Phantom-Gruppe (Realitätscheck-Befund 17.08.2026).
+  t = t.replace(/^\d+\s*(?:Tage?|Wochen?|Monate?)\s*vorher(?:\s*[–-]\s*DRINGEND)?\s*:\s*/i, '');
   t = t.replace(OLD_LEAD_PREFIX, '');                                         // Alt-Format "In N Tagen:" weg
   const name = contractName?.trim();
   if (name) {
