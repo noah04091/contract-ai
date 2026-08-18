@@ -429,10 +429,17 @@ async function processOnboardingEmails(db) {
   // - Created in the last 45 days (to cover Day 30 social proof email)
   // - Have email notifications enabled
   // - Not unsubscribed
+  // - Double-Opt-In abgeschlossen: verified === true ist Pflicht. Ohne diesen Filter
+  //   gingen Willkommens- UND Marketing-Mails (Tag 2/7/14/30) an Adressen, deren
+  //   Inhaber die Registrierung nie bestätigt haben (§ 7 UWG). Team-Invite-User
+  //   (isVerified statt verified) bleiben bewusst außen vor: deren Welcome-Mail
+  //   würde fälschlich "Plan: Free" behaupten und Upgrade-Nudges an Org-Mitglieder
+  //   sind nicht gewollt.
   const fortyFiveDaysAgo = new Date(Date.now() - 45 * 24 * 60 * 60 * 1000);
 
   const users = await usersCollection.find({
     createdAt: { $gte: fortyFiveDaysAgo },
+    verified: true,
     emailNotifications: { $ne: false },
     'onboarding.emailSequence.unsubscribed': { $ne: true },
     'emailPreferences.marketing': { $ne: false },
@@ -479,6 +486,15 @@ async function processOnboardingEmails(db) {
  */
 async function sendWelcomeEmailNow(user, db) {
   try {
+    // Doppel-Schutz: Wenn die Welcome-Mail schon raus ist (z. B. weil der 8:30-Cron
+    // sie vor der Verifikation verschickt hat — Altbestand vor dem verified-Filter),
+    // nicht erneut senden. Ohne diesen Guard bekam ein User, der abends registrierte
+    // und erst nach dem nächsten Cron-Lauf bestätigte, die Mail zweimal.
+    if (user?.onboarding?.emailSequence?.welcome) {
+      console.log(`📧 Welcome-Mail übersprungen (bereits gesendet): ${user.email}`);
+      return true;
+    }
+
     await sendOnboardingEmail(user, 'welcome');
 
     // Mark as sent in database
