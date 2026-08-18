@@ -487,6 +487,12 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     // Count contracts before deletion
     const contractCount = await contractsCollection.countDocuments({ userId: userId });
 
+    // 🛑 18.08.2026: Stripe-Abos beenden, BEVOR das Konto verschwindet — ein gelöschtes
+    // Konto löst kein Stripe-Ereignis aus, sonst laufen die Abbuchungen ewig weiter.
+    // Wirft nie; Ergebnis wandert ins Archiv, Fehler zusätzlich ins Alarmsystem.
+    const { cancelStripeSubscriptionsOnDelete } = require('../utils/cancelStripeSubscriptionsOnDelete');
+    const stripeCancellation = await cancelStripeSubscriptionsOnDelete(user);
+
     // 📦 Archive deleted account
     const deletedAccountRecord = {
       originalUserId: user._id.toString(),
@@ -508,7 +514,10 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
       deletionDevice: null, // Admin-Löschung hat kein spezifisches Gerät
       deletedBy: 'admin',
       deletedByAdmin: req.user.email,
-      verified: user.verified || false
+      verified: user.verified || false,
+      // 💳 18.08.2026: Stripe-Spur für Abrechnungs-/Dispute-Forensik
+      stripeCustomerId: user.stripeCustomerId || null,
+      stripeCancellation
     };
 
     await deletedAccountsCollection.insertOne(deletedAccountRecord);
