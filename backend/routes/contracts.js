@@ -24,6 +24,7 @@ const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
 const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
 const { findContractWithOrgAccess, hasPermission, buildOrgFilter } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { normalizeLaufzeit, normalizeKuendigung } = require("../utils/contractFieldLabels"); // 🇩🇪 Englisch→Deutsch Normalisierung für Eckdaten
+const { detectMimeType } = require("../utils/emailImportSecurity"); // 📄 Dateityp aus den Bytes, nicht aus dem Namen (Re-Analyse)
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness, handleEnhancedDeepLawyerAnalysisRequest } = analyzeRoute;
 // ⚡ Async-Job-Helfer für den Re-Analyse-Pfad (gegen Cloudflare-~100s-Schnitt bei langen Läufen)
 const { generateJobId, insertAnalysisJob, updateAnalysisJob } = analyzeRoute;
@@ -2615,6 +2616,9 @@ router.post("/:id/detect-provider", verifyToken, async (req, res) => {
 // verhaltensgleich zum blockierenden Pfad, nur ohne offene HTTP-Verbindung.
 async function runReanalysisInBackground(jobId, ctx) {
   const { tempFilePath, contractId, userId, originalname, fileSize, requestId } = ctx;
+  // 18.08.2026: Dateityp kommt aus der Magic-Byte-Erkennung des Aufrufers. Fallback PDF
+  // hält den bisherigen Stand, falls der Kontext ihn (noch) nicht mitliefert.
+  const dateiTyp = ctx.mimetype || 'application/pdf';
   const db = await database.connect();
   await updateAnalysisJob(db, jobId, { status: 'processing', startedAt: new Date() });
 
@@ -2622,7 +2626,7 @@ async function runReanalysisInBackground(jobId, ctx) {
     file: {
       path: tempFilePath,
       originalname,
-      mimetype: 'application/pdf',
+      mimetype: dateiTyp, // 18.08.2026: aus den Bytes erkannt, nicht fest PDF
       size: fileSize,
       filename: path.basename(tempFilePath)
     },
@@ -2774,8 +2778,24 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       await contractsCollection.updateOne({ _id: new ObjectId(id) }, { $set: { fileHash } });
     }
 
-    // 📄 Buffer in Temp-Datei schreiben — die Upload-Pipeline erwartet req.file.path auf Platte.
-    tempFilePath = path.join(os.tmpdir(), `reanalyze-${id}-${Date.now()}.pdf`);
+    // 📄 18.08.2026: Dateityp aus den BYTES bestimmen, nicht raten.
+    // Vorher stand hier fest `application/pdf` (und `.pdf` als Endung). analyze.js entscheidet
+    // aber genau daran, welcher Leseweg genommen wird (`const isPdf = fileMimetype === ...`,
+    // analyze.js:5364/5460). Folge: JEDE erneute Analyse einer DOCX lief durch den PDF-Weg,
+    // scheiterte dort zwangsläufig und meldete dem Kunden „📄 PDF-Datei beschädigt" —
+    // obwohl er nie eine PDF hochgeladen hat. Real belegt am 18.08. 07:03; betroffen sind
+    // 97 von 831 Verträgen (~12 %). Der Anzeigename taugt als Quelle NICHT (`contract.name`
+    // kann eine KI-Beschreibung sein), deshalb die Magic-Byte-Erkennung, die für den
+    // E-Mail-Import schon existiert. Unbekannt/nicht erkannt → PDF wie bisher (fail-safe).
+    const erkannterTyp = detectMimeType(buffer);
+    const dateiTyp = erkannterTyp === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      ? erkannterTyp
+      : 'application/pdf';
+    const dateiEndung = dateiTyp === 'application/pdf' ? 'pdf' : 'docx';
+    console.log(`📄 [${requestId}] Re-Analyse Dateityp erkannt: ${dateiTyp} (Magic Bytes: ${erkannterTyp || 'unbekannt'})`);
+
+    // Buffer in Temp-Datei schreiben — die Upload-Pipeline erwartet req.file.path auf Platte.
+    tempFilePath = path.join(os.tmpdir(), `reanalyze-${id}-${Date.now()}.${dateiEndung}`);
     await fs.writeFile(tempFilePath, buffer);
 
     // ⚡ ASYNC-MODUS (27.07.2026): Bei ?async=true den Job dispatchen und SOFORT mit 202 antworten,
@@ -2799,6 +2819,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
         contractId: id,
         userId: req.user.userId,
         originalname: contract.name || 'vertrag.pdf',
+        mimetype: dateiTyp, // 18.08.2026: aus den Bytes erkannt, nicht fest PDF
         fileSize: buffer.length,
         requestId
       };
@@ -2825,7 +2846,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       file: {
         path: tempFilePath,
         originalname: contract.name || 'vertrag.pdf',
-        mimetype: 'application/pdf',
+        mimetype: dateiTyp, // 18.08.2026: aus den Bytes erkannt, nicht fest PDF
         size: buffer.length,
         filename: path.basename(tempFilePath)
       },
