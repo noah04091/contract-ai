@@ -123,6 +123,11 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // 🎓 Stufe 2 Registrierungs-Strecke (18.08.2026): ID des im Modal hochgeladenen
+  // Vertrags. Damit endet das Onboarding nicht mehr im Dashboard, sondern führt
+  // per explizitem Klick direkt in die erste Analyse (= der Wert-Moment; 21 % der
+  // Free-User luden hoch und analysierten nie).
+  const [uploadedContractId, setUploadedContractId] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
   // Get user's first name for personalization
@@ -156,7 +161,10 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       // 🎉 Celebrate onboarding completion with fireworks!
       celebrate('onboarding-complete');
       onClose?.();
-      navigate('/dashboard');
+      // 🎓 Stufe 2: Wurde im Modal ein Vertrag hochgeladen, startet der Abschluss-
+      // Klick die erste Analyse (ContractsV2 ?analyze=-Effekt, exakt der Pfad des
+      // "Jetzt analysieren"-Knopfs inkl. Limit-Check). Ohne Upload wie bisher Dashboard.
+      navigate(uploadedContractId ? `/contracts?analyze=${uploadedContractId}` : '/dashboard');
     }
   };
 
@@ -264,6 +272,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       console.log('✅ Onboarding Upload erfolgreich:', data);
 
       setUploadState('success');
+      setUploadedContractId(data.contract?._id || data.contractId || null);
 
       // Mark the upload step as complete in onboarding
       await completeStep('upload', { contractId: data.contract?._id || data.contractId });
@@ -994,10 +1003,17 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               whileTap={{ scale: 0.98 }}
             >
               {currentStep === STEPS.length - 1 ? (
-                <>
-                  Zum Dashboard
-                  <Rocket size={18} />
-                </>
+                uploadedContractId ? (
+                  <>
+                    Erste Analyse starten
+                    <Search size={18} />
+                  </>
+                ) : (
+                  <>
+                    Zum Dashboard
+                    <Rocket size={18} />
+                  </>
+                )
               ) : (
                 <>
                   Weiter

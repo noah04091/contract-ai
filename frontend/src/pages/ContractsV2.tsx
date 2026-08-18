@@ -1094,6 +1094,55 @@ export default function Contracts() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
 
+  // 🎓 Registrierungs-Strecke Stufe 2 (18.08.2026): Ankunft aus dem Onboarding-Modal
+  // (?analyze=<id>). Der Modal-Upload endete vorher im Dashboard, ohne dass der Kunde
+  // je den Wert-Moment sah (21 % der Free-User laden hoch und analysieren nie).
+  // Startet die Analyse über exakt denselben Pfad wie der "Jetzt analysieren"-Knopf
+  // (inkl. Limit-Check + Overlay). Bereits analysierte Verträge (Zurück-Navigation,
+  // Duplikat-Upload) öffnen nur die vorhandene Analyse — kein doppelter
+  // Kontingent-Verbrauch. Ref-Guard: läuft pro Mount höchstens einmal.
+  const autoAnalyzeRef = useRef(false);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const analyzeId = params.get('analyze');
+    if (!analyzeId || loading || autoAnalyzeRef.current) return;
+    autoAnalyzeRef.current = true;
+    navigate('/contracts', { replace: true }); // Param sofort säubern (Reload-/Back-Schutz)
+    (async () => {
+      let contract: Contract | null = contracts.find(c => String(c._id) === String(analyzeId)) || null;
+      if (!contract) {
+        // Pagination-/Timing-Fallback wie im view=-Effekt; Analyse-Felder sind hier
+        // dünner (Einzel-GET), aber für Start bzw. Root-Fallbacks ausreichend.
+        try {
+          const detail = await apiCall(`/contracts/${analyzeId}`);
+          contract = (detail as { contract?: Contract })?.contract || (detail as Contract);
+        } catch { /* gelöscht/fremd → Liste bleibt einfach offen, kein Fehlerzustand */ }
+      }
+      if (!contract || !contract._id) return;
+      if (contract.analyzed) {
+        const analysisResultData = buildAnalysisResultFromContract(contract);
+        setShowDetails(false);
+        setQuickAnalysisModal({
+          show: true,
+          contractName: contract.name,
+          contractId: contract._id,
+          analysisResult: analysisResultData,
+        });
+        try {
+          sessionStorage.setItem('contractai_quickAnalysis', JSON.stringify({
+            contractName: contract.name,
+            contractId: contract._id,
+            analysisResult: analysisResultData,
+          }));
+        } catch { /* sessionStorage voll oder nicht verfügbar */ }
+        navigate(`/contracts?quickAnalysis=${contract._id}`, { replace: true });
+      } else {
+        handleAnalyzeExistingContract(contract);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, contracts, loading]);
+
   // 🔄 18.08.2026 (Noahs Re-Test): quickAnalysis-Restore selbst auffrischen.
   // Der sessionStorage-Payload kann VERALTET sein — z.B. das vor dem Kauf
   // gegatete Paket oder ein Stand aus altem Mapping (leere Reiter, obwohl das
