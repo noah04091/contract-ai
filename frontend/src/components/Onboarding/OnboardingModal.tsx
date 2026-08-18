@@ -370,7 +370,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              Du bist einer von über 5.000 Nutzern, die ihre Verträge intelligent verwalten.
+              Du bist einer von über 500 Nutzern, die ihre Verträge intelligent verwalten.
               <br />In 60 Sekunden zeigen wir dir, wie du das Maximum herausholst.
             </motion.p>
 
@@ -381,10 +381,13 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
+              {/* Ehrlichkeits-Standard (28.06.2026): Nutzerzahl überall "über 500",
+                  keine erfundenen Mengen ("50.000+ Verträge"/"98% Zufriedenheit"
+                  waren frei erfunden — UWG-/Vertrauensrisiko). */}
               {[
-                { value: '5.000+', label: 'Nutzer' },
-                { value: '50.000+', label: 'Verträge' },
-                { value: '98%', label: 'Zufriedenheit' }
+                { value: '500+', label: 'Nutzer' },
+                { value: '3', label: 'Gratis-Analysen' },
+                { value: 'DSGVO', label: 'konform' }
               ].map((stat, index) => (
                 <motion.div
                   key={stat.label}
