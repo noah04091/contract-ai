@@ -231,6 +231,50 @@ interface UploadFileItem {
 // bestehen (pollAnalysisJob räumt ihn bei done/failed auf).
 const resumedAnalysisJobIds = new Set<string>();
 
+// 🔓 18.08.2026: EIN gemeinsames Mapping für das Schnellanalyse-Modal aus einem
+// angereicherten Vertrag (Datenquelle bevorzugt die LISTE — die Einzel-Route
+// GET /contracts/:id baut contract.analysis nur mit 7 Feldern, contracts.js
+// ~1150, OHNE criticalIssues/recommendations). Root-Fallbacks, weil analyze.js
+// die Analyse-Inhaltsfelder auch direkt aufs Contract-Dokument schreibt.
+// Genutzt von: Unlock-Rücksprung + quickAnalysis-Restore-Auffrischung.
+function buildAnalysisResultFromContract(full: Contract): Record<string, unknown> {
+  const raw = full as unknown as Record<string, unknown>;
+  return {
+    success: true,
+    originalContractId: full._id,
+    documentType: full.documentType,
+    contractType: full.contractType,
+    contractScore: full.analysis?.contractScore ?? full.contractScore,
+    summary: full.analysis?.summary || full.summary,
+    legalAssessment: full.analysis?.legalAssessment || full.legalAssessment,
+    suggestions: full.analysis?.suggestions || full.suggestions,
+    comparison: full.analysis?.comparison ?? raw.comparison,
+    positiveAspects: full.analysis?.positiveAspects ?? raw.positiveAspects,
+    criticalIssues: full.analysis?.criticalIssues ?? raw.criticalIssues,
+    recommendations: full.analysis?.recommendations ?? raw.recommendations,
+    detailedLegalOpinion: full.analysis?.detailedLegalOpinion || full.detailedLegalOpinion,
+    analysisCoverage: full.analysis?.analysisCoverage ?? full.analysisCoverage,
+    jurisdictionWarning: full.analysis?.jurisdictionWarning ?? full.jurisdictionWarning,
+    ocrNotice: full.analysis?.ocrNotice ?? full.ocrNotice,
+    pilotTruncated: full.analysis?.pilotTruncated ?? full.pilotTruncated,
+    usedFallbackFormat: full.analysis?.usedFallbackFormat ?? full.usedFallbackFormat,
+    // Hero-Zähler, Termine-Zähler, „Auf einen Blick", Score-Begründung, Brief-Tabs
+    importantDates: raw.importantDates,
+    fristHinweise: raw.fristHinweise,
+    quickFacts: raw.quickFacts,
+    laymanSummary: raw.laymanSummary,
+    scoreReasoning: raw.scoreReasoning,
+    typeSpecificFindings: raw.typeSpecificFindings,
+    letterType: raw.letterType,
+    kuendigung: full.kuendigung,
+    laufzeit: full.laufzeit,
+    risiken: full.risiken,
+    optimierungen: full.optimierungen,
+    gated: (full as { gated?: boolean }).gated,
+    gatedCounts: (full as { gatedCounts?: unknown }).gatedCounts,
+  };
+}
+
 // ✅ User Info Interface
 interface UserInfo {
   subscriptionPlan: 'free' | 'business' | 'enterprise';
@@ -1028,45 +1072,7 @@ export default function Contracts() {
           full = (detail as { contract?: Contract })?.contract || (detail as Contract);
         }
         if (full && full._id) {
-          // Root-Fallbacks: analyze.js schreibt die Analyse-Inhaltsfelder auch
-          // direkt aufs Contract-Dokument — je nach Anreicherungs-Route liegen
-          // sie in full.analysis ODER auf Root. Beide Quellen akzeptieren.
-          const raw = full as unknown as Record<string, unknown>;
-          const analysisResultData = {
-            success: true,
-            originalContractId: full._id,
-            documentType: full.documentType,
-            contractType: full.contractType,
-            contractScore: full.analysis?.contractScore ?? full.contractScore,
-            summary: full.analysis?.summary || full.summary,
-            legalAssessment: full.analysis?.legalAssessment || full.legalAssessment,
-            suggestions: full.analysis?.suggestions || full.suggestions,
-            comparison: full.analysis?.comparison ?? raw.comparison,
-            positiveAspects: full.analysis?.positiveAspects ?? raw.positiveAspects,
-            criticalIssues: full.analysis?.criticalIssues ?? raw.criticalIssues,
-            recommendations: full.analysis?.recommendations ?? raw.recommendations,
-            detailedLegalOpinion: full.analysis?.detailedLegalOpinion || full.detailedLegalOpinion,
-            analysisCoverage: full.analysis?.analysisCoverage ?? full.analysisCoverage,
-            jurisdictionWarning: full.analysis?.jurisdictionWarning ?? full.jurisdictionWarning,
-            ocrNotice: full.analysis?.ocrNotice ?? full.ocrNotice,
-            pilotTruncated: full.analysis?.pilotTruncated ?? full.pilotTruncated,
-            usedFallbackFormat: full.analysis?.usedFallbackFormat ?? full.usedFallbackFormat,
-            // 18.08.2026: Felder, die das Modal zusätzlich speist (Hero-Zähler,
-            // Termine-Zähler, „Auf einen Blick", Score-Begründung, Brief-Tabs)
-            importantDates: raw.importantDates,
-            fristHinweise: raw.fristHinweise,
-            quickFacts: raw.quickFacts,
-            laymanSummary: raw.laymanSummary,
-            scoreReasoning: raw.scoreReasoning,
-            typeSpecificFindings: raw.typeSpecificFindings,
-            letterType: raw.letterType,
-            kuendigung: full.kuendigung,
-            laufzeit: full.laufzeit,
-            risiken: full.risiken,
-            optimierungen: full.optimierungen,
-            gated: (full as { gated?: boolean }).gated,
-            gatedCounts: (full as { gatedCounts?: unknown }).gatedCounts,
-          };
+          const analysisResultData = buildAnalysisResultFromContract(full);
           setShowDetails(false); // falls die view=-Logik das Detail-Modal schon geöffnet hat
           setQuickAnalysisModal({
             show: true,
@@ -1087,6 +1093,33 @@ export default function Contracts() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
+
+  // 🔄 18.08.2026 (Noahs Re-Test): quickAnalysis-Restore selbst auffrischen.
+  // Der sessionStorage-Payload kann VERALTET sein — z.B. das vor dem Kauf
+  // gegatete Paket oder ein Stand aus altem Mapping (leere Reiter, obwohl das
+  // Detail-Modal 5/5 zeigt). Sobald die frisch geladene Liste den Vertrag
+  // enthält, Payload einmalig aus dem angereicherten Vertrag neu bauen —
+  // dieselbe Quelle + dasselbe Mapping wie Unlock-/Duplikat-Pfad.
+  const quickAnalysisRefreshedRef = useRef<string | null>(null);
+  useEffect(() => {
+    const cid = quickAnalysisModal.contractId;
+    if (!quickAnalysisModal.show || !cid) return;
+    if (quickAnalysisRefreshedRef.current === cid) return;
+    const full = contracts.find(c => String(c._id) === String(cid));
+    if (!full) return; // Liste noch leer — Effect feuert erneut, wenn contracts da sind
+    quickAnalysisRefreshedRef.current = cid;
+    const freshData = buildAnalysisResultFromContract(full);
+    setQuickAnalysisModal(prev =>
+      prev.show && prev.contractId === cid ? { ...prev, analysisResult: freshData } : prev
+    );
+    try {
+      sessionStorage.setItem('contractai_quickAnalysis', JSON.stringify({
+        contractName: full.name,
+        contractId: cid,
+        analysisResult: freshData,
+      }));
+    } catch { /* sessionStorage voll oder nicht verfügbar */ }
+  }, [contracts, quickAnalysisModal.show, quickAnalysisModal.contractId]);
 
   // 📁 Close dropdown when clicking outside
   useEffect(() => {
