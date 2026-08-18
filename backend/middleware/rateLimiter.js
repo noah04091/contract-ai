@@ -1,8 +1,36 @@
 // backend/middleware/rateLimiter.js
 // Rate Limiting fuer Contract AI API Endpoints
 
+const net = require('net');
 const rateLimit = require('express-rate-limit');
 const { ipKeyGenerator } = require('express-rate-limit'); // IPv6-sicherer IP-Schlüssel (verhindert Bypass)
+
+/**
+ * 🔑 Kundenadresse fuer die NICHT angemeldeten Routen (Anmelden, Passwort vergessen,
+ * Passwort neu setzen). Bewusst OHNE app.set('trust proxy', ...).
+ *
+ * Warum kein trust proxy (17.08.2026 gemessen): api.contract-ai.de antwortet von
+ * 216.24.57.7, das liegt in KEINEM veroeffentlichten Cloudflare-Bereich. Renders
+ * Zwischensprung ist damit von aussen nicht benennbar. Jede trust-proxy-Variante
+ * raet also die Kettenlaenge (dann faelschbar) oder haelt am Zwischensprung (dann
+ * zaehlen alle Nutzer dahinter in EINEN Topf, enger als heute).
+ *
+ * CF-Connecting-IP laeuft die Kette gar nicht ab: Cloudflare setzt die Kopfzeile bei
+ * jeder Anfrage selbst und ueberschreibt, was der Aufrufer schickt.
+ * Fehlt sie, gilt der bisherige Zustand — der Fehlerfall kostet nichts.
+ *
+ * Die Wertpruefung faengt nur versehentlichen Muell ab; gegen einen vollaufenden
+ * Zaehlerspeicher schuetzen die Nicht-Faelschbarkeit und der selbstraeumende Speicher
+ * von express-rate-limit (zwei Puffer, clearExpired im Fenstertakt).
+ */
+function clientAddressKey(req) {
+  const cf = req.headers['cf-connecting-ip'];
+  if (typeof cf === 'string') {
+    const candidate = cf.trim();
+    if (net.isIP(candidate)) return ipKeyGenerator(candidate);
+  }
+  return ipKeyGenerator(req.ip);
+}
 
 const standardLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -26,7 +54,13 @@ const authLimiter = rateLimit({
     retryAfter: '15 Minuten'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  // Vorher ohne keyGenerator -> Default req.ip -> ohne 'trust proxy' die Adresse des
+  // vorgelagerten Proxys. Live gemessen: 4 Anmeldeversuche von EINER Leitung ergaben
+  // 19, 18, 18, 17 — der Zaehler lief also nicht auf dem Kunden, sondern auf einem
+  // wechselnden Proxy-Pool. Folge doppelt schlecht: echte Kunden teilen sich das
+  // Kontingent, und die Versuche eines Angreifers verteilen sich ueber mehrere Toepfe.
+  keyGenerator: clientAddressKey
 });
 
 const analyzeLimiter = rateLimit({
