@@ -23,14 +23,18 @@ const EMAIL_CATEGORIES = {
  */
 function generateUnsubscribeToken(email, category = EMAIL_CATEGORIES.ALL) {
   const secret = process.env.UNSUBSCRIBE_SECRET || process.env.JWT_SECRET || "fallback-secret";
-  const data = `${email.toLowerCase()}:${category}:${Date.now()}`;
+  // EIN Zeitstempel fuer Signatur UND Payload. Vorher liefen hier zwei getrennte
+  // Date.now()-Aufrufe — die Signatur konnte damit ueber einen anderen Wert gehen
+  // als im Payload steht, was eine echte Signatur-Pruefung unmoeglich machte.
+  const t = Date.now();
+  const data = `${email.toLowerCase()}:${category}:${t}`;
   const hash = crypto.createHmac("sha256", secret).update(data).digest("hex");
 
   // Base64-encode fuer URL-Sicherheit
   const payload = Buffer.from(JSON.stringify({
     e: email.toLowerCase(),
     c: category,
-    t: Date.now()
+    t
   })).toString("base64url");
 
   return `${payload}.${hash.substring(0, 16)}`;
@@ -43,8 +47,33 @@ function generateUnsubscribeToken(email, category = EMAIL_CATEGORIES.ALL) {
  */
 function validateUnsubscribeToken(token) {
   try {
-    const [payload] = token.split(".");
+    const [payload, signature] = String(token).split(".");
+    if (!payload || !signature) return null;
     const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    if (!decoded || typeof decoded.e !== "string" || typeof decoded.c !== "string" || typeof decoded.t !== "number") {
+      return null;
+    }
+
+    // SIGNATUR NACHRECHNEN (Haertung 18.08.2026): Vorher wurde der HMAC-Teil des
+    // Tokens NIE geprueft — ein selbstgebauter Payload mit beliebiger "Signatur"
+    // konnte jede bekannte E-Mail-Adresse von allen Mails abmelden (inkl. bezahlter
+    // Fristen-Erinnerungen). Jetzt wird der HMAC verglichen (timing-safe).
+    // Uebergangs-Toleranz t-1: Alt-Tokens (vor der Haertung) signierten ueber einen
+    // eigenen Date.now()-Aufruf, der 1ms vor dem Payload-Zeitstempel liegen konnte.
+    const secret = process.env.UNSUBSCRIBE_SECRET || process.env.JWT_SECRET || "fallback-secret";
+    const sigBuf = Buffer.from(signature);
+    const signatureValid = [decoded.t, decoded.t - 1].some((t) => {
+      const expected = crypto.createHmac("sha256", secret)
+        .update(`${decoded.e}:${decoded.c}:${t}`)
+        .digest("hex")
+        .substring(0, 16);
+      const expBuf = Buffer.from(expected);
+      return expBuf.length === sigBuf.length && crypto.timingSafeEqual(expBuf, sigBuf);
+    });
+    if (!signatureValid) {
+      console.log("Unsubscribe-Token: Signatur ungueltig");
+      return null;
+    }
 
     // Token ist 30 Tage gueltig
     const tokenAge = Date.now() - decoded.t;
