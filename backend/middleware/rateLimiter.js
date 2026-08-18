@@ -80,7 +80,12 @@ const sensitiveLimiter = rateLimit({
     retryAfter: '15 Minuten'
   },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  // Alle 4 Verwendungen (cancellations.js:119/500/577/742) laufen HINTER verifyToken,
+  // req.user.userId ist also da. Vorher ohne keyGenerator -> Default req.ip -> ohne
+  // 'trust proxy' die Adresse des vorgelagerten Proxys -> 10 Kuendigungen pro 15 Min
+  // fuer die GESAMTE Plattform. Identisch zu den 6 Nachbar-Limitern in dieser Datei.
+  keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
 });
 
 const sseLimiter = rateLimit({

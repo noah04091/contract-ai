@@ -78,8 +78,32 @@ async function premiumOrHasUnlockedContract(req, res, next) {
 // ===== RATE LIMITERS =====
 
 /**
+ * 🔑 17.08.2026: Schluessel der oeffentlichen /sign-Limiter ist der Unterzeichner-Token
+ * aus dem Pfad, nicht mehr die X-Forwarded-For-Kopfzeile.
+ *
+ * Grund (live gemessen): Ueber den direkten API-Host erzeugte jede selbst gesetzte
+ * X-Forwarded-For-Kopfzeile einen frischen Zaehler, die Sperren waren also umgehbar.
+ * Ueber die Website (Vercel) war der Wert dagegen vertrauenswuerdig — zwei Wege, zwei
+ * Wahrheiten. Der Token ist auf beiden Wegen derselbe und nicht austauschbar.
+ *
+ * Inhaltlich ist das auch die richtige Grenze: N Versuche pro Unterzeichner, egal
+ * woher sie kommen. Passt zur bereits vorhandenen 60-Sekunden-Sperre pro Unterzeichner.
+ *
+ * Der Token ist ein Geheimnis, deshalb wandert nur seine Pruefsumme in den Zaehler.
+ * Bewusst NICHT req.ip: ueber Vercel waere das fuer alle Unterzeichner derselbe Wert
+ * und sie haetten sich das Kontingent geteilt.
+ */
+function signerTokenKey(req) {
+  return 'signer:' + crypto
+    .createHash('sha256')
+    .update(String(req.params.token || ''))
+    .digest('hex')
+    .slice(0, 32);
+}
+
+/**
  * Rate limiter for signature submission (prevents spam/abuse)
- * 5 attempts per 15 minutes per IP
+ * 5 attempts per 15 minutes per signer token
  */
 const signatureSubmitLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -87,14 +111,7 @@ const signatureSubmitLimiter = rateLimit({
   message: 'Zu viele Signaturversuche. Bitte warten Sie 15 Minuten.',
   standardHeaders: true,
   legacyHeaders: false,
-  // Use IP address as key
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0] ||
-           req.headers['x-real-ip'] ||
-           req.connection.remoteAddress ||
-           req.socket.remoteAddress ||
-           'unknown';
-  }
+  keyGenerator: signerTokenKey
 });
 
 /**
@@ -107,13 +124,7 @@ const signatureDeclineLimiter = rateLimit({
   message: 'Zu viele Ablehnungsversuche. Bitte warten Sie 15 Minuten.',
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0] ||
-           req.headers['x-real-ip'] ||
-           req.connection.remoteAddress ||
-           req.socket.remoteAddress ||
-           'unknown';
-  }
+  keyGenerator: signerTokenKey
 });
 
 /**
@@ -181,13 +192,7 @@ const otpSendLimiter = rateLimit({
   message: { success: false, error: 'Zu viele Code-Anfragen. Bitte warten Sie 15 Minuten.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0] ||
-           req.headers['x-real-ip'] ||
-           req.connection.remoteAddress ||
-           req.socket.remoteAddress ||
-           'unknown';
-  }
+  keyGenerator: signerTokenKey
 });
 
 /**
@@ -200,13 +205,7 @@ const otpVerifyLimiter = rateLimit({
   message: { success: false, error: 'Zu viele Verifizierungsversuche. Bitte warten Sie 15 Minuten.' },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0] ||
-           req.headers['x-real-ip'] ||
-           req.connection.remoteAddress ||
-           req.socket.remoteAddress ||
-           'unknown';
-  }
+  keyGenerator: signerTokenKey
 });
 
 /**

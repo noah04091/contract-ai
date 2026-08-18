@@ -42,25 +42,33 @@ if (!SERP_API_KEY) {
 }
 
 // 🆕 STEP 3: Rate Limiting (einfache In-Memory Lösung)
+// 17.08.2026: Schluessel ist die Nutzerkennung, nicht mehr die IP. Der Mount laeuft
+// mit verifyToken + checkSubscription (server.js), req.user.userId ist also immer da.
+// Vorher req.ip -> ohne 'trust proxy' die Adresse des vorgelagerten Proxys -> 10 Suchen
+// pro 15 Min fuer ALLE Nutzer zusammen. IP bleibt nur Rueckfall.
 const requestTracker = new Map();
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 Minuten
-const MAX_REQUESTS_PER_IP = 10;
+const MAX_REQUESTS_PER_USER = 10;
 
-function checkRateLimit(ip) {
+function rateLimitKey(req) {
+  return req.user?.userId || req.user?.id || `ip:${req.ip || req.connection?.remoteAddress || 'unknown'}`;
+}
+
+function checkRateLimit(key) {
   const now = Date.now();
-  const userRequests = requestTracker.get(ip) || [];
-  
+  const userRequests = requestTracker.get(key) || [];
+
   // Alte Requests entfernen
   const recentRequests = userRequests.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
-  
-  if (recentRequests.length >= MAX_REQUESTS_PER_IP) {
+
+  if (recentRequests.length >= MAX_REQUESTS_PER_USER) {
     return false; // Rate limit erreicht
   }
-  
+
   // Neuen Request hinzufügen
   recentRequests.push(now);
-  requestTracker.set(ip, recentRequests);
-  
+  requestTracker.set(key, recentRequests);
+
   return true; // OK
 }
 
@@ -1644,17 +1652,17 @@ router.post("/", async (req, res) => {
     console.log(`📋 Request Body Keys: ${Object.keys(req.body).join(', ')}`);
     console.log(`📋 Request Body: ${JSON.stringify(req.body, null, 2)}`);
 
-    // 🆕 STEP 3: Rate Limiting prüfen
-    const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-    console.log(`🌍 Client IP: ${clientIP}`);
-    
+    // 🆕 STEP 3: Rate Limiting prüfen (pro Nutzer, nicht pro Proxy-Adresse)
+    const limitKey = rateLimitKey(req);
+    console.log(`🔑 Rate-Limit-Schluessel: ${req.user?.userId ? 'userId' : 'IP-Rueckfall'}`);
+
     console.log(`✅ Rate Limit Check passed`);
 
-    if (!checkRateLimit(clientIP)) {
-      console.log(`❌ Rate Limit exceeded for IP: ${clientIP}`);
+    if (!checkRateLimit(limitKey)) {
+      console.log(`❌ Rate Limit exceeded fuer Nutzer ${req.user?.userId || '(unbekannt)'}`);
       return res.status(429).json({
         error: "Rate Limit erreicht",
-        message: `Maximal ${MAX_REQUESTS_PER_IP} Anfragen alle 15 Minuten erlaubt`,
+        message: `Maximal ${MAX_REQUESTS_PER_USER} Anfragen alle 15 Minuten erlaubt`,
         retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000 / 60) + " Minuten"
       });
     }
@@ -1698,7 +1706,7 @@ router.post("/", async (req, res) => {
     }
 
     console.log(`🔍 Cache MISS - Starte neue Analyse für: "${cleanSearchQuery}"`);
-    console.log(`📊 Request von IP: ${clientIP}`);
+    console.log(`📊 Request von Nutzer: ${req.user?.userId || '(unbekannt)'}`);
 
     // 🆕 Debug: SERP API Key Check
     console.log(`🔑 SERP API Key verfügbar: ${SERP_API_KEY ? 'JA' : 'NEIN'}`);
@@ -2870,9 +2878,9 @@ router.get("/health", (req, res) => {
       maxAge: `${CACHE_DURATION / 1000 / 60} minutes`
     },
     rateLimit: {
-      activeIPs: requestTracker.size,
+      activeKeys: requestTracker.size,
       window: `${RATE_LIMIT_WINDOW / 1000 / 60} minutes`,
-      maxRequests: MAX_REQUESTS_PER_IP
+      maxRequests: MAX_REQUESTS_PER_USER
     },
     timestamp: new Date().toISOString()
   });
@@ -2904,19 +2912,23 @@ router.get("/cache/stats", (req, res) => {
   res.json(stats);
 });
 
-// 🆕 STEP 3: Rate Limit Status
-router.get("/rate-limit/:ip?", (req, res) => {
-  const checkIP = req.params.ip || req.ip || req.connection.remoteAddress || 'unknown';
-  const userRequests = requestTracker.get(checkIP) || [];
+// 🆕 STEP 3: Rate Limit Status — zeigt ausschliesslich den EIGENEN Zaehlerstand.
+// 17.08.2026: Der frei waehlbare Pfad-Parameter ":ip?" ist entfallen. Seit der Zaehler
+// auf Nutzerkennungen laeuft, haette "/rate-limit/<fremde-userId>" den Zaehlerstand
+// eines anderen Kunden herausgegeben (gleiche Klasse wie der Assistent-Befund 14.08.).
+// Die Route hat nachweislich keinen Konsumenten (weder Frontend noch Backend).
+router.get("/rate-limit", (req, res) => {
+  const key = rateLimitKey(req);
+  const userRequests = requestTracker.get(key) || [];
   const now = Date.now();
   const recentRequests = userRequests.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW);
-  
+
   res.json({
-    ip: checkIP,
+    scope: req.user?.userId ? 'user' : 'ip-fallback',
     requestsInWindow: recentRequests.length,
-    maxRequests: MAX_REQUESTS_PER_IP,
-    remaining: Math.max(0, MAX_REQUESTS_PER_IP - recentRequests.length),
-    windowResetIn: recentRequests.length > 0 ? 
+    maxRequests: MAX_REQUESTS_PER_USER,
+    remaining: Math.max(0, MAX_REQUESTS_PER_USER - recentRequests.length),
+    windowResetIn: recentRequests.length > 0 ?
       Math.ceil((RATE_LIMIT_WINDOW - (now - Math.min(...recentRequests))) / 1000) : 0
   });
 });
