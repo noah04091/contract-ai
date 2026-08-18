@@ -27,6 +27,10 @@ const { cleanContractName } = require("../utils/cleanContractName");
 const { plural, greetingName } = require("../utils/mailText");
 // Legal Pulse ist ein Business+-Feature — Zugang inkl. Org-Vererbung (siehe utils/pulseAccess.js).
 const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
+// Sichtbarer Abmelde-Link: dieselbe Token-Maschinerie wie der List-Unsubscribe-Header.
+// Der frühere statische Link (/unsubscribe?type=legal_pulse) war token-los — die
+// Abmelde-Seite verlangt aber zwingend einen Token und zeigte "Abmeldung fehlgeschlagen".
+const { generateUnsubscribeUrl, EMAIL_CATEGORIES } = require("../services/emailUnsubscribeService");
 
 const STALENESS_THRESHOLD_DAYS = 14;
 const COOLDOWN_DAYS = 14;
@@ -273,8 +277,10 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
     buttonText: "Jetzt prüfen",
     buttonUrl: "https://contract-ai.de/pulse",
   });
+  // "jederzeit in den Einstellungen" war nicht einlösbar (keine erreichbare
+  // Pulse-Einstellungs-Seite) — der Abmelde-Link in der Fußzeile funktioniert.
   body += pulseNote(
-    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Du kannst das jederzeit in den Einstellungen ändern."
+    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Über &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail kannst du unsere Benachrichtigungs-Mails jederzeit abbestellen."
   );
 
   const subject = criticalContracts.length > 0
@@ -289,7 +295,7 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
     body,
     badge: "Legal Pulse",
     preheader,
-    unsubscribeUrl: `https://contract-ai.de/unsubscribe?type=legal_pulse`,
+    unsubscribeUrl: generateUnsubscribeUrl(email, EMAIL_CATEGORIES.ALL),
   });
 
   await queueEmail(db, {

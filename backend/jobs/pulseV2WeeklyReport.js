@@ -28,6 +28,10 @@ const {
 } = require("../utils/pulseEmailTemplate");
 // Gemeinsame Text-Helfer: Ein-/Mehrzahl + Anrede (siehe utils/mailText.js).
 const { plural, greetingName } = require("../utils/mailText");
+// Sichtbarer Abmelde-Link: dieselbe Token-Maschinerie wie der List-Unsubscribe-Header.
+// Der frühere statische Link (/unsubscribe?type=legal_pulse) war token-los — die
+// Abmelde-Seite verlangt aber zwingend einen Token und zeigte "Abmeldung fehlgeschlagen".
+const { generateUnsubscribeUrl, EMAIL_CATEGORIES } = require("../services/emailUnsubscribeService");
 
 const WEEK_DAYS = 7;
 const COOLDOWN_DAYS = 6;          // verhindert Doppel-Versand (z.B. bei Deploy-Overlap)
@@ -94,7 +98,29 @@ async function computeUserStats(db, userId, weekAgo) {
   const negative = alerts.filter(a => a.impactDirection !== "positive");
   const critical = negative.filter(a => a.severity === "critical");
 
-  return { monitoredCount, alerts, positive, negative, critical };
+  // Offene ALT-Punkte (älter als die Berichtswoche; "offen" = unread/read, exakt die
+  // Definition der /pulse-Seite), nur auf noch existierenden Verträgen. Grund: Die grüne
+  // "alle Verträge aktuell / nichts zu tun"-Variante ging auch an Konten mit offenen
+  // Meldungen aus früheren Wochen — dort war "Du musst nichts unternehmen" unwahr.
+  // countDocuments statt find+limit: die Zahl steht wörtlich im Betreff und darf
+  // auch bei vielen Alt-Alerts nicht falsch-niedrig gedeckelt werden.
+  // Fail-open auf 0: bei Fehler fällt die Mail auf die bisherige Variante zurück.
+  let openOlderCount = 0;
+  try {
+    const livingIds = livingContracts.map((c) => String(c._id));
+    if (livingIds.length) {
+      openOlderCount = await db.collection("pulse_v2_legal_alerts").countDocuments({
+        userId: { $in: candidates },
+        status: { $in: ["unread", "read"] },
+        createdAt: { $lt: weekAgo },
+        contractId: { $in: livingIds },
+      });
+    }
+  } catch (err) {
+    console.warn("[PulseV2WeeklyReport] openOlderCount failed:", err.message);
+  }
+
+  return { monitoredCount, alerts, positive, negative, critical, openOlderCount };
 }
 
 /** Drei Kennzahl-Kacheln (E-Mail-sichere Tabelle, Pulse-Blau). */
@@ -119,16 +145,22 @@ function truncateTitle(title, max = 120) {
 }
 
 /** Baut Betreff + HTML des Wach-Berichts. */
-function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats }) {
+function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats, unsubscribeUrl }) {
   const clean = (name) => {
     if (!name) return "Unbenannter Vertrag";
     return name.replace(/\.\w{2,4}$/, "").replace(/^\d{10,13}[-_]/, "").replace(/^\d{6}_/, "").replace(/_/g, " ").trim() || "Unbenannter Vertrag";
   };
   const findingCount = stats.negative.length + stats.positive.length;
   const allClear = findingCount === 0;
+  // Offene Punkte aus FRÜHEREN Wochen (fehlt das Feld, z.B. in Test-Szenarien: 0).
+  const openOlder = stats.openOlderCount || 0;
 
   let body = pulseHeadline(
-    allClear ? "Deine Verträge sind aktuell. Nichts zu tun." : "Dein Wochen-Überblick von Legal Pulse"
+    allClear
+      ? (openOlder > 0
+          ? `Nichts Neues diese Woche. ${openOlder === 1 ? "1 älterer Punkt wartet" : `${openOlder} ältere Punkte warten`} noch.`
+          : "Deine Verträge sind aktuell. Nichts zu tun.")
+      : "Dein Wochen-Überblick von Legal Pulse"
   );
   body += pulseLead(userName ? `Hallo ${userName},` : "Hallo,");
   body += pulseLead(
@@ -138,10 +170,25 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
   body += statTiles([
     { num: monitoredCount, label: monitoredCount === 1 ? "Vertrag überwacht" : "Verträge überwacht" },
     { num: changesEvaluated, label: "relevante Rechtsänderungen geprüft" },
-    { num: findingCount, label: findingCount === 1 ? "Hinweis für dich" : "Hinweise für dich" },
+    // "neue" ist bewusst Teil des Labels: Es kann offene Punkte aus früheren Wochen
+    // geben — "0 Hinweise" ohne "neue" würde dann der Offen-Zeile widersprechen.
+    { num: findingCount, label: plural(findingCount, "neuer Hinweis für dich", "neue Hinweise für dich") },
   ]);
 
-  if (allClear) {
+  if (allClear && openOlder > 0) {
+    // Ehrliche Variante: diese Woche nichts Neues, aber ältere Punkte sind noch offen —
+    // hier wäre "Alles im grünen Bereich / Du musst nichts unternehmen" unwahr.
+    body += `
+      <div style="background:#fdf6e7; border:1px solid #f0dfb6; border-radius:12px; padding:16px 18px; margin:0 0 22px;">
+        <span style="color:#b45309; font-weight:600;">Diese Woche kam nichts Neues dazu.</span>
+        <span style="color:#3c4257;"> Keine deiner Klauseln ist von den Gesetzen oder Urteilen dieser Woche betroffen. Aus fr&uuml;heren Wochen ${openOlder === 1 ? "ist aber noch 1 &auml;lterer Punkt" : `sind aber noch ${openOlder} &auml;ltere Punkte`} offen.</span>
+      </div>`;
+    body += pulseReassurance({
+      text: "&Ouml;ffne Legal Pulse: Wir zeigen dir zu jedem offenen Punkt genau die betroffene Stelle und f&uuml;hren dich durch das, was zu tun ist.",
+      buttonText: "Offene Punkte ansehen",
+      buttonUrl: "https://contract-ai.de/pulse",
+    });
+  } else if (allClear) {
     body += `
       <div style="background:#e6f6ef; border:1px solid #bfe6d6; border-radius:12px; padding:16px 18px; margin:0 0 22px;">
         <span style="color:#149a6d; font-weight:600;">&#10003; Alles im gr&uuml;nen Bereich.</span>
@@ -179,6 +226,9 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
       const restPunkte = stats.alerts.length - MAX_FINDINGS_IN_EMAIL;
       body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${restPunkte} ${plural(restPunkte, "weiterer Punkt", "weitere Punkte")} im Dashboard</span>`);
     }
+    if (openOlder > 0) {
+      body += pulseLead(`<span style="color:#8792a2; font-size:13px;">Au&szlig;erdem ${openOlder === 1 ? "ist" : "sind"} aus fr&uuml;heren Wochen noch ${openOlder} ${plural(openOlder, "&auml;lterer Punkt", "&auml;ltere Punkte")} offen.</span>`);
+    }
     body += pulseReassurance({
       text: "&Ouml;ffne Legal Pulse: Wir zeigen dir zu jedem Punkt genau die betroffene Stelle und f&uuml;hren dich durch das, was zu tun ist.",
       buttonText: "Punkte ansehen",
@@ -186,15 +236,20 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
     });
   }
 
+  // Der frühere Zusatz "jederzeit in den Einstellungen abstellbar" war nicht einlösbar:
+  // Es gibt keine für Nutzer erreichbare Pulse-Einstellungs-Seite. Der Abmelde-Link in
+  // der Fußzeile funktioniert dagegen (Token-URL, gleiche Mechanik wie der Mail-Header).
   body += pulseNote(
-    "Gepr&uuml;ft werden die f&uuml;r deine Vertragsarten relevantesten Rechts&auml;nderungen aus offiziellen Quellen (Gesetzbl&auml;tter, Bundesgerichte, Ministerien, Aufsichtsbeh&ouml;rden). Alle Zahlen stammen aus den tats&auml;chlichen Pr&uuml;fl&auml;ufen dieser Woche. Du bekommst diesen &Uuml;berblick w&ouml;chentlich &mdash; jederzeit in den Einstellungen abstellbar."
+    "Gepr&uuml;ft werden die f&uuml;r deine Vertragsarten relevantesten Rechts&auml;nderungen aus offiziellen Quellen (Gesetzbl&auml;tter, Bundesgerichte, Ministerien, Aufsichtsbeh&ouml;rden). Alle Zahlen stammen aus den tats&auml;chlichen Pr&uuml;fl&auml;ufen dieser Woche. Du bekommst diesen &Uuml;berblick w&ouml;chentlich. &Uuml;ber &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail kannst du unsere Benachrichtigungs-Mails jederzeit abbestellen."
   );
 
   const subject = allClear
-    ? "🛡️ Deine Woche: alle Verträge aktuell"
+    ? (openOlder > 0
+        ? `🛡️ Deine Woche: nichts Neues, ${openOlder} ${plural(openOlder, "Punkt", "Punkte")} noch offen`
+        : "🛡️ Deine Woche: alle Verträge aktuell")
     : `⚖️ Deine Woche: ${findingCount} ${findingCount === 1 ? "Punkt" : "Punkte"} für dich`;
   const preheader = allClear
-    ? `${monitoredCount} ${plural(monitoredCount, "Vertrag", "Verträge")} überwacht · ${changesEvaluated} ${plural(changesEvaluated, "Änderung", "Änderungen")} geprüft · nichts zu tun`
+    ? `${monitoredCount} ${plural(monitoredCount, "Vertrag", "Verträge")} überwacht · ${changesEvaluated} ${plural(changesEvaluated, "Änderung", "Änderungen")} geprüft · ${openOlder > 0 ? `${openOlder} ${plural(openOlder, "älterer Punkt", "ältere Punkte")} offen` : "nichts zu tun"}`
     // "aus" verlangt den Dativ; mit der impliziten "einer" gilt die gemischte
     // Deklination → das Adjektiv bleibt in BEIDEN Fällen "geprüften"
     // ("aus 1 geprüften Änderung" / "aus 2 geprüften Änderungen").
@@ -204,7 +259,10 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
     body,
     badge: "Wach-Bericht",
     preheader,
-    unsubscribeUrl: "https://contract-ai.de/unsubscribe?type=legal_pulse",
+    // Ohne E-Mail-Kontext (kommt real nicht vor, alle Versandpfade haben einen
+    // E-Mail-Guard) lieber KEIN Footer-Link als der alte token-lose, der auf der
+    // Abmelde-Seite nachweislich in "Abmeldung fehlgeschlagen" lief.
+    unsubscribeUrl,
   });
 
   return { subject, html };
@@ -235,6 +293,7 @@ async function runWeeklyReport(db, options = {}) {
       monitoredCount: stats.monitoredCount,
       changesEvaluated,
       stats,
+      unsubscribeUrl: user?.email ? generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.ALL) : undefined,
     });
     return { subject, html, monitoredCount: stats.monitoredCount, changesEvaluated, findings: stats.negative.length + stats.positive.length };
   }
@@ -292,6 +351,9 @@ async function runWeeklyReport(db, options = {}) {
         monitoredCount: stats.monitoredCount,
         changesEvaluated,
         stats,
+        // Kategorie "all" = konsistent mit dem One-Click-Header und dem Versand-Check
+        // in emailRetryService (Pulse-Mails laufen dort unter EMAIL_CATEGORIES.ALL).
+        unsubscribeUrl: generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.ALL),
       });
 
       await queueEmail(db, { to: user.email, subject, html, userId: String(userId), emailType: "legal_pulse_v2_weekly_report" });
@@ -323,19 +385,21 @@ async function buildTestScenarioEmails(db, userId, userName) {
   const weekAgo = new Date(now.getTime() - WEEK_DAYS * 24 * 60 * 60 * 1000);
   const evaluatedReal = await countChangesEvaluated(db, weekAgo);
   const real = await computeUserStats(db, userId, weekAgo);
+  const testUser = await findUserRobust(db, userId, { email: 1 });
+  const unsubscribeUrl = testUser?.email ? generateUnsubscribeUrl(testUser.email, EMAIL_CATEGORIES.ALL) : undefined;
 
   const monitoredCount = Math.max(real.monitoredCount, 1);     // für die Anschauung mind. 1
   const changesEvaluated = evaluatedReal || 37;                // Fallback nur für Test-Sichtbarkeit
 
   // Szenario A — ruhige Woche (alles aktuell)
   const emptyStats = { alerts: [], negative: [], positive: [], critical: [] };
-  const a = buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats: emptyStats });
+  const a = buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats: emptyStats, unsubscribeUrl });
 
   // Szenario B — Woche mit Punkten (Beispiel-Funde: 1 dringend, 1 Chance)
   const crit = { contractName: "Arbeitsvertrag Muster GmbH", lawTitle: "BGH-Urteil zur Datenschutz-Einwilligung bei Beschäftigten", severity: "critical", impactDirection: "negative" };
   const chance = { contractName: "Mietvertrag Lager Nord", lawTitle: "Neues Sonderkündigungsrecht bei Gewerbemiete", severity: "medium", impactDirection: "positive" };
   const findingStats = { alerts: [crit, chance], negative: [crit], positive: [chance], critical: [crit] };
-  const b = buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats: findingStats });
+  const b = buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, stats: findingStats, unsubscribeUrl });
 
   return [
     { subject: "[TEST] " + a.subject, html: a.html, scenario: "Ruhige Woche — alles aktuell" },
