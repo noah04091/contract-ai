@@ -1627,6 +1627,23 @@ const connectDB = async () => {
         }
       })), { timezone: "Europe/Berlin" });
 
+      // 🐕 Kalender-Wächter (Stufe 3, 18.08.2026): täglicher Selbsttest des Erinnerungs-
+      // Systems — read-only, meldet über den bestehenden Alarmkanal (captureError →
+      // error_logs + Alarmmail). Prüft: Versand-Cron lief heute (schließt die offene
+      // „Voll-Tag-Cron-Ausfall"-Lücke = Option C der Kalender-Karte), keine unverknüpften
+      // Vorwarner (Stufe-2-Invariante), keine toten deadlineEventId-Referenzen, gestern
+      // „notified" ⇒ Mail existiert, keine >48h hängenden „queued". 09:45 Berlin =
+      // sicher NACH dem 09:00-Lauf; Details/Tests: services/calendarWatchdog.js.
+      cron.schedule("45 9 * * *", withDistributedLock('calendar-watchdog', withCronLock('calendar-watchdog', async () => {
+        try {
+          const { runCalendarWatchdog } = require("./services/calendarWatchdog");
+          await withCronLogging('calendar-watchdog', () => runCalendarWatchdog(db));
+        } catch (error) {
+          console.error("❌ Kalender-Wächter Error:", error);
+          await captureError(error, { route: 'CRON:calendar-watchdog', method: 'SCHEDULED', severity: 'high' });
+        }
+      })), { timezone: "Europe/Berlin" });
+
       // 📧 NEU: E-Mail Queue Retry (alle 15 Minuten)
       cron.schedule("*/15 * * * *", async () => {
         try {
