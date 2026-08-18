@@ -667,7 +667,10 @@ export default function DashboardV2() {
                 <ArrowRight size={18} className={styles.stepArrow} />
               </Link>
 
-              <Link to="/pulse" className={styles.onboardingStep}>
+              {/* Schritt 2 führte vorher auf /pulse (Legal Pulse = Business-Feature!) —
+                  die Analyse startet aber in /contracts. Neue Free-User liefen so
+                  direkt in eine Bezahlschranke statt zum Wert-Moment. */}
+              <Link to="/contracts" className={styles.onboardingStep}>
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepIcon} style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}>
                   <Shield size={20} />
@@ -679,14 +682,17 @@ export default function DashboardV2() {
                 <ArrowRight size={18} className={styles.stepArrow} />
               </Link>
 
+              {/* "Erinnerung setzen" versprach eine manuelle Aktion, die erst ab
+                  Business geht — die automatischen Fristen-Mails gibt es dagegen
+                  für alle Pläne. Text entsprechend ehrlich formuliert. */}
               <Link to="/calendar" className={styles.onboardingStep}>
                 <div className={styles.stepNumber}>3</div>
                 <div className={styles.stepIcon} style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)' }}>
                   <Bell size={20} />
                 </div>
                 <div className={styles.stepContent}>
-                  <h3>Erinnerung setzen</h3>
-                  <p>Verpasse nie wieder eine wichtige Frist</p>
+                  <h3>Fristen im Blick behalten</h3>
+                  <p>Wir erinnern dich automatisch per E-Mail an wichtige Fristen</p>
                 </div>
                 <ArrowRight size={18} className={styles.stepArrow} />
               </Link>
