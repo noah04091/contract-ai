@@ -37,6 +37,7 @@ import Unsubscribe from "./pages/Unsubscribe"; // 📧 E-Mail-Abmeldung (DSGVO)
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
 const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
+const VerifyFailed = lazy(() => import("./pages/VerifyFailed")); // ⚠️ Bestätigungslink abgelaufen/ungültig
 const VerifyContract = lazy(() => import("./pages/VerifyContract")); // 🔐 Vertragsverifizierung via QR-Code
 const AcceptInvite = lazy(() => import("./pages/AcceptInvite")); // 👥 Team-Einladung annehmen
 
@@ -203,6 +204,7 @@ function AppWithLoader() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-success" element={<VerifySuccess />} /> {/* ✅ NEU: E-Mail bestätigt Seite */}
+            <Route path="/verify-failed" element={<VerifyFailed />} /> {/* ⚠️ Bestätigungslink abgelaufen/ungültig */}
             <Route path="/verify/:id" element={<VerifyContract />} /> {/* 🔐 Vertragsverifizierung via QR-Code */}
             <Route path="/accept-invite/:token" element={<AcceptInvite />} /> {/* 👥 Team-Einladung annehmen */}
             <Route path="/sign/:token" element={<SignaturePageComponent />} /> {/* ✉️ Signature Page (Feature-Flag controlled) */}

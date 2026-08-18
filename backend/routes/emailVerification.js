@@ -72,8 +72,11 @@ module.exports = function(db) {
       );
 
       // Verification-Link erstellen
+      // email steht mit im Link, damit der Fehlerpfad in /verify den User kennt:
+      // bei bereits verbrauchtem Token (Doppelklick, Mail-Scanner-Prefetch) leiten
+      // wir dann auf /verify-success statt auf eine Fehlerseite.
       const frontendUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
-      const verificationLink = `${frontendUrl}/api/email-verification/verify?token=${verificationToken}`;
+      const verificationLink = `${frontendUrl}/api/email-verification/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
 
       // ✅ V4 CLEAN E-MAIL-TEMPLATE - Minimalistisch & Button im Fokus
       const emailHtml = generateEmailTemplate({
@@ -111,24 +114,51 @@ module.exports = function(db) {
   });
 
   // ✅ 2. E-MAIL VERIFIZIEREN
+  // Wichtig: Diese Route wird per Klick im Browser geöffnet, NIE per fetch.
+  // Deshalb antwortet sie in JEDEM Ausgang mit einem Redirect auf eine echte
+  // Seite — vorher zeigte der Fehlerpfad rohes JSON (Sackgasse am kritischsten
+  // Punkt des Funnels, u. a. bei abgelaufenem 24h-Token, Doppelklick auf den
+  // Link und Mail-Scanner-Prefetch, der den Token vor dem User verbraucht).
   router.get("/verify", async (req, res) => {
+    const frontendUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
+
+    // Fehler-/Selbstheilungs-Pfad: Kennt der Link die Adresse und ist der User
+    // längst verifiziert (Token schon verbraucht), ist das KEIN Fehler → Erfolgsseite.
+    // Sonst → /verify-failed mit vorausgefüllter Adresse für den Neu-Senden-Knopf.
+    const redirectFailedOrAlreadyVerified = async (emailParam) => {
+      try {
+        if (emailParam) {
+          const email = normalizeEmail(emailParam);
+          const existing = await usersCollection.findOne(
+            { email },
+            { projection: { verified: 1, email: 1 } }
+          );
+          if (existing && existing.verified === true) {
+            return res.redirect(`${frontendUrl}/verify-success?email=${encodeURIComponent(existing.email)}`);
+          }
+          return res.redirect(`${frontendUrl}/verify-failed?email=${encodeURIComponent(email)}`);
+        }
+      } catch (lookupErr) {
+        console.error("⚠️ verify: Lookup im Fehlerpfad fehlgeschlagen:", lookupErr.message);
+      }
+      return res.redirect(`${frontendUrl}/verify-failed`);
+    };
+
     try {
-      const { token } = req.query;
+      const { token, email: emailParam } = req.query;
 
       if (!token) {
-        return res.status(400).json({ message: "Verification-Token fehlt" });
+        return await redirectFailedOrAlreadyVerified(emailParam);
       }
 
       // User mit Token finden
-      const user = await usersCollection.findOne({ 
+      const user = await usersCollection.findOne({
         verificationToken: token,
         verificationTokenExpiry: { $gt: new Date() } // Token noch nicht abgelaufen
       });
 
       if (!user) {
-        return res.status(400).json({ 
-          message: "Ungültiger oder abgelaufener Verification-Token" 
-        });
+        return await redirectFailedOrAlreadyVerified(emailParam);
       }
 
       // User als verifiziert markieren
@@ -180,13 +210,13 @@ module.exports = function(db) {
       }
 
       // Redirect zum Frontend mit Success-Status
-      const frontendUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
       const redirectUrl = `${frontendUrl}/verify-success?email=${encodeURIComponent(user.email)}`;
       res.redirect(redirectUrl);
 
     } catch (error) {
       console.error("❌ Fehler bei E-Mail-Verification:", error);
-      res.status(500).json({ message: "Fehler bei der Verifizierung" });
+      // Auch der Serverfehler landet auf einer echten Seite, nie auf rohem JSON
+      res.redirect(`${frontendUrl}/verify-failed`);
     }
   });
 
