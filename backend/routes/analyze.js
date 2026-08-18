@@ -4276,6 +4276,42 @@ async function updateAnalysisJob(db, jobId, updates) {
   } catch (err) {
     console.warn(`⚠️ [analysis_jobs] updateJob(${jobId}) failed: ${err.message}`);
   }
+
+  // 🚨 Stufe 2: Die Analyse läuft ASYNC — dispatchAnalyzeRequest antwortet dem Kunden
+  // mit HTTP 202 (:4343) und die Pipeline arbeitet entkoppelt weiter. Es entsteht also
+  // NIE eine 5xx-Antwort, die der Beobachter in utils/logger.js sehen könnte. Ohne
+  // diese Stelle bliebe ausgerechnet das Herzstück unsichtbar — und die Spuren
+  // verfallen nach 24 h (TTL auf completedAt, :4238), sind also auch nachträglich weg.
+  //
+  // Diese Funktion ist der gemeinsame Trichter: analyze.js (Upload) UND contracts.js
+  // (Re-Analyse, importiert sie in :29) schreiben ihre Fehlschläge hierdurch.
+  // Kein Doppel mit dem Save-Fehler-Alarm aus 620173b9: der sitzt im Zweig, der
+  // trotzdem success:true ausliefert (:7204), der Job endet dort als 'done'.
+  //
+  // Erste Zeile steigt aus, wenn kein Fehlschlag: updateAnalysisJob läuft ~8x pro
+  // Analyse (5 Fortschrittsmeldungen + Statuswechsel), das darf nichts kosten.
+  if (updates?.status !== 'failed') return;
+  try {
+    const { isOperationalFailure } = require('../utils/analysisJobFailure');
+    if (!isOperationalFailure(updates.error)) return; // Nutzerfall: still ins Job-Doc, kein Alarm
+    const { captureError } = require('../services/errorMonitoring');
+    const fehler = new Error(updates.error?.message || 'Analyse fehlgeschlagen');
+    fehler.name = `AnalysisJobFailed:${updates.error?.code || 'UNKNOWN'}`;
+    fehler.status = Number(updates.error?.httpStatus) || 500;
+    // Bewusst OHNE await: der Job-Status steht zu diesem Zeitpunkt bereits in der DB
+    // (das Frontend pollt ihn direkt), und ein langsamer Mailversand darf den Ablauf
+    // danach — z.B. das Aufräumen der Temp-Datei in contracts.js — nicht aufhalten.
+    // Gleiches Muster wie in Stufe 1.
+    captureError(fehler, {
+      route: 'ASYNC /api/analyze [job]',
+      method: 'BACKGROUND',
+      severity: 'high'
+      // Bewusst kein Dateiname und kein Vertragsinhalt im Alarm.
+    }).catch(() => {});
+  } catch (alarmErr) {
+    // Alarmierung darf den Job-Ablauf niemals beeinflussen.
+    console.warn(`⚠️ [analysis_jobs] Alarmierung fehlgeschlagen (folgenlos): ${alarmErr.message}`);
+  }
 }
 
 async function getAnalysisJob(db, jobId) {

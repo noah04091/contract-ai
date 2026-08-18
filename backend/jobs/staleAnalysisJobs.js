@@ -61,6 +61,29 @@ async function runStaleAnalysisJobsCleanup(db) {
     }
   }
 
+  // 🚨 17.08.2026 (Stufe 2 der Alarmierung): Dieser Cron schreibt direkt per updateOne
+  // und läuft deshalb NICHT durch updateAnalysisJob — er braucht seine eigene Meldung.
+  // Hängengebliebene Jobs bedeuten immer eine echte Betriebsstörung (Hard-Crash, OOM,
+  // SIGKILL ohne Graceful-Shutdown, siehe Kopf dieser Datei), nie einen Nutzerfehler.
+  // Für den Kunden sichtbar als endloses „Analyse läuft" — genau der Fall, der bisher
+  // nur auffiel, wenn jemand sich beschwert hat. Eine Meldung pro Lauf, nicht pro Job.
+  // Eigenes try/catch: die Aufräumung darf davon nie abhängen.
+  if (marked > 0) {
+    try {
+      const { captureError } = require('../services/errorMonitoring');
+      const fehler = new Error(`${marked} Analyse-Job(s) hingen länger als ${Math.round(STALE_THRESHOLD_MS / 60000)} Min und wurden als fehlgeschlagen markiert`);
+      fehler.name = 'AnalysisJobsStale';
+      fehler.status = 500;
+      await captureError(fehler, {
+        route: 'CRON:stale-analysis-jobs',
+        method: 'SCHEDULED',
+        severity: 'high'
+      });
+    } catch (alarmErr) {
+      console.warn(`⚠️ [stale-analysis-jobs] Alarmierung fehlgeschlagen (folgenlos): ${alarmErr.message}`);
+    }
+  }
+
   return { marked, scanned: stale.length };
 }
 
