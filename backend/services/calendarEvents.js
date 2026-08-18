@@ -1381,17 +1381,34 @@ async function generateEventsForContract(db, contract) {
         console.log(`  Event ${idx + 1}: ${e.type} - Datum: ${e.date.toISOString()} (Local: ${e.date})`);
       });
 
+      // 🔗 Stufe 2: Vorwarnungen fest mit ihrem Haupt-Event verknüpfen (nach dem Dedupe,
+      // damit Referenzen nie auf verworfene Events zeigen; Details am Helfer unten).
+      assignDeadlineRefs(events);
+
       // Nur neue Events einfügen, die noch nicht existieren (keine Löschung!)
       // Prüfe pro Event ob schon ein gleiches existiert (gleicher Vertrag + Typ + Datum)
       const newEvents = [];
+      // Übersprungene Haupt-Events: vorab vergebene _id → _id des schon gespeicherten Zwillings,
+      // damit neue Vorwarnungen nicht auf eine nie eingefügte _id zeigen.
+      const existingMainIds = new Map();
       for (const event of events) {
         const exists = await db.collection("contract_events").findOne({
           contractId: contract._id,
           type: event.type,
           date: event.date
-        });
+        }, { projection: { _id: 1 } });
         if (!exists) {
           newEvents.push(event);
+        } else if (event._id && !isReminderEventB(event)) {
+          existingMainIds.set(String(event._id), exists._id);
+        }
+      }
+      if (existingMainIds.size > 0) {
+        for (const ev of newEvents) {
+          const ref = ev.metadata?.deadlineEventId;
+          if (ref && existingMainIds.has(String(ref))) {
+            ev.metadata.deadlineEventId = existingMainIds.get(String(ref));
+          }
         }
       }
 
@@ -2101,6 +2118,42 @@ function dedupeSameDayMilestones(events, opts = {}) {
   return { kept, dropped: [...dropSet] };
 }
 
+/**
+ * 🔗 Stufe 2 (18.08.2026): Feste Referenz Vorwarnung→Frist (metadata.deadlineEventId).
+ * Läuft im Speicher-Block NACH dedupeSameDayMilestones und VOR dem Insert — so können
+ * weder die Zusammenführung noch der Exists-Check die Referenz entwerten. Haupt-Events
+ * bekommen ihre _id vorab (insertMany übernimmt eine gesetzte _id unverändert); jede
+ * Vorwarnung zeigt auf das NÄCHSTGELEGENE Haupt-Event gleicher Typ-Familie (Stichtag =
+ * Vorwarn-Datum + daysUntil) — exakt die Eltern-Logik von dedupeSameDayMilestones.
+ * Ohne sicheren Treffer bleibt die Referenz bewusst weg (kein Raten; Waisen meldet der
+ * Wächter aus Stufe 3). PURE Funktion, mutiert nur die übergebenen Objekte, exportiert
+ * für Unit-Tests (tests/unit/assignDeadlineRefs.test.js).
+ */
+function assignDeadlineRefs(events) {
+  const mains = events.filter(e => !isReminderEventB(e));
+  for (const m of mains) { if (!m._id) m._id = new ObjectId(); }
+  const byType = new Map();
+  for (const m of mains) {
+    if (!byType.has(m.type)) byType.set(m.type, []);
+    byType.get(m.type).push(m);
+  }
+  for (const r of events) {
+    if (!isReminderEventB(r)) continue;
+    const lead = Number(r.metadata?.daysUntil);
+    if (!Number.isFinite(lead)) continue;
+    const candidates = (byType.get(r.metadata?.originalEvent) || [])
+      .filter(m => String(m.contractId) === String(r.contractId));
+    if (candidates.length === 0) continue;
+    const target = new Date(r.date);
+    target.setDate(target.getDate() + lead);
+    const owner = candidates.reduce((best, m) =>
+      Math.abs(new Date(m.date) - target) < Math.abs(new Date(best.date) - target) ? m : best,
+      candidates[0]);
+    r.metadata = { ...(r.metadata || {}), deadlineEventId: owner._id };
+  }
+  return events;
+}
+
 module.exports = {
   generateEventsForContract,
   cleanAndRegenerateAIEvents,
@@ -2109,6 +2162,7 @@ module.exports = {
   onContractChange,
   extractNoticePeriod,
   dedupeSameDayMilestones,
+  assignDeadlineRefs,
   buildRegenerableCleanupFilter,
   reapStuckQueuedEvents,
   completeDanglingLabel
