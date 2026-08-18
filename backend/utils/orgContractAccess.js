@@ -16,6 +16,15 @@ const OrganizationMember = require("../models/OrganizationMember");
  * @returns {{ contract, membership, isOwner, role } | null}
  */
 async function findContractWithOrgAccess(collection, userId, contractId) {
+  // 🛡️ 18.08.2026: Ungültige Vertrags-ID ist "nicht gefunden", kein Serverfehler.
+  // Vorher warf `new ObjectId(...)` hier einen BSONError, der in den Auffangblöcken
+  // der 48 Aufrufstellen als HTTP 500 landete — also ein Serverfehler für einen
+  // reinen Eingabefall (eine alte Verknüpfung, ein Tippfehler in der Adresse).
+  // Seit der 5xx-Alarmierung (17.08.) löste genau das zusätzlich eine Alarmmail aus.
+  // `null` ist die Antwort, die ALLE Aufrufer bereits einheitlich mit 404 beantworten
+  // (contracts.js, optimize.js, chat.js, legalLens.js, legalLensV2.js — geprüft).
+  if (!contractId || !ObjectId.isValid(contractId)) return null;
+
   const userOid = new ObjectId(userId);
   const contractOid = new ObjectId(contractId);
 
@@ -62,6 +71,9 @@ async function findContractWithOrgAccess(collection, userId, contractId) {
  * @returns {{ contract, membership, isOwner, role } | null}
  */
 async function findContractWithOrgAccessMongoose(Model, userId, contractId) {
+  // 🛡️ 18.08.2026: siehe findContractWithOrgAccess — ungültige ID = "nicht gefunden".
+  if (!contractId || !ObjectId.isValid(contractId)) return null;
+
   const userOid = new ObjectId(userId);
   const contractOid = new ObjectId(contractId);
 
