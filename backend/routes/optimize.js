@@ -4,6 +4,7 @@
 
 const express = require("express");
 const multer = require("multer");
+const { resolveUploadMimeType } = require("../utils/resolveUploadMimeType"); // Dateityp aus dem Inhalt
 const pdfParse = require("pdf-parse");
 const { extractTextFromBuffer, isSupportedMimetype } = require("../services/textExtractor");
 const fs = require("fs").promises;
@@ -73,13 +74,16 @@ const getOpenAI = () => {
 const uploadToS3 = async (localFilePath, originalFilename, userId) => {
   try {
     const fileBuffer = await fs.readFile(localFilePath);
+    // 19.08.2026: Dateityp aus dem INHALT statt aus der Endung (fail-safe auf die
+    // alte Regel). Siehe utils/resolveUploadMimeType.js.
+    const erkannterMimeType = resolveUploadMimeType(fileBuffer, originalFilename);
     const s3Key = `contracts/${Date.now()}-${originalFilename}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME,
       Key: s3Key,
       Body: fileBuffer,
-      ContentType: originalFilename?.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf',
+      ContentType: erkannterMimeType,
       Metadata: {
         uploadDate: new Date().toISOString(),
         userId: userId || 'unknown',
@@ -97,6 +101,7 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
       s3Key,
       s3Location,
       s3Bucket: process.env.S3_BUCKET_NAME,
+      mimeType: erkannterMimeType, // 19.08.2026
     };
   } catch (error) {
     console.error(`❌ [S3-Optimizer] Upload failed:`, error);

@@ -6,6 +6,7 @@ const { extractTextFromBuffer, isSupportedMimetype, SUPPORTED_MIMETYPES } = requ
 const pdfExtractor = require("../services/pdfExtractor");
 const { convertImageToPdf, isImageMimetype } = require("../services/imageToPdf"); // 🖼️ Welle 4a: Handy-Foto → PDF am Eingang
 const { shouldAttemptOcr } = require("../utils/ocrGate"); // 🔍 OCR-Weiche (Text-Menge + Scan-Dichte)
+const { resolveUploadMimeType } = require("../utils/resolveUploadMimeType"); // 📄 Dateityp aus dem Inhalt, nicht aus der Endung
 const { tryParseLenient } = require("../utils/jsonRepair"); // 🩹 Tolerantes JSON-Parsen für abgeschnittene KI-Antworten
 const { shouldClearExpiry, isImplausibleAiEndDate } = require("../utils/expiryPlausibility"); // 🛡️ Enddatum-Plausibilität (Vergangenheit / ==Start) + KI-Enddatum-Guard (TÜV-Fund #1)
 const { isMilestoneBeforeStart } = require("../utils/milestonePlausibility"); // 🛡️ Meilenstein-Datum vor Vertragsbeginn = unmöglich
@@ -253,11 +254,17 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
     const fileBuffer = await fs.readFile(localFilePath);
     const s3Key = `contracts/${Date.now()}-${originalFilename}`;
 
+    // 📄 19.08.2026: Dateityp aus dem INHALT statt aus der Endung. Vorher galt alles,
+    // was nicht auf .docx endet, als PDF — deshalb tragen 32 Bild-Dateien in S3
+    // faelschlich `application/pdf`. Fail-safe: erkennt der Inhalt nichts, greift
+    // exakt die alte Regel. Siehe utils/resolveUploadMimeType.js.
+    const erkannterMimeType = resolveUploadMimeType(fileBuffer, originalFilename);
+
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME,
       Key: s3Key,
       Body: fileBuffer,
-      ContentType: originalFilename?.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf',
+      ContentType: erkannterMimeType,
       Metadata: {
         uploadDate: new Date().toISOString(),
         userId: userId || 'unknown',
@@ -268,12 +275,13 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
 
     const s3Location = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
 
-    console.log(`✅ [ANALYZE S3] Successfully uploaded to: ${s3Location}`);
+    console.log(`✅ [ANALYZE S3] Successfully uploaded to: ${s3Location} (Typ: ${erkannterMimeType})`);
 
     return {
       s3Key,
       s3Location,
       s3Bucket: process.env.S3_BUCKET_NAME,
+      mimeType: erkannterMimeType, // 19.08.2026: wandert ins Vertragsdokument
     };
   } catch (error) {
     console.error(`❌ [ANALYZE S3] Upload failed:`, error);
@@ -4567,7 +4575,14 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
       filename: fileInfo.filename || fileInfo.key,
       originalname: fileInfo.originalname,
       filePath: storageInfo.fileUrl,
-      mimetype: fileInfo.mimetype,
+      // 📄 19.08.2026 (Stufe 1 der Dateityp-Kette): Das Feld gab es schon, war aber
+      // nur bei 13 von 830 Vertraegen gefuellt (fileInfo.mimetype ist im Async-Pfad
+      // oft leer). Jetzt kommt der Wert bevorzugt aus der INHALTS-Erkennung beim
+      // Hochladen. Damit weiss der Vertrag selbst, was er ist, statt dass die
+      // Oberflaeche es aus der Namensendung raten muss — was bei jeder Datei ohne
+      // Endung fehlschlaegt (E-Mail-Import, KI-Name). Rein additiv: bisher liest
+      // dieses Feld niemand, es kann also nichts brechen.
+      mimetype: storageInfo.mimeType || fileInfo.mimetype || 'application/pdf',
       size: fileInfo.size,
       fileHash: fileHash, // Add file hash for duplicate detection
       
@@ -4998,6 +5013,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         s3Key: s3Result.s3Key,
         s3Location: s3Result.s3Location,
         s3Bucket: s3Result.s3Bucket,
+        mimeType: s3Result.mimeType, // 19.08.2026: aus dem Datei-Inhalt erkannt
         s3Info: {
           key: s3Result.s3Key,
           location: s3Result.s3Location,

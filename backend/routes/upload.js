@@ -1,6 +1,7 @@
 // 📤 backend/routes/upload.js - Upload ohne Analyse (nur Speicherung) + Duplikats-Erkennung
 const express = require("express");
 const multer = require("multer");
+const { resolveUploadMimeType } = require("../utils/resolveUploadMimeType"); // Dateityp aus dem Inhalt
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const { ObjectId } = require("mongodb");
@@ -104,13 +105,16 @@ const uploadMiddleware = multer({
 const uploadToS3 = async (localFilePath, originalFilename, userId) => {
   try {
     const fileBuffer = await fs.readFile(localFilePath);
+    // 19.08.2026: Dateityp aus dem INHALT statt aus der Endung (fail-safe auf die
+    // alte Regel). Siehe utils/resolveUploadMimeType.js.
+    const erkannterMimeType = resolveUploadMimeType(fileBuffer, originalFilename);
     const s3Key = `contracts/${Date.now()}-${originalFilename}`;
 
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME,
       Key: s3Key,
       Body: fileBuffer,
-      ContentType: originalFilename?.endsWith('.docx') ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' : 'application/pdf',
+      ContentType: erkannterMimeType,
       Metadata: {
         uploadDate: new Date().toISOString(),
         userId: userId || 'unknown',
@@ -127,6 +131,7 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
       s3Key,
       s3Location,
       s3Bucket: process.env.S3_BUCKET_NAME,
+      mimeType: erkannterMimeType, // 19.08.2026
     };
   } catch (error) {
     console.error(`❌ [S3] Upload failed:`, error);
@@ -212,7 +217,10 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
           uploadType: "S3_UPLOAD",
           s3Key: s3Result.s3Key,
           s3Location: s3Result.s3Location,
-          s3Bucket: s3Result.s3Bucket
+          s3Bucket: s3Result.s3Bucket,
+          // 19.08.2026: Dateityp aus dem Inhalt erkannt. contractData spreadet
+          // storageInfo, das Feld landet also direkt im Vertrag. Rein additiv.
+          mimetype: s3Result.mimeType || req.file?.mimetype || 'application/pdf'
         };
         cleanupLocalFile = true; // Delete local file after successful S3 upload
         console.log(`✅ [${requestId}] S3 upload successful`);
@@ -220,7 +228,8 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
         console.error(`❌ [${requestId}] S3 upload failed, falling back to local storage:`, s3Error.message);
         storageInfo = {
           uploadType: "LOCAL_UPLOAD",
-          filePath: req.file.path
+          filePath: req.file.path,
+          mimetype: req.file?.mimetype || 'application/pdf' // 19.08.2026
         };
       }
     } else {
