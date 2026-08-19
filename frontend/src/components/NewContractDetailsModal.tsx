@@ -1660,6 +1660,25 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         <ImportantDatesSection
           importantDates={contract.importantDates}
           contractName={fixUtf8Display(contract.name)}
+          resolveCalendarEventId={(d) => {
+            // 19.08.2026 (Noahs Klicktest): passendes Kalender-Event zum wichtigen
+            // Termin finden, damit "Im Vertragskalender anzeigen" direkt das Popup
+            // öffnet (?eventId). Zuordnung: gleicher TAG unter den Haupt-Terminen
+            // dieses Vertrags; bei mehreren am selben Tag entscheidet das Label
+            // (der Event-Titel enthält es wörtlich — auch nach completeDanglingLabel,
+            // das nur ein Datum ANHÄNGT). Kein Treffer → null = Alt-Verhalten.
+            const day = new Date(d.date); day.setHours(0, 0, 0, 0);
+            if (isNaN(day.getTime())) return null;
+            const sameDay = calendarEvents.filter(e => {
+              if (isReminderEntry(e)) return false;
+              const x = new Date(e.date); x.setHours(0, 0, 0, 0);
+              return x.getTime() === day.getTime();
+            });
+            if (sameDay.length === 0) return null;
+            const label = (d.label || '').trim();
+            const byLabel = label ? sameDay.filter(e => e.title.includes(label)) : [];
+            return String((byLabel[0] || sameDay[0]).id);
+          }}
         />
       )}
 

@@ -22,6 +22,12 @@ const MIN_CONFIDENCE_TO_DISPLAY = 60;
 interface ImportantDatesSectionProps {
   importantDates: ImportantDate[];
   contractName: string;
+  // 19.08.2026 (Noahs Klicktest): Liefert die Kalender-Event-id zu einem wichtigen
+  // Termin (der Aufrufer kennt die Events des Vertrags). Mit id öffnet "Im
+  // Vertragskalender anzeigen" direkt das Termin-Popup (?eventId — derselbe Weg
+  // wie Mail-Links und die Kalendererinnerungs-Buttons). Ohne Treffer/Prop:
+  // bisheriges Verhalten (Kalender im richtigen Monat).
+  resolveCalendarEventId?: (date: ImportantDate) => string | null;
 }
 
 // Mapping von Datums-Typen zu Emojis und Labels
@@ -67,7 +73,7 @@ const getSeverity = (type: string): 'critical' | 'warning' | 'info' => {
   return 'info';
 };
 
-export default function ImportantDatesSection({ importantDates, contractName }: ImportantDatesSectionProps) {
+export default function ImportantDatesSection({ importantDates, contractName, resolveCalendarEventId }: ImportantDatesSectionProps) {
   const [selectedDate, setSelectedDate] = useState<ImportantDate | null>(null);
   const navigate = useNavigate();
 
@@ -93,12 +99,21 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
   }
 
   // Navigiere zum Kalender mit dem ausgewählten Datum
-  const handleOpenInCalendar = (date: string) => {
-    // Formatiere das Datum für die Kalender-URL (YYYY-MM-DD)
-    const dateObj = new Date(date);
+  const handleOpenInCalendar = (dateEntry: ImportantDate) => {
+    // 19.08.2026: Erst versuchen, das zugehoerige Kalender-Event zu finden — dann
+    // oeffnet sich im Kalender direkt das Termin-Popup (?eventId, bestehender
+    // Deep-Link-Handler). Rueckfall: Kalender im richtigen Monat (Alt-Verhalten;
+    // year/month/highlight wird von der Kalender-Seite derzeit nicht ausgewertet,
+    // schadet aber nicht).
+    const eventId = resolveCalendarEventId ? resolveCalendarEventId(dateEntry) : null;
+    if (eventId) {
+      navigate(`/calendar?eventId=${eventId}`);
+      return;
+    }
+    const dateObj = new Date(dateEntry.date);
     const year = dateObj.getFullYear();
-    const month = dateObj.getMonth(); // 0-indexed für Kalender
-    navigate(`/calendar?year=${year}&month=${month}&highlight=${date}`);
+    const month = dateObj.getMonth(); // 0-indexed fuer Kalender
+    navigate(`/calendar?year=${year}&month=${month}&highlight=${dateEntry.date}`);
   };
 
   // Sortiere nach Priorität (kritische zuerst) und dann nach Datum
@@ -316,7 +331,7 @@ export default function ImportantDatesSection({ importantDates, contractName }: 
               {/* 📅 Kalender-Link Button */}
               <button
                 className={styles.calendarLinkButton}
-                onClick={() => handleOpenInCalendar(selectedDate.date)}
+                onClick={() => handleOpenInCalendar(selectedDate)}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M8 7V3M16 7V3M7 11H17M5 21H19C20.1046 21 21 20.1046 21 19V7C21 5.89543 20.1046 5 19 5H5C3.89543 5 3 5.89543 3 7V19C3 20.1046 3.89543 21 5 21Z"
