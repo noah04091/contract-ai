@@ -22,7 +22,7 @@ const { queueEmail } = require("../services/emailRetryService");
 // reiner Feld-Check auf subscriptionPlan — der sperrte Mitglieder zahlender
 // Organisationen aus, deren eigenes Feld auf "free" steht (real: 5 Konten der
 // hs-niederrhein.de-Org mit Org-Plan enterprise).
-const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
+const { hasPulseAccess, PULSE_ACCESS_PROJECTION, pulseEmailsDisabled } = require("../utils/pulseAccess");
 const {
   generatePulseEmailTemplate, pulseHeadline, pulseLead, pulseSection, pulseReassurance, pulseNote,
 } = require("../utils/pulseEmailTemplate");
@@ -240,7 +240,7 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
   // Es gibt keine für Nutzer erreichbare Pulse-Einstellungs-Seite. Der Abmelde-Link in
   // der Fußzeile funktioniert dagegen (Token-URL, gleiche Mechanik wie der Mail-Header).
   body += pulseNote(
-    "Gepr&uuml;ft werden die f&uuml;r deine Vertragsarten relevantesten Rechts&auml;nderungen aus offiziellen Quellen (Gesetzbl&auml;tter, Bundesgerichte, Ministerien, Aufsichtsbeh&ouml;rden). Alle Zahlen stammen aus den tats&auml;chlichen Pr&uuml;fl&auml;ufen dieser Woche. Du bekommst diesen &Uuml;berblick w&ouml;chentlich. &Uuml;ber &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail kannst du unsere Benachrichtigungs-Mails jederzeit abbestellen."
+    "Gepr&uuml;ft werden die f&uuml;r deine Vertragsarten relevantesten Rechts&auml;nderungen aus offiziellen Quellen (Gesetzbl&auml;tter, Bundesgerichte, Ministerien, Aufsichtsbeh&ouml;rden). Alle Zahlen stammen aus den tats&auml;chlichen Pr&uuml;fl&auml;ufen dieser Woche. Du bekommst diesen &Uuml;berblick w&ouml;chentlich. Nur die Legal-Pulse-Mails abschalten kannst du unten auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;; &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail stoppt alle Benachrichtigungs-Mails von uns."
   );
 
   const subject = allClear
@@ -339,9 +339,9 @@ async function runWeeklyReport(db, options = {}) {
       // Nur zahlende Pläne (Legal Pulse = Business+), Org-Mitglieder eingeschlossen
       if (!(await hasPulseAccess(db, user))) { skipped++; continue; }
 
-      // Opt-out respektieren (fail-open: fehlende Einstellung = senden)
-      const s = user.legalPulseSettings;
-      if (s && (s.enabled === false || s.emailNotifications === false)) { skipped++; continue; }
+      // Opt-out respektieren (fail-open: fehlende Einstellung = senden).
+      // Gemeinsamer Helfer: dieselbe Prüfung schützt jetzt alle 4 Pulse-Mail-Jobs.
+      if (pulseEmailsDisabled(user)) { skipped++; continue; }
 
       const stats = await computeUserStats(db, userId, weekAgo);
       if (stats.monitoredCount === 0) { skipped++; continue; } // nichts zu berichten

@@ -26,7 +26,7 @@ const { cleanContractName } = require("../utils/cleanContractName");
 // Gemeinsame Text-Helfer: Ein-/Mehrzahl + Anrede (siehe utils/mailText.js).
 const { plural, greetingName } = require("../utils/mailText");
 // Legal Pulse ist ein Business+-Feature — Zugang inkl. Org-Vererbung (siehe utils/pulseAccess.js).
-const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
+const { hasPulseAccess, PULSE_ACCESS_PROJECTION, pulseEmailsDisabled } = require("../utils/pulseAccess");
 // Sichtbarer Abmelde-Link: dieselbe Token-Maschinerie wie der List-Unsubscribe-Header.
 // Der frühere statische Link (/unsubscribe?type=legal_pulse) war token-los — die
 // Abmelde-Seite verlangt aber zwingend einen Token und zeigte "Abmeldung fehlgeschlagen".
@@ -98,7 +98,7 @@ async function runStalenessReminder(db) {
       try { if (ObjectId.isValid(String(userId))) idCandidates.push(new ObjectId(String(userId))); } catch { /* ignore */ }
       const user = await db.collection("users").findOne(
         { _id: { $in: idCandidates } },
-        { projection: { email: 1, name: 1, firstName: 1, ...PULSE_ACCESS_PROJECTION } }
+        { projection: { email: 1, name: 1, firstName: 1, legalPulseSettings: 1, ...PULSE_ACCESS_PROJECTION } }
       );
 
       if (!user?.email) continue;
@@ -107,6 +107,10 @@ async function runStalenessReminder(db) {
       // die Vertraege automatisch — im Free-Plan stimmt das nicht. Sie ging real an
       // ein gekuendigtes Konto (27.07. und nochmal 10.08.).
       if (!(await hasPulseAccess(db, user))) continue;
+
+      // Feiner Opt-out (19.08.2026): Pulse-Mails auf /pulse abgeschaltet → keine
+      // Erinnerungs-Mail (dieser Job IST nur eine Mail). Fail-open.
+      if (pulseEmailsDisabled(user)) continue;
 
       // Send reminder — null = kein Name hinterlegt, die Mail grüßt dann neutral mit "Hallo,"
       const userName = greetingName(user);
@@ -280,7 +284,7 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
   // "jederzeit in den Einstellungen" war nicht einlösbar (keine erreichbare
   // Pulse-Einstellungs-Seite) — der Abmelde-Link in der Fußzeile funktioniert.
   body += pulseNote(
-    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Über &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail kannst du unsere Benachrichtigungs-Mails jederzeit abbestellen."
+    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Nur die Legal-Pulse-Mails abschalten kannst du unten auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;; &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail stoppt alle Benachrichtigungs-Mails von uns."
   );
 
   const subject = criticalContracts.length > 0

@@ -1946,7 +1946,10 @@ function getResubscribeUpdate(category) {
     case 'marketing':
       return { $set: { 'emailPreferences.marketing': true, 'emailPreferencesUpdatedAt': new Date() } };
     case 'calendar':
-      return { $set: { 'legalPulseSettings.emailNotifications': true }, $unset: { 'unsubscribedAt': '' } };
+      // 19.08.2026: enabled mit auf true — sonst bleibt ein V1-Bestand mit enabled:false
+      // trotz "wieder anmelden" stumm (pulseEmailsDisabled prüft BEIDE Felder; identisch
+      // zum Einschalt-Body des Schalters auf /pulse).
+      return { $set: { 'legalPulseSettings.emailNotifications': true, 'legalPulseSettings.enabled': true }, $unset: { 'unsubscribedAt': '' } };
     case 'product_updates':
       return { $set: { 'emailPreferences.product_updates': true, 'emailPreferencesUpdatedAt': new Date() } };
     case 'all':

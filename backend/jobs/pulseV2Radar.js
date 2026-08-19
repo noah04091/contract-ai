@@ -35,7 +35,7 @@ const {
 // auch die anderen Pulse-Mails nutzen können (er fehlte ihnen vorher).
 const { plural, greetingName, capitalizeFirst } = require("../utils/mailText");
 // Legal Pulse ist ein Business+-Feature — Zugang inkl. Org-Vererbung (siehe utils/pulseAccess.js).
-const { hasPulseAccess, PULSE_ACCESS_PROJECTION } = require("../utils/pulseAccess");
+const { hasPulseAccess, PULSE_ACCESS_PROJECTION, pulseEmailsDisabled } = require("../utils/pulseAccess");
 // Sichtbarer Abmelde-Link: dieselbe Token-Maschinerie wie der List-Unsubscribe-Header.
 // Der frühere statische Link (/unsubscribe?type=legal_pulse) war token-los — die
 // Abmelde-Seite verlangt aber zwingend einen Token und zeigte "Abmeldung fehlgeschlagen".
@@ -1541,12 +1541,12 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
   try {
     user = await db.collection("users").findOne(
       { $or: [{ _id: userId }, { _id: ObjectId.createFromHexString(userId) }] },
-      { projection: { email: 1, name: 1, firstName: 1, ...PULSE_ACCESS_PROJECTION } }
+      { projection: { email: 1, name: 1, firstName: 1, legalPulseSettings: 1, ...PULSE_ACCESS_PROJECTION } }
     );
   } catch {
     user = await db.collection("users").findOne(
       { _id: userId },
-      { projection: { email: 1, name: 1, firstName: 1, ...PULSE_ACCESS_PROJECTION } }
+      { projection: { email: 1, name: 1, firstName: 1, legalPulseSettings: 1, ...PULSE_ACCESS_PROJECTION } }
     );
   }
 
@@ -1559,6 +1559,14 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
   // Die Treffer-Erkennung selbst ist bewusst NICHT angefasst (Herzstueck).
   if (!(await hasPulseAccess(db, user))) {
     console.log(`[PulseV2Radar] Mail uebersprungen fuer ${userId}: Plan ohne Legal Pulse (${user.subscriptionPlan || "free"})`);
+    return;
+  }
+
+  // Feiner Opt-out (19.08.2026): Nutzer hat die Pulse-Mails auf /pulse abgeschaltet.
+  // Wie beim Plan-Guard bewusst NACH dem Speichern: Alerts + Glocke bleiben, nur
+  // die Mail entfaellt. Fail-open (fehlende Einstellung = senden).
+  if (pulseEmailsDisabled(user)) {
+    console.log(`[PulseV2Radar] Mail uebersprungen fuer ${userId}: Pulse-Mails abgeschaltet (Opt-out)`);
     return;
   }
 
@@ -1676,7 +1684,7 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
   // "jederzeit in den Einstellungen" war nicht einlösbar (keine erreichbare
   // Pulse-Einstellungs-Seite) — der Abmelde-Link in der Fußzeile funktioniert.
   body += pulseNote(
-    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Über &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail kannst du unsere Benachrichtigungs-Mails jederzeit abbestellen."
+    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Nur die Legal-Pulse-Mails abschalten kannst du unten auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;; &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail stoppt alle Benachrichtigungs-Mails von uns."
   );
 
   const html = generatePulseEmailTemplate({

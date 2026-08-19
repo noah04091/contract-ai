@@ -62,4 +62,23 @@ async function hasPulseAccess(db, user) {
 /** Felder, die ein Aufrufer mindestens projizieren sollte, damit die Prüfung greift. */
 const PULSE_ACCESS_PROJECTION = { subscriptionPlan: 1, role: 1 };
 
-module.exports = { hasPulseAccess, PULSE_ACCESS_PROJECTION };
+/**
+ * Hat dieser Nutzer die Legal-Pulse-MAILS abgeschaltet? (Feiner Opt-out, 19.08.2026)
+ *
+ * Eine Wahrheit für alle 4 Mail-Jobs (Wochenbericht, Radar, Monitor, Staleness):
+ * `users.legalPulseSettings.emailNotifications === false` (Schalter auf /pulse und
+ * PUT /api/legal-pulse/settings) oder `enabled === false` (Alt-Feld, gleiche Wirkung).
+ *
+ * FAIL-OPEN: fehlendes Settings-Objekt oder fehlende Felder bedeuten "Mails an" —
+ * exakt das Verhalten, das der Wochenbericht seit 07.07.2026 hat. Stoppt NUR Mails;
+ * Überwachung, Meldungen auf /pulse und die Glocke laufen unverändert weiter.
+ *
+ * @param {{legalPulseSettings?: {enabled?: boolean, emailNotifications?: boolean}}|null|undefined} user
+ * @returns {boolean}
+ */
+function pulseEmailsDisabled(user) {
+  const s = user && user.legalPulseSettings;
+  return !!(s && (s.enabled === false || s.emailNotifications === false));
+}
+
+module.exports = { hasPulseAccess, PULSE_ACCESS_PROJECTION, pulseEmailsDisabled };

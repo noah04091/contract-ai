@@ -155,7 +155,10 @@ router.get("/settings", verifyToken, async (req, res) => {
     const usersCollection = db.collection("users");
     const user = await usersCollection.findOne(
       { _id: new ObjectId(req.user.userId) },
-      { projection: { legalPulseSettings: 1 } }
+      // emailOptOut mitliefern (19.08.2026): der globale Abmelde-Link setzt emailOptOut,
+      // der Versand-Check stoppt dann ALLE Mails — die Schalter-Karte auf /pulse darf
+      // in dem Fall nicht "An" behaupten.
+      { projection: { legalPulseSettings: 1, emailOptOut: 1 } }
     );
 
     if (!user) {
@@ -186,7 +189,10 @@ router.get("/settings", verifyToken, async (req, res) => {
 
     res.json({
       success: true,
-      settings
+      settings,
+      // true = global von ALLEN Benachrichtigungs-Mails abgemeldet (Footer-Link) —
+      // der Pulse-Schalter allein kann Mails dann nicht wieder aktivieren.
+      emailOptOut: user.emailOptOut === true
     });
 
   } catch (error) {

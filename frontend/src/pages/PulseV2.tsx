@@ -6,6 +6,7 @@ import { AnalysisPipeline } from '../components/pulseV2/AnalysisPipeline';
 import { ContractDetail } from '../components/pulseV2/ContractDetail';
 import { FindingCard } from '../components/pulseV2/FindingCard';
 import { PortfolioInsightsPanel } from '../components/pulseV2/PortfolioInsightsPanel';
+import { PulseEmailSettings } from '../components/pulseV2/PulseEmailSettings';
 import { ActionItem, isLegallyMotivated } from '../components/pulseV2/ActionItem';
 import { LegalAlertsPanel } from '../components/pulseV2/LegalAlertsPanel';
 import { PortfolioImprovementCard } from '../components/pulseV2/PortfolioImprovementCard';
@@ -1495,6 +1496,12 @@ const DashboardView: React.FC<{ onSelectContract: (id: string, alertId?: string)
           monitoring={monitoringStatus}
           radarData={radarData ?? null}
         />
+      </div>
+
+      {/* E-Mail-Schalter: löst das "in den Einstellungen abstellbar"-Versprechen
+          der Pulse-Mails ein (die verweisen auf genau diese Stelle). */}
+      <div id="pulse-email-settings" style={{ marginTop: 16, scrollMarginTop: 90 }}>
+        <PulseEmailSettings />
       </div>
     </div>
   );

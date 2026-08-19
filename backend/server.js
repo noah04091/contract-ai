@@ -2601,7 +2601,11 @@ const connectDB = async () => {
         await legalPulseMonitor.init();
 
         // Dev route for manual triggering
-        app.post("/api/legalpulse/cron-run", verifyToken, async (req, res) => {
+        // Absicherung 19.08.2026 (TÜV-Fund): war für JEDEN eingeloggten Nutzer offen
+        // und runMonitoring() selbst hat kein Env-Gate — nur die Cron-Planung ist
+        // hinter LEGAL_PULSE_CRON_ENABLED. Jetzt Admin-only wie die anderen Trigger.
+        const requireAdminForCronRun = require("./middleware/verifyAdmin");
+        app.post("/api/legalpulse/cron-run", verifyToken, requireAdminForCronRun, async (req, res) => {
           try {
             logger.debug("Manual monitoring triggered", { userId: req.user.userId });
             await legalPulseMonitor.runMonitoring();

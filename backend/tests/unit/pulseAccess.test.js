@@ -100,3 +100,36 @@ describe('Legal-Pulse-Zugang', () => {
     });
   });
 });
+
+// ── Feiner Mail-Opt-out (19.08.2026) ────────────────────────────────────────
+// Eine Wahrheit für alle 4 Pulse-Mail-Jobs. Fail-open: nur ein EXPLIZITES false
+// schaltet Mails ab — fehlende Settings/Felder bedeuten immer "senden".
+const { pulseEmailsDisabled } = require('../../utils/pulseAccess');
+
+describe('pulseEmailsDisabled (feiner Mail-Opt-out)', () => {
+  test('kein Settings-Objekt → Mails an (fail-open)', () => {
+    expect(pulseEmailsDisabled({ email: 'a@b.de' })).toBe(false);
+    expect(pulseEmailsDisabled(null)).toBe(false);
+    expect(pulseEmailsDisabled(undefined)).toBe(false);
+  });
+
+  test('leeres Settings-Objekt → Mails an', () => {
+    expect(pulseEmailsDisabled({ legalPulseSettings: {} })).toBe(false);
+  });
+
+  test('emailNotifications false → Mails aus', () => {
+    expect(pulseEmailsDisabled({ legalPulseSettings: { emailNotifications: false } })).toBe(true);
+  });
+
+  test('enabled false → Mails aus (Alt-Feld, gleiche Wirkung wie im Wochenbericht)', () => {
+    expect(pulseEmailsDisabled({ legalPulseSettings: { enabled: false, emailNotifications: true } })).toBe(true);
+  });
+
+  test('beide true → Mails an (Prod-Bestand 2501test)', () => {
+    expect(pulseEmailsDisabled({ legalPulseSettings: { enabled: true, emailNotifications: true } })).toBe(false);
+  });
+
+  test('nur truthy/falsy reicht nicht: undefined-Felder bleiben an', () => {
+    expect(pulseEmailsDisabled({ legalPulseSettings: { enabled: undefined, emailNotifications: undefined } })).toBe(false);
+  });
+});

@@ -106,12 +106,13 @@ describe("Wach-Bericht: sichtbarer Abmelde-Link", () => {
     expect(html).not.toContain('>Benachrichtigungen abmelden</a>');
   });
 
-  test("kein 'in den Einstellungen'-Versprechen mehr, stattdessen ehrlicher Verweis auf den Abmelde-Link", () => {
+  test("kein 'in den Einstellungen'-Versprechen mehr, stattdessen beide ehrlichen Wege", () => {
     const { html } = buildWeeklyReportEmail({ ...base, stats: emptyStats(0) });
     expect(html).not.toContain("in den Einstellungen");
-    // "unsere Benachrichtigungs-Mails" (nicht "diesen Überblick"): der Link meldet
-    // von ALLEN Benachrichtigungs-Mails ab — der Text darf nichts Engeres suggerieren.
-    expect(html).toContain("Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail kannst du unsere Benachrichtigungs-Mails jederzeit abbestellen");
+    // Feiner Weg (Schalter auf /pulse, stoppt nur Pulse-Mails) + globaler Weg
+    // (Footer-Link, stoppt ALLE Benachrichtigungs-Mails) — beide korrekt benannt.
+    expect(html).toContain("Nur die Legal-Pulse-Mails abschalten kannst du unten auf deiner Pulse-Seite");
+    expect(html).toContain("stoppt alle Benachrichtigungs-Mails von uns");
   });
 });
 
