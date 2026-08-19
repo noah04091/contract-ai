@@ -1228,9 +1228,10 @@ export default function Profile() {
                 )}
               </AnimatePresence>
 
-              {/* Invoices Section */}
+              {/* Invoices Section — invoicesSection: eigener Abstand nach oben, die
+                  Sektion klebte an den Karten darüber (Noahs A-Z-Test 19.08.) */}
               <motion.section
-                className={styles.sectionGroup}
+                className={`${styles.sectionGroup} ${styles.invoicesSection}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.9 }}
@@ -1247,7 +1248,7 @@ export default function Profile() {
                   </div>
                 ) : invoices.length === 0 ? (
                   <p className={styles.noInvoices}>
-                    Keine Rechnungen gefunden.
+                    Noch keine Rechnungen vorhanden. Sobald du etwas kaufst, findest du sie hier.
                   </p>
                 ) : (
                   <div className={styles.invoicesContainer}>

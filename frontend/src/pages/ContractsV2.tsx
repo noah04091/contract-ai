@@ -4340,7 +4340,11 @@ export default function Contracts() {
         {/* 🎯 Simple Tour - zuverlässiger als react-joyride.
             Nur in der Listen-Ansicht mounten — ihre Ziel-Elemente (Toolbar/Suche)
             existieren nur dort; so zeigt sie nie ins Leere (Upload-/Analyse-Flow). */}
-        {activeSection === 'contracts' && <SimpleTour tourId="contracts" />}
+        {/* Tour pausiert, solange Analyse-Overlay oder Analyse-Ansicht offen sind —
+            vorher startete sie mitten über dem "Vertrag wird analysiert"-Overlay
+            (Noahs A-Z-Test 19.08., Screenshot-Beweis). Unmount bricht eine laufende
+            Tour sauber ab; nach dem Schließen startet der Autostart erneut. */}
+        {activeSection === 'contracts' && !analyzingOverlay.show && !quickAnalysisModal.show && <SimpleTour tourId="contracts" />}
 
         {/* ========== ENTERPRISE LAYOUT ========== */}
         <div className={`${styles.enterpriseLayout} ${previewContract ? styles.withPreview : ''}`}>
@@ -6403,7 +6407,11 @@ export default function Contracts() {
                 </button>
               </div>
 
-              {/* 📄 PDF Thumbnail — zuklappbar */}
+              <div className={styles.previewContent}>
+              {/* 📄 PDF Thumbnail — zuklappbar. 19.08.2026 (Noahs A-Z-Test): steht
+                  jetzt IM Scrollbereich statt statisch darüber — aufgeklappt nahm
+                  die Vorschau sonst dauerhaft Platz weg, während nur der Rest
+                  darunter scrollte. */}
               {(previewPdfLoading || previewPdfUrl || previewPdfError) && (
                 <div className={styles.previewThumbnailSection}>
                   <button
@@ -6450,8 +6458,6 @@ export default function Contracts() {
                   )}
                 </div>
               )}
-
-              <div className={styles.previewContent}>
                 {/* Status & Analysiert sind jetzt im Header bzw. im Score-Ring-Meta — keine Redundanz */}
 
                 {/* 🆕 Leer-Zustand: noch nicht analysierter Vertrag ohne Score/Summary/Termine */}

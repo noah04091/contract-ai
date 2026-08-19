@@ -655,7 +655,9 @@ export default function DashboardV2() {
             </div>
 
             <div className={styles.onboardingSteps}>
-              <Link to="/contracts" className={styles.onboardingStep}>
+              {/* ?upload=true öffnet den Upload-Bereich direkt (wie der
+                  "Neuer Vertrag"-Knopf im Header) statt nur die Vertragsliste. */}
+              <Link to="/contracts?upload=true" className={styles.onboardingStep}>
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepIcon} style={{ background: 'linear-gradient(135deg, #3B82F6, #1D4ED8)' }}>
                   <Upload size={20} />
@@ -699,7 +701,7 @@ export default function DashboardV2() {
             </div>
 
             <div className={styles.onboardingCta}>
-              <Link to="/contracts" className={styles.onboardingPrimaryBtn}>
+              <Link to="/contracts?upload=true" className={styles.onboardingPrimaryBtn}>
                 <Plus size={18} />
                 <span>Ersten Vertrag hinzufügen</span>
               </Link>

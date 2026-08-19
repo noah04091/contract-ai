@@ -91,12 +91,8 @@ export const dashboardTour: TourConfig = {
       title: '📍 Navigation',
       placement: 'right',
     },
-    {
-      target: 'body',
-      content: 'Sobald du Verträge hochgeladen hast, siehst du hier Statistiken: Aktive Verträge, bevorstehende Fristen, und kritische Termine.',
-      title: '📊 Statistiken',
-      placement: 'center',
-    },
+    // 19.08.2026: „📊 Statistiken"-Step entfernt — er beleuchtete nichts (target body)
+    // und beschrieb Zahlen, die ein frischer Nutzer noch gar nicht hat (Noahs A-Z-Test).
     {
       target: 'body',
       content: 'Starte jetzt! Lade deinen ersten Vertrag hoch - die KI analysiert ihn automatisch und zeigt dir alle wichtigen Informationen.',

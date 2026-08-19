@@ -25,7 +25,8 @@ import styles from './OnboardingChecklist.module.css';
 
 interface ChecklistItemConfig {
   id: string;
-  label: string;
+  label: string; // Erledigt-Form („Profil vervollständigt")
+  labelPending?: string; // Aufgaben-Form solange offen („Profil vervollständigen") — Noahs A-Z-Test 19.08.
   description: string;
   icon: React.ElementType;
   iconColor: string;
@@ -53,6 +54,7 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
   {
     id: 'firstContractUploaded',
     label: 'Ersten Vertrag hochgeladen',
+    labelPending: 'Ersten Vertrag hochladen',
     description: 'Lade deinen ersten Vertrag zur Analyse hoch',
     icon: FileUp,
     iconColor: '#8B5CF6',
@@ -64,6 +66,7 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
   {
     id: 'companyProfileComplete',
     label: 'Profil vervollständigt',
+    labelPending: 'Profil vervollständigen',
     description: 'Deine Daten für die Vertragserstellung – privat oder geschäftlich',
     icon: Building2,
     iconColor: '#F59E0B',
@@ -75,6 +78,7 @@ const CHECKLIST_ITEMS: ChecklistItemConfig[] = [
   {
     id: 'firstAnalysisComplete',
     label: 'Erste Analyse durchgeführt',
+    labelPending: 'Erste Analyse durchführen',
     description: 'Klicke bei einem Vertrag auf "Analysieren"',
     icon: Search,
     iconColor: '#EC4899',
@@ -332,7 +336,7 @@ export function OnboardingChecklist({ className }: OnboardingChecklistProps) {
 
                 {/* Content */}
                 <div className={styles.itemContent}>
-                  <p className={styles.itemLabel}>{item.label}</p>
+                  <p className={styles.itemLabel}>{isCompleted ? item.label : (item.labelPending ?? item.label)}</p>
                   <p className={styles.itemDescription}>{item.description}</p>
                 </div>
 

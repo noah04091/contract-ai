@@ -987,6 +987,11 @@
   font-size: 14px;
 }
 
+/* 19.08.2026: Rechnungen-Sektion klebte an den Karten darüber (Noahs A-Z-Test) */
+.invoicesSection {
+  margin-top: 40px;
+}
+
 /* Load More Button */
 .loadMoreButton {
   display: flex;

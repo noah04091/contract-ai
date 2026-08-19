@@ -70,7 +70,10 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
   if (!show) return null;
 
   return createPortal(
-    <div className={styles.backdrop}>
+    // role="dialog": macht das Overlay für den Tour-Autostart-Wächter
+    // (useTour.ts isAnyModalOpen) als Modal erkennbar — vorher startete die
+    // Contracts-Tour ÜBER dem laufenden Analyse-Overlay. Nebenbei a11y-korrekt.
+    <div className={styles.backdrop} role="dialog" aria-modal="true" aria-label="Vertrag wird analysiert">
       <div className={styles.container}>
         {/* Header */}
         <div className={styles.header}>

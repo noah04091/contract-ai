@@ -87,6 +87,10 @@ const contractTypeCategories = [
 
 export default function Navbar() {
   const { user, setUser } = useAuth();
+
+  // 19.08.2026 (Noahs A-Z-Test): Eingeloggt führt das Logo ins Dashboard statt auf
+  // die Landingpage — Standard-Verhalten von Apps; ausgeloggt bleibt die Landingpage.
+  const logoTarget = user ? "/dashboard" : "/";
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -307,7 +311,7 @@ export default function Navbar() {
           {/* Left Section - Logo */}
           <div className={styles.leftSection}>
             {!isMobile && (
-              <Link to="/" className={styles.logoLink}>
+              <Link to={logoTarget} className={styles.logoLink}>
                 <motion.img
                   src={logo}
                   alt="Contract AI Logo"
@@ -322,7 +326,7 @@ export default function Navbar() {
           {/* Center Section - App Navigation für eingeloggte User */}
           <div className={styles.centerSection}>
             {isMobile && (
-              <Link to="/" className={styles.logoLink}>
+              <Link to={logoTarget} className={styles.logoLink}>
                 <motion.img
                   src={logo}
                   alt="Contract AI Logo"
@@ -523,7 +527,7 @@ export default function Navbar() {
               </motion.div>
             </motion.button>
           ) : (
-            <Link to="/" className={styles.logoLink}>
+            <Link to={logoTarget} className={styles.logoLink}>
               <motion.img
                 src={logo}
                 alt="Contract AI Logo"
@@ -538,7 +542,7 @@ export default function Navbar() {
         {/* Center Section - Logo (Mobile) oder Marketing Navigation (Desktop) */}
         <div className={styles.centerSection}>
           {isMobile && (
-            <Link to="/" className={styles.logoLink}>
+            <Link to={logoTarget} className={styles.logoLink}>
               <motion.img
                 src={logo}
                 alt="Contract AI Logo"
@@ -775,7 +779,7 @@ export default function Navbar() {
 
         {/* Center Section - Logo always centered */}
         <div className={styles.centerSection}>
-          <Link to="/" className={styles.logoLink}>
+          <Link to={logoTarget} className={styles.logoLink}>
             <motion.img 
               src={logo} 
               alt="Contract AI Logo" 
@@ -897,7 +901,7 @@ export default function Navbar() {
 
         {/* Center Section - Logo always centered */}
         <div className={styles.centerSection}>
-          <Link to="/" className={styles.logoLink}>
+          <Link to={logoTarget} className={styles.logoLink}>
             <motion.img 
               src={logo} 
               alt="Contract AI Logo" 
@@ -1070,7 +1074,7 @@ export default function Navbar() {
 
         {/* Center Section - Logo always centered */}
         <div className={styles.centerSection}>
-          <Link to="/" className={styles.logoLink}>
+          <Link to={logoTarget} className={styles.logoLink}>
             <motion.img 
               src={logo} 
               alt="Contract AI Logo" 
