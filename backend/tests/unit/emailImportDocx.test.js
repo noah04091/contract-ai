@@ -65,3 +65,78 @@ describe("validateAttachment — PDF und DOCX erlaubt (13.08.2026)", () => {
     expect(r.error).toContain("zu groß");
   });
 });
+
+// ---------------------------------------------------------------------------
+// 🐛 Regression 19.08.2026: DOCX, bei denen [Content_Types].xml NICHT vorne steht
+//
+// Ein DOCX ist ein ZIP, und die Reihenfolge der Archiv-Eintraege ist nicht
+// festgelegt. Legt das schreibende Programm z.B. `word/numbering.xml` zuerst ab,
+// stand `[Content_Types].xml` ausserhalb des alten 1000-Byte-Fensters von
+// detectMimeType — die Datei galt dann als `application/zip`.
+//
+// An 97 echten Word-Vertraegen gemessen: 13 (grob jede achte) fielen durch. Folge
+// im E-Mail-Import: ABGELEHNT mit "Nur PDF- oder Word-Dateien (.docx) erlaubt".
+// Dazu scheiterte ihre nachtraegliche Erstanalyse mit "PDF-Datei beschaedigt",
+// weil routes/contracts.js bei `application/zip` auf PDF zurueckfaellt.
+//
+// Diese Tests nageln fest, dass genau diese Bauform akzeptiert wird — und dass
+// echte Archive weiterhin abgelehnt werden.
+// ---------------------------------------------------------------------------
+
+const ZIP_SIG = Buffer.from([0x50, 0x4b, 0x03, 0x04]);
+const fuellung = (n) => Buffer.alloc(n, 0x41); // 'A'
+
+// Nachbau des ECHTEN Falls: erster Eintrag word/numbering.xml,
+// [Content_Types].xml erst weit hinter Byte 1000.
+const docxSpaeteContentTypes = Buffer.concat([
+  ZIP_SIG,
+  Buffer.from("word/numbering.xml"),
+  fuellung(3000),
+  Buffer.from("[Content_Types].xml"),
+  fuellung(500),
+]);
+
+// Variante ohne [Content_Types].xml im gelesenen Bereich — nur word/document.xml.
+// Genau dieser Fall braucht das ZWEITE Merkmal.
+const docxNurDocumentXml = Buffer.concat([
+  ZIP_SIG,
+  Buffer.from("word/numbering.xml"),
+  fuellung(5000),
+  Buffer.from("word/document.xml"),
+  fuellung(500),
+]);
+
+// Echtes Archiv, gross, aber ohne jedes Word-Merkmal — muss abgelehnt bleiben.
+const echtesZipGross = Buffer.concat([
+  ZIP_SIG,
+  Buffer.from("bilder/urlaub.jpg"),
+  fuellung(9000),
+  Buffer.from("dokumente/liste.txt"),
+]);
+
+describe("DOCX-Erkennung unabhaengig von der Archiv-Reihenfolge (19.08.2026)", () => {
+  test("DOCX mit spaetem [Content_Types].xml wird akzeptiert (war der reale Fehler)", () => {
+    const r = validateAttachment(asAttachment(docxSpaeteContentTypes, "AGB.docx"));
+    expect(r.valid).toBe(true);
+    expect(r.detectedMimeType).toBe("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  });
+
+  test("DOCX, das nur ueber word/document.xml erkennbar ist, wird akzeptiert", () => {
+    const r = validateAttachment(asAttachment(docxNurDocumentXml, "Vertrag.docx"));
+    expect(r.valid).toBe(true);
+    expect(r.detectedMimeType).toBe("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  });
+
+  test("echtes Archiv ohne Word-Merkmale bleibt abgelehnt (keine Aufweichung)", () => {
+    const r = validateAttachment(asAttachment(echtesZipGross, "urlaub.zip"));
+    expect(r.valid).toBe(false);
+    expect(r.error).toMatch(/Nur PDF- oder Word-Dateien/);
+  });
+
+  test("die Erkennung liest den GANZEN Puffer, nicht nur ein Fenster", () => {
+    // Merkmal absichtlich sehr weit hinten — ein festes Fenster wuerde es verfehlen.
+    const sehrSpaet = Buffer.concat([ZIP_SIG, fuellung(200000), Buffer.from("word/document.xml")]);
+    const r = validateAttachment(asAttachment(sehrSpaet, "spaet.docx"));
+    expect(r.valid).toBe(true);
+  });
+});

@@ -61,9 +61,27 @@ function detectMimeType(buffer) {
 
   // ZIP (für DOCX, etc.): PK (50 4B)
   if (buffer[0] === 0x50 && buffer[1] === 0x4B) {
-    // DOCX ist ein ZIP-Archiv, prüfe auf [Content_Types].xml
-    const bufferString = buffer.toString('utf-8', 0, Math.min(buffer.length, 1000));
-    if (bufferString.includes('[Content_Types].xml')) {
+    // 🐛 19.08.2026 KORREKTUR: Vorher wurden nur die ERSTEN 1000 BYTES nach der
+    // Zeichenkette `[Content_Types].xml` durchsucht. Ein DOCX ist aber ein ZIP, und die
+    // Reihenfolge der Archiv-Einträge ist nicht festgelegt — legt das schreibende
+    // Programm z.B. `word/numbering.xml` zuerst ab, steht `[Content_Types].xml` weit
+    // hinter dem Fenster. Solche Word-Dateien galten dann als `application/zip`.
+    //
+    // An 97 echten Word-Verträgen gemessen: 13 (also grob jede achte) fielen durch.
+    // Folgen, alle drei Nutzer dieser Funktion betroffen:
+    //  - validateAttachment (unten): lässt nur PDF+DOCX durch → solche Word-Dateien
+    //    wurden beim E-Mail-Import mit „Nur PDF- oder Word-Dateien erlaubt" ABGELEHNT,
+    //  - routes/contracts.js (nachträgliche Erstanalyse): fiel auf 'application/pdf'
+    //    zurück → die Analyse lief in den PDF-Weg und meldete „PDF-Datei beschädigt",
+    //  - utils/resolveUploadMimeType.js: falscher ContentType in S3.
+    //
+    // Jetzt: Suche über den GANZEN Puffer (Buffer#includes arbeitet byteweise, ohne
+    // den Puffer in eine Zeichenkette zu wandeln) und ZWEI Merkmale statt einem.
+    // Beide sind Word-spezifisch; das lockerere `word/` wäre zu unscharf.
+    // Gemessen: `[Content_Types].xml` allein fängt 10 der 13, zusammen mit
+    // `word/document.xml` alle 13. Die beiden echten Archive im Bestand
+    // (eine .zip und eine .odt) enthalten keines der Merkmale und bleiben ZIP.
+    if (buffer.includes('[Content_Types].xml') || buffer.includes('word/document.xml')) {
       return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     }
     return 'application/zip';
