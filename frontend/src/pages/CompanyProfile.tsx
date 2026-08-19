@@ -846,7 +846,7 @@ export default function CompanyProfile() {
                     <motion.button
                       key={section.id}
                       className={`${styles.navItem} ${isActive ? styles.navItemActive : ''} ${isLocked ? styles.navItemLocked : ''}`}
-                      onClick={() => !isLocked && setActiveSection(section.id)}
+                      onClick={() => setActiveSection(section.id)}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}

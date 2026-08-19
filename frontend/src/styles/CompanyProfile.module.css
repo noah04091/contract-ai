@@ -275,7 +275,8 @@
 
 .navItemLocked {
   opacity: 0.65;
-  cursor: default;
+  /* 19.08.2026 (Paket D1): Reiter ist jetzt anklickbar (zeigt Vorschau-Overlay) */
+  cursor: pointer;
 }
 
 .navItemIcon {
