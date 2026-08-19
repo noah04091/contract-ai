@@ -181,6 +181,10 @@ export default function CompanyProfile() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>('company');
+  // 🎯 Paket D2 (19.08.2026, Mockup 1A von Noah gewählt): Typ-Auswahl beim Erstbesuch.
+  // Vorher landete jeder ungefragt auf "Unternehmensdaten" mit Firmenname-Feld —
+  // Privatpersonen dachten "ich habe keine Firma, ich bin hier falsch".
+  const [showTypeChooser, setShowTypeChooser] = useState(false);
 
   // Enterprise Check
   const isPremium = user?.subscriptionPlan === 'enterprise';
@@ -193,6 +197,7 @@ export default function CompanyProfile() {
   // Handle profile type change
   const handleProfileTypeChange = (newType: ProfileType) => {
     setProfileType(newType);
+    try { localStorage.setItem('contractai_profileType', newType); } catch { /* voll/blockiert */ }
     // Update legal form to first option of new type
     const newLegalForms = newType === 'business' ? BUSINESS_LEGAL_FORMS : PERSONAL_LEGAL_FORMS;
     setProfile(prev => ({
@@ -200,6 +205,40 @@ export default function CompanyProfile() {
       profileType: newType,
       legalForm: newLegalForms[0]
     }));
+  };
+
+  // 🎯 Paket D2: Auswahl aus dem Erstbesuch-Popup. 'freelancer' und 'privat' sind
+  // beide profileType 'personal' (das Backend kennt nur business/personal),
+  // unterscheiden sich aber im vorbelegten Status. Bei personal wird der Name aus
+  // der Registrierung vorbefüllt (Mockup-Entscheidung 2, jederzeit änderbar) und
+  // sofort über /basic gespeichert — das persistiert Typ + Name und hakt das
+  // Checklist-Item ab. Business speichert erst mit dem Firmennamen des Nutzers
+  // (das Backend verlangt companyName als Pflichtfeld).
+  const handleTypeChoice = async (choice: 'business' | 'freelancer' | 'privat') => {
+    setShowTypeChooser(false);
+    const type: ProfileType = choice === 'business' ? 'business' : 'personal';
+    handleProfileTypeChange(type);
+
+    if (type === 'personal') {
+      const fullName = (user?.name || '').trim();
+      const status = choice === 'freelancer' ? 'Freiberufler' : 'Privatperson';
+      let nameToSave = '';
+      setProfile(prev => {
+        nameToSave = (prev.companyName || fullName).trim();
+        return { ...prev, profileType: type, companyName: prev.companyName || fullName, legalForm: status };
+      });
+
+      if (nameToSave) {
+        try {
+          await fetch('/api/company-profile/basic', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ companyName: nameToSave, profileType: type })
+          });
+        } catch { /* nicht kritisch — wird spätestens beim Speichern persistiert */ }
+      }
+    }
   };
 
   // Calculate completion data
@@ -277,10 +316,21 @@ export default function CompanyProfile() {
         // Set profile type from loaded data
         if (data.profile.profileType) {
           setProfileType(data.profile.profileType);
+          // Navbar liest den Typ für ihr Label (Mein Profil / Firmenprofil)
+          try { localStorage.setItem('contractai_profileType', data.profile.profileType); } catch { /* voll/blockiert */ }
+        } else if ((data.profile.companyName || '').trim()) {
+          // Profil aus der Registrierung (Firmenname angegeben, aber nie ein Typ
+          // gewählt): eindeutig geschäftlich → kein Popup, still auf business.
+          try { localStorage.setItem('contractai_profileType', 'business'); } catch { /* voll/blockiert */ }
+        } else {
+          setShowTypeChooser(true);
         }
         if (data.profile.logoUrl) {
           setLogoPreview(data.profile.logoUrl);
         }
+      } else {
+        // Noch gar kein Profil → Erstbesuch, Typ-Auswahl zeigen
+        setShowTypeChooser(true);
       }
     } catch (error) {
       console.error('Fehler beim Laden des Profils:', error);
@@ -739,6 +789,44 @@ export default function CompanyProfile() {
       </Helmet>
 
       <div className={styles.page}>
+        {/* 🎯 Paket D2: Typ-Auswahl beim Erstbesuch (Mockup 1A). Erscheint nur,
+            solange kein Typ gewählt ist; "Später entscheiden" lässt alles wie bisher. */}
+        {showTypeChooser && !loading && (
+          <div className={styles.typeChooserBackdrop} role="dialog" aria-modal="true" aria-label="Für wen ist dieses Profil?">
+            <div className={styles.typeChooserModal}>
+              <h3>Für wen ist dieses Profil?</h3>
+              <p>
+                Deine Angaben verwenden wir für die Vertragserstellung und deine Dokumente.
+                Du kannst die Auswahl jederzeit oben auf der Seite ändern.
+              </p>
+              <button className={styles.typeChooserCard} onClick={() => handleTypeChoice('business')}>
+                <span className={styles.typeChooserIcon} style={{ background: '#eff6ff' }}>🏢</span>
+                <span>
+                  <b>Unternehmen</b>
+                  <small>Firma, GmbH, UG, Verein …</small>
+                </span>
+              </button>
+              <button className={styles.typeChooserCard} onClick={() => handleTypeChoice('freelancer')}>
+                <span className={styles.typeChooserIcon} style={{ background: '#f5f3ff' }}>💼</span>
+                <span>
+                  <b>Freelancer / Selbstständig</b>
+                  <small>Freiberufler, Einzelunternehmer</small>
+                </span>
+              </button>
+              <button className={styles.typeChooserCard} onClick={() => handleTypeChoice('privat')}>
+                <span className={styles.typeChooserIcon} style={{ background: '#f0fdf4' }}>👤</span>
+                <span>
+                  <b>Privatperson</b>
+                  <small>Für private Verträge und Dokumente</small>
+                </span>
+              </button>
+              <button className={styles.typeChooserSkip} onClick={() => setShowTypeChooser(false)}>
+                Später entscheiden
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Background Effects */}
         <div className={styles.bgGradient}></div>
         <div className={styles.bgPattern}></div>

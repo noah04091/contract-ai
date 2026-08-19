@@ -907,41 +907,34 @@ export default function Profile() {
                 </div>
 
                 <div className={styles.featureGrid}>
-                  {/* Company Profile */}
-                  <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
+                  {/* Company Profile — 🎯 Paket D4 (19.08.2026, Mockup-Entscheidung 4):
+                      Die Kachel verkaufte das Profil als reines Enterprise-Feature
+                      (Upgrade-Knopf zu /pricing), obwohl die Basis-Felder für ALLE
+                      kostenlos sind und die Onboarding-Checkliste jeden dorthin
+                      schickt. Jetzt ehrlich: jeder kann ausfüllen, das Enterprise-
+                      Extra (Logo, Steuer, Kontakt, Bank) steht als Badge dran. */}
+                  <div className={styles.featureCard}>
                     <div className={styles.featureHeader}>
                       <div className={`${styles.featureIcon} ${styles.blue}`}>🏢</div>
                       <div className={styles.featureContent}>
                         <h3 className={styles.featureTitle}>
-                          Firmenprofil
-                          {!isEnterprise && <span className={styles.featureLockBadge}>Enterprise</span>}
+                          Profil für Verträge
+                          {!isEnterprise && <span className={styles.featureLockBadge}>Zusatz-Bereiche ab Enterprise</span>}
                         </h3>
                         <p className={styles.featureDescription}>
-                          Hinterlege deine Firmendaten für automatisches Ausfüllen in generierten Verträgen.
+                          Name bzw. Firma, Adresse und Status: fließt automatisch in erstellte Verträge und Dokumente ein.
                         </p>
                       </div>
                     </div>
-                    {isEnterprise ? (
-                      <motion.button
-                        className={`${styles.featureButton} ${styles.primary}`}
-                        onClick={() => window.location.href = '/company-profile'}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <FileText size={16} />
-                        Firmenprofil bearbeiten
-                      </motion.button>
-                    ) : (
-                      <motion.button
-                        className={`${styles.featureButton} ${styles.upgrade}`}
-                        onClick={() => window.location.href = '/pricing'}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <Star size={16} />
-                        Upgrade auf Enterprise (29€/Monat)
-                      </motion.button>
-                    )}
+                    <motion.button
+                      className={`${styles.featureButton} ${styles.primary}`}
+                      onClick={() => window.location.href = '/company-profile'}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <FileText size={16} />
+                      {isEnterprise ? 'Firmenprofil bearbeiten' : 'Profil ausfüllen'}
+                    </motion.button>
                   </div>
 
                   {/* Team Management */}

@@ -91,6 +91,15 @@ export default function Navbar() {
   // 19.08.2026 (Noahs A-Z-Test): Eingeloggt führt das Logo ins Dashboard statt auf
   // die Landingpage — Standard-Verhalten von Apps; ausgeloggt bleibt die Landingpage.
   const logoTarget = user ? "/dashboard" : "/";
+
+  // 🎯 Paket D3 (19.08.2026, Mockup-Entscheidung 3): "Mein Profil" (/me = Konto) und
+  // "Unternehmen" (/company-profile) klangen für Privatpersonen wie dasselbe bzw.
+  // falsch. Jetzt: /me = "Kontoeinstellungen"; /company-profile heißt je nach
+  // gewähltem Profil-Typ "Firmenprofil" (business) oder "Mein Profil" (personal/
+  // noch nicht gewählt). Den Typ schreibt die Profil-Seite in localStorage.
+  let storedProfileType: string | null = null;
+  try { storedProfileType = localStorage.getItem('contractai_profileType'); } catch { /* blockiert */ }
+  const companyProfileLabel = storedProfileType === 'business' ? 'Firmenprofil' : 'Mein Profil';
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -409,11 +418,11 @@ export default function Navbar() {
                       <div className={styles.dropdownList}>
                         <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <UserIcon size={16} strokeWidth={1.75} />
-                          <span>Mein Profil</span>
+                          <span>Kontoeinstellungen</span>
                         </Link>
                         <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <Building2 size={16} strokeWidth={1.75} />
-                          <span>Unternehmen</span>
+                          <span>{companyProfileLabel}</span>
                         </Link>
                         <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <CreditCard size={16} strokeWidth={1.75} />
@@ -472,11 +481,11 @@ export default function Navbar() {
                       <div className={styles.dropdownList}>
                         <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <UserIcon size={16} strokeWidth={1.75} />
-                          <span>Mein Profil</span>
+                          <span>Kontoeinstellungen</span>
                         </Link>
                         <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <Building2 size={16} strokeWidth={1.75} />
-                          <span>Unternehmen</span>
+                          <span>{companyProfileLabel}</span>
                         </Link>
                         <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <CreditCard size={16} strokeWidth={1.75} />
@@ -845,11 +854,11 @@ export default function Navbar() {
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <UserIcon size={16} strokeWidth={1.75} />
-                        <span>Mein Profil</span>
+                        <span>Kontoeinstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <Building2 size={16} strokeWidth={1.75} />
-                        <span>Unternehmen</span>
+                        <span>{companyProfileLabel}</span>
                       </Link>
                       <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <CreditCard size={16} strokeWidth={1.75} />
@@ -951,11 +960,11 @@ export default function Navbar() {
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <UserIcon size={16} strokeWidth={1.75} />
-                        <span>Mein Profil</span>
+                        <span>Kontoeinstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <Building2 size={16} strokeWidth={1.75} />
-                        <span>Unternehmen</span>
+                        <span>{companyProfileLabel}</span>
                       </Link>
                       <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <CreditCard size={16} strokeWidth={1.75} />
@@ -1013,11 +1022,11 @@ export default function Navbar() {
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <UserIcon size={16} strokeWidth={1.75} />
-                        <span>Mein Profil</span>
+                        <span>Kontoeinstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <Building2 size={16} strokeWidth={1.75} />
-                        <span>Unternehmen</span>
+                        <span>{companyProfileLabel}</span>
                       </Link>
                       <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <CreditCard size={16} strokeWidth={1.75} />
@@ -1139,11 +1148,11 @@ export default function Navbar() {
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <UserIcon size={16} strokeWidth={1.75} />
-                        <span>Mein Profil</span>
+                        <span>Kontoeinstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <Building2 size={16} strokeWidth={1.75} />
-                        <span>Unternehmen</span>
+                        <span>{companyProfileLabel}</span>
                       </Link>
                       <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <CreditCard size={16} strokeWidth={1.75} />
