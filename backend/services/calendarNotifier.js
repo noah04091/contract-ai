@@ -475,6 +475,17 @@ async function checkAndSendNotifications(db) {
  * Fuegt eine Event-Benachrichtigung zur E-Mail-Queue hinzu
  */
 async function queueEventNotification(event, db) {
+  // 🗓️ EHRLICHKEITS-WACHE (19.08.2026, Noahs AVV-Befund): Viele Erzeuger-Texte sagen
+  // fest "heute" ("läuft heute ab") — geschrieben für den Versand AM Stichtag. Das
+  // Lookahead-Sicherheitsnetz mailt nackte Stichtage aber BIS ZU 7 TAGE FRÜHER
+  // (bewusst: lieber früh als nie, 7966fbb6) → die Mail log dann ("läuft heute ab"
+  // am 19.08. für den 26.08.). Die App-Anzeige neutralisiert solche Wörter längst
+  // (neutralizeRelativeTime, Calendar.tsx) — jetzt tut es auch der Mail-Trichter:
+  // Wird VOR dem eigenen Tag versendet, ersetzt das echte Datum das Wort "heute".
+  // Am eigenen Tag bleibt "heute" wahr und unangetastet. Eine Wache für ALLE Typen
+  // statt 10 Vorlagen-Flicken.
+  event.description = neutralizeRelativeDayWords(event.description, event.date);
+
   const actionToken = await generateActionToken(event._id, event.userId);
   const baseUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
 
@@ -614,6 +625,26 @@ async function queueEventNotification(event, db) {
   });
 
   console.log(`E-Mail zur Queue hinzugefuegt: ${subject} fuer ${maskEmail(event.user.email)}`);
+}
+
+/**
+ * 🗓️ Ersetzt "heute" in einem Event-Text durch das echte Datum, WENN das Event vor
+ * seinem eigenen Tag versendet wird (Lookahead-Frühwarnung für nackte Stichtage).
+ * Am eigenen Tag (oder überfällig) bleibt der Text unverändert — dort stimmt "heute".
+ * Nur ganze Wörter (\b), Groß-/Kleinschreibung bleibt korrekt ("Heute ist" → "Am … ist").
+ * PURE Funktion, exportiert für Unit-Tests.
+ */
+function neutralizeRelativeDayWords(text, eventDate, now = new Date()) {
+  if (!text || !eventDate) return text;
+  const d = new Date(eventDate);
+  if (isNaN(d.getTime())) return text;
+  const dayStart = (x) => { const y = new Date(x); y.setUTCHours(0, 0, 0, 0); return y.getTime(); };
+  const daysUntil = Math.round((dayStart(d) - dayStart(now)) / 86400000);
+  if (daysUntil < 1) return text;
+  const dateStr = d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' });
+  return text
+    .replace(/\bHeute\b/g, `Am ${dateStr}`)
+    .replace(/\bheute\b/g, `am ${dateStr}`);
 }
 
 /**
@@ -911,6 +942,7 @@ module.exports = {
   shouldDeferToOwnDay,
   getSendWindow,
   freeReminderMailsEnabled,
+  neutralizeRelativeDayWords,
   // Reine Render-Funktionen (für Vorschau/Tests; keine Seiteneffekte)
   __render: {
     generateCalendarEmailTemplate,
