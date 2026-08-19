@@ -334,6 +334,15 @@ export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
   // Benutzername: Bevorzuge name, dann email-Präfix, dann 'User'
   const userName = user?.name || user?.email?.split('@')[0] || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
+
+  // 🎯 19.08.2026: identisch zur Navbar (Noahs Fund: Dashboard-Dropdown zeigte
+  // noch die alten Namen) — /me = "Einstellungen" mit Zahnrad, /company-profile
+  // typ-abhängig "Firmenprofil" (Gebäude) oder "Mein Profil" (Person). Typ via
+  // localStorage, geschrieben von der Profil-Seite.
+  let storedProfileType: string | null = null;
+  try { storedProfileType = localStorage.getItem('contractai_profileType'); } catch { /* blockiert */ }
+  const companyProfileLabel = storedProfileType === 'business' ? 'Firmenprofil' : 'Mein Profil';
+  const CompanyProfileIcon = storedProfileType === 'business' ? Building2 : User;
   // Plan-Anzeige: Formatiere für bessere Lesbarkeit
   const formatPlan = (plan?: string): string => {
     if (!plan || plan === 'free') return 'Free';
@@ -514,12 +523,12 @@ export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
                 <div className={styles.dropdownDivider} />
                 <div className={styles.dropdownList}>
                   <Link to="/me" className={styles.dropdownItem} onClick={() => setShowUserMenu(false)}>
-                    <User size={16} strokeWidth={1.75} />
-                    <span>Mein Profil</span>
+                    <Settings size={16} strokeWidth={1.75} />
+                    <span>Einstellungen</span>
                   </Link>
                   <Link to="/company-profile" className={styles.dropdownItem} onClick={() => setShowUserMenu(false)}>
-                    <Building2 size={16} strokeWidth={1.75} />
-                    <span>Unternehmen</span>
+                    <CompanyProfileIcon size={16} strokeWidth={1.75} />
+                    <span>{companyProfileLabel}</span>
                   </Link>
                   <Link to="/pricing" className={styles.dropdownItem} onClick={() => setShowUserMenu(false)}>
                     <CreditCard size={16} strokeWidth={1.75} />
