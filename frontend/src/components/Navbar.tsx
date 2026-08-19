@@ -418,7 +418,7 @@ export default function Navbar() {
                       <div className={styles.dropdownList}>
                         <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <UserIcon size={16} strokeWidth={1.75} />
-                          <span>Kontoeinstellungen</span>
+                          <span>Einstellungen</span>
                         </Link>
                         <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <Building2 size={16} strokeWidth={1.75} />
@@ -481,7 +481,7 @@ export default function Navbar() {
                       <div className={styles.dropdownList}>
                         <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <UserIcon size={16} strokeWidth={1.75} />
-                          <span>Kontoeinstellungen</span>
+                          <span>Einstellungen</span>
                         </Link>
                         <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                           <Building2 size={16} strokeWidth={1.75} />
@@ -854,7 +854,7 @@ export default function Navbar() {
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <UserIcon size={16} strokeWidth={1.75} />
-                        <span>Kontoeinstellungen</span>
+                        <span>Einstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <Building2 size={16} strokeWidth={1.75} />
@@ -960,7 +960,7 @@ export default function Navbar() {
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <UserIcon size={16} strokeWidth={1.75} />
-                        <span>Kontoeinstellungen</span>
+                        <span>Einstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <Building2 size={16} strokeWidth={1.75} />
@@ -1022,7 +1022,7 @@ export default function Navbar() {
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <UserIcon size={16} strokeWidth={1.75} />
-                        <span>Kontoeinstellungen</span>
+                        <span>Einstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <Building2 size={16} strokeWidth={1.75} />
@@ -1148,7 +1148,7 @@ export default function Navbar() {
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <UserIcon size={16} strokeWidth={1.75} />
-                        <span>Kontoeinstellungen</span>
+                        <span>Einstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
                         <Building2 size={16} strokeWidth={1.75} />
