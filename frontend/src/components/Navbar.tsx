@@ -94,9 +94,9 @@ export default function Navbar() {
 
   // 🎯 Paket D3 (19.08.2026, Mockup-Entscheidung 3): "Mein Profil" (/me = Konto) und
   // "Unternehmen" (/company-profile) klangen für Privatpersonen wie dasselbe bzw.
-  // falsch. Jetzt: /me = "Kontoeinstellungen"; /company-profile heißt je nach
-  // gewähltem Profil-Typ "Firmenprofil" (business) oder "Mein Profil" (personal/
-  // noch nicht gewählt). Den Typ schreibt die Profil-Seite in localStorage.
+  // falsch. Jetzt: /me = "Einstellungen" (Branchenstandard Stripe/DocuSign/Slack);
+  // /company-profile heißt je nach gewähltem Profil-Typ "Firmenprofil" (business)
+  // oder "Mein Profil" (personal/noch nicht gewählt). Typ via localStorage.
   let storedProfileType: string | null = null;
   try { storedProfileType = localStorage.getItem('contractai_profileType'); } catch { /* blockiert */ }
   const companyProfileLabel = storedProfileType === 'business' ? 'Firmenprofil' : 'Mein Profil';
