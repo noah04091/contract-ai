@@ -1,6 +1,11 @@
-// CalendarOverview — neue "Überblick"-Ansicht des Kalenders.
+// CalendarOverview — "Überblick"-Ansicht des Kalenders.
 //
-// REINE ANZEIGE aus den vorhandenen Events (kein Backend-Eingriff, kein Versand berührt).
+// REINE ANZEIGE (kein Versand berührt). Stufe 4 (19.08.2026): Die Erinnerungs-
+// Abdeckung pro Frist kommt jetzt als SERVER-Wahrheit mit (event.coverage aus
+// routes/calendar.js, gebaut aus der festen Referenz metadata.deadlineEventId) —
+// vorher versuchte diese Ansicht, Vorwarner per Titel im Store zu finden, die dort
+// 3b-ausgeblendet sind → Abdeckung war nicht zuverlässig darstellbar und der Tab
+// deshalb deaktiviert. Jetzt:
 // - Schutz-Status (wie viele Fristen, wie viele mit/ohne Erinnerung)
 // - Agenda nach Zeit-Horizont (Aufmerksamkeit / diese Woche / diesen Monat / später)
 // - Mini-Zeitleiste pro Frist: macht sichtbar, WANN per E-Mail erinnert wird
@@ -10,7 +15,7 @@
 
 import { useMemo } from 'react';
 import type { CalendarEvent } from '../stores/calendarStore';
-import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from '../utils/reminderGrouping';
+import { cleanDeadlineName, isReminderEntry, stripFileName } from '../utils/reminderGrouping';
 import styles from './CalendarOverview.module.css';
 
 interface CalendarOverviewProps {
@@ -62,9 +67,11 @@ const leadEmoji = (title: string): string => {
 
 const CANCELABLE = new Set(['CANCEL_WINDOW_OPEN', 'LAST_CANCEL_DAY']);
 
+type CoverageStage = NonNullable<CalendarEvent['coverage']>['stages'][number];
+
 interface EnrichedItem {
   event: CalendarEvent;
-  reminders: CalendarEvent[];
+  stages: CoverageStage[]; // künftige Erinnerungs-Stufen (Server-Wahrheit, event.coverage)
   days: number;
 }
 
@@ -84,38 +91,29 @@ export default function CalendarOverview({
       e => !isReminderEntry(e) && startOfDay(displayDate(e)) >= today
     );
 
-    // Kommende Vorwarn-Erinnerungen, zugeordnet über contractId + Frist-Name.
-    const reminderEvents = events.filter(
-      e => isReminderEntry(e) && startOfDay(e.date) >= today
-    );
-    const remByKey = new Map<string, CalendarEvent[]>();
-    for (const r of reminderEvents) {
-      const key = `${r.contractId}|${cleanDeadlineName(r.title, r.contractName)}`;
-      const arr = remByKey.get(key);
-      if (arr) arr.push(r);
-      else remByKey.set(key, [r]);
-    }
-
+    // Kommende Erinnerungs-Stufen aus der Server-Abdeckung (event.coverage, Stufe 4):
+    // nur künftige Stufen zählen für den Schutz-Status — eine Frist, deren Vorwarner
+    // alle schon vorbei sind, gilt weiterhin als "ohne Erinnerung" (Lücken-Warnung).
     const enriched: EnrichedItem[] = deadlines
       .map(d => {
-        const key = `${d.contractId}|${cleanDeadlineName(d.title, d.contractName)}`;
-        const reminders = (remByKey.get(key) || [])
+        const stages = (d.coverage?.stages || [])
+          .filter(st => { const t = startOfDay(st.date); return !isNaN(t) && t >= today; })
           .slice()
           .sort((a, b) => startOfDay(a.date) - startOfDay(b.date));
         const days = Math.round((startOfDay(displayDate(d)) - today) / MS_DAY);
-        return { event: d, reminders, days };
+        return { event: d, stages, days };
       })
       .sort((a, b) => a.days - b.days);
 
     const total = enriched.length;
-    const withRem = enriched.filter(x => x.reminders.length > 0).length;
+    const withRem = enriched.filter(x => x.stages.length > 0).length;
     const without = total - withRem;
 
     // Aufmerksamkeit: bald fällig OHNE Erinnerung (Lücke) ODER bald kündbar.
     const attention: EnrichedItem[] = [];
     const rest: EnrichedItem[] = [];
     for (const x of enriched) {
-      const gapSoon = x.reminders.length === 0 && x.days <= 30;
+      const gapSoon = x.stages.length === 0 && x.days <= 30;
       const cancelSoon = CANCELABLE.has(x.event.type) && x.days <= 30;
       if (gapSoon || cancelSoon) attention.push(x);
       else rest.push(x);
@@ -154,8 +152,8 @@ export default function CalendarOverview({
         <div className={styles.tlAxis} />
         <div className={`${styles.tlPt} ${styles.tlNow}`} style={{ left: '3%' }} />
         <span className={styles.tlLbl} style={{ left: '3%' }}>heute</span>
-        {item.reminders.map(r => (
-          <span key={r.id} className={styles.tlPt} style={{ left: `${posOf(r.date)}%` }}>🔔</span>
+        {item.stages.map((st, i) => (
+          <span key={`${st.date}-${i}`} className={styles.tlPt} style={{ left: `${posOf(st.date)}%` }}>🔔</span>
         ))}
         <span className={`${styles.tlPt} ${styles.tlDeadline}`} style={{ left: '97%' }}>◆</span>
         <span className={styles.tlLbl} style={{ left: '95%' }}>Frist</span>
@@ -163,15 +161,15 @@ export default function CalendarOverview({
     );
   };
 
-  const reminderLabelText = (reminders: CalendarEvent[]): string => {
-    const labels = reminders.map(r => reminderLeadLabel(r.title) || fmtShort(r.date));
+  const reminderLabelText = (stages: CoverageStage[]): string => {
+    const labels = stages.map(st => st.label || fmtShort(st.date));
     const uniq = Array.from(new Set(labels));
     const head = uniq.slice(0, 3).join(' & ');
     return uniq.length > 3 ? `${head} +${uniq.length - 3}` : head;
   };
 
   const renderCard = (item: EnrichedItem) => {
-    const { event, reminders } = item;
+    const { event, stages } = item;
     const stripeCls =
       event.severity === 'critical' ? styles.crit
       : event.severity === 'warning' ? styles.warn
@@ -195,13 +193,13 @@ export default function CalendarOverview({
           </div>
         </div>
 
-        {reminders.length > 0 ? (
+        {stages.length > 0 ? (
           <div className={styles.strip}>
             {renderTimeline(item)}
             <div className={styles.legend}>
               <span className={styles.legendTxt}>
                 <span className={styles.mail}>✉️</span>
-                <span className="ellip">Erinnerung: {reminderLabelText(reminders)}</span>
+                <span className="ellip">Erinnerung: {reminderLabelText(stages)}</span>
               </span>
               <button className={styles.manageBtn} onClick={() => onManageReminders(event)}>
                 Bearbeiten

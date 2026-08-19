@@ -99,6 +99,49 @@ export const reminderLeadLabel = (title: string): string | null => {
 export const isReminderEntry = (e: ReminderLike): boolean =>
   reminderLeadLabel(e.title) !== null || /_REMINDER_\d+D$/i.test(e.type);
 
+// ── Stufe 4 (19.08.2026): Zuordnung Vorwarnung→Frist per FESTER REFERENZ ──────────
+// Seit Stufe 2 trägt jede Vorwarnung metadata.deadlineEventId (die _id ihrer Frist,
+// vom Generator ab Geburt vergeben, Bestand per Backfill 1175/1175 nachgezogen).
+// Die Referenz ist die WAHRHEIT; der Titel-Schlüssel (cleanDeadlineName) bleibt nur
+// noch als Rückfall für unverknüpfte Altfälle. Trägt eine Vorwarnung eine Referenz,
+// entscheidet AUSSCHLIESSLICH sie — auch gegen einen zufällig passenden Titel
+// (verhindert Doppel-Zuordnung bei Zwillings-Fristen).
+
+export interface DeadlineRefLike extends ReminderLike {
+  id?: string;
+  metadata?: { deadlineEventId?: string };
+}
+
+// Gehört diese Vorwarnung zu dieser Frist? (Popup-Karte „So wirst du erinnert")
+export const belongsToDeadline = (
+  reminder: DeadlineRefLike,
+  deadline: { id?: string; title: string },
+  contractName?: string
+): boolean => {
+  const ref = reminder.metadata?.deadlineEventId;
+  if (ref && deadline.id) return String(ref) === String(deadline.id);
+  return cleanDeadlineName(reminder.title, contractName) === cleanDeadlineName(deadline.title, contractName);
+};
+
+// Gruppen-Schlüssel eines Events für die Frist-Familien der Modals: Vorwarnungen mit
+// Referenz erben den Schlüssel ihrer FRIST (heilt auch abweichende KI-Labels wie
+// „Ende der Probezeit" vs. „Probezeit endet" — die 4 Rest-Phantome der Messung vom
+// 17.08.); ohne Referenz bzw. für Haupt-Termine der bisherige Titel-Schlüssel.
+export const deadlineKeyOf = (
+  ev: DeadlineRefLike,
+  allEvents: ReadonlyArray<DeadlineRefLike>,
+  contractName?: string
+): string => {
+  if (isReminderEntry(ev)) {
+    const ref = ev.metadata?.deadlineEventId;
+    if (ref) {
+      const main = allEvents.find(m => m.id !== undefined && String(m.id) === String(ref));
+      if (main) return cleanDeadlineName(main.title, contractName);
+    }
+  }
+  return cleanDeadlineName(ev.title, contractName);
+};
+
 // Entfernt einen eingebetteten Dateinamen ("…Santander.pdf") aus einem Anzeige-Titel.
 // Backend baut manche Titel als "LETZTER TAG: {dateiname}.pdf kündigen!" — der rohe
 // Dateiname mitten im Satz sieht hässlich aus. REINE Darstellung: ändert NICHT den

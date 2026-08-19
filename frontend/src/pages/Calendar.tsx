@@ -48,7 +48,7 @@ import NotificationSettingsModal from "../components/NotificationSettingsModal";
 import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 3c: Erinnerungen vom Kalender aus verwalten
 import CalendarOverview from "../components/CalendarOverview"; // 🗓️ Ansicht "Überblick": Fristen + Erinnerungen auf einen Blick
 import ReminderHelpModal from "../components/ReminderHelpModal"; // ❓ Hilfe-Popup: Erinnerungs-Prozess in einfachen Worten
-import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from "../utils/reminderGrouping"; // 🔔 Erinnerungen dieser Frist
+import { reminderLeadLabel, isReminderEntry, stripFileName, belongsToDeadline } from "../utils/reminderGrouping"; // 🔔 Erinnerungen dieser Frist
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
 import { WelcomePopup } from "../components/Tour"; // 🎯 Paket C (19.08.2026): Popup statt Click-through-Tour
@@ -88,6 +88,8 @@ interface CalendarEvent {
     expiresAt?: string;
     envelopeTitle?: string;
     envelopeId?: string;
+    // Stufe 2 (18.08.2026): feste Referenz einer Vorwarnung auf die _id ihrer Frist
+    deadlineEventId?: string;
   };
   amount?: number;
   isManual?: boolean;
@@ -793,10 +795,9 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
               return { id: e.id, label: sigLabel(e.type), dateStr: fmt(e.date), kind };
             });
         } else {
-          // 11.08.2026: Vertragsname als Kontext — deckt Vertragsnamen ohne
-          // Datei-Endung ab ("Bürogebäude Mietvertrag"), bei denen der
-          // Endungs-Strip im Schlüssel nicht greift.
-          const deadlineKey = cleanDeadlineName(currentEvent.title, currentEvent.contractName);
+          // Stufe 4 (19.08.2026): Zuordnung per FESTER REFERENZ (metadata.deadlineEventId,
+          // belongsToDeadline) — der Titel-Schlüssel ist nur noch Rückfall für unverknüpfte
+          // Altfälle. Vertragsname bleibt als Kontext für genau diesen Rückfall (11.08.).
           // 28.07.2026: Vergangene Vorwarner NICHT mehr wegfiltern (gleiche Ehrlichkeit wie der
           // Signatur-Zweig oben, Commit 8f93ab57): Nach der "7 Tage vorher"-Mail las sich die
           // Karte wie "nur am Tag selbst erinnert", obwohl die Mail real rausging. Statusbasiert:
@@ -805,7 +806,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
           // ausgeblendet — dort erklärt bereits das 🔒-Banner, dass keine Mails verschickt
           // werden; eine Wand aus "nicht gesendet" wäre doppelt und wirkt wie ein Fehler.
           list = evs
-            .filter(e => isReminderEntry(e) && cleanDeadlineName(e.title, currentEvent.contractName) === deadlineKey && (!noEmailReminders || new Date(e.date) > now))
+            .filter(e => isReminderEntry(e) && belongsToDeadline(e, currentEvent, currentEvent.contractName) && (!noEmailReminders || new Date(e.date) > now))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
             .map(e => {
               const kind: 'sent' | 'upcoming' | 'skipped' =
@@ -3884,11 +3885,11 @@ export default function CalendarPage() {
                 )}
                 {/* Row 2: View Switcher */}
                 <div className="view-switcher">
-                  {/* "overview" (Überblick) vorerst ausgeblendet: die breite Event-Liste
-                      enthält die Vorwarn-Erinnerungen nicht (Backend-Filter), daher konnte
-                      der Überblick die Abdeckung nicht zuverlässig anzeigen. Komponente +
-                      Wiring bleiben erhalten — reaktivierbar, sobald Erinnerungs-Daten sauber. */}
-                  {(['month', 'week', 'day'] as const).map(view => (
+                  {/* "overview" (Überblick) REAKTIVIERT (Stufe 4, 19.08.2026): Die Abdeckung
+                      pro Frist kommt jetzt als Server-Wahrheit mit (event.coverage aus der
+                      festen Referenz metadata.deadlineEventId) — der frühere Blocker "Liste
+                      enthält die Vorwarner nicht" ist damit gegenstandslos. */}
+                  {(['month', 'week', 'day', 'overview'] as const).map(view => (
                     <button
                       key={view}
                       className={`view-btn ${currentView === view ? 'active' : ''}`}
@@ -3896,7 +3897,7 @@ export default function CalendarPage() {
                         setCurrentView(view);
                       }}
                     >
-                      {view === 'month' ? 'Monat' : view === 'week' ? 'Woche' : 'Tag'}
+                      {view === 'month' ? 'Monat' : view === 'week' ? 'Woche' : view === 'day' ? 'Tag' : 'Überblick'}
                     </button>
                   ))}
                 </div>

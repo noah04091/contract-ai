@@ -15,6 +15,8 @@ import {
   isReminderEntry,
   stripFileName,
   completeDanglingLabel,
+  belongsToDeadline,
+  deadlineKeyOf,
 } from '../utils/reminderGrouping';
 
 // Die 8 real in der Prod-DB stehenden Titel (Stand 10.08.2026)
@@ -205,6 +207,51 @@ describe('isReminderEntry — Vorwarner vs. Haupt-Event', () => {
   test('Haupt-Events sind keine Vorwarner', () => {
     expect(isReminderEntry(FAMILIE_A_MAIN)).toBe(false);
     expect(isReminderEntry(FAMILIE_B_MAIN)).toBe(false);
+  });
+});
+
+describe('belongsToDeadline / deadlineKeyOf — Referenz-Vorrang (Stufe 4, 19.08.2026)', () => {
+  const FRIST = { id: 'F1', title: '⚠️ Kündigungseingang bis 20.08.2026: belmoto_GmbH.pdf', type: 'CANCEL_DEADLINE' };
+  const ZWILLING = { id: 'F2', title: '⚠️ Kündigungseingang bis 20.08.2026: belmoto_GmbH.pdf', type: 'CANCEL_DEADLINE' };
+
+  test('Referenz matcht → gehört dazu, auch ohne Titel-Ähnlichkeit', () => {
+    const r = { title: '🔴 1 Tag vorher – DRINGEND: Völlig anderes Label', type: 'CANCEL_DEADLINE_REMINDER_1D', metadata: { deadlineEventId: 'F1' } };
+    expect(belongsToDeadline(r, FRIST, 'belmoto_GmbH.pdf')).toBe(true);
+  });
+
+  test('Referenz auf ANDERE Frist schlägt zufällig passenden Titel (keine Doppel-Zuordnung bei Zwillingen)', () => {
+    const r = { title: '🔴 1 Tag vorher – DRINGEND: Kündigungseingang bis 20.08.2026', type: 'CANCEL_DEADLINE_REMINDER_1D', metadata: { deadlineEventId: 'F2' } };
+    expect(belongsToDeadline(r, FRIST, 'belmoto_GmbH.pdf')).toBe(false);
+    expect(belongsToDeadline(r, ZWILLING, 'belmoto_GmbH.pdf')).toBe(true);
+  });
+
+  test('ohne Referenz greift der Titel-Rückfall (Altfall-Verhalten unverändert)', () => {
+    const r = { title: '🔴 1 Tag vorher – DRINGEND: Kündigungseingang bis 20.08.2026', type: 'CANCEL_DEADLINE_REMINDER_1D' };
+    expect(belongsToDeadline(r, FRIST, 'belmoto_GmbH.pdf')).toBe(true);
+    const fremd = { title: '🔴 1 Tag vorher – DRINGEND: Ganz andere Frist', type: 'CANCEL_DEADLINE_REMINDER_1D' };
+    expect(belongsToDeadline(fremd, FRIST, 'belmoto_GmbH.pdf')).toBe(false);
+  });
+
+  test('deadlineKeyOf: Vorwarner mit Referenz erbt den Schlüssel seiner FRIST (heilt Label-Abweichung)', () => {
+    // Der reale Rest-Phantom-Fall der Messung vom 17.08.: KI-Label der Vorwarnung
+    // ("Ende der Probezeit") weicht vom Frist-Label ("Probezeit endet") ab.
+    const main = { id: 'M1', title: '👔 Probezeit endet: Arbeitsvertrag.pdf', type: 'PROBATION_END' };
+    const rem = { id: 'R1', title: '⚠️ 7 Tage vorher: Ende der Probezeit', type: 'PROBATION_END_REMINDER_7D', metadata: { deadlineEventId: 'M1' } };
+    const all = [main, rem];
+    expect(deadlineKeyOf(rem, all, 'Arbeitsvertrag.pdf')).toBe('Probezeit endet');
+    expect(deadlineKeyOf(rem, all, 'Arbeitsvertrag.pdf')).toBe(deadlineKeyOf(main, all, 'Arbeitsvertrag.pdf'));
+  });
+
+  test('deadlineKeyOf: ohne Referenz bzw. Referenz-Ziel nicht in der Liste → Titel-Schlüssel wie bisher', () => {
+    const remOhne = { id: 'R2', title: '🚨 7 Tage vorher: Kündigungseingang bis 23.08.2026', type: 'CANCEL_DEADLINE_REMINDER_7D' };
+    expect(deadlineKeyOf(remOhne, [remOhne], 'x.pdf')).toBe('Kündigungseingang bis 23.08.2026');
+    const remFremdRef = { id: 'R3', title: '🚨 7 Tage vorher: Kündigungseingang bis 23.08.2026', type: 'CANCEL_DEADLINE_REMINDER_7D', metadata: { deadlineEventId: 'GIBTS-NICHT' } };
+    expect(deadlineKeyOf(remFremdRef, [remFremdRef], 'x.pdf')).toBe('Kündigungseingang bis 23.08.2026');
+  });
+
+  test('deadlineKeyOf: Haupt-Termine nutzen IMMER ihren eigenen Titel-Schlüssel', () => {
+    const main = { id: 'M1', title: '⚠️ Kündigungseingang bis 23.08.2026: datei.pdf', type: 'CANCEL_DEADLINE', metadata: { deadlineEventId: 'IRRELEVANT' } };
+    expect(deadlineKeyOf(main, [main], 'datei.pdf')).toBe('Kündigungseingang bis 23.08.2026');
   });
 });
 

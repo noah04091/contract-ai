@@ -250,6 +250,30 @@ router.get("/events", verifyToken, async (req, res) => {
       masterEventId: event.masterEventId?.toString() || null
     }));
 
+    // 🛡️ Stufe 4 (19.08.2026): Abdeckungs-Auskunft pro Frist — NUR im Listen-Pfad
+    // (bei ?contractId/?envelopeId sind die Vorwarner selbst in der Antwort, dort
+    // braucht es keine Zusammenfassung). Die Vorwarner bleiben 3b-ausgeblendet;
+    // jedes Haupt-Event bekommt `coverage` aus seinen per metadata.deadlineEventId
+    // (Stufe 2) verknüpften Vorwarnern. Grundlage der „Überblick"-Ansicht.
+    // Fail-safe: ein Fehler hier darf die Kalender-Antwort nie verhindern.
+    if (!contractId && !envelopeId && transformedEvents.length > 0) {
+      try {
+        const { buildCoverageMap } = require("../utils/reminderCoverage");
+        const mainIds = allEvents.map(e => e._id).filter(Boolean);
+        const linkedReminders = await req.db.collection("contract_events")
+          .find({ "metadata.deadlineEventId": { $in: mainIds } })
+          .project({ date: 1, status: 1, "metadata.daysUntil": 1, "metadata.deadlineEventId": 1 })
+          .toArray();
+        const coverageMap = buildCoverageMap(linkedReminders);
+        for (const ev of transformedEvents) {
+          const cov = coverageMap.get(ev.id);
+          if (cov) ev.coverage = cov;
+        }
+      } catch (covErr) {
+        console.error("⚠️ coverage-Anreicherung übersprungen:", covErr.message);
+      }
+    }
+
     // 🔒 Prüfe Zugriffsrechte für Frontend UI-State
     const access = await checkCalendarAccess(req.db, req.user.userId);
 

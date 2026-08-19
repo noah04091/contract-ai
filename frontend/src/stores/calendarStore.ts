@@ -51,12 +51,22 @@ export interface CalendarEvent {
     daysLeft?: number;
     cancellationId?: string;
     isFollowUp?: boolean;
+    // Stufe 2 (18.08.2026): feste Referenz einer Vorwarnung auf die _id ihrer Frist
+    deadlineEventId?: string;
   };
   amount?: number;
   isManual?: boolean;
   confidence?: number;
   dataSource?: string;
   isEstimated?: boolean;
+  // Stufe 4 (19.08.2026): Abdeckungs-Auskunft pro Frist, serverseitig aus den per
+  // deadlineEventId verknüpften Vorwarnern gebaut (routes/calendar.js). Nur auf
+  // Haupt-Terminen der Listen-Abfrage (ohne ?contractId) vorhanden; Grundlage der
+  // „Überblick"-Ansicht — Vorwarner selbst bleiben in der Liste 3b-ausgeblendet.
+  coverage?: {
+    total: number;
+    stages: Array<{ date: string; label: string; kind: 'sent' | 'upcoming' | 'skipped' }>;
+  };
 }
 
 // Helper: Extract userId from JWT token

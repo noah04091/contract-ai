@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import styles from './ReminderSettingsModal.module.css';
-import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from '../utils/reminderGrouping';
+import { reminderLeadLabel, isReminderEntry, stripFileName, deadlineKeyOf } from '../utils/reminderGrouping';
 import {
   X,
   Bell,
@@ -44,6 +44,7 @@ interface AutoEvent {
   type: string;
   severity: string;
   status?: string; // "notified" = Mail bestätigt gesendet (kommt aus GET /calendar/events)
+  metadata?: { deadlineEventId?: string }; // Stufe 2: feste Referenz Vorwarnung→Frist
 }
 
 interface PresetOption {
@@ -336,7 +337,9 @@ export default function ReminderSettingsModal({
   const autoEventGroups = (() => {
     const map = new Map<string, { name: string; main: AutoEvent | null; reminders: AutoEvent[] }>();
     for (const e of autoEvents) {
-      const name = cleanDeadlineName(e.title, contractName) || e.title;
+      // Stufe 4 (19.08.2026): Schlüssel per fester Referenz (deadlineKeyOf) — Vorwarner
+      // mit metadata.deadlineEventId erben den Schlüssel ihrer FRIST, Titel nur Rückfall.
+      const name = deadlineKeyOf(e, autoEvents, contractName) || e.title;
       if (!map.has(name)) map.set(name, { name, main: null, reminders: [] });
       const g = map.get(name)!;
       if (isReminderEntry(e)) g.reminders.push(e);

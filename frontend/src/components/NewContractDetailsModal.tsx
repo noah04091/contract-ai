@@ -10,7 +10,7 @@ import SignatureModal from './SignatureModal';
 import ImportantDatesSection from './ImportantDatesSection';
 import FristHinweiseSection from './FristHinweiseSection';
 import { fixUtf8Display } from "../utils/textUtils";
-import { cleanDeadlineName, isReminderEntry, stripFileName } from "../utils/reminderGrouping";
+import { cleanDeadlineName, isReminderEntry, stripFileName, deadlineKeyOf } from "../utils/reminderGrouping";
 import { apiCall } from "../utils/api";
 import { useToast } from "../context/ToastContext";
 import { createEditableFields, isContractLifecycleFieldHiddenForDocType, type EditableField } from "../utils/contractEditableFields";
@@ -308,13 +308,14 @@ const useIsWideScreen = (minWidth: number): boolean => {
 // Typs (z.B. 2× PAYMENT_DUE = "Erste"/"Zweite Abfindungszahlung") fälschlich in EINEN Topf fielen
 // und der "base" überschrieben wurde (ein Termin verschwand). Jetzt trennt der Frist-Name sauber.
 // Eigene (isManual) bleiben separat oben. Defensive: nichts wird verworfen — alles landet sichtbar.
-type CalEventLite = { id: string; title: string; date: string; type: string; severity: 'info' | 'warning' | 'critical'; isManual?: boolean };
+type CalEventLite = { id: string; title: string; date: string; type: string; severity: 'info' | 'warning' | 'critical'; isManual?: boolean; metadata?: { deadlineEventId?: string } };
 const groupCalendarEvents = (events: CalEventLite[], contractName?: string) => {
   const customs: CalEventLite[] = [];
   const famMap = new Map<string, { family: string; base: CalEventLite | null; reminders: CalEventLite[] }>();
   for (const ev of events) {
     if (ev.isManual) { customs.push(ev); continue; }
-    const fam = cleanDeadlineName(ev.title, contractName) || ev.type || `__${ev.id}`;
+    // Stufe 4 (19.08.2026): Schlüssel per fester Referenz (deadlineKeyOf) — Titel nur Rückfall.
+    const fam = deadlineKeyOf(ev, events, contractName) || ev.type || `__${ev.id}`;
     if (!famMap.has(fam)) famMap.set(fam, { family: fam, base: null, reminders: [] });
     const g = famMap.get(fam)!;
     if (isReminderEntry(ev)) g.reminders.push(ev);
