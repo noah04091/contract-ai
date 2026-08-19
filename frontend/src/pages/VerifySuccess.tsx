@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { useAuth } from "../hooks/useAuth";
 import "../styles/SplitAuth.css";
+
+// Direkt zur API (gleiches Muster wie Login/Register, Vercel-Proxy verschluckt die Kunden-IP)
+const API_BASE = import.meta.env.VITE_API_URL || "https://api.contract-ai.de";
 
 // Back Arrow Icon SVG
 const BackArrowIcon = () => (
@@ -14,11 +18,61 @@ export default function VerifySuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [countdown, setCountdown] = useState(5);
+  const { refetchUser } = useAuth();
 
   const email = searchParams.get('email') || 'deine E-Mail-Adresse';
 
+  // 🔑 Auto-Login (Paket B, 19.08.2026): Der Verify-Redirect trägt einen
+  // Einmal-Token (?welcome=...). Wir lösen ihn gegen eine normale Session ein
+  // und leiten direkt ins Dashboard — der manuelle Login entfällt. Schlägt das
+  // fehl (Token abgelaufen/verbraucht), bleibt der bisherige Weg: Countdown → Login.
+  const welcomeTokenRef = useRef<string | null>(searchParams.get('welcome'));
+  const [autoLoginState, setAutoLoginState] = useState<'none' | 'running' | 'failed'>(
+    welcomeTokenRef.current ? 'running' : 'none'
+  );
+  const autoLoginAttempted = useRef(false);
+
   useEffect(() => {
-    // Countdown Timer
+    const token = welcomeTokenRef.current;
+    if (!token || autoLoginAttempted.current) return;
+    autoLoginAttempted.current = true;
+
+    // Einmal-Token sofort aus URL/History entfernen
+    const emailParam = searchParams.get('email');
+    navigate(`/verify-success${emailParam ? `?email=${encodeURIComponent(emailParam)}` : ''}`, { replace: true });
+
+    (async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/email-verification/complete-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ token }),
+        });
+        const data = await response.json();
+
+        if (response.ok && data.token) {
+          // Gleiche Ablage wie Login.tsx (beide Keys für Backwards-Compatibility)
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('authEmail', data.email || emailParam || '');
+          localStorage.setItem('authTimestamp', String(Date.now()));
+          await refetchUser();
+          navigate('/dashboard');
+        } else {
+          setAutoLoginState('failed');
+        }
+      } catch {
+        setAutoLoginState('failed');
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // Countdown Timer — pausiert, solange der Auto-Login läuft
+    if (autoLoginState === 'running') return;
+
     const countdownInterval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -32,7 +86,7 @@ export default function VerifySuccess() {
     return () => {
       clearInterval(countdownInterval);
     };
-  }, [navigate]);
+  }, [navigate, autoLoginState]);
 
   // Mail Icon SVG
   const MailIcon = () => (
@@ -144,6 +198,20 @@ export default function VerifySuccess() {
                 <span>{email}</span>
               </div>
 
+              {/* 🔑 Läuft der Auto-Login, zeigen wir nur den Hinweis — kein Knopf,
+                  kein Countdown. Erst bei Fehlschlag erscheint der bisherige Weg. */}
+              {autoLoginState === 'running' && (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  style={{ margin: '8px 0 0 0', fontSize: '15px', fontWeight: 500, color: '#059669' }}
+                >
+                  Du wirst automatisch angemeldet …
+                </p>
+              )}
+
+              {autoLoginState !== 'running' && (
+              <>
               {/* CTA Button */}
               <button
                 onClick={() => navigate("/login")}
@@ -183,6 +251,8 @@ export default function VerifySuccess() {
                   Automatische Weiterleitung in <span>{countdown}s</span>
                 </div>
               </div>
+              </>
+              )}
 
               {/* Alternative Links */}
               <div className="split-auth-alt-links">

@@ -145,8 +145,31 @@ module.exports = function(db) {
         // Nicht kritisch - Verification war erfolgreich
       }
 
+      // 🔑 Auto-Login (Paket B, 19.08.2026): Einmal-Token ausstellen, damit der
+      // Kunde nach dem Bestätigen nicht manuell einloggen muss. Der Klick auf den
+      // Mail-Link beweist Postfach-Besitz — gleiches Vertrauensniveau wie ein
+      // "Passwort vergessen"-Link. Einmalig (atomarer $unset beim Einlösen),
+      // 10 Minuten befristet, nur für verifizierte, nicht gesperrte Konten.
+      // Scheitert die Ausstellung, läuft der bisherige Weg (manueller Login).
+      let welcomeParam = "";
+      try {
+        const autoLoginToken = require("crypto").randomBytes(32).toString("hex");
+        await usersCollection.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              autoLoginToken,
+              autoLoginTokenExpiry: new Date(Date.now() + 10 * 60 * 1000)
+            }
+          }
+        );
+        welcomeParam = `&welcome=${autoLoginToken}`;
+      } catch (tokenErr) {
+        console.error("⚠️ Auto-Login-Token konnte nicht erstellt werden:", tokenErr.message);
+      }
+
       // Redirect zum Frontend mit Success-Status
-      const redirectUrl = `${frontendUrl}/verify-success?email=${encodeURIComponent(user.email)}`;
+      const redirectUrl = `${frontendUrl}/verify-success?email=${encodeURIComponent(user.email)}${welcomeParam}`;
       res.redirect(redirectUrl);
 
     } catch (error) {
@@ -159,6 +182,73 @@ module.exports = function(db) {
   // ❌ GET /status/:email ENTFERNT (19.08.2026): hatte im gesamten Repo null
   // Aufrufer und verriet ohne Auth, ob eine Adresse registriert ist
   // (Adress-Enumeration). Befund 6 der Registrierungs-Strecke.
+
+  // ✅ 3. AUTO-LOGIN-TOKEN EINLÖSEN (Paket B, 19.08.2026)
+  // Tauscht den Einmal-Token aus dem Verify-Redirect gegen eine normale Session
+  // (identisches JWT + Cookie wie POST /auth/login). Atomarer findOneAndUpdate
+  // mit $unset = strikt einmalig; abgelaufene/fremde Tokens → 401, das Frontend
+  // fällt dann auf den bisherigen manuellen Login zurück.
+  router.post("/complete-login", authLimiter, async (req, res) => {
+    try {
+      const { token } = req.body || {};
+      if (!token || typeof token !== "string" || !/^[0-9a-f]{64}$/.test(token)) {
+        return res.status(401).json({ message: "Ungültiger oder abgelaufener Anmelde-Link" });
+      }
+
+      const result = await usersCollection.findOneAndUpdate(
+        {
+          autoLoginToken: token,
+          autoLoginTokenExpiry: { $gt: new Date() },
+          verified: true,
+          suspended: { $ne: true }
+        },
+        { $unset: { autoLoginToken: "", autoLoginTokenExpiry: "" }, $set: { lastLoginAt: new Date() } }
+      );
+      const user = result && (result.value !== undefined ? result.value : result);
+
+      if (!user || !user._id) {
+        return res.status(401).json({ message: "Ungültiger oder abgelaufener Anmelde-Link" });
+      }
+
+      // Session exakt wie in routes/auth.js POST /login (Werte dort = Quelle der
+      // Wahrheit: JWT_EXPIRES_IN "2h", COOKIE_NAME "token", COOKIE_OPTIONS)
+      const jwt = require("jsonwebtoken");
+      const sessionToken = jwt.sign(
+        { email: user.email, userId: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: "2h" }
+      );
+      res.cookie("token", sessionToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "Lax",
+        path: "/",
+        maxAge: 1000 * 60 * 60 * 2,
+        ...(process.env.NODE_ENV === "production" && { domain: ".contract-ai.de" })
+      });
+
+      try {
+        const { logActivity, ActivityTypes } = require("../services/activityLogger");
+        await logActivity(db, {
+          type: ActivityTypes.USER_LOGIN,
+          userId: user._id.toString(),
+          userEmail: user.email,
+          description: `User eingeloggt (Auto-Login nach E-Mail-Bestätigung): ${user.email}`,
+          details: { plan: user.subscriptionPlan || "free" },
+          severity: "info",
+          source: "verify-auto-login"
+        });
+      } catch (logErr) {
+        console.error("Activity Log Error:", logErr);
+      }
+
+      console.log(`🔑 Auto-Login nach Verifikation: ${user.email}`);
+      return res.json({ message: "✅ Login erfolgreich", token: sessionToken, email: user.email });
+    } catch (error) {
+      console.error("❌ Fehler beim Auto-Login:", error);
+      return res.status(500).json({ message: "Fehler bei der Anmeldung" });
+    }
+  });
 
   return router;
 };
