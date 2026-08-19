@@ -385,6 +385,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     type: string;
     severity: 'info' | 'warning' | 'critical';
     isManual?: boolean;
+    // Stufe 2 (18.08.2026): feste Referenz Vorwarnung→Frist — der "Zum Kalender"-Button
+    // einer Vorwarnung öffnet damit das Popup ihrer FRIST (Vorwarner selbst sind im
+    // Kalender-Store per 3b-Filter ausgeblendet, ihre eigene id fände dort nichts).
+    metadata?: { deadlineEventId?: string };
   }>>([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
@@ -644,7 +648,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
           <button
-            onClick={() => window.location.href = `/calendar?eventId=${event.id}`}
+            onClick={() => {
+              // Vorwarner: Popup der zugehörigen FRIST öffnen (eigene id ist im Kalender-
+              // Store 3b-ausgeblendet → ?eventId liefe ins Leere). Ohne Referenz (Altfall):
+              // wenigstens zum Kalender navigieren. Haupt-Termine öffnen sich selbst.
+              const targetId = isReminderEntry(event)
+                ? (event.metadata?.deadlineEventId || '')
+                : event.id;
+              window.location.href = targetId ? `/calendar?eventId=${targetId}` : '/calendar';
+            }}
             style={{ padding: '7px 12px', fontSize: '12.5px', fontWeight: 600, background: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', color: '#475569', cursor: 'pointer', transition: 'background .15s, border-color .15s' }}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#f6f8fb'; e.currentTarget.style.borderColor = '#cbd5e1'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#e5e7eb'; }}

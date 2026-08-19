@@ -821,8 +821,12 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
         const anchorStart = new Date(anchor); anchorStart.setHours(0, 0, 0, 0);
         if (!isNaN(anchorStart.getTime())) {
           if (anchorStart >= todayStart) {
-            // heute/zukünftig: Stichtag steht noch bevor.
-            list.push({ id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor), kind: 'upcoming' as const });
+            // heute/zukünftig: Stichtag steht noch bevor. 19.08.2026: Ist die Stichtags-Mail
+            // HEUTE schon raus (status notified), ehrlich "✓ gesendet" zeigen — vorher stand
+            // hier stundenlang "geplant", während "Erinnerungen verwalten" längst den Haken
+            // zeigte (Noahs Kaufvertrag-Befund, Widerspruch zwischen den beiden Ansichten).
+            const sameDayKind: 'sent' | 'upcoming' = currentEvent.status === 'notified' ? 'sent' : 'upcoming';
+            list.push({ id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor), kind: sameDayKind });
           } else if (!sigExpiry) {
             // Abgelaufene Vertrags-Frist: Stichtag ist vorbei → ehrlich zeigen, ob am Tag
             // benachrichtigt wurde (status "notified" = Mail ging wirklich raus), statt ihn

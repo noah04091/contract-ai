@@ -1095,7 +1095,7 @@ async function generateEventsForContract(db, contract) {
                 contractId: contract._id,
                 type: `${mapping.eventType}_REMINDER_${reminder.days}D`,
                 title: `${reminder.emoji} ${reminder.label}: ${displayLabel}`,
-                description: `"${contract.name}": ${importantDate.description || displayLabel} - Noch ${reminder.days} Tage!`,
+                description: `"${contract.name}": ${importantDate.description || displayLabel} - Noch ${reminder.days} ${reminder.days === 1 ? 'Tag' : 'Tage'}!`,
                 date: createLocalDate(reminderDate),
                 severity: reminder.urgency,
                 status: "scheduled",
