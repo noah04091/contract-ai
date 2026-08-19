@@ -15,7 +15,7 @@ export default function VerifySuccess() {
   const [searchParams] = useSearchParams();
   const [countdown, setCountdown] = useState(5);
 
-  const email = searchParams.get('email') || 'Ihre E-Mail-Adresse';
+  const email = searchParams.get('email') || 'deine E-Mail-Adresse';
 
   useEffect(() => {
     // Countdown Timer
@@ -60,7 +60,7 @@ export default function VerifySuccess() {
       <Helmet>
         <title>E-Mail bestätigt | Contract AI</title>
         <meta name="robots" content="noindex, nofollow" />
-        <meta name="description" content="Ihre E-Mail-Adresse wurde erfolgreich bestätigt." />
+        <meta name="description" content="Deine E-Mail-Adresse wurde erfolgreich bestätigt." />
       </Helmet>
 
       <div className="split-auth-container">
@@ -86,7 +86,7 @@ export default function VerifySuccess() {
               Willkommen bei<br />Contract AI!
             </h1>
             <p className="split-auth-subheadline">
-              Ihr Konto ist jetzt vollständig aktiviert. Starten Sie mit der intelligenten Vertragsanalyse.
+              Dein Konto ist jetzt vollständig aktiviert. Starte mit der intelligenten Vertragsanalyse.
             </p>
 
             {/* Features */}
@@ -135,7 +135,7 @@ export default function VerifySuccess() {
 
               <h2 className="split-auth-success-title">E-Mail bestätigt!</h2>
               <p className="split-auth-success-text">
-                Ihre E-Mail-Adresse wurde erfolgreich verifiziert.
+                Deine E-Mail-Adresse wurde erfolgreich bestätigt.
               </p>
 
               {/* Email Badge */}
@@ -204,7 +204,7 @@ export default function VerifySuccess() {
 
             {/* Mobile Features */}
             <div className="split-auth-mobile-features">
-              <h3 className="split-auth-mobile-features-title">Ihre Vorteile:</h3>
+              <h3 className="split-auth-mobile-features-title">Deine Vorteile:</h3>
               <div className="split-auth-mobile-features-list">
                 {[
                   "KI-gestützte Vertragsanalyse",

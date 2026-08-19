@@ -207,6 +207,21 @@ router.post("/register", authLimiter, async (req, res) => {
 
     await usersCollection.insertOne(newUser);
 
+    // 📧 Bestätigungs-Mail direkt vom Server anstoßen (19.08.2026, Befund 6 der
+    // Registrierungs-Strecke): Vorher schickte NUR das Frontend die Mail nach dem
+    // Registrieren — wer den Tab sofort schloss, bekam nie eine. Fire-and-forget,
+    // damit die Antwortzeit der Registrierung unverändert bleibt. Der Frontend-
+    // Aufruf ~1,5s später bleibt als Fallback und läuft dank des 60s-Cooldowns im
+    // Service idempotent in "already_sent_recently" (genau EINE Mail).
+    try {
+      const { sendVerificationMail } = require("../services/verificationEmailService");
+      sendVerificationMail(dbInstance, email).catch(err =>
+        console.error("⚠️ Server-seitiger Verification-Mail-Versand fehlgeschlagen:", err.message)
+      );
+    } catch (requireErr) {
+      console.error("⚠️ verificationEmailService nicht ladbar:", requireErr.message);
+    }
+
     // 🆕 FIRMENPROFIL: Automatisch anlegen wenn Firmenname bei Registrierung angegeben
     if (companyName && companyName.trim()) {
       try {

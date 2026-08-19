@@ -59,7 +59,11 @@ export default function Register() {
   const sendVerificationEmail = async (emailToVerify: string) => {
     await new Promise(resolve => setTimeout(resolve, 400));
     try {
-      const response = await fetch("/api/email-verification/send-verification", {
+      // 19.08.2026: direkt zur API statt über die Vercel-Weiterleitung — gleicher
+      // Grund wie beim Registrieren oben: über den Umweg kommt die Kundenadresse
+      // nicht am Server an und alle Kunden teilten sich EINEN Drossel-Zähler
+      // (die Route ist seit heute nach Hausmuster gedrosselt).
+      const response = await fetch(`${API_BASE}/api/email-verification/send-verification`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
