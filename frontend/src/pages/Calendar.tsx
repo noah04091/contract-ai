@@ -51,7 +51,7 @@ import ReminderHelpModal from "../components/ReminderHelpModal"; // ❓ Hilfe-Po
 import { cleanDeadlineName, reminderLeadLabel, isReminderEntry, stripFileName } from "../utils/reminderGrouping"; // 🔔 Erinnerungen dieser Frist
 import { useCalendarStore } from "../stores/calendarStore";
 import { useToast } from "../context/ToastContext";
-import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
+import { WelcomePopup } from "../components/Tour"; // 🎯 Paket C (19.08.2026): Popup statt Click-through-Tour
 
 // Hook: ESC-Taste schließt Modal
 const useEscapeKey = (onClose: () => void) => {
@@ -3757,8 +3757,17 @@ export default function CalendarPage() {
         <title>Vertragskalender | Contract AI</title>
       </Helmet>
 
-      {/* 🎯 Simple Tour */}
-      <SimpleTour tourId="calendar" />
+      {/* 🎯 Paket C (19.08.2026, Noahs A-Z-Test): Willkommens-Popup statt
+          Click-through-Tour — die Tour zielte auf Elemente, die je nach Zustand
+          fehlen oder verrutschen, und wirkte dadurch kaputt. Gleiche featureId
+          "calendar" = wer die alte Tour gesehen hat, sieht das Popup nicht. */}
+      <WelcomePopup
+        featureId="calendar"
+        icon={<Bell size={32} />}
+        title="Dein Fristenkalender"
+        description="Hier siehst du alle wichtigen Termine aus deinen Verträgen: Kündigungsfristen, Verlängerungen und Zahlungstermine. Wir erinnern dich automatisch per E-Mail, damit du keine Frist mehr verpasst."
+        tip="Klicke auf einen Tag oder ein Ereignis, um Details zu sehen oder direkt zum Vertrag zu springen."
+      />
 
       <div className="calendar-page" data-tour="calendar-view">
         <div className="calendar-page-content">
