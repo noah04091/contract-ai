@@ -47,6 +47,18 @@
   margin: 0;
 }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+/* Chips als Filter (19.08.2026): klickbar, aktiver Chip mit Markenring. */
+.schipBtn {
+  cursor: pointer;
+  font-family: inherit;
+  transition: box-shadow .15s ease, border-color .15s ease, transform .05s ease;
+}
+.schipBtn:hover { border-color: var(--blue-200); }
+.schipBtn:active { transform: scale(0.98); }
+.schipOn {
+  border-color: var(--blue) !important;
+  box-shadow: 0 0 0 2px var(--blue-100);
+}
 .schip {
   display: flex;
   align-items: center;
@@ -208,7 +220,7 @@
   gap: 7px;
   min-width: 0;
 }
-.legendTxt .mail { color: var(--blue); flex-shrink: 0; }
+.legendTxt .mail, .nudgeTxt .mail { color: var(--blue); flex-shrink: 0; }
 .legendTxt span.ellip {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -238,8 +250,10 @@
   gap: 10px;
 }
 .nudgeTxt {
+  /* 19.08.2026: von Amber-WARNUNG auf neutrale Info umgestellt — die Zeile sagt jetzt
+     ehrlich "Erinnerung: am Stichtag selbst" statt faelschlich "keine Erinnerung". */
   font-size: 12.5px;
-  color: var(--amber);
+  color: var(--g500);
   font-weight: 600;
   display: flex;
   align-items: center;

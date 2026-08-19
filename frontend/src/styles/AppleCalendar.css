@@ -272,6 +272,26 @@
   color: var(--text-secondary);
 }
 
+/* Überblick-Reiter in Markenfarbe (Noahs Wunsch 19.08.): fällt auch inaktiv auf,
+   damit man ihn als "schnell mal Überblick" wahrnimmt. Aktiv wie gewohnt weiß. */
+.view-btn.view-btn-overview:not(.active) {
+  color: #2563eb;
+  font-weight: 600;
+}
+.view-btn.view-btn-overview:not(.active):hover {
+  color: #1e40af;
+  background: rgba(37, 99, 235, 0.08);
+}
+.view-btn.view-btn-overview.active {
+  color: #2563eb;
+}
+
+/* Überblick: Vollbreite — hebt das !important-Zweispalten-Raster (Zeile ~144) auf,
+   sonst bleibt rechts eine leere 340px-Spalte (Noahs Befund 19.08.). */
+.calendar-page .content-grid.overview-full {
+  grid-template-columns: 1fr !important;
+}
+
 /* ========== Calendar Grid ========== */
 .calendar-grid {
   display: grid;

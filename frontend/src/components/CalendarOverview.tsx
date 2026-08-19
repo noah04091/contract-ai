@@ -13,7 +13,7 @@
 // Alle Aktionen (Frist öffnen, Erinnerungen verwalten) laufen über die bestehenden
 // Handler aus Calendar.tsx → keine neue/fragile Speicher-Logik.
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { CalendarEvent } from '../stores/calendarStore';
 import { cleanDeadlineName, isReminderEntry, stripFileName } from '../utils/reminderGrouping';
 import styles from './CalendarOverview.module.css';
@@ -81,6 +81,11 @@ export default function CalendarOverview({
   onManageReminders,
   formatContractName,
 }: CalendarOverviewProps) {
+  // 🔍 Chip-Filter (Noahs Wunsch 19.08.): Status-Chips wirken als Filter.
+  // 'alle' | 'vorwarnung' (mit Vorwarn-Stufen) | 'stichtag' (nur Stichtags-Mail).
+  // Klick auf den aktiven Chip setzt zurück auf 'alle'.
+  const [chipFilter, setChipFilter] = useState<'alle' | 'vorwarnung' | 'stichtag'>('alle');
+
   const model = useMemo(() => {
     const today = startOfToday();
 
@@ -127,6 +132,10 @@ export default function CalendarOverview({
     return { total, withRem, without, attention, week, month, quarter, later };
   }, [events]);
 
+  // Chip-Filter-Prädikat: 'vorwarnung' = hat künftige Vorwarn-Stufen, 'stichtag' = keine.
+  const matchesChip = (x: EnrichedItem): boolean =>
+    chipFilter === 'alle' || (chipFilter === 'vorwarnung' ? x.stages.length > 0 : x.stages.length === 0);
+
   const renderBadge = (days: number) => {
     let text: string;
     let cls = '';
@@ -162,7 +171,10 @@ export default function CalendarOverview({
   };
 
   const reminderLabelText = (stages: CoverageStage[]): string => {
-    const labels = stages.map(st => st.label || fmtShort(st.date));
+    // "am Stichtag" ehrlich mitnennen: das Haupt-Event mailt IMMER an seinem Tag
+    // (daysSame-Schalter, Klasse-B/Own-Day-Logik) — das ist keine Vorwarn-Stufe,
+    // gehört aber zur Wahrheit "so wirst du erinnert" (Noahs Befund 19.08.).
+    const labels = [...stages.map(st => st.label || fmtShort(st.date)), 'am Stichtag'];
     const uniq = Array.from(new Set(labels));
     const head = uniq.slice(0, 3).join(' & ');
     return uniq.length > 3 ? `${head} +${uniq.length - 3}` : head;
@@ -207,13 +219,18 @@ export default function CalendarOverview({
             </div>
           </div>
         ) : (
+          /* EHRLICH statt Angst (Noahs Befund 19.08.): Auch ohne Vorwarn-Stufen kommt
+             die Mail AM STICHTAG selbst (Haupt-Event, daysSame/Own-Day-Logik) — das
+             alte "Keine Erinnerung — du könntest die Frist verpassen" war schlicht
+             falsch und widersprach dem Termin-Popup. Angeboten wird jetzt, FRÜHER
+             erinnert zu werden. */
           <div className={styles.nudge}>
             <span className={styles.nudgeTxt}>
-              <span>🔕</span>
-              <span className="ellip">Keine Erinnerung — du könntest die Frist verpassen.</span>
+              <span className={styles.mail}>✉️</span>
+              <span className="ellip">Erinnerung: am Stichtag selbst</span>
             </span>
             <button className={styles.addBtn} onClick={() => onManageReminders(event)}>
-              ＋ Erinnern
+              ＋ Früher erinnern
             </button>
           </div>
         )}
@@ -252,28 +269,43 @@ export default function CalendarOverview({
           <h2>Du behältst alles im Blick</h2>
         </div>
         <div className={styles.chips}>
-          <div className={`${styles.schip} ${styles.neutral}`}>
+          <button
+            type="button"
+            className={`${styles.schip} ${styles.neutral} ${styles.schipBtn} ${chipFilter === 'alle' ? styles.schipOn : ''}`}
+            onClick={() => setChipFilter('alle')}
+            aria-pressed={chipFilter === 'alle'}
+          >
             <span className={styles.n}>{model.total}</span> kommende {model.total === 1 ? 'Frist' : 'Fristen'}
-          </div>
+          </button>
           {model.withRem > 0 && (
-            <div className={`${styles.schip} ${styles.ok}`}>
-              <span className={styles.n}>{model.withRem}</span> mit E-Mail-Erinnerung
-            </div>
+            <button
+              type="button"
+              className={`${styles.schip} ${styles.ok} ${styles.schipBtn} ${chipFilter === 'vorwarnung' ? styles.schipOn : ''}`}
+              onClick={() => setChipFilter(f => f === 'vorwarnung' ? 'alle' : 'vorwarnung')}
+              aria-pressed={chipFilter === 'vorwarnung'}
+            >
+              <span className={styles.n}>{model.withRem}</span> mit Vorwarnung
+            </button>
           )}
           {model.without > 0 && (
-            <div className={`${styles.schip} ${styles.warn}`}>
-              <span className={styles.n}>{model.without}</span> ohne Erinnerung
-            </div>
+            <button
+              type="button"
+              className={`${styles.schip} ${styles.warn} ${styles.schipBtn} ${chipFilter === 'stichtag' ? styles.schipOn : ''}`}
+              onClick={() => setChipFilter(f => f === 'stichtag' ? 'alle' : 'stichtag')}
+              aria-pressed={chipFilter === 'stichtag'}
+            >
+              <span className={styles.n}>{model.without}</span> nur am Stichtag
+            </button>
           )}
         </div>
       </div>
 
-      {/* Agenda */}
-      {section('⚠️ Braucht deine Aufmerksamkeit', model.attention, true)}
-      {section('Diese Woche', model.week)}
-      {section('Diesen Monat', model.month)}
-      {section('Die nächsten Monate', model.quarter)}
-      {section('Später', model.later)}
+      {/* Agenda — der Chip-Filter wirkt auf alle Abschnitte (Zähler oben bleiben Gesamtwerte) */}
+      {section('⚠️ Braucht deine Aufmerksamkeit', model.attention.filter(matchesChip), true)}
+      {section('Diese Woche', model.week.filter(matchesChip))}
+      {section('Diesen Monat', model.month.filter(matchesChip))}
+      {section('Die nächsten Monate', model.quarter.filter(matchesChip))}
+      {section('Später', model.later.filter(matchesChip))}
     </div>
   );
 }

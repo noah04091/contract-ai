@@ -3859,7 +3859,10 @@ export default function CalendarPage() {
           </header>
 
           {/* Main Content Grid */}
-          <div className="content-grid" style={{
+          {/* Überblick = Vollbreite. Klasse nötig, weil AppleCalendar.css das Zweispalten-
+              Raster mit !important setzt und das Inline-'1fr' sonst verliert (Noahs
+              „Space nach rechts"-Befund 19.08.). */}
+          <div className={`content-grid${currentView === 'overview' ? ' overview-full' : ''}`} style={{
             display: 'grid',
             gridTemplateColumns: currentView === 'overview' ? '1fr' : '1fr 340px',
             gap: '24px'
@@ -3892,7 +3895,7 @@ export default function CalendarPage() {
                   {(['month', 'week', 'day', 'overview'] as const).map(view => (
                     <button
                       key={view}
-                      className={`view-btn ${currentView === view ? 'active' : ''}`}
+                      className={`view-btn ${currentView === view ? 'active' : ''}${view === 'overview' ? ' view-btn-overview' : ''}`}
                       onClick={() => {
                         setCurrentView(view);
                       }}
