@@ -110,7 +110,8 @@ export default function VerifySuccess() {
           {/* Footer */}
           <div className="split-auth-branding-footer">
             <p className="split-auth-footer-text">
-              Bereits über 1.000+ Verträge analysiert
+              {/* Belegt (DB-Count 19.08.): 421 analysierte Verträge echter Nutzer — „1.000+" war erfunden. */}
+              Bereits über 400 Verträge analysiert
             </p>
           </div>
         </div>

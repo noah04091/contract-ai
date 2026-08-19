@@ -171,7 +171,10 @@ export default function Register() {
             <div>
               <div className="ca-reg-eyebrow">
                 <span className="ca-reg-eyebrow-dot" />
-                Über 500 Unternehmen vertrauen uns
+                {/* Ehrlichkeits-Standard 28.06./19.08.: belegt sind 532 echte Nutzer
+                    (DB-Count 19.08.); „Unternehmen" ist laut Kundenanalyse nicht
+                    haltbar (überwiegend Privat-Domains). */}
+                Über 500 Nutzer vertrauen uns
               </div>
               <h1 className="ca-reg-h1">Starte kostenlos<br />in wenigen Minuten</h1>
               <p className="ca-reg-sub">
@@ -184,7 +187,7 @@ export default function Register() {
                 "Kostenloser Start – keine Kreditkarte nötig",
                 "3 kostenlose Analysen zum Testen",
                 "Risiken & Sparpotenziale auf einen Blick",
-                "Erste Analyse in unter 60 Sekunden",
+                "Erste Analyse in wenigen Minuten", // ehrlich: KI-Etappe läuft real 1–3 Min
               ].map((feature, i) => (
                 <div key={i} className="ca-reg-feature">
                   <span className="ca-reg-feature-ico"><Check size={13} strokeWidth={2.8} /></span>
@@ -200,7 +203,8 @@ export default function Register() {
             <div className="ca-reg-trust">
               <div className="ca-reg-trust-row">
                 <span className="ca-reg-trust-ico"><Users size={16} /></span>
-                <span className="ca-reg-trust-text">Bereits über <strong>1.500</strong> Verträge analysiert</span>
+                {/* Belegt (DB-Count 19.08.): 421 analysierte Verträge echter Nutzer — „1.500" war erfunden. */}
+                <span className="ca-reg-trust-text">Bereits über <strong>400</strong> Verträge analysiert</span>
               </div>
               <div className="ca-reg-trust-row ca-reg-trust-row-2">
                 <ShieldCheck size={15} />
