@@ -104,9 +104,14 @@ export default function UploadSuccessModal({
                 Was möchtest du als Nächstes tun?
               </p>
 
-              {/* Action Cards */}
+              {/* Action Cards — 19.08.2026 (Ideensammlung, letzter Punkt): Vorher
+                  standen "KI-Rechtsprüfung" und "Nur speichern" als GLEICHWERTIGE
+                  Karten nebeneinander; die Speichern-Karte bewarb sich sogar mit
+                  eigenen Häkchen (darunter "Fristen tracken" — faktisch falsch:
+                  Fristen extrahiert erst die Analyse). Gemessen luden 21 % der
+                  Nutzer hoch und analysierten nie. Jetzt: EINE klare Empfehlung,
+                  "Nur speichern" bleibt als ehrlicher, dezenter Zweitweg. */}
               <div className={styles.actionsGrid}>
-                {/* Analyze Card - Recommended */}
                 <motion.div
                   className={`${styles.actionCard} ${styles.analyzeCard} ${!hasEnoughAnalyses ? styles.disabled : ''}`}
                   initial={{ opacity: 0, y: 20 }}
@@ -137,6 +142,10 @@ export default function UploadSuccessModal({
                       <Check size={14} />
                       <span>Optimierungsvorschläge</span>
                     </li>
+                    <li>
+                      <Check size={14} />
+                      <span>Fristen-Wächter wird aktiviert</span>
+                    </li>
                   </ul>
 
                   <div className={styles.cardInfo}>
@@ -162,52 +171,13 @@ export default function UploadSuccessModal({
                     </p>
                   )}
                 </motion.div>
-
-                {/* Skip Card */}
-                <motion.div
-                  className={`${styles.actionCard} ${styles.skipCard}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  whileHover={{ y: -4 }}
-                >
-                  <div className={styles.cardIcon}>
-                    <Save size={26} />
-                  </div>
-                  <h3 className={styles.cardTitle}>Nur speichern</h3>
-                  <p className={styles.cardDescription}>
-                    Später analysieren
-                  </p>
-
-                  {/* Feature List */}
-                  <ul className={styles.featureList}>
-                    <li>
-                      <Check size={14} />
-                      <span>In Verwaltung sehen</span>
-                    </li>
-                    <li>
-                      <Check size={14} />
-                      <span>Fristen tracken</span>
-                    </li>
-                    <li>
-                      <Check size={14} />
-                      <span>Jederzeit prüfbar</span>
-                    </li>
-                  </ul>
-
-                  <div className={styles.cardInfo}>
-                    <span className={styles.analysisCountFree}>
-                      0 Analysen verbraucht
-                    </span>
-                  </div>
-                  <button
-                    className={`${styles.cardButton} ${styles.secondaryButton}`}
-                    onClick={onSkip}
-                  >
-                    Speichern
-                  </button>
-                </motion.div>
               </div>
+
+              {/* Dezenter Zweitweg: nur speichern */}
+              <button className={styles.skipLink} onClick={onSkip}>
+                <Save size={15} />
+                <span>Nur speichern und später analysieren</span>
+              </button>
 
               {/* Legal Pulse Info Banner */}
               <motion.div

@@ -160,11 +160,36 @@
 }
 
 /* Actions Grid */
+/* 19.08.2026: eine Karte statt zwei gleichwertiger — "Nur speichern" ist jetzt
+   ein dezenter Link darunter (.skipLink), nicht mehr eine eigene Verkaufs-Karte */
 .actionsGrid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 16px;
+  margin-bottom: 12px;
+}
+
+.skipLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px 12px;
   margin-bottom: 20px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.skipLink:hover {
+  color: #334155;
+  background: #f1f5f9;
 }
 
 .actionCard {
@@ -503,7 +528,7 @@
   }
 
   .actionsGrid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 

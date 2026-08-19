@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   User as UserIcon,
   Building2,
+  Settings,
   CreditCard,
   HelpCircle,
   LogOut,
@@ -100,6 +101,9 @@ export default function Navbar() {
   let storedProfileType: string | null = null;
   try { storedProfileType = localStorage.getItem('contractai_profileType'); } catch { /* blockiert */ }
   const companyProfileLabel = storedProfileType === 'business' ? 'Firmenprofil' : 'Mein Profil';
+  // Icon passend zum Label: Gebäude für Firmenprofil, Person für Mein Profil
+  // (das Zahnrad gehört jetzt zu "Einstellungen" — Noahs Icon-Feedback 19.08.)
+  const CompanyProfileIcon = storedProfileType === 'business' ? Building2 : UserIcon;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -417,11 +421,11 @@ export default function Navbar() {
                       <div className={styles.dropdownDivider} />
                       <div className={styles.dropdownList}>
                         <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <UserIcon size={16} strokeWidth={1.75} />
+                          <Settings size={16} strokeWidth={1.75} />
                           <span>Einstellungen</span>
                         </Link>
                         <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <Building2 size={16} strokeWidth={1.75} />
+                          <CompanyProfileIcon size={16} strokeWidth={1.75} />
                           <span>{companyProfileLabel}</span>
                         </Link>
                         <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
@@ -480,11 +484,11 @@ export default function Navbar() {
                       <div className={styles.dropdownDivider} />
                       <div className={styles.dropdownList}>
                         <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <UserIcon size={16} strokeWidth={1.75} />
+                          <Settings size={16} strokeWidth={1.75} />
                           <span>Einstellungen</span>
                         </Link>
                         <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <Building2 size={16} strokeWidth={1.75} />
+                          <CompanyProfileIcon size={16} strokeWidth={1.75} />
                           <span>{companyProfileLabel}</span>
                         </Link>
                         <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
@@ -853,11 +857,11 @@ export default function Navbar() {
                     <div className={styles.dropdownDivider} />
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <UserIcon size={16} strokeWidth={1.75} />
+                        <Settings size={16} strokeWidth={1.75} />
                         <span>Einstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <Building2 size={16} strokeWidth={1.75} />
+                        <CompanyProfileIcon size={16} strokeWidth={1.75} />
                         <span>{companyProfileLabel}</span>
                       </Link>
                       <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
@@ -959,11 +963,11 @@ export default function Navbar() {
                     <div className={styles.dropdownDivider} />
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <UserIcon size={16} strokeWidth={1.75} />
+                        <Settings size={16} strokeWidth={1.75} />
                         <span>Einstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <Building2 size={16} strokeWidth={1.75} />
+                        <CompanyProfileIcon size={16} strokeWidth={1.75} />
                         <span>{companyProfileLabel}</span>
                       </Link>
                       <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
@@ -1021,11 +1025,11 @@ export default function Navbar() {
                     <div className={styles.dropdownDivider} />
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <UserIcon size={16} strokeWidth={1.75} />
+                        <Settings size={16} strokeWidth={1.75} />
                         <span>Einstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <Building2 size={16} strokeWidth={1.75} />
+                        <CompanyProfileIcon size={16} strokeWidth={1.75} />
                         <span>{companyProfileLabel}</span>
                       </Link>
                       <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
@@ -1147,11 +1151,11 @@ export default function Navbar() {
                     <div className={styles.dropdownDivider} />
                     <div className={styles.dropdownList}>
                       <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <UserIcon size={16} strokeWidth={1.75} />
+                        <Settings size={16} strokeWidth={1.75} />
                         <span>Einstellungen</span>
                       </Link>
                       <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <Building2 size={16} strokeWidth={1.75} />
+                        <CompanyProfileIcon size={16} strokeWidth={1.75} />
                         <span>{companyProfileLabel}</span>
                       </Link>
                       <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
@@ -1682,14 +1686,14 @@ export default function Navbar() {
                   <ul className={styles.navListNew}>
                     <li className={styles.navItemNew}>
                       <Link to="/me" className={`${styles.navLinkNew} ${location.pathname === '/me' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.navIconNew}><UserIcon size={20} strokeWidth={1.75} /></span>
-                        <span className={styles.navLabelNew}>Profil</span>
+                        <span className={styles.navIconNew}><Settings size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>Einstellungen</span>
                       </Link>
                     </li>
                     <li className={styles.navItemNew}>
                       <Link to="/company-profile" className={`${styles.navLinkNew} ${location.pathname === '/company-profile' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.navIconNew}><Building2 size={20} strokeWidth={1.75} /></span>
-                        <span className={styles.navLabelNew}>Unternehmen</span>
+                        <span className={styles.navIconNew}><CompanyProfileIcon size={20} strokeWidth={1.75} /></span>
+                        <span className={styles.navLabelNew}>{companyProfileLabel}</span>
                       </Link>
                     </li>
                     <li className={styles.navItemNew}>
