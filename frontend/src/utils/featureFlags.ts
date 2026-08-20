@@ -61,14 +61,19 @@ export const DASHBOARD_FIRSTRUN_WHITELIST: string[] = [
 
 const DASHBOARD_FIRSTRUN_KEY = "dashboardFirstRunEnabled";
 
+// Bewusst nur die E-Mail statt eines konkreten Nutzer-Typs: im Projekt
+// existieren mehrere UserData-Definitionen (authUtils, Dashboard), und der
+// Schalter braucht ohnehin nichts weiter.
+type WithEmail = { email?: string | null } | null | undefined;
+
 /** Darf dieser Nutzer den Umschalter sehen? (nur Whitelist) */
-export function canSeeDashboardFirstRun(user: UserData | null | undefined): boolean {
+export function canSeeDashboardFirstRun(user: WithEmail): boolean {
   if (!user || !user.email) return false;
   return DASHBOARD_FIRSTRUN_WHITELIST.includes(user.email.toLowerCase());
 }
 
 /** Ist der neue Erststart aktiv? Standard: aus. */
-export function isDashboardFirstRunEnabled(user: UserData | null | undefined): boolean {
+export function isDashboardFirstRunEnabled(user: WithEmail): boolean {
   if (!canSeeDashboardFirstRun(user)) return false;
   try {
     return localStorage.getItem(DASHBOARD_FIRSTRUN_KEY) === "1";

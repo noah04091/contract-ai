@@ -443,10 +443,12 @@ export default function DashboardV2() {
   // EVENT HANDLERS
   // ============================================
 
-  // 🧪 Schalter-Stand einlesen, sobald der Nutzer bekannt ist (nur Whitelist)
+  // 🧪 Schalter-Stand einlesen, sobald der Nutzer bekannt ist (nur Whitelist).
+  // Beide Quellen prüfen: `user` aus dem Auth-Context und `userData` aus dem
+  // Dashboard-Abruf — je nach Ladezeitpunkt ist mal die eine, mal die andere da.
   useEffect(() => {
-    setFirstRunEnabled(isDashboardFirstRunEnabled(user));
-  }, [user]);
+    setFirstRunEnabled(isDashboardFirstRunEnabled(user) || isDashboardFirstRunEnabled(userData));
+  }, [user, userData]);
 
   const handleRefresh = () => {
     fetchData(true);
@@ -614,15 +616,23 @@ export default function DashboardV2() {
         </header>
 
         {/* 🧪 Umschalter für den neuen Erststart — nur für Konten aus der
-            Whitelist sichtbar (featureFlags.ts). Erlaubt den direkten Vergleich
-            alt/neu am echten Konto; Rollback = Schalter aus. */}
-        {canSeeDashboardFirstRun(user) && stats.total === 0 && (
+            Whitelist sichtbar (featureFlags.ts). Bewusst UNABHÄNGIG von der
+            Vertragszahl: sonst könnte ihn niemand testen, der bereits Verträge
+            hat (erster Anlauf 20.08. hing an `stats.total === 0`). Bei aktivem
+            Schalter zeigt das Dashboard den Erststart als Vorschau — die
+            Zahlenreihe steht dort bewusst leer, wie bei einem frischen Konto.
+            Rollback = Schalter aus. */}
+        {(canSeeDashboardFirstRun(user) || canSeeDashboardFirstRun(userData)) && (
           <button
             className={styles.firstRunToggle}
             onClick={() => { setDashboardFirstRunEnabled(!firstRunEnabled); setFirstRunEnabled(v => !v); }}
             title="Nur für dich sichtbar"
           >
-            {firstRunEnabled ? '← Zurück zur bisherigen Ansicht' : '🧪 Neuen Erststart ausprobieren'}
+            {firstRunEnabled
+              ? '← Zurück zur bisherigen Ansicht'
+              : stats.total === 0
+                ? '🧪 Neuen Erststart ausprobieren'
+                : '🧪 Neuen Erststart ansehen (Vorschau)'}
           </button>
         )}
 
@@ -630,14 +640,14 @@ export default function DashboardV2() {
             ONBOARDING CHECKLIST - For guided setup
             (im neuen Erststart übernimmt die Einrichtungs-Leiste diese Rolle)
             ============================================ */}
-        {!(firstRunEnabled && stats.total === 0) && (
+        {!firstRunEnabled && (
           <OnboardingChecklist className={styles.onboardingChecklist} />
         )}
 
         {/* ============================================
             ONBOARDING - Für neue User ohne Verträge
             ============================================ */}
-        {firstRunEnabled && stats.total === 0 ? (
+        {firstRunEnabled ? (
           <DashboardFirstRun
             userName={userName}
             analysisUsage={analysisUsage}
