@@ -11,6 +11,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { CheckCircle, FileText, RefreshCw, WifiOff, Scale, Eye, AlertTriangle, PenLine, MessageSquare } from "lucide-react";
+import { getFileTypeInfo } from "../../utils/fileType"; // 📄 Dateityp statt Annahme „alles ist PDF"
 import styles from "./V2HeroSection.module.css";
 import { isRiskScoreMeaningful } from "../../utils/scoreDisplay";
 import V2ConversionBanner from "./V2ConversionBanner";
@@ -81,6 +82,10 @@ interface Props {
   // contractId aus dem Parent — wenn vorhanden, wird der "PDF anzeigen"-Button
   // gezeigt. Backend liefert via /api/s3/view?contractId=X die signed S3-URL.
   contractId?: string | null;
+  /** 📄 20.08.2026 (Stufe 5): der aus dem Datei-INHALT bestimmte Typ. Ohne ihn
+   *  faellt die Erkennung auf die Endung in fileName zurueck — und die fehlt bei
+   *  E-Mail-Importen ganz. Fehlt die Angabe komplett, gilt fail-safe PDF. */
+  mimetype?: string | null;
   // Conversion-Banner inline im Hero (Free→Business/Business→Enterprise)
   // 🩹 17.08.2026: Backend liefert `count` (usage:{count,limit,plan}) — Typ akzeptiert beide Namen.
   usage?: { count?: number; analysisCount?: number; limit?: number; plan?: string } | null;
@@ -357,8 +362,13 @@ function pickDocTypeLabel(d: AnalysisData): string {
   return fallback;
 }
 
-export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset, contractId, usage, userPlan, onOpenChat, openingChat }: Props) {
+export default function V2HeroSection({ data, fileName, serviceHealth, isInitialResult, canReanalyze, analyzing, onReanalyze, onReset, contractId, mimetype, usage, userPlan, onOpenChat, openingChat }: Props) {
   const d = data;
+  // 📄 20.08.2026 (Stufe 5 der Dateityp-Kette): Was fuer eine Datei ist das?
+  // Bevorzugt den gespeicherten Typ (aus dem Datei-INHALT bestimmt), sonst die
+  // Endung in fileName, sonst fail-safe PDF. Steuert Beschriftung UND ob der
+  // PDF-Betrachter ueberhaupt geoeffnet werden darf.
+  const dateiTyp = getFileTypeInfo({ mimetype, name: fileName });
   // 🛡️ Kaputte/Platzhalter-Dateinamen (z.B. "$value.pdf" aus fremden Lohn-Systemen,
   // "undefined.pdf", leere Namen) NICHT roh anzeigen — stattdessen sinnvoller Fallback.
   const cleanTitle = (raw: string | undefined | null, fallback: string): string => {
@@ -721,12 +731,25 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               <button
                 type="button"
                 className={`${styles.fcBtn} ${styles.fcBtnInfo}`}
-                onClick={() => setPdfViewerOpen(true)}
+                /* 📄 20.08.2026 (Stufe 5): Vorher wurde hier IMMER der PDF-Betrachter
+                   geoeffnet — bei einer Word-Datei oder einem Bild brach der mit
+                   „Fehler beim Laden des PDF-Dokuments" ab. Jetzt nur noch bei einer
+                   echten PDF; sonst wird die Datei in einem neuen Tab geoeffnet, wo
+                   der Browser sie anzeigt oder herunterlaedt. Der Endpunkt liefert
+                   seit Stufe 4 den richtigen Typ mit. */
+                onClick={async () => {
+                  if (dateiTyp.isPdf) { setPdfViewerOpen(true); return; }
+                  try {
+                    const res = await fetch(`/api/s3/view?contractId=${encodeURIComponent(contractId)}&type=original`, { credentials: "include" });
+                    const j = await res.json();
+                    if (j?.url) window.open(j.url, "_blank", "noopener,noreferrer");
+                  } catch { /* still: der Knopf bleibt einfach wirkungslos statt zu crashen */ }
+                }}
                 disabled={analyzing}
-                aria-label="Original-PDF in Vorschau anzeigen"
+                aria-label={`Original-Datei anzeigen (${dateiTyp.label})`}
               >
                 <Eye size={14} aria-hidden="true" />
-                <span>PDF anzeigen</span>
+                <span>{dateiTyp.actionLabel}</span>
               </button>
             )}
             {canReanalyze && onReanalyze && (
@@ -1294,7 +1317,9 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
       />
 
       {/* PDF-Viewer-Modal — öffnet beim Klick auf "PDF anzeigen" */}
-      {contractId && (
+      {/* 📄 Doppelte Absicherung: der Betrachter wird bei Nicht-PDF gar nicht erst
+          gerendert, nicht nur nicht geoeffnet. */}
+      {contractId && dateiTyp.isPdf && (
         <V2PdfViewerModal
           contractId={contractId}
           fileName={fileName}

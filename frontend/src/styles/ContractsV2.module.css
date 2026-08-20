@@ -9734,7 +9734,15 @@
   border-color: #bfdbfe !important;
   color: #2563eb !important;        /* MS-Word-Blau */
 }
-/* .contractIcon_default erbt von .contractIcon (Brand-Blau-Hauch, neutral) */
+/* 20.08.2026: Bilder als eigene Farbe — vorher gab es fuer sie keine Variante und
+   sie liefen unter „FILE" mit. Gruen-Ton, damit sie sich von PDF (bordeaux) und
+   Word (blau) klar abheben. */
+.contractIcon_image {
+  background: #f0fdf4 !important;
+  border-color: #bbf7d0 !important;
+  color: #15803d !important;
+}
+/* .contractIcon_other und .contractIcon_default erben von .contractIcon (neutral) */
 .contractIconLabel {
   font-size: 10px !important;
   font-weight: 700 !important;

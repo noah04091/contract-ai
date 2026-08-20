@@ -41,6 +41,7 @@ import { apiCall, uploadAndAnalyze, uploadOnly, reanalyzeExistingContract, getPe
 import { useAuth } from "../hooks/useAuth"; // 🏢 Org-Rolle für Rollen-Awareness
 import { useToast } from "../context/ToastContext"; // 🔔 Toast-Benachrichtigungen
 import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
+import { getFileTypeInfo } from "../utils/fileType"; // 📄 Dateityp aus dem gespeicherten Typ, nicht aus der Endung
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
@@ -58,6 +59,9 @@ interface Contract {
   _id: string;
   userId?: string;
   name: string;
+  /** 📄 20.08.2026: aus dem Datei-INHALT bestimmter Typ (Stufe 1+3). Seit heute auch
+   *  in LIST_PROJECTION, kommt also in der Liste mit. */
+  mimetype?: string | null;
   kuendigung: string;
   expiryDate: string;
   startDate?: string;
@@ -1404,8 +1408,8 @@ export default function Contracts() {
     if (!contract) { setHoverLoading(false); return; } // 🆕 kein Spinner-Hänger wenn Vertrag verschwindet
 
     // Nicht-PDFs: kein Fetch, klare Meldung
-    const ft = getFileType(contract.name);
-    if (ft.variant !== 'pdf' && !contract.isGenerated) {
+    const ft = getFileTypeInfo(contract);
+    if (!ft.isPdf && !contract.isGenerated) {
       setHoverUrl(null);
       setHoverError('unsupported');
       setHoverLoading(false);
@@ -3744,17 +3748,10 @@ export default function Contracts() {
 
   // 📎 File-Type-Detection für den Vertragsname-Avatar
   // Pure, idempotent, defensiv gegen null/empty/whitespace/edge-cases
-  const getFileType = (name?: string | null): { label: string; variant: 'pdf' | 'doc' | 'default' } => {
-    if (!name || typeof name !== 'string') return { label: 'FILE', variant: 'default' };
-    const trimmed = name.trim();
-    if (!trimmed) return { label: 'FILE', variant: 'default' };
-    const dotIdx = trimmed.lastIndexOf('.');
-    if (dotIdx <= 0 || dotIdx === trimmed.length - 1) return { label: 'FILE', variant: 'default' };
-    const ext = trimmed.slice(dotIdx + 1).toLowerCase();
-    if (ext === 'pdf') return { label: 'PDF', variant: 'pdf' };
-    if (ext === 'doc' || ext === 'docx') return { label: 'DOC', variant: 'doc' };
-    return { label: 'FILE', variant: 'default' };
-  };
+  // 📄 20.08.2026: Der lokale Typ-Helfer ist nach utils/fileType.ts gewandert.
+  // Er kannte nur die Dateiendung und nur PDF/DOC — Bilder galten als „FILE" und
+  // eine Datei ohne Endung im Namen (E-Mail-Import) fiel durch. Der gemeinsame
+  // Helfer nimmt zuerst den gespeicherten Typ (aus dem Datei-INHALT bestimmt).
 
   // 🎯 Intelligente Status-Berechnung basierend auf Vertragsdaten
   // ⚠️⚠️ MUSS 1:1 IDENTISCH bleiben mit calculateSmartStatusBackend (backend/routes/contracts.js)
@@ -5983,9 +5980,9 @@ export default function Contracts() {
                               <td>
                                 <div className={styles.contractName}>
                                   {(() => {
-                                    const ft = getFileType(contract.name);
+                                    const ft = getFileTypeInfo(contract);
                                     return (
-                                      <div className={`${styles.contractIcon} ${styles[`contractIcon_${ft.variant}`]}`}>
+                                      <div className={`${styles.contractIcon} ${styles[`contractIcon_${ft.variant}`] ?? ''}`}>
                                         <span className={styles.contractIconLabel}>{ft.label}</span>
                                       </div>
                                     );

@@ -1134,6 +1134,10 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
                     onReanalyze={() => handleAnalyze(true)}
                     onReset={handleReset}
                     contractId={(result?.originalContractId || initialResult?.originalContractId || propContractId) as string | undefined}
+                    /* 📄 20.08.2026 (Stufe 5): Beim frischen Upload kennt die Browser-Datei
+                       ihren Typ selbst. Fehlt sie (Ansicht aus der Liste heraus), faellt
+                       V2HeroSection auf die Endung im Dateinamen zurueck, sonst auf PDF. */
+                    mimetype={file?.type || undefined}
                     usage={(result?.usage || initialResult?.usage) as Parameters<typeof V2HeroSection>[0]['usage']}
                     userPlan={user?.subscriptionPlan}
                     onOpenChat={handleOpenInChat}

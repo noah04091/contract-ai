@@ -7,6 +7,7 @@ import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { Document, Page, pdfjs } from "react-pdf";
+import { getFileTypeInfo } from "../utils/fileType"; // 📄 Dateityp aus dem gespeicherten Typ, nicht aus der Endung
 import {
   ArrowLeft,
   Calendar,
@@ -92,6 +93,9 @@ interface Contract {
   _id: string;
   userId?: string;
   name: string;
+  /** 📄 20.08.2026: aus dem Datei-INHALT bestimmter Typ (Stufe 1+3). Kommt ueber
+   *  GET /api/contracts/:id mit, das ohne Feld-Positivliste laedt. */
+  mimetype?: string | null;
   laufzeit: string;
   kuendigung: string;
   uploadedAt?: string;
@@ -274,8 +278,32 @@ export default function ContractDetailsV2() {
     };
   }, [isFullscreen]);
 
-  // Dateityp-Erkennung: PDF vs. Word
-  const isDocx = !!(contract?.s3Key?.toLowerCase().endsWith('.docx') || (!contract?.s3Key && contract?.name?.toLowerCase().endsWith('.docx')));
+  // 📄 Dateityp-Erkennung (20.08.2026 ueberarbeitet, Stufe 5 der Dateityp-Kette).
+  // Vorher haftete sie allein an der Endung des Speicherschluessels:
+  //   contract?.s3Key?.endsWith('.docx') || (!s3Key && name?.endsWith('.docx'))
+  // Zwei Luecken: (a) verliert der Schluessel seine Endung — real vorgekommen, als
+  // eine Analyse die Datei ohne Endung neu hochlud — galt eine Word-Datei als PDF und
+  // der PDF-Betrachter brach mit "Fehler beim Laden des PDF-Dokuments" ab; (b) BILDER
+  // hatten gar keinen eigenen Zweig und liefen ebenfalls in den PDF-Betrachter.
+  // Jetzt ueber den gemeinsamen Helfer, der zuerst den gespeicherten Typ nimmt
+  // (aus dem Datei-INHALT bestimmt) und die Endung nur noch als Rueckfall.
+  // ⚠️ Fail-safe: im Zweifel PDF — siehe utils/fileType.ts.
+  const dateiTyp = getFileTypeInfo(contract);
+  // Name bewusst beibehalten: steuert unveraendert alle bestehenden Verzweigungen,
+  // deckt jetzt aber JEDE Nicht-PDF ab, nicht nur .docx.
+  const isDocx = !dateiTyp.isPdf;
+  // Typgerechte Texte fuer den Nicht-PDF-Zweig. Vorher stand dort fest
+  // "Word-Dokument" — bei einem Bild oder Archiv waere das schlicht falsch.
+  const nichtPdfTitel =
+    dateiTyp.variant === 'doc' ? 'Word-Dokument'
+    : dateiTyp.variant === 'image' ? 'Bilddatei'
+    : 'Datei';
+  const nichtPdfHinweis =
+    dateiTyp.variant === 'doc'
+      ? 'Word-Dokumente können nicht direkt im Browser angezeigt werden. Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.'
+      : dateiTyp.variant === 'image'
+      ? 'Dieses Dokument liegt als Bild vor. Laden Sie es herunter, um es in voller Größe anzusehen.'
+      : 'Diese Datei kann nicht direkt im Browser angezeigt werden. Laden Sie sie herunter, um sie zu öffnen.';
 
   // PDF Viewer State
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -3462,10 +3490,9 @@ export default function ContractDetailsV2() {
                           /* DOCX: Download-Bereich statt PDF-Viewer */
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 60 }}>
                             <FileText size={64} style={{ color: '#6b9fff', marginBottom: 16 }} />
-                            <p style={{ fontSize: 18, fontWeight: 600, color: 'white', marginBottom: 8 }}>Word-Dokument</p>
+                            <p style={{ fontSize: 18, fontWeight: 600, color: 'white', marginBottom: 8 }}>{nichtPdfTitel}</p>
                             <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 400, lineHeight: 1.6, marginBottom: 24 }}>
-                              Word-Dokumente können nicht direkt im Browser angezeigt werden.
-                              Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.
+                              {nichtPdfHinweis}
                             </p>
                             <a
                               href={pdfUrl}
@@ -3905,7 +3932,7 @@ export default function ContractDetailsV2() {
                     </button>
                     {(contract.filePath || contract.s3Key) && (
                       <button onClick={handleOpenOriginalPDF} className={styles.quickActionBtn}>
-                        <ExternalLink size={18} /> {isDocx ? 'Original Word' : 'Original PDF'}
+                        <ExternalLink size={18} /> {isDocx ? `Original ${nichtPdfTitel}` : 'Original PDF'}
                       </button>
                     )}
                     {contract.optimizedPdfS3Key && (
@@ -4176,10 +4203,9 @@ export default function ContractDetailsV2() {
                 /* DOCX: Download-Bereich im Fullscreen */
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                   <FileText size={64} style={{ color: '#6b9fff', marginBottom: 16 }} />
-                  <p style={{ fontSize: 18, fontWeight: 600, color: 'white', marginBottom: 8 }}>Word-Dokument</p>
+                  <p style={{ fontSize: 18, fontWeight: 600, color: 'white', marginBottom: 8 }}>{nichtPdfTitel}</p>
                   <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', maxWidth: 400, lineHeight: 1.6, marginBottom: 24 }}>
-                    Word-Dokumente können nicht direkt im Browser angezeigt werden.
-                    Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.
+                    {nichtPdfHinweis}
                   </p>
                   <a
                     href={pdfUrl}

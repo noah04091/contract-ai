@@ -2426,6 +2426,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               fileName={contract.name || 'Vertrag'}
               isInitialResult={true}
               contractId={contract._id ? String(contract._id) : undefined}
+              /* 📄 20.08.2026 (Stufe 5): gespeicherter Typ aus dem Datei-Inhalt. */
+              mimetype={(contract as { mimetype?: string | null }).mimetype ?? undefined}
             />
             <V2TabsSection data={data as Parameters<typeof V2TabsSection>[0]['data']} />
             {contract._id && (
