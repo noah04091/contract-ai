@@ -389,10 +389,12 @@ export default function Profile() {
     }
   };
 
-  const handleExportData = async () => {
+  // 📄 20.08.2026: Standard ist die lesbare Fassung (öffnet sich im Browser, druckbar
+  // als PDF). Die JSON-Fassung bleibt für die Datenmitnahme nach Art. 20 DSGVO.
+  const handleExportData = async (format: 'html' | 'json' = 'html') => {
     setIsExporting(true);
     try {
-      const res = await fetch('/api/auth/export-data', {
+      const res = await fetch(`/api/auth/export-data?format=${format}`, {
         credentials: 'include'
       });
 
@@ -401,7 +403,9 @@ export default function Profile() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `contract-ai-export-${new Date().toISOString().split('T')[0]}.json`;
+        a.download = format === 'json'
+          ? `contract-ai-export-${new Date().toISOString().split('T')[0]}.json`
+          : `contract-ai-daten-${new Date().toISOString().split('T')[0]}.html`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1042,10 +1046,10 @@ export default function Profile() {
                 <div className={styles.accountActionCard}>
                   <div className={`${styles.accountActionIcon} ${styles.export}`}>📦</div>
                   <h3 className={styles.accountActionTitle}>Daten exportieren</h3>
-                  <p className={styles.accountActionDesc}>Alle deine Daten als JSON herunterladen</p>
+                  <p className={styles.accountActionDesc}>Konto, Verträge und Termine als lesbare Übersicht</p>
                   <motion.button
                     className={styles.accountActionBtn}
-                    onClick={handleExportData}
+                    onClick={() => handleExportData('html')}
                     disabled={isExporting}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -1057,6 +1061,14 @@ export default function Profile() {
                     )}
                     {isExporting ? 'Exportiere...' : 'Exportieren'}
                   </motion.button>
+                  {/* Maschinenlesbare Fassung für die Datenmitnahme (Art. 20 DSGVO) */}
+                  <button
+                    className={styles.accountActionLink}
+                    onClick={() => handleExportData('json')}
+                    disabled={isExporting}
+                  >
+                    Technische Rohdaten (JSON)
+                  </button>
                 </div>
 
                 {/* Password Change */}
@@ -1422,7 +1434,7 @@ export default function Profile() {
             setShowDeleteModal(false);
             setShowNotificationSettings(true);
           }}
-          onExportData={handleExportData}
+          onExportData={() => handleExportData('html')}
           isExporting={isExporting}
         />
       </div>

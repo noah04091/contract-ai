@@ -2025,7 +2025,13 @@ router.get("/export-data", verifyToken, async (req, res) => {
     }
 
     // Hole alle Verträge des Users
-    const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
+    // 🔴 20.08.2026: Dieser Filter suchte NUR nach der Zeichenketten-Form der userId.
+    // Gespeichert sind 847 von 849 Verträgen aber als ObjectId → der DSGVO-Export
+    // lieferte praktisch jedem Nutzer NULL Verträge (derselbe Fehler wie am 19.06. im
+    // Lösch-Pfad und am 31.07. bei den Kalender-Events, hier war er noch offen).
+    const uidVariants = [req.user.userId];
+    try { uidVariants.push(new ObjectId(req.user.userId)); } catch (_) { /* ungültige id ignorieren */ }
+    const contracts = await contractsCollection.find({ userId: { $in: uidVariants } }).toArray();
 
     // Hole Kalender-Events
     // 31.07.2026 (TÜV-Fix): Der DSGVO-Export las aus der nicht existenten Collection
@@ -2102,10 +2108,23 @@ router.get("/export-data", verifyToken, async (req, res) => {
 
     console.log(`📦 DSGVO-Export erstellt für ${user.email}: ${contracts.length} Verträge, ${calendarEvents.length} Events`);
 
-    // Als JSON-Datei senden
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="contract-ai-export-${new Date().toISOString().split('T')[0]}.json"`);
-    res.json(exportData);
+    // 📄 20.08.2026: Standard ist jetzt eine LESBARE Fassung. Die reine .json-Datei
+    // erfüllt zwar Art. 20 DSGVO, ein normaler Nutzer kann damit aber nichts anfangen:
+    // sein Rechner öffnet sie nicht sinnvoll. Die HTML-Seite öffnet sich per Doppelklick
+    // im Browser und lässt sich als PDF drucken. `?format=json` liefert weiterhin die
+    // maschinenlesbare Fassung für die Datenmitnahme.
+    const datumsStempel = new Date().toISOString().split('T')[0];
+
+    if (String(req.query.format || 'html').toLowerCase() === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="contract-ai-export-${datumsStempel}.json"`);
+      return res.json(exportData);
+    }
+
+    const { buildDataExportHtml } = require("../utils/buildDataExportHtml");
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="contract-ai-daten-${datumsStempel}.html"`);
+    return res.send(buildDataExportHtml(exportData));
   } catch (err) {
     console.error("❌ Fehler beim Daten-Export:", err);
     res.status(500).json({ message: "Serverfehler beim Export" });
