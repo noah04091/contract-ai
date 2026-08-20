@@ -739,11 +739,28 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                    seit Stufe 4 den richtigen Typ mit. */
                 onClick={async () => {
                   if (dateiTyp.isPdf) { setPdfViewerOpen(true); return; }
+                  // 🔴 20.08.2026 (Noahs Test): Der Knopf tat NICHTS. Zwei Ursachen, beide hier behoben.
+                  //  1. `window.open` stand HINTER dem `await`. Ausserhalb der Klick-Geste
+                  //     blockiert der Browser das als Pop-up — und zwar lautlos, ohne Fehler,
+                  //     weshalb auch das catch nie ansprang. Das Fenster muss SOFORT aufgehen
+                  //     und danach umgeleitet werden (gleiches Muster wie openSmartPDF).
+                  //  2. Es fehlte der Authorization-Kopf. Ueberall sonst wird er mitgeschickt;
+                  //     ohne gueltiges Cookie kam nur ein 401 zurueck und `j.url` blieb leer.
+                  const fenster = window.open("", "_blank", "noopener,noreferrer");
                   try {
-                    const res = await fetch(`/api/s3/view?contractId=${encodeURIComponent(contractId)}&type=original`, { credentials: "include" });
+                    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
+                    const res = await fetch(`/api/s3/view?contractId=${encodeURIComponent(contractId)}&type=original`, {
+                      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+                      credentials: "include",
+                    });
                     const j = await res.json();
-                    if (j?.url) window.open(j.url, "_blank", "noopener,noreferrer");
-                  } catch { /* still: der Knopf bleibt einfach wirkungslos statt zu crashen */ }
+                    const ziel = j?.url || j?.fileUrl;
+                    if (ziel && fenster && !fenster.closed) fenster.location.href = ziel;
+                    else if (ziel) window.open(ziel, "_blank", "noopener,noreferrer");
+                    else fenster?.close();
+                  } catch {
+                    fenster?.close(); // kein haengendes leeres Fenster zuruecklassen
+                  }
                 }}
                 disabled={analyzing}
                 aria-label={`Original-Datei anzeigen (${dateiTyp.label})`}
