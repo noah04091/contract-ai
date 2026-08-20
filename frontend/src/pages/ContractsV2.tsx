@@ -616,6 +616,11 @@ export default function Contracts() {
             );
           }
         }
+        // 20.08.2026 (Noahs Test): "unbefristet" ist eine ANALYSE-Aussage. Bei nur
+        // gespeicherten, nie analysierten Verträgen wissen wir nichts über die
+        // Laufzeit → ehrlich "—" (nie-raten-Prinzip). Gleiche Erkennungsregel wie
+        // der "Jetzt analysieren"-Knopf.
+        if (!contract.expiryDate && shouldShowAnalyzeButton(contract)) return muted('—');
         if (!contract.expiryDate) return muted('unbefristet');
         const exp = new Date(contract.expiryDate);
         if (Number.isNaN(exp.getTime())) return muted('—');
