@@ -1930,7 +1930,10 @@ router.get("/confirm-email-change", async (req, res) => {
         emailCategory: 'security'
       });
 
-      await sendEmail(oldEmail, "⚠️ Sicherheitshinweis: E-Mail-Adresse geändert – Contract AI", securityEmailHtml);
+      // Fix 20.08.2026: sendEmail (utils/sendEmail.js) erwartet EIN Objekt {to,subject,html}.
+      // Der frühere positionale Aufruf (oldEmail, subject, html) destrukturierte den String
+      // → to=undefined → die Sicherheitswarnung an die ALTE Adresse ging ins Leere.
+      await sendEmail({ to: oldEmail, subject: "⚠️ Sicherheitshinweis: E-Mail-Adresse geändert – Contract AI", html: securityEmailHtml });
       console.log(`📧 Sicherheits-E-Mail an alte Adresse gesendet: ${oldEmail}`);
     } catch (emailErr) {
       console.error("⚠️ Sicherheits-E-Mail konnte nicht gesendet werden:", emailErr);

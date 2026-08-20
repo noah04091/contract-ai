@@ -12,6 +12,10 @@ const {
   getUnsubscribeStats
 } = require("../services/emailUnsubscribeService");
 const { getBounceStats, reactivateEmail } = require("../services/emailBounceService");
+// Admin-Schutz für die Test-Mail-Route (siehe unten): war ohne jede Authentifizierung
+// erreichbar → jeder konnte Mails an beliebige Fremdadressen über unseren Absender auslösen.
+const verifyToken = require("../middleware/verifyToken");
+const verifyAdmin = require("../middleware/verifyAdmin");
 
 // Middleware fuer optionale Authentifizierung
 const optionalAuth = (req, res, next) => {
@@ -321,7 +325,7 @@ router.get("/stats", optionalAuth, async (req, res) => {
  * Sendet Test-E-Mails verschiedener Typen
  * Body: { email: "test@example.com", type: "calendar|digest|reminder|all" }
  */
-router.post("/test", async (req, res) => {
+router.post("/test", verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { email, type = "all" } = req.body;
 
