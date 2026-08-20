@@ -1344,11 +1344,19 @@ router.put("/email-preferences", verifyToken, async (req, res) => {
     const { emailDigestMode } = req.body;
 
     // Validate mode
-    const validModes = ["instant", "daily", "weekly"];
+    // 20.08.2026: "weekly" wird NICHT mehr angenommen. Der Versand-Cron hätte solche
+    // Nutzer übersprungen, aber der Digest-Dienst (processDigests) verarbeitet
+    // ausschließlich "daily" → wer weekly gesetzt hätte, wäre ohne jede Fehlermeldung
+    // dauerhaft ohne Erinnerungen geblieben. Erst wieder erlauben, wenn die Sammel-Mail
+    // den Modus wirklich beherrscht (dann auch DIGEST_MODES_HANDLED im Notifier ergänzen).
+    // Bestand geprüft: 0 von 559 Nutzern hatten den Wert je gesetzt, kein UI ruft die Route.
+    const validModes = ["instant", "daily"];
     if (!validModes.includes(emailDigestMode)) {
       return res.status(400).json({
         success: false,
-        error: "Ungültiger Modus. Erlaubt: instant, daily, weekly"
+        error: emailDigestMode === "weekly"
+          ? "Die wöchentliche Zusammenfassung steht derzeit nicht zur Verfügung. Erlaubt: instant, daily"
+          : "Ungültiger Modus. Erlaubt: instant, daily"
       });
     }
 
@@ -1383,9 +1391,7 @@ router.put("/email-preferences", verifyToken, async (req, res) => {
       emailDigestMode,
       message: emailDigestMode === "instant"
         ? "Du erhältst jetzt E-Mails sofort bei jedem Event."
-        : emailDigestMode === "daily"
-        ? "Du erhältst jetzt eine tägliche Zusammenfassung um 7 Uhr."
-        : "Du erhältst jetzt eine wöchentliche Zusammenfassung."
+        : "Du erhältst jetzt eine tägliche Zusammenfassung um 7 Uhr."
     });
 
   } catch (error) {

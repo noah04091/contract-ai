@@ -338,10 +338,13 @@ async function checkAndSendNotifications(db) {
         continue;
       }
 
-      // Skip users with digest mode - they get a combined email instead
-      const digestMode = event.user?.emailDigestMode;
-      if (digestMode === "daily" || digestMode === "weekly") {
-        // These users are handled by calendarDigestService
+      // Sammel-Mail statt Einzelversand — ABER nur für Modi, die der Digest-Dienst
+      // wirklich verarbeitet (siehe digestModeSkipsInstantMails). 20.08.2026: Vorher
+      // wurde auch "weekly" übersprungen, obwohl processDigests ausschließlich "daily"
+      // abarbeitet → wer weekly gesetzt hätte, wäre STILL komplett ohne Erinnerungen
+      // geblieben. Jetzt fällt jeder nicht verarbeitete Modus auf den Direktversand
+      // zurück (lieber eine Mail zu viel als Funkstille).
+      if (digestModeSkipsInstantMails(event.user?.emailDigestMode)) {
         continue;
       }
 
@@ -625,6 +628,20 @@ async function queueEventNotification(event, db) {
   });
 
   console.log(`E-Mail zur Queue hinzugefuegt: ${subject} fuer ${maskEmail(event.user.email)}`);
+}
+
+/**
+ * 📬 Welche Digest-Modi ersetzen den Einzelversand wirklich?
+ * NUR die, die services/calendarDigestService.js (processDigests, Cron 07:00) auch
+ * tatsächlich abarbeitet — dort matcht die Abfrage ausschließlich "daily".
+ * Jeder andere Wert (z.B. "weekly", Tippfehler, Alt-Werte) MUSS auf den normalen
+ * Direktversand zurückfallen, sonst entsteht Funkstille ohne Fehlermeldung.
+ * Wer den Digest-Dienst um einen Modus erweitert, ergänzt ihn hier — und nur hier.
+ * PURE Funktion, exportiert für Unit-Tests.
+ */
+const DIGEST_MODES_HANDLED = new Set(["daily"]);
+function digestModeSkipsInstantMails(mode) {
+  return DIGEST_MODES_HANDLED.has(mode);
 }
 
 /**
@@ -943,6 +960,8 @@ module.exports = {
   getSendWindow,
   freeReminderMailsEnabled,
   neutralizeRelativeDayWords,
+  digestModeSkipsInstantMails,
+  DIGEST_MODES_HANDLED,
   // Reine Render-Funktionen (für Vorschau/Tests; keine Seiteneffekte)
   __render: {
     generateCalendarEmailTemplate,

@@ -323,8 +323,13 @@ async function processDigests(db) {
  * @param {Object} user - User-Objekt
  * @returns {boolean}
  */
+// ⚠️ 20.08.2026: Dieser Helfer wird NIRGENDS aufgerufen (geprüft) und ist bewusst als
+// Falle markiert: Er behauptet, "weekly" werde als Digest behandelt — processDigests
+// oben filtert aber ausschließlich auf "daily". Wer ihn je verwendet, ohne den Dienst
+// um "weekly" zu erweitern, erzeugt Nutzer, die GAR KEINE Erinnerungen mehr bekommen.
+// Maßgeblich ist DIGEST_MODES_HANDLED in services/calendarNotifier.js.
 function userPrefersDigest(user) {
-  return user?.emailDigestMode === "daily" || user?.emailDigestMode === "weekly";
+  return user?.emailDigestMode === "daily";
 }
 
 module.exports = {
