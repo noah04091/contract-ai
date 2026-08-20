@@ -52,7 +52,22 @@ const generateInlineSignedUrl = async (key, filename = 'document.pdf') => {
     Bucket: process.env.S3_BUCKET_NAME,
     Key: key,
     ResponseContentDisposition: `inline; filename="${ascii}"; filename*=UTF-8''${utf8}`,
-    ResponseContentType: 'application/pdf',
+    // 📄 20.08.2026 (Stufe 4 der Dateityp-Kette): Hier stand fest
+    //     ResponseContentType: 'application/pdf'
+    // Damit hat diese Zeile JEDE Datei als PDF ausgeliefert — auch Bilder und
+    // Word-Dokumente, und sie hätte sogar einen korrekten Wert aus S3 wieder
+    // überschrieben. Gemessen: 136 von 843 Verträgen sind gar keine PDF.
+    //
+    // Jetzt OHNE Überschreibung: S3 liefert den Typ aus, der am Objekt steht.
+    // Das ist seit Stufe 3 (20.08.) für 808 von 850 Objekten aus dem Datei-INHALT
+    // bestimmt und damit korrekt (35 falsche Etiketten wurden dabei repariert).
+    // Für die wenigen Objekte ohne erkennbaren Inhalt (5 alte .doc) bleibt der
+    // gespeicherte Wert 'application/pdf' — also exakt das bisherige Verhalten,
+    // nie schlechter.
+    //
+    // Die Inline-Anzeige haengt NICHT hieran, sondern an ContentDisposition
+    // oben. Das Weglassen aendert also nur den gemeldeten Typ, nicht das
+    // Inline-Verhalten.
   });
 
   const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
