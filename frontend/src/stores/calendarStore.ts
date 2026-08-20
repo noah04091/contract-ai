@@ -59,6 +59,9 @@ export interface CalendarEvent {
   confidence?: number;
   dataSource?: string;
   isEstimated?: boolean;
+  // 20.08.2026: wann die Mail real rausging (fuer ehrliche "Vorab erinnert"-Anzeige
+  // bei Fruehwarnungen nackter Stichtage — Lookahead mailt bis zu 7 Tage frueher)
+  notifiedAt?: string | null;
   // Stufe 4 (19.08.2026): Abdeckungs-Auskunft pro Frist, serverseitig aus den per
   // deadlineEventId verknüpften Vorwarnern gebaut (routes/calendar.js). Nur auf
   // Haupt-Terminen der Listen-Abfrage (ohne ?contractId) vorhanden; Grundlage der

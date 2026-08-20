@@ -91,6 +91,7 @@ interface CalendarEvent {
     // Stufe 2 (18.08.2026): feste Referenz einer Vorwarnung auf die _id ihrer Frist
     deadlineEventId?: string;
   };
+  notifiedAt?: string | null; // 20.08.2026: realer Mail-Zeitpunkt (Vorab-Erinnerungs-Anzeige)
   amount?: number;
   isManual?: boolean;
   confidence?: number;
@@ -823,11 +824,18 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
         if (!isNaN(anchorStart.getTime())) {
           if (anchorStart >= todayStart) {
             // heute/zukünftig: Stichtag steht noch bevor. 19.08.2026: Ist die Stichtags-Mail
-            // HEUTE schon raus (status notified), ehrlich "✓ gesendet" zeigen — vorher stand
-            // hier stundenlang "geplant", während "Erinnerungen verwalten" längst den Haken
-            // zeigte (Noahs Kaufvertrag-Befund, Widerspruch zwischen den beiden Ansichten).
+            // schon raus (status notified), ehrlich "✓ gesendet" zeigen. 20.08.2026 (Noahs
+            // AVV-Befund): Ging sie VOR dem Stichtag raus (Lookahead-Frühwarnung nackter
+            // Stichtage, bis zu 7 Tage früher), stand hier "Am Tag selbst ✓ gesendet" mit
+            // KÜNFTIGEM Datum — Widerspruch. Jetzt: "Vorab erinnert" + echtes Sende-Datum;
+            // und KEINE weitere Mail am Stichtag versprechen (es kommt keine mehr).
             const sameDayKind: 'sent' | 'upcoming' = currentEvent.status === 'notified' ? 'sent' : 'upcoming';
-            list.push({ id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor), kind: sameDayKind });
+            const sentAt = currentEvent.notifiedAt ? new Date(currentEvent.notifiedAt) : null;
+            const sentEarly = sameDayKind === 'sent' && sentAt && !isNaN(sentAt.getTime())
+              && new Date(sentAt).setHours(0, 0, 0, 0) < anchorStart.getTime();
+            list.push(sentEarly
+              ? { id: 'same-day', label: 'Vorab erinnert', dateStr: fmt(currentEvent.notifiedAt as string), kind: 'sent' as const }
+              : { id: 'same-day', label: sigExpiry ? 'Am Ablauftag' : 'Am Tag selbst', dateStr: fmt(anchor), kind: sameDayKind });
           } else if (!sigExpiry) {
             // Abgelaufene Vertrags-Frist: Stichtag ist vorbei → ehrlich zeigen, ob am Tag
             // benachrichtigt wurde (status "notified" = Mail ging wirklich raus), statt ihn

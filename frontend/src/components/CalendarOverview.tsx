@@ -225,13 +225,30 @@ export default function CalendarOverview({
              falsch und widersprach dem Termin-Popup. Angeboten wird jetzt, FRÜHER
              erinnert zu werden. */
           <div className={styles.nudge}>
-            <span className={styles.nudgeTxt}>
-              <span className={styles.mail}>✉️</span>
-              <span className="ellip">Erinnerung: am Stichtag selbst</span>
-            </span>
-            <button className={styles.addBtn} onClick={() => onManageReminders(event)}>
-              ＋ Früher erinnern
-            </button>
+            {event.status === 'notified' ? (
+              /* 20.08.2026 (Noahs AVV-Befund): Die eine Mail dieser Frist ging bereits
+                 VORAB raus (Lookahead-Frühwarnung) — dann kein künftiges "am Stichtag
+                 selbst" mehr versprechen, sondern ehrlich den Sende-Zeitpunkt zeigen. */
+              <>
+                <span className={styles.nudgeTxt}>
+                  <span className={styles.mail}>✓</span>
+                  <span className="ellip">Vorab erinnert{event.notifiedAt ? ` am ${fmtShort(event.notifiedAt)}` : ''}</span>
+                </span>
+                <button className={styles.manageBtn} onClick={() => onManageReminders(event)}>
+                  Bearbeiten
+                </button>
+              </>
+            ) : (
+              <>
+                <span className={styles.nudgeTxt}>
+                  <span className={styles.mail}>✉️</span>
+                  <span className="ellip">Erinnerung: am Stichtag selbst</span>
+                </span>
+                <button className={styles.addBtn} onClick={() => onManageReminders(event)}>
+                  ＋ Früher erinnern
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

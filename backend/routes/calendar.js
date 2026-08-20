@@ -243,6 +243,11 @@ router.get("/events", verifyToken, async (req, res) => {
       amount: event.contract?.amount,
       suggestedAction: event.metadata?.suggestedAction,
       isManual: event.isManual === true, // Explizit boolean
+      // 20.08.2026 (Noahs AVV-Befund): Wann ging die Mail WIRKLICH raus? Nötig, damit
+      // die UI bei Frühwarnungen (Lookahead für nackte Stichtage) ehrlich "Vorab
+      // erinnert am {Datum}" zeigen kann statt "Am Tag selbst ✓ gesendet" mit
+      // künftigem Datum — dieser Widerspruch verwirrte real.
+      notifiedAt: event.notifiedAt || null,
       // Recurrence fields for frontend
       recurrence: event.recurrence || null,
       isRecurringMaster: event.isRecurringMaster || false,

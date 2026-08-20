@@ -44,6 +44,7 @@ interface AutoEvent {
   type: string;
   severity: string;
   status?: string; // "notified" = Mail bestätigt gesendet (kommt aus GET /calendar/events)
+  notifiedAt?: string | null; // 20.08.2026: realer Mail-Zeitpunkt (Vorab-Erinnerung nackter Stichtage)
   metadata?: { deadlineEventId?: string }; // Stufe 2: feste Referenz Vorwarnung→Frist
 }
 
@@ -548,10 +549,18 @@ export default function ReminderSettingsModal({
                             {group.main && (() => {
                               const k = eventKind(group.main);
                               const sent = k === 'sent';
+                              // 20.08.2026 (Noahs AVV-Befund): Ging die Stichtags-Mail VOR dem Tag raus
+                              // (Lookahead-Frühwarnung), ehrlich "Vorab erinnert" + Sende-Datum zeigen
+                              // statt "Am Tag selbst ✓ gesendet" mit künftigem Datum.
+                              const sentEarly = sent && group.main.notifiedAt
+                                && new Date(group.main.notifiedAt).setHours(0, 0, 0, 0) < new Date(group.main.date).setHours(0, 0, 0, 0);
+                              const sameDayLabel = sentEarly
+                                ? `Vorab erinnert (${formatAutoEventDate(group.main.notifiedAt as string)})`
+                                : 'Am Tag selbst';
                               return (
                                 <div style={remRow}>
                                   <span style={k === 'upcoming' ? remIc : { ...remIc, background: sent ? '#ecfdf5' : '#f3f4f6', color: sent ? '#059669' : '#9ca3af' }}>{k === 'upcoming' ? '🔔' : sent ? '✓' : '–'}</span>
-                                  <span style={k === 'upcoming' ? remWhen : { ...remWhen, color: '#6b7280' }}>Am Tag selbst</span>
+                                  <span style={k === 'upcoming' ? remWhen : { ...remWhen, color: '#6b7280' }}>{sameDayLabel}</span>
                                   {k === 'upcoming'
                                     ? <span style={tagAuto}>✉️ automatisch</span>
                                     : <span style={{ ...pendingTag, ...(sent ? { color: '#059669', background: '#ecfdf5' } : {}) }}>{sent ? '✓ gesendet' : 'nicht gesendet'}</span>}
