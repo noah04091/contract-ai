@@ -13,6 +13,11 @@ interface AnalysisOverlayProps {
   progress: number;          // 0-100
   currentStep?: string;
   pdfFile?: File;
+  // 20.08.2026 (Noahs Test): Bei der Analyse eines BEREITS gespeicherten Vertrags
+  // liegt die Datei nicht mehr im Browser (nur auf S3) — dann kam statt der echten
+  // Seite nur das Platzhalter-Muster. Über diese URL zeigt das Overlay auch dort
+  // das echte Dokument.
+  pdfSrcUrl?: string;
 }
 
 const STEPS = [
@@ -33,8 +38,10 @@ function getCurrentStep(progress: number): string {
   return STEPS[0].label;
 }
 
-export default function AnalysisOverlay({ show, contractName, progress, currentStep, pdfFile }: AnalysisOverlayProps) {
+export default function AnalysisOverlay({ show, contractName, progress, currentStep, pdfFile, pdfSrcUrl }: AnalysisOverlayProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  // Lokale Datei hat Vorrang (sofort da, kein Netzwerk); sonst die nachgereichte URL
+  const documentSource = pdfUrl || pdfSrcUrl || null;
 
   // Create blob URL for PDF preview
   useEffect(() => {
@@ -85,8 +92,8 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
         <div className={styles.pdfFrame}>
           {/* PDF or Placeholder */}
           <div className={styles.pdfContent}>
-            {pdfUrl ? (
-              <Document file={pdfUrl} loading={null} error={null}>
+            {documentSource ? (
+              <Document file={documentSource} loading={null} error={null}>
                 <Page
                   pageNumber={1}
                   width={280}

@@ -768,7 +768,7 @@ export default function Contracts() {
   });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
-  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; progress: number; stage?: string }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay (📶 stage = echte Backend-Etappe)
+  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; pdfSrcUrl?: string; progress: number; stage?: string }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay (📶 stage = echte Backend-Etappe, pdfSrcUrl = S3-Quelle bei Re-Analyse)
 
   // ℹ️ 20.08.2026: UploadSuccessModal aus dem Fluss entfernt (Doppel-Abfrage nach
   // "Nur speichern") — Komponente existiert weiter für einfaches Zurückrollen.
@@ -3138,6 +3138,29 @@ export default function Contracts() {
     // Setze Loading States - Button UND Full-Screen Overlay
     setAnalyzingContract(prev => ({ ...prev, [contract._id]: true }));
     setAnalyzingOverlay({ show: true, contractName: fixUtf8Display(contract.name), progress: 0 });
+
+    // 📄 20.08.2026 (Noahs Test): Bei einem bereits gespeicherten Vertrag liegt die
+    // Datei nur auf S3 — ohne Quelle zeigte das Overlay nur Platzhalter-Linien.
+    // Signierte Ansicht-URL nachreichen (fire-and-forget, blockiert die Analyse nicht;
+    // identische Route wie die Seitenleisten-Vorschau). Schlägt es fehl, bleibt es
+    // beim bisherigen Platzhalter.
+    if (contract.s3Key) {
+      (async () => {
+        try {
+          const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+          const res = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: 'include'
+          });
+          if (!res.ok) return;
+          const data = await res.json();
+          const url = data.fileUrl || data.url || null;
+          if (url) {
+            setAnalyzingOverlay(prev => prev.show ? { ...prev, pdfSrcUrl: url } : prev);
+          }
+        } catch { /* Vorschau ist Beiwerk — Analyse läuft unabhängig weiter */ }
+      })();
+    }
 
     // 🔍 Simulierter Progress für bestehendes Vertrag-Overlay
     // 📶 24.07.2026: Sync-Route ohne Job-Etappen → ehrliche Kurve (Deckel 90,
@@ -7261,6 +7284,7 @@ export default function Contracts() {
         progress={analyzingOverlay.progress}
         currentStep={analyzingOverlay.stage} // 📶 echte Backend-Etappe (Fallback: eigene Labels)
         pdfFile={analyzingOverlay.pdfFile}
+        pdfSrcUrl={analyzingOverlay.pdfSrcUrl}
       />
 
       {/* 📱 MOBILE-FIRST 2025: Bottom Navigation - nur bei Vertrags-Liste anzeigen */}
