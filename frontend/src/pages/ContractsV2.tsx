@@ -772,7 +772,7 @@ export default function Contracts() {
   });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
-  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; pdfSrcUrl?: string; progress: number; stage?: string }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay (📶 stage = echte Backend-Etappe, pdfSrcUrl = S3-Quelle bei Re-Analyse)
+  const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; pdfSrcUrl?: string; mimetype?: string | null; progress: number; stage?: string }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay (📶 stage = echte Backend-Etappe, pdfSrcUrl = S3-Quelle bei Re-Analyse)
 
   // ℹ️ 20.08.2026: UploadSuccessModal aus dem Fluss entfernt (Doppel-Abfrage nach
   // "Nur speichern") — Komponente existiert weiter für einfaches Zurückrollen.
@@ -3194,7 +3194,7 @@ export default function Contracts() {
 
     // Setze Loading States - Button UND Full-Screen Overlay
     setAnalyzingContract(prev => ({ ...prev, [contract._id]: true }));
-    setAnalyzingOverlay({ show: true, contractName: fixUtf8Display(contract.name), progress: 0 });
+    setAnalyzingOverlay({ show: true, contractName: fixUtf8Display(contract.name), mimetype: contract.mimetype, progress: 0 });
 
     // 📄 20.08.2026 (Noahs Test): Bei einem bereits gespeicherten Vertrag liegt die
     // Datei nur auf S3 — ohne Quelle zeigte das Overlay nur Platzhalter-Linien.
@@ -6505,18 +6505,31 @@ export default function Contracts() {
                           setShowDetails(true);
                         }}
                       >
-                        <Document
-                          file={previewPdfUrl}
-                          loading={null}
-                          error={
-                            <div className={styles.previewThumbnailError}>
-                              <AlertCircle size={16} />
-                              <span>Vorschau nicht verfügbar</span>
-                            </div>
-                          }
-                        >
-                          <Page pageNumber={1} width={380} renderTextLayer={false} renderAnnotationLayer={false} />
-                        </Document>
+                        {/* 📄 20.08.2026 (Etappe 2b): Hier lief bisher ALLES durch den
+                            PDF-Leser. Ein Bild kann der nicht lesen, deshalb stand bei
+                            einem Foto "Vorschau nicht verfügbar" — obwohl das Detail-
+                            Fenster dasselbe Bild links problemlos anzeigt. Ein Bild
+                            braucht keinen Leser, nur ein Bild-Element. */}
+                        {angezeigterTyp(previewContract) === 'image' ? (
+                          <img
+                            src={previewPdfUrl}
+                            alt=""
+                            style={{ width: 380, display: 'block' }}
+                          />
+                        ) : (
+                          <Document
+                            file={previewPdfUrl}
+                            loading={null}
+                            error={
+                              <div className={styles.previewThumbnailError}>
+                                <AlertCircle size={16} />
+                                <span>{vorschauTitel(previewContract)} nicht verfügbar</span>
+                              </div>
+                            }
+                          >
+                            <Page pageNumber={1} width={380} renderTextLayer={false} renderAnnotationLayer={false} />
+                          </Document>
+                        )}
                       </div>
                     ) : previewPdfError ? (
                       <div className={styles.previewThumbnailError}>
@@ -7335,6 +7348,7 @@ export default function Contracts() {
         currentStep={analyzingOverlay.stage} // 📶 echte Backend-Etappe (Fallback: eigene Labels)
         pdfFile={analyzingOverlay.pdfFile}
         pdfSrcUrl={analyzingOverlay.pdfSrcUrl}
+        mimetype={analyzingOverlay.mimetype}
       />
 
       {/* 📱 MOBILE-FIRST 2025: Bottom Navigation - nur bei Vertrags-Liste anzeigen */}

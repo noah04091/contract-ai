@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Search } from 'lucide-react';
 import { Document, Page } from 'react-pdf';
+import { getFileTypeInfo } from '../utils/fileType';
 import styles from './AnalysisOverlay.module.css';
 
 interface AnalysisOverlayProps {
@@ -18,6 +19,10 @@ interface AnalysisOverlayProps {
   // Seite nur das Platzhalter-Muster. Über diese URL zeigt das Overlay auch dort
   // das echte Dokument.
   pdfSrcUrl?: string;
+  // 📄 20.08.2026 (Etappe 2b): Typ der Datei. Bei einer lokal hochgeladenen Datei
+  // steckt er schon in pdfFile.type; bei einem bereits gespeicherten Vertrag (nur
+  // pdfSrcUrl) muss der Aufrufer ihn mitgeben, sonst wüsste das Overlay nichts.
+  mimetype?: string | null;
 }
 
 const STEPS = [
@@ -38,10 +43,19 @@ function getCurrentStep(progress: number): string {
   return STEPS[0].label;
 }
 
-export default function AnalysisOverlay({ show, contractName, progress, currentStep, pdfFile, pdfSrcUrl }: AnalysisOverlayProps) {
+export default function AnalysisOverlay({ show, contractName, progress, currentStep, pdfFile, pdfSrcUrl, mimetype }: AnalysisOverlayProps) {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   // Lokale Datei hat Vorrang (sofort da, kein Netzwerk); sonst die nachgereichte URL
   const documentSource = pdfUrl || pdfSrcUrl || null;
+
+  // 📄 20.08.2026 (Etappe 2b): Hier stand bisher IMMER der PDF-Leser. Ein Bild kann
+  // der nicht lesen, und weil der Fehlerfall auf "nichts anzeigen" steht, blieb die
+  // Fläche bei einem Foto einfach leer (Noahs Befund). Ein Bild braucht aber gar
+  // keinen Leser, nur ein Bild-Element.
+  // Die lokale Datei kennt ihren Typ selbst; sonst zählt der mitgegebene.
+  const istBild = getFileTypeInfo(
+    pdfFile ? { mimetype: pdfFile.type, name: pdfFile.name } : { mimetype, name: contractName }
+  ).variant === 'image';
 
   // Create blob URL for PDF preview
   useEffect(() => {
@@ -92,7 +106,13 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
         <div className={styles.pdfFrame}>
           {/* PDF or Placeholder */}
           <div className={styles.pdfContent}>
-            {documentSource ? (
+            {documentSource && istBild ? (
+              <img
+                src={documentSource}
+                alt=""
+                style={{ width: 280, maxHeight: '100%', objectFit: 'contain', display: 'block' }}
+              />
+            ) : documentSource ? (
               <Document file={documentSource} loading={null} error={null}>
                 <Page
                   pageNumber={1}
