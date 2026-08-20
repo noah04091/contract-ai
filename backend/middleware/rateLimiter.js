@@ -162,6 +162,27 @@ function skipForPremium(req) {
   return ['business', 'enterprise', 'legendary'].includes(plan);
 }
 
+// 🚪 Kontolöschung: EIGENER Zähler (20.08.2026)
+//
+// Vorher hing DELETE /api/auth/delete am sensitiveLimiter — und den teilen sich fünf
+// Kündigungs-Routen in cancellations.js. Zehn Kündigungsschreiben in einer Viertelstunde
+// hätten also verhindert, dass derselbe Nutzer danach sein Konto löschen kann.
+// Das widerspricht dem Grundsatz des Löschdialogs (und Art. 17 DSGVO): informieren,
+// niemals blockieren. Ein eigener Zähler entkoppelt beides; fünf Löschversuche in
+// 15 Minuten sind für einen Einmalvorgang reichlich und bremsen Missbrauch trotzdem.
+const accountDeletionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    error: 'Zu viele Löschversuche',
+    message: 'Bitte warten Sie einige Minuten.',
+    retryAfter: '15 Minuten'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
+});
+
 module.exports = {
   standardLimiter,
   authLimiter,
@@ -170,6 +191,7 @@ module.exports = {
   uploadLimiter,
   sensitiveLimiter,
   sseLimiter,
+  accountDeletionLimiter,
   createDynamicLimiter,
   skipForPremium
 };

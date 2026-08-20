@@ -7,7 +7,7 @@ const crypto = require("crypto");
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const verifyAdmin = require("../middleware/verifyAdmin"); // 🔐 Admin-only access
-const { authLimiter, sensitiveLimiter } = require("../middleware/rateLimiter"); // 🛡️ Brute-Force-Schutz
+const { authLimiter, sensitiveLimiter, standardLimiter, accountDeletionLimiter } = require("../middleware/rateLimiter"); // 🛡️ Brute-Force-Schutz
 const sendEmail = require("../utils/sendEmail");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
@@ -796,7 +796,10 @@ const PLAN_LABELS = { free: 'Starter', business: 'Business', enterprise: 'Enterp
 // Bewusst schlank: vier Zählungen plus (nur bei aktivem Abo) ein Stripe-Aufruf für
 // das Laufzeitende. Wer mit laufendem Abo löscht, verliert bezahlte Zeit — das muss
 // er vorher sehen, sonst entsteht daraus später eine Rückbuchung.
-router.get("/deletion-summary", verifyToken, sensitiveLimiter, async (req, res) => {
+// Bewusst der normale Zähler statt des strengen: Das hier ist eine reine Lesefrage,
+// die bei jedem Öffnen des Dialogs anfällt. Läge sie im strengen Topf, würde
+// mehrfaches Öffnen das Kontingent aufbrauchen, das der Nutzer zum Löschen braucht.
+router.get("/deletion-summary", verifyToken, standardLimiter, async (req, res) => {
   try {
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
@@ -958,7 +961,7 @@ function buildGoodbyeEmail(user, { contractCount, aboBeendet, angebot }) {
   });
 }
 
-router.delete("/delete", verifyToken, sensitiveLimiter, async (req, res) => {
+router.delete("/delete", verifyToken, accountDeletionLimiter, async (req, res) => {
   // 📱 Geräteinformationen beim Löschen erfassen
   const userAgent = req.headers['user-agent'] || '';
   const deviceInfo = parseDeviceInfo(userAgent);
