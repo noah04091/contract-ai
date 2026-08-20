@@ -910,6 +910,14 @@ async function enrichContractsWithAggregation(mongoFilter, sortOptions, skip, li
     jurisdictionWarning: 1,
     // 🖼️ Welle 4a: OCR-Hinweis (Foto-/Scan-Ehrlichkeits-Banner)
     ocrNotice: 1,
+    // 📄 20.08.2026 (Stufe 5 der Dateityp-Kette): Der aus dem Datei-INHALT bestimmte
+    // Typ. Ohne diesen Eintrag käme er in der LISTE nie an (die Detailansicht lädt
+    // ohne Projektion und bekommt ihn ohnehin). Das Frontend braucht ihn, um das
+    // richtige Kennzeichen zu zeigen und um bei einer Nicht-PDF den PDF-Betrachter
+    // gar nicht erst zu öffnen — dort entsteht heute „Fehler beim Laden des
+    // PDF-Dokuments". Gefüllt bei 808 von 850 Verträgen (Stufe 1 + 3); die
+    // restlichen fallen im Frontend auf die Dateiendung zurück.
+    mimetype: 1,
     // Detail-Modal Felder (werden über "Feld hinzufügen" gesetzt)
     contractType: 1, contractTypeLabel: 1, anbieter: 1, vertragsnummer: 1, kosten: 1,
     provider: 1, customFields: 1, notes: 1,
