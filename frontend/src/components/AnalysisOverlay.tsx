@@ -110,7 +110,13 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
               <img
                 src={documentSource}
                 alt=""
-                style={{ width: 280, maxHeight: '100%', objectFit: 'contain', display: 'block' }}
+                // 20.08.2026, 2. Anlauf: Mit `width: 280` wurde ein QUERFORMAT-Bild
+                // (Noahs DHL-Label, 1478x769) auf 146 px Hoehe geschrumpft und klebte
+                // als duenner Streifen oben in einem 396 px hohen weissen Rahmen —
+                // zusammen mit dem weissen Schleier darueber sah das schlicht leer aus.
+                // `cover` fuellt den Rahmen wie eine PDF-Seite es tut (die wird unten
+                // ebenfalls beschnitten), damit man sein Dokument wiedererkennt.
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               />
             ) : documentSource ? (
               <Document file={documentSource} loading={null} error={null}>
