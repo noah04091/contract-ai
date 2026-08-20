@@ -95,7 +95,18 @@ function determineSeverity(error, context = {}) {
   if (error.name === 'MongoError' || error.name === 'MongoServerError') {
     return 'critical';
   }
-  if (context.route?.includes('/auth/') && error.status !== 401) {
+  // 🔧 20.08.2026: Diese Regel stufte JEDEN Fehler unter /auth/ als "high" ein, sobald
+  // er kein 401 war — auch reine EINGABEfehler des Aufrufers. Realfall, der es aufdeckte:
+  // ein bewusst kaputter Anfrage-Inhalt (`{kaputt`) aus einem curl-Test schlug als
+  // "high" auf, obwohl der Server voellig korrekt mit 400 abgelehnt hat und nichts
+  // kaputt war. Ein 4xx bedeutet "der Absender hat Unsinn geschickt", kein Serverfehler.
+  //
+  // ⚠️ Bewusst NICHT die ganze Regel gestrichen: Ein echter ABSTURZ unter /auth/ traegt
+  // gar keinen Status. Der muss weiterhin sofort "high" sein, sonst waere das eine
+  // Verschlechterung. Deshalb wird nur der Fall mit explizitem 4xx herausgenommen.
+  const statusCode = error.status || error.statusCode || null;
+  const istEingabefehler = statusCode >= 400 && statusCode < 500;
+  if (context.route?.includes('/auth/') && !istEingabefehler) {
     return 'high';
   }
 
@@ -156,6 +167,24 @@ async function sendErrorNotification(errorData) {
   try {
     const { error, context, severity, fingerprint, count } = errorData;
 
+    // 🔒 20.08.2026: Ab hier stehen vom AUFRUFER gelieferte Werte in der Mail
+    // (User-Agent, IP). Die Mail ist HTML — ohne Maskierung koennte ein Angreifer
+    // ueber einen praeparierten User-Agent Markup in unsere eigene Alarm-Mail
+    // einschleusen. Deshalb laeuft jeder Fremdwert durch diese Funktion.
+    const esc = (wert) => String(wert === null || wert === undefined ? '' : wert)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    // 20.08.2026: "Nicht eingeloggt" war irrefuehrend. Bricht die Anfrage schon im
+    // Body-Parser ab (type beginnt mit 'entity.'), lief die Anmeldepruefung NIE —
+    // dort steht dann immer "nicht eingeloggt", auch bei einem angemeldeten Kunden.
+    const vorAnmeldungAbgebrochen = typeof error.type === 'string' && error.type.startsWith('entity.');
+    const nutzerZeile = context.userId
+      ? esc(context.userId)
+      : (vorAnmeldungAbgebrochen
+          ? 'unbekannt (Abbruch vor der Anmeldeprüfung)'
+          : 'Nicht eingeloggt');
+
     const subject = `🚨 [${severity.toUpperCase()}] Fehler in Contract AI`;
 
     const html = generateEmailTemplate({
@@ -164,12 +193,14 @@ async function sendErrorNotification(errorData) {
         <p>Ein Fehler wurde in Contract AI erkannt:</p>
 
         <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 16px 0;">
-          <p style="margin: 0 0 8px 0;"><strong>Fehler:</strong> ${error.name || 'Error'}</p>
-          <p style="margin: 0 0 8px 0;"><strong>Nachricht:</strong> ${error.message || 'Keine Nachricht'}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Fehler:</strong> ${esc(error.name) || 'Error'}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Nachricht:</strong> ${esc(error.message) || 'Keine Nachricht'}</p>
           <p style="margin: 0 0 8px 0;"><strong>Severity:</strong> ${severity}</p>
-          <p style="margin: 0 0 8px 0;"><strong>Route:</strong> ${context.route || 'Unbekannt'}</p>
-          <p style="margin: 0 0 8px 0;"><strong>Methode:</strong> ${context.method || 'Unbekannt'}</p>
-          <p style="margin: 0 0 8px 0;"><strong>User:</strong> ${context.userId || 'Nicht eingeloggt'}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Route:</strong> ${esc(context.route) || 'Unbekannt'}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Methode:</strong> ${esc(context.method) || 'Unbekannt'}</p>
+          <p style="margin: 0 0 8px 0;"><strong>User:</strong> ${nutzerZeile}</p>
+          <p style="margin: 0 0 8px 0;"><strong>Absender:</strong> ${esc(context.userAgent) || 'unbekannt'}</p>
+          <p style="margin: 0 0 8px 0;"><strong>IP:</strong> ${esc(context.ip) || 'unbekannt'}</p>
           <p style="margin: 0;"><strong>Zeitpunkt:</strong> ${new Date().toLocaleString('de-DE')}</p>
         </div>
 
@@ -178,7 +209,7 @@ async function sendErrorNotification(errorData) {
         ${error.stack ? `
           <details style="margin-top: 16px;">
             <summary style="cursor: pointer; color: #6b7280;">Stack Trace anzeigen</summary>
-            <pre style="background: #f3f4f6; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px; margin-top: 8px;">${error.stack}</pre>
+            <pre style="background: #f3f4f6; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px; margin-top: 8px;">${esc(error.stack)}</pre>
           </details>
         ` : ''}
       `
@@ -216,7 +247,12 @@ async function captureError(error, context = {}) {
         name: error.name || 'Error',
         message: error.message || 'Unknown error',
         stack: error.stack || null,
-        code: error.code || null
+        code: error.code || null,
+        // 20.08.2026: Beides fehlte und musste bei der Aufklaerung muehsam aus dem
+        // Stack Trace erschlossen werden. `type` setzt z.B. body-parser auf
+        // 'entity.parse.failed' — daran erkennt man einen Abbruch VOR der Route.
+        status: error.status || error.statusCode || null,
+        type: error.type || null
       },
       context: {
         route: context.route || null,
