@@ -544,12 +544,25 @@ export default function DashboardV2() {
   const isAdmin = user?.role === 'admin';
 
   // 🔐 If admin, show AdminDashboard
-  if (isAdmin) {
+  // 🧪 20.08.2026: Admins landen hier und sehen das Nutzer-Dashboard NIE — damit
+  // war der Erststart-Umschalter für Noah unerreichbar (er ist Admin). Deshalb
+  // hier ein eigener Einstieg: Schalter an → wir fallen bewusst durch zur
+  // Nutzer-Ansicht, wo der Erststart gerendert wird. Schalter aus → wie bisher.
+  if (isAdmin && !firstRunEnabled) {
     return (
       <DashboardLayout user={userData}>
         <Helmet>
           <title>Admin Dashboard | Contract AI</title>
         </Helmet>
+        {(canSeeDashboardFirstRun(user) || canSeeDashboardFirstRun(userData)) && (
+          <button
+            className={styles.firstRunToggle}
+            onClick={() => { setDashboardFirstRunEnabled(true); setFirstRunEnabled(true); }}
+            title="Nur für dich sichtbar"
+          >
+            🧪 Neuen Erststart ansehen (Vorschau)
+          </button>
+        )}
         <AdminDashboard />
       </DashboardLayout>
     );

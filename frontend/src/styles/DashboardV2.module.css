@@ -1286,8 +1286,12 @@
 
 /* 🧪 Umschalter neuer Erststart (20.08.2026) — nur Whitelist-Konten sehen ihn */
 .firstRunToggle {
+  /* inline-flex + align-self: funktioniert sowohl im Flex-Container des
+     Nutzer-Dashboards als auch im Admin-Layout (dort kein Flex-Elternteil) */
+  display: inline-flex;
+  align-items: center;
   align-self: flex-start;
-  margin-bottom: 12px;
+  margin: 0 0 12px 0;
   padding: 7px 14px;
   background: var(--surface);
   border: 1px dashed var(--gray-300);
