@@ -25,7 +25,6 @@ import { isProtectableDocType } from "../components/contractAnalysisV2/protectio
 import ContractAnalysis from "../components/ContractAnalysisSwitch";
 import MultiUploadResultNavigator from "../components/MultiUploadResultNavigator"; // 🆕 29.05.2026: Navigator-View ("X von N") ersetzt Grid-View
 import NewContractDetailsModal from "../components/NewContractDetailsModal"; // 🎨 NEW: Professional Contract Details Modal
-import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
 import ContractDetailModal from "../components/ContractDetailModal"; // 🎨 Contract Detail Modal (Signatures)
 // FolderBar removed - functionality moved to Enterprise Sidebar
 import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
@@ -766,14 +765,8 @@ export default function Contracts() {
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
   const [analyzingOverlay, setAnalyzingOverlay] = useState<{ show: boolean; contractName: string; pdfFile?: File; progress: number; stage?: string }>({ show: false, contractName: '', progress: 0 }); // ✅ Full-Screen Analyse-Overlay (📶 stage = echte Backend-Etappe)
 
-  // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
-  const [uploadSuccessModal, setUploadSuccessModal] = useState<{
-    show: boolean;
-    uploadedContracts: Array<{ _id: string; name: string; uploadedAt: string }>;
-  }>({
-    show: false,
-    uploadedContracts: []
-  });
+  // ℹ️ 20.08.2026: UploadSuccessModal aus dem Fluss entfernt (Doppel-Abfrage nach
+  // "Nur speichern") — Komponente existiert weiter für einfaches Zurückrollen.
 
   // 🔔 NEU: Reminder Settings Modal State
   const [reminderSettingsModal, setReminderSettingsModal] = useState<{
@@ -2916,15 +2909,20 @@ export default function Contracts() {
         triggerOnboardingSync();
 
         if (autoAnalyze) {
-          // 🚀 Default-Pfad: direkt analysieren (kein Zwischen-Modal) — exakt dieselbe
-          // bewährte Sequenz wie "Analysieren" im Erfolgs-Modal. Schließt das Aktivierungs-Leck.
+          // 🚀 Default-Pfad: direkt analysieren (kein Zwischen-Modal). Schließt das Aktivierungs-Leck.
           await analyzeUploadedContracts(uploadedContracts);
         } else {
-          // "Nur speichern": Erfolgs-Modal mit Analysieren/Überspringen-Wahl
-          setUploadSuccessModal({
-            show: true,
-            uploadedContracts
-          });
+          // 20.08.2026 (Noahs Test): "Nur speichern" tut sofort, was draufsteht.
+          // Vorher kam hier NOCHMAL ein Erfolgs-Modal mit derselben Analysieren/
+          // Speichern-Frage — Doppel-Abfrage, die Entscheidung fiel ja schon am
+          // Upload-Knopf. Rückweg bleibt: "Jetzt analysieren" an jedem
+          // un-analysierten Vertrag in der Liste.
+          toast.success(uploadedContracts.length === 1
+            ? `„${fixUtf8Display(uploadedContracts[0].name)}" gespeichert. Du kannst den Vertrag jederzeit in der Liste analysieren.`
+            : `${uploadedContracts.length} Verträge gespeichert. Du kannst sie jederzeit in der Liste analysieren.`);
+          clearAllUploadFiles();
+          await fetchContracts();
+          setActiveSection('contracts');
         }
       }
 
@@ -2933,12 +2931,6 @@ export default function Contracts() {
     }
   };
 
-  // ✅ FIXED: Analyse-Aktion aus Success Modal - NUTZT NEUE /api/analyze ROUTE!
-  const handleAnalyzeFromModal = async () => {
-    const contractsToAnalyze = uploadSuccessModal.uploadedContracts;
-    setUploadSuccessModal({ show: false, uploadedContracts: [] });
-    await analyzeUploadedContracts(contractsToAnalyze);
-  };
 
   // 🚀 Analysiert frisch hochgeladene Verträge über den bewährten uploadAndAnalyze-Pfad.
   // Wird genutzt vom Erfolgs-Modal ("Analysieren") UND vom Default-Upload ("Hochladen & analysieren").
@@ -3123,17 +3115,6 @@ export default function Contracts() {
   };
 
   // ✅ NEU: Skip-Aktion aus Success Modal
-  const handleSkipAnalysis = async () => {
-    setUploadSuccessModal({ show: false, uploadedContracts: [] });
-
-    // Clear upload files und refresh contracts list
-    clearAllUploadFiles();
-
-    // ✅ Wichtig: Warte auf fetchContracts, damit neue Verträge sichtbar werden
-    await fetchContracts();
-
-    setActiveSection('contracts');
-  };
 
   // ✅ NEU: Nachträgliche Analyse für bestehenden Vertrag
   const handleAnalyzeExistingContract = async (contract: Contract) => {
@@ -6783,16 +6764,6 @@ export default function Contracts() {
 
           {/* Duplikat-Modal wurde als Portal nach document.body verschoben (unterhalb) */}
 
-          {/* ✅ NEU: Upload Success Modal (Two-Step Upload Flow) */}
-          <UploadSuccessModal
-            isOpen={uploadSuccessModal.show}
-            onClose={() => setUploadSuccessModal({ show: false, uploadedContracts: [] })}
-            uploadedContracts={uploadSuccessModal.uploadedContracts}
-            onAnalyze={handleAnalyzeFromModal}
-            onSkip={handleSkipAnalysis}
-            analysisCount={userInfo.analysisCount}
-            analysisLimit={userInfo.analysisLimit}
-          />
       </div>
       {/* End of pageContainer */}
 
