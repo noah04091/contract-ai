@@ -155,17 +155,24 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       setDirection(1); // Forward animation
       setCurrentStep(prev => prev + 1);
     } else {
-      await completeOnboarding();
-      // ✅ User-Context aktualisieren damit Dashboard sofort aktuelle Daten hat
-      await refetchUser();
-      // 🎉 Celebrate onboarding completion with fireworks!
-      celebrate('onboarding-complete');
-      onClose?.();
-      // 🎓 Stufe 2: Wurde im Modal ein Vertrag hochgeladen, startet der Abschluss-
-      // Klick die erste Analyse (ContractsV2 ?analyze=-Effekt, exakt der Pfad des
-      // "Jetzt analysieren"-Knopfs inkl. Limit-Check). Ohne Upload wie bisher Dashboard.
-      navigate(uploadedContractId ? `/contracts?analyze=${uploadedContractId}` : '/dashboard');
+      await finishOnboarding(true);
     }
+  };
+
+  // 🎓 Abschluss des Onboardings. `startAnalysis` entscheidet, wohin es geht:
+  // mit Analyse (ContractsV2 ?analyze=-Effekt, exakt der Pfad des "Jetzt
+  // analysieren"-Knopfs inkl. Limit-Check) oder ohne (Dashboard).
+  // 20.08.2026 (Noahs Test): Wer im Modal hochgeladen hat, wird nicht mehr in die
+  // Analyse gedrängt — der Zweitweg "Später analysieren" steht gleichberechtigt
+  // daneben, der Vertrag ist ja gespeichert und jederzeit analysierbar.
+  const finishOnboarding = async (startAnalysis: boolean) => {
+    await completeOnboarding();
+    // ✅ User-Context aktualisieren damit Dashboard sofort aktuelle Daten hat
+    await refetchUser();
+    // 🎉 Celebrate onboarding completion with fireworks!
+    celebrate('onboarding-complete');
+    onClose?.();
+    navigate(startAnalysis && uploadedContractId ? `/contracts?analyze=${uploadedContractId}` : '/dashboard');
   };
 
   const handleBack = () => {
@@ -973,10 +980,14 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               <button className={styles.laterButton} onClick={handleNext}>
                 Später
               </button>
-              {/* Upload-Button triggert nur den File-Dialog, keine Navigation */}
+              {/* Upload-Button triggert nur den File-Dialog, keine Navigation.
+                  20.08.2026 (Noahs Test): Nach erfolgreichem Upload stand hier
+                  weiterhin "Datei auswählen" — verwirrend, weil die Datei ja
+                  schon oben lag. Jetzt zeigt der Knopf den erreichten Zustand
+                  und führt weiter (das Auto-Weiter nach 1,5s bleibt). */}
               <motion.button
                 className={styles.nextButton}
-                onClick={triggerFileInput}
+                onClick={uploadState === 'success' ? handleNext : triggerFileInput}
                 disabled={uploadState === 'uploading'}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -986,12 +997,34 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                     Wird hochgeladen...
                     <Loader2 size={18} className={styles.spinning} />
                   </>
+                ) : uploadState === 'success' ? (
+                  <>
+                    Weiter
+                    <ChevronRight size={18} />
+                  </>
                 ) : (
                   <>
                     Datei auswählen
                     <Upload size={18} />
                   </>
                 )}
+              </motion.button>
+            </div>
+          ) : currentStep === STEPS.length - 1 && uploadedContractId ? (
+            /* Abschluss MIT hochgeladenem Vertrag: Analyse empfohlen, aber der
+               Weg ohne Analyse steht gleichberechtigt daneben (Noahs Wunsch). */
+            <div className={styles.uploadActions}>
+              <button className={styles.laterButton} onClick={() => finishOnboarding(false)}>
+                Später analysieren
+              </button>
+              <motion.button
+                className={styles.nextButton}
+                onClick={handleNext}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Erste Analyse starten
+                <Search size={18} />
               </motion.button>
             </div>
           ) : (
@@ -1003,17 +1036,10 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               whileTap={{ scale: 0.98 }}
             >
               {currentStep === STEPS.length - 1 ? (
-                uploadedContractId ? (
-                  <>
-                    Erste Analyse starten
-                    <Search size={18} />
-                  </>
-                ) : (
-                  <>
-                    Zum Dashboard
-                    <Rocket size={18} />
-                  </>
-                )
+                <>
+                  Zum Dashboard
+                  <Rocket size={18} />
+                </>
               ) : (
                 <>
                   Weiter

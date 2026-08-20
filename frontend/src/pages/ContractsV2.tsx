@@ -4342,7 +4342,17 @@ export default function Contracts() {
               className={`${styles.sidebarResizeHandle} ${isResizing ? styles.resizing : ''}`}
               onMouseDown={handleSidebarResizeStart}
             />
-            <div className={styles.sidebarNav}>
+            {/* 🧭 20.08.2026 (Noahs Test): Ein Klick in die Seiten-Navigation muss die
+                Analyse-Ansicht verlassen. Vorher setzten die Knöpfe zwar Sektion und
+                Filter, aber `quickAnalysisModal.show` blieb true — die Analyse-Ansicht
+                überdeckte weiterhin alles, es „passierte nichts" (nur der Umweg über
+                eine andere Seite half, weil dabei der Zustand verloren ging).
+                Capture-Phase am Container, damit es für ALLE Einträge gilt (auch
+                Ordner und künftige) und vor deren eigenen Handlern greift. */}
+            <div
+              className={styles.sidebarNav}
+              onClickCapture={() => { if (quickAnalysisModal.show) { void closeQuickAnalysis(); } }}
+            >
               <p className={styles.sidebarTitle}>Navigation</p>
 
               {/* Main Nav Items */}

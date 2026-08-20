@@ -32,12 +32,25 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
-    // 🔧 CSS-Preload-Fehler ignorieren - diese sind nicht kritisch
-    // Die CSS-Dateien werden trotzdem über normale link-Tags geladen
-    if (error.message && (
-        error.message.includes('Unable to preload CSS') ||
-        error.message.includes('preload'))) {
-      // Wir setzen hasError auf false, damit die Komponente nicht die Fallback-UI rendert
+    const message = error?.message || '';
+
+    // ⚠️ 20.08.2026 (Root Cause "weiße Seite", Noahs Test): Der frühere Filter
+    // schluckte JEDEN Fehler, dessen Text irgendwo "preload" enthielt, und gab
+    // `hasError: false` zurück. Bei einem fehlgeschlagenen Modul-Nachladen nach
+    // einem Deploy heißt es aber z. B. "Unable to preload CSS for /assets/…" —
+    // die App rendert dann ohne die fehlende Komponente weiter und zeigt NICHTS
+    // (weiße Seite ohne jede Meldung, nur manueller Reload half).
+    // Jetzt: Nachlade-Fehler zählen als echter Fehler (componentDidCatch löst
+    // den Reload aus); nur ein reiner CSS-Preload-Hinweis bleibt harmlos.
+    const isModuleLoadError =
+      message.includes('Failed to fetch dynamically imported module') ||
+      message.includes('Importing a module script failed') ||
+      message.includes('error loading dynamically imported module') ||
+      message.includes('Loading chunk') ||
+      message.includes('ChunkLoadError');
+
+    if (!isModuleLoadError && message.includes('Unable to preload CSS')) {
+      // CSS lädt zusätzlich über normale link-Tags → unkritisch, App läuft weiter
       return { hasError: false };
     }
 
@@ -62,6 +75,8 @@ class ErrorBoundary extends Component<Props, State> {
     // Lösung: Hard Reload der Seite, damit neue Chunks geladen werden
     if (
       error.message.includes('Failed to fetch dynamically imported module') ||
+      error.message.includes('Importing a module script failed') ||
+      error.message.includes('error loading dynamically imported module') ||
       error.message.includes('Loading chunk') ||
       error.message.includes('Loading CSS chunk') ||
       error.message.includes('ChunkLoadError')
@@ -88,8 +103,10 @@ class ErrorBoundary extends Component<Props, State> {
       this.autoRecover();
     }
 
-    // 🔄 Auto-Recovery für CSS-Preload-Fehler (benign errors - CSS lädt via link tags)
-    if (error.message.includes('Unable to preload CSS') || error.message.includes('preload')) {
+    // 🔄 Auto-Recovery nur für echte CSS-Preload-Hinweise (CSS lädt via link tags).
+    // Bewusst NICHT mehr für jedes "preload" im Text — sonst versucht die App
+    // ein fehlendes Code-Paket dreimal vergeblich neu zu rendern (weiße Seite).
+    if (error.message.includes('Unable to preload CSS')) {
       console.log('🔧 Auto-Recovery für CSS-Preload-Fehler gestartet...');
       this.autoRecover();
     }
