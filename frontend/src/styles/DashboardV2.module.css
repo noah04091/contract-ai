@@ -1284,6 +1284,28 @@
    ONBOARDING - Welcome Screen für neue User
    ============================================ */
 
+/* 🧪 Umschalter neuer Erststart (20.08.2026) — nur Whitelist-Konten sehen ihn */
+.firstRunToggle {
+  align-self: flex-start;
+  margin-bottom: 12px;
+  padding: 7px 14px;
+  background: var(--surface);
+  border: 1px dashed var(--gray-300);
+  border-radius: var(--radius-full);
+  font-family: var(--font);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+}
+
+.firstRunToggle:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  border-style: solid;
+}
+
 .onboarding {
   background: var(--surface);
   border: 1px solid var(--border);

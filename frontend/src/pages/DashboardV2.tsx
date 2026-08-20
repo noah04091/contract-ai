@@ -29,6 +29,8 @@ import { fixUtf8Display } from "../utils/textUtils";
 import { DashboardLayout } from "../components/DashboardV2";
 import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
 import { OnboardingChecklist } from "../components/Onboarding"; // 🎓 Onboarding Checklist
+import DashboardFirstRun from "../components/DashboardV2/DashboardFirstRun"; // 🧪 Neuer Erststart (hinter Schalter)
+import { canSeeDashboardFirstRun, isDashboardFirstRunEnabled, setDashboardFirstRunEnabled } from "../utils/featureFlags";
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 
 // ============================================
@@ -233,6 +235,8 @@ export default function DashboardV2() {
       return false;
     }
   });
+  // 🧪 Neuer Erststart (20.08.2026) — nur Whitelist, Standard aus
+  const [firstRunEnabled, setFirstRunEnabled] = useState<boolean>(false);
   const [summaryStats, setSummaryStats] = useState<{total: number; active: number; expiringSoon: number; expired: number; generated: number; analyzed: number} | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -439,6 +443,11 @@ export default function DashboardV2() {
   // EVENT HANDLERS
   // ============================================
 
+  // 🧪 Schalter-Stand einlesen, sobald der Nutzer bekannt ist (nur Whitelist)
+  useEffect(() => {
+    setFirstRunEnabled(isDashboardFirstRunEnabled(user));
+  }, [user]);
+
   const handleRefresh = () => {
     fetchData(true);
   };
@@ -604,15 +613,38 @@ export default function DashboardV2() {
           </div>
         </header>
 
+        {/* 🧪 Umschalter für den neuen Erststart — nur für Konten aus der
+            Whitelist sichtbar (featureFlags.ts). Erlaubt den direkten Vergleich
+            alt/neu am echten Konto; Rollback = Schalter aus. */}
+        {canSeeDashboardFirstRun(user) && stats.total === 0 && (
+          <button
+            className={styles.firstRunToggle}
+            onClick={() => { setDashboardFirstRunEnabled(!firstRunEnabled); setFirstRunEnabled(v => !v); }}
+            title="Nur für dich sichtbar"
+          >
+            {firstRunEnabled ? '← Zurück zur bisherigen Ansicht' : '🧪 Neuen Erststart ausprobieren'}
+          </button>
+        )}
+
         {/* ============================================
             ONBOARDING CHECKLIST - For guided setup
+            (im neuen Erststart übernimmt die Einrichtungs-Leiste diese Rolle)
             ============================================ */}
-        <OnboardingChecklist className={styles.onboardingChecklist} />
+        {!(firstRunEnabled && stats.total === 0) && (
+          <OnboardingChecklist className={styles.onboardingChecklist} />
+        )}
 
         {/* ============================================
             ONBOARDING - Für neue User ohne Verträge
             ============================================ */}
-        {stats.total === 0 && !onboardingDismissed ? (
+        {firstRunEnabled && stats.total === 0 ? (
+          <DashboardFirstRun
+            userName={userName}
+            analysisUsage={analysisUsage}
+            checklist={user?.onboarding?.checklist}
+            onUploaded={() => { fetchData(true); }}
+          />
+        ) : stats.total === 0 && !onboardingDismissed ? (
           <div className={styles.onboarding} style={{ position: 'relative' }}>
             <button
               onClick={handleDismissOnboarding}
