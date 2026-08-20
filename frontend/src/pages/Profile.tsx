@@ -10,6 +10,7 @@ import {
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";
 import NotificationSettingsModal from "../components/NotificationSettingsModal";
+import DeleteAccountModal from "../components/DeleteAccountModal";
 
 interface NotificationProps {
   message: string;
@@ -69,6 +70,7 @@ export default function Profile() {
 
   // Notification Settings Modal State
   const [showNotificationSettings, setShowNotificationSettings] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Onboarding/Tour Reset State
   const [isResettingTour, setIsResettingTour] = useState(false);
@@ -465,33 +467,12 @@ export default function Profile() {
     }
   };
 
-  const handleAccountDelete = async () => {
-    const confirmDelete = window.confirm(
-      "Willst du deinen Account wirklich löschen? Alle Verträge gehen verloren!"
-    );
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch("/api/auth/delete", {
-        method: "DELETE",
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        window.alert("Account gelöscht. Bis bald!");
-        window.location.href = "/";
-      } else {
-        setNotification({
-          message: "Fehler beim Löschen des Accounts",
-          type: "error"
-        });
-      }
-    } catch {
-      setNotification({
-        message: "Fehler beim Löschen des Accounts",
-        type: "error"
-      });
-    }
+  // 🚪 20.08.2026: Statt eines nackten window.confirm führt jetzt ein Dialog durch die
+  // Löschung — erst was im Konto steckt, dann der freiwillige Grund, dann das
+  // persönliche Rückkehr-Angebot, dann die Bestätigung. Der eigentliche Löschaufruf
+  // liegt im Dialog, hier wird er nur geöffnet.
+  const handleAccountDelete = () => {
+    setShowDeleteModal(true);
   };
 
   const handleUpgrade = async () => {
@@ -1430,6 +1411,19 @@ export default function Profile() {
           isOpen={showNotificationSettings}
           onClose={() => setShowNotificationSettings(false)}
           onSaved={() => setNotification({ message: "Benachrichtigungseinstellungen gespeichert", type: "success" })}
+        />
+
+        {/* Kontolöschung mit Halteangebot */}
+        <DeleteAccountModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onDeleted={() => { window.location.href = "/"; }}
+          onOpenNotificationSettings={() => {
+            setShowDeleteModal(false);
+            setShowNotificationSettings(true);
+          }}
+          onExportData={handleExportData}
+          isExporting={isExporting}
         />
       </div>
     </>

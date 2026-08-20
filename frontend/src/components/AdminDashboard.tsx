@@ -164,6 +164,12 @@ interface DeletedAccount {
   deletedBy: 'user' | 'admin';
   deletedByAdmin?: string;
   verified: boolean;
+  // 📝 Freiwillige Angaben aus dem Löschdialog (seit 20.08.2026)
+  deletionReason?: string | null;
+  deletionReasonLabel?: string | null;
+  deletionReasonText?: string | null;
+  retentionCode?: string | null;
+  offerDeclined?: boolean;
 }
 
 interface DeletedAccountsStats {
@@ -175,6 +181,16 @@ interface DeletedAccountsStats {
     avgAccountAgeDays: number;
     deviceBreakdown: Array<{ device: string; count: number }>;
     planBreakdown: Array<{ plan: string; count: number }>;
+    // 📝 Warum sie gehen (90 Tage)
+    reasonBreakdown?: Array<{ key: string; label: string; count: number }>;
+    reasonsAnswered?: number;
+    reasonsUnanswered?: number;
+    reasonTexts?: Array<{
+      text: string;
+      reasonLabel: string | null;
+      plan: string;
+      deletedAt: string;
+    }>;
   };
   accounts: DeletedAccount[];
 }
@@ -1298,7 +1314,9 @@ export default function AdminDashboard() {
       { key: 'accountAgeInDays', label: 'Lebensdauer (Tage)' },
       { key: 'deletedBy', label: 'Gelöscht von' },
       { key: 'registrationDevice', label: 'Registrierungs-Gerät' },
-      { key: 'verified', label: 'War verifiziert' }
+      { key: 'verified', label: 'War verifiziert' },
+      { key: 'deletionReason', label: 'Grund' },
+      { key: 'deletionReasonText', label: 'Freitext' }
     ];
 
     const exportData = deletedAccountsData.accounts.map(acc => ({
@@ -1312,7 +1330,9 @@ export default function AdminDashboard() {
       accountAgeInDays: acc.accountAgeInDays ?? 'Unbekannt',
       deletedBy: acc.deletedBy === 'user' ? 'Selbst' : `Admin (${acc.deletedByAdmin || ''})`,
       registrationDevice: acc.registrationDevice?.device || 'Unbekannt',
-      verified: acc.verified ? 'Ja' : 'Nein'
+      verified: acc.verified ? 'Ja' : 'Nein',
+      deletionReason: acc.deletionReasonLabel || 'Nicht beantwortet',
+      deletionReasonText: acc.deletionReasonText || ''
     }));
 
     const csv = convertToCSV(exportData, headers);
@@ -2962,6 +2982,53 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {/* 📝 Warum sie gehen — seit 20.08.2026 fragt der Löschdialog freiwillig nach dem Grund */}
+            {deletedAccountsData?.stats.reasonBreakdown && deletedAccountsData.stats.reasonBreakdown.length > 0 && (
+              <div className={styles.chartsRow}>
+                <div className={styles.chartCard}>
+                  <h3>
+                    Warum sie gehen (90 Tage) · {deletedAccountsData.stats.reasonsAnswered || 0} von{' '}
+                    {(deletedAccountsData.stats.reasonsAnswered || 0) + (deletedAccountsData.stats.reasonsUnanswered || 0)} beantwortet
+                  </h3>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <BarChart data={deletedAccountsData.stats.reasonBreakdown} layout="vertical" margin={{ left: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" allowDecimals={false} />
+                      <YAxis type="category" dataKey="label" width={140} tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Bar dataKey="count" fill="#3b82f6" name="Anzahl" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {deletedAccountsData.stats.reasonTexts && deletedAccountsData.stats.reasonTexts.length > 0 && (
+                  <div className={styles.chartCard}>
+                    <h3>Was sie geschrieben haben (letzte 20)</h3>
+                    <div className={styles.tableContainer} style={{ maxHeight: 250, overflowY: 'auto' }}>
+                      <table className={styles.userTable}>
+                        <thead>
+                          <tr>
+                            <th>Datum</th>
+                            <th>Grund</th>
+                            <th>Freitext</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {deletedAccountsData.stats.reasonTexts.map((t, i) => (
+                            <tr key={i}>
+                              <td>{formatDate(t.deletedAt)}</td>
+                              <td>{t.reasonLabel || '—'}</td>
+                              <td>{t.text}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Deleted Accounts Table */}
             <div className={styles.tableCard}>
               <div className={styles.tabHeader}>
@@ -2987,6 +3054,7 @@ export default function AdminDashboard() {
                         <th>Gelöscht von</th>
                         <th>Lebensdauer</th>
                         <th>Analysen</th>
+                        <th>Grund</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3052,6 +3120,16 @@ export default function AdminDashboard() {
                             )}
                           </td>
                           <td>{account.analysisCount}</td>
+                          <td>
+                            {account.deletionReasonLabel ? (
+                              <span title={account.deletionReasonText || undefined}>
+                                {account.deletionReasonLabel}
+                                {account.deletionReasonText && <span className={styles.timeDetail}>{account.deletionReasonText}</span>}
+                              </span>
+                            ) : (
+                              <span className={styles.noData}>—</span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

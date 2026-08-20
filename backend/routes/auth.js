@@ -7,7 +7,7 @@ const crypto = require("crypto");
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const verifyAdmin = require("../middleware/verifyAdmin"); // 🔐 Admin-only access
-const { authLimiter } = require("../middleware/rateLimiter"); // 🛡️ Brute-Force-Schutz
+const { authLimiter, sensitiveLimiter } = require("../middleware/rateLimiter"); // 🛡️ Brute-Force-Schutz
 const sendEmail = require("../utils/sendEmail");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
@@ -768,11 +768,203 @@ router.put("/change-password", verifyToken, async (req, res) => {
 });
 
 // 🗑️ Account löschen (mit Archivierung für Admin-Übersicht)
-router.delete("/delete", verifyToken, async (req, res) => {
+// ============================================================
+// 🚪 KONTOLÖSCHUNG MIT HALTEANGEBOT (20.08.2026)
+//
+// Vorher: ein `window.confirm` im Profil, ein Klick, Konto weg. Von 93 gelöschten
+// Konten wussten wir bei KEINEM einzigen, warum. 73 davon haben selbst gelöscht,
+// die meisten am Tag der Registrierung nach ein bis zwei Analysen.
+//
+// Jetzt: Der Dialog zeigt erst, was im Konto steckt, fragt dann freiwillig nach dem
+// Grund und stellt ein persönliches Rückkehr-Angebot aus. Nichts davon darf die
+// Löschung behindern (DSGVO Art. 17) — alle Schritte sind überspringbar und jeder
+// Nebenschritt ist fail-open.
+// ============================================================
+
+// Feste Liste, damit die Gründe auswertbar bleiben statt als Freitext zu zerfasern.
+// Eine Quelle für alle: der Dialog holt sie über deletion-summary, diese Route prüft
+// dagegen, das Admin-Dashboard beschriftet damit seine Auswertung.
+const {
+  DELETION_REASONS: LOESCHGRUENDE,
+  DELETION_REASON_KEYS: LOESCHGRUND_KEYS,
+  REASON_TEXT_MAX_LENGTH: FREITEXT_MAXLAENGE
+} = require("../constants/deletionReasons");
+
+const PLAN_LABELS = { free: 'Starter', business: 'Business', enterprise: 'Enterprise', premium: 'Enterprise' };
+
+// 📊 Zahlen für den ersten Bildschirm des Löschdialogs.
+// Bewusst schlank: vier Zählungen plus (nur bei aktivem Abo) ein Stripe-Aufruf für
+// das Laufzeitende. Wer mit laufendem Abo löscht, verliert bezahlte Zeit — das muss
+// er vorher sehen, sonst entsteht daraus später eine Rückbuchung.
+router.get("/deletion-summary", verifyToken, sensitiveLimiter, async (req, res) => {
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+
+    const uidVariants = [req.user.userId];
+    try { uidVariants.push(new ObjectId(req.user.userId)); } catch (_) { /* ungültige id ignorieren */ }
+
+    const [contracts, watchedContractIds] = await Promise.all([
+      contractsCollection.countDocuments({ userId: { $in: uidVariants } }),
+      dbInstance.collection("contract_events").distinct("contractId", {
+        userId: { $in: uidVariants },
+        status: "scheduled",
+        date: { $gte: new Date() }
+      })
+    ]);
+
+    const plan = user.subscriptionPlan || 'free';
+    const aboAktiv = user.subscriptionActive === true && plan !== 'free';
+
+    // Laufzeitende steht nicht in der Datenbank, nur bei Stripe. Fail-safe: ohne Datum
+    // weiter, dann nennt der Dialog eben nur die Tatsache, dass das Abo endet.
+    let currentPeriodEnd = null;
+    let cancelAtPeriodEnd = user.cancelAtPeriodEnd === true;
+    if (aboAktiv && user.stripeSubscriptionId && process.env.STRIPE_SECRET_KEY) {
+      try {
+        const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+        const sub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+        const endeSek = sub.items?.data?.[0]?.current_period_end || sub.current_period_end;
+        if (endeSek) currentPeriodEnd = new Date(endeSek * 1000);
+        cancelAtPeriodEnd = sub.cancel_at_period_end === true;
+      } catch (stripeErr) {
+        console.warn(`⚠️ [DELETE-SUMMARY] Laufzeitende nicht abrufbar: ${stripeErr.message}`);
+      }
+    }
+
+    res.json({
+      contracts,
+      watchedContracts: watchedContractIds.length,
+      analyses: user.analysisCount || 0,
+      daysWithUs: user.createdAt
+        ? Math.floor((Date.now() - new Date(user.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+        : null,
+      subscription: {
+        active: aboAktiv,
+        plan,
+        planLabel: PLAN_LABELS[plan] || plan,
+        currentPeriodEnd,
+        cancelAtPeriodEnd
+      },
+      // Steuert nur die Tonlage des Angebots: "komm zurück" oder "probier es doch mal aus"
+      everPaid: Boolean(user.premiumSince || user.stripeSubscriptionId || user.subscriptionStatus === 'canceled'),
+      reasons: LOESCHGRUENDE
+    });
+  } catch (err) {
+    console.error("❌ Fehler bei deletion-summary:", err);
+    res.status(500).json({ message: "Serverfehler beim Laden der Kontoübersicht" });
+  }
+});
+
+// 🎟️ Persönliches Rückkehr-Angebot ausstellen (20 % auf 3 Monate, 14 Tage gültig,
+// einmal einlösbar). Idempotent: Ein bereits ausgestelltes, noch gültiges Angebot
+// wird erneut zurückgegeben, damit Doppelklicks keine Code-Halde erzeugen.
+router.post("/retention-offer", verifyToken, sensitiveLimiter, async (req, res) => {
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+
+    const bestehend = user.retentionOffer;
+    const nochGueltig = bestehend?.expiresAt && new Date(bestehend.expiresAt).getTime() > Date.now() + 24 * 60 * 60 * 1000;
+    if (bestehend?.code && nochGueltig) {
+      return res.json({ code: bestehend.code, expiresAt: bestehend.expiresAt, reused: true });
+    }
+
+    const { createPersonalWinbackCode } = require("../utils/winbackPromo");
+    const angebot = await createPersonalWinbackCode({
+      email: user.email,
+      stripeCustomerId: user.stripeCustomerId || null,
+      userId: user._id.toString(),
+      anlass: "loeschung"
+    });
+
+    // Kein Code (Stripe streikt): Der Dialog zeigt dann einfach keinen an und die
+    // Löschung geht trotzdem weiter. Kein Fehler für den Nutzer.
+    if (!angebot) return res.json({ code: null, expiresAt: null, reused: false });
+
+    const gespeichert = {
+      code: angebot.code,
+      promotionCodeId: angebot.promotionCodeId,
+      expiresAt: angebot.expiresAt,
+      issuedAt: new Date(),
+      anlass: "loeschung"
+    };
+    await usersCollection.updateOne({ _id: user._id }, { $set: { retentionOffer: gespeichert } });
+
+    res.json({ code: angebot.code, expiresAt: angebot.expiresAt, reused: angebot.wiederverwendet === true });
+  } catch (err) {
+    console.error("❌ Fehler beim Ausstellen des Rückkehr-Angebots:", err);
+    // Auch hier kein 500: Ein fehlendes Angebot darf den Löschweg nicht blockieren.
+    res.json({ code: null, expiresAt: null, reused: false });
+  }
+});
+
+// 📧 Abschiedsmail: Bestätigung der Löschung, mit dem persönlichen Code als Beigabe.
+// Transaktional, nicht werblich — sie bestätigt einen Vorgang, den der Nutzer selbst
+// ausgelöst hat. Muss RAUS, BEVOR der Datensatz verschwindet.
+function buildGoodbyeEmail(user, { contractCount, aboBeendet, angebot }) {
+  const firstName = user.firstName || (user.name ? user.name.split(' ')[0] : '') || '';
+  const greeting = firstName ? `Hallo ${firstName},` : 'Hallo,';
+  const gueltigBis = angebot?.expiresAt
+    ? new Date(angebot.expiresAt).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : null;
+
+  const angebotsBlock = angebot?.code ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
+      <tr>
+        <td style="padding: 24px; text-align: center;">
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1d4ed8;">Dein pers&ouml;nlicher Code${gueltigBis ? ` &middot; g&uuml;ltig bis ${gueltigBis}` : ''}</div>
+          <div style="margin-top: 10px; font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.4px;">20&thinsp;% Rabatt, 3 Monate lang</div>
+          <div style="margin-top: 8px; font-size: 14px; line-height: 1.6; color: #334155;">Falls du zur&uuml;ckkommen m&ouml;chtest, l&ouml;st du damit 3 Monate lang 20&thinsp;% auf Business oder Enterprise ein. Der Code geh&ouml;rt nur dir und ist einmal einl&ouml;sbar.</div>
+          <div style="margin-top: 16px; display: inline-block; padding: 10px 20px; background-color: #ffffff; border: 1px dashed #2563eb; border-radius: 8px;">
+            <div style="font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #64748b;">Dein Code</div>
+            <div style="font-size: 20px; font-weight: 800; letter-spacing: 3px; color: #1e3a8a;">${angebot.code}</div>
+          </div>
+        </td>
+      </tr>
+    </table>` : '';
+
+  return generateEmailTemplate({
+    title: "Dein Konto wurde gelöscht",
+    preheader: angebot?.code
+      ? "Alles gelöscht wie gewünscht. Dein persönlicher Rückkehr-Code liegt bei."
+      : "Alles gelöscht wie gewünscht.",
+    body: `
+      <p style="margin: 0 0 16px 0;">${greeting}</p>
+      <p style="margin: 0 0 16px 0;">dein Contract AI Konto ist gel&ouml;scht. Das ist erledigt:</p>
+      <ul style="margin: 0 0 20px 0; padding-left: 20px; color: #334155; line-height: 1.7;">
+        <li>${contractCount} ${contractCount === 1 ? 'Vertrag wurde' : 'Vertr&auml;ge wurden'} mit allen Analysen gel&ouml;scht</li>
+        <li>Alle Fristen und Erinnerungen sind entfernt</li>
+        ${aboBeendet ? '<li>Dein Abo wurde beendet, es wird nichts mehr abgebucht</li>' : ''}
+        <li>Deine Adresse ist aus allen Verteilern entfernt</li>
+      </ul>
+      ${angebotsBlock}
+      <p style="margin: 0;">Danke, dass du Contract AI ausprobiert hast.</p>
+    `,
+    ...(angebot?.code ? {
+      cta: {
+        text: "Angebot ansehen",
+        url: `https://contract-ai.de/pricing?code=${encodeURIComponent(angebot.code)}`
+      }
+    } : {})
+  });
+}
+
+router.delete("/delete", verifyToken, sensitiveLimiter, async (req, res) => {
   // 📱 Geräteinformationen beim Löschen erfassen
   const userAgent = req.headers['user-agent'] || '';
   const deviceInfo = parseDeviceInfo(userAgent);
   const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'Unbekannt';
+
+  // 📝 Freiwilliger Löschgrund aus dem Dialog. Beides darf fehlen — niemand wird zur
+  // Antwort gezwungen. Der Schlüssel wird gegen die feste Liste geprüft, damit die
+  // Auswertung im Admin sauber bleibt; der Freitext wird gekappt.
+  const roherGrund = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+  const deletionReason = LOESCHGRUND_KEYS.has(roherGrund) ? roherGrund : null;
+  const deletionReasonText = typeof req.body?.reasonText === 'string'
+    ? req.body.reasonText.trim().slice(0, FREITEXT_MAXLAENGE) || null
+    : null;
+  const offerDeclined = req.body?.offerDeclined === true;
 
   try {
     // User-Daten holen bevor gelöscht wird
@@ -829,7 +1021,17 @@ router.delete("/delete", verifyToken, async (req, res) => {
       // 💳 18.08.2026: Stripe-Spur für Abrechnungs-/Dispute-Forensik — die Customer-ID
       // fehlte im Archiv bisher komplett und musste im Dispute-Fall manuell gesucht werden.
       stripeCustomerId: user.stripeCustomerId || null,
-      stripeCancellation
+      stripeCancellation,
+      // 📝 20.08.2026: Warum gehen die Leute? Bis heute wussten wir es bei keinem
+      // einzigen der 93 gelöschten Konten. Beide Felder sind freiwillig und dürfen
+      // null sein; `null` heißt "nicht beantwortet", nicht "kein Grund".
+      deletionReason,
+      deletionReasonText,
+      // 🎟️ Ausgestelltes Rückkehr-Angebot, damit eine spätere Einlösung diesem
+      // Abschied zugeordnet werden kann. `offerDeclined` trennt "gesehen und
+      // übergangen" von "nie gesehen" (etwa weil Stripe streikte).
+      retentionOffer: user.retentionOffer || null,
+      offerDeclined
     };
 
     await deletedAccountsCollection.insertOne(deletedAccountRecord);
@@ -859,6 +1061,35 @@ router.delete("/delete", verifyToken, async (req, res) => {
       { _id: new ObjectId(req.user.userId), email: req.user.email },
       'free'
     );
+    // 📧 Abschiedsmail VOR dem Löschen — danach kennen wir die Adresse nur noch im
+    // Archiv, und dort soll sie für nichts weiter verwendet werden. Ein Kontakt,
+    // transaktional, mit dem persönlichen Code darin. Scheitert die Mail, läuft die
+    // Löschung trotzdem durch: der Code stand bereits im Dialog auf dem Bildschirm.
+    try {
+      const aboBeendet = Boolean(
+        stripeCancellation?.endOfPeriod?.length || stripeCancellation?.canceledNow?.length
+      );
+      await sendEmail({
+        to: user.email,
+        subject: "Dein Contract AI Konto wurde gelöscht",
+        html: buildGoodbyeEmail(user, {
+          contractCount,
+          aboBeendet,
+          angebot: user.retentionOffer || null
+        })
+      });
+      console.log(`📧 Abschiedsmail an ${user.email} verschickt`);
+    } catch (mailErr) {
+      console.error("❌ Abschiedsmail fehlgeschlagen (Löschung läuft weiter):", mailErr.message);
+      try {
+        require("../services/errorMonitoring").captureError(mailErr, {
+          severity: "low",
+          route: "account-deletion/goodbye-mail",
+          userEmail: user.email
+        });
+      } catch (_) { /* Alarmierung ist nie wichtiger als die Löschung */ }
+    }
+
     await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
 
     res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);

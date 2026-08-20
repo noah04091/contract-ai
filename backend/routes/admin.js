@@ -841,6 +841,39 @@ router.get("/deleted-accounts", verifyToken, verifyAdmin, async (req, res) => {
       { $sort: { count: -1 } }
     ]).toArray();
 
+    // 📝 20.08.2026: Löschgründe nach Häufigkeit, rollierend über 90 Tage.
+    // Vorher wussten wir bei KEINEM der gelöschten Konten, warum. Der Zeitraum ist
+    // bewusst begrenzt: Alt-Datensätze haben gar kein Grund-Feld und würden die
+    // Verteilung sonst dauerhaft mit "nicht beantwortet" verwässern.
+    const { DELETION_REASON_SHORT } = require("../constants/deletionReasons");
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const reasonRaw = await deletedAccountsCollection.aggregate([
+      { $match: { accountDeletedAt: { $gte: ninetyDaysAgo } } },
+      { $group: { _id: '$deletionReason', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]).toArray();
+
+    const reasonBreakdown = reasonRaw
+      .filter(r => r._id)
+      .map(r => ({
+        key: r._id,
+        label: DELETION_REASON_SHORT[r._id] || r._id,
+        count: r.count
+      }));
+    const reasonsUnanswered = reasonRaw.find(r => !r._id)?.count || 0;
+    const reasonsAnswered = reasonBreakdown.reduce((s, r) => s + r.count, 0);
+
+    // Freitexte separat: das eigentlich Aufschlussreiche, aber nur die letzten 20,
+    // damit die Antwort nicht ausufert.
+    const reasonTexts = await deletedAccountsCollection
+      .find({ deletionReasonText: { $ne: null }, accountDeletedAt: { $gte: ninetyDaysAgo } })
+      .project({ deletionReasonText: 1, deletionReason: 1, accountDeletedAt: 1, subscriptionPlan: 1 })
+      .sort({ accountDeletedAt: -1 })
+      .limit(20)
+      .toArray();
+
     res.json({
       success: true,
       stats: {
@@ -856,6 +889,16 @@ router.get("/deleted-accounts", verifyToken, verifyAdmin, async (req, res) => {
         planBreakdown: planBreakdown.map(p => ({
           plan: p._id || 'free',
           count: p.count
+        })),
+        // 📝 Warum die Leute gehen (90 Tage)
+        reasonBreakdown,
+        reasonsAnswered,
+        reasonsUnanswered,
+        reasonTexts: reasonTexts.map(t => ({
+          text: t.deletionReasonText,
+          reasonLabel: DELETION_REASON_SHORT[t.deletionReason] || t.deletionReason || null,
+          plan: t.subscriptionPlan || 'free',
+          deletedAt: t.accountDeletedAt
         }))
       },
       accounts: deletedAccounts.map(acc => ({
@@ -873,7 +916,16 @@ router.get("/deleted-accounts", verifyToken, verifyAdmin, async (req, res) => {
         deletionDevice: acc.deletionDevice,
         deletedBy: acc.deletedBy,
         deletedByAdmin: acc.deletedByAdmin,
-        verified: acc.verified
+        verified: acc.verified,
+        // 📝 Freiwillige Angaben aus dem Löschdialog (null = nicht beantwortet)
+        deletionReason: acc.deletionReason || null,
+        deletionReasonLabel: acc.deletionReason
+          ? (DELETION_REASON_SHORT[acc.deletionReason] || acc.deletionReason)
+          : null,
+        deletionReasonText: acc.deletionReasonText || null,
+        // 🎟️ Ausgestelltes Rückkehr-Angebot, falls vorhanden
+        retentionCode: acc.retentionOffer?.code || null,
+        offerDeclined: acc.offerDeclined === true
       }))
     });
 

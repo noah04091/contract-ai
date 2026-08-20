@@ -250,41 +250,54 @@ function generateWinbackInactiveEmail(user, context = {}) {
 
 /**
  * Generate "Win-back Follow-up" Email (3 Tage nach Kündigung)
- * Zweiter, sanfter Anstoß mit dem einmaligen COMEBACK20-Angebot.
+ * Zweiter, sanfter Anstoß mit dem persönlichen Rückkehr-Angebot.
+ *
+ * 🎟️ 20.08.2026: Der Code ist nicht mehr der pauschale "COMEBACK20", sondern der
+ * persönliche, den die Kündigungs-Mail bereits genannt hat (derselbe, nicht ein
+ * zweiter). Ohne Code fällt der Angebotsblock weg und die Mail bleibt trotzdem
+ * sinnvoll: ein freundliches Nachhaken.
  */
-function generateWinbackCanceledEmail(user) {
+function generateWinbackCanceledEmail(user, rabattCode = null, gueltigBis = null) {
   const firstName = user.firstName || user.name?.split(' ')[0] || '';
   const greeting = firstName ? `Hallo ${firstName},` : 'Hallo,';
 
-  const body = `
-    <p style="margin: 0 0 16px 0;">${greeting}</p>
-    <p style="margin: 0 0 16px 0;">vor ein paar Tagen wurde dein Contract AI Abo beendet. Wir wollten nur kurz nachhaken: Dein persönliches Rückkehr-Angebot gilt noch.</p>
-    <p style="margin: 0 0 20px 0;">Falls du zurück möchtest, kommst du mit einem Klick genau dorthin, wo du aufgehört hast. Deine Verträge und Daten sind alle noch da.</p>
-
+  const angebotsBlock = rabattCode ? `
     <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 20px 0; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px;">
       <tr>
         <td style="padding: 24px; text-align: center;">
-          <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1d4ed8;">Nur noch kurze Zeit &middot; einmalig f&uuml;r dich</div>
+          <div style="font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #1d4ed8;">${gueltigBis ? `G&uuml;ltig bis ${gueltigBis}` : 'Nur noch kurze Zeit'} &middot; einmalig f&uuml;r dich</div>
           <div style="margin-top: 10px; font-size: 22px; font-weight: 800; color: #0f172a; letter-spacing: -0.4px;">20&thinsp;% Rabatt, 3 Monate lang</div>
           <div style="margin-top: 8px; font-size: 14px; line-height: 1.6; color: #334155;">Komm zur&uuml;ck und sichere dir 3 Monate lang 20&thinsp;% auf Business oder Enterprise. Jederzeit k&uuml;ndbar.</div>
           <div style="margin-top: 16px; display: inline-block; padding: 10px 20px; background-color: #ffffff; border: 1px dashed #2563eb; border-radius: 8px;">
             <div style="font-size: 9px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #64748b;">Dein Code</div>
-            <div style="font-size: 20px; font-weight: 800; letter-spacing: 5px; color: #1e3a8a;">COMEBACK20</div>
+            <div style="font-size: 20px; font-weight: 800; letter-spacing: 3px; color: #1e3a8a;">${rabattCode}</div>
           </div>
         </td>
       </tr>
     </table>
+  ` : '';
+
+  const body = `
+    <p style="margin: 0 0 16px 0;">${greeting}</p>
+    <p style="margin: 0 0 16px 0;">vor ein paar Tagen wurde dein Contract AI Abo beendet.${rabattCode ? ' Wir wollten nur kurz nachhaken: Dein persönliches Rückkehr-Angebot gilt noch.' : ' Wir wollten nur kurz nachhaken.'}</p>
+    <p style="margin: 0 0 20px 0;">Falls du zurück möchtest, kommst du mit einem Klick genau dorthin, wo du aufgehört hast. Deine Verträge und Daten sind alle noch da.</p>
+
+    ${angebotsBlock}
 
     <p style="margin: 0;">Kein Druck. Wenn du bleiben möchtest, wo du bist, ist das völlig in Ordnung.</p>
   `;
 
   return generateEmailTemplate({
-    title: 'Dein Angebot wartet noch',
-    preheader: 'Dein persönliches Rückkehr-Angebot: 20% Rabatt für 3 Monate mit Code COMEBACK20.',
+    title: rabattCode ? 'Dein Angebot wartet noch' : 'Deine Verträge warten noch',
+    preheader: rabattCode
+      ? `Dein persönliches Rückkehr-Angebot: 20% Rabatt für 3 Monate mit Code ${rabattCode}.`
+      : 'Deine Verträge und Daten sind weiterhin gespeichert.',
     body,
     cta: {
-      text: 'Angebot einlösen',
-      url: 'https://contract-ai.de/pricing?code=COMEBACK20'
+      text: rabattCode ? 'Angebot einlösen' : 'Zu Contract AI',
+      url: rabattCode
+        ? `https://contract-ai.de/pricing?code=${encodeURIComponent(rabattCode)}`
+        : 'https://contract-ai.de/pricing'
     },
     unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing')
   });
@@ -508,8 +521,46 @@ async function sendCanceledWinbackEmail(db, user) {
       return { sent: false, reason: 'cooldown_or_optout' };
     }
 
-    const html = generateWinbackCanceledEmail(user);
-    const subject = 'Dein 20%-Angebot wartet noch';
+    // 🎟️ Denselben persönlichen Code nennen, den die Kündigungs-Mail schon genannt hat.
+    // Er steht am Konto; fehlt er (Altfall oder Stripe streikte damals), holen wir einen
+    // nach — createPersonalWinbackCode findet einen laufenden Code wieder, statt einen
+    // zweiten auszustellen. Ohne Code geht die Mail ohne Angebotsblock raus.
+    let rabattCode = user.retentionOffer?.code || null;
+    let ablauf = user.retentionOffer?.expiresAt || null;
+    const nochGueltig = ablauf && new Date(ablauf).getTime() > Date.now() + 24 * 60 * 60 * 1000;
+
+    if (!rabattCode || !nochGueltig) {
+      const { createPersonalWinbackCode } = require('../utils/winbackPromo');
+      const angebot = await createPersonalWinbackCode({
+        email: user.email,
+        stripeCustomerId: user.stripeCustomerId || null,
+        userId: user._id.toString(),
+        anlass: 'followup'
+      });
+      if (angebot?.code) {
+        rabattCode = angebot.code;
+        ablauf = angebot.expiresAt;
+        await db.collection('users').updateOne(
+          { _id: user._id },
+          { $set: { retentionOffer: {
+            code: angebot.code,
+            promotionCodeId: angebot.promotionCodeId,
+            expiresAt: angebot.expiresAt,
+            issuedAt: new Date(),
+            anlass: 'followup'
+          } } }
+        );
+      } else {
+        rabattCode = null;
+      }
+    }
+
+    const gueltigBis = rabattCode && ablauf
+      ? new Date(ablauf).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      : null;
+
+    const html = generateWinbackCanceledEmail(user, rabattCode, gueltigBis);
+    const subject = rabattCode ? 'Dein 20%-Angebot wartet noch' : 'Deine Verträge warten noch';
 
     await sendEmail(user.email, subject, '', html, { unsubscribeUrl: generateUnsubscribeUrl(user.email, 'marketing') });
     await markTriggerEmailSent(db, user._id, 'winbackCanceled');

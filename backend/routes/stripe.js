@@ -85,21 +85,40 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
 
     // 🎁 Optional: Promo-Code aus URL auto-anwenden (z.B. /pricing?code=BUSINESS10)
     // Fail-safe: Bei jedem Fehler/Mismatch -> Fallback auf manuelle Eingabe via allow_promotion_codes
+    //
+    // 🛡️ 20.08.2026: Seit die Win-back-Codes PERSÖNLICH sind (befristet, einmalig,
+    // an einen Kunden gebunden), gibt es zwei neue Fälle, die es vorher nicht gab:
+    //   1. Der Code ist abgelaufen -> `active: true` findet ihn nicht mehr.
+    //   2. Der Code gehört jemand anderem -> Stripe LEHNT die Session ab (400), der
+    //      Kunde bekam bis hier eine 500 und konnte gar nicht mehr bezahlen.
+    // Beides darf den Checkout nie blockieren; der Status reist zum Frontend, damit
+    // dort "Angebot abgelaufen" stehen kann statt eines stillen Vollpreises.
     let resolvedPromotionCodeId = null;
-    if (code && typeof code === 'string' && code.trim().length > 0) {
+    let promoStatus = null; // 'applied' | 'unbekannt_oder_abgelaufen' | 'fremder_code' | 'fehlgeschlagen'
+    const angefragterCode = (typeof code === 'string' ? code.trim() : '');
+    if (angefragterCode.length > 0) {
       try {
         const promoCodes = await stripe.promotionCodes.list({
-          code: code.trim(),
+          code: angefragterCode,
           active: true,
           limit: 1
         });
-        if (promoCodes.data.length > 0) {
-          resolvedPromotionCodeId = promoCodes.data[0].id;
-          console.log(`✅ [STRIPE] Promo-Code "${code.trim()}" auto-applied (promo_id: ${resolvedPromotionCodeId})`);
+        const promo = promoCodes.data[0];
+        if (!promo) {
+          promoStatus = 'unbekannt_oder_abgelaufen';
+          console.warn(`⚠️  [STRIPE] Promo-Code "${angefragterCode}" nicht gefunden/inaktiv/abgelaufen — Fallback auf manuelle Eingabe`);
+        } else if (promo.customer && promo.customer !== customerId) {
+          // Persönlicher Code eines anderen Kontos: NICHT anwenden, sonst wirft
+          // sessions.create und der Kauf scheitert komplett.
+          promoStatus = 'fremder_code';
+          console.warn(`⚠️  [STRIPE] Promo-Code "${angefragterCode}" gehört zu einem anderen Kunden — wird ignoriert`);
         } else {
-          console.warn(`⚠️  [STRIPE] Promo-Code "${code.trim()}" nicht gefunden/inaktiv — Fallback auf manuelle Eingabe`);
+          resolvedPromotionCodeId = promo.id;
+          promoStatus = 'applied';
+          console.log(`✅ [STRIPE] Promo-Code "${angefragterCode}" auto-applied (promo_id: ${resolvedPromotionCodeId})`);
         }
       } catch (lookupErr) {
+        promoStatus = 'fehlgeschlagen';
         console.warn(`⚠️  [STRIPE] Promo-Code-Lookup fehlgeschlagen:`, lookupErr.message);
       }
     }
@@ -145,10 +164,27 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
       sessionParams.allow_promotion_codes = true;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    // 🛡️ Letztes Netz: Falls Stripe den Rabatt doch ablehnt (Code zwischenzeitlich
+    // eingelöst, abgelaufen, Coupon deaktiviert), darf der KAUF nicht mitsterben.
+    // Zweiter Versuch ohne Rabatt, dafür mit manueller Eingabemöglichkeit.
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams);
+    } catch (sessionErr) {
+      if (!resolvedPromotionCodeId) throw sessionErr;
+      console.warn(`⚠️  [STRIPE] Session mit Rabatt abgelehnt (${sessionErr.message}) — zweiter Versuch ohne Auto-Promo`);
+      promoStatus = 'fehlgeschlagen';
+      delete sessionParams.discounts;
+      sessionParams.allow_promotion_codes = true;
+      session = await stripe.checkout.sessions.create(sessionParams);
+    }
 
-    console.log(`✅ Stripe Checkout-Session erstellt: ${session.id}${resolvedPromotionCodeId ? ' (mit Auto-Promo)' : ''}`);
-    res.json({ url: session.url });
+    console.log(`✅ Stripe Checkout-Session erstellt: ${session.id}${promoStatus === 'applied' ? ' (mit Auto-Promo)' : ''}`);
+    res.json({
+      url: session.url,
+      // Für eine ehrliche Meldung im Frontend statt stillem Vollpreis
+      promo: angefragterCode ? { code: angefragterCode, status: promoStatus } : null
+    });
   } catch (err) {
     console.error("❌ Stripe Checkout Fehler:", err);
     res.status(500).json({ message: "Fehler bei Stripe Checkout", details: err.message });

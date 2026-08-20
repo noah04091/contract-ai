@@ -1,0 +1,544 @@
+/* DeleteAccountModal.module.css
+   Vier-Schritt-Dialog für die Kontolöschung. Ton: ruhig und sachlich, nicht dramatisch.
+   Rot erscheint erst auf dem letzten Bildschirm, wo es wirklich hingehört. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 20px;
+}
+
+.modal {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+/* ---------- Kopf ---------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+}
+
+.stepDots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot,
+.dotAktiv {
+  width: 22px;
+  height: 3px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  transition: background 0.2s ease;
+}
+
+.dotAktiv {
+  background: #2563eb;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.closeButton:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.closeButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Inhalt ---------- */
+
+.content {
+  padding: 4px 24px 24px;
+  overflow-y: auto;
+}
+
+.titel {
+  font-size: 21px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.lede {
+  font-size: 14.5px;
+  color: #64748b;
+  margin: 0 0 18px;
+  line-height: 1.55;
+}
+
+.zwischenTitel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  margin: 22px 0 10px;
+}
+
+.hinweis {
+  font-size: 13px;
+  color: #64748b;
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+
+.laden {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 14px;
+  padding: 18px 0;
+}
+
+.spin {
+  animation: drehen 1s linear infinite;
+}
+
+@keyframes drehen {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+}
+
+/* ---------- Bestandsaufnahme ---------- */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.stat {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 11px 13px;
+}
+
+.stat b {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.stat span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.warnung {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.warnung svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.alternativen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alt {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+  padding: 13px 14px;
+  cursor: pointer;
+  color: #2563eb;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.alt:hover:not(:disabled) {
+  border-color: #93c5fd;
+  background: #f8fbff;
+}
+
+.alt:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.alt svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.alt b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.alt small {
+  display: block;
+  font-size: 12.5px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+/* ---------- Gründe ---------- */
+
+.gruende {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.grund,
+.grundAktiv {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  padding: 11px 13px;
+  font-size: 13.5px;
+  color: #334155;
+  cursor: pointer;
+  line-height: 1.4;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.grund:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.grundAktiv {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-weight: 500;
+}
+
+.radio {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid #cbd5e1;
+  transition: border 0.15s ease;
+}
+
+.grundAktiv .radio {
+  border: 4.5px solid #2563eb;
+}
+
+.feldLabel {
+  display: block;
+  font-size: 13px;
+  color: #475569;
+  margin-bottom: 7px;
+}
+
+.feldLabel b {
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.04em;
+}
+
+.textarea,
+.input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #0f172a;
+  background: #ffffff;
+  resize: vertical;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.textarea:focus,
+.input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.zaehler {
+  text-align: right;
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Angebot ---------- */
+
+.angebot {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  padding: 20px;
+  text-align: center;
+}
+
+.angebotKopf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #1d4ed8;
+}
+
+.rabatt {
+  font-size: 19px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  margin: 8px 0 12px;
+}
+
+.code {
+  display: inline-block;
+  background: #ffffff;
+  border: 1px dashed #2563eb;
+  border-radius: 9px;
+  padding: 11px 18px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  color: #1e3a8a;
+}
+
+.angebotFuss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #475569;
+  margin-top: 12px;
+}
+
+/* ---------- Folgenliste ---------- */
+
+.folgen {
+  margin: 0 0 20px;
+  padding-left: 18px;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.folgen li {
+  margin-bottom: 4px;
+}
+
+/* ---------- Aktionen ---------- */
+
+.aktionen {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+.rechts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.primaer,
+.sekundaer,
+.gefahr,
+.zurueck,
+.weiterLeise {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  padding: 10px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+
+.primaer {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.primaer:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.sekundaer {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+.sekundaer:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.gefahr {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.gefahr:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.zurueck {
+  background: transparent;
+  color: #64748b;
+  padding-left: 6px;
+}
+
+.zurueck:hover:not(:disabled) {
+  color: #0f172a;
+}
+
+/* Der Weg zum Löschen bleibt sichtbar, drängt sich aber nicht auf */
+.weiterLeise {
+  background: transparent;
+  color: #64748b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.weiterLeise:hover:not(:disabled) {
+  color: #dc2626;
+}
+
+.primaer:disabled,
+.sekundaer:disabled,
+.gefahr:disabled,
+.zurueck:disabled,
+.weiterLeise:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primaer:focus-visible,
+.sekundaer:focus-visible,
+.gefahr:focus-visible,
+.zurueck:focus-visible,
+.weiterLeise:focus-visible,
+.alt:focus-visible,
+.grund:focus-visible,
+.grundAktiv:focus-visible,
+.closeButton:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.fehler {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 14px 0 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 520px) {
+  .stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .aktionen {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .rechts {
+    margin-left: 0;
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .primaer,
+  .sekundaer,
+  .gefahr,
+  .weiterLeise,
+  .zurueck {
+    justify-content: center;
+  }
+}
