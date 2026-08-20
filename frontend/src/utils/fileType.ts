@@ -98,3 +98,25 @@ export function canOpenInPdfViewer(
 ): boolean {
   return getFileTypeInfo(contract).isPdf;
 }
+
+/**
+ * Kann der BROWSER diese Datei selbst anzeigen?
+ *
+ * Hintergrund (20.08.2026, Etappe 2a): `openSmartPDF` in ContractsV2 oeffnet aus
+ * Pop-up-Gruenden SOFORT ein leeres Fenster und leitet es danach auf die Datei um.
+ * Bei einer Word-Datei zeigt der Browser sie aber nicht an, er LAEDT SIE HERUNTER —
+ * die Umleitung passiert nie und das Fenster haengt fuer immer auf "PDF wird
+ * geladen...". Genau das hat Noah im Test gesehen.
+ *
+ * PDF und Bilder stellt jeder Browser selbst dar. Word, ZIP und Unbekanntes nicht.
+ *
+ * ⚠️ Wie bei canOpenInPdfViewer gilt: nur fuer die ORIGINAL-Datei. Ein signiertes
+ * oder erzeugtes PDF ist IMMER eine echte PDF, auch wenn das Original Word war —
+ * dort darf diese Pruefung nicht davor.
+ */
+export function canDisplayInBrowser(
+  contract?: { mimetype?: string | null; name?: string | null } | null
+): boolean {
+  const v = getFileTypeInfo(contract).variant;
+  return v === 'pdf' || v === 'image';
+}

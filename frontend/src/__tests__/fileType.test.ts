@@ -11,7 +11,7 @@
 // Ansicht aussperren (echte Verschlechterung), waehrend der umgekehrte Fehler nur
 // den bereits bekannten Zustand stehen laesst.
 
-import { getFileTypeInfo, canOpenInPdfViewer } from '../utils/fileType';
+import { getFileTypeInfo, canOpenInPdfViewer, canDisplayInBrowser } from '../utils/fileType';
 
 const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
@@ -101,5 +101,25 @@ describe('canOpenInPdfViewer: die Sperre vor dem Betrachter', () => {
   test('erlaubt im Zweifel, statt eine funktionierende Ansicht auszusperren', () => {
     expect(canOpenInPdfViewer(null)).toBe(true);
     expect(canOpenInPdfViewer({ name: 'ohne-endung' })).toBe(true);
+  });
+});
+
+describe('canDisplayInBrowser: verhindert das haengende Fenster (Etappe 2a)', () => {
+  test('PDF und Bild kann der Browser selbst anzeigen', () => {
+    expect(canDisplayInBrowser({ mimetype: 'application/pdf' })).toBe(true);
+    expect(canDisplayInBrowser({ mimetype: 'image/png' })).toBe(true);
+    expect(canDisplayInBrowser({ name: 'Foto.jpg' })).toBe(true);
+  });
+
+  test('Word und Archive kann er NICHT — genau hier hing das Fenster', () => {
+    expect(canDisplayInBrowser({ mimetype: DOCX })).toBe(false);
+    expect(canDisplayInBrowser({ mimetype: 'application/msword' })).toBe(false);
+    expect(canDisplayInBrowser({ mimetype: 'application/zip' })).toBe(false);
+    expect(canDisplayInBrowser({ name: 'Vertrag.docx' })).toBe(false);
+  });
+
+  test('im Zweifel true, damit nichts ausgesperrt wird', () => {
+    expect(canDisplayInBrowser(null)).toBe(true);
+    expect(canDisplayInBrowser({ name: 'ohne-endung' })).toBe(true);
   });
 });

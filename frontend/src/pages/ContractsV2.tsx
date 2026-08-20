@@ -41,7 +41,7 @@ import { apiCall, uploadAndAnalyze, uploadOnly, reanalyzeExistingContract, getPe
 import { useAuth } from "../hooks/useAuth"; // 🏢 Org-Rolle für Rollen-Awareness
 import { useToast } from "../context/ToastContext"; // 🔔 Toast-Benachrichtigungen
 import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
-import { getFileTypeInfo } from "../utils/fileType"; // 📄 Dateityp aus dem gespeicherten Typ, nicht aus der Endung
+import { getFileTypeInfo, type FileVariant } from "../utils/fileType"; // 📄 Dateityp aus dem gespeicherten Typ, nicht aus der Endung
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import InlineAnalysisProgress from "../components/InlineAnalysisProgress"; // 🎨 Kompakte Inline-Analyse
@@ -1660,6 +1660,35 @@ export default function Contracts() {
   };
 
   // 🆕 Smart PDF Opener - Opens signed PDF if available, otherwise original
+  // 📄 20.08.2026 (Etappe 2a): Welcher Typ wird dem Nutzer TATSÄCHLICH gezeigt?
+  // Das ist nicht immer der des Originals. Ein signiertes Dokument und ein generierter
+  // Vertrag sind IMMER echte PDF, auch wenn das Original eine Word-Datei war. Diese
+  // Unterscheidung liegt hier an EINER Stelle, damit Beschriftung und Verhalten nicht
+  // auseinanderlaufen können.
+  const angezeigterTyp = (contract: Contract | null, signiertBevorzugt = false): FileVariant => {
+    if (!contract) return 'pdf';
+    if (signiertBevorzugt && contract.envelope?.s3KeySealed && contract.envelope?.signatureStatus === 'COMPLETED') return 'pdf';
+    if (!contract.s3Key && contract.isGenerated) return 'pdf';
+    return getFileTypeInfo(contract).variant;
+  };
+
+  // Beschriftung der Schnellzugriffe. Sagt, was WIRKLICH passiert: Word wird
+  // heruntergeladen, nicht geöffnet.
+  const smartPdfTitel = (contract: Contract): string => {
+    const v = angezeigterTyp(contract, true);
+    if (v === 'image') return 'Bild öffnen';
+    if (v === 'doc' || v === 'other') return 'Dokument herunterladen';
+    return contract.envelope?.s3KeySealed ? 'Signiertes PDF öffnen' : 'PDF öffnen';
+  };
+
+  const vorschauTitel = (contract: Contract | null): string => {
+    const v = angezeigterTyp(contract);
+    if (v === 'image') return 'Bild-Vorschau';
+    if (v === 'doc') return 'Dokument-Vorschau';
+    if (v === 'other') return 'Datei-Vorschau';
+    return 'PDF-Vorschau';
+  };
+
   const openSmartPDF = async (contract: Contract, preferSigned: boolean = true) => {
     setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
 
@@ -1672,6 +1701,22 @@ export default function Contracts() {
 
       // Check if we should try to open signed PDF
       const hasSignedPDF = contract.envelope?.s3KeySealed && contract.envelope?.signatureStatus === 'COMPLETED';
+
+      // 📄 20.08.2026 (Etappe 2a): Der Typ wird VOR dem Öffnen des Fensters bestimmt.
+      // Das geht ohne Netzwerk, weil er am Vertrag steht — und es muss vorher sein,
+      // weil das Fenster aus Pop-up-Gründen sofort aufgehen muss.
+      //
+      // ⚠️ ZWEI AUSNAHMEN, die NICHT über den Original-Typ entschieden werden dürfen:
+      //   1. Ein signiertes Dokument (type=signed) ist IMMER eine echte PDF.
+      //   2. Ein generierter Vertrag ohne s3Key bekommt unten frisch eine PDF erzeugt.
+      // In beiden Fällen war das Original vielleicht Word — angezeigt wird trotzdem PDF.
+      const variante = angezeigterTyp(contract, preferSigned);
+      const imBrowserAnzeigbar = variante === 'pdf' || variante === 'image';
+      const ladeText = variante === 'image'
+        ? 'Bild wird geladen…'
+        : variante === 'pdf'
+          ? (hasSignedPDF && preferSigned ? 'Signiertes PDF wird geladen…' : 'PDF wird geladen…')
+          : 'Dokument wird heruntergeladen…';
 
       tempWindow = window.open('', '_blank');
       if (tempWindow) {
@@ -1709,7 +1754,7 @@ export default function Contracts() {
             <body>
               <div class="loader">
                 <div class="spinner"></div>
-                <h2>${hasSignedPDF && preferSigned ? 'Signiertes PDF' : 'PDF'} wird geladen...</h2>
+                <h2>${ladeText}</h2>
               </div>
             </body>
           </html>
@@ -1736,6 +1781,14 @@ export default function Contracts() {
           const pdfUrl = data.url || data.fileUrl;
           if (tempWindow && !tempWindow.closed) {
             tempWindow.location.href = pdfUrl;
+            // 📄 20.08.2026: Bei Word/ZIP zeigt der Browser die Datei nicht an, er LÄDT
+            // SIE HERUNTER. Die Umleitung oben schlägt dann nie auf sichtbaren Inhalt um
+            // und das Fenster blieb für immer auf dem Ladetext stehen (Noahs Befund).
+            // Der Download läuft trotzdem — deshalb das Fenster danach zumachen.
+            if (!imBrowserAnzeigbar) {
+              const zuSchliessen = tempWindow;
+              setTimeout(() => { try { zuSchliessen.close(); } catch { /* egal */ } }, 2500);
+            }
           } else {
             window.open(pdfUrl, '_blank', 'noopener,noreferrer');
           }
@@ -4282,7 +4335,7 @@ export default function Contracts() {
               openSmartPDF(contract, true);
             }}
             disabled={pdfLoading[contract._id]}
-            title="PDF öffnen"
+            title={smartPdfTitel(contract)}
           >
             {pdfLoading[contract._id] ? (
               <Loader size={14} className={styles.loadingIcon} />
@@ -6026,7 +6079,7 @@ export default function Contracts() {
                                       e.stopPropagation();
                                       openSmartPDF(contract, true);
                                     }}
-                                    title={contract.envelope?.s3KeySealed ? 'Signiertes PDF öffnen' : 'PDF öffnen'}
+                                    title={smartPdfTitel(contract)}
                                     disabled={pdfLoading[contract._id]}
                                   >
                                     {pdfLoading[contract._id] ? (
@@ -6433,9 +6486,9 @@ export default function Contracts() {
                   <button
                     className={styles.previewThumbnailToggle}
                     onClick={toggleSidebarPdf}
-                    title={sidebarPdfCollapsed ? 'PDF-Vorschau einblenden' : 'PDF-Vorschau ausblenden'}
+                    title={`${vorschauTitel(previewContract)} ${sidebarPdfCollapsed ? 'einblenden' : 'ausblenden'}`}
                   >
-                    <span className={styles.previewThumbnailToggleLabel}>PDF-Vorschau</span>
+                    <span className={styles.previewThumbnailToggleLabel}>{vorschauTitel(previewContract)}</span>
                     {sidebarPdfCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
                   </button>
                   {!sidebarPdfCollapsed && (
@@ -6468,7 +6521,7 @@ export default function Contracts() {
                     ) : previewPdfError ? (
                       <div className={styles.previewThumbnailError}>
                         <AlertCircle size={16} />
-                        <span>PDF-Vorschau nicht verfügbar</span>
+                        <span>{vorschauTitel(previewContract)} nicht verfügbar</span>
                       </div>
                     ) : null
                   )}
@@ -6738,7 +6791,7 @@ export default function Contracts() {
                     }}
                   >
                     <Eye size={14} />
-                    PDF
+                    {getFileTypeInfo(previewContract).label}
                   </button>
                   {canEditContract(previewContract) && (
                     <button
@@ -7214,7 +7267,7 @@ export default function Contracts() {
                     }}
                   >
                     <ExternalLink size={18} />
-                    <span>PDF öffnen</span>
+                    <span>{smartPdfTitel(dropdownContract)}</span>
                   </button>
                 </div>
 
