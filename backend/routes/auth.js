@@ -866,14 +866,22 @@ router.post("/retention-offer", verifyToken, sensitiveLimiter, async (req, res) 
 
     const bestehend = user.retentionOffer;
     const nochGueltig = bestehend?.expiresAt && new Date(bestehend.expiresAt).getTime() > Date.now() + 24 * 60 * 60 * 1000;
-    if (bestehend?.code && nochGueltig) {
+    // Nur ein Angebot aus demselben Anlass wiederverwenden: Ein Code aus einer früheren
+    // KÜNDIGUNG hängt am damaligen Stripe-Kunden und wäre nach der Kontolöschung nicht
+    // mehr einlösbar. Für die Löschung braucht es einen ungebundenen.
+    if (bestehend?.code && nochGueltig && bestehend.anlass === 'loeschung') {
       return res.json({ code: bestehend.code, expiresAt: bestehend.expiresAt, reused: true });
     }
 
+    // ⚠️ BEWUSST OHNE Kundenbindung: Wer sein Konto löscht, kommt als NEUER Nutzer
+    // zurück. Die Verknüpfung zur alten Stripe-Kundennummer stirbt mit dem Konto, und
+    // eine Neuregistrierung legt bei Stripe einen neuen Kunden an (stripe.js:73).
+    // Ein an den alten Kunden gebundener Code würde beim Kauf aussortiert und wäre
+    // damit wertlos. `max_redemptions: 1` schützt trotzdem vor Weitergabe.
     const { createPersonalWinbackCode } = require("../utils/winbackPromo");
     const angebot = await createPersonalWinbackCode({
       email: user.email,
-      stripeCustomerId: user.stripeCustomerId || null,
+      stripeCustomerId: null,
       userId: user._id.toString(),
       anlass: "loeschung"
     });
