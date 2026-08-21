@@ -348,13 +348,22 @@ export default function SetupGuide({ checklist, freeAnalyses, onUploaded, onDism
           <button className={styles.canCard} onClick={() => navigate('/chat')}>
             <span className={`${styles.canIcon} ${styles.canIconLight}`}><MessageSquare size={18} /></span>
             <h3>Fragen stellen</h3>
-            <p>„Kann ich zum Monatsende kündigen?" — frag einfach nach.</p>
+            <p>„Kann ich zum Monatsende kündigen?" — sobald ein Vertrag da ist, fragst du einfach nach.</p>
             <span className={styles.canFoot}>
               <span className={styles.canGo}>Ansehen →</span>
-              <span className={styles.freeTag}>5 frei</span>
+              <span className={styles.freeTag}>5 Fragen frei</span>
             </span>
           </button>
         </div>
+
+        {/* Noahs Hinweis: Die vier Karten sind nicht alles, was das Produkt kann. */}
+        <p className={styles.canMore}>
+          Und vieles mehr: Verträge vergleichen, optimieren, digital unterschreiben
+          und bei Gesetzesänderungen gewarnt werden.{' '}
+          <button className={styles.canMoreLink} onClick={() => navigate('/features')}>
+            Alle Funktionen ansehen →
+          </button>
+        </p>
 
         {/* Abholung zum Schluss: Sicherheit, Aufwand, Hilfe — die drei stillen
             Fragen eines neuen Nutzers, bevor er die erste Datei hochlädt. */}
