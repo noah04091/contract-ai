@@ -4380,6 +4380,10 @@ async function dispatchAnalyzeRequest(req, res) {
     body: { ...req.body },
     query: { ...req.query },
     fromPhoto: req.fromPhoto === true, // 🖼️ Welle 4a: Foto-Herkunft in Async durchreichen
+    // 🔑 21.08.2026 (Stufe 2): Der Stempel des ORIGINAL-Fotos muss den Sprung in den
+    // Hintergrund überleben — sonst greift der Duplikat-Abgleich dort wieder zum
+    // Stempel der gewickelten PDF und legt einen zweiten Vertrag an.
+    originalFileHash: req.originalFileHash || null,
     jobId
   };
 
@@ -4432,6 +4436,7 @@ async function runPipelineInBackground(jobId, snapshot) {
     body: snapshot.body,
     query: snapshot.query,
     fromPhoto: snapshot.fromPhoto === true, // 🖼️ Welle 4a
+    originalFileHash: snapshot.originalFileHash || null, // 🔑 21.08.2026 (Stufe 2)
     jobId: snapshot.jobId,
     on: () => {},
     removeListener: () => {}
@@ -4862,6 +4867,14 @@ router.post("/", verifyToken, analyzeRateLimiter, async (req, res, next) => {
     if (req.file && isImageMimetype(req.file.mimetype)) {
       try {
         const imgBuffer = await fs.readFile(req.file.path);
+
+        // 🔑 21.08.2026 (Stufe 2): Stempel des ORIGINALS merken, BEVOR gewickelt wird.
+        // Der Duplikat-Abgleich weiter unten nahm den Stempel bisher von der GEWICKELTEN
+        // PDF und verglich ihn mit dem des Original-Fotos, das beim Hochladen gespeichert
+        // wurde. Zwei verschiedene Dinge → nie ein Treffer → die Pipeline legte einen
+        // ZWEITEN Vertrag an. Betrifft die Wege, die nicht über die Vertrags-Nummer
+        // laufen: „trotzdem analysieren" nach einem Doppel-Hinweis und der Wiederholversuch.
+        req.originalFileHash = crypto.createHash("sha256").update(imgBuffer).digest("hex");
         const { pdfBuffer } = await convertImageToPdf(imgBuffer, req.file.mimetype);
 
         const pdfPath = req.file.path + '.pdf';
@@ -5299,9 +5312,32 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     console.log(`🔍 [${requestId}] File hash calculated: ${fileHash.substring(0, 12)}...`);
 
     let existingContract = null;
-    if (crypto && contractsCollection) {
+
+    // 🎯 21.08.2026 (Stufe 2): ZIEL-VERTRAG STATT RATEN.
+    // routes/contracts.js baut den Aufruf an diese Pipeline selbst zusammen und WEISS,
+    // welcher Vertrag gemeint ist (Zugriff + Rolle dort bereits geprüft). Dann muss hier
+    // nicht mehr über den Fingerabdruck erraten werden, welcher Vertrag aktualisiert wird.
+    //
+    // 🔴 Genau dieses Raten war die Ursache der Foto-Zwillinge: Ein Bild wird vor der
+    // Analyse in ein PDF gewickelt, der Fingerabdruck also VOM PDF genommen und mit dem
+    // des Original-Fotos verglichen. Kein Treffer → die Pipeline legte einen ZWEITEN
+    // Vertrag an. Gemessen: 16 solcher Doppel im Bestand, 10 bei echten Kunden.
+    //
+    // ⚠️ Der Wert kommt NICHT aus dem Browser, sondern serverintern aus contracts.js.
+    // Deshalb entsteht hier keine neue Vertrauensgrenze. Fehlt er (E-Mail-Import,
+    // API v1, alter Direkt-Upload), bleibt exakt das bisherige Verhalten.
+    if (req.zielVertrag && req.zielVertrag._id) {
+      existingContract = req.zielVertrag;
+      console.log(`🎯 [${requestId}] Ziel-Vertrag vorgegeben: ${existingContract._id} (kein Fingerabdruck-Abgleich nötig)`);
+    }
+
+    if (!existingContract && crypto && contractsCollection) {
       try {
-        existingContract = await checkForDuplicate(fileHash, req.user.userId);
+        // 21.08.2026: Bei einem Foto ist `fileHash` der Stempel der GEWICKELTEN PDF.
+        // Verglichen werden muss aber mit dem, der beim Hochladen gespeichert wurde,
+        // und das ist der des Originals (siehe oben in der Route).
+        const abgleichHash = req.originalFileHash || fileHash;
+        existingContract = await checkForDuplicate(abgleichHash, req.user.userId);
         
         if (existingContract) {
           console.log(`📄 [${requestId}] Duplicate found: ${existingContract._id}`);
@@ -6595,10 +6631,23 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         // Add s3Key at top level if S3 upload
         if (storageInfo.s3Info) {
-          updateData.s3Key = storageInfo.s3Info.key;
-          updateData.s3Bucket = storageInfo.s3Info.bucket;
-          updateData.s3Location = storageInfo.s3Info.location;
-          updateData.s3ETag = storageInfo.s3Info.etag;
+          // 🔒 21.08.2026 (Stufe 2): Ein bestehender Vertrag behält SEINE Datei.
+          // Vorher zeigte diese Zeile den Vertrag bedingungslos auf die soeben neu
+          // hochgeladene Kopie um. Zwei Folgen, beide unerwünscht:
+          //   1. Bei einem Foto stünde danach `image/png` am Vertrag (mimetype wird hier
+          //      NICHT angefasst), während der Verweis auf die abgeleitete PDF zeigt —
+          //      exakt die Unwahrheit, die die Dateityp-Kette gerade beseitigt hat.
+          //   2. Das ursprüngliche S3-Objekt blieb als Waise liegen, bei JEDER
+          //      nachträglichen Analyse aufs Neue.
+          // Der Verweis wird deshalb nur noch gesetzt, wenn der Vertrag noch keinen hat.
+          if (!existingContract.s3Key) {
+            updateData.s3Key = storageInfo.s3Info.key;
+            updateData.s3Bucket = storageInfo.s3Info.bucket;
+            updateData.s3Location = storageInfo.s3Info.location;
+            updateData.s3ETag = storageInfo.s3Info.etag;
+          } else {
+            console.log(`🔒 [${requestId}] Dateiverweis des bestehenden Vertrags bleibt unverändert (${existingContract.s3Key})`);
+          }
         }
 
         updateData.extraRefs = {

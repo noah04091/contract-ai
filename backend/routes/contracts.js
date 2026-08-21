@@ -25,6 +25,7 @@ const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team
 const { findContractWithOrgAccess, hasPermission, buildOrgFilter } = require("../utils/orgContractAccess"); // 👥 Org-basierter Zugriff
 const { normalizeLaufzeit, normalizeKuendigung } = require("../utils/contractFieldLabels"); // 🇩🇪 Englisch→Deutsch Normalisierung für Eckdaten
 const { detectMimeType } = require("../utils/emailImportSecurity"); // 📄 Dateityp aus den Bytes, nicht aus dem Namen (Re-Analyse)
+const { convertImageToPdf, isImageMimetype } = require("../services/imageToPdf"); // 🖼️ 21.08.2026: Foto → PDF auch auf DIESEM Weg
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness, handleEnhancedDeepLawyerAnalysisRequest } = analyzeRoute;
 // ⚡ Async-Job-Helfer für den Re-Analyse-Pfad (gegen Cloudflare-~100s-Schnitt bei langen Läufen)
 const { generateJobId, insertAnalysisJob, updateAnalysisJob } = analyzeRoute;
@@ -2630,6 +2631,11 @@ async function runReanalysisInBackground(jobId, ctx) {
   const db = await database.connect();
   await updateAnalysisJob(db, jobId, { status: 'processing', startedAt: new Date() });
 
+  // 🎯 21.08.2026 (Stufe 2): Ziel-Vertrag mitgeben statt ihn die Pipeline über den
+  // Fingerabdruck erraten zu lassen. Zugriff und Rolle wurden in der Route geprüft,
+  // bevor dieser Hintergrund-Lauf überhaupt angestoßen wurde.
+  const zielVertrag = await contractsCollection.findOne({ _id: new ObjectId(contractId) });
+
   const fakeReq = {
     file: {
       path: tempFilePath,
@@ -2640,6 +2646,7 @@ async function runReanalysisInBackground(jobId, ctx) {
     },
     user: { userId },
     body: { forceReanalyze: 'true' },
+    zielVertrag,
     query: {},
     jobId, // 🔑 aktiviert echten Fortschritt (reportJobProgress schreibt Etappen ins Job-Doc)
     on: () => {},
@@ -2796,6 +2803,32 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     // kann eine KI-Beschreibung sein), deshalb die Magic-Byte-Erkennung, die für den
     // E-Mail-Import schon existiert. Unbekannt/nicht erkannt → PDF wie bisher (fail-safe).
     const erkannterTyp = detectMimeType(buffer);
+
+    // 🖼️ 21.08.2026 (Stufe 2): Ein BILD wurde hier bisher stillschweigend als PDF
+    // behandelt (es fiel in den `: 'application/pdf'`-Zweig unten). Die Pipeline hat
+    // dann versucht, ein PNG als PDF zu lesen, fand keinen Text und brach ab —
+    // deshalb hat „Analysieren" bei einem Foto aus der Liste NIE funktioniert.
+    // Gemessen: von 40 Bild-Verträgen trug genau 1 eine eigene Analyse.
+    //
+    // Jetzt wird es hier in ein einseitiges PDF gewickelt, mit derselben erprobten
+    // Funktion, die der Direkt-Upload seit dem 09.07. benutzt. Ab hier sieht die
+    // Pipeline ein ganz normales gescanntes PDF.
+    // ⚠️ `contract.s3Key` bleibt dabei unangetastet — das ORIGINAL des Kunden ist das
+    // Foto, nicht die abgeleitete PDF.
+    if (erkannterTyp && isImageMimetype(erkannterTyp)) {
+      try {
+        const { pdfBuffer } = await convertImageToPdf(buffer, erkannterTyp);
+        console.log(`🖼️→📄 [${requestId}] Foto erkannt (${erkannterTyp}) → in PDF gewickelt (${buffer.length} → ${pdfBuffer.length} Bytes)`);
+        buffer = pdfBuffer;
+      } catch (convErr) {
+        console.error(`❌ [${requestId}] Foto→PDF-Konvertierung fehlgeschlagen: ${convErr.message}`);
+        return res.status(400).json({
+          success: false,
+          message: "📸 Das Foto konnte nicht verarbeitet werden. Bitte lade das Dokument als PDF hoch."
+        });
+      }
+    }
+
     const dateiTyp = erkannterTyp === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       ? erkannterTyp
       : 'application/pdf';
@@ -2860,6 +2893,10 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       },
       user: { userId: req.user.userId },
       body: { forceReanalyze: 'true' },
+      // 🎯 21.08.2026 (Stufe 2): Wir WISSEN hier, welcher Vertrag gemeint ist (Zugriff
+      // und Rolle oben geprüft). Die Pipeline muss ihn deshalb nicht mehr über den
+      // Fingerabdruck erraten — genau dieses Raten erzeugte bei Fotos Doppel-Verträge.
+      zielVertrag: contract,
       query: {},
       on: () => {},
       removeListener: () => {}

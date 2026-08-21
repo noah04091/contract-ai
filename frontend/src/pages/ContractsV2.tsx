@@ -37,7 +37,7 @@ import FristHinweiseSection from "../components/FristHinweiseSection"; // ⏰ Un
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
-import { apiCall, uploadAndAnalyze, uploadOnly, reanalyzeExistingContract, getPendingAnalysisJobs, pollAnalysisJob } from "../utils/api"; // ✅ NEU: uploadOnly + async Re-Analyse + 🔄 17.08.2026 Job-Wiederaufnahme nach Reload
+import { apiCall, uploadAndAnalyze, uploadOnly, reanalyzeExistingContract, analyzeExistingContract, getPendingAnalysisJobs, pollAnalysisJob } from "../utils/api"; // ✅ NEU: uploadOnly + async Re-Analyse + 🔄 17.08.2026 Job-Wiederaufnahme nach Reload
 import { useAuth } from "../hooks/useAuth"; // 🏢 Org-Rolle für Rollen-Awareness
 import { useToast } from "../context/ToastContext"; // 🔔 Toast-Benachrichtigungen
 import { fixUtf8Display } from "../utils/textUtils"; // 🔧 Fix für Umlaut-Encoding
@@ -3098,13 +3098,26 @@ export default function Contracts() {
             setAnalyzingOverlay(prev => prev.show ? { ...prev, progress: Math.round(currentProgress), stage: realStage ?? prev.stage } : prev);
           }, 200); // Update every 200ms for smooth animation
 
-          const analysisResult = await uploadAndAnalyze(uploadFileItem.file, (progress, stage) => {
+          // 📄 21.08.2026 (Stufe 2): Analyse über die VERTRAGS-NUMMER statt über einen
+          // zweiten kompletten Upload derselben Datei.
+          //
+          // 🔴 Vorher: uploadAndAnalyze(file, …, forceReanalyze) schickte die Datei erneut
+          // an /api/analyze. Dieser Aufruf kannte den soeben entstandenen Vertrag nicht und
+          // musste ihn über einen Fingerabdruck ERRATEN. Bei einem Foto wird der aber erst
+          // genommen, NACHDEM das Bild in ein PDF gewickelt wurde — er passte nicht mehr,
+          // und das Backend legte einen ZWEITEN Vertrag an (16 Doppel im Bestand, 10 bei
+          // echten Kunden). Jetzt wird nichts mehr geraten, ein Doppel ist strukturell
+          // ausgeschlossen. Nebeneffekt: die Datei geht nur noch EINMAL über die Leitung.
+          //
+          // Die Rückgabe hat bewusst dieselbe Form wie vorher, damit die Ergebnis-Anzeige
+          // unverändert bleibt.
+          const analysisResult = await analyzeExistingContract(contract._id, (progress, stage) => {
             // 📶 Echter Backend-Fortschritt übernimmt, sobald er weiter ist als die Simulation
             if (progress > currentProgress) {
               currentProgress = progress;
             }
             if (stage) realStage = stage;
-          }, true); // forceReanalyze = true!
+          }, contract.name);
 
           // Clear the progress interval
           if (progressIntervalId) {

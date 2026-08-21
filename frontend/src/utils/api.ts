@@ -764,6 +764,55 @@ export async function reanalyzeExistingContract(
  * Backwards-Compat: wenn Response NICHT { jobId } enthält (z.B. ENV-Kill-Switch),
  * fällt der Code automatisch auf den alten synchronen Pfad zurück — kein Crash.
  */
+/**
+ * 📄 21.08.2026 (Stufe 2): Analysiert einen BEREITS HOCHGELADENEN Vertrag über seine
+ * NUMMER, statt dieselbe Datei ein zweites Mal hochzuladen.
+ *
+ * 🔴 Warum das nötig war: Der alte Weg schickte die Datei erneut komplett an
+ * /api/analyze. Dieser Aufruf weiß nichts von dem gerade entstandenen Vertrag und
+ * musste deshalb über einen Fingerabdruck ERRATEN, welcher gemeint ist. Bei einem Foto
+ * wird der Fingerabdruck aber erst genommen, NACHDEM das Bild in ein PDF gewickelt
+ * wurde — er passt dann nicht mehr zum Original, und das Backend legte einen ZWEITEN
+ * Vertrag an. Gemessen: 16 solcher Doppel im Bestand, 10 bei echten Kunden.
+ *
+ * Nebeneffekt: halber Netzwerkverkehr, weil die Datei nur noch einmal hochgeht.
+ *
+ * ⚠️ Die Rückgabe ist bewusst das ROHE Pipeline-Ergebnis — exakt dieselbe Form wie bei
+ * uploadAndAnalyze — damit die Ergebnis-Anzeige unverändert weiterläuft.
+ */
+export const analyzeExistingContract = async (
+  contractId: string,
+  onProgress?: (progress: number, stage?: string | null) => void,
+  anzeigeName?: string
+): Promise<unknown> => {
+  if (onProgress) onProgress(10);
+
+  const dispatch = await apiCall(
+    `/contracts/${contractId}/analyze?async=true`,
+    { method: 'POST' },
+    0,
+    true
+  );
+
+  // Async: Backend antwortet mit { jobId } → pollen bis fertig.
+  // Kill-Switch ANALYZE_ASYNC_ENABLED=false → direkte Antwort, dann unten durchreichen.
+  if (isAsyncDispatchResponse(dispatch)) {
+    setPendingJob(dispatch.jobId, anzeigeName || contractId);
+    const finalResult = await pollAnalysisJob(dispatch.jobId, {
+      onProgress: (status) => {
+        if (onProgress && typeof status.progress === 'number') {
+          onProgress(Math.max(10, status.progress), status.stage ?? null);
+        }
+      }
+    });
+    if (onProgress) onProgress(100);
+    return finalResult;
+  }
+
+  if (onProgress) onProgress(100);
+  return dispatch;
+};
+
 export const uploadAndAnalyze = async (
   file: File,
   // 📶 24.07.2026: stage = echte Backend-Etappe (z.B. „KI-Tiefenprüfung läuft…") —
