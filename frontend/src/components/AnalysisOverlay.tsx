@@ -60,9 +60,18 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
   const [defekteQuellen, setDefekteQuellen] = useState<string[]>([]);
   const bildQuelle = [pdfUrl, pdfSrcUrl].find(q => q && !defekteQuellen.includes(q)) || null;
 
-  const istBild = getFileTypeInfo(
+  const variante = getFileTypeInfo(
     pdfFile ? { mimetype: pdfFile.type, name: pdfFile.name } : { mimetype, name: contractName }
-  ).variant === 'image';
+  ).variant;
+  const istBild = variante === 'image';
+  // 21.08.2026 (Noahs Klicktest): Bei einer WORD-Datei lief die Anzeige in den
+  // PDF-Leser, der eine .docx nicht lesen kann. Sein Fehlerfall steht auf „nichts
+  // anzeigen" → der Rahmen blieb komplett leer und weiß. Das Platzhalter-Muster aus
+  // grauen Zeilen, das ein Dokument andeutet, existiert unten längst, wurde aber nie
+  // erreicht. Der PDF-Leser bekommt jetzt nur noch echte PDF.
+  // ⚠️ Fail-safe bleibt: unbekannter Typ gilt als PDF (getFileTypeInfo) und landet
+  // weiterhin im Leser — das ist der bisherige, funktionierende Zustand.
+  const istPdf = variante === 'pdf';
 
   // Create blob URL for PDF preview
   useEffect(() => {
@@ -131,7 +140,7 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
                 // sichtbar, damit die Raender nicht wieder als "leer" gelesen werden.
                 style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#f1f5f9' }}
               />
-            ) : documentSource && !istBild ? (
+            ) : documentSource && istPdf ? (
               <Document file={documentSource} loading={null} error={null}>
                 <Page
                   pageNumber={1}

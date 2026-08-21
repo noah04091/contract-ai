@@ -78,3 +78,33 @@ describe('Selbstheilende Bildquelle (21.08.2026)', () => {
     expect(queryByTestId('pdf-leser')).not.toBeInTheDocument(); // NIE der PDF-Leser bei einem Bild
   });
 });
+
+describe('Word in der Ladeanzeige (21.08.2026, Noahs Klicktest)', () => {
+  const word = () => new File([new Uint8Array([1, 2, 3])], 'Mietvertrag.docx', {
+    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
+
+  test('⚠️ eine Word-Datei landet NICHT mehr im PDF-Leser (dort blieb der Rahmen leer)', () => {
+    const { queryByTestId } = render(
+      <AnalysisOverlay show contractName="Mietvertrag.docx" progress={40} pdfFile={word()} />
+    );
+    expect(queryByTestId('pdf-leser')).not.toBeInTheDocument();
+    expect(queryByTestId('pdf-seite')).not.toBeInTheDocument();
+  });
+
+  test('stattdessen erscheint das Platzhalter-Muster', () => {
+    const { baseElement } = render(
+      <AnalysisOverlay show contractName="Mietvertrag.docx" progress={40} pdfFile={word()} />
+    );
+    // Die grauen Zeilen tragen eine eigene Klasse aus dem CSS-Modul.
+    const zeilen = baseElement.querySelectorAll('[class*="placeholderLine"]');
+    expect(zeilen.length).toBeGreaterThan(5);
+  });
+
+  test('⚠️ Regression: eine PDF geht weiterhin in den PDF-Leser', () => {
+    const { queryByTestId } = render(
+      <AnalysisOverlay show contractName="Vertrag.pdf" progress={40} pdfFile={pdf()} />
+    );
+    expect(queryByTestId('pdf-leser')).toBeInTheDocument();
+  });
+});
