@@ -29,8 +29,6 @@ import { fixUtf8Display } from "../utils/textUtils";
 import { DashboardLayout } from "../components/DashboardV2";
 import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
 import { OnboardingChecklist } from "../components/Onboarding"; // 🎓 Onboarding Checklist
-import DashboardFirstRun from "../components/DashboardV2/DashboardFirstRun"; // 🧪 Neuer Erststart (hinter Schalter)
-import { canSeeDashboardFirstRun, isDashboardFirstRunEnabled, setDashboardFirstRunEnabled } from "../utils/featureFlags";
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 
 // ============================================
@@ -235,8 +233,6 @@ export default function DashboardV2() {
       return false;
     }
   });
-  // 🧪 Neuer Erststart (20.08.2026) — nur Whitelist, Standard aus
-  const [firstRunEnabled, setFirstRunEnabled] = useState<boolean>(false);
   const [summaryStats, setSummaryStats] = useState<{total: number; active: number; expiringSoon: number; expired: number; generated: number; analyzed: number} | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -443,13 +439,6 @@ export default function DashboardV2() {
   // EVENT HANDLERS
   // ============================================
 
-  // 🧪 Schalter-Stand einlesen, sobald der Nutzer bekannt ist (nur Whitelist).
-  // Beide Quellen prüfen: `user` aus dem Auth-Context und `userData` aus dem
-  // Dashboard-Abruf — je nach Ladezeitpunkt ist mal die eine, mal die andere da.
-  useEffect(() => {
-    setFirstRunEnabled(isDashboardFirstRunEnabled(user) || isDashboardFirstRunEnabled(userData));
-  }, [user, userData]);
-
   const handleRefresh = () => {
     fetchData(true);
   };
@@ -544,25 +533,12 @@ export default function DashboardV2() {
   const isAdmin = user?.role === 'admin';
 
   // 🔐 If admin, show AdminDashboard
-  // 🧪 20.08.2026: Admins landen hier und sehen das Nutzer-Dashboard NIE — damit
-  // war der Erststart-Umschalter für Noah unerreichbar (er ist Admin). Deshalb
-  // hier ein eigener Einstieg: Schalter an → wir fallen bewusst durch zur
-  // Nutzer-Ansicht, wo der Erststart gerendert wird. Schalter aus → wie bisher.
-  if (isAdmin && !firstRunEnabled) {
+  if (isAdmin) {
     return (
       <DashboardLayout user={userData}>
         <Helmet>
           <title>Admin Dashboard | Contract AI</title>
         </Helmet>
-        {(canSeeDashboardFirstRun(user) || canSeeDashboardFirstRun(userData)) && (
-          <button
-            className={styles.firstRunToggle}
-            onClick={() => { setDashboardFirstRunEnabled(true); setFirstRunEnabled(true); }}
-            title="Nur für dich sichtbar"
-          >
-            🧪 Neuen Erststart ansehen (Vorschau)
-          </button>
-        )}
         <AdminDashboard />
       </DashboardLayout>
     );
@@ -628,46 +604,15 @@ export default function DashboardV2() {
           </div>
         </header>
 
-        {/* 🧪 Umschalter für den neuen Erststart — nur für Konten aus der
-            Whitelist sichtbar (featureFlags.ts). Bewusst UNABHÄNGIG von der
-            Vertragszahl: sonst könnte ihn niemand testen, der bereits Verträge
-            hat (erster Anlauf 20.08. hing an `stats.total === 0`). Bei aktivem
-            Schalter zeigt das Dashboard den Erststart als Vorschau — die
-            Zahlenreihe steht dort bewusst leer, wie bei einem frischen Konto.
-            Rollback = Schalter aus. */}
-        {(canSeeDashboardFirstRun(user) || canSeeDashboardFirstRun(userData)) && (
-          <button
-            className={styles.firstRunToggle}
-            onClick={() => { setDashboardFirstRunEnabled(!firstRunEnabled); setFirstRunEnabled(v => !v); }}
-            title="Nur für dich sichtbar"
-          >
-            {firstRunEnabled
-              ? '← Zurück zur bisherigen Ansicht'
-              : stats.total === 0
-                ? '🧪 Neuen Erststart ausprobieren'
-                : '🧪 Neuen Erststart ansehen (Vorschau)'}
-          </button>
-        )}
-
         {/* ============================================
             ONBOARDING CHECKLIST - For guided setup
-            (im neuen Erststart übernimmt die Einrichtungs-Leiste diese Rolle)
             ============================================ */}
-        {!firstRunEnabled && (
-          <OnboardingChecklist className={styles.onboardingChecklist} />
-        )}
+        <OnboardingChecklist className={styles.onboardingChecklist} />
 
         {/* ============================================
             ONBOARDING - Für neue User ohne Verträge
             ============================================ */}
-        {firstRunEnabled ? (
-          <DashboardFirstRun
-            userName={userName}
-            analysisUsage={analysisUsage}
-            checklist={user?.onboarding?.checklist}
-            onUploaded={() => { fetchData(true); }}
-          />
-        ) : stats.total === 0 && !onboardingDismissed ? (
+        {stats.total === 0 && !onboardingDismissed ? (
           <div className={styles.onboarding} style={{ position: 'relative' }}>
             <button
               onClick={handleDismissOnboarding}
