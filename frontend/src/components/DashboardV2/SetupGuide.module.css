@@ -1,0 +1,253 @@
+/* 📁 SetupGuide.module.css — Erststart (21.08.2026)
+   Nutzt die Design-Tokens aus DashboardV2.module.css (dort :root).
+   Farblogik: Blau führt · Orange = Fristen · Grün = erledigt und kostenlos. */
+
+.wrap { display: flex; flex-direction: column; gap: 20px; }
+
+/* ============ Einrichtung ============ */
+.setup {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #E5E7EB);
+  border-radius: 16px;
+  box-shadow: var(--shadow, 0 1px 3px rgba(0,0,0,0.06));
+  overflow: hidden;
+}
+
+.setupHead { display: flex; align-items: center; gap: 18px; padding: 22px 26px 18px; }
+
+.ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+.ringProgress { transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.ringTxt {
+  position: absolute; inset: 0; display: grid; place-items: center;
+  font-size: 13px; font-weight: 700; color: var(--primary, #3B82F6);
+}
+
+.setupHeadTxt { flex: 1; min-width: 0; }
+.setupHeadTxt h2 {
+  font-size: 19px; font-weight: 600; letter-spacing: -0.35px;
+  margin: 0 0 4px 0; color: var(--gray-900, #111827);
+}
+.setupHeadTxt p { font-size: 13.5px; color: var(--gray-500, #6B7280); margin: 0; line-height: 1.5; }
+
+.dismiss {
+  background: none; border: none; font-family: inherit;
+  font-size: 12.5px; color: var(--gray-400, #9CA3AF);
+  cursor: pointer; flex-shrink: 0; padding: 4px 6px; border-radius: 6px;
+}
+.dismiss:hover { color: var(--gray-600, #4B5563); text-decoration: underline; }
+
+.steps { padding: 4px 26px 24px; display: flex; flex-direction: column; gap: 12px; }
+
+/* --- erledigt --- */
+.stepDone {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: var(--radius, 12px);
+  background: linear-gradient(180deg, rgba(16,185,129,0.055) 0%, rgba(16,185,129,0.02) 100%);
+}
+.sdTick {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--success, #10B981); color: #fff;
+  display: grid; place-items: center; flex-shrink: 0;
+  box-shadow: 0 2px 7px rgba(16, 185, 129, 0.32);
+}
+.sdTxt { flex: 1; min-width: 0; }
+.sdTxt b { font-size: 14.5px; font-weight: 550; display: block; color: var(--gray-700, #374151); }
+.sdTxt span { font-size: 12.5px; color: var(--gray-500, #6B7280); }
+.doneTag {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  color: #047857; background: rgba(16, 185, 129, 0.12);
+  padding: 4px 10px; border-radius: var(--radius-full, 9999px); flex-shrink: 0;
+}
+
+/* --- aktiv --- */
+.stepActive {
+  border: 1.5px solid var(--primary, #3B82F6);
+  border-radius: var(--radius, 12px);
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.07);
+  overflow: hidden;
+}
+.saHead { display: flex; align-items: center; gap: 14px; padding: 18px 20px 14px; }
+.saNum {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--primary, #3B82F6); color: #fff;
+  font-size: 13px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+.saTxt { flex: 1; min-width: 0; }
+.saTxt h3 { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; margin: 0 0 2px 0; color: var(--gray-900, #111827); }
+.saTxt p { font-size: 13px; color: var(--gray-500, #6B7280); margin: 0; line-height: 1.5; }
+.nowTag {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+  color: var(--primary, #3B82F6); background: rgba(59, 130, 246, 0.1);
+  padding: 4px 10px; border-radius: var(--radius-full, 9999px); flex-shrink: 0;
+}
+
+.saBtn {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin: 0 20px 18px; padding: 10px 18px;
+  background: var(--primary, #3B82F6); color: #fff;
+  border: none; border-radius: var(--radius-sm, 8px);
+  font-family: inherit; font-size: 13.5px; font-weight: 550; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+.saBtn:hover { background: var(--primary-dark, #2563EB); }
+
+/* Ablagefläche */
+.drop {
+  margin: 0 20px 12px;
+  border: 2px dashed var(--gray-300, #D1D5DB);
+  border-radius: var(--radius, 12px);
+  padding: 26px 20px; text-align: center; background: #fff; cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+.drop:hover, .dropOver { border-color: var(--primary, #3B82F6); background: #f5faff; }
+.dropError { border-color: var(--danger, #EF4444); background: #fff8f8; }
+
+.dropIcon {
+  width: 46px; height: 46px; border-radius: 13px;
+  background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #fff;
+  display: grid; place-items: center; margin: 0 auto 12px;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+.dropIconError { background: linear-gradient(135deg, #EF4444, #DC2626); box-shadow: 0 4px 14px rgba(239,68,68,0.28); }
+
+.drop b { font-size: 15px; font-weight: 600; display: block; margin-bottom: 4px; color: var(--gray-900, #111827); }
+.drop > span { font-size: 12.5px; color: var(--gray-500, #6B7280); display: block; }
+
+.dropTitleMobile, .dropHintMobile { display: none; }
+
+.dropBtn {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 14px; padding: 10px 20px;
+  background: var(--primary, #3B82F6); color: #fff;
+  border-radius: var(--radius-sm, 8px); font-size: 13.5px; font-weight: 550;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+.drop:hover .dropBtn { background: var(--primary-dark, #2563EB); }
+
+.dropNote {
+  margin: 0 20px 18px; font-size: 12.5px; color: var(--gray-500, #6B7280);
+  text-align: center; line-height: 1.5;
+}
+.dropNote b { color: var(--gray-700, #374151); font-weight: 600; }
+
+.spin { animation: sgspin 1s linear infinite; }
+@keyframes sgspin { to { transform: rotate(360deg); } }
+
+/* --- wartend --- */
+.stepIdle {
+  display: flex; align-items: center; gap: 14px;
+  padding: 15px 20px;
+  border: 1px solid var(--border, #E5E7EB);
+  border-radius: var(--radius, 12px); background: #fff;
+}
+.siNum {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--gray-100, #F3F4F6); color: var(--gray-400, #9CA3AF);
+  font-size: 12.5px; font-weight: 700; display: grid; place-items: center; flex-shrink: 0;
+}
+.siTxt { flex: 1; min-width: 0; }
+.siTxt b { font-size: 14.5px; font-weight: 550; display: block; color: var(--gray-700, #374151); }
+.siTxt span { font-size: 12.5px; color: var(--gray-400, #9CA3AF); }
+.siNote { font-size: 12px; color: var(--gray-400, #9CA3AF); flex-shrink: 0; }
+
+/* --- freiwillig --- */
+.stepOpt {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 20px;
+  border: 1px dashed var(--gray-300, #D1D5DB);
+  border-radius: var(--radius, 12px); background: var(--gray-50, #F9FAFB);
+}
+.soIcon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: #fff; border: 1px solid var(--border, #E5E7EB);
+  color: var(--gray-400, #9CA3AF); display: grid; place-items: center; flex-shrink: 0;
+}
+.stepOpt .siTxt b { color: var(--gray-600, #4B5563); font-weight: 500; }
+.optTag {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase;
+  color: var(--gray-400, #9CA3AF); background: #fff;
+  border: 1px solid var(--border, #E5E7EB);
+  padding: 3px 9px; border-radius: var(--radius-full, 9999px); flex-shrink: 0;
+}
+.optBtn {
+  padding: 7px 14px; border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--border, #E5E7EB); background: #fff;
+  font-family: inherit; font-size: 12.5px; font-weight: 550;
+  color: var(--gray-600, #4B5563); cursor: pointer; flex-shrink: 0;
+}
+.optBtn:hover { border-color: var(--primary, #3B82F6); color: var(--primary, #3B82F6); }
+
+/* ============ Möglichkeiten ============ */
+.can {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #E5E7EB);
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.04));
+  padding: 22px 26px 26px;
+}
+.canHead { margin-bottom: 16px; }
+.canHead h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; margin: 0 0 3px 0; color: var(--gray-900, #111827); }
+.canHead p { font-size: 13.5px; color: var(--gray-500, #6B7280); margin: 0; }
+
+.canGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; }
+
+.canCard {
+  border: 1px solid var(--border, #E5E7EB);
+  border-radius: var(--radius, 12px);
+  padding: 18px; cursor: pointer; background: #fff;
+  display: flex; flex-direction: column; gap: 9px;
+  text-align: left; font-family: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.canCard:hover {
+  border-color: var(--primary-light, #60A5FA);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,0.06));
+  transform: translateY(-2px);
+}
+.canIcon { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; color: #fff; }
+.canIconBlue { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+.canIconOrange { background: linear-gradient(135deg, #F59E0B, #D97706); }
+.canIconGreen { background: linear-gradient(135deg, #10B981, #059669); }
+.canIconLight { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+
+.canCard h3 { font-size: 14.5px; font-weight: 600; letter-spacing: -0.15px; margin: 0; color: var(--gray-900, #111827); }
+.canCard p { font-size: 12.5px; color: var(--gray-500, #6B7280); line-height: 1.5; flex: 1; margin: 0; }
+
+.canFoot {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding-top: 9px; border-top: 1px solid var(--gray-100, #F3F4F6);
+}
+.canGo { font-size: 12.5px; font-weight: 600; color: var(--primary, #3B82F6); }
+.freeTag {
+  font-size: 10.5px; font-weight: 600; color: #047857;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 3px 8px; border-radius: var(--radius-full, 9999px);
+}
+
+/* ============ Mobil ============ */
+@media (max-width: 900px) {
+  .canGrid { grid-template-columns: 1fr 1fr; }
+  .setupHead { padding: 18px 18px 14px; gap: 14px; }
+  .setupHeadTxt h2 { font-size: 17px; }
+  .steps { padding: 4px 18px 20px; }
+  .stepDone, .stepIdle, .stepOpt { padding: 13px 16px; gap: 12px; }
+  .saHead { padding: 16px 16px 12px; }
+  .drop { margin: 0 16px 12px; padding: 22px 14px; }
+  .dropNote { margin: 0 16px 16px; }
+  .saBtn { margin: 0 16px 16px; width: calc(100% - 32px); justify-content: center; }
+  .can { padding: 18px 18px 22px; }
+
+  /* Ziehen und Ablegen gibt es auf dem Handy nicht */
+  .dropTitleDesktop, .dropHintDesktop { display: none; }
+  .dropTitleMobile, .dropHintMobile { display: block; }
+  .dropBtn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 560px) {
+  .canGrid { grid-template-columns: 1fr; }
+  .doneTag, .optTag { display: none; }
+}

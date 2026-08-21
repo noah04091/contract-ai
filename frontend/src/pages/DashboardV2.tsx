@@ -29,6 +29,7 @@ import { fixUtf8Display } from "../utils/textUtils";
 import { DashboardLayout } from "../components/DashboardV2";
 import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
 import { OnboardingChecklist } from "../components/Onboarding"; // 🎓 Onboarding Checklist
+import SetupGuide, { SETUP_GUIDE_ENABLED } from "../components/DashboardV2/SetupGuide"; // 🎯 Erststart für neue Konten
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 
 // ============================================
@@ -605,6 +606,23 @@ export default function DashboardV2() {
         </header>
 
         {/* ============================================
+            ERSTSTART (21.08.2026) — ersetzt für neu registrierte Konten die
+            Kombination aus Checkliste und Willkommensbox durch EINE geführte
+            Ansicht. Abschalten: SETUP_GUIDE_ENABLED in SetupGuide.tsx auf
+            false setzen, dann greift wieder der bisherige Aufbau darunter.
+            Bedingung: noch keine Verträge und nicht dauerhaft ausgeblendet.
+            ============================================ */}
+        {SETUP_GUIDE_ENABLED && stats.total === 0 && !onboardingDismissed ? (
+          <SetupGuide
+            userName={userName}
+            checklist={user?.onboarding?.checklist}
+            freeAnalyses={analysisUsage.isUnlimited ? null : Math.max(0, analysisUsage.remaining)}
+            onUploaded={() => { fetchData(true); }}
+            onDismiss={handleDismissOnboarding}
+          />
+        ) : (
+          <>
+        {/* ============================================
             ONBOARDING CHECKLIST - For guided setup
             ============================================ */}
         <OnboardingChecklist className={styles.onboardingChecklist} />
@@ -1157,6 +1175,8 @@ export default function DashboardV2() {
           </div>
 
         </div>
+          </>
+        )}
           </>
         )}
       </div>

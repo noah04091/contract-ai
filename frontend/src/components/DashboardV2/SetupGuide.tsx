@@ -1,0 +1,355 @@
+// 📁 components/DashboardV2/SetupGuide.tsx
+// 🎯 Erststart für neu registrierte Konten (21.08.2026)
+//
+// Ersetzt die bisherige Kombination aus Checkliste und Willkommensbox durch
+// EINE geführte Ansicht. Zwei Blöcke mit klar getrennten Rollen:
+//   1. "Deine Einrichtung"  → Wo stehe ich? Was ist jetzt dran?
+//   2. "Das kannst du ..."  → Was kann dieses Produkt? (ohne Nummern, damit
+//      es nicht mit den Schritten verwechselt wird)
+//
+// Gestaltungsprinzip: Nur EIN Schritt ist groß. Erledigte stehen als grün
+// abgehakte Zeilen da (sichtbarer Fortschritt), der aktuelle Schritt bekommt
+// die Bühne samt Ablagefläche, Kommendes bleibt ruhig.
+//
+// Der Fortschritt zählt vier Kernschritte (Konto, E-Mail, erster Vertrag,
+// erste Analyse) und startet dadurch bei 2 von 4 — angefangene Aufgaben
+// werden deutlich häufiger beendet als bei null begonnene. Das Profil ist
+// bewusst freiwillig und zählt NICHT mit, sonst könnte die Einrichtung bei
+// jedem, der nur prüfen will, nie fertig werden.
+//
+// Upload: dasselbe Muster wie im Onboarding-Fenster (POST /api/upload),
+// danach Übergabe an die bestehende ?analyze=-Weiterleitung in ContractsV2 —
+// dort laufen Limit-Prüfung, das gewohnte Lade-Overlay und die normale
+// Analyse-Ansicht. Bewusst KEINE Zwischenfrage "analysieren oder speichern":
+// Der nächste Schritt kündigt die Prüfung an, und die Karte nennt die Kosten
+// vorher. Auf der Verträge-Seite bleibt die Wahl unverändert bestehen.
+
+import { useCallback, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Check, Upload, Loader2, AlertCircle, Search, Bell, PencilLine,
+  MessageSquare, User, ArrowRight
+} from 'lucide-react';
+import styles from './SetupGuide.module.css';
+
+// 🔌 EIN-ZEILEN-SCHALTER: auf false setzen, und das Dashboard zeigt sofort
+// wieder die bisherige Checkliste samt Willkommensbox. Kein weiterer Eingriff
+// nötig, kein Datenverlust.
+export const SETUP_GUIDE_ENABLED = true;
+
+const MAX_SIZE = 50 * 1024 * 1024;
+const ALLOWED = [
+  'application/pdf', 'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp',
+];
+
+interface ChecklistState {
+  accountCreated?: boolean;
+  emailVerified?: boolean;
+  firstContractUploaded?: boolean;
+  companyProfileComplete?: boolean;
+  firstAnalysisComplete?: boolean;
+}
+
+interface Props {
+  userName: string;
+  checklist?: ChecklistState;
+  freeAnalyses: number | null; // null = unbegrenzt
+  onUploaded?: () => void;
+  onDismiss?: () => void;
+}
+
+export default function SetupGuide({ userName, checklist, freeAnalyses, onUploaded, onDismiss }: Props) {
+  const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [state, setState] = useState<'idle' | 'uploading' | 'error'>('idle');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const hasContract = Boolean(checklist?.firstContractUploaded);
+  const hasAnalysis = Boolean(checklist?.firstAnalysisComplete);
+  const hasProfile = Boolean(checklist?.companyProfileComplete);
+
+  // Vier Kernschritte; Profil zählt bewusst nicht mit
+  const doneCount = 2 + (hasContract ? 1 : 0) + (hasAnalysis ? 1 : 0);
+  const openCount = 4 - doneCount;
+  const ringLength = 138;
+  const ringOffset = ringLength - (ringLength * doneCount) / 4;
+
+  const headline = openCount === 0
+    ? 'Alles eingerichtet'
+    : openCount === 1
+      ? 'Noch ein Schritt'
+      : 'Fast startklar';
+
+  const subline = hasContract
+    ? 'Dein erster Vertrag liegt schon da — jetzt fehlt nur noch die Prüfung.'
+    : 'Noch zwei Schritte — danach verschwindet dieser Bereich und du siehst dein Dashboard.';
+
+  const handleFile = useCallback(async (file: File) => {
+    if (!ALLOWED.includes(file.type)) {
+      setErrorMsg('Bitte eine PDF-, Word- oder Bilddatei auswählen.');
+      setState('error');
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      setErrorMsg('Die Datei ist größer als 50 MB.');
+      setState('error');
+      return;
+    }
+
+    setState('uploading');
+    setErrorMsg(null);
+
+    try {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Der Upload hat nicht geklappt.');
+      }
+
+      const data = await response.json();
+      const contractId = data.contract?._id || data.contractId;
+      onUploaded?.();
+      navigate(contractId ? `/contracts?analyze=${contractId}` : '/contracts');
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Der Upload hat nicht geklappt.');
+      setState('error');
+    }
+  }, [navigate, onUploaded]);
+
+  return (
+    <div className={styles.wrap}>
+      {/* ================= EINRICHTUNG ================= */}
+      <section className={styles.setup}>
+        <header className={styles.setupHead}>
+          <span className={styles.ring}>
+            <svg width="52" height="52" aria-hidden="true">
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#E5E7EB" strokeWidth="4" />
+              <circle cx="26" cy="26" r="22" fill="none" stroke="#3B82F6" strokeWidth="4"
+                strokeLinecap="round" strokeDasharray={ringLength} strokeDashoffset={ringOffset}
+                transform="rotate(-90 26 26)" className={styles.ringProgress} />
+            </svg>
+            <span className={styles.ringTxt}>{doneCount}/4</span>
+          </span>
+          <div className={styles.setupHeadTxt}>
+            <h2>{headline}, {userName}</h2>
+            <p>{subline}</p>
+          </div>
+          {onDismiss && (
+            <button className={styles.dismiss} onClick={onDismiss} title="Diesen Bereich dauerhaft ausblenden">
+              Ausblenden
+            </button>
+          )}
+        </header>
+
+        <div className={styles.steps}>
+          {/* 1 + 2: erledigt */}
+          <div className={styles.stepDone}>
+            <span className={styles.sdTick}><Check size={14} strokeWidth={3.5} /></span>
+            <span className={styles.sdTxt}>
+              <b>Konto erstellt</b>
+              <span>Du hast dich erfolgreich registriert</span>
+            </span>
+            <span className={styles.doneTag}>Erledigt</span>
+          </div>
+
+          <div className={styles.stepDone}>
+            <span className={styles.sdTick}><Check size={14} strokeWidth={3.5} /></span>
+            <span className={styles.sdTxt}>
+              <b>E-Mail bestätigt</b>
+              <span>Deine Adresse ist verifiziert</span>
+            </span>
+            <span className={styles.doneTag}>Erledigt</span>
+          </div>
+
+          {/* 3: Vertrag */}
+          {hasContract ? (
+            <div className={styles.stepDone}>
+              <span className={styles.sdTick}><Check size={14} strokeWidth={3.5} /></span>
+              <span className={styles.sdTxt}>
+                <b>Erster Vertrag hinzugefügt</b>
+                <span>Er liegt sicher in deiner Verwaltung</span>
+              </span>
+              <span className={styles.doneTag}>Erledigt</span>
+            </div>
+          ) : (
+            <div className={styles.stepActive}>
+              <div className={styles.saHead}>
+                <span className={styles.saNum}>3</span>
+                <span className={styles.saTxt}>
+                  <h3>Ersten Vertrag hinzufügen</h3>
+                  <p>Wir erkennen den Vertragstyp automatisch — du musst nichts einstellen.</p>
+                </span>
+                <span className={styles.nowTag}>Jetzt dran</span>
+              </div>
+
+              <div
+                className={`${styles.drop} ${dragOver ? styles.dropOver : ''} ${state === 'error' ? styles.dropError : ''}`}
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) handleFile(f);
+                }}
+                onClick={() => state !== 'uploading' && fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && state !== 'uploading') fileInputRef.current?.click(); }}
+              >
+                {state === 'uploading' ? (
+                  <>
+                    <span className={styles.dropIcon}><Loader2 size={20} className={styles.spin} /></span>
+                    <b>Wird hochgeladen …</b>
+                    <span>Gleich beginnt die Prüfung</span>
+                  </>
+                ) : state === 'error' ? (
+                  <>
+                    <span className={`${styles.dropIcon} ${styles.dropIconError}`}><AlertCircle size={20} /></span>
+                    <b>{errorMsg}</b>
+                    <span>Klicke hier, um es erneut zu versuchen</span>
+                  </>
+                ) : (
+                  <>
+                    <span className={styles.dropIcon}><Upload size={20} /></span>
+                    <b className={styles.dropTitleDesktop}>Datei hierher ziehen</b>
+                    <b className={styles.dropTitleMobile}>Vertrag auswählen</b>
+                    <span className={styles.dropHintDesktop}>PDF, Word oder Foto · bis 50 MB</span>
+                    <span className={styles.dropHintMobile}>Aus Dateien oder direkt fotografieren</span>
+                    <span className={styles.dropBtn}>Datei auswählen</span>
+                  </>
+                )}
+              </div>
+
+              {state === 'idle' && (
+                <p className={styles.dropNote}>
+                  Die Prüfung startet direkt danach
+                  {freeAnalyses !== null && <> und nutzt <b>eine deiner {freeAnalyses} freien Analysen</b></>}.
+                </p>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.webp"
+                style={{ display: 'none' }}
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }}
+              />
+            </div>
+          )}
+
+          {/* 4: Analyse */}
+          {hasAnalysis ? (
+            <div className={styles.stepDone}>
+              <span className={styles.sdTick}><Check size={14} strokeWidth={3.5} /></span>
+              <span className={styles.sdTxt}>
+                <b>Erste Analyse abgeschlossen</b>
+                <span>Risiken und Fristen sind erkannt</span>
+              </span>
+              <span className={styles.doneTag}>Erledigt</span>
+            </div>
+          ) : hasContract ? (
+            <div className={styles.stepActive}>
+              <div className={styles.saHead}>
+                <span className={styles.saNum}>4</span>
+                <span className={styles.saTxt}>
+                  <h3>Erste Analyse starten</h3>
+                  <p>Risiken, Kündigungsfristen und eine Bewertung — in wenigen Minuten.</p>
+                </span>
+                <span className={styles.nowTag}>Jetzt dran</span>
+              </div>
+              <button className={styles.saBtn} onClick={() => navigate('/contracts')}>
+                Zu meinen Verträgen
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          ) : (
+            <div className={styles.stepIdle}>
+              <span className={styles.siNum}>4</span>
+              <span className={styles.siTxt}>
+                <b>Erste Analyse</b>
+                <span>Risiken, Fristen und eine Bewertung deines Vertrags</span>
+              </span>
+              <span className={styles.siNote}>startet automatisch</span>
+            </div>
+          )}
+
+          {/* Freiwillig: Profil */}
+          {!hasProfile && (
+            <div className={styles.stepOpt}>
+              <span className={styles.soIcon}><User size={14} /></span>
+              <span className={styles.siTxt}>
+                <b>Profil vervollständigen</b>
+                <span>Nur nötig, wenn du selbst Verträge erstellen möchtest</span>
+              </span>
+              <span className={styles.optTag}>freiwillig</span>
+              <button className={styles.optBtn} onClick={() => navigate('/company-profile')}>Ausfüllen</button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ================= MÖGLICHKEITEN ================= */}
+      <section className={styles.can}>
+        <header className={styles.canHead}>
+          <h2>Das kannst du mit Contract AI machen</h2>
+          <p>Alles wird nutzbar, sobald dein erster Vertrag da ist.</p>
+        </header>
+
+        <div className={styles.canGrid}>
+          <button className={styles.canCard} onClick={() => navigate('/contracts?upload=true')}>
+            <span className={`${styles.canIcon} ${styles.canIconBlue}`}><Search size={18} /></span>
+            <h3>Verträge prüfen</h3>
+            <p>Risiken und Kündigungsfristen erkennen — in verständlichem Deutsch.</p>
+            <span className={styles.canFoot}>
+              <span className={styles.canGo}>Ansehen →</span>
+              {freeAnalyses !== null && <span className={styles.freeTag}>{freeAnalyses} frei</span>}
+            </span>
+          </button>
+
+          <button className={styles.canCard} onClick={() => navigate('/calendar')}>
+            <span className={`${styles.canIcon} ${styles.canIconOrange}`}><Bell size={18} /></span>
+            <h3>Fristen überwachen</h3>
+            <p>Wir melden uns per E-Mail, bevor sich etwas still verlängert.</p>
+            <span className={styles.canFoot}>
+              <span className={styles.canGo}>Ansehen →</span>
+              <span className={styles.freeTag}>inklusive</span>
+            </span>
+          </button>
+
+          <button className={styles.canCard} onClick={() => navigate('/generate')}>
+            <span className={`${styles.canIcon} ${styles.canIconGreen}`}><PencilLine size={18} /></span>
+            <h3>Verträge erstellen</h3>
+            <p>Über 17 geprüfte Vorlagen vom Arbeitsvertrag bis zur Geheimhaltung.</p>
+            <span className={styles.canFoot}>
+              <span className={styles.canGo}>Vorlagen ansehen →</span>
+            </span>
+          </button>
+
+          <button className={styles.canCard} onClick={() => navigate('/chat')}>
+            <span className={`${styles.canIcon} ${styles.canIconLight}`}><MessageSquare size={18} /></span>
+            <h3>Fragen stellen</h3>
+            <p>„Kann ich zum Monatsende kündigen?" — frag einfach nach.</p>
+            <span className={styles.canFoot}>
+              <span className={styles.canGo}>Ansehen →</span>
+              <span className={styles.freeTag}>5 frei</span>
+            </span>
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
