@@ -75,43 +75,9 @@
 }
 .tBtn:hover { border-color: var(--primary, #3B82F6); color: var(--primary, #3B82F6); }
 
-/* ============ Zahlenreihe ============ */
-.statsRow {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.statCard {
-  display: flex;
-  flex-direction: column;
-  padding: 18px 20px;
-  background: var(--surface, #fff);
-  border: 1px solid var(--border, #E5E7EB);
-  border-radius: var(--radius, 12px);
-}
-
-.statCardActive {
-  border-color: rgba(59, 130, 246, 0.35);
-  background: linear-gradient(160deg, #ffffff 0%, #f5f9ff 100%);
-}
-
-.statIcon {
-  width: 34px; height: 34px; border-radius: var(--radius-sm, 8px);
-  background: var(--gray-100, #F3F4F6); color: var(--gray-400, #9CA3AF);
-  display: grid; place-items: center; margin-bottom: 12px;
-}
-.statIconGreen { background: rgba(16, 185, 129, 0.1); color: var(--success, #10B981); }
-.statIconOrange { background: rgba(245, 158, 11, 0.1); color: var(--warning, #F59E0B); }
-.statIconBlue { background: rgba(59, 130, 246, 0.12); color: var(--primary, #3B82F6); }
-
-.statValue {
-  font-size: 24px; font-weight: 700; letter-spacing: -0.5px; line-height: 1;
-  color: var(--gray-300, #D1D5DB); margin-bottom: 4px;
-}
-.statCardActive .statValue { color: var(--gray-900, #111827); }
-.statLabel { font-size: 12.5px; color: var(--gray-500, #6B7280); }
+/* 21.08.2026: Die Zahlenreihe mit Platzhaltern („Verträge –") ist entfernt —
+   sie sagte einem frisch registrierten Konto nichts und schob die eigentliche
+   Handlung nach unten. Zugehörige Regeln hier ebenfalls gelöscht. */
 
 /* ============ Hauptbereich ============ */
 .mainRow {
@@ -279,7 +245,6 @@
 
 /* ============ Mobil ============ */
 @media (max-width: 900px) {
-  .statsRow { grid-template-columns: repeat(2, 1fr); }
   .mainRow { grid-template-columns: 1fr; }
   .outlookRow { grid-template-columns: repeat(2, 1fr); }
   .mainTop { padding: 22px 18px 2px; }
