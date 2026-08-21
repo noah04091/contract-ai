@@ -614,7 +614,6 @@ export default function DashboardV2() {
             ============================================ */}
         {SETUP_GUIDE_ENABLED && stats.total === 0 && !onboardingDismissed ? (
           <SetupGuide
-            userName={userName}
             checklist={user?.onboarding?.checklist}
             freeAnalyses={analysisUsage.isUnlimited ? null : Math.max(0, analysisUsage.remaining)}
             onUploaded={() => { fetchData(true); }}

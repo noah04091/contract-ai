@@ -28,7 +28,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Check, Upload, Loader2, AlertCircle, Search, Bell, PencilLine,
-  MessageSquare, User, ArrowRight
+  MessageSquare, User, ArrowRight, ShieldCheck, Clock, LifeBuoy
 } from 'lucide-react';
 import styles from './SetupGuide.module.css';
 
@@ -53,14 +53,15 @@ interface ChecklistState {
 }
 
 interface Props {
-  userName: string;
+  // Kein userName: Die Begrüßung über diesem Bereich nennt den Namen bereits,
+  // eine zweite Nennung direkt darunter wirkt aufgesetzt (Noahs Rückmeldung).
   checklist?: ChecklistState;
   freeAnalyses: number | null; // null = unbegrenzt
   onUploaded?: () => void;
   onDismiss?: () => void;
 }
 
-export default function SetupGuide({ userName, checklist, freeAnalyses, onUploaded, onDismiss }: Props) {
+export default function SetupGuide({ checklist, freeAnalyses, onUploaded, onDismiss }: Props) {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -74,14 +75,16 @@ export default function SetupGuide({ userName, checklist, freeAnalyses, onUpload
   // Vier Kernschritte; Profil zählt bewusst nicht mit
   const doneCount = 2 + (hasContract ? 1 : 0) + (hasAnalysis ? 1 : 0);
   const openCount = 4 - doneCount;
-  const ringLength = 138;
+  const ringLength = 145; // Umfang bei r=23
   const ringOffset = ringLength - (ringLength * doneCount) / 4;
 
+  // Bewusst OHNE Namen: die Begrüßung darüber nennt ihn bereits
+  // („Guten Morgen, Tim") — zweimal wirkt aufgesetzt.
   const headline = openCount === 0
     ? 'Alles eingerichtet'
     : openCount === 1
-      ? 'Noch ein Schritt'
-      : 'Fast startklar';
+      ? 'Du bist fast fertig'
+      : 'Du bist gleich startklar';
 
   const subline = hasContract
     ? 'Dein erster Vertrag liegt schon da — jetzt fehlt nur noch die Prüfung.'
@@ -135,16 +138,16 @@ export default function SetupGuide({ userName, checklist, freeAnalyses, onUpload
       <section className={styles.setup}>
         <header className={styles.setupHead}>
           <span className={styles.ring}>
-            <svg width="52" height="52" aria-hidden="true">
-              <circle cx="26" cy="26" r="22" fill="none" stroke="#E5E7EB" strokeWidth="4" />
-              <circle cx="26" cy="26" r="22" fill="none" stroke="#3B82F6" strokeWidth="4"
+            <svg width="58" height="58" aria-hidden="true">
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#DBE7FB" strokeWidth="5" />
+              <circle cx="29" cy="29" r="23" fill="none" stroke="#3B82F6" strokeWidth="5"
                 strokeLinecap="round" strokeDasharray={ringLength} strokeDashoffset={ringOffset}
-                transform="rotate(-90 26 26)" className={styles.ringProgress} />
+                transform="rotate(-90 29 29)" className={styles.ringProgress} />
             </svg>
             <span className={styles.ringTxt}>{doneCount}/4</span>
           </span>
           <div className={styles.setupHeadTxt}>
-            <h2>{headline}, {userName}</h2>
+            <h2>{headline}</h2>
             <p>{subline}</p>
           </div>
           {onDismiss && (
@@ -306,7 +309,10 @@ export default function SetupGuide({ userName, checklist, freeAnalyses, onUpload
       <section className={styles.can}>
         <header className={styles.canHead}>
           <h2>Das kannst du mit Contract AI machen</h2>
-          <p>Alles wird nutzbar, sobald dein erster Vertrag da ist.</p>
+          <p>
+            Kurz gesagt: Du legst deine Verträge hier ab, wir lesen sie für dich und
+            passen auf die Fristen auf. Alles Weitere ist freiwillig.
+          </p>
         </header>
 
         <div className={styles.canGrid}>
@@ -348,6 +354,33 @@ export default function SetupGuide({ userName, checklist, freeAnalyses, onUpload
               <span className={styles.freeTag}>5 frei</span>
             </span>
           </button>
+        </div>
+
+        {/* Abholung zum Schluss: Sicherheit, Aufwand, Hilfe — die drei stillen
+            Fragen eines neuen Nutzers, bevor er die erste Datei hochlädt. */}
+        <div className={styles.reassure}>
+          <span className={styles.reItem}>
+            <span className={`${styles.reIcon} ${styles.reIconGreen}`}><ShieldCheck size={15} /></span>
+            <span className={styles.reTxt}>
+              <b>Deine Daten bleiben deine</b>
+              Server in Deutschland, DSGVO-konform, jederzeit löschbar.
+            </span>
+          </span>
+          <span className={styles.reItem}>
+            <span className={`${styles.reIcon} ${styles.reIconBlue}`}><Clock size={15} /></span>
+            <span className={styles.reTxt}>
+              <b>Zwei Minuten reichen</b>
+              Datei ablegen genügt — du musst nichts ausfüllen oder einstellen.
+            </span>
+          </span>
+          <span className={styles.reItem}>
+            <span className={`${styles.reIcon} ${styles.reIconOrange}`}><LifeBuoy size={15} /></span>
+            <span className={styles.reTxt}>
+              <b>Du bist nicht allein</b>
+              <button className={styles.reLink} onClick={() => navigate('/hilfe')}>Hilfe-Center ansehen</button>
+              {' '}oder einfach auf unsere E-Mail antworten.
+            </span>
+          </span>
         </div>
       </section>
     </div>
