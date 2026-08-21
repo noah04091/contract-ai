@@ -57,11 +57,15 @@ interface Props {
   // eine zweite Nennung direkt darunter wirkt aufgesetzt (Noahs Rückmeldung).
   checklist?: ChecklistState;
   freeAnalyses: number | null; // null = unbegrenzt
+  // Der Block „Das kannst du machen" nur, solange die Seite sonst leer wäre.
+  // Sobald Verträge da sind, zeigt das Dashboard darunter seine eigenen
+  // Funktionsbereiche — dann wäre er doppelt.
+  showPossibilities?: boolean;
   onUploaded?: () => void;
   onDismiss?: () => void;
 }
 
-export default function SetupGuide({ checklist, freeAnalyses, onUploaded, onDismiss }: Props) {
+export default function SetupGuide({ checklist, freeAnalyses, showPossibilities = true, onUploaded, onDismiss }: Props) {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -306,6 +310,7 @@ export default function SetupGuide({ checklist, freeAnalyses, onUploaded, onDism
       </section>
 
       {/* ================= MÖGLICHKEITEN ================= */}
+      {showPossibilities && (
       <section className={styles.can}>
         <header className={styles.canHead}>
           <h2>Das kannst du mit Contract AI machen</h2>
@@ -392,6 +397,7 @@ export default function SetupGuide({ checklist, freeAnalyses, onUploaded, onDism
           </span>
         </div>
       </section>
+      )}
     </div>
   );
 }

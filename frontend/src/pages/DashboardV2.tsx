@@ -440,6 +440,14 @@ export default function DashboardV2() {
   // EVENT HANDLERS
   // ============================================
 
+  // 🎯 Erststart: Ist die Einrichtung noch offen? Maßgeblich sind die beiden
+  // Kernschritte, die der Nutzer selbst gehen muss — Konto und E-Mail sind zum
+  // Zeitpunkt der ersten Anmeldung ohnehin erledigt, das Profil ist freiwillig.
+  const setupIncomplete = !(
+    user?.onboarding?.checklist?.firstContractUploaded &&
+    user?.onboarding?.checklist?.firstAnalysisComplete
+  );
+
   const handleRefresh = () => {
     fetchData(true);
   };
@@ -608,28 +616,34 @@ export default function DashboardV2() {
         {/* ============================================
             ERSTSTART (21.08.2026) — ersetzt für neu registrierte Konten die
             Kombination aus Checkliste und Willkommensbox durch EINE geführte
-            Ansicht. Abschalten: SETUP_GUIDE_ENABLED in SetupGuide.tsx auf
-            false setzen, dann greift wieder der bisherige Aufbau darunter.
-            Bedingung: noch keine Verträge und nicht dauerhaft ausgeblendet.
+            Ansicht. Abschalten: SETUP_GUIDE_ENABLED in SetupGuide.tsx auf false.
+
+            ⚠️ 21.08. korrigiert: Die Anzeige hing an `stats.total === 0`. Nach dem
+            ersten Upload fiel das Dashboard dadurch zurück in den alten Aufbau —
+            die alte Checkliste kam zurück, mitten in der laufenden Einrichtung.
+            Maßgeblich ist jetzt, ob die Einrichtung ABGESCHLOSSEN ist. Solange
+            das nicht der Fall ist, bleibt die geführte Ansicht oben stehen; mit
+            vorhandenen Verträgen erscheint das normale Dashboard darunter.
             ============================================ */}
-        {SETUP_GUIDE_ENABLED && stats.total === 0 && !onboardingDismissed ? (
+        {SETUP_GUIDE_ENABLED && setupIncomplete && !onboardingDismissed && (
           <SetupGuide
             checklist={user?.onboarding?.checklist}
             freeAnalyses={analysisUsage.isUnlimited ? null : Math.max(0, analysisUsage.remaining)}
+            showPossibilities={stats.total === 0}
             onUploaded={() => { fetchData(true); }}
             onDismiss={handleDismissOnboarding}
           />
-        ) : (
-          <>
-        {/* ============================================
-            ONBOARDING CHECKLIST - For guided setup
-            ============================================ */}
-        <OnboardingChecklist className={styles.onboardingChecklist} />
+        )}
+
+        {/* Bisheriger Aufbau nur noch, wenn der Erststart abgeschaltet ist */}
+        {!SETUP_GUIDE_ENABLED && (
+          <OnboardingChecklist className={styles.onboardingChecklist} />
+        )}
 
         {/* ============================================
             ONBOARDING - Für neue User ohne Verträge
             ============================================ */}
-        {stats.total === 0 && !onboardingDismissed ? (
+        {!SETUP_GUIDE_ENABLED && stats.total === 0 && !onboardingDismissed ? (
           <div className={styles.onboarding} style={{ position: 'relative' }}>
             <button
               onClick={handleDismissOnboarding}
@@ -728,7 +742,7 @@ export default function DashboardV2() {
               </Link>
             </div>
           </div>
-        ) : (
+        ) : (stats.total > 0 || onboardingDismissed || (SETUP_GUIDE_ENABLED && !setupIncomplete)) ? (
           <>
         {/* ============================================
             ROW 1: STATS - Überblick auf einen Blick
@@ -1175,9 +1189,7 @@ export default function DashboardV2() {
 
         </div>
           </>
-        )}
-          </>
-        )}
+        ) : null}
       </div>
     </DashboardLayout>
   );
