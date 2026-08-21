@@ -53,12 +53,20 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
   // Fläche bei einem Foto einfach leer (Noahs Befund). Ein Bild braucht aber gar
   // keinen Leser, nur ein Bild-Element.
   // Die lokale Datei kennt ihren Typ selbst; sonst zählt der mitgegebene.
+  // 21.08.2026: Welche Bildquelle laedt WIRKLICH? Es gibt zwei Kandidaten — die lokale
+  // Datei (blob:) und die S3-Adresse. Statt auf eine zu wetten, wird die naechste
+  // genommen, sobald eine nicht laedt; versagen beide, kommt das Platzhalter-Muster.
+  // Ein kaputtes Bild-Symbol darf hier NIE stehen bleiben.
+  const [defekteQuellen, setDefekteQuellen] = useState<string[]>([]);
+  const bildQuelle = [pdfUrl, pdfSrcUrl].find(q => q && !defekteQuellen.includes(q)) || null;
+
   const istBild = getFileTypeInfo(
     pdfFile ? { mimetype: pdfFile.type, name: pdfFile.name } : { mimetype, name: contractName }
   ).variant === 'image';
 
   // Create blob URL for PDF preview
   useEffect(() => {
+    setDefekteQuellen([]);
     if (pdfFile && show) {
       const url = URL.createObjectURL(pdfFile);
       setPdfUrl(url);
@@ -106,10 +114,11 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
         <div className={styles.pdfFrame}>
           {/* PDF or Placeholder */}
           <div className={styles.pdfContent}>
-            {documentSource && istBild ? (
+            {istBild && bildQuelle ? (
               <img
-                src={documentSource}
+                src={bildQuelle}
                 alt=""
+                onError={() => setDefekteQuellen(bisher => [...bisher, bildQuelle])}
                 // 20.08.2026, 3. Anlauf. Vorgeschichte, damit das niemand rueckwaerts dreht:
                 //   `width: 280`  -> ein QUERFORMAT-Bild (Noahs DHL-Label, 1478x769) wurde
                 //                    146 px hoch und klebte als Streifen oben im 396 px
@@ -122,7 +131,7 @@ export default function AnalysisOverlay({ show, contractName, progress, currentS
                 // sichtbar, damit die Raender nicht wieder als "leer" gelesen werden.
                 style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#f1f5f9' }}
               />
-            ) : documentSource ? (
+            ) : documentSource && !istBild ? (
               <Document file={documentSource} loading={null} error={null}>
                 <Page
                   pageNumber={1}

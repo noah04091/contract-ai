@@ -3033,8 +3033,29 @@ export default function Contracts() {
           show: true,
           contractName: fixUtf8Display(contract.name),
           pdfFile: uploadFileItem.file,
+          mimetype: contract.mimetype,
           progress: 0
         });
+
+        // 📄 21.08.2026: ZWEITE Bildquelle nachreichen. Die lokale Datei (blob:) ist
+        // sofort da, hat sich bei Fotos aber als unzuverlaessig erwiesen. Diese Adresse
+        // ist dieselbe, mit der die Seitenleisten-Vorschau nachweislich funktioniert.
+        // Das Overlay nimmt automatisch die, die laedt. Fire-and-forget, blockiert nichts.
+        if (contract.s3Key) {
+          (async () => {
+            try {
+              const tkn = localStorage.getItem('authToken') || localStorage.getItem('token');
+              const r = await fetch(`/api/s3/view?contractId=${contract._id}&type=original`, {
+                headers: tkn ? { Authorization: `Bearer ${tkn}` } : undefined,
+                credentials: 'include'
+              });
+              if (!r.ok) return;
+              const d = await r.json();
+              const adresse = d.fileUrl || d.url || null;
+              if (adresse) setAnalyzingOverlay(prev => prev.show ? { ...prev, pdfSrcUrl: adresse } : prev);
+            } catch { /* Vorschau ist Beiwerk */ }
+          })();
+        }
 
         // Update progress
         const progressPercent = Math.round(((i + 1) / contractsToAnalyze.length) * 100);

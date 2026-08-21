@@ -1,7 +1,7 @@
 // 20.08.2026: Noah meldet, dass die Ladeanzeige bei einem Foto weiss bleibt.
 // Dieser Test klaert, ob die ANZEIGE-LOGIK schuld ist oder die Daten.
 
-import { render } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
 jest.mock('react-pdf', () => ({
@@ -51,5 +51,30 @@ describe('AnalysisOverlay: Foto in der Ladeanzeige', () => {
       <AnalysisOverlay show contractName="DHL-Label" progress={54} pdfSrcUrl="https://example.invalid/x" />
     );
     expect(queryByTestId('pdf-leser')).toBeInTheDocument();
+  });
+});
+
+describe('Selbstheilende Bildquelle (21.08.2026)', () => {
+  test('faellt auf die zweite Quelle zurueck, wenn die erste nicht laedt', () => {
+    const { baseElement } = render(
+      <AnalysisOverlay show contractName="x.png" progress={41}
+        pdfFile={bild()} pdfSrcUrl="https://example.invalid/echt.png" mimetype="image/png" />
+    );
+    const ersteQuelle = baseElement.querySelector('img')!.getAttribute('src');
+    expect(ersteQuelle).toBe('blob:test');
+
+    fireEvent.error(baseElement.querySelector('img')!);
+
+    const zweiteQuelle = baseElement.querySelector('img')!.getAttribute('src');
+    expect(zweiteQuelle).toBe('https://example.invalid/echt.png');
+  });
+
+  test('kein kaputtes Bild-Symbol: versagen ALLE Quellen, kommt das Platzhalter-Muster', () => {
+    const { baseElement, queryByTestId } = render(
+      <AnalysisOverlay show contractName="x.png" progress={41} pdfFile={bild()} />
+    );
+    fireEvent.error(baseElement.querySelector('img')!);
+    expect(baseElement.querySelector('img')).not.toBeInTheDocument();
+    expect(queryByTestId('pdf-leser')).not.toBeInTheDocument(); // NIE der PDF-Leser bei einem Bild
   });
 });

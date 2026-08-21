@@ -746,7 +746,11 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
                   //     und danach umgeleitet werden (gleiches Muster wie openSmartPDF).
                   //  2. Es fehlte der Authorization-Kopf. Ueberall sonst wird er mitgeschickt;
                   //     ohne gueltiges Cookie kam nur ein 401 zurueck und `j.url` blieb leer.
-                  const fenster = window.open("", "_blank", "noopener,noreferrer");
+                  // ⚠️ KEIN "noopener" hier! window.open gibt mit noopener laut Spezifikation
+                  // NULL zurueck — man haette dann keinen Griff auf das Fenster, koennte es
+                  // weder umleiten noch schliessen, und es bliebe als leerer about:blank-Tab
+                  // stehen. Genau das ist am 21.08. passiert. openSmartPDF macht es richtig.
+                  const fenster = window.open("", "_blank");
                   try {
                     const token = localStorage.getItem("authToken") || localStorage.getItem("token");
                     const res = await fetch(`/api/s3/view?contractId=${encodeURIComponent(contractId)}&type=original`, {
