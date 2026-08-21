@@ -19,7 +19,7 @@ import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Upload, Search, Bell, FileText, Loader2, AlertCircle, CheckCircle,
+  Upload, Search, Loader2, AlertCircle, CheckCircle,
   ShieldCheck, Clock, MessageSquare, Zap, GitCompare, PenTool, Radar,
   ChevronDown, PencilLine
 } from 'lucide-react';
@@ -170,33 +170,12 @@ export default function DashboardFirstRun({ userName, analysisUsage, checklist, 
         </div>
       )}
 
-      {/* ===== Zahlenreihe — echte Struktur, nur noch ohne Inhalt ===== */}
-      <div className={styles.statsRow}>
-        <div className={styles.statCard}>
-          <span className={styles.statIcon}><FileText size={18} /></span>
-          <span className={styles.statValue}>–</span>
-          <span className={styles.statLabel}>Verträge</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={`${styles.statIcon} ${styles.statIconGreen}`}><CheckCircle size={18} /></span>
-          <span className={styles.statValue}>–</span>
-          <span className={styles.statLabel}>Aktiv</span>
-        </div>
-        <div className={styles.statCard}>
-          <span className={`${styles.statIcon} ${styles.statIconOrange}`}><Bell size={18} /></span>
-          <span className={styles.statValue}>–</span>
-          <span className={styles.statLabel}>Fristen</span>
-        </div>
-        <div className={`${styles.statCard} ${styles.statCardActive}`}>
-          <span className={`${styles.statIcon} ${styles.statIconBlue}`}><Zap size={18} /></span>
-          <span className={styles.statValue}>
-            {analysisUsage.isUnlimited ? '∞' : freeLeft}
-          </span>
-          <span className={styles.statLabel}>
-            {analysisUsage.isUnlimited ? 'Analysen' : 'Analysen frei'}
-          </span>
-        </div>
-      </div>
+      {/* 21.08.2026 (Noahs Test): Hier stand eine Zahlenreihe mit leeren
+          Platzhaltern („Verträge –", „Aktiv –", „Fristen –"). Für ein frisch
+          registriertes Konto sagt sie nichts aus, nimmt aber den Platz über der
+          eigentlichen Handlung weg und lässt die Seite leer wirken. Entfernt —
+          die echten Zahlen erscheinen ohnehin, sobald der erste Vertrag da ist.
+          Das freie Kontingent steht weiterhin in der rechten Spalte. */}
 
       {/* ===== Die eine Handlung ===== */}
       <div className={styles.mainRow}>
