@@ -27,7 +27,16 @@ function fakeDb(cfg = {}) {
           throw new Error('contract_events-Query unbekannt: ' + JSON.stringify(q));
         }
         if (name === 'email_queue') return cursor(cfg.mails || []);
+        if (name === 'users') {
+          // Invariante 6: Abgemeldete (emailOptOut ODER emailPreferences.calendar:false)
+          if (q.$or) return cursor(cfg.unsubscribed || []);
+          throw new Error('users-Query unbekannt: ' + JSON.stringify(q));
+        }
         throw new Error(`find unerwartet auf ${name}`);
+      },
+      countDocuments: async (q) => {
+        if (name !== 'contract_events') throw new Error(`countDocuments unerwartet auf ${name}`);
+        return (cfg.openPerUser || {})[String(q.userId)] || 0;
       }
     })
   };
@@ -158,5 +167,48 @@ describe('runCalendarWatchdog', () => {
       stuck: [{ _id: oid('q1'), queuedAt: new Date(0) }]
     }), { now: NOW, capture: boom });
     expect(stats.findings).toBe(3); // Cron-Spur + unlinked + stuck, trotz kaputtem Kanal
+  });
+
+  // ── Invariante 6 (21.08.2026): Das Abmelde-Tor im Notifier unterdrückt Mails, ohne
+  // eine Spur zu hinterlassen. Diese Invariante ist der Ersatz-Melder dafür. ──────────
+  test('Abgemeldeter Kunde MIT offenen Fristen → HIGH UnsubscribedWithDeadlines', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u1'), email: 'a@b.invalid', emailOptOut: true }],
+      openPerUser: { [oid('u1')]: 3 }
+    }), { now: NOW, capture: cap });
+    const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
+    expect(f).toBeDefined();
+    expect(f.ctx.severity).toBe('high');
+    expect(f.message).toContain('3 offene Frist');
+    expect(f.message).toContain(oid('u1'));
+    expect(stats.unsubscribedWithDeadlines).toBe(1);
+  });
+
+  test('Abgemeldeter Kunde OHNE offene Fristen → KEIN Alarm (legitime Entscheidung)', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u2'), email: 'c@d.invalid', emailPreferences: { calendar: false } }],
+      openPerUser: {}
+    }), { now: NOW, capture: cap });
+    expect(cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines')).toBeUndefined();
+    expect(stats.unsubscribedWithDeadlines).toBe(0);
+    expect(stats.findings).toBe(0);
+  });
+
+  test('Mehrere Betroffene werden zu EINEM Alarm gebündelt (ein Fingerprint, keine Flut)', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u3') }, { _id: oid('u4') }, { _id: oid('u5') }],
+      openPerUser: { [oid('u3')]: 1, [oid('u4')]: 2, [oid('u5')]: 0 }
+    }), { now: NOW, capture: cap });
+    const treffer = cap.calls.filter(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
+    expect(treffer).toHaveLength(1);
+    expect(treffer[0].message).toContain('2 Kunde(n)');
+    expect(treffer[0].message).toContain('3 offene Frist');
+    expect(stats.unsubscribedWithDeadlines).toBe(2);
   });
 });

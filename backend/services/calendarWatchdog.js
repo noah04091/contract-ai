@@ -134,9 +134,40 @@ async function runCalendarWatchdog(db, opts = {}) {
   if (stuck.length > 0) {
     await alarm('CalendarWatchdogStuckQueued', 'high',
       `${stuck.length} Event(s) hängen seit >${STUCK_QUEUED_HOURS}h im Status "queued" — weder ` +
-      `versendet noch zurückgesetzt (Reaper ist standardmäßig aus, CALENDAR_QUEUED_REAPER_ENABLED). ` +
+      `versendet noch zurückgesetzt (der 48h-Reaper räumt sie nur ab, wenn CALENDAR_QUEUED_REAPER_ENABLED gesetzt ist). ` +
       `Beispiele: ${sample(stuck.map(e => e._id))}.`,
       { ids: stuck.slice(0, 20).map(e => String(e._id)) });
+  }
+
+  // ── 6) Abgemeldete Kunden, die dadurch Fristen verpassen ───────────────────
+  // 21.08.2026 (adversarialer Prüfbefund): Seit das Abmelde-Tor VOR dem Claim greift
+  // (calendarNotifier.isCalendarUnsubscribed), hinterlässt eine unterdrückte Erinnerung
+  // KEINE Spur mehr — vorher gab es wenigstens eine "skipped"-Zeile in email_queue und
+  // ein hängendes queued-Event, das Invariante 5 meldete. Fachlich war das ein Fehlalarm,
+  // praktisch war es der EINZIGE Melder für "Kunde bekommt stillschweigend nichts mehr".
+  // Diese Invariante ersetzt ihn durch das, was wirklich zählt: Ist jemand abgemeldet UND
+  // hat noch offene Fristen? Dann fliegt er blind, und das darf nicht still passieren.
+  // Bewusst KEIN Alarm bei Abgemeldeten ohne offene Fristen — das ist eine harmlose,
+  // legitime Entscheidung.
+  const unsubscribedUsers = await db.collection('users').find({
+    $or: [{ emailOptOut: true }, { 'emailPreferences.calendar': false }]
+  }).project({ _id: 1, email: 1, emailOptOut: 1, 'emailPreferences.calendar': 1 }).toArray();
+  const blindeKunden = [];
+  for (const u of unsubscribedUsers) {
+    const offen = await db.collection('contract_events').countDocuments({
+      userId: u._id, status: 'scheduled', date: { $gte: now },
+      severity: { $in: ['info', 'warning', 'critical'] }
+    });
+    if (offen > 0) blindeKunden.push({ id: String(u._id), offen });
+  }
+  if (blindeKunden.length > 0) {
+    const gesamt = blindeKunden.reduce((s, k) => s + k.offen, 0);
+    await alarm('CalendarWatchdogUnsubscribedWithDeadlines', 'high',
+      `${blindeKunden.length} Kunde(n) sind von Kalender-Mails abgemeldet, haben aber zusammen ` +
+      `${gesamt} offene Frist(en) — sie bekommen dazu KEINE Erinnerung mehr und merken es nicht. ` +
+      `Prüfen, ob die Abmeldung gewollt war (Fehlklick im Mail-Programm ist möglich) und ggf. ` +
+      `emailPreferences.calendar / emailOptOut zurücksetzen. Betroffen: ${sample(blindeKunden.map(k => k.id))}.`,
+      { users: blindeKunden.slice(0, 20) });
   }
 
   const stats = {
@@ -146,6 +177,7 @@ async function runCalendarWatchdog(db, opts = {}) {
     deadReferences: deadRefs.length,
     notifiedWithoutMail: notifiedWithoutMail.length,
     stuckQueued: stuck.length,
+    unsubscribedWithDeadlines: blindeKunden.length,
     checkedActiveRefs: active.length,
     notifiedYesterday: notifiedYesterday.length
   };

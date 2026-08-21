@@ -8,6 +8,7 @@ const { queueEmail, processEmailQueue } = require("./emailRetryService");
 const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // gemeinsame Tageszahl-Quelle (Anzeige)
 const { formatProvider } = require("../utils/formatProvider"); // Anbieter kann Objekt sein → nie roh interpolieren ("[object Object]")
 const { cleanContractName } = require("../utils/cleanContractName"); // Betreff-Anzeige: Mojibake + Datei-Präfixe raus (wie Pulse-Mails)
+const { isUnsubscribed, EMAIL_CATEGORIES } = require("./emailUnsubscribeService"); // Abmelde-Prüfung VOR dem Claim (siehe isCalendarUnsubscribed)
 
 /**
  * Maskiert eine E-Mail-Adresse für Logs (DSGVO-Hygiene).
@@ -412,6 +413,15 @@ async function checkAndSendNotifications(db) {
         }
       }
 
+      // 📭 LETZTES TOR VOR DEM CLAIM (21.08.2026): abgemeldete Adressen hier abfangen,
+      // NICHT erst in der Warteschlange — sonst bliebe das Event auf "queued" hängen und
+      // der Wächter meldete einen Fehlalarm. Begründung ausführlich an isCalendarUnsubscribed.
+      // Das Event bleibt "scheduled" und wird vom 03:00-Lauf regulär als "expired" markiert.
+      if (await isCalendarUnsubscribed(db, event.user.email)) {
+        console.log(`Skipping ${maskEmail(event.user.email)} - von Kalender-Mails abgemeldet`);
+        continue;
+      }
+
       try {
         // Atomar: Status nur ändern wenn noch "scheduled" (verhindert doppelte E-Mails)
         const claimed = await db.collection("contract_events").findOneAndUpdate(
@@ -628,6 +638,51 @@ async function queueEventNotification(event, db) {
   });
 
   console.log(`E-Mail zur Queue hinzugefuegt: ${subject} fuer ${maskEmail(event.user.email)}`);
+}
+
+/**
+ * 📭 Ist diese Adresse von Kalender-Mails abgemeldet? (21.08.2026)
+ *
+ * WARUM HIER und nicht erst in der Warteschlange: `processEmailQueue` prüft die Abmeldung
+ * ebenfalls (emailRetryService.js), aber dort ist das Event bereits atomar auf "queued"
+ * geclaimt. Der dortige Skip-Pfad setzt nur die MAIL auf "skipped" und fasst das Event nicht
+ * an → es bliebe dauerhaft auf "queued" hängen (der Cron sucht nur "scheduled",
+ * updateExpiredEvents fasst nur "scheduled" an) und der Kalender-Wächter würde nach 48 h
+ * einen Fehlalarm auslösen, obwohl der Nutzer nur normal abbestellt hat.
+ * Prüfen wir VOR dem Claim, bleibt das Event auf "scheduled" und wird vom 03:00-Lauf ganz
+ * normal als "expired" markiert — der ehrliche Zustand: Tag verstrichen, keine Mail.
+ *
+ * Kategorie: dieselbe wie in der Warteschlange. Jede Mail aus diesem Cron bekommt
+ * `emailType: calendar_*` (siehe queueEventNotification) und wird dort folglich gegen
+ * EMAIL_CATEGORIES.CALENDAR geprüft — dieser Spiegel ist bewusst exakt, nicht "besser".
+ *
+ * FEHLERRICHTUNG: Schlägt die Prüfung selbst fehl (DB-Schluckauf), wird NICHT unterdrückt.
+ * Eine Mail zu viel ist harmlos, eine verpasste Frist nicht.
+ *
+ * Kosten: 2 DB-Abfragen je Event. Gemessen 21.08. am Produktivbestand: 78 Events im Fenster,
+ * ~37 ms je Prüfung, also +2,9 s Laufzeit für den ganzen Tageslauf (größtes Fenster der
+ * letzten 90 Tage: 87 Events). Für einen Cron ohne Zeitdruck vernachlässigbar. Bewusst die
+ * geteilte Funktion statt einer eigenen Kopie, damit es EINE Wahrheit bleibt; ein Cache je
+ * Lauf (78 Events verteilen sich auf 42 Nutzer) wäre erst bei Größenordnungen mehr nötig. *
+ * Ehrlich dazugesagt: Diese Kosten fallen bei JEDEM Lauf erneut an, für ein abgemeldetes
+ * Event also bis zu 14x (7 Tage Vorschau x 2 Läufe), und email_optouts hat keinen Index auf
+ * email. Bei 0 Einträgen heute belanglos; wächst die Sammlung, gehört dort ein Index hin.
+ *
+ * ⚠️ SICHTBARKEIT: Ein hier unterdrücktes Event hinterlässt KEINE Spur (vorher gab es
+ * wenigstens eine "skipped"-Zeile in email_queue). Ersatz-Melder ist Invariante 6 im
+ * Kalender-Wächter (calendarWatchdog.js): abgemeldet + offene Fristen = Alarm. Wer dieses
+ * Tor anfasst, muss diese Invariante mitdenken, sonst wird Stille unsichtbar.
+ *
+ * deps ist nur für Tests da (injizierbare Prüffunktion).
+ */
+async function isCalendarUnsubscribed(db, email, deps = {}) {
+  const check = deps.isUnsubscribed || isUnsubscribed;
+  try {
+    return await check(db, email, EMAIL_CATEGORIES.CALENDAR);
+  } catch (err) {
+    console.warn(`⚠️ Abmelde-Prüfung fehlgeschlagen (sende trotzdem): ${err.message}`);
+    return false;
+  }
 }
 
 /**
@@ -962,6 +1017,7 @@ module.exports = {
   neutralizeRelativeDayWords,
   digestModeSkipsInstantMails,
   DIGEST_MODES_HANDLED,
+  isCalendarUnsubscribed,
   // Reine Render-Funktionen (für Vorschau/Tests; keine Seiteneffekte)
   __render: {
     generateCalendarEmailTemplate,

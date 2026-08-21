@@ -129,7 +129,15 @@ function makeDb(state) {
   // Free-User, heute fällig → beide Läufe skippen
   const e4 = { _id: new ObjectId(), userId: freeUser._id, contractId: c3, type: "CANCEL_DEADLINE", title: "⚠️ Kündigungseingang bis: Free", date: todayNoon, status: "scheduled", severity: "warning", metadata: { contractName: "Free.pdf" } };
 
-  const state = { users: [paidUser, freeUser], contract_events: [e1, e3main, e3cov, e4], email_queue: [] };
+  // 📭 21.08.2026: Abgemeldeter zahlender Nutzer, heute fällig. Beweist die EINZIGE Aussage,
+  // die das neue Vor-Claim-Tor rechtfertigt: Das Event darf NICHT geclaimt werden (bleibt
+  // "scheduled", nicht "queued") und es darf KEINE email_queue-Zeile entstehen. Stünde die
+  // Prüfung erst in der Warteschlange, wäre das Event hier "queued" und bliebe dort hängen.
+  const unsubUser = { _id: new ObjectId(), email: "secondrun-unsub@example.invalid", subscriptionPlan: "enterprise", emailPreferences: { calendar: false } };
+  const c4 = new ObjectId();
+  const e5 = { _id: new ObjectId(), userId: unsubUser._id, contractId: c4, type: "CANCEL_DEADLINE", title: "⚠️ Kündigungseingang bis: Abgemeldet", date: todayNoon, status: "scheduled", severity: "critical", metadata: { contractName: "Abgemeldet.pdf" } };
+
+  const state = { users: [paidUser, freeUser, unsubUser], contract_events: [e1, e3main, e3cov, e4, e5], email_queue: [] };
   const db = makeDb(state);
 
   console.log("\n════ Lauf 1 (09:00-Äquivalent) ════");
@@ -139,6 +147,8 @@ function makeDb(state) {
   ok("L1: E1 wurde beansprucht (scheduled → queued)", e1.status === "queued", `status=${e1.status}`);
   ok("L1: Klasse-A-Hauptevent bleibt scheduled (geskippt, keine Mail)", e3main.status === "scheduled" && mailsFor(e3main).length === 0);
   ok("L1: Free-User-Event bleibt scheduled, keine Mail", e4.status === "scheduled" && mailsFor(e4).length === 0);
+  ok("L1: Abgemeldeter Nutzer — Event wurde NICHT beansprucht (Tor steht VOR dem Claim)", e5.status === "scheduled", `status=${e5.status} (bei "queued" stünde die Prüfung zu spät)`);
+  ok("L1: Abgemeldeter Nutzer — KEINE Mail in der Warteschlange", mailsFor(e5).length === 0, `mails=${mailsFor(e5).length}`);
 
   // Zwischen den Läufen: Analyse um 13:22 erzeugt ein heute fälliges Event (der 25.07.-Fall)
   const e2 = { _id: new ObjectId(), userId: paidUser._id, contractId: c1, type: "CONTRACT_END_REMINDER_30D", title: "📅 30 Tage vorher: Ende der Datenlöschfrist", date: todayNoon, status: "scheduled", severity: "info", metadata: { daysUntil: 30, contractName: "Test.pdf" } };
@@ -150,6 +160,7 @@ function makeDb(state) {
   ok("L2: KEINE Doppel-Mail für E1 (queued ist für Lauf 2 unsichtbar)", mailsFor(e1).length === 1, `e1Mails=${mailsFor(e1).length}`);
   ok("L2: Klasse-A-Skip identisch wiederholt (keine Mail, bleibt scheduled)", e3main.status === "scheduled" && mailsFor(e3main).length === 0);
   ok("L2: Free-User weiterhin übersprungen", mailsFor(e4).length === 0);
+  ok("L2: Abgemeldeter bleibt scheduled und ohne Mail (auch im zweiten Lauf)", e5.status === "scheduled" && mailsFor(e5).length === 0);
   ok("L2: Gesamt-Queue = exakt 2 Mails (E1 aus Lauf 1, E2 aus Lauf 2)", state.email_queue.length === 2, `queue=${state.email_queue.length}`);
 
   // Härtetest: E1 inzwischen "notified" (Mail bestätigt raus) → dritter Lauf fasst nichts an
