@@ -2996,7 +2996,10 @@ export default function Contracts() {
 
   // 🚀 Analysiert frisch hochgeladene Verträge über den bewährten uploadAndAnalyze-Pfad.
   // Wird genutzt vom Erfolgs-Modal ("Analysieren") UND vom Default-Upload ("Hochladen & analysieren").
-  const analyzeUploadedContracts = async (contractsToAnalyze: Array<{ _id: string; name: string }>) => {
+  // 21.08.2026: Typ um zwei OPTIONALE Felder erweitert, damit die Ladeanzeige den
+  // Dateityp und eine zweite Bildquelle bekommen kann. Optional, weil der Aufrufer
+  // sie nicht zwingend mitliefert — fehlen sie, entfaellt nur die zweite Quelle.
+  const analyzeUploadedContracts = async (contractsToAnalyze: Array<{ _id: string; name: string; mimetype?: string | null; s3Key?: string }>) => {
     if (contractsToAnalyze.length === 0) {
       return;
     }
