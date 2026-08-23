@@ -16,7 +16,6 @@ import styles from "./ContractAnalysis.module.css";
 import LockedAnalysisUpsell, { GatedCounts } from "./LockedAnalysisUpsell";
 import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 import { useCalendarStore } from "../stores/calendarStore"; // 📅 Calendar Cache Invalidation
-import { useAuth } from "../context/AuthContext"; // 💬 User subscription check
 import { loadCompanyProfile, createBrandedWrapper, type CompanyProfile } from "../utils/pdfBranding"; // 🏢 Enterprise Branding
 import AnalysisImportantDates from "./AnalysisImportantDates"; // 📅 Termine & Erinnerungen im Analyse-Ergebnis
 
@@ -145,10 +144,8 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
   const displayName = file?.name || contractName || 'Vertrag';
   const displaySize = file ? (file.size / 1024 / 1024).toFixed(2) : null;
 
-  // 💬 Auth für Chat-Button (Business/Enterprise only)
-  const { user } = useAuth();
-  const isBusinessOrHigher = user?.subscriptionPlan === 'business' ||
-                              user?.subscriptionPlan === 'enterprise';
+  // Das frühere isBusinessOrHigher für den Chat-Knopf ist entfallen: Der Chat ist
+  // seit Welle 2 für alle Pläne offen, das Kontingent prüft das Backend.
 
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -1637,15 +1634,16 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               )}
             </button>
 
-            {/* 💬 Mit KI besprechen Button - Business/Enterprise only */}
+            {/* 💬 Mit KI besprechen — für alle Pläne offen, Free mit 5 Nachrichten/Monat.
+                Gleiche Korrektur wie in ContractAnalysisV2 und ContractDetails. */}
             <button
               className={`${styles.secondaryButton} ${styles.chatButton}`}
               onClick={handleOpenInChat}
-              disabled={openingChat || !isBusinessOrHigher}
-              title={!isBusinessOrHigher ? 'Nur für Business & Enterprise Nutzer verfügbar' : 'Vertrag mit KI-Rechtsbot besprechen'}
+              disabled={openingChat}
+              title="Vertrag mit KI-Rechtsbot besprechen"
               style={{
-                opacity: !isBusinessOrHigher ? 0.5 : 1,
-                cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer',
+                opacity: 1,
+                cursor: openingChat ? 'wait' : 'pointer',
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 color: '#ffffff',
                 border: 'none'
@@ -1664,7 +1662,7 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
               ) : (
                 <>
                   <MessageSquare size={18} />
-                  <span>{isBusinessOrHigher ? 'Mit KI besprechen' : 'Chat (Business)'}</span>
+                  <span>Mit KI besprechen</span>
                 </>
               )}
             </button>

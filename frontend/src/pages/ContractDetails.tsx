@@ -8,7 +8,6 @@ import Notification from "../components/Notification";
 import ContractContentViewer from "../components/ContractContentViewer";
 import ReminderSettingsModal from "../components/ReminderSettingsModal";
 import ImportantDatesSection from "../components/ImportantDatesSection";
-import { useAuth } from "../context/AuthContext";
 import { fixUtf8Display } from "../utils/textUtils";
 
 // Interface für wichtige Datums aus der KI-Analyse
@@ -115,10 +114,8 @@ export default function ContractDetails() {
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [openingChat, setOpeningChat] = useState(false);
 
-  // 💬 Auth für Chat-Button (Business/Enterprise only)
-  const { user } = useAuth();
-  const isBusinessOrHigher = user?.subscriptionPlan === 'business' ||
-                              user?.subscriptionPlan === 'enterprise';
+  // Das frühere isBusinessOrHigher für den Chat-Knopf ist entfallen: Der Chat ist
+  // seit Welle 2 für alle Pläne offen, das Kontingent prüft das Backend.
 
   const [calendarEvents, setCalendarEvents] = useState<Array<{
     _id: string;
@@ -386,11 +383,11 @@ export default function ContractDetails() {
   const handleOpenInChat = async () => {
     if (!contract || openingChat) return;
 
-    // Double-check subscription on frontend
-    if (!isBusinessOrHigher) {
-      setNotification({ message: 'Diese Funktion ist nur für Business/Enterprise Nutzer verfügbar', type: 'error' });
-      return;
-    }
+    // ⚠️ Hier stand bis 23.08.2026 dieselbe Business-Wand wie im Analyse-Overlay,
+    // ein Rest aus der Zeit vor Welle 2 (08.07.2026). Der Chat ist seitdem für alle
+    // Pläne offen, Free hat 5 Nachrichten/Monat. Über das Kontingent entscheidet das
+    // Backend: Ist es aufgebraucht, kommt 403 mit einer verständlichen Nachricht,
+    // die der catch-Block unten bereits anzeigt.
 
     setOpeningChat(true);
 
@@ -1119,23 +1116,20 @@ export default function ContractDetails() {
                 Legal Lens
               </button>
 
-              {/* 💬 Mit KI-Rechtsbot besprechen - Business/Enterprise only */}
+              {/* 💬 Mit KI-Rechtsbot besprechen — für alle Pläne offen, Free mit
+                  5 Nachrichten/Monat. Vorher grau und nicht klickbar. */}
               <button
                 onClick={handleOpenInChat}
                 className={styles.actionButton}
-                disabled={openingChat || !isBusinessOrHigher}
+                disabled={openingChat}
                 style={{
-                  background: isBusinessOrHigher
-                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
-                    : '#9ca3af',
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                   color: 'white',
                   border: 'none',
-                  opacity: !isBusinessOrHigher ? 0.6 : openingChat ? 0.8 : 1,
-                  cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer'
+                  opacity: openingChat ? 0.8 : 1,
+                  cursor: openingChat ? 'wait' : 'pointer'
                 }}
-                title={!isBusinessOrHigher
-                  ? 'Nur für Business & Enterprise Nutzer verfügbar'
-                  : 'Vertrag mit KI-Rechtsbot besprechen - Fragen stellen, Details klären'}
+                title="Vertrag mit KI-Rechtsbot besprechen - Fragen stellen, Details klären"
               >
                 {openingChat ? (
                   <>
@@ -1145,7 +1139,7 @@ export default function ContractDetails() {
                 ) : (
                   <>
                     <MessageSquare size={16} />
-                    {isBusinessOrHigher ? 'Mit KI besprechen' : 'Chat (Business)'}
+                    Mit KI besprechen
                   </>
                 )}
               </button>
