@@ -2646,6 +2646,7 @@ async function runReanalysisInBackground(jobId, ctx) {
     },
     user: { userId },
     body: { forceReanalyze: 'true' },
+    fromPhoto: ctx.fromPhoto === true, // 🖼️ 23.08.2026: Foto-Herkunft ueberlebt den Hintergrund-Lauf
     zielVertrag,
     query: {},
     jobId, // 🔑 aktiviert echten Fortschritt (reportJobProgress schreibt Etappen ins Job-Doc)
@@ -2802,6 +2803,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     // 97 von 831 Verträgen (~12 %). Der Anzeigename taugt als Quelle NICHT (`contract.name`
     // kann eine KI-Beschreibung sein), deshalb die Magic-Byte-Erkennung, die für den
     // E-Mail-Import schon existiert. Unbekannt/nicht erkannt → PDF wie bisher (fail-safe).
+    let warFoto = false; // 🖼️ 23.08.2026: Herkunft „Foto" bis zum Ehrlichkeits-Banner durchreichen
     const erkannterTyp = detectMimeType(buffer);
 
     // 🧱 21.08.2026: ALTES Word-Format (.doc) EHRLICH abweisen, statt es unten in den
@@ -2833,6 +2835,12 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
         const { pdfBuffer } = await convertImageToPdf(buffer, erkannterTyp);
         console.log(`🖼️→📄 [${requestId}] Foto erkannt (${erkannterTyp}) → in PDF gewickelt (${buffer.length} → ${pdfBuffer.length} Bytes)`);
         buffer = pdfBuffer;
+        // 🖼️ 23.08.2026 (aus Noahs Klicktest): Das Merkmal „kam als Foto rein" muss mit.
+        // Ohne es meldete das Ehrlichkeits-Banner `fromPhoto=false` bei einem Foto —
+        // in den Logs direkt sichtbar: Direkt-Upload true, dieser Weg false.
+        // Der Kunde erfuhr dann nicht, dass der Text per Texterkennung aus seinem Bild
+        // gewonnen wurde. Genau die Sorte kleiner Unwahrheit, die wir hier bekaempfen.
+        warFoto = true;
       } catch (convErr) {
         console.error(`❌ [${requestId}] Foto→PDF-Konvertierung fehlgeschlagen: ${convErr.message}`);
         return res.status(400).json({
@@ -2874,6 +2882,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
         userId: req.user.userId,
         originalname: contract.name || 'vertrag.pdf',
         mimetype: dateiTyp, // 18.08.2026: aus den Bytes erkannt, nicht fest PDF
+        fromPhoto: warFoto, // 🖼️ 23.08.2026: sonst verliert das Banner die Foto-Herkunft
         fileSize: buffer.length,
         requestId
       };
@@ -2906,6 +2915,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       },
       user: { userId: req.user.userId },
       body: { forceReanalyze: 'true' },
+      fromPhoto: warFoto, // 🖼️ 23.08.2026: fuer das Ehrlichkeits-Banner (OCR aus Foto)
       // 🎯 21.08.2026 (Stufe 2): Wir WISSEN hier, welcher Vertrag gemeint ist (Zugriff
       // und Rolle oben geprüft). Die Pipeline muss ihn deshalb nicht mehr über den
       // Fingerabdruck erraten — genau dieses Raten erzeugte bei Fotos Doppel-Verträge.

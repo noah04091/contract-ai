@@ -123,3 +123,23 @@ describe('Bausteine der Foto-Erkennung funktionieren wirklich', () => {
     expect(isImageMimetype(detectMimeType(docx))).toBe(false);
   });
 });
+
+describe('Foto-Herkunft erreicht das Ehrlichkeits-Banner (23.08.2026, aus Noahs Klicktest)', () => {
+  const code = nurCode(lies('routes/contracts.js'));
+
+  test('das Merkmal wird beim Einwickeln gesetzt', () => {
+    const posWickeln = code.indexOf('convertImageToPdf');
+    const posMerkmal = code.indexOf('warFoto = true');
+    expect(posMerkmal).toBeGreaterThan(posWickeln);
+  });
+
+  test('⚠️ es wird an BEIDE Wege weitergereicht — sonst luegt das Banner im Hintergrund-Lauf', () => {
+    // blockierender Aufruf + Hintergrund-Kontext + nachgebauter Aufruf
+    const treffer = code.match(/fromPhoto/g) || [];
+    expect(treffer.length).toBeGreaterThanOrEqual(3);
+  });
+
+  test('der Hintergrund-Lauf liest es aus dem Kontext', () => {
+    expect(code).toMatch(/fromPhoto:\s*ctx\.fromPhoto === true/);
+  });
+});
