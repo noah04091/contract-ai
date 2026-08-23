@@ -87,6 +87,18 @@ function detectMimeType(buffer) {
     return 'application/zip';
   }
 
+  // 📄 21.08.2026: ALTES Word-Format (.doc) — OLE2-Signatur D0 CF 11 E0 A1 B1 1A E1.
+  // Vorher fiel es hier durch (Rueckgabe null) und wurde von allen drei Nutzern dieser
+  // Funktion als PDF behandelt. Folge fuer den Kunden: „PDF-Datei beschaedigt", obwohl
+  // er nie eine PDF hochgeladen hat. Betroffen: 5 Vertraege bei 4 echten Kunden.
+  // ⚠️ Das Format bleibt NICHT analysierbar (mammoth kann nur .docx) — es geht allein
+  // darum, es zu ERKENNEN, damit die Meldung ehrlich wird statt falsch.
+  if (buffer.length >= 8 &&
+      buffer[0] === 0xD0 && buffer[1] === 0xCF && buffer[2] === 0x11 && buffer[3] === 0xE0 &&
+      buffer[4] === 0xA1 && buffer[5] === 0xB1 && buffer[6] === 0x1A && buffer[7] === 0xE1) {
+    return 'application/msword';
+  }
+
   // JPEG: FF D8 FF
   if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
     return 'image/jpeg';

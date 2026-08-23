@@ -2804,6 +2804,19 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     // E-Mail-Import schon existiert. Unbekannt/nicht erkannt → PDF wie bisher (fail-safe).
     const erkannterTyp = detectMimeType(buffer);
 
+    // 🧱 21.08.2026: ALTES Word-Format (.doc) EHRLICH abweisen, statt es unten in den
+    // PDF-Zweig fallen zu lassen. Dort las die Pipeline es als PDF und meldete dem
+    // Kunden „PDF-Datei beschädigt" — obwohl er nie eine PDF hochgeladen hat.
+    // Betroffen: 5 Verträge bei 4 echten Kunden, alle noch nicht analysiert.
+    if (erkannterTyp === 'application/msword') {
+      console.log(`🧱 [${requestId}] Altes Word-Format (.doc) erkannt → ehrliche Absage statt PDF-Fehler`);
+      return res.status(400).json({
+        success: false,
+        error: 'LEGACY_DOC_FORMAT',
+        message: "📄 Das alte Word-Format (.doc) kann nicht analysiert werden. Bitte öffne das Dokument in Word und speichere es als .docx oder PDF, dann lädst du es erneut hoch."
+      });
+    }
+
     // 🖼️ 21.08.2026 (Stufe 2): Ein BILD wurde hier bisher stillschweigend als PDF
     // behandelt (es fiel in den `: 'application/pdf'`-Zweig unten). Die Pipeline hat
     // dann versucht, ein PNG als PDF zu lesen, fand keinen Text und brach ab —

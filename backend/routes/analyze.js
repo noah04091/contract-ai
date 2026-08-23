@@ -13,6 +13,7 @@ const { isMilestoneBeforeStart } = require("../utils/milestonePlausibility"); //
 const { hasColumnArtifacts, extractColumnAwareText } = require("../services/optimizerV2/utils/clauseSplitter"); // 🔀 Spalten-Korrektur für mehrspaltige PDFs (TÜV #4)
 const { sanitizeAnalysisResult } = require("../utils/textSanitizer");
 const fs = require("fs").promises;
+const { detectMimeType } = require("../utils/emailImportSecurity"); // 📄 21.08.2026: altes .doc an den Bytes erkennen
 const fsSync = require("fs");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
@@ -4858,6 +4859,31 @@ router.post("/", verifyToken, analyzeRateLimiter, async (req, res, next) => {
       });
     }
     
+    // 🧱 21.08.2026: ALTES Word-Format (.doc) EHRLICH abweisen.
+    // Vorher fiel es durch jede Erkennung und wurde als PDF gelesen — der Kunde bekam
+    // „PDF-Datei beschädigt", obwohl er nie eine PDF hochgeladen hat. Analysierbar wird
+    // das Format dadurch nicht (mammoth kann nur .docx); es geht allein darum, ihm die
+    // WAHRHEIT zu sagen und ihm zu erklären, was er tun kann.
+    // Gelesen werden nur die ersten 8 Bytes, nicht die ganze Datei.
+    if (req.file?.path) {
+      try {
+        const griff = await fs.open(req.file.path, 'r');
+        const kopf = Buffer.alloc(8);
+        try { await griff.read(kopf, 0, 8, 0); } finally { await griff.close(); }
+        if (detectMimeType(kopf) === 'application/msword') {
+          console.log(`🧱 [ANALYZE] Altes Word-Format (.doc) erkannt → ehrliche Absage statt PDF-Fehler`);
+          try { await fs.unlink(req.file.path); } catch { /* egal */ }
+          return res.status(400).json({
+            success: false,
+            error: "LEGACY_DOC_FORMAT",
+            message: "📄 Das alte Word-Format (.doc) kann nicht analysiert werden. Bitte öffne das Dokument in Word und speichere es als .docx oder PDF, dann lädst du es erneut hoch."
+          });
+        }
+      } catch (_) {
+        // Erkennung darf einen Upload NIEMALS scheitern lassen — im Zweifel weiter wie bisher.
+      }
+    }
+
     // 🖼️ Welle 4a (09.07.2026): Handy-Foto → PDF am EINGANG, vor allem anderen.
     // Wenn ein Bild hochgeladen wurde, wickeln wir es in ein einseitiges PDF und
     // tauschen req.file transparent aus. Ab hier sieht die GESAMTE Pipeline
