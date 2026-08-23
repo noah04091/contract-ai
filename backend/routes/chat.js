@@ -546,7 +546,8 @@ router.post("/new-with-contract", verifyToken, async (req, res) => {
     const chats = req.db.collection("chats");
     const contracts = req.db.collection("contracts");
 
-    // ✅ CRITICAL: Check subscription - Business/Enterprise only
+    // ✅ CRITICAL: Zugang prüfen. Nicht mehr "Business/Enterprise only" — seit
+    // Welle 2 entscheidet das Kontingent, siehe direkt darunter.
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
     if (!user) {
       return res.status(404).json({ error: "User not found" });

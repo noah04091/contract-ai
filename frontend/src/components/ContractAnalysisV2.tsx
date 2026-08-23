@@ -473,18 +473,20 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
   };
 
   // 💬 Handler: Mit KI-Rechtsbot besprechen
+  //
+  // ⚠️ Hier stand bis 23.08.2026 eine Business-Wand (window.confirm "Der KI-Chat ist
+  // ab Business verfügbar"). Sie war ein vergessener Rest: Mit Welle 2 (08.07.2026)
+  // wurde der Chat quota-basiert geöffnet — Free hat 5 Nachrichten/Monat. Backend
+  // (routes/chat.js), die Chat-Seite und die Aktionsleiste (V2ActionBar) waren längst
+  // umgestellt, nur dieser gemeinsame Handler warf Free-Nutzer noch vorher raus. Damit
+  // war der Chat für Free faktisch gesperrt, obwohl überall 5 freie Fragen beworben
+  // wurden (Erststart, Preisseiten-Vergleichstabelle).
+  //
+  // Das Kontingent wird NICHT hier geprüft, sondern vom Backend: Ist es aufgebraucht,
+  // kommt 403 "Chat limit reached", und der Block weiter unten öffnet den Drawer mit
+  // dem Upsell-Hinweis. Das ist der ehrlichere Weg, weil der Nutzer erst dann etwas
+  // von Business hört, wenn er das Produkt wirklich erlebt hat.
   const handleOpenInChat = async () => {
-    // 💬 Ehrlicher Hinweis statt Fehlermeldung (Noahs Test-Fund 11.08.): Free-Nutzer
-    // liefen in die Business-Sperre (403) und bekamen "Chat konnte nicht geöffnet
-    // werden. Bitte versuche es erneut." — klang nach kaputtem Produkt.
-    if (!isBusinessOrHigher) {
-      const goPricing = window.confirm(
-        'Der KI-Chat ist ab Business verfügbar — damit besprichst du deinen Vertrag direkt mit dem Rechts-Assistenten.\n\nJetzt Pläne ansehen?'
-      );
-      if (goPricing) window.location.href = '/pricing';
-      return;
-    }
-
     const analysisData = result || initialResult;
     const contractId = analysisData?.originalContractId || propContractId;
 
@@ -1769,15 +1771,17 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               )}
             </button>
 
-            {/* 💬 Mit KI besprechen Button - Business/Enterprise only */}
+            {/* 💬 Mit KI besprechen — für alle Pläne. Free hat 5 Nachrichten/Monat,
+                das Kontingent prüft das Backend (siehe handleOpenInChat). Vorher war
+                dieser Knopf für Free ausgegraut und hieß "Chat (Business)". */}
             <button
               className={`${styles.secondaryButton} ${styles.chatButton}`}
               onClick={handleOpenInChat}
-              disabled={openingChat || !isBusinessOrHigher}
-              title={!isBusinessOrHigher ? 'Nur für Business & Enterprise Nutzer verfügbar' : 'Vertrag mit KI-Rechtsbot besprechen'}
+              disabled={openingChat}
+              title="Vertrag mit KI-Rechtsbot besprechen"
               style={{
-                opacity: !isBusinessOrHigher ? 0.5 : 1,
-                cursor: !isBusinessOrHigher ? 'not-allowed' : openingChat ? 'wait' : 'pointer',
+                opacity: 1,
+                cursor: openingChat ? 'wait' : 'pointer',
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 color: '#ffffff',
                 border: 'none'
@@ -1796,7 +1800,7 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
               ) : (
                 <>
                   <MessageSquare size={18} />
-                  <span>{isBusinessOrHigher ? 'Mit KI besprechen' : 'Chat (Business)'}</span>
+                  <span>Mit KI besprechen</span>
                 </>
               )}
             </button>

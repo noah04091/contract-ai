@@ -86,7 +86,9 @@ test('FREE: analyze = 3', getFeatureLimit('free', 'analyze') === 3);
 test('FREE: optimize = 0 (gesperrt)', getFeatureLimit('free', 'optimize') === 0);
 test('FREE: generate = 0 (gesperrt)', getFeatureLimit('free', 'generate') === 0);
 test('FREE: compare = 0 (gesperrt)', getFeatureLimit('free', 'compare') === 0);
-test('FREE: chat = 0 (gesperrt)', getFeatureLimit('free', 'chat') === 0);
+// ⚠️ Stand bis 23.08.2026 auf 0 und war damit seit Welle 2 (08.07.2026) dauerhaft
+// rot, ohne dass es auffiel: PLAN_LIMITS.free.chat ist seitdem 5.
+test('FREE: chat = 5 (begrenzt, nicht gesperrt)', getFeatureLimit('free', 'chat') === 5);
 
 // ========================================
 // TEST 6: getFeatureLimit() - BUSINESS Plan
@@ -115,13 +117,22 @@ test('ENTERPRISE: chat = Infinity', getFeatureLimit('enterprise', 'chat') === In
 // ========================================
 section('8. Business+ Features Access');
 
-const businessFeatures = ['optimize', 'chat', 'generate', 'compare', 'legalPulse', 'legalLens'];
+// 📨 'chat' ist hier bewusst NICHT mehr gelistet: Seit Welle 2 (08.07.2026) darf
+// Free chatten, begrenzt auf 5 Nachrichten/Monat über PLAN_LIMITS. Die Zusicherung
+// dafür steht direkt unter dieser Schleife.
+const businessFeatures = ['optimize', 'generate', 'compare', 'legalPulse', 'legalLens'];
 
 businessFeatures.forEach(feature => {
   test(`FREE kann NICHT ${feature}`, hasFeatureAccess('free', feature) === false);
   test(`BUSINESS kann ${feature}`, hasFeatureAccess('business', feature) === true);
   test(`ENTERPRISE kann ${feature}`, hasFeatureAccess('enterprise', feature) === true);
 });
+
+// Chat: für alle offen, aber für Free strikt begrenzt. Beide Hälften müssen gelten,
+// sonst ist entweder der Zugang gesperrt oder das Kontingent unbegrenzt.
+test('FREE darf chat (Zugang offen)', hasFeatureAccess('free', 'chat') === true);
+test('BUSINESS darf chat', hasFeatureAccess('business', 'chat') === true);
+test('ENTERPRISE darf chat', hasFeatureAccess('enterprise', 'chat') === true);
 
 // ========================================
 // TEST 9: hasFeatureAccess() - Enterprise-Only Features

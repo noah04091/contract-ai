@@ -369,14 +369,13 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
             <span className={`${styles.canIcon} ${styles.canIconLight}`}><MessageSquare size={18} /></span>
             <h3>Fragen stellen</h3>
             <p>„Kann ich zum Monatsende kündigen?" Sobald ein Vertrag da ist, fragst du einfach nach.</p>
-            {/* ⚠️ Hier stand "5 Fragen frei". Das Backend widerspricht sich selbst:
-                PLAN_LIMITS.free.chat = 5 (Noahs Entscheidung vom 08.07.), aber
-                FEATURE_ACCESS.chat listet nur BUSINESS und ENTERPRISE. Im Test
-                konnte ein Free-Konto keine Frage stellen. Bis das geklärt ist,
-                steht hier bewusst KEINE Zahl, statt etwas zu versprechen, das
-                nicht einlösbar ist. */}
+            {/* Die Zahl war am 23.08. kurzzeitig entfernt, weil ein Free-Konto
+                trotz Versprechen keine Frage stellen konnte. Ursache war eine
+                vergessene Business-Wand in ContractAnalysisV2; seit deren
+                Entfernung sind die 5 Fragen tatsächlich einlösbar. */}
             <span className={styles.canFoot}>
               <span className={styles.canGo}>Ansehen →</span>
+              <span className={styles.freeTag}>5 Fragen frei</span>
             </span>
           </button>
         </div>

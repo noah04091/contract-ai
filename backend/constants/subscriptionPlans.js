@@ -33,7 +33,13 @@ const FEATURE_ACCESS = {
 
   // Business+ Features
   optimize: [PLANS.BUSINESS, PLANS.ENTERPRISE],
-  chat: [PLANS.BUSINESS, PLANS.ENTERPRISE],
+  // 📨 Chat ist seit Welle 2 (08.07.2026) für ALLE Pläne offen; Free bekommt
+  // 5 Nachrichten/Monat über PLAN_LIMITS (unten). Diese Liste stand bis zum
+  // 23.08.2026 noch auf Business+ und widersprach damit dem Limit direkt
+  // darunter. Wirksam war sie nicht (routes/chat.js gated über das Kontingent,
+  // requireFeature liegt nicht auf der Chat-Route), aber sie war eine Landmine:
+  // Wer später requireFeature('chat') einsetzt, hätte Free wieder ausgesperrt.
+  chat: [PLANS.FREE, PLANS.BUSINESS, PLANS.ENTERPRISE], // Mit Limits
   generate: [PLANS.BUSINESS, PLANS.ENTERPRISE],
   compare: [PLANS.BUSINESS, PLANS.ENTERPRISE],
   legalPulse: [PLANS.BUSINESS, PLANS.ENTERPRISE],
