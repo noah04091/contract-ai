@@ -14,35 +14,45 @@ export type CelebrationType =
   | 'achievement';
 
 // Achievement definitions
+//
+// Ton (überarbeitet 23.08.2026): ruhig und deutsch statt Ausrufezeichen und
+// Denglisch. Die Meldung erscheint jetzt auf einer hellen Karte, da wirkt
+// "Achievement freigeschaltet!" fehl am Platz.
+//
+// Wichtig bei 'onboarding-complete': Der Text darf NICHT behaupten, die
+// Einrichtung sei fertig. Diese Meldung kommt nach der Einführungstour,
+// während der Erststart-Bereich auf dem Dashboard noch bei 2 von 4 steht.
+// Vorher stand hier "Du hast das Onboarding abgeschlossen", was sich direkt
+// widersprach.
 export const ACHIEVEMENTS = {
   'onboarding-complete': {
-    title: 'Willkommen an Bord! 🎉',
-    description: 'Du hast das Onboarding abgeschlossen',
+    title: 'Willkommen an Bord',
+    description: 'Alles Weitere findest du auf deinem Dashboard',
     icon: '🚀'
   },
   'first-upload': {
-    title: 'Erster Vertrag!',
-    description: 'Dein erster Vertrag wurde hochgeladen',
+    title: 'Erster Vertrag gespeichert',
+    description: 'Er liegt jetzt sicher in deiner Verwaltung',
     icon: '📄'
   },
   'first-analysis': {
-    title: 'Erste Analyse!',
-    description: 'Deine erste KI-Analyse ist fertig',
+    title: 'Erste Analyse fertig',
+    description: 'Risiken und Fristen sind ausgewertet',
     icon: '🔍'
   },
   'checklist-complete': {
-    title: 'Einrichtung komplett!',
-    description: 'Du hast alle Schritte abgeschlossen',
+    title: 'Einrichtung abgeschlossen',
+    description: 'Du hast alle Schritte erledigt',
     icon: '✅'
   },
   'milestone': {
-    title: 'Meilenstein erreicht!',
-    description: 'Du machst großartige Fortschritte',
+    title: 'Meilenstein erreicht',
+    description: 'Du machst gute Fortschritte',
     icon: '🏆'
   },
   'achievement': {
-    title: 'Achievement freigeschaltet!',
-    description: 'Weiter so!',
+    title: 'Geschafft',
+    description: 'Weiter so',
     icon: '⭐'
   }
 } as const;
@@ -159,7 +169,9 @@ const confettiConfigs = {
   // Side cannons - burst from both sides
   sideCannons: () => {
     const end = Date.now() + 1000;
-    const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B'];
+    // Markenfarben: Blau führt, Grün für Erledigtes, Orange für Fristen.
+    // Das frühere Lila (#8B5CF6) gehört nicht zur Palette.
+    const colors = ['#3B82F6', '#10B981', '#F59E0B', '#60A5FA'];
 
     (function frame() {
       confetti({

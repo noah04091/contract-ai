@@ -1,5 +1,14 @@
 /* 📁 frontend/src/components/Celebration/AchievementToast.module.css */
-/* 🏆 Premium Achievement Toast - Stripe/Notion Style */
+/* 🏆 Erfolgs-Meldung — hell, ruhig, im Stil des restlichen Produkts
+ *
+ * Vorher: fast schwarzer Verlauf (#1a1a2e → #16213e), ein rotierender
+ * Schimmer im Hintergrund und Lila (#8B5CF6) im Symbolfeld sowie in der
+ * Fortschrittsleiste. Das stach aus dem sonst hellen, blauen Produkt heraus
+ * und wirkte eher verspielt als professionell (Noahs Rückmeldung 23.08.).
+ *
+ * Jetzt: weiße Karte, feiner Rahmen, weicher Schatten, blaues Symbolfeld.
+ * Kein Lila — Blau führt, so wie überall sonst.
+ */
 
 .toastContainer {
   position: fixed;
@@ -14,63 +23,41 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border-radius: 16px;
+  gap: 14px;
+  padding: 16px 44px 16px 18px;
+  background: #ffffff;
+  border-radius: 14px;
   box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.2),
-    0 10px 20px -5px rgba(0, 0, 0, 0.3),
-    0 0 40px rgba(59, 130, 246, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+    0 1px 2px rgba(16, 24, 40, 0.04),
+    0 8px 24px -6px rgba(16, 24, 40, 0.12),
+    0 20px 48px -12px rgba(16, 24, 40, 0.10);
+  border: 1px solid rgba(16, 24, 40, 0.08);
   pointer-events: auto;
   overflow: hidden;
   min-width: 320px;
   max-width: 420px;
 }
 
-/* Subtle animated glow */
+/* Der frühere rotierende Schimmer ist bewusst entfernt. Die Meldung soll
+   ruhig stehen, die Bewegung liefert bereits das Konfetti. */
 .glow {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: conic-gradient(
-    from 0deg,
-    transparent,
-    rgba(59, 130, 246, 0.1),
-    transparent,
-    rgba(139, 92, 246, 0.1),
-    transparent
-  );
-  animation: rotate 4s linear infinite;
-  opacity: 0.5;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  display: none;
 }
 
 .iconContainer {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  background: #EFF6FF;
+  border: 1px solid #DBEAFE;
+  border-radius: 11px;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .icon {
-  font-size: 24px;
+  font-size: 21px;
   line-height: 1;
 }
 
@@ -80,53 +67,54 @@
 }
 
 .title {
-  margin: 0 0 4px 0;
-  font-size: 16px;
+  margin: 0 0 2px 0;
+  font-size: 15px;
   font-weight: 600;
-  color: #ffffff;
+  color: #111827;
   letter-spacing: -0.01em;
 }
 
 .description {
   margin: 0;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
-  line-height: 1.4;
+  font-size: 13.5px;
+  color: #6B7280;
+  line-height: 1.45;
 }
 
 .closeButton {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   width: 24px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
   border: none;
   border-radius: 6px;
-  color: rgba(255, 255, 255, 0.5);
+  color: #9CA3AF;
   font-size: 18px;
+  line-height: 1;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .closeButton:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.8);
+  background: #F3F4F6;
+  color: #4B5563;
 }
 
-/* Auto-close progress bar */
+/* Laufzeit-Anzeige bis zum automatischen Schließen */
 .progressBar {
   position: absolute;
   bottom: 0;
   left: 0;
   height: 3px;
   width: 100%;
-  background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+  background: #3B82F6;
   transform-origin: left;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 14px 14px;
 }
 
 /* Responsive */

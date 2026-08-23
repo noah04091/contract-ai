@@ -91,8 +91,8 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
       : 'Du bist gleich startklar';
 
   const subline = hasContract
-    ? 'Dein erster Vertrag liegt schon da — jetzt fehlt nur noch die Prüfung.'
-    : 'Noch zwei Schritte — danach verschwindet dieser Bereich und du siehst dein Dashboard.';
+    ? 'Dein erster Vertrag liegt schon da. Jetzt fehlt nur noch die Prüfung.'
+    : 'Noch zwei Schritte, danach verschwindet dieser Bereich und du siehst dein Dashboard.';
 
   const handleFile = useCallback(async (file: File) => {
     if (!ALLOWED.includes(file.type)) {
@@ -197,7 +197,7 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
                 <span className={styles.saNum}>3</span>
                 <span className={styles.saTxt}>
                   <h3>Ersten Vertrag hinzufügen</h3>
-                  <p>Wir erkennen den Vertragstyp automatisch — du musst nichts einstellen.</p>
+                  <p>Wir erkennen den Vertragstyp automatisch, du musst nichts einstellen.</p>
                 </span>
                 <span className={styles.nowTag}>Jetzt dran</span>
               </div>
@@ -274,7 +274,7 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
                 <span className={styles.saNum}>4</span>
                 <span className={styles.saTxt}>
                   <h3>Erste Analyse starten</h3>
-                  <p>Risiken, Kündigungsfristen und eine Bewertung — in wenigen Minuten.</p>
+                  <p>Risiken, Kündigungsfristen und eine Bewertung, in wenigen Minuten.</p>
                 </span>
                 <span className={styles.nowTag}>Jetzt dran</span>
               </div>
@@ -294,8 +294,21 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
             </div>
           )}
 
-          {/* Freiwillig: Profil */}
-          {!hasProfile && (
+          {/* Freiwillig: Profil.
+              Wichtig (Noahs Rückmeldung 23.08.): Wer das Profil ausfüllt, muss den
+              Haken SEHEN. Vorher verschwand die Zeile einfach, und erledigte Arbeit
+              fühlte sich an, als wäre sie verpufft. Der Punkt bleibt jetzt stehen und
+              wechselt in denselben Erledigt-Zustand wie die Kernschritte. */}
+          {hasProfile ? (
+            <div className={styles.stepDone}>
+              <span className={styles.sdTick}><Check size={14} strokeWidth={3.5} /></span>
+              <span className={styles.sdTxt}>
+                <b>Profil vervollständigt</b>
+                <span>Deine Angaben stehen für erstellte Verträge bereit</span>
+              </span>
+              <span className={styles.doneTag}>Erledigt</span>
+            </div>
+          ) : (
             <div className={styles.stepOpt}>
               <span className={styles.soIcon}><User size={14} /></span>
               <span className={styles.siTxt}>
@@ -324,7 +337,7 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
           <button className={styles.canCard} onClick={() => navigate('/contracts?upload=true')}>
             <span className={`${styles.canIcon} ${styles.canIconBlue}`}><Search size={18} /></span>
             <h3>Verträge prüfen</h3>
-            <p>Risiken und Kündigungsfristen erkennen — in verständlichem Deutsch.</p>
+            <p>Risiken und Kündigungsfristen erkennen, in verständlichem Deutsch.</p>
             <span className={styles.canFoot}>
               <span className={styles.canGo}>Ansehen →</span>
               {freeAnalyses !== null && <span className={styles.freeTag}>{freeAnalyses} frei</span>}
@@ -344,7 +357,9 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
           <button className={styles.canCard} onClick={() => navigate('/generate')}>
             <span className={`${styles.canIcon} ${styles.canIconGreen}`}><PencilLine size={18} /></span>
             <h3>Verträge erstellen</h3>
-            <p>Über 17 geprüfte Vorlagen vom Arbeitsvertrag bis zur Geheimhaltung.</p>
+            {/* Nachgezählt am 23.08.: CONTRACT_TYPES in Generate.tsx enthält
+                genau 16 Vorlagen. Vorher stand hier "über 17". */}
+            <p>16 geprüfte Vorlagen vom Arbeitsvertrag bis zur Geheimhaltung.</p>
             <span className={styles.canFoot}>
               <span className={styles.canGo}>Vorlagen ansehen →</span>
             </span>
@@ -353,10 +368,15 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
           <button className={styles.canCard} onClick={() => navigate('/chat')}>
             <span className={`${styles.canIcon} ${styles.canIconLight}`}><MessageSquare size={18} /></span>
             <h3>Fragen stellen</h3>
-            <p>„Kann ich zum Monatsende kündigen?" — sobald ein Vertrag da ist, fragst du einfach nach.</p>
+            <p>„Kann ich zum Monatsende kündigen?" Sobald ein Vertrag da ist, fragst du einfach nach.</p>
+            {/* ⚠️ Hier stand "5 Fragen frei". Das Backend widerspricht sich selbst:
+                PLAN_LIMITS.free.chat = 5 (Noahs Entscheidung vom 08.07.), aber
+                FEATURE_ACCESS.chat listet nur BUSINESS und ENTERPRISE. Im Test
+                konnte ein Free-Konto keine Frage stellen. Bis das geklärt ist,
+                steht hier bewusst KEINE Zahl, statt etwas zu versprechen, das
+                nicht einlösbar ist. */}
             <span className={styles.canFoot}>
               <span className={styles.canGo}>Ansehen →</span>
-              <span className={styles.freeTag}>5 Fragen frei</span>
             </span>
           </button>
         </div>
@@ -375,16 +395,22 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
         <div className={styles.reassure}>
           <span className={styles.reItem}>
             <span className={`${styles.reIcon} ${styles.reIconGreen}`}><ShieldCheck size={15} /></span>
+            {/* ⚠️ Hier stand "Server in Deutschland". Das ist gemessen FALSCH
+                (S3 liegt in Stockholm, die KI-Verarbeitung in den USA mit
+                Standardvertragsklauseln) und darf an dieser Stelle nicht stehen:
+                Es ist genau der Satz, auf den ein neuer Nutzer vertraut, bevor er
+                seinen ersten Vertrag hochlädt. Siehe project_serverstandort-aussage-falsch.
+                Die Ersatzformulierung ist vollständig belegbar. */}
             <span className={styles.reTxt}>
               <b>Deine Daten bleiben deine</b>
-              Server in Deutschland, DSGVO-konform, jederzeit löschbar.
+              DSGVO-konform, jederzeit löschbar, alle Verarbeiter offengelegt.
             </span>
           </span>
           <span className={styles.reItem}>
             <span className={`${styles.reIcon} ${styles.reIconBlue}`}><Clock size={15} /></span>
             <span className={styles.reTxt}>
               <b>Zwei Minuten reichen</b>
-              Datei ablegen genügt — du musst nichts ausfüllen oder einstellen.
+              Datei ablegen genügt, du musst nichts ausfüllen oder einstellen.
             </span>
           </span>
           <span className={styles.reItem}>

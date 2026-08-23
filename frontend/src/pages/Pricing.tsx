@@ -69,6 +69,13 @@ export default function Pricing() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [currentPlan, setCurrentPlan] = useState<'free' | 'business' | 'enterprise' | null>(null);
+  // Sofort bekannt, ohne auf /api/auth/me zu warten. currentPlan trifft erst
+  // nach dem Netzwerkaufruf ein; ohne diesen Wert würde einem eingeloggten
+  // Nutzer für einen Moment "Kostenlos starten" entgegenspringen.
+  const [isLoggedIn] = useState(() =>
+    typeof window !== 'undefined' &&
+    Boolean(localStorage.getItem('authToken') || localStorage.getItem('token'))
+  );
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 900);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -518,11 +525,15 @@ export default function Pricing() {
                 14 Tage Geld-zurück-Garantie · Jederzeit kündbar
               </div>
             </div>
-            <div>
-              <Link to="/register" className={styles.heroStarterLink}>
-                Oder kostenlos mit dem Starter-Plan beginnen <ArrowRight size={16} />
-              </Link>
-            </div>
+            {/* Der Verweis auf die Registrierung ergibt nur für Besucher Sinn.
+                Wer eingeloggt ist, hat sein Konto bereits. */}
+            {!isLoggedIn && (
+              <div>
+                <Link to="/register" className={styles.heroStarterLink}>
+                  Oder kostenlos mit dem Starter-Plan beginnen <ArrowRight size={16} />
+                </Link>
+              </div>
+            )}
           </motion.div>
 
           {/* URGENCY / SEASONAL CAMPAIGN */}
@@ -632,10 +643,28 @@ export default function Pricing() {
                 <span className={styles.priceCurrency}>€</span>
                 <span className={styles.freeForever}>/ für immer</span>
               </div>
-              <p className={styles.freeNote}>Keine Kreditkarte nötig</p>
-              <Link to="/register" className={`${styles.planBtn} ${styles.planBtnStarter}`}>
-                Kostenlos starten
-              </Link>
+              {/* Eingeloggte Starter-Nutzer wurden hier bisher wie Besucher
+                  angesprochen ("Kostenlos starten", "Keine Kreditkarte nötig"),
+                  obwohl sie genau diesen Plan bereits nutzen. Business und
+                  Enterprise zeigten ihren Plan längst an, nur Starter nicht.
+                  currentPlan ist null, solange niemand eingeloggt ist. */}
+              <p className={styles.freeNote}>
+                {currentPlan === 'free' ? 'Du nutzt diesen Plan gerade' : 'Keine Kreditkarte nötig'}
+              </p>
+              {isLoggedIn ? (
+                <button
+                  className={`${styles.planBtn} ${styles.planBtnStarter} ${currentPlan === 'free' ? styles.planBtnCurrent : ''}`}
+                  disabled
+                >
+                  {currentPlan === 'free'
+                    ? <><Check size={18} />Dein aktueller Plan</>
+                    : 'Kostenloser Basis-Plan'}
+                </button>
+              ) : (
+                <Link to="/register" className={`${styles.planBtn} ${styles.planBtnStarter}`}>
+                  Kostenlos starten
+                </Link>
+              )}
               <div className={styles.planDivider} />
               <ul className={styles.featureList}>
                 {starterFeatures.map((text, i) => (
