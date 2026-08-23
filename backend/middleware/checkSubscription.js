@@ -10,7 +10,10 @@ const Organization = require("../models/Organization");
 module.exports = function createCheckSubscription(usersCollection) {
   return async function checkSubscription(req, res, next) {
     // ✅ SKIP Subscription-Check für E-Mail-Import (nutzt API-Key stattdessen)
-    if (req.originalUrl.includes('/api/contracts/email-import')) {
+    // 🔒 23.08.2026 SICHERHEIT: siehe verifyToken.js — Pfad exakt prüfen statt `.includes()`
+    // über die ganze URL (sonst umgeht `?x=/api/contracts/email-import` die Prüfung).
+    const emailImportPfad = String(req.originalUrl || '').split('?')[0].split('#')[0];
+    if (emailImportPfad === '/api/contracts/email-import' || emailImportPfad === '/api/contracts/email-import/') {
       console.log('⏩ E-Mail-Import Route: Subscription-Check übersprungen (nutzt API-Key)');
       return next();
     }

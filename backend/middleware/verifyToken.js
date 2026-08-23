@@ -17,7 +17,14 @@ const COOKIE_OPTIONS = {
 
 module.exports = function (req, res, next) {
   // ✅ SKIP JWT-Check für E-Mail-Import (nutzt API-Key stattdessen)
-  if (req.originalUrl.includes('/api/contracts/email-import')) {
+  // 🔒 23.08.2026 SICHERHEIT: NUR den Pfad prüfen, nicht die ganze URL. `req.originalUrl`
+  // enthält den Query-String — `.includes()` ließ deshalb JEDE Adresse mit dem Anhängsel
+  // `?x=/api/contracts/email-import` die Anmeldung KOMPLETT überspringen. Am Produktivsystem
+  // belegt: GET /api/s3/view?key=…&x=/api/contracts/email-import → HTTP 200 ohne Token
+  // (unauthentifizierter Datei-Download). Der legitime Weg ist AUSSCHLIESSLICH die exakte
+  // Route POST /api/contracts/email-import (über eigenen API-Key abgesichert).
+  const emailImportPfad = String(req.originalUrl || '').split('?')[0].split('#')[0];
+  if (emailImportPfad === '/api/contracts/email-import' || emailImportPfad === '/api/contracts/email-import/') {
     console.log('⏩ E-Mail-Import Route: JWT-Check übersprungen (nutzt API-Key)');
     return next();
   }
