@@ -227,13 +227,13 @@ export default function DashboardV2() {
   const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [pendingEnvelopes, setPendingEnvelopes] = useState<PendingEnvelope[]>([]);
   const [pulseAnalyzedContracts, setPulseAnalyzedContracts] = useState<PulseAnalyzedContract[]>([]);
-  const [onboardingDismissed, setOnboardingDismissed] = useState<boolean>(() => {
-    try {
-      return localStorage.getItem('dashboard-onboarding-dismissed') === 'true';
-    } catch {
-      return false;
-    }
-  });
+  // ⚠️ Bis 23.08.2026 lag dieser Merker in localStorage unter einem festen
+  // Schlüssel. Er hing damit am BROWSER statt am Konto: Wer den Bereich einmal
+  // ausgeblendet hatte, sah ihn auch mit einem frisch registrierten Konto nie
+  // wieder (Noahs Testfund). Jetzt entscheidet das Konto, siehe unten.
+  // Diese State-Variable hält nur das sofortige Ausblenden im laufenden Besuch,
+  // bevor die Server-Antwort zurück ist.
+  const [dismissedLocally, setDismissedLocally] = useState<boolean>(false);
   const [summaryStats, setSummaryStats] = useState<{total: number; active: number; expiringSoon: number; expired: number; generated: number; analyzed: number} | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -242,6 +242,12 @@ export default function DashboardV2() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Kontobezogen: Das Backend führt diesen Merker im Nutzer-Dokument
+  // (onboarding.checklistHiddenByUser, gesetzt über POST /api/onboarding/hide-checklist).
+  // Ein neu registriertes Konto hat ihn nicht, sieht den Erststart also wieder,
+  // auch im selben Browser. Die alte Checkliste nutzt dieselbe Quelle.
+  const onboardingDismissed = dismissedLocally || Boolean(user?.onboarding?.checklistHiddenByUser);
 
   // ============================================
   // NOTIFICATION SYSTEM
@@ -457,11 +463,25 @@ export default function DashboardV2() {
   };
 
   const handleDismissOnboarding = useCallback(() => {
-    setOnboardingDismissed(true);
+    // Sofort ausblenden, damit der Klick sich unmittelbar anfühlt.
+    setDismissedLocally(true);
+
+    // Dauerhaft merken, aber am Konto statt am Browser. Schlägt der Aufruf fehl,
+    // bleibt der Bereich für diesen Besuch ausgeblendet und kommt beim nächsten
+    // wieder. Das ist der harmlosere Ausgang als ein Merker, der nie mehr weggeht.
     try {
-      localStorage.setItem('dashboard-onboarding-dismissed', 'true');
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      fetch('/api/onboarding/hide-checklist', {
+        method: 'POST',
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      }).catch(() => { /* stiller Fehlschlag, siehe oben */ });
+
+      // Aufräumen bei Gelegenheit: Der browserweite Alt-Merker wird nirgends mehr
+      // gelesen, liegt aber noch in vielen Browsern herum.
+      localStorage.removeItem('dashboard-onboarding-dismissed');
     } catch {
-      // localStorage unavailable (private browsing) - dismissal bleibt nur in-Memory
+      // localStorage nicht verfügbar (privates Fenster)
     }
   }, []);
 

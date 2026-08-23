@@ -58,10 +58,23 @@ module.exports = function createCheckSubscription(usersCollection) {
       }
 
       // ✅ Routes die ein Business-Abo oder höher erfordern
+      //
+      // ⚠️ '/api/chat' stand hier bis zum 23.08.2026 und war die eigentliche Sperre
+      // für den Free-Chat: Sie liegt VOR allen Chat-Routen (server.js: app.use
+      // "/api/chat", verifyToken, checkSubscription, chatRoutes) und blockte Free
+      // mit 403 PREMIUM_REQUIRED — auch das blosse Anlegen eines leeren Chats.
+      // Deshalb war das Eingabefeld tot: Chat.tsx legt beim ersten Besuch per
+      // POST /new einen Chat an, bekam 403, loggte nur in die Konsole, und ohne
+      // aktiven Chat ist die Eingabe deaktiviert.
+      //
+      // Entfernt, weil Welle 2 (08.07.2026) den Chat quota-basiert geöffnet hat:
+      // Free hat 5 Nachrichten/Monat. Das Kostenlimit erzwingt die Chat-Route
+      // selbst und zwar atomar (consumeChatQuota in POST /:id/message, plus
+      // Vorab-Prüfung in /new-with-contract und /:id/upload). Diese pauschale
+      // Plan-Sperre war der Grund, warum die 5 Fragen nie einlösbar waren.
       const premiumRequiredRoutes = [
         '/api/optimize',           // KI-Optimierung
         '/api/contracts/generate', // Vertrag generieren
-        '/api/chat',               // Chat mit Vertrag
         '/api/compare',            // Vertragsvergleich
         '/api/envelopes',          // Digitale Signaturen
         '/api/legal-lens',         // LegalLens Analyse
@@ -123,7 +136,9 @@ module.exports = function createCheckSubscription(usersCollection) {
       console.error("❌ Fehler in checkSubscription:", err);
 
       // Bei Fehlern: Premium-Routes blockieren, Basis-Features erlauben
-      const premiumRequiredRoutes = ['/api/optimize', '/api/contracts/generate', '/api/chat', '/api/compare', '/api/envelopes', '/api/legal-lens', '/api/legalpulse'];
+      // '/api/chat' bewusst NICHT gelistet, siehe Begründung oben. Sonst wäre der
+      // Free-Chat bei jedem Datenbankfehler wieder gesperrt.
+      const premiumRequiredRoutes = ['/api/optimize', '/api/contracts/generate', '/api/compare', '/api/envelopes', '/api/legal-lens', '/api/legalpulse'];
       const isPremiumRoute = premiumRequiredRoutes.some(route => req.originalUrl.toLowerCase().startsWith(route.toLowerCase()));
 
       if (isPremiumRoute) {
