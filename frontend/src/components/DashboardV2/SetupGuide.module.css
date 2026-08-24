@@ -5,7 +5,10 @@
 /* 21.08.2026: Abstände einmal durchgestrafft, damit Einrichtung und
    Möglichkeiten auf einem üblichen Bildschirm ohne Scrollen zu sehen sind.
    Es wurde nichts entfernt, nur enger gesetzt. */
-.wrap { display: flex; flex-direction: column; gap: 16px; }
+/* ⚠️ 24.08.2026 (Noahs Fund): Ohne unteren Abstand stiess dieser Block direkt an
+   die Statistik-Karten des Dashboards. Zwei eigenstaendige Bereiche brauchen eine
+   sichtbare Trennung, sonst liest man sie als einen. */
+.wrap { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
 
 /* Symbole sind von Haus aus inline und sitzen dadurch auf der Textlinie —
    in runden/quadratischen Flächen wirken sie deshalb verrutscht. Als Block
@@ -118,9 +121,12 @@
    Bewusst grün statt blau: Er quittiert Erledigtes, er startet nichts Neues.
    Volle Breite, damit er als Abschluss der Liste gelesen wird und nicht als
    eine weitere Aktion neben den Schritten. */
+/* ⚠️ 24.08.2026 (Noahs Fund): Der Knopf lief vorher über die volle Breite und
+   wirkte dadurch wuchtiger als der Abschluss, den er quittiert. Jetzt so breit
+   wie sein Inhalt. */
 .finishBtn {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: calc(100% - 44px); margin: 4px 22px 20px; padding: 11px 18px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  margin: 4px 22px 20px; padding: 11px 20px;
   background: var(--success, #10B981); color: #ffffff;
   border: none; border-radius: var(--radius-sm, 8px);
   font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer;

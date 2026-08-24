@@ -241,7 +241,7 @@ export default function DashboardV2() {
   const [error, setError] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refetchUser } = useAuth();
 
   // Kontobezogen: Das Backend führt diesen Merker im Nutzer-Dokument
   // (onboarding.checklistHiddenByUser, gesetzt über POST /api/onboarding/hide-checklist).
@@ -392,6 +392,16 @@ export default function DashboardV2() {
     fetchData();
   }, [fetchData]);
 
+  // Nutzer-Kontext beim Betreten des Dashboards auffrischen.
+  // Der AuthProvider holt ihn sonst nur EINMAL beim Laden der App. Die Häkchen der
+  // Einrichtung entstehen aber serverseitig (Upload, Analyse), teils auf anderen
+  // Seiten. Ohne diesen Aufruf zeigte das Dashboard nach der ersten Analyse weiter
+  // "Erste Analyse starten" (Noahs Fund 24.08.). Läuft nur beim Mount.
+  useEffect(() => {
+    refetchUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ============================================
   // COMPUTED VALUES
   // ============================================
@@ -449,9 +459,36 @@ export default function DashboardV2() {
   // 🎯 Erststart: Ist die Einrichtung noch offen? Maßgeblich sind die beiden
   // Kernschritte, die der Nutzer selbst gehen muss — Konto und E-Mail sind zum
   // Zeitpunkt der ersten Anmeldung ohnehin erledigt, das Profil ist freiwillig.
+  // 🐛 Noahs Fund 24.08.: Nach der ersten Analyse zeigte das Dashboard weiter
+  // "Erste Analyse starten". Ursache: Die Häkchen stehen im Nutzer-Dokument
+  // (analyze.js setzt firstAnalysisComplete serverseitig), aber `user` kommt aus
+  // dem Auth-Kontext, der nur beim Laden der App EINMAL geholt wird. Wer analysiert
+  // und dann zurück aufs Dashboard geht, sieht einen veralteten Stand. Es wirkte
+  // erst richtig, nachdem das Speichern des Profils den Kontext nebenbei auffrischte.
+  //
+  // Zwei unabhängige Absicherungen, weil eine einzelne Quelle genau dieses Problem
+  // erzeugt hat:
+  // 1. Beim Betreten des Dashboards den Kontext frisch holen (die Wurzel).
+  // 2. Das Dashboard kennt seine eigenen Zahlen. Wer analysierte Verträge hat, HAT
+  //    die erste Analyse hinter sich, unabhängig davon, was der Kontext gerade sagt.
+  const effectiveChecklist = useMemo(() => {
+    const base: {
+      accountCreated?: boolean;
+      emailVerified?: boolean;
+      firstContractUploaded?: boolean;
+      companyProfileComplete?: boolean;
+      firstAnalysisComplete?: boolean;
+    } = user?.onboarding?.checklist || {};
+    return {
+      ...base,
+      firstContractUploaded: Boolean(base.firstContractUploaded) || stats.total > 0,
+      firstAnalysisComplete: Boolean(base.firstAnalysisComplete) || stats.analyzed > 0,
+    };
+  }, [user, stats.total, stats.analyzed]);
+
   const setupIncomplete = !(
-    user?.onboarding?.checklist?.firstContractUploaded &&
-    user?.onboarding?.checklist?.firstAnalysisComplete
+    effectiveChecklist.firstContractUploaded &&
+    effectiveChecklist.firstAnalysisComplete
   );
 
   // 🏁 Abschluss-Moment (24.08.2026, Noahs Fund): Vorher verschwand der Bereich in
@@ -660,10 +697,10 @@ export default function DashboardV2() {
             ============================================ */}
         {SETUP_GUIDE_ENABLED && (setupIncomplete || showSetupFinale) && !onboardingDismissed && (
           <SetupGuide
-            checklist={user?.onboarding?.checklist}
+            checklist={effectiveChecklist}
             freeAnalyses={analysisUsage.isUnlimited ? null : Math.max(0, analysisUsage.remaining)}
             showPossibilities={stats.total === 0}
-            onUploaded={() => { fetchData(true); }}
+            onUploaded={() => { fetchData(true); refetchUser(); }}
             onDismiss={handleDismissOnboarding}
           />
         )}
