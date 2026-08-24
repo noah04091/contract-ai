@@ -434,9 +434,17 @@
   transition: all 0.2s var(--ease);
 }
 
+/* ⚠️ 24.08.2026 (Noahs Fund "Hover macht nichts mehr"): Der Effekt war nicht kaputt,
+   er war wirkungslos. `--gray-200` ist #E5E7EB — exakt dieselbe Farbe, die die Karte
+   im Ruhezustand als `--border` trägt. Es blieb also nur ein Schatten mit 6 % Deckkraft,
+   der auf weißem Grund praktisch unsichtbar ist.
+   Jetzt: leichtes Anheben (das nimmt das Auge am deutlichsten wahr), ein etwas
+   tragfähigerer Schatten und ein Rahmen, der sich wirklich unterscheidet.
+   Bewusst zurückhaltend gehalten — die Karte soll antworten, nicht springen. */
 .clickable:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--gray-200);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px -2px rgba(16, 24, 40, 0.10), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+  border-color: #D1D5DB;
 }
 
 .clickable:focus {
@@ -444,8 +452,18 @@
   outline-offset: 2px;
 }
 
+/* Beim Drücken zurück auf die Grundlinie und minimal kleiner. Ohne das
+   translateY(0) würde der Klick gegen das Anheben von oben arbeiten. */
 .clickable:active {
-  transform: scale(0.98);
+  transform: translateY(0) scale(0.99);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Wer mit Tastatur oder Maus unterwegs ist, aber Bewegung reduziert haben möchte,
+   bekommt denselben Hinweis ohne Verschiebung. */
+@media (prefers-reduced-motion: reduce) {
+  .clickable:hover { transform: none; }
+  .clickable:active { transform: none; }
 }
 
 /* ============================================

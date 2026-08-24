@@ -25,12 +25,19 @@ interface AnalysisOverlayProps {
   mimetype?: string | null;
 }
 
+// Fallback-Etappen, solange das Backend noch keine echte Etappe gemeldet hat.
+// ⚠️ 24.08.2026: Hier stand "KI-Optimierung". Bei einer ANALYSE wird nichts
+// optimiert — Optimierung ist ein eigenes, kostenpflichtiges Feature (PLAN_LIMITS
+// optimize, Business aufwärts). Ein kostenloses Konto las also mitten in seiner
+// ersten Analyse ein Wort, das Verbesserungsvorschläge verspricht, die danach
+// nicht kommen. Ausgerechnet in dem Moment, in dem der Nutzer aufmerksam auf den
+// Bildschirm schaut. Die Bezeichnungen sagen jetzt, was wirklich passiert.
 const STEPS = [
-  { id: 'upload', label: 'Upload', threshold: 0 },
-  { id: 'type', label: 'Typ erkennen', threshold: 15 },
-  { id: 'gaps', label: 'Analyse', threshold: 35 },
-  { id: 'ai', label: 'KI-Optimierung', threshold: 55 },
-  { id: 'qc', label: 'Qualitätscheck', threshold: 85 },
+  { id: 'upload', label: 'Dokument wird geladen', threshold: 0 },
+  { id: 'type', label: 'Vertragstyp erkennen', threshold: 15 },
+  { id: 'gaps', label: 'Text lesen', threshold: 35 },
+  { id: 'ai', label: 'Klauseln und Fristen prüfen', threshold: 55 },
+  { id: 'qc', label: 'Ergebnis zusammenstellen', threshold: 85 },
   { id: 'done', label: 'Fertig', threshold: 100 },
 ];
 
