@@ -149,16 +149,38 @@ async function runCalendarWatchdog(db, opts = {}) {
   // hat noch offene Fristen? Dann fliegt er blind, und das darf nicht still passieren.
   // Bewusst KEIN Alarm bei Abgemeldeten ohne offene Fristen — das ist eine harmlose,
   // legitime Entscheidung.
+  // 24.08.2026 NACHGESCHÄRFT: Es gibt VIER unabhängige Aus-Schalter für Fristen-Mails,
+  // nicht zwei. Neben emailOptOut und emailPreferences.calendar (Abmelde-Link) wirken
+  // auch die beiden Profil-Schalter notificationSettings.email.enabled und
+  // .contractDeadlines — gelesen von calendarNotifier.js:372, calendarDigestService.js:281
+  // und notificationSender.js:113/188. Die erste Fassung dieser Invariante kannte nur die
+  // ersten beiden; ein per Profil stummgeschalteter Kunde mit offenen Fristen fiel also
+  // NICHT auf. Genau die Stille, gegen die diese Invariante gebaut wurde.
   const unsubscribedUsers = await db.collection('users').find({
-    $or: [{ emailOptOut: true }, { 'emailPreferences.calendar': false }]
-  }).project({ _id: 1, email: 1, emailOptOut: 1, 'emailPreferences.calendar': 1 }).toArray();
+    $or: [
+      { emailOptOut: true },
+      { 'emailPreferences.calendar': false },
+      { 'notificationSettings.email.enabled': false },
+      { 'notificationSettings.email.contractDeadlines': false }
+    ]
+  }).project({
+    _id: 1, email: 1, emailOptOut: 1, 'emailPreferences.calendar': 1,
+    'notificationSettings.email.enabled': 1, 'notificationSettings.email.contractDeadlines': 1
+  }).toArray();
   const blindeKunden = [];
   for (const u of unsubscribedUsers) {
     const offen = await db.collection('contract_events').countDocuments({
       userId: u._id, status: 'scheduled', date: { $gte: now },
       severity: { $in: ['info', 'warning', 'critical'] }
     });
-    if (offen > 0) blindeKunden.push({ id: String(u._id), offen });
+    if (offen > 0) {
+      const ns = u.notificationSettings?.email || {};
+      const grund = u.emailOptOut === true ? 'emailOptOut (global)'
+        : u.emailPreferences?.calendar === false ? 'Abmelde-Link (emailPreferences.calendar)'
+        : ns.enabled === false ? 'Profil: E-Mails gesamt aus'
+        : 'Profil: Fristen-Erinnerungen aus';
+      blindeKunden.push({ id: String(u._id), offen, grund });
+    }
   }
   if (blindeKunden.length > 0) {
     const gesamt = blindeKunden.reduce((s, k) => s + k.offen, 0);
@@ -166,6 +188,7 @@ async function runCalendarWatchdog(db, opts = {}) {
       `${blindeKunden.length} Kunde(n) sind von Kalender-Mails abgemeldet, haben aber zusammen ` +
       `${gesamt} offene Frist(en) — sie bekommen dazu KEINE Erinnerung mehr und merken es nicht. ` +
       `Prüfen, ob die Abmeldung gewollt war (Fehlklick im Mail-Programm ist möglich) und ggf. ` +
+      `zurücksetzen. Gründe: ${sample([...new Set(blindeKunden.map(k => k.grund))])}. ` +
       `emailPreferences.calendar / emailOptOut zurücksetzen. Betroffen: ${sample(blindeKunden.map(k => k.id))}.`,
       { users: blindeKunden.slice(0, 20) });
   }

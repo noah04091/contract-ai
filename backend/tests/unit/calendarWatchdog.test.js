@@ -211,4 +211,41 @@ describe('runCalendarWatchdog', () => {
     expect(treffer[0].message).toContain('3 offene Frist');
     expect(stats.unsubscribedWithDeadlines).toBe(2);
   });
+
+  // 24.08.2026: Invariante 6 kennt jetzt ALLE VIER Aus-Schalter, nicht nur die zwei
+  // des Abmelde-Links. Die Profil-Schalter wirken beim Versand genauso.
+  test('Profil-Schalter "Fristen aus" + offene Fristen -> Alarm (war vorher blind)', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u6'), notificationSettings: { email: { contractDeadlines: false } } }],
+      openPerUser: { [oid('u6')]: 2 }
+    }), { now: NOW, capture: cap });
+    const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
+    expect(f).toBeDefined();
+    expect(f.message).toContain('Profil: Fristen-Erinnerungen aus');
+    expect(stats.unsubscribedWithDeadlines).toBe(1);
+  });
+
+  test('Profil-Schalter "E-Mails gesamt aus" wird als eigener Grund benannt', async () => {
+    const cap = captureSpy();
+    await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u7'), notificationSettings: { email: { enabled: false } } }],
+      openPerUser: { [oid('u7')]: 1 }
+    }), { now: NOW, capture: cap });
+    const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
+    expect(f.message).toContain('Profil: E-Mails gesamt aus');
+  });
+
+  test('Der globale Schalter hat Vorrang vor den feineren Gruenden', async () => {
+    const cap = captureSpy();
+    await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u8'), emailOptOut: true, notificationSettings: { email: { contractDeadlines: false } } }],
+      openPerUser: { [oid('u8')]: 1 }
+    }), { now: NOW, capture: cap });
+    const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
+    expect(f.message).toContain('emailOptOut (global)');
+  });
 });
