@@ -1296,11 +1296,23 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     // Felder ohne Wert → im + Menü anbieten
     const fieldsMissing = EDITABLE_FIELDS.filter(f => !f.hasValue() && editingField !== f.key);
 
+    // 🛠️ 24.08.2026 (Noahs Idee): Überschrift dem Dokumenttyp anpassen. Grundsatz wie überall
+    // im Modal: "im Zweifel Vertrag" — nur bei EINDEUTIGEM Nicht-Vertrag umbenennen, damit ein
+    // schlecht erkannter echter Vertrag (documentType UNKNOWN/leer) nie fälschlich zum "Dokument"
+    // wird. Eindeutige Nicht-Verträge: Rechnung, Quittung, Tabelle, Finanzdokument (oder
+    // documentCategory==='invoice'). Alles andere inkl. UNKNOWN/leer/Anschreiben bleibt "Vertrag".
+    const NICHT_VERTRAG_DOC_TYPES = ['INVOICE', 'RECEIPT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'];
+    const dtOben = (contract.documentType || '').toUpperCase().trim();
+    const istSonstigesDokument =
+      NICHT_VERTRAG_DOC_TYPES.includes(dtOben) ||
+      (contract.documentCategory || '').toLowerCase().trim() === 'invoice';
+    const detailsSektionsTitel = istSonstigesDokument ? 'Dokumentdetails' : 'Vertragsdetails';
+
     return (
     <div className={styles.tabContent}>
       <div className={styles.section}>
         <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span><FileText size={16} style={{ verticalAlign: '-3px', marginRight: 7 }} />Vertragsdetails</span>
+          <span><FileText size={16} style={{ verticalAlign: '-3px', marginRight: 7 }} />{detailsSektionsTitel}</span>
           <div className={styles.addFieldWrapper} ref={addFieldMenuRef}>
             <button
               className={styles.quickFactAddBtn}
