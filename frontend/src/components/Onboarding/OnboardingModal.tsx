@@ -752,7 +752,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             {isFreePlan && (
               <p className={styles.planNote}>
                 Zum Start hast du <strong>3 kostenlose Analysen</strong>, den Fristenkalender
-                und 5 Fragen an die KI. Ohne Kreditkarte.
+                und 5 Fragen an die KI.
               </p>
             )}
           </motion.div>

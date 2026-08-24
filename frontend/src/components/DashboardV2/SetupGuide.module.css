@@ -201,7 +201,11 @@
   padding: 15px 20px;
   border: 1px solid var(--border, #E5E7EB);
   border-radius: var(--radius, 12px); background: #fff;
+  transition: border-color 0.18s ease;
 }
+/* Der kommende Schritt reagiert leiser als der freiwillige: Er ist noch nicht dran,
+   soll aber nicht wie ein totes Element wirken. */
+.stepIdle:hover { border-color: var(--gray-300, #D1D5DB); }
 .siNum {
   width: 28px; height: 28px; border-radius: 50%;
   background: var(--gray-100, #F3F4F6); color: var(--gray-400, #9CA3AF);
@@ -218,6 +222,15 @@
   padding: 14px 20px;
   border: 1px dashed var(--gray-300, #D1D5DB);
   border-radius: var(--radius, 12px); background: var(--gray-50, #F9FAFB);
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+/* 24.08.2026 (Noahs Fund): Die alte Checkliste liess offene Schritte auf den
+   Mauszeiger reagieren, das fehlte hier. Ein offener Punkt darf zeigen, dass man
+   etwas mit ihm tun kann; erledigte Zeilen bleiben bewusst ruhig, sie laden zu
+   nichts mehr ein. */
+.stepOpt:hover {
+  border-color: var(--primary, #3B82F6);
+  background: #f5faff;
 }
 .soIcon {
   width: 28px; height: 28px; border-radius: 8px;

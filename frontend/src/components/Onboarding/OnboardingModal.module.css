@@ -163,6 +163,9 @@
   margin: 0 0 12px 0;
   line-height: 1.3;
   letter-spacing: -0.02em;
+  /* Gleiche Begründung wie bei .stepDescription: keine einzelnen Wörter in der
+     letzten Zeile, auf jeder Bildschirmbreite. */
+  text-wrap: balance;
 }
 
 .highlight {
@@ -178,6 +181,12 @@
   margin: 0 0 28px 0;
   line-height: 1.6;
   max-width: 400px;
+  /* 24.08.2026 (Noahs Fund): Die Zeilen brachen mitten im Satz an unglücklichen
+     Stellen, einzelne Wörter standen allein in der letzten Zeile. Ein harter
+     Umbruch nach dem Komma würde das nur auf EINER Bildschirmbreite lösen und auf
+     dem Handy neue Probleme schaffen. `balance` verteilt die Zeilen gleichmäßig,
+     unabhängig von der Breite. Browser ohne Unterstützung brechen wie bisher. */
+  text-wrap: balance;
 }
 
 /* ============================================

@@ -1708,7 +1708,13 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             {(result?.originalContractId || initialResult?.originalContractId) && (
               <motion.button
                 className={styles.primaryActionButton}
-                onClick={() => window.location.href = `/pulse/${result?.originalContractId || initialResult?.originalContractId}`}
+                // ⚠️ 24.08.2026 (Noahs Fund "jetzt kann ich nicht mehr zur Analyse
+                // zurück"): Hier stand window.location.href. Das lädt die gesamte
+                // Anwendung neu und wirft den Verlauf weg — die geöffnete Analyse war
+                // damit unerreichbar, auch über den Zurück-Knopf. navigate() bleibt
+                // innerhalb der Anwendung, und weil die Analyse eine eigene Adresse
+                // hat (/contracts?analyze=…), führt der Zurück-Knopf sauber dorthin.
+                onClick={() => navigate(`/pulse/${result?.originalContractId || initialResult?.originalContractId}`)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -1909,7 +1915,9 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             onOpenChat={handleOpenInChat}
             onOpenPulse={() => {
               const id = result?.originalContractId || initialResult?.originalContractId;
-              if (id) window.location.href = `/pulse/${id}`;
+              // Gleiche Korrektur wie oben: kein harter Seitenwechsel, sonst ist der
+              // Weg zurück zur Analyse verloren.
+              if (id) navigate(`/pulse/${id}`);
             }}
             onOpenContract={() => {
               const id = result?.originalContractId || initialResult?.originalContractId;
@@ -1923,8 +1931,19 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
             onShowDeadlines={() => {
               // Scroll zur Fristen-Sektion; Fallback: ans ENDE des Ergebnisses
               // (Tabs/Empfehlungen) — nicht an den Anfang (wäre Scroll nach oben).
-              if (datesSectionRef.current) {
-                datesSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+              const ziel = datesSectionRef.current;
+              if (ziel) {
+                ziel.scrollIntoView({ behavior: "smooth", block: "start" });
+                // ⚠️ 24.08.2026 (Noahs Fund "es passiert rein gar nichts"):
+                // Scrollen allein ist keine verlässliche Rückmeldung. Ist der Bereich
+                // bereits sichtbar oder der Container schon am Anschlag, kann der
+                // Browser nicht weiter scrollen und der Klick bleibt wirkungslos —
+                // der Nutzer haelt den Knopf fuer kaputt. Eine kurze Hervorhebung
+                // beantwortet den Klick IMMER, unabhaengig von der Scroll-Position.
+                ziel.classList.add(datesWrapperStyles.v2DatesHighlight);
+                window.setTimeout(() => {
+                  ziel.classList.remove(datesWrapperStyles.v2DatesHighlight);
+                }, 1600);
               } else if (analysisResultRef.current) {
                 analysisResultRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
               }

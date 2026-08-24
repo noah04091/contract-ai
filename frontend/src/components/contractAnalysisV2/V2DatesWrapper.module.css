@@ -1,6 +1,27 @@
 /* V2-Wrapper für AnalysisImportantDates — neutralisiert das knallige Gelb der Fristen-Sektion.
    Targets: alle Klassen, die das alte Modul mit fef3c7/fffbeb/fde68a hat. */
 
+/* Kurze Hervorhebung nach Klick auf "Fristen & Optionen ansehen" (24.08.2026).
+   Vorher war das Scrollen die einzige Rückmeldung, und die bleibt aus, wenn der
+   Bereich ohnehin sichtbar ist oder der Container am Anschlag steht — der Knopf
+   wirkte dann kaputt (Noahs Fund). Bewusst ruhig: ein weicher blauer Ring, der
+   nach anderthalb Sekunden wieder verschwindet. */
+.v2DatesHighlight {
+  animation: v2DatesPulse 1.6s ease-out;
+  border-radius: 14px;
+}
+
+@keyframes v2DatesPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.00); }
+  15%  { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.28); }
+  70%  { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18); }
+  100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.00); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2DatesHighlight { animation: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22); }
+}
+
 .v2DatesWrapper :global([class*="fristenBlock"]) {
   background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%) !important;
   border: 1px solid #e5e7eb !important;
