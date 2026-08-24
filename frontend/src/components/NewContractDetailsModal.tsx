@@ -1,5 +1,5 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle, ExternalLink, MoreHorizontal, Pencil, Check, Plus, RotateCcw, Mail, Bell, Scale, Lightbulb, AlertTriangle, Users, Sparkles, Info, Star, Search, Lock } from 'lucide-react';
 import { startGenerateUnlock, startBusinessSubscription } from '../utils/startAnalysisUnlock';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
@@ -464,6 +464,25 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     })();
     return () => { cancelled = true; };
   }, [initialContract?._id, initialContract?.isGenerated]);
+
+  // 🛠️ 24.08.2026 (Noahs Fund 1): Nach dem Umschalten des Zahlungsstatus lädt der
+  // PaymentTracker nur SEINEN eigenen Schalter optimistisch um. Das Status-Abzeichen oben
+  // (renderStatusBadge → computedStatus) blieb aber „Offen", bis der Nutzer neu lud, weil
+  // niemand es benachrichtigte. Dieser Meldekanal lädt den EINEN Vertrag frisch nach —
+  // das Backend rechnet computedStatus neu (paid → „Bezahlt") — und aktualisiert die
+  // Anzeige sofort, ohne Neuladen.
+  const refreshContractLive = useCallback(async () => {
+    if (!contract?._id) return;
+    try {
+      const res = await fetch(`/api/contracts/${contract._id}`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const full = (data && data.contract) ? data.contract : data;
+      if (full && full._id) {
+        setContract(prev => ({ ...prev, ...full }));
+      }
+    } catch { /* still: bei Fehler bleibt der optimistische Schalter-Zustand */ }
+  }, [contract?._id]);
 
   // 🔔 Kalendererinnerungen für diesen Vertrag laden
   useEffect(() => {
@@ -2010,9 +2029,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       </div>
 
       {/* Smart Contract Info (Payment/Cost Tracking) */}
-      {(contract.paymentMethod || contract.paymentAmount || contract.paymentStatus) && (
+      {/* 🛠️ 24.08.2026 (Noahs Fund 2): Der Zahlungs-Bereich erschien NUR, wenn die Analyse
+          schon ein Zahlungs-Feld gefüllt hatte. Eine Quittung ohne vorbefülltes Feld fiel
+          heraus — obwohl das Status-Abzeichen oben sie längst als „Offen" führte (das nutzt
+          `documentCategory === 'invoice'`). Diese Uneinigkeit war die Wurzel. Jetzt an
+          DASSELBE Signal gekoppelt: Ist es eine Rechnung/Quittung, gibt es auch den Schalter,
+          damit der Nutzer den Status setzen kann. */}
+      {(contract.documentCategory === 'invoice' || contract.paymentMethod || contract.paymentAmount || contract.paymentStatus) && (
         <div className={styles.section}>
-          <SmartContractInfo contract={contract as Parameters<typeof SmartContractInfo>[0]['contract']} />
+          <SmartContractInfo
+            contract={contract as Parameters<typeof SmartContractInfo>[0]['contract']}
+            onPaymentUpdate={refreshContractLive}
+          />
         </div>
       )}
 
