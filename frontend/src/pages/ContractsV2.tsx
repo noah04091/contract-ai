@@ -6995,7 +6995,11 @@ export default function Contracts() {
             // Nur die Vertragsliste im Hintergrund aktualisieren.
             // selectedContract wird NICHT überschrieben — das Modal verwaltet seinen eigenen State.
             // So bleiben inline-gespeicherte Felder (Vertragsnummer, Anbieter etc.) erhalten.
-            await fetchContracts();
+            // 🛠️ 24.08.2026 (Noahs Nachtrag): STILLE Aktualisierung statt fetchContracts —
+            // sonst blitzt beim Umschalten des Zahlungsstatus ein Lade-Skelett über der Liste
+            // (fetchContracts setzt setLoading(true)). silentRefreshContracts aktualisiert die
+            // Status-Spalte nahtlos, ohne Flackern.
+            await silentRefreshContracts();
           }}
           onDelete={handleDeleteContract}
         />,

@@ -482,7 +482,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         setContract(prev => ({ ...prev, ...full }));
       }
     } catch { /* still: bei Fehler bleibt der optimistische Schalter-Zustand */ }
-  }, [contract?._id]);
+    // 🛠️ 24.08.2026 (Noahs Nachtrag): Auch die ÜBERSICHTSLISTE dahinter soll sofort den
+    // neuen Status zeigen, ohne dass der Nutzer „Aktualisieren" klickt. `onEdit` löst in
+    // ContractsV2 exakt diese stille Hintergrund-Aktualisierung der Liste aus.
+    onEdit?.(contract._id);
+  }, [contract?._id, onEdit]);
 
   // 🔔 Kalendererinnerungen für diesen Vertrag laden
   useEffect(() => {
