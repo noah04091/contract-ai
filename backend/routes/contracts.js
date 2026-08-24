@@ -2057,8 +2057,29 @@ router.put("/:id", verifyToken, async (req, res) => {
 
     const updateData = { ...req.body, updatedAt: new Date() };
 
-    delete updateData.userId;
-    delete updateData._id;
+    // 🔒 24.08.2026 SICHERHEIT (TÜV): Diese Route uebernahm bisher `{...req.body}` und
+    // loeschte nur userId/_id. Damit konnte ein Nutzer BELIEBIGE interne Felder an SEINEM
+    // eigenen Vertrag setzen — z.B. `unlock.paid` (umgeht den 4,90€-Einmalkauf, den sonst
+    // NUR der Stripe-Webhook setzt, analysisGate.js:57), `analyzedAt`/`analyzed`
+    // (umgeht Freemium-Gate + Wiederhol-Sperre) oder einen fremden `s3Key`
+    // (Zusammenspiel mit dem Analyse-Weg → fremdes Dokument lesbar).
+    //
+    // Bewusst SPERR-Liste statt Positiv-Liste: Die Oberflaeche speichert viele und teils
+    // frei benannte Felder (name, notes, kosten, kuendigung, laufzeit, Inline-Facts …).
+    // Eine Positiv-Liste wuerde davon zwangslaeufig legitime Speichervorgaenge blockieren.
+    // Wir entfernen deshalb NUR die sicherheits-/besitzrelevanten Felder und lassen alle
+    // normalen Bearbeitungsfelder unangetastet.
+    const GESPERRTE_FELDER = [
+      '_id', 'userId', 'organizationId', 'orgId',        // Besitz/Identitaet
+      'unlock',                                          // Bezahlschranke (nur Stripe-Webhook)
+      'analyzed', 'analyzedAt', 'isFirstAnalysis',       // Freemium-/Wiederhol-Gate
+      'isGenerated',                                     // Entwurf-/Gate-Logik
+      'fileHash', 'createdAt', 'uploadedAt', 'uploadType',   // Integritaet/Herkunft
+      's3Key', 's3Bucket', 's3Location', 's3ETag', 'extraRefs', // Datei-Zeiger (IDOR/Injection)
+      'optimizedPdfS3Key', 'sealedS3Key', 's3KeySealed', 'pdfS3Key', 'effectiveS3Key',
+      'filePath', 'fileUrl'
+    ];
+    for (const feld of GESPERRTE_FELDER) delete updateData[feld];
 
     // 🇩🇪 Defensive Normalisierung: falls Client (oder Re-Analyse) englische Eckdaten schickt,
     // schreibe direkt deutsch in DB. Idempotent — deutsche Werte bleiben.
