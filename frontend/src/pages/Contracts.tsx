@@ -4231,7 +4231,7 @@ export default function Contracts() {
                     className={styles.premiumHintUpgrade}
                     onClick={() => {
                       setPremiumHint(null);
-                      navigate('/subscribe');
+                      navigate('/pricing');
                     }}
                   >
                     Jetzt upgraden

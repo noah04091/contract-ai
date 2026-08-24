@@ -3547,8 +3547,8 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
       if (shouldSendEmail) {
         try {
           const upgradeUrl = userPlan === 'free'
-            ? 'https://www.contract-ai.de/subscribe?plan=premium'
-            : 'https://www.contract-ai.de/subscribe?plan=business';
+            ? 'https://www.contract-ai.de/pricing?plan=premium'
+            : 'https://www.contract-ai.de/pricing?plan=business';
 
           const planUpgradeName = userPlan === 'free' ? 'Premium' : 'Business';
           const nextPlanLimit = userPlan === 'free' ? 10 : 20;

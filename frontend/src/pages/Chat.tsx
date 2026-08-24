@@ -328,7 +328,7 @@ export default function Chat() {
           // Special limit error message with upgrade link
           msgs[msgs.length - 1] = {
             role: "assistant",
-            content: `⚠️ **Chat-Limit erreicht**\n\n${errorMessage}\n\n[Jetzt upgraden →](/subscribe)`,
+            content: `⚠️ **Chat-Limit erreicht**\n\n${errorMessage}\n\n[Jetzt upgraden →](/pricing)`,
           };
         } else {
           // Generic error
@@ -571,7 +571,7 @@ export default function Chat() {
           <p>
             Mit dem Business-Tarif bekommst du 50 Chat-Nachrichten pro Monat — inklusive Volltext-Kontext zu deinen Dokumenten.
           </p>
-          <a href="/subscribe" className={styles.upgradeButton}>
+          <a href="/pricing" className={styles.upgradeButton}>
             Jetzt upgraden
           </a>
         </div>
@@ -780,8 +780,18 @@ export default function Chat() {
               <div className={styles.thread}>
                 {active.messages
                   .filter((m) => m.role !== "system")
-                  .map((msg, i) => (
-                    <Bubble key={i} role={msg.role as "user" | "assistant"} content={msg.content} />
+                  .map((msg, i, arr) => (
+                    <Bubble
+                      key={i}
+                      role={msg.role as "user" | "assistant"}
+                      content={msg.content}
+                      isTyping={
+                        loading &&
+                        i === arr.length - 1 &&
+                        msg.role === "assistant" &&
+                        msg.content === ""
+                      }
+                    />
                   ))}
               </div>
             )}
@@ -947,7 +957,15 @@ export default function Chat() {
 // 🧩 SUB-COMPONENTS
 // ==========================================
 
-function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
+function Bubble({
+  role,
+  content,
+  isTyping = false,
+}: {
+  role: "user" | "assistant";
+  content: string;
+  isTyping?: boolean;
+}) {
   return (
     <div className={`${styles.bubble} ${role === "user" ? styles.userBubble : styles.aiBubble}`}>
       <div className={`${styles.avatar} ${role === "user" ? styles.userAvatar : styles.aiAvatar}`}>
@@ -960,7 +978,18 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
           </span>
         </div>
         <div className={styles.bubbleContent}>
-          <MarkdownContent content={content} />
+          {isTyping ? (
+            <div className={styles.typingIndicator} aria-live="polite">
+              <span>KI-Rechtsanwalt tippt</span>
+              <span className={styles.typingDots} aria-hidden="true">
+                <span></span>
+                <span></span>
+                <span></span>
+              </span>
+            </div>
+          ) : (
+            <MarkdownContent content={content} />
+          )}
         </div>
       </div>
     </div>

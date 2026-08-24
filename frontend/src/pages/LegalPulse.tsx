@@ -885,7 +885,7 @@ export default function LegalPulse() {
                 </div>
               </div>
 
-              <Link to="/subscribe" className={styles.premiumGateButton}>
+              <Link to="/pricing" className={styles.premiumGateButton}>
                 Jetzt upgraden
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
                   <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1667,7 +1667,7 @@ export default function LegalPulse() {
               <h3>Legal Pulse ist ein Premium-Feature</h3>
               <p>Upgrade auf Business oder Enterprise, um automatisches Risiko-Monitoring, Gesetzesänderungs-Alerts und detaillierte Analysen für alle deine Verträge zu erhalten.</p>
             </div>
-            <Link to="/subscribe" className={styles.premiumBannerButton}>
+            <Link to="/pricing" className={styles.premiumBannerButton}>
               Jetzt upgraden
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
                 <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

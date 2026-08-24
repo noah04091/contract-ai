@@ -115,7 +115,9 @@ const ApiKeys = lazy(() => import("./pages/ApiKeys")); // 🔑 REST API-Zugang (
 const ApiDocs = lazy(() => import("./pages/ApiDocs")); // 📚 REST API-Dokumentation
 const Integrations = lazy(() => import("./pages/Integrations")); // 🔗 CRM/ERP/CPQ Integrationen
 const Team = lazy(() => import("./pages/Team")); // 👥 Team-Management (Enterprise)
-const Subscribe = lazy(() => import("./pages/Subscribe"));
+// Subscribe.tsx ist eine tote Alt-Seite (rief den entfernten POST /api/checkout auf);
+// /subscribe leitet stattdessen öffentlich auf die Preisseite weiter — auch für
+// bereits verschickte Mail-Links wie /subscribe?plan=business.
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
 const LegalPulse = lazy(() => import("./pages/LegalPulse"));
@@ -133,6 +135,11 @@ const PlaybookReview = lazy(() => import("./pages/PlaybookReview")); // 🎯 Pla
 const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
 const PlaceSignatureFields = lazy(() => import("./pages/PlaceSignatureFields")); // ✉️ NEU: Field Placement Editor
 const NewSignatureRequest = lazy(() => import("./pages/NewSignatureRequest")); // ✉️ NEU: Neue Signaturanfrage
+
+function SubscribeRedirect() {
+  const { search } = useLocation();
+  return <Navigate to={`/pricing${search}`} replace />;
+}
 
 function AppWithLoader() {
   const location = useLocation();
@@ -343,7 +350,7 @@ function AppWithLoader() {
             <Route path="/api-keys" element={<RequireAuth><ApiKeys /></RequireAuth>} />
             <Route path="/integrations" element={<RequireAuth><Integrations /></RequireAuth>} />
             <Route path="/team" element={<RequireAuth><Team /></RequireAuth>} />
-            <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
+            <Route path="/subscribe" element={<SubscribeRedirect />} />
             <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
             <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
             {/* Refund-Feedback-Admin lebt jetzt als Tab im Admin-Center (/dashboard) — alte Route leitet weiter */}
