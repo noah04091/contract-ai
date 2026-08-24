@@ -8,7 +8,7 @@ const { queueEmail, processEmailQueue } = require("./emailRetryService");
 const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // gemeinsame Tageszahl-Quelle (Anzeige)
 const { formatProvider } = require("../utils/formatProvider"); // Anbieter kann Objekt sein → nie roh interpolieren ("[object Object]")
 const { cleanContractName } = require("../utils/cleanContractName"); // Betreff-Anzeige: Mojibake + Datei-Präfixe raus (wie Pulse-Mails)
-const { isUnsubscribed, EMAIL_CATEGORIES } = require("./emailUnsubscribeService"); // Abmelde-Prüfung VOR dem Claim (siehe isCalendarUnsubscribed)
+const { isUnsubscribed, generateUnsubscribeUrl, EMAIL_CATEGORIES } = require("./emailUnsubscribeService"); // Abmelde-Prüfung VOR dem Claim (siehe isCalendarUnsubscribed)
 
 /**
  * Maskiert eine E-Mail-Adresse für Logs (DSGVO-Hygiene).
@@ -962,7 +962,18 @@ function generateCalendarEmailTemplate(params) {
       <p style="margin:0; font-size:13px; color:#9aa3b2;">${quickActions.map(a => `<a href="${a.url}" target="_blank" style="color:#9aa3b2; text-decoration:none;">${a.text}</a>`).join(" &nbsp;·&nbsp; ")}</p>
     </td></tr>` : "";
 
-  const unsubscribeUrl = `${FRONTEND}/api/email/unsubscribe?email=${encodeURIComponent(recipientEmail)}&category=CALENDAR`;
+  // 📭 24.08.2026: Dieser Link war TOT. Er zeigte auf die rohe Daten-Schnittstelle
+  // (/api/email/unsubscribe) und trug KEINEN Token — die Route verlangt aber einen und
+  // antwortete mit rohem JSON: {"success":false,"error":"Kein Abmelde-Token angegeben"}.
+  // Zusätzlich passte "CALENDAR" in Großbuchstaben auf keine Kategorie (alle sind klein).
+  // Jetzt der geteilte Helfer: signierter Token → echte Seite /abmelden mit Bestätigung.
+  // Reihenfolge war Absicht: VOR der Kategorie-Entflechtung (23.08.) hätte ein
+  // funktionierender Link den Kunden von Legal Pulse abgemeldet statt von den Fristen.
+  // Fällt recipientEmail wider Erwarten weg (Vorschau/Render-Tests), lieber die nackte
+  // Seite als eine Ausnahme, die die GANZE Mail verschluckt.
+  const unsubscribeUrl = recipientEmail
+    ? generateUnsubscribeUrl(recipientEmail, EMAIL_CATEGORIES.CALENDAR)
+    : `${FRONTEND}/abmelden`;
   const preheaderHtml = preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all;">${escapeHtml(preheader)}</div>` : "";
 
   // 🔓 Dezenter Business-Hinweis in Free-Mails (Retention Stufe 1, 10.08.2026).
