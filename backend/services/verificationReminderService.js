@@ -72,8 +72,11 @@ async function sendVerificationReminders() {
     let skippedCount = 0;
 
     for (const user of unverifiedUsers) {
-      // Opt-Out Check
-      if (optOutEmails.has(user.email)) {
+      // Opt-Out Check: email_unsubscribes-Liste ODER User-Feld (24.08.2026).
+      // Der Abmelde-Link (/abmelden → routes/auth.js) schreibt emailPreferences.verification_reminder=false
+      // bzw. emailOptOut=true; diese Felder MÜSSEN hier greifen, sonst hätte der Widerspruch keine Wirkung.
+      const optedOutByField = user.emailOptOut === true || user.emailPreferences?.verification_reminder === false;
+      if (optOutEmails.has(user.email) || optedOutByField) {
         optedOutCount++;
         continue;
       }

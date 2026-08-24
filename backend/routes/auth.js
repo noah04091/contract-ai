@@ -2181,7 +2181,7 @@ async function resolveUnsubscribeToken(token) {
 // Alles andere (z.B. 'verification_reminder') ist KEINE gültige Kategorie — der frühere
 // default-Zweig „riet" und schaltete den Newsletter ab. Das war für jede unbekannte
 // Kennung falsch, nicht nur die eine. Jetzt: unbekannt = nichts anfassen, ehrlich ablehnen.
-const KNOWN_UNSUBSCRIBE_CATEGORIES = new Set(['all', 'calendar', 'legal_pulse', 'marketing', 'product_updates']);
+const KNOWN_UNSUBSCRIBE_CATEGORIES = new Set(['all', 'calendar', 'legal_pulse', 'marketing', 'product_updates', 'verification_reminder']);
 
 // Helper: Check if user is currently subscribed for a category
 function isSubscribedForCategory(user, category) {
@@ -2196,6 +2196,10 @@ function isSubscribedForCategory(user, category) {
       return user.legalPulseSettings?.emailNotifications !== false && user.legalPulseSettings?.enabled !== false && user.emailOptOut !== true;
     case 'product_updates':
       return user.emailPreferences?.product_updates !== false && user.emailOptOut !== true;
+    case 'verification_reminder':
+      // 24.08.2026: Verifizierungs-Erinnerung → eigenes Feld emailPreferences.verification_reminder
+      // (verificationReminderService liest dieses Feld zusätzlich zur email_unsubscribes-Liste).
+      return user.emailPreferences?.verification_reminder !== false && user.emailOptOut !== true;
     case 'all':
       return user.emailOptOut !== true;
     default:
@@ -2217,6 +2221,11 @@ function getUnsubscribeUpdate(category) {
       return { $set: { 'legalPulseSettings.emailNotifications': false, 'unsubscribedAt': new Date() } };
     case 'product_updates':
       return { $set: { 'emailPreferences.product_updates': false, 'emailPreferencesUpdatedAt': new Date() } };
+    case 'verification_reminder':
+      // 24.08.2026: Abmeldung schreibt genau das Feld, das verificationReminderService liest.
+      // Früher war 'verification_reminder' unbekannt → Link wurde still abgelehnt, der Widerspruch
+      // wirkte nie (UWG-relevant: 30-Tage-Erinnerung an unbestätigte Konten ohne echten Opt-out).
+      return { $set: { 'emailPreferences.verification_reminder': false, 'emailPreferencesUpdatedAt': new Date() } };
     case 'all':
       return { $set: { emailOptOut: true, emailOptOutAt: new Date(), 'emailPreferencesUpdatedAt': new Date() } };
     default:
@@ -2241,6 +2250,8 @@ function getResubscribeUpdate(category) {
       return { $set: { 'legalPulseSettings.emailNotifications': true, 'legalPulseSettings.enabled': true }, $unset: { 'unsubscribedAt': '' } };
     case 'product_updates':
       return { $set: { 'emailPreferences.product_updates': true, 'emailPreferencesUpdatedAt': new Date() } };
+    case 'verification_reminder':
+      return { $set: { 'emailPreferences.verification_reminder': true, 'emailPreferencesUpdatedAt': new Date() } };
     case 'all':
       return { $set: { emailOptOut: false, 'emailPreferencesUpdatedAt': new Date() } };
     default:
