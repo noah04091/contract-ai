@@ -132,7 +132,8 @@
   }
 
   .heroIcon {
-    font-size: 48px;
+    width: 56px;
+    height: 56px;
   }
 
   .empty h2 {
@@ -252,7 +253,8 @@
   }
 
   .premiumIcon {
-    font-size: 56px;
+    width: 56px;
+    height: 56px;
   }
 
   .premiumRequired h2 {
@@ -370,6 +372,17 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--text);
+}
+
+.usageTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.usageTitle svg {
+  color: #2563eb;
+  flex-shrink: 0;
 }
 
 .warningBadge {
@@ -618,7 +631,15 @@
 }
 
 .headerIcon {
-  font-size: 20px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
 
 .headerTitle {
@@ -628,12 +649,13 @@
 
 .badge {
   margin-left: 8px;
-  font-size: 12px;
-  color: var(--muted);
-  background: #f3f4f6;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 500;
+  color: #2563eb;
+  background: #eff6ff;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #dbeafe;
 }
 
 .actions {
@@ -730,11 +752,14 @@
 }
 
 .aiAvatar {
-  background: #3b82f6;
+  background: #2563eb;
+  color: #fff;
 }
 
 .userAvatar {
-  background: #d1d5db;
+  background: #f4f4f5;
+  border: 1px solid #e4e4e7;
+  color: #52525b;
 }
 
 .bubbleBody {
@@ -845,8 +870,15 @@
 }
 
 .heroIcon {
-  font-size: 64px;
-  margin-bottom: 16px;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
 }
 
 .empty h2 {
@@ -941,7 +973,10 @@
 }
 
 .contractIcon {
-  font-size: 16px;
+  display: grid;
+  place-items: center;
+  color: #2563eb;
+  flex-shrink: 0;
 }
 
 .contractInfo {
@@ -986,7 +1021,10 @@
 }
 
 .lightbulbIcon {
-  font-size: 14px;
+  display: grid;
+  place-items: center;
+  color: #2563eb;
+  flex-shrink: 0;
 }
 
 .smartQuestionsTitle {
@@ -1178,8 +1216,15 @@
 }
 
 .premiumIcon {
-  font-size: 72px;
-  margin-bottom: 24px;
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 24px;
 }
 
 .premiumRequired h2 {

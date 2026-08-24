@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import styles from "../styles/Chat.module.css";
 import { useAuth } from "../context/AuthContext";
 import { WelcomePopup } from "../components/Tour";
-import { MessageCircle, Camera } from "lucide-react";
+import { MessageCircle, Camera, Scale, User, FileText, Lightbulb } from "lucide-react";
 import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
 type ChatLite = {
@@ -566,7 +566,9 @@ export default function Chat() {
           <title>Vertrags-Chat | Contract AI</title>
         </Helmet>
         <div className={styles.premiumRequired}>
-          <div className={styles.premiumIcon}>⚖️</div>
+          <div className={styles.premiumIcon}>
+            <Scale size={32} aria-hidden="true" />
+          </div>
           <h2>Dein Chat-Kontingent ist aufgebraucht</h2>
           <p>
             Mit dem Business-Tarif bekommst du 50 Chat-Nachrichten pro Monat — inklusive Volltext-Kontext zu deinen Dokumenten.
@@ -613,7 +615,9 @@ export default function Chat() {
             {usage && typeof usage.limit === 'number' && isFinite(usage.limit) && (
               <div className={styles.usageStats}>
                 <div className={styles.usageLabel}>
-                  <span>💬 Chat-Nutzung</span>
+                  <span className={styles.usageTitle}>
+                    <MessageCircle size={13} aria-hidden="true" /> Chat-Nutzung
+                  </span>
                   {usage.remaining < usage.limit * 0.2 && (
                     <span className={styles.warningBadge}>Niedrig</span>
                   )}
@@ -623,7 +627,7 @@ export default function Chat() {
                     className={styles.usageProgress}
                     style={{
                       width: `${Math.min(100, (usage.current / usage.limit) * 100)}%`,
-                      backgroundColor: usage.remaining < usage.limit * 0.2 ? '#ef4444' : '#3b82f6',
+                      backgroundColor: usage.remaining < usage.limit * 0.2 ? '#ef4444' : '#2563eb',
                     }}
                   />
                 </div>
@@ -724,7 +728,9 @@ export default function Chat() {
         <main className={styles.main}>
           <header className={styles.header}>
             <div>
-              <span className={styles.headerIcon}>⚖️</span>
+              <span className={styles.headerIcon}>
+                <Scale size={16} aria-hidden="true" />
+              </span>
               <span className={styles.headerTitle}>Legal Chat 2.0</span>
               <span className={styles.badge}>Rechtsanwalt für Vertragsrecht</span>
             </div>
@@ -814,7 +820,9 @@ export default function Chat() {
                         title="PDF-Vorschau öffnen"
                         style={{ cursor: att.s3Key ? "pointer" : "default" }}
                       >
-                        <span className={styles.contractIcon}>📄</span>
+                        <span className={styles.contractIcon}>
+                          <FileText size={16} aria-hidden="true" />
+                        </span>
                         <div className={styles.contractInfo}>
                           <span className={styles.contractName}>{att.name}</span>
                           {att.contractType && (
@@ -830,7 +838,9 @@ export default function Chat() {
                 {smartQuestions.length > 0 && (
                   <div className={styles.smartQuestions}>
                     <div className={styles.smartQuestionsHeader}>
-                      <span className={styles.lightbulbIcon}>💡</span>
+                      <span className={styles.lightbulbIcon}>
+                        <Lightbulb size={14} aria-hidden="true" />
+                      </span>
                       <span className={styles.smartQuestionsTitle}>Vertragsspezifische Fragen:</span>
                     </div>
                     <div className={styles.chipRow}>
@@ -969,7 +979,7 @@ function Bubble({
   return (
     <div className={`${styles.bubble} ${role === "user" ? styles.userBubble : styles.aiBubble}`}>
       <div className={`${styles.avatar} ${role === "user" ? styles.userAvatar : styles.aiAvatar}`}>
-        {role === "assistant" ? "⚖️" : "👤"}
+        {role === "assistant" ? <Scale size={15} aria-hidden="true" /> : <User size={15} aria-hidden="true" />}
       </div>
       <div className={styles.bubbleBody}>
         <div className={styles.bubbleHeader}>
@@ -999,7 +1009,9 @@ function Bubble({
 function EmptyState({ suggestions, onPick }: { suggestions: string[]; onPick: (s: string) => void }) {
   return (
     <div className={styles.empty}>
-      <div className={styles.heroIcon}>📄</div>
+      <div className={styles.heroIcon}>
+        <Scale size={28} aria-hidden="true" />
+      </div>
       <h2>Willkommen beim Legal Chat 2.0</h2>
       <p>
         Stelle Fragen zu Vertragsrecht und erhalte strukturierte Einschätzungen wie von einem
