@@ -1689,8 +1689,12 @@ const connectDB = async () => {
       cron.schedule("0 9 * * *", withDistributedLock('notification-queue', async () => {
         console.log("📤 Starte Notification Queue Verarbeitung...");
         try {
+          // 24.08.2026: withCronLogging ergänzt. Diese Strecke lief zwar mit Sperre, schrieb
+          // aber KEINE cron_logs — sie war damit in jeder Auswertung unsichtbar und konnte von
+          // keiner Wächter-Regel geprüft werden. Genau hier blieben 11 Kunden Anfang 2026
+          // sieben Monate lang unbemerkt ohne ihre "Vertrag läuft ab"-Mail.
           const { processNotificationQueue } = require("./services/notificationSender");
-          const result = await processNotificationQueue(db);
+          const result = await withCronLogging('notification-queue', () => processNotificationQueue(db));
           console.log(`✅ Notification Queue abgeschlossen:`, result);
         } catch (error) {
           console.error("❌ Notification Queue Cron Error:", error);

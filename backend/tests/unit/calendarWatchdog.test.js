@@ -27,6 +27,8 @@ function fakeDb(cfg = {}) {
           throw new Error('contract_events-Query unbekannt: ' + JSON.stringify(q));
         }
         if (name === 'email_queue') return cursor(cfg.mails || []);
+        // Invariante 7: zweite Versand-Strecke
+        if (name === 'notification_queue') return cursor(cfg.nqFailed || []);
         if (name === 'users') {
           // Invariante 6: Abgemeldete (emailOptOut ODER emailPreferences.calendar:false)
           if (q.$or) return cursor(cfg.unsubscribed || []);
@@ -35,6 +37,7 @@ function fakeDb(cfg = {}) {
         throw new Error(`find unerwartet auf ${name}`);
       },
       countDocuments: async (q) => {
+        if (name === 'notification_queue') return cfg.nqStale || 0;
         if (name !== 'contract_events') throw new Error(`countDocuments unerwartet auf ${name}`);
         return (cfg.openPerUser || {})[String(q.userId)] || 0;
       }
@@ -263,5 +266,43 @@ describe('runCalendarWatchdog', () => {
     }), { now: NOW, capture: cap });
     const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
     expect(f.message).toContain('emailOptOut (global)');
+  });
+
+  // ── Invariante 7 (24.08.2026): Die zweite Versand-Strecke war fuer alle sechs
+  // Invarianten davor unsichtbar — sie liest notification_queue, nicht contract_events.
+  test('endgueltig fehlgeschlagene Status-Mail -> HIGH NotificationQueueFailed (mit Grund)', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      nqFailed: [{ _id: oid('n1'), type: 'bald_ablaufend', lastError: '501 Invalid MAIL FROM address provided' }]
+    }), { now: NOW, capture: cap });
+    const f = cap.calls.find(c => c.name === 'CalendarWatchdogNotificationQueueFailed');
+    expect(f).toBeDefined();
+    expect(f.ctx.severity).toBe('high');
+    expect(f.message).toContain('501 Invalid MAIL FROM');
+    expect(f.message).toContain('KEINEN Wiederholversuch');
+    expect(stats.notificationQueueFailed).toBe(1);
+  });
+
+  test('ueberfaellige pending-Eintraege -> HIGH NotificationQueueStale', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' }, nqStale: 4
+    }), { now: NOW, capture: cap });
+    const f = cap.calls.find(c => c.name === 'CalendarWatchdogNotificationQueueStale');
+    expect(f).toBeDefined();
+    expect(f.message).toContain('4 Eintrag');
+    expect(stats.notificationQueueStale).toBe(4);
+  });
+
+  test('gesunde zweite Strecke -> still (keine Fehlalarme)', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' }, nqFailed: [], nqStale: 0
+    }), { now: NOW, capture: cap });
+    expect(cap.calls.filter(c => c.name.includes('NotificationQueue'))).toHaveLength(0);
+    expect(stats.notificationQueueFailed).toBe(0);
+    expect(stats.notificationQueueStale).toBe(0);
+    expect(stats.findings).toBe(0);
   });
 });

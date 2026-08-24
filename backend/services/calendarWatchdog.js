@@ -195,6 +195,39 @@ async function runCalendarWatchdog(db, opts = {}) {
       { users: blindeKunden.slice(0, 20) });
   }
 
+  // ── 7) Die ZWEITE Versand-Strecke (notification_queue) ─────────────────────
+  // 23.08.2026 entdeckt, 24.08.2026 abgesichert: Neben contract_events/email_queue gibt es
+  // eine völlig eigene Strecke — notificationSender.js schickt "Vertrag läuft bald ab"-Mails
+  // aus notification_queue, an email_queue vorbei. Kein Retry, kein Bounce-Requeue, und bis
+  // heute auch keine cron_logs-Spur. Alle sechs Invarianten oben lesen contract_events und
+  // konnten sie deshalb NIE prüfen. Folge: 11 echte Kunden bekamen Anfang 2026 ihre Mail nie
+  // (Absender-Fehlkonfiguration), und das fiel SIEBEN MONATE lang niemandem auf.
+  // "failed" ist dort ein Endzustand — was hier liegen bleibt, wird nie wieder versucht.
+  const seitGestern = new Date(now.getTime() - 36 * 3600 * 1000);
+  const nqFailed = await db.collection('notification_queue').find({
+    status: 'failed', failedAt: { $gte: seitGestern }
+  }).project({ _id: 1, type: 1, lastError: 1 }).toArray();
+  if (nqFailed.length > 0) {
+    const gruende = [...new Set(nqFailed.map(n => String(n.lastError || 'ohne Fehlertext').slice(0, 60)))];
+    await alarm('CalendarWatchdogNotificationQueueFailed', 'high',
+      `${nqFailed.length} Vertrags-Status-Mail(s) der zweiten Versand-Strecke sind in den letzten ` +
+      `36h endgültig fehlgeschlagen (notification_queue). Dort gibt es KEINEN Wiederholversuch — ` +
+      `diese Kunden bekommen ihre "Vertrag läuft ab"-Mail nie. Gründe: ${sample(gruende)}. ` +
+      `IDs: ${sample(nqFailed.map(n => n._id))}.`,
+      { ids: nqFailed.slice(0, 20).map(n => String(n._id)), reasons: gruende.slice(0, 5) });
+  }
+  // Überfällig und unbearbeitet: der Cron hätte sie längst abholen müssen.
+  const nqUeberfaellig = await db.collection('notification_queue').countDocuments({
+    status: 'pending', scheduledFor: { $lte: new Date(now.getTime() - 36 * 3600 * 1000) }
+  });
+  if (nqUeberfaellig > 0) {
+    await alarm('CalendarWatchdogNotificationQueueStale', 'high',
+      `${nqUeberfaellig} Eintrag/Einträge in notification_queue sind seit über 36h fällig, aber ` +
+      `noch "pending" — der 09:00-Lauf holt sie offenbar nicht ab (Sperre hängt, Cron aus, oder ` +
+      `Fehler vor der Schleife). Ohne diese Regel bliebe das unsichtbar.`,
+      { count: nqUeberfaellig });
+  }
+
   const stats = {
     findings: findings.length,
     sendCronTrace: !!(lock || log),
@@ -203,6 +236,8 @@ async function runCalendarWatchdog(db, opts = {}) {
     notifiedWithoutMail: notifiedWithoutMail.length,
     stuckQueued: stuck.length,
     unsubscribedWithDeadlines: blindeKunden.length,
+    notificationQueueFailed: nqFailed.length,
+    notificationQueueStale: nqUeberfaellig,
     checkedActiveRefs: active.length,
     notifiedYesterday: notifiedYesterday.length
   };
