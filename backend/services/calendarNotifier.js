@@ -417,7 +417,18 @@ async function checkAndSendNotifications(db) {
       // NICHT erst in der Warteschlange — sonst bliebe das Event auf "queued" hängen und
       // der Wächter meldete einen Fehlalarm. Begründung ausführlich an isCalendarUnsubscribed.
       // Das Event bleibt "scheduled" und wird vom 03:00-Lauf regulär als "expired" markiert.
-      if (await isCalendarUnsubscribed(db, event.user.email)) {
+      // 24.08.2026 — DIESELBEN AUSNAHMEN WIE DER PROFIL-SCHALTER (:372). Vorher blockte
+      // dieses Tor ALLES, der Profil-Schalter "Vertragsfristen" nahm aber bewusst zwei
+      // Klassen aus (Entwurfs-Entscheidung 07.07.2026):
+      //   • der SELBST GESETZTE Wecker des Kunden — er hat ihn einzeln bestellt, er darf
+      //     nicht still verschwinden, nur weil die automatischen Fristen abbestellt wurden;
+      //   • SIGNATUR-Events — sie hängen am eigenen Schalter "Signatur-Updates" und sind
+      //     transaktional (ein Vertrag wartet auf Unterschrift).
+      // Ohne diesen Gleichlauf bedeutete "Fristen abbestellen" je nach Ort etwas ANDERES:
+      // im Profil mild, über den Mail-Link total. Genau die dritte Wahrheit, die wir hier
+      // abschaffen wollen. Gemessen 24.08.: 19 eigene Wecker + 5 Signatur-Events im Bestand,
+      // davon 0 offen — heute also wirkungslos, aber die Klasse kommt wieder.
+      if (!isUserPickedDate && !isSignatureEvent && await isCalendarUnsubscribed(db, event.user.email)) {
         console.log(`Skipping ${maskEmail(event.user.email)} - von Kalender-Mails abgemeldet`);
         continue;
       }

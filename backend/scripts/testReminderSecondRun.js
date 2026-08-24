@@ -137,18 +137,28 @@ function makeDb(state) {
   const c4 = new ObjectId();
   const e5 = { _id: new ObjectId(), userId: unsubUser._id, contractId: c4, type: "CANCEL_DEADLINE", title: "⚠️ Kündigungseingang bis: Abgemeldet", date: todayNoon, status: "scheduled", severity: "critical", metadata: { contractName: "Abgemeldet.pdf" } };
 
-  const state = { users: [paidUser, freeUser, unsubUser], contract_events: [e1, e3main, e3cov, e4, e5], email_queue: [] };
+  // 📭 24.08.2026: Der Abgemeldete hat ZUSÄTZLICH einen selbst gesetzten Wecker und ein
+  // Signatur-Event. Beide sind vom Fristen-Schalter bewusst ausgenommen (calendarNotifier:372),
+  // also muss auch das Abmelde-Tor sie durchlassen — sonst bedeutet "Fristen abbestellen"
+  // je nach Ort etwas anderes.
+  const e6 = { _id: new ObjectId(), userId: unsubUser._id, contractId: c4, type: "CUSTOM_REMINDER", title: "⏰ Eigener Wecker", date: todayNoon, status: "scheduled", severity: "info", metadata: { contractName: "Abgemeldet.pdf", reminderType: "custom" } };
+  const e7 = { _id: new ObjectId(), userId: unsubUser._id, contractId: c4, type: "SIGNATURE_EXPIRY", sourceType: "ENVELOPE", title: "🖋️ Signatur läuft ab", date: todayNoon, status: "scheduled", severity: "warning", metadata: { contractName: "Abgemeldet.pdf" } };
+  const state = { users: [paidUser, freeUser, unsubUser], contract_events: [e1, e3main, e3cov, e4, e5, e6, e7], email_queue: [] };
   const db = makeDb(state);
 
   console.log("\n════ Lauf 1 (09:00-Äquivalent) ════");
   const q1 = await checkAndSendNotifications(db);
   const mailsFor = (ev) => state.email_queue.filter(m => m.eventId === ev._id.toString());
-  ok("L1: genau 1 Mail gequeued (nur das heute fällige Paid-Event)", q1 === 1 && state.email_queue.length === 1, `q1=${q1} queue=${state.email_queue.length}`);
+  // 3 = das heute fällige Paid-Event + die zwei Ausnahmen des Abgemeldeten (eigener Wecker,
+  // Signatur). Die eigentliche Fristen-Mail des Abgemeldeten fehlt hier weiterhin — genau richtig.
+  ok("L1: genau 3 Mails gequeued (Paid-Event + die 2 Ausnahmen, NICHT die Fristen-Mail des Abgemeldeten)", q1 === 3 && state.email_queue.length === 3, `q1=${q1} queue=${state.email_queue.length}`);
   ok("L1: E1 wurde beansprucht (scheduled → queued)", e1.status === "queued", `status=${e1.status}`);
   ok("L1: Klasse-A-Hauptevent bleibt scheduled (geskippt, keine Mail)", e3main.status === "scheduled" && mailsFor(e3main).length === 0);
   ok("L1: Free-User-Event bleibt scheduled, keine Mail", e4.status === "scheduled" && mailsFor(e4).length === 0);
   ok("L1: Abgemeldeter Nutzer — Event wurde NICHT beansprucht (Tor steht VOR dem Claim)", e5.status === "scheduled", `status=${e5.status} (bei "queued" stünde die Prüfung zu spät)`);
   ok("L1: Abgemeldeter Nutzer — KEINE Mail in der Warteschlange", mailsFor(e5).length === 0, `mails=${mailsFor(e5).length}`);
+  ok("L1: Abgemeldeter — sein EIGENER Wecker klingelt trotzdem (Ausnahme wie beim Profil-Schalter)", mailsFor(e6).length === 1, `mails=${mailsFor(e6).length}`);
+  ok("L1: Abgemeldeter — Signatur-Mail geht trotzdem raus (eigener Schalter, transaktional)", mailsFor(e7).length === 1, `mails=${mailsFor(e7).length}`);
 
   // Zwischen den Läufen: Analyse um 13:22 erzeugt ein heute fälliges Event (der 25.07.-Fall)
   const e2 = { _id: new ObjectId(), userId: paidUser._id, contractId: c1, type: "CONTRACT_END_REMINDER_30D", title: "📅 30 Tage vorher: Ende der Datenlöschfrist", date: todayNoon, status: "scheduled", severity: "info", metadata: { daysUntil: 30, contractName: "Test.pdf" } };
@@ -161,13 +171,13 @@ function makeDb(state) {
   ok("L2: Klasse-A-Skip identisch wiederholt (keine Mail, bleibt scheduled)", e3main.status === "scheduled" && mailsFor(e3main).length === 0);
   ok("L2: Free-User weiterhin übersprungen", mailsFor(e4).length === 0);
   ok("L2: Abgemeldeter bleibt scheduled und ohne Mail (auch im zweiten Lauf)", e5.status === "scheduled" && mailsFor(e5).length === 0);
-  ok("L2: Gesamt-Queue = exakt 2 Mails (E1 aus Lauf 1, E2 aus Lauf 2)", state.email_queue.length === 2, `queue=${state.email_queue.length}`);
+  ok("L2: Gesamt-Queue = exakt 4 Mails (E1 + 2 Ausnahmen aus Lauf 1, E2 aus Lauf 2)", state.email_queue.length === 4, `queue=${state.email_queue.length}`);
 
   // Härtetest: E1 inzwischen "notified" (Mail bestätigt raus) → dritter Lauf fasst nichts an
   e1.status = "notified";
   console.log("\n════ Lauf 3 (Gegenprobe: alles verarbeitet) ════");
   const q3 = await checkAndSendNotifications(db);
-  ok("L3: 0 neue Mails — verarbeitete/notified Events bleiben unsichtbar", q3 === 0 && state.email_queue.length === 2, `q3=${q3} queue=${state.email_queue.length}`);
+  ok("L3: 0 neue Mails — verarbeitete/notified Events bleiben unsichtbar", q3 === 0 && state.email_queue.length === 4, `q3=${q3} queue=${state.email_queue.length}`);
 
   console.log(`\n──────── Ergebnis: ${pass} bestanden, ${fail} fehlgeschlagen ────────`);
   process.exit(fail === 0 ? 0 : 1);
