@@ -403,8 +403,17 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              Du bist einer von über 500 Nutzern, die ihre Verträge intelligent verwalten.
-              <br />In 60 Sekunden zeigen wir dir, wie du das Maximum herausholst.
+              {/* 24.08.2026: Hier stand ein harter <br /> zwischen den Sätzen. Der
+                  macht aus beiden EINEN Textblock mit erzwungenem Umbruch, und die
+                  Ausgleichs-Regel kann darin nichts mehr verteilen — deshalb stand
+                  "herausholst." allein in der letzten Zeile. Als zwei eigene Blöcke
+                  wird jeder Satz für sich ausgewogen umbrochen. */}
+              <span className={styles.descLine}>
+                Du bist einer von über 500 Nutzern, die ihre Verträge intelligent verwalten.
+              </span>
+              <span className={styles.descLine}>
+                In 60 Sekunden zeigen wir dir, wie du das Maximum herausholst.
+              </span>
             </motion.p>
 
             {/* Animated Stats */}

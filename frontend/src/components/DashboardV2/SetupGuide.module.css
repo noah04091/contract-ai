@@ -15,6 +15,18 @@
    greift die Zentrierung der Elternfläche sauber. */
 .wrap svg { display: block; }
 
+/* Umbruch-Regel für alle längeren Texte in diesem Bereich (24.08.2026).
+   Ohne sie bleibt regelmäßig ein einzelnes Wort in der letzten Zeile hängen, was
+   auf einer sonst sorgfältig gesetzten Fläche sofort auffällt. `balance` gleicht
+   Überschriften aus, `pretty` verhindert bei Fließtext das einsame Schlusswort.
+   Bewusst hier zentral statt an jeder Klasse einzeln — genau diese Streuung hat
+   dazu geführt, dass eine Stelle vergessen wurde. */
+.wrap h2,
+.wrap h3,
+.wrap h4 { text-wrap: balance; }
+
+.wrap p { text-wrap: pretty; }
+
 /* ============ Einrichtung ============ */
 .setup {
   background: var(--surface, #fff);
