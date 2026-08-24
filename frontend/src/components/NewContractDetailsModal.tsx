@@ -1297,15 +1297,20 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     const fieldsMissing = EDITABLE_FIELDS.filter(f => !f.hasValue() && editingField !== f.key);
 
     // 🛠️ 24.08.2026 (Noahs Idee): Überschrift dem Dokumenttyp anpassen. Grundsatz wie überall
-    // im Modal: "im Zweifel Vertrag" — nur bei EINDEUTIGEM Nicht-Vertrag umbenennen, damit ein
-    // schlecht erkannter echter Vertrag (documentType UNKNOWN/leer) nie fälschlich zum "Dokument"
-    // wird. Eindeutige Nicht-Verträge: Rechnung, Quittung, Tabelle, Finanzdokument (oder
-    // documentCategory==='invoice'). Alles andere inkl. UNKNOWN/leer/Anschreiben bleibt "Vertrag".
-    const NICHT_VERTRAG_DOC_TYPES = ['INVOICE', 'RECEIPT', 'TABLE_DOCUMENT', 'FINANCIAL_DOCUMENT'];
+    // im Modal: "im Zweifel Vertrag" — nur bei EINDEUTIGEM, verlässlichem Nicht-Vertrag umbenennen.
+    // Auslöser = NUR die präzisen, GPT-verifizierten Typen INVOICE/RECEIPT/TABLE_DOCUMENT. Der
+    // Analyse-Kern lässt jeden unsicheren Fall per zweiter Meinung Richtung CONTRACT kippen, ein
+    // verbliebenes INVOICE/RECEIPT/TABLE ist also belastbar (Rechnung/Quittung/Tabelle sind nie
+    // Verträge). Bewusst NICHT dabei:
+    //  - FINANCIAL_DOCUMENT: unzuverlässiger Heuristik-Typ (keine GPT-Kategorie), trifft echte
+    //    Finanz-/Darlehensverträge und wird sonst überall (Kalender, Feld-Anzeige) als vertrags-
+    //    artig behandelt → würde einen echten Vertrag fälschlich zum "Dokument" machen.
+    //  - documentCategory==='invoice': grober Topf, kann fälschlich 'invoice' sein (siehe
+    //    Kontoauszug-Bug 24.08.) → nicht als Auslöser nutzen.
+    // UNKNOWN/leer/LETTER/CONTRACT/AGB → bleibt konservativ "Vertragsdetails".
+    const NICHT_VERTRAG_DOC_TYPES = ['INVOICE', 'RECEIPT', 'TABLE_DOCUMENT'];
     const dtOben = (contract.documentType || '').toUpperCase().trim();
-    const istSonstigesDokument =
-      NICHT_VERTRAG_DOC_TYPES.includes(dtOben) ||
-      (contract.documentCategory || '').toLowerCase().trim() === 'invoice';
+    const istSonstigesDokument = NICHT_VERTRAG_DOC_TYPES.includes(dtOben);
     const detailsSektionsTitel = istSonstigesDokument ? 'Dokumentdetails' : 'Vertragsdetails';
 
     return (
