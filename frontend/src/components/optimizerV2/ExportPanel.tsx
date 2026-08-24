@@ -482,15 +482,26 @@ Viele Grüße`;
             <h4>Im Contract Builder öffnen</h4>
             <p>Optimierten Vertrag im visuellen Editor bearbeiten, Design wählen und als PDF exportieren</p>
           </div>
+          {/* 🛠️ 24.08.2026 (Noahs Fund): Bei EINEM sehr guten Vertrag gibt es nichts zu
+              optimieren (optimizedCount === 0, dieselbe Zählung wie die Redline „alle
+              unverändert"). Der Knopf bot trotzdem an, einen „optimierten Vertrag" zu
+              erzeugen, und lief ins Leere. Jetzt gesperrt — konsistent zum DOCX-Knopf
+              daneben (der bei optimizedCount === 0 längst inaktiv ist). */}
           <button
             className={styles.exportBtnActive}
             onClick={handleOpenInBuilder}
-            disabled={builderLoading}
+            disabled={optimizedCount === 0 || builderLoading}
           >
             {builderLoading ? <Loader2 size={14} className={styles.spinIcon} /> : <Hammer size={14} />}
             {builderLoading ? 'Erstelle...' : 'Öffnen'}
           </button>
         </div>
+        {optimizedCount === 0 && (
+          <p className={styles.exportEmptyHint} style={{ margin: '8px 4px 0', fontSize: '0.8rem', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Check size={14} style={{ color: '#34C759', flex: 'none' }} />
+            Dieser Vertrag ist bereits optimal — es gibt keine Optimierungen und damit keinen optimierten Vertrag zu erstellen. Der Analysebericht oben lässt sich weiterhin herunterladen.
+          </p>
+        )}
       </div>
 
       {/* ── Email Pitch Templates ── */}
