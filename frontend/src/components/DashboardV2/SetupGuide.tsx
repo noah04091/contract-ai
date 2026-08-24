@@ -151,6 +151,18 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
           <div className={styles.setupHeadTxt}>
             <h2>{headline}</h2>
             <p>{subline}</p>
+            {/* 🎨 24.08.2026: Der Ring nennt den Stand ("2/4"), zeigt aber nicht, wie
+                weit der Weg noch ist. Der Balken macht daraus eine Strecke — man sieht
+                auf einen Blick, dass die Hälfte geschafft ist, ohne zu rechnen.
+                Im Abschluss-Zustand entfällt er, dort ist der volle Balken nur Lärm. */}
+            {openCount > 0 && (
+              <div className={styles.progressTrack} role="presentation">
+                <div
+                  className={styles.progressFill}
+                  style={{ width: `${(doneCount / 4) * 100}%` }}
+                />
+              </div>
+            )}
           </div>
           {/* Im Abschluss-Zustand steht der Knopf unten und heißt deutlicher,
               sonst hätte man hier oben und unten zwei Wege zum selben Ziel. */}
@@ -343,54 +355,64 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
           </p>
         </header>
 
-        <div className={styles.canGrid}>
-          <button className={styles.canCard} onClick={() => navigate('/contracts?upload=true')}>
-            <span className={`${styles.canIcon} ${styles.canIconBlue}`}><Search size={18} /></span>
+        {/* 🎨 24.08.2026: Vorher standen hier VIER gleich große Kacheln nebeneinander.
+            Damit sagte die Fläche "alle vier sind gleich wichtig" — und das stimmt
+            für einen neuen Nutzer nicht. Für ihn zählt genau eine Sache: den ersten
+            Vertrag prüfen zu lassen. Alles andere ergibt erst danach Sinn. Der Blick
+            musste sich also selbst einen Anfang suchen.
+            Jetzt trägt "Verträge prüfen" eine große Karte mit "Fang hier an", die
+            drei übrigen stehen als schmalere Reihe daneben: sichtbar, aber ohne vom
+            ersten Schritt abzulenken. */}
+        <div className={styles.canMix}>
+          <button className={styles.heroCard} onClick={() => navigate('/contracts?upload=true')}>
+            <span className={styles.heroBadge}>Fang hier an</span>
+            <span className={styles.heroIcon}><Search size={22} /></span>
             <h3>Verträge prüfen</h3>
-            <p>Risiken und Kündigungsfristen erkennen, in verständlichem Deutsch.</p>
-            <span className={styles.canFoot}>
-              <span className={styles.canGo}>Ansehen →</span>
-              {freeAnalyses !== null && <span className={styles.freeTag}>{freeAnalyses} frei</span>}
+            <p>
+              Risiken, Kündigungsfristen und versteckte Klauseln, erklärt in
+              verständlichem Deutsch statt in Juristensprache.
+            </p>
+            <span className={styles.heroMeta}>
+              {freeAnalyses !== null && <span className={styles.heroFree}>{freeAnalyses} Analysen frei</span>}
+              <span className={styles.heroGo}>Vertrag hochladen <span className={styles.heroArrow}>→</span></span>
             </span>
           </button>
 
-          <button className={styles.canCard} onClick={() => navigate('/calendar')}>
-            <span className={`${styles.canIcon} ${styles.canIconOrange}`}><Bell size={18} /></span>
-            <h3>Fristen überwachen</h3>
-            <p>Wir melden uns per E-Mail, bevor sich etwas still verlängert.</p>
-            <span className={styles.canFoot}>
-              <span className={styles.canGo}>Ansehen →</span>
-              <span className={styles.freeTag}>inklusive</span>
-            </span>
-          </button>
+          <div className={styles.sideStack}>
+            <button className={styles.sideCard} onClick={() => navigate('/calendar')}>
+              <span className={`${styles.sideIcon} ${styles.canIconOrange}`}><Bell size={16} /></span>
+              <span className={styles.sideTxt}>
+                <h4>Fristen überwachen <span className={styles.miniFree}>inklusive</span></h4>
+                <p>Wir melden uns, bevor sich etwas still verlängert.</p>
+              </span>
+            </button>
 
-          <button className={styles.canCard} onClick={() => navigate('/generate')}>
-            <span className={`${styles.canIcon} ${styles.canIconGreen}`}><PencilLine size={18} /></span>
-            <h3>Verträge erstellen</h3>
-            {/* Nachgezählt am 23.08.: CONTRACT_TYPES in Generate.tsx enthält
-                genau 16 Vorlagen. Vorher stand hier "über 17". */}
-            <p>16 geprüfte Vorlagen vom Arbeitsvertrag bis zur Geheimhaltung.</p>
-            <span className={styles.canFoot}>
-              <span className={styles.canGo}>Vorlagen ansehen →</span>
-            </span>
-          </button>
-
-          <button className={styles.canCard} onClick={() => navigate('/chat')}>
-            <span className={`${styles.canIcon} ${styles.canIconLight}`}><MessageSquare size={18} /></span>
-            <h3>Fragen stellen</h3>
-            <p>„Kann ich zum Monatsende kündigen?" Sobald ein Vertrag da ist, fragst du einfach nach.</p>
             {/* Die Zahl war am 23.08. kurzzeitig entfernt, weil ein Free-Konto
                 trotz Versprechen keine Frage stellen konnte. Ursache war eine
                 vergessene Business-Wand in ContractAnalysisV2; seit deren
                 Entfernung sind die 5 Fragen tatsächlich einlösbar. */}
-            <span className={styles.canFoot}>
-              <span className={styles.canGo}>Ansehen →</span>
-              <span className={styles.freeTag}>5 Fragen frei</span>
-            </span>
-          </button>
+            <button className={styles.sideCard} onClick={() => navigate('/chat')}>
+              <span className={`${styles.sideIcon} ${styles.canIconLight}`}><MessageSquare size={16} /></span>
+              <span className={styles.sideTxt}>
+                <h4>Fragen stellen <span className={styles.miniFree}>5 Fragen frei</span></h4>
+                <p>„Kann ich zum Monatsende kündigen?"</p>
+              </span>
+            </button>
+
+            {/* Nachgezählt am 23.08.: CONTRACT_TYPES in Generate.tsx enthält genau 16
+                Vorlagen. Das Etikett ist ehrlich: Erstellen ist für Free gesperrt
+                (PLAN_LIMITS generate = 0). */}
+            <button className={styles.sideCard} onClick={() => navigate('/generate')}>
+              <span className={`${styles.sideIcon} ${styles.canIconGreen}`}><PencilLine size={16} /></span>
+              <span className={styles.sideTxt}>
+                <h4>Verträge erstellen <span className={styles.miniPaid}>ab Business</span></h4>
+                <p>16 geprüfte Vorlagen, vom Arbeitsvertrag bis zur Geheimhaltung.</p>
+              </span>
+            </button>
+          </div>
         </div>
 
-        {/* Noahs Hinweis: Die vier Karten sind nicht alles, was das Produkt kann. */}
+        {/* Noahs Hinweis: Die Karten sind nicht alles, was das Produkt kann. */}
         <p className={styles.canMore}>
           Und vieles mehr: Verträge vergleichen, optimieren, digital unterschreiben
           und bei Gesetzesänderungen gewarnt werden.{' '}

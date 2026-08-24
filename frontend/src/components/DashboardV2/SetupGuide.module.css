@@ -60,12 +60,26 @@
 .steps { padding: 2px 22px 20px; display: flex; flex-direction: column; gap: 9px; }
 
 /* --- erledigt --- */
+/* 🎨 24.08.2026: Erledigte Schritte behalten Grün und Häkchen — sie sollen sich
+   weiter wie eine Belohnung anfühlen — nehmen aber weniger Höhe ein als vorher
+   (11px → 9px). Der Platz gehört dem Schritt, der gerade dran ist. */
 .stepDone {
   display: flex; align-items: center; gap: 13px;
-  padding: 11px 16px;
+  padding: 9px 16px;
   border: 1px solid rgba(16, 185, 129, 0.28);
   border-radius: var(--radius, 12px);
   background: linear-gradient(180deg, rgba(16,185,129,0.055) 0%, rgba(16,185,129,0.02) 100%);
+}
+
+/* Fortschritts-Strecke im Kopf. Der Ring nennt den Stand, der Balken zeigt den Weg. */
+.progressTrack {
+  height: 5px; margin-top: 10px; border-radius: 999px;
+  background: var(--gray-100, #F3F4F6); overflow: hidden;
+}
+.progressFill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary, #3B82F6) 0%, #60A5FA 100%);
+  transition: width 0.55s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .sdTick {
   width: 28px; height: 28px; border-radius: 50%;
@@ -83,11 +97,17 @@
 }
 
 /* --- aktiv --- */
+/* 🎨 24.08.2026: Der aktive Schritt unterschied sich nur durch Farbe und einen
+   flachen Ring. Ein echter Schatten hebt ihn aus der Fläche heraus — er ist das
+   Einzige hier, das gerade eine Handlung verlangt. */
 .stepActive {
   border: 1.5px solid var(--primary, #3B82F6);
   border-radius: var(--radius, 12px);
   background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.07);
+  box-shadow:
+    0 0 0 4px rgba(59, 130, 246, 0.07),
+    0 8px 22px -10px rgba(37, 99, 235, 0.30),
+    0 2px 6px -3px rgba(15, 23, 42, 0.08);
   overflow: hidden;
 }
 .saHead { display: flex; align-items: center; gap: 13px; padding: 15px 17px 12px; }
@@ -263,6 +283,104 @@
 .canHead { margin-bottom: 14px; }
 .canHead h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; margin: 0 0 3px 0; color: var(--gray-900, #111827); }
 .canHead p { font-size: 13.5px; color: var(--gray-500, #6B7280); margin: 0; }
+
+/* ============ Möglichkeiten: ein Versprechen, drei Nebenwege (24.08.2026) ============
+   Vorher: vier gleich große Kacheln nebeneinander. Damit sagte die Fläche "alles
+   gleich wichtig" — für einen neuen Nutzer zählt aber genau eine Sache, und der
+   Blick musste sich selbst einen Anfang suchen. Jetzt trägt "Verträge prüfen" das
+   Gewicht, die drei übrigen bleiben sichtbar, ohne abzulenken. */
+.canMix { display: grid; grid-template-columns: 1.35fr 1fr; gap: 13px; }
+
+.heroCard {
+  border: 1px solid rgba(59, 130, 246, 0.32);
+  border-radius: 15px;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(59, 130, 246, 0.13) 0%, rgba(59, 130, 246, 0) 58%),
+    #ffffff;
+  padding: 21px; cursor: pointer; text-align: left; font-family: inherit;
+  display: flex; flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.heroCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--primary, #3B82F6);
+  box-shadow: 0 14px 32px -12px rgba(15, 23, 42, 0.20), 0 4px 10px -6px rgba(15, 23, 42, 0.10);
+}
+.heroBadge {
+  align-self: flex-start;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+  color: #1D4ED8; background: rgba(59, 130, 246, 0.10);
+  border: 1px solid rgba(59, 130, 246, 0.26);
+  padding: 3px 9px; border-radius: var(--radius-full, 9999px); margin-bottom: 13px;
+}
+.heroIcon {
+  width: 46px; height: 46px; border-radius: 13px; margin-bottom: 13px;
+  display: grid; place-items: center; color: #fff;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  box-shadow: 0 6px 16px -6px rgba(37, 99, 235, 0.6);
+}
+.heroCard h3 {
+  margin: 0 0 6px; font-size: 18.5px; font-weight: 650;
+  letter-spacing: -0.3px; color: var(--gray-900, #111827);
+}
+.heroCard p {
+  margin: 0 0 15px; font-size: 13.5px; line-height: 1.55;
+  color: var(--gray-600, #4B5563); max-width: 34ch;
+}
+.heroMeta { display: flex; align-items: center; gap: 10px; margin-top: auto; flex-wrap: wrap; }
+.heroFree {
+  font-size: 12px; font-weight: 650; color: #047857;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  padding: 3px 10px; border-radius: var(--radius-full, 9999px);
+}
+.heroGo {
+  font-size: 13.5px; font-weight: 650; color: #1D4ED8;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.heroArrow { display: inline-block; transition: transform 0.2s ease; }
+.heroCard:hover .heroArrow { transform: translateX(3px); }
+
+.sideStack { display: flex; flex-direction: column; gap: 11px; }
+.sideCard {
+  border: 1px solid var(--border, #E5E7EB);
+  border-radius: 13px; background: #fff;
+  padding: 13px 14px; cursor: pointer; text-align: left; font-family: inherit;
+  display: flex; gap: 12px; align-items: flex-start; flex: 1;
+  transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+.sideCard:hover {
+  border-color: var(--primary-light, #60A5FA);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0,0,0,0.06));
+}
+.sideIcon {
+  width: 34px; height: 34px; border-radius: 9px; flex: none;
+  display: grid; place-items: center; color: #fff;
+}
+.sideTxt { flex: 1; min-width: 0; }
+.sideTxt h4 {
+  margin: 0 0 2px; font-size: 13.5px; font-weight: 620;
+  color: var(--gray-900, #111827);
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+}
+.sideTxt p { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--gray-500, #6B7280); }
+.miniFree {
+  font-size: 10px; font-weight: 650; color: #047857;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.26);
+  padding: 1.5px 7px; border-radius: var(--radius-full, 9999px); white-space: nowrap;
+}
+.miniPaid {
+  font-size: 10px; font-weight: 650; color: var(--gray-500, #6B7280);
+  background: var(--gray-100, #F3F4F6);
+  border: 1px solid var(--border, #E5E7EB);
+  padding: 1.5px 7px; border-radius: var(--radius-full, 9999px); white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .canMix { grid-template-columns: 1fr; }
+}
 
 .canGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 11px; }
 
