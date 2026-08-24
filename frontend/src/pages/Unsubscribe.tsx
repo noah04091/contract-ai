@@ -10,10 +10,21 @@ export default function Unsubscribe() {
   const navigate = useNavigate();
   const token = searchParams.get('token');
 
-  const [status, setStatus] = useState<'verifying' | 'confirm' | 'processing' | 'success' | 'error' | 'already'>('verifying');
+  const [status, setStatus] = useState<'verifying' | 'confirm' | 'processing' | 'success' | 'resubscribed' | 'error' | 'already'>('verifying');
   const [email, setEmail] = useState<string>('');
   const [category, setCategory] = useState<string>('all');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  // 24.08.2026: ehrliches „Wieder anmelden" — ein breiterer Schalter kann trotz Resubscribe
+  // noch blockieren (Backend liefert blockReason: 'all' | 'email_master' | null).
+  const [blockReason, setBlockReason] = useState<string | null>(null);
+
+  // Kategorie in Klartext (für kategoriespezifische statt pauschale Meldungen).
+  const categoryLabel = (c: string): string =>
+    c === 'calendar' ? 'Fristen- und Vertragserinnerungen'
+      : c === 'legal_pulse' ? 'Legal-Pulse-Mails'
+        : c === 'marketing' ? 'Marketing-Mails'
+          : c === 'product_updates' ? 'Produkt-Update-Mails'
+            : 'E-Mail-Benachrichtigungen';
 
   // Step 1: Verify the token and get current status
   useEffect(() => {
@@ -100,8 +111,10 @@ export default function Unsubscribe() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Successfully resubscribed, navigate to dashboard
-        navigate('/dashboard');
+        // 24.08.2026: NICHT mehr blind aufs Dashboard leiten. Zeige eine ehrliche
+        // Ergebnisseite — inkl. Hinweis, falls ein breiterer Schalter noch blockiert.
+        setBlockReason(data.stillBlocked ? (data.blockReason || 'all') : null);
+        setStatus('resubscribed');
       } else {
         setStatus('error');
         setErrorMessage(data.message || 'Fehler beim Anmelden');
@@ -253,7 +266,7 @@ export default function Unsubscribe() {
               Erfolgreich abgemeldet
             </h1>
             <p style={{ color: '#666', fontSize: '15px', marginBottom: '8px' }}>
-              Du wirst keine E-Mail-Benachrichtigungen mehr erhalten.
+              Du erhältst keine {categoryLabel(category)} mehr.
             </p>
             {email && (
               <p style={{ color: '#999', fontSize: '13px', marginBottom: '24px' }}>
@@ -261,7 +274,7 @@ export default function Unsubscribe() {
               </p>
             )}
             <p style={{ color: '#888', fontSize: '14px', marginBottom: '24px' }}>
-              Du kannst dich jederzeit in den Profileinstellungen wieder anmelden.
+              Du kannst dich mit dem Knopf unten jederzeit wieder anmelden.
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -304,6 +317,45 @@ export default function Unsubscribe() {
                 Zur Startseite
               </button>
             </div>
+          </>
+        )}
+
+        {status === 'resubscribed' && (
+          <>
+            <div style={{
+              width: '80px', height: '80px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #22C55E, #4ADE80)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px'
+            }}>
+              <CheckCircle size={40} color="white" />
+            </div>
+            <h1 style={{ fontSize: '24px', fontWeight: 600, color: '#1a1a1a', marginBottom: '12px' }}>
+              Wieder angemeldet
+            </h1>
+            <p style={{ color: '#666', fontSize: '15px', marginBottom: blockReason ? '12px' : '24px' }}>
+              Deine {categoryLabel(category)} sind wieder aktiviert.{!blockReason && ' Du wirst wieder erinnert.'}
+            </p>
+            {blockReason === 'email_master' && (
+              <p style={{ color: '#b45309', fontSize: '14px', lineHeight: 1.6, background: '#fdf6e7', border: '1px solid #f0dfb6', borderRadius: '10px', padding: '12px 14px', marginBottom: '24px', textAlign: 'left' }}>
+                <strong>Hinweis:</strong> In deinem Profil ist „alle E-Mails" ausgeschaltet. Deshalb kommen trotzdem keine E-Mails, bis du das in deinem Profil wieder einschaltest.
+              </p>
+            )}
+            {blockReason === 'all' && (
+              <p style={{ color: '#b45309', fontSize: '14px', lineHeight: 1.6, background: '#fdf6e7', border: '1px solid #f0dfb6', borderRadius: '10px', padding: '12px 14px', marginBottom: '24px', textAlign: 'left' }}>
+                <strong>Hinweis:</strong> Du bist aktuell von allen E-Mails abgemeldet. Deshalb kommen trotzdem keine E-Mails, bis du dich wieder für alle E-Mails anmeldest.
+              </p>
+            )}
+            <button
+              onClick={() => navigate('/')}
+              style={{
+                padding: '12px 24px', background: '#3B82F6', border: 'none', borderRadius: '10px',
+                fontSize: '14px', fontWeight: 500, color: 'white', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '8px', margin: '0 auto'
+              }}
+            >
+              <ArrowLeft size={16} />
+              Zur Startseite
+            </button>
           </>
         )}
 

@@ -9,6 +9,7 @@ const verifyToken = require("../middleware/verifyToken");
 const verifyAdmin = require("../middleware/verifyAdmin"); // 🔐 Admin-only access
 const { authLimiter, sensitiveLimiter, standardLimiter, accountDeletionLimiter } = require("../middleware/rateLimiter"); // 🛡️ Brute-Force-Schutz
 const sendEmail = require("../utils/sendEmail");
+const { processResubscribe } = require("../utils/resubscribeBlock");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { normalizeEmail } = require("../utils/normalizeEmail");
 const { validatePassword } = require("../utils/passwordValidator");
@@ -2368,12 +2369,14 @@ router.post("/resubscribe", async (req, res) => {
     const { user, category } = resolved;
     const update = getResubscribeUpdate(category);
 
-    const result = await usersCollection.updateOne(
-      { _id: user._id },
-      update
-    );
+    // 24.08.2026 EHRLICHES „Wieder anmelden" + Blocker-Fix: erst schreiben, DANN am
+    // FRISCHEN Stand prüfen, ob ein breiterer Schalter (emailOptOut / Profil „alle E-Mails")
+    // noch blockiert. Bei category 'all' ändert das Update emailOptOut → der vorab gelesene
+    // user-Doc wäre veraltet und würde fälschlich „noch abgemeldet" melden. Reihenfolge +
+    // Logik in utils/resubscribeBlock.js (unit-getestet, inkl. genau dieser Reihenfolge).
+    const outcome = await processResubscribe(usersCollection, user._id, category, update);
 
-    if (result.matchedCount === 0) {
+    if (outcome.notFound) {
       return res.status(404).json({
         success: false,
         message: "Benutzer nicht gefunden"
@@ -2384,6 +2387,9 @@ router.post("/resubscribe", async (req, res) => {
 
     res.json({
       success: true,
+      category,
+      stillBlocked: outcome.stillBlocked,
+      blockReason: outcome.blockReason,
       message: "Sie erhalten wieder E-Mail-Benachrichtigungen."
     });
 
