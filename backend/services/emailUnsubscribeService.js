@@ -9,10 +9,17 @@ const crypto = require("crypto");
  */
 const EMAIL_CATEGORIES = {
   ALL: "all",                          // Alle E-Mails
-  CALENDAR: "calendar",                // Kalender-Erinnerungen
+  CALENDAR: "calendar",                // Fristen-/Vertragserinnerungen (Feld: emailPreferences.calendar)
   MARKETING: "marketing",              // Marketing/Newsletter
   PRODUCT_UPDATES: "product_updates",  // Produkt-Updates
-  SECURITY: "security"                 // Sicherheits-E-Mails (nicht abbestellbar)
+  SECURITY: "security",                // Sicherheits-E-Mails (nicht abbestellbar)
+  // 23.08.2026: Legal Pulse ist eine SPEZIALFALL-Kategorie. Ihre EINE Wahrheit ist
+  // legalPulseSettings.emailNotifications (gelesen von pulseEmailsDisabled in den 4
+  // Pulse-Jobs UND unten in isUnsubscribed) — NICHT emailPreferences.legal_pulse.
+  // Vorher lieh sich Legal Pulse fälschlich die Kennung "calendar"; dadurch schaltete
+  // eine Fristen-Abmeldung Legal Pulse ab und umgekehrt. Siehe recordUnsubscribe/
+  // isUnsubscribed/resubscribe (Spezialfälle) + routes/auth.js (Abmelde-Seite).
+  LEGAL_PULSE: "legal_pulse"
 };
 
 /**
@@ -146,9 +153,13 @@ async function recordUnsubscribe(db, email, category, metadata = {}) {
   const user = await db.collection("users").findOne({ email: emailLower });
 
   if (user) {
+    // Legal Pulse: eine Wahrheit = legalPulseSettings (nicht emailPreferences.legal_pulse),
+    // damit die Pulse-Jobs (pulseEmailsDisabled) und isUnsubscribed dasselbe Fach lesen.
     const updateField = category === EMAIL_CATEGORIES.ALL
       ? { emailOptOut: true, emailOptOutAt: now }
-      : { [`emailPreferences.${category}`]: false };
+      : category === EMAIL_CATEGORIES.LEGAL_PULSE
+        ? { "legalPulseSettings.emailNotifications": false }
+        : { [`emailPreferences.${category}`]: false };
 
     await db.collection("users").updateOne(
       { _id: user._id },
@@ -198,8 +209,13 @@ async function isUnsubscribed(db, email, category = EMAIL_CATEGORIES.ALL) {
     // Komplett abgemeldet?
     if (user.emailOptOut === true) return true;
 
-    // Kategorie-spezifisch abgemeldet?
-    if (category !== EMAIL_CATEGORIES.ALL) {
+    // Legal Pulse: eine Wahrheit = legalPulseSettings (spiegelt pulseEmailsDisabled:
+    // enabled===false ODER emailNotifications===false). NICHT emailPreferences.legal_pulse.
+    if (category === EMAIL_CATEGORIES.LEGAL_PULSE) {
+      const s = user.legalPulseSettings;
+      if (s && (s.enabled === false || s.emailNotifications === false)) return true;
+    } else if (category !== EMAIL_CATEGORIES.ALL) {
+      // Kategorie-spezifisch abgemeldet (z.B. calendar = Fristen-Erinnerungen)
       const prefs = user.emailPreferences || {};
       if (prefs[category] === false) return true;
     }
@@ -227,9 +243,13 @@ async function resubscribe(db, email, category = EMAIL_CATEGORIES.ALL) {
   const user = await db.collection("users").findOne({ email: emailLower });
 
   if (user) {
+    // Legal Pulse: eine Wahrheit = legalPulseSettings (enabled + emailNotifications,
+    // wie beim Wieder-Einschalten auf der /pulse-Seite), nicht emailPreferences.legal_pulse.
     const updateData = category === EMAIL_CATEGORIES.ALL
       ? { emailOptOut: false }
-      : { [`emailPreferences.${category}`]: true };
+      : category === EMAIL_CATEGORIES.LEGAL_PULSE
+        ? { "legalPulseSettings.emailNotifications": true, "legalPulseSettings.enabled": true }
+        : { [`emailPreferences.${category}`]: true };
 
     await db.collection("users").updateOne(
       { _id: user._id },

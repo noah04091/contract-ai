@@ -293,7 +293,7 @@ async function runWeeklyReport(db, options = {}) {
       monitoredCount: stats.monitoredCount,
       changesEvaluated,
       stats,
-      unsubscribeUrl: user?.email ? generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.ALL) : undefined,
+      unsubscribeUrl: user?.email ? generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.LEGAL_PULSE) : undefined,
     });
     return { subject, html, monitoredCount: stats.monitoredCount, changesEvaluated, findings: stats.negative.length + stats.positive.length };
   }
@@ -351,9 +351,10 @@ async function runWeeklyReport(db, options = {}) {
         monitoredCount: stats.monitoredCount,
         changesEvaluated,
         stats,
-        // Kategorie "all" = konsistent mit dem One-Click-Header und dem Versand-Check
-        // in emailRetryService (Pulse-Mails laufen dort unter EMAIL_CATEGORIES.ALL).
-        unsubscribeUrl: generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.ALL),
+        // 23.08.2026: Kategorie legal_pulse (vorher ALL) — konsistent mit dem Versand-Check
+        // in emailRetryService (Pulse-Mails laufen dort jetzt unter LEGAL_PULSE) und dem
+        // /pulse-Schalter. Ein Klick meldet NUR von Legal Pulse ab, nicht von allem.
+        unsubscribeUrl: generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.LEGAL_PULSE),
       });
 
       await queueEmail(db, { to: user.email, subject, html, userId: String(userId), emailType: "legal_pulse_v2_weekly_report" });
@@ -386,7 +387,7 @@ async function buildTestScenarioEmails(db, userId, userName) {
   const evaluatedReal = await countChangesEvaluated(db, weekAgo);
   const real = await computeUserStats(db, userId, weekAgo);
   const testUser = await findUserRobust(db, userId, { email: 1 });
-  const unsubscribeUrl = testUser?.email ? generateUnsubscribeUrl(testUser.email, EMAIL_CATEGORIES.ALL) : undefined;
+  const unsubscribeUrl = testUser?.email ? generateUnsubscribeUrl(testUser.email, EMAIL_CATEGORIES.LEGAL_PULSE) : undefined;
 
   const monitoredCount = Math.max(real.monitoredCount, 1);     // für die Anschauung mind. 1
   const changesEvaluated = evaluatedReal || 37;                // Fallback nur für Test-Sichtbarkeit

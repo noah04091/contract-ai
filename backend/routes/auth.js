@@ -643,37 +643,13 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// 🔧 TEMP: Reset eigenen analysisCount (für Testing nach 500-Fehlern)
-// DELETE nach erfolgreichem Test!
-router.post("/reset-my-analysis-count", verifyToken, async (req, res) => {
-  try {
-    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-    if (!user) {
-      return res.status(404).json({ message: "User nicht gefunden" });
-    }
-
-    const previousCount = user.analysisCount ?? 0;
-
-    await usersCollection.updateOne(
-      { _id: user._id },
-      { $set: { analysisCount: 0 } }
-    );
-
-    console.log(`🔧 [AUTH] Reset analysisCount for ${user.email}: ${previousCount} -> 0`);
-
-    res.json({
-      success: true,
-      message: "analysisCount zurückgesetzt",
-      previousCount,
-      newCount: 0,
-      email: user.email,
-      plan: user.subscriptionPlan || 'free'
-    });
-  } catch (err) {
-    console.error("❌ Reset error:", err);
-    res.status(500).json({ message: "Fehler beim Zurücksetzen" });
-  }
-});
+// 🗑️ 24.08.2026 SICHERHEIT: Route POST /reset-my-analysis-count ENTFERNT.
+// Sie setzte den analysisCount des AUFRUFERS auf 0 — nur mit verifyToken, ohne Admin-
+// Check, ohne Rate-Limit. Damit konnte JEDER eingeloggte (auch Free-)Nutzer sein
+// Analyse-Kontingent beliebig oft selbst zurücksetzen → das Kontingent war wirkungslos.
+// Der Kommentar sagte selbst "TEMP … DELETE nach Test". Nachweis vor dem Löschen: 0 Aufrufer
+// (Frontend/Backend/Cron). Für echtes Zurücksetzen gibt es den monatlichen Cron
+// (cron/resetAnalysisCount.js) und die Admin-Wege.
 
 // 🎓 ONBOARDING TOUR: Tour als abgeschlossen markieren (serverseitig)
 router.post("/complete-tour", verifyToken, async (req, res) => {
@@ -2166,7 +2142,9 @@ async function resolveUnsubscribeToken(token) {
   const userId = verifyUnsubscribeToken(token);
   if (userId) {
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
-    return user ? { user, category: 'calendar' } : null;
+    // 23.08.2026: Alt-Format-Tokens stammen ausschließlich aus früheren Legal-Pulse-Mails
+    // → Kategorie 'legal_pulse' (früher fälschlich 'calendar', was jetzt die Fristen sind).
+    return user ? { user, category: 'legal_pulse' } : null;
   }
 
   return null;
@@ -2178,7 +2156,11 @@ function isSubscribedForCategory(user, category) {
     case 'marketing':
       return user.emailPreferences?.marketing !== false && user.emailOptOut !== true;
     case 'calendar':
-      return user.legalPulseSettings?.emailNotifications !== false;
+      // 23.08.2026: Fristen-/Vertragserinnerungen (eigenes Feld), gespiegelt zu isUnsubscribed(CALENDAR)
+      return user.emailPreferences?.calendar !== false && user.emailOptOut !== true;
+    case 'legal_pulse':
+      // Legal Pulse: eine Wahrheit = legalPulseSettings (enabled + emailNotifications)
+      return user.legalPulseSettings?.emailNotifications !== false && user.legalPulseSettings?.enabled !== false && user.emailOptOut !== true;
     case 'product_updates':
       return user.emailPreferences?.product_updates !== false && user.emailOptOut !== true;
     case 'all':
@@ -2194,6 +2176,11 @@ function getUnsubscribeUpdate(category) {
     case 'marketing':
       return { $set: { 'emailPreferences.marketing': false, 'emailPreferencesUpdatedAt': new Date() } };
     case 'calendar':
+      // 23.08.2026: Fristen-/Vertragserinnerungen → eigenes Feld emailPreferences.calendar
+      // (gelesen von isUnsubscribed(CALENDAR) + dem Kalender-Tor). Früher schrieb 'calendar'
+      // fälschlich legalPulseSettings → Fristen-Abmeldung wirkte gar nicht.
+      return { $set: { 'emailPreferences.calendar': false, 'emailPreferencesUpdatedAt': new Date() } };
+    case 'legal_pulse':
       return { $set: { 'legalPulseSettings.emailNotifications': false, 'unsubscribedAt': new Date() } };
     case 'product_updates':
       return { $set: { 'emailPreferences.product_updates': false, 'emailPreferencesUpdatedAt': new Date() } };
@@ -2210,9 +2197,12 @@ function getResubscribeUpdate(category) {
     case 'marketing':
       return { $set: { 'emailPreferences.marketing': true, 'emailPreferencesUpdatedAt': new Date() } };
     case 'calendar':
-      // 19.08.2026: enabled mit auf true — sonst bleibt ein V1-Bestand mit enabled:false
-      // trotz "wieder anmelden" stumm (pulseEmailsDisabled prüft BEIDE Felder; identisch
-      // zum Einschalt-Body des Schalters auf /pulse).
+      // 23.08.2026: Fristen-/Vertragserinnerungen → eigenes Feld emailPreferences.calendar.
+      return { $set: { 'emailPreferences.calendar': true, 'emailPreferencesUpdatedAt': new Date() } };
+    case 'legal_pulse':
+      // enabled mit auf true — sonst bleibt ein V1-Bestand mit enabled:false trotz
+      // "wieder anmelden" stumm (pulseEmailsDisabled prüft BEIDE Felder; identisch zum
+      // Einschalt-Body des Schalters auf /pulse).
       return { $set: { 'legalPulseSettings.emailNotifications': true, 'legalPulseSettings.enabled': true }, $unset: { 'unsubscribedAt': '' } };
     case 'product_updates':
       return { $set: { 'emailPreferences.product_updates': true, 'emailPreferencesUpdatedAt': new Date() } };

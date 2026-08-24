@@ -123,7 +123,10 @@ async function sendSeparateNotifications(db, userId, notifications) {
         await markAsSent(db, notification._id);
         continue;
       }
-      const unsub = await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.ALL);
+      // 23.08.2026: CALENDAR statt ALL — diese Status-/Fristen-Mails tragen einen
+      // Kalender-Abmeldelink (Header CALENDAR), also muss die Abmeldung hier auch
+      // greifen. emailOptOut (global) wird von isUnsubscribed weiterhin zuerst geprüft.
+      const unsub = await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.CALENDAR);
       if (unsub) {
         console.log(`   Skipping unsubscribed: ${user.email}`);
         await markAsSent(db, notification._id);
@@ -195,7 +198,9 @@ async function sendGroupedNotification(db, userId, notifications) {
       for (const n of notifications) await markAsSent(db, n._id);
       return { sent: 0, failed: 0 };
     }
-    const unsub = await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.ALL);
+    // 23.08.2026: CALENDAR statt ALL (siehe Einzelversand oben) — gruppierte Status-/
+    // Fristen-Mail trägt denselben Kalender-Abmeldelink. emailOptOut bleibt vorrangig.
+    const unsub = await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.CALENDAR);
     if (unsub) {
       console.log(`   Skipping unsubscribed: ${user.email}`);
       for (const n of notifications) await markAsSent(db, n._id);

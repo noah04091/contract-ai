@@ -1691,7 +1691,7 @@ async function storeAndNotify(db, userId, alerts, options = {}) {
     body,
     badge: "Legal Radar",
     preheader: `${alertCount} ${plural(alertCount, "Vertrag", "Verträge")} von Gesetzesänderungen betroffen`,
-    unsubscribeUrl: generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.ALL),
+    unsubscribeUrl: generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.LEGAL_PULSE),
   });
 
   // Subject line — specific when possible

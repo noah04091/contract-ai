@@ -3756,6 +3756,9 @@ router.get("/admin/test-email-diagnostic", verifyAdmin, async (req, res) => {
     const { isUnsubscribed, EMAIL_CATEGORIES } = require("../services/emailUnsubscribeService");
     const unsubAll = user?.email ? await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.ALL) : false;
     const unsubCalendar = user?.email ? await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.CALENDAR) : false;
+    // 23.08.2026: CALENDAR = jetzt Fristen; für dieses Pulse-Diagnose-Endpunkt zusätzlich
+    // den Pulse-relevanten Wert liefern (legal_pulse = legalPulseSettings).
+    const unsubLegalPulse = user?.email ? await isUnsubscribed(db, user.email, EMAIL_CATEGORIES.LEGAL_PULSE) : false;
 
     // 4. Check email queue for this user
     const queueEntries = await db.collection("email_queue")
@@ -3787,6 +3790,7 @@ router.get("/admin/test-email-diagnostic", verifyAdmin, async (req, res) => {
         emailActive,
         unsubscribedAll: unsubAll,
         unsubscribedCalendar: unsubCalendar,
+        unsubscribedLegalPulse: unsubLegalPulse,
       },
       emailQueue: {
         totalForUser: queueEntries.length,

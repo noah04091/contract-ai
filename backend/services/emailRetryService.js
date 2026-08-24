@@ -223,7 +223,14 @@ async function processEmailQueue(db) {
       continue;
     }
 
-    const emailCategory = email.emailType?.startsWith("calendar_") ? EMAIL_CATEGORIES.CALENDAR : EMAIL_CATEGORIES.ALL;
+    // 23.08.2026: legal_pulse_* eigene Kategorie (vorher liefen Pulse-Mails hier als ALL,
+    // ein Pulse-Abmelder hätte also von ALLEM abmelden müssen). calendar_* = Fristen.
+    // AUSNAHME (TÜV): interne Betreiber-Mails (legal_pulse_v2_admin_*) bleiben ALL — sie
+    // gehen an den Betreiber, nicht an Kunden, und dürfen NICHT durch dessen persönliche
+    // /pulse-Abmeldung unterdrückt werden (sonst verschwindet z.B. die Feedback-Bilanz still).
+    const emailCategory = email.emailType?.startsWith("calendar_") ? EMAIL_CATEGORIES.CALENDAR
+      : (email.emailType?.startsWith("legal_pulse") && !email.emailType.includes("_admin_")) ? EMAIL_CATEGORIES.LEGAL_PULSE
+      : EMAIL_CATEGORIES.ALL;
     const unsubscribed = await isUnsubscribed(db, email.to, emailCategory);
     if (unsubscribed) {
       console.log(`⏩ Ueberspringe abgemeldete E-Mail: ${email.to}`);

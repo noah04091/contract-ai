@@ -299,7 +299,7 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
     body,
     badge: "Legal Pulse",
     preheader,
-    unsubscribeUrl: generateUnsubscribeUrl(email, EMAIL_CATEGORIES.ALL),
+    unsubscribeUrl: generateUnsubscribeUrl(email, EMAIL_CATEGORIES.LEGAL_PULSE),
   });
 
   await queueEmail(db, {

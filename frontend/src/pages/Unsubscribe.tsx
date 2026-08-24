@@ -184,10 +184,12 @@ export default function Unsubscribe() {
               {category === 'marketing'
                 ? 'Du erhältst dann keine Marketing- und Onboarding-E-Mails mehr von uns.'
                 : category === 'calendar'
-                  ? 'Du erhältst dann keine Legal Pulse Digest-E-Mails mehr zu Rechtsänderungen, die deine Verträge betreffen könnten.'
-                  : category === 'product_updates'
-                    ? 'Du erhältst dann keine Produkt-Update-E-Mails mehr von uns.'
-                    : 'Du erhältst dann keine E-Mail-Benachrichtigungen mehr von uns.'}
+                  ? 'Du erhältst dann keine Fristen- und Vertragserinnerungen mehr per E-Mail. Deine Termine bleiben im Kalender sichtbar, du bekommst nur keine Erinnerungs-Mails mehr.'
+                  : category === 'legal_pulse'
+                    ? 'Du erhältst dann keine Legal-Pulse-E-Mails mehr zu Rechtsänderungen, die deine Verträge betreffen könnten. Deine Fristen-Erinnerungen bleiben davon unberührt.'
+                    : category === 'product_updates'
+                      ? 'Du erhältst dann keine Produkt-Update-E-Mails mehr von uns.'
+                      : 'Du erhältst dann keine E-Mail-Benachrichtigungen mehr von uns.'}
             </p>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>

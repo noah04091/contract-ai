@@ -351,7 +351,7 @@ async function sendAlertEmail(db, user, contractSummaries) {
     body,
     badge: "Legal Pulse",
     preheader: `${totalFindings} ${plural(totalFindings, "neues Risiko", "neue Risiken")} in ${contractSummaries.length} ${plural(contractSummaries.length, "Vertrag", "Verträgen")} erkannt`,
-    unsubscribeUrl: generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.ALL),
+    unsubscribeUrl: generateUnsubscribeUrl(user.email, EMAIL_CATEGORIES.LEGAL_PULSE),
   });
 
   await queueEmail(db, {
