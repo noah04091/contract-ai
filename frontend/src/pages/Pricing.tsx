@@ -268,8 +268,17 @@ export default function Pricing() {
     } catch (error) {
       const err = error as Error;
       if (res && (res.status === 401 || res.status === 403)) {
-        alert("Um ein Abo zu kaufen, müssen Sie sich zuerst registrieren.");
-        navigate("/register?from=pricing&plan=" + plan);
+        // ⚠️ 24.08.2026: Hier stand ein blockierendes alert ("Um ein Abo zu kaufen,
+        // müssen Sie sich zuerst registrieren"). Es traf den Nutzer im Moment der
+        // Kaufabsicht und las sich wie eine Fehlermeldung. Schlimmer noch: Der
+        // Plan-Parameter wurde zwar angehängt, aber von der Registrierungsseite nie
+        // gelesen, und nach der Bestätigung landete jeder im Dashboard. Der
+        // Kaufwunsch ging also verloren, der Nutzer musste alles neu gehen.
+        // Jetzt wird die vollständige Auswahl weitergereicht (Plan, Abrechnung,
+        // Aktionscode) und nach der E-Mail-Bestätigung direkt zur Zahlung geführt.
+        const params = new URLSearchParams({ plan, billing: billingPeriod });
+        if (urlPromoCode) params.set('code', urlPromoCode);
+        navigate(`/register?${params.toString()}`);
       } else {
         alert("Fehler beim Checkout: " + err.message);
       }

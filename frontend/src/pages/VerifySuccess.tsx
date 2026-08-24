@@ -37,6 +37,17 @@ export default function VerifySuccess() {
     if (!token || autoLoginAttempted.current) return;
     autoLoginAttempted.current = true;
 
+    // 💳 Kaufwunsch von der Preisseite, vom Backend durchgereicht (24.08.2026).
+    // Vor dem Bereinigen der URL auslesen, danach ist er weg.
+    const wishPlan = (searchParams.get('plan') || '').toLowerCase();
+    const wish = ['business', 'enterprise', 'premium'].includes(wishPlan)
+      ? {
+          plan: wishPlan,
+          billing: searchParams.get('billing') === 'yearly' ? 'yearly' : 'monthly',
+          code: searchParams.get('code')?.trim() || null,
+        }
+      : null;
+
     // Einmal-Token sofort aus URL/History entfernen
     const emailParam = searchParams.get('email');
     navigate(`/verify-success${emailParam ? `?email=${encodeURIComponent(emailParam)}` : ''}`, { replace: true });
@@ -58,6 +69,36 @@ export default function VerifySuccess() {
           localStorage.setItem('authEmail', data.email || emailParam || '');
           localStorage.setItem('authTimestamp', String(Date.now()));
           await refetchUser();
+
+          // Wer kaufen wollte, kommt jetzt direkt zur Zahlung statt ins Dashboard.
+          // Schlägt das fehl (Netzwerk, Stripe nicht erreichbar), landet er im
+          // Dashboard und verliert nichts: Der Wunsch bleibt am Konto gespeichert
+          // und die Preisseite ist einen Klick entfernt.
+          if (wish) {
+            try {
+              const checkout = await fetch(`${API_BASE}/api/stripe/create-checkout-session`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${data.token}`,
+                },
+                body: JSON.stringify({
+                  plan: wish.plan,
+                  billing: wish.billing,
+                  ...(wish.code && { code: wish.code }),
+                }),
+              });
+              const checkoutData = await checkout.json();
+              if (checkout.ok && checkoutData.url) {
+                window.location.href = checkoutData.url;
+                return;
+              }
+            } catch {
+              // bewusst still: der Rückfall unten greift
+            }
+          }
+
           navigate('/dashboard');
         } else {
           setAutoLoginState('failed');

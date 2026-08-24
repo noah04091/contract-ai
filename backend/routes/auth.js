@@ -87,7 +87,7 @@ module.exports = (db) => {
 // ✅ Registrierung - ERWEITERT mit Double-Opt-In + Beta-Tester Support + Geräteerkennung
 // 🛡️ Rate Limited: Max 5 Versuche pro 15 Minuten (Brute-Force-Schutz)
 router.post("/register", authLimiter, async (req, res) => {
-  const { email: rawEmail, password, isBetaTester, firstName, lastName, companyName, acquisition } = req.body;
+  const { email: rawEmail, password, isBetaTester, firstName, lastName, companyName, acquisition, intendedPurchase } = req.body;
 
   // 🆕 Validierung der Pflichtfelder
   if (!rawEmail || !password)
@@ -123,6 +123,29 @@ router.post("/register", authLimiter, async (req, res) => {
     return Object.keys(out).length > 0 ? out : null;
   };
   const acquisitionData = sanitizeAcquisition(acquisition);
+
+  // 💳 Kaufabsicht von der Preisseite (24.08.2026).
+  // Wer auf "Business starten" klickt, ohne angemeldet zu sein, wurde bisher mit
+  // einer Meldung zur Registrierung geschickt — und sein Kaufwunsch war danach weg.
+  // Der Wunsch gehört ans KONTO, nicht in den Browser: Der Bestätigungslink wird
+  // oft auf einem anderen Geraet geoeffnet (Mail auf dem Handy).
+  // Streng validiert, weil der Wert aus dem Browser kommt und spaeter einen
+  // Stripe-Checkout vorbelegt. Er entscheidet NICHT ueber Preise oder Rechte,
+  // sondern nur darueber, welche Auswahl nach der Bestaetigung vorbelegt wird.
+  let intendedPurchaseData = null;
+  if (intendedPurchase && typeof intendedPurchase === "object") {
+    const plan = String(intendedPurchase.plan || "").toLowerCase();
+    if (["business", "enterprise", "premium"].includes(plan)) {
+      const rawCode = typeof intendedPurchase.code === "string" ? intendedPurchase.code.trim() : "";
+      intendedPurchaseData = {
+        plan,
+        billing: intendedPurchase.billing === "yearly" ? "yearly" : "monthly",
+        // Nur harmlose Zeichen, hart begrenzt
+        code: /^[A-Za-z0-9_-]{1,40}$/.test(rawCode) ? rawCode : null,
+        createdAt: new Date()
+      };
+    }
+  }
 
   try {
     const existing = await usersCollection.findOne({ email });
@@ -166,6 +189,9 @@ router.post("/register", authLimiter, async (req, res) => {
       updatedAt: new Date(),
       // 📊 HERKUNFT (first-touch, woher kam der Nutzer) — null wenn keine Daten
       acquisition: acquisitionData,
+      // 💳 Offener Kaufwunsch von der Preisseite; wird nach der E-Mail-Bestätigung
+      // eingelöst und dabei geleert (siehe emailVerification.js).
+      intendedPurchase: intendedPurchaseData,
       // 🔔 NOTIFICATION SETTINGS
       emailNotifications: true,
       contractReminders: true,

@@ -168,8 +168,30 @@ module.exports = function(db) {
         console.error("⚠️ Auto-Login-Token konnte nicht erstellt werden:", tokenErr.message);
       }
 
+      // 💳 Offener Kaufwunsch von der Preisseite (24.08.2026): Wer dort auf
+      // "Business starten" geklickt hat, ohne angemeldet zu sein, wurde zur
+      // Registrierung geschickt — und landete danach im Dashboard, sein Kaufwunsch
+      // war weg. Der Wunsch hängt jetzt am Konto und wird hier an die Erfolgsseite
+      // durchgereicht, die nach dem Auto-Login direkt zur Zahlung führt.
+      // Der Wunsch wird bewusst NICHT geleert: Diese Weiterleitung passiert genau
+      // einmal (der Verify-Token ist danach verbraucht), das Feld ist ab dann
+      // wirkungslos. Es dient nur noch als Hinweis darauf, mit welcher Absicht das
+      // Konto entstanden ist — nützlich, wenn jemand den Checkout abbricht.
+      let purchaseParam = "";
+      try {
+        const wish = user.intendedPurchase;
+        if (wish && typeof wish.plan === "string") {
+          purchaseParam =
+            `&plan=${encodeURIComponent(wish.plan)}` +
+            `&billing=${wish.billing === "yearly" ? "yearly" : "monthly"}` +
+            (wish.code ? `&code=${encodeURIComponent(wish.code)}` : "");
+        }
+      } catch (wishErr) {
+        console.error("⚠️ Kaufwunsch konnte nicht gelesen werden:", wishErr.message);
+      }
+
       // Redirect zum Frontend mit Success-Status
-      const redirectUrl = `${frontendUrl}/verify-success?email=${encodeURIComponent(user.email)}${welcomeParam}`;
+      const redirectUrl = `${frontendUrl}/verify-success?email=${encodeURIComponent(user.email)}${welcomeParam}${purchaseParam}`;
       res.redirect(redirectUrl);
 
     } catch (error) {

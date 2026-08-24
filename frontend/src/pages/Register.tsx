@@ -37,6 +37,18 @@ export default function Register() {
   const [searchParams] = useSearchParams();
   const isBetaTester = searchParams.get('beta') === 'true';
 
+  // 💳 Kaufabsicht von der Preisseite (24.08.2026).
+  // Vorher hängte die Preisseite zwar "?plan=..." an, gelesen hat es hier aber
+  // niemand — und nach der E-Mail-Bestätigung landete jeder im Dashboard. Wer
+  // kaufen wollte, musste den kompletten Weg ein zweites Mal gehen. Jetzt wird die
+  // Auswahl sichtbar gemacht, an das Konto geheftet und nach der Bestätigung
+  // direkt zur Zahlung geführt.
+  const planParam = (searchParams.get('plan') || '').toLowerCase();
+  const intendedPlan = ['business', 'enterprise', 'premium'].includes(planParam) ? planParam : null;
+  const intendedBilling = searchParams.get('billing') === 'yearly' ? 'yearly' : 'monthly';
+  const intendedCode = searchParams.get('code')?.trim() || null;
+  const planLabel = intendedPlan === 'business' ? 'Business' : 'Enterprise';
+
   // ===== Live-Validierung (neu im Redesign) =====
   const emailValid = EMAIL_RE.test(email);
   const ruleLen = password.length >= 8;
@@ -135,7 +147,13 @@ export default function Register() {
           email,
           password,
           isBetaTester,
-          acquisition: getAcquisition() // 📊 Herkunft (first-touch), unsichtbar fürs Frontend
+          acquisition: getAcquisition(), // 📊 Herkunft (first-touch), unsichtbar fürs Frontend
+          // Kaufabsicht ans Konto heften, nicht an den Browser: Der Bestätigungslink
+          // wird oft auf einem anderen Gerät geöffnet (Mail auf dem Handy), ein
+          // localStorage-Merker wäre dort weg.
+          ...(intendedPlan && {
+            intendedPurchase: { plan: intendedPlan, billing: intendedBilling, code: intendedCode }
+          })
         }),
       });
 
@@ -264,11 +282,27 @@ export default function Register() {
                   <div className="ca-reg-beta"><span>🎁</span><span>Beta-Tester Registrierung</span></div>
                 )}
 
-                <h2 className="ca-reg-title">{isBetaTester ? "Willkommen, Beta-Tester!" : "Konto erstellen"}</h2>
+                {/* Wer von der Preisseite kommt, soll sehen, dass sein Kauf nicht
+                    verloren geht, sondern nur noch einen Schritt entfernt ist. */}
+                {intendedPlan && !isBetaTester && (
+                  <div className="ca-reg-planbar">
+                    <span className="ca-reg-planbar-dot" />
+                    <span>
+                      <strong>{planLabel}</strong> gewählt
+                      {intendedBilling === 'yearly' ? ' · jährliche Abrechnung' : ' · monatlich'}
+                    </span>
+                  </div>
+                )}
+
+                <h2 className="ca-reg-title">
+                  {isBetaTester ? "Willkommen, Beta-Tester!" : intendedPlan ? "Noch ein Schritt" : "Konto erstellen"}
+                </h2>
                 <p className="ca-reg-subtitle">
                   {isBetaTester
                     ? "3 Monate Premium kostenlos – alle Features inklusive!"
-                    : "Fülle das Formular aus, um loszulegen"}
+                    : intendedPlan
+                      ? "Erstelle dein Konto. Danach bestätigst du kurz deine E-Mail und kommst direkt zur Zahlung."
+                      : "Fülle das Formular aus, um loszulegen"}
                 </p>
 
                 <form onSubmit={handleRegister} className="ca-reg-form">
@@ -384,7 +418,11 @@ export default function Register() {
               <div className="ca-reg-verify">
                 <div className="ca-reg-verify-ico"><Mail size={34} strokeWidth={1.8} /></div>
                 <h2 className="ca-reg-verify-title">Fast geschafft – E-Mail bestätigen</h2>
-                <p className="ca-reg-verify-text">Wir haben dir eine Bestätigungs-E-Mail gesendet an:</p>
+                <p className="ca-reg-verify-text">
+                  {intendedPlan
+                    ? `Bestätige kurz deine Adresse, danach geht es direkt zur Zahlung für ${planLabel}. Wir haben dir eine E-Mail gesendet an:`
+                    : 'Wir haben dir eine Bestätigungs-E-Mail gesendet an:'}
+                </p>
 
                 <div className="ca-reg-email-badge"><Mail size={16} /><span>{email}</span></div>
 
@@ -392,7 +430,9 @@ export default function Register() {
                   {[
                     { num: "1", label: "E-Mail öffnen", active: true },
                     { num: "2", label: "Link klicken", active: false },
-                    { num: "3", label: "Anmelden", active: false },
+                    // Der Auto-Login übernimmt seit dem 19.08. das Anmelden; wer kauft,
+                    // landet direkt bei der Zahlung.
+                    { num: "3", label: intendedPlan ? "Zur Zahlung" : "Loslegen", active: false },
                   ].map((step, i) => (
                     <div key={i} className="ca-reg-step">
                       <div className={`ca-reg-step-num${step.active ? " active" : ""}`}>{step.num}</div>

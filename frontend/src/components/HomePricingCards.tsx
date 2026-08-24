@@ -61,8 +61,9 @@ export default function HomePricingCards() {
     } catch (error) {
       const err = error as Error;
       if (res && (res.status === 401 || res.status === 403)) {
-        alert("Um ein Abo zu kaufen, müssen Sie sich zuerst registrieren.");
-        navigate("/register?from=pricing&plan=" + plan);
+        // Gleiche Korrektur wie auf der Preisseite (24.08.2026): kein blockierendes
+        // alert im Moment der Kaufabsicht, und die Auswahl geht nicht mehr verloren.
+        navigate(`/register?${new URLSearchParams({ plan, billing: billingPeriod }).toString()}`);
       } else {
         alert("Fehler beim Checkout: " + err.message);
       }
