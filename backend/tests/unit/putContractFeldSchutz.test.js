@@ -21,7 +21,10 @@ function sperrlisteAusQuelltext() {
 // Reproduziert exakt, was die Route tut: spread + updatedAt + delete-Schleife.
 function filtere(body) {
   const updateData = { ...body, updatedAt: new Date() };
-  for (const feld of sperrlisteAusQuelltext()) delete updateData[feld];
+  const gesperrt = new Set(sperrlisteAusQuelltext());
+  for (const s of Object.keys(updateData)) {
+    if (s.startsWith('$') || gesperrt.has(s.split('.')[0])) delete updateData[s];
+  }
   return updateData;
 }
 
@@ -75,5 +78,24 @@ describe('Vollstaendigkeit der Sperr-Liste', () => {
     for (const muss of ['unlock', 's3Key', 'analyzed', 'analyzedAt', 'userId', '_id', 'organizationId', 'isGenerated', 'fileHash']) {
       expect(liste).toContain(muss);
     }
+  });
+});
+
+describe('🔴 NACHZUG: Punkt-Schluessel + $-Operatoren (Hintertuer-Bypass)', () => {
+  test('unlock.paid (verschachtelter Pfad) wird entfernt — der eigentliche 4,90€-Bypass', () => {
+    const r = filtere({ 'unlock.paid': true });
+    expect(Object.keys(r)).not.toContain('unlock.paid');
+  });
+  test('s3Key.irgendwas wird ebenfalls entfernt', () => {
+    expect(Object.keys(filtere({ 's3Key.x': 'y' }))).not.toContain('s3Key.x');
+  });
+  test('$-Operatoren werden entfernt', () => {
+    const r = filtere({ '$rename': 'x', '$set': {} });
+    expect(r).not.toHaveProperty('$rename');
+    expect(r).not.toHaveProperty('$set');
+  });
+  test('⚠️ ein legitimes Feld mit Punkt (falls es je eins gaebe) OHNE gesperrtes Praefix bleibt', () => {
+    // z.B. ein hypothetisches "meta.note" — Praefix "meta" ist nicht gesperrt.
+    expect(Object.keys(filtere({ 'meta.note': 'hallo' }))).toContain('meta.note');
   });
 });

@@ -2079,7 +2079,19 @@ router.put("/:id", verifyToken, async (req, res) => {
       'optimizedPdfS3Key', 'sealedS3Key', 's3KeySealed', 'pdfS3Key', 'effectiveS3Key',
       'filePath', 'fileUrl'
     ];
-    for (const feld of GESPERRTE_FELDER) delete updateData[feld];
+    // 🔒 24.08.2026 NACHZUG: Exaktes Loeschen allein reicht NICHT. `$set` behandelt einen
+    // Schluessel MIT PUNKT ("unlock.paid") als verschachtelten Pfad — `delete updateData.unlock`
+    // greift dann nicht, und `{"unlock.paid": true}` setzt das Bezahl-Feld trotzdem
+    // (Hintertuer-Bypass, am Code bewiesen). Zusaetzlich koennten `$`-Schluessel Operatoren
+    // einschleusen. Deshalb pruefen wir JEDEN Schluessel: erstes Punkt-Segment gesperrt →
+    // raus; beginnt mit `$` → raus. Legitime Editor-Felder (name, notes, kosten …) haben
+    // weder ein gesperrtes Punkt-Praefix noch ein `$` → sie bleiben.
+    const gesperrt = new Set(GESPERRTE_FELDER);
+    for (const schluessel of Object.keys(updateData)) {
+      if (schluessel.startsWith('$') || gesperrt.has(schluessel.split('.')[0])) {
+        delete updateData[schluessel];
+      }
+    }
 
     // 🇩🇪 Defensive Normalisierung: falls Client (oder Re-Analyse) englische Eckdaten schickt,
     // schreibe direkt deutsch in DB. Idempotent — deutsche Werte bleiben.
