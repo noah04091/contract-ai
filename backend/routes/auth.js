@@ -2177,6 +2177,12 @@ async function resolveUnsubscribeToken(token) {
   return null;
 }
 
+// 24.08.2026: Die einzigen Kennungen, für die das Abmelde-System echte Fächer kennt.
+// Alles andere (z.B. 'verification_reminder') ist KEINE gültige Kategorie — der frühere
+// default-Zweig „riet" und schaltete den Newsletter ab. Das war für jede unbekannte
+// Kennung falsch, nicht nur die eine. Jetzt: unbekannt = nichts anfassen, ehrlich ablehnen.
+const KNOWN_UNSUBSCRIBE_CATEGORIES = new Set(['all', 'calendar', 'legal_pulse', 'marketing', 'product_updates']);
+
 // Helper: Check if user is currently subscribed for a category
 function isSubscribedForCategory(user, category) {
   switch (category) {
@@ -2193,7 +2199,7 @@ function isSubscribedForCategory(user, category) {
     case 'all':
       return user.emailOptOut !== true;
     default:
-      return true;
+      return null; // unbekannte Kategorie — der Handler lehnt vorher ab, kein „raten"
   }
 }
 
@@ -2214,7 +2220,9 @@ function getUnsubscribeUpdate(category) {
     case 'all':
       return { $set: { emailOptOut: true, emailOptOutAt: new Date(), 'emailPreferencesUpdatedAt': new Date() } };
     default:
-      return { $set: { 'emailPreferences.marketing': false, 'emailPreferencesUpdatedAt': new Date() } };
+      // 24.08.2026: KEIN Raten mehr. Unbekannte Kategorie → null, der Handler lehnt ab
+      // und schaltet NICHTS ab (früher fälschlich den Newsletter).
+      return null;
   }
 }
 
@@ -2236,7 +2244,8 @@ function getResubscribeUpdate(category) {
     case 'all':
       return { $set: { emailOptOut: false, 'emailPreferencesUpdatedAt': new Date() } };
     default:
-      return { $set: { 'emailPreferences.marketing': true, 'emailPreferencesUpdatedAt': new Date() } };
+      // 24.08.2026: KEIN Raten mehr — unbekannte Kategorie → null (Handler lehnt ab).
+      return null;
   }
 }
 
@@ -2262,6 +2271,15 @@ router.get("/unsubscribe", async (req, res) => {
     }
 
     const { user, category } = resolved;
+
+    // 24.08.2026: Unbekannte Kategorie (z.B. 'verification_reminder') ehrlich ablehnen,
+    // statt eine Ansicht für ein nicht existierendes Fach zu zeigen.
+    if (!KNOWN_UNSUBSCRIBE_CATEGORIES.has(category)) {
+      return res.status(400).json({
+        success: false,
+        message: "Dieser Abmelde-Link gehört zu keiner bekannten Benachrichtigungs-Kategorie."
+      });
+    }
 
     // Return current notification status + category
     res.json({
@@ -2304,6 +2322,15 @@ router.post("/unsubscribe", async (req, res) => {
 
     const { user, category } = resolved;
     const update = getUnsubscribeUpdate(category);
+
+    // 24.08.2026: Unbekannte Kategorie → NICHTS abmelden (früher schaltete der default
+    // fälschlich den Newsletter ab). Ehrlich ablehnen statt raten.
+    if (!update) {
+      return res.status(400).json({
+        success: false,
+        message: "Dieser Abmelde-Link gehört zu keiner bekannten Benachrichtigungs-Kategorie und wurde daher nicht ausgeführt."
+      });
+    }
 
     const result = await usersCollection.updateOne(
       { _id: user._id },
@@ -2368,6 +2395,14 @@ router.post("/resubscribe", async (req, res) => {
 
     const { user, category } = resolved;
     const update = getResubscribeUpdate(category);
+
+    // 24.08.2026: Unbekannte Kategorie → ehrlich ablehnen, nichts anfassen.
+    if (!update) {
+      return res.status(400).json({
+        success: false,
+        message: "Dieser Link gehört zu keiner bekannten Benachrichtigungs-Kategorie."
+      });
+    }
 
     // 24.08.2026 EHRLICHES „Wieder anmelden" + Blocker-Fix: erst schreiben, DANN am
     // FRISCHEN Stand prüfen, ob ein breiterer Schalter (emailOptOut / Profil „alle E-Mails")
