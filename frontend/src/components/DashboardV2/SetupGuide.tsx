@@ -90,9 +90,14 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
       ? 'Du bist fast fertig'
       : 'Du bist gleich startklar';
 
-  const subline = hasContract
-    ? 'Dein erster Vertrag liegt schon da. Jetzt fehlt nur noch die Prüfung.'
-    : 'Noch zwei Schritte, danach verschwindet dieser Bereich und du siehst dein Dashboard.';
+  // Der Abschluss-Fall stand vorher nicht drin: Sobald der vierte Schritt fertig war,
+  // verschwand der ganze Bereich sofort. Die Zeile hätte dann fälschlich behauptet,
+  // es fehle noch die Prüfung.
+  const subline = openCount === 0
+    ? 'Du kannst jetzt loslegen. Dieser Bereich verschwindet, sobald du ihn schließt.'
+    : hasContract
+      ? 'Dein erster Vertrag liegt schon da. Jetzt fehlt nur noch die Prüfung.'
+      : 'Noch zwei Schritte, danach verschwindet dieser Bereich und du siehst dein Dashboard.';
 
   const handleFile = useCallback(async (file: File) => {
     if (!ALLOWED.includes(file.type)) {
@@ -154,7 +159,9 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
             <h2>{headline}</h2>
             <p>{subline}</p>
           </div>
-          {onDismiss && (
+          {/* Im Abschluss-Zustand steht der Knopf unten und heißt deutlicher,
+              sonst hätte man hier oben und unten zwei Wege zum selben Ziel. */}
+          {onDismiss && openCount > 0 && (
             <button className={styles.dismiss} onClick={onDismiss} title="Diesen Bereich dauerhaft ausblenden">
               Ausblenden
             </button>
@@ -320,6 +327,16 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
             </div>
           )}
         </div>
+
+        {/* 🏁 Abschluss: Der Nutzer schließt selbst. Vorher löste sich der Bereich
+            in dem Moment auf, in dem der letzte Schritt fertig war — ohne Bestätigung
+            und samt dem freiwilligen Profil-Punkt, der dann nur noch verschwunden war. */}
+        {openCount === 0 && onDismiss && (
+          <button className={styles.finishBtn} onClick={onDismiss}>
+            <Check size={16} strokeWidth={3} />
+            Fertig, ausblenden
+          </button>
+        )}
       </section>
 
       {/* ================= MÖGLICHKEITEN ================= */}

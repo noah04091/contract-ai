@@ -454,6 +454,19 @@ export default function DashboardV2() {
     user?.onboarding?.checklist?.firstAnalysisComplete
   );
 
+  // 🏁 Abschluss-Moment (24.08.2026, Noahs Fund): Vorher verschwand der Bereich in
+  // dem Augenblick, in dem der vierte Schritt fertig war — mitsamt dem freiwilligen
+  // Profil-Punkt, den der Nutzer nie erledigt hatte. Erledigte Arbeit wurde also nie
+  // quittiert, und ein sichtbarer offener Punkt löste sich ungefragt auf.
+  // Jetzt bleibt der Bereich einmal als Abschluss stehen, bis der Nutzer selbst
+  // schließt (onDismiss → kontobezogener Merker).
+  //
+  // ⚠️ BESTANDSSCHUTZ: Ohne die Vertragsgrenze bekämen auch langjährige Konten diesen
+  // Abschluss plötzlich vorgesetzt, obwohl ihre Einrichtung Monate zurückliegt. Es gibt
+  // keinen Zeitstempel am Abschluss, deshalb dient ein kleiner Bestand als Näherung
+  // für „gerade erst angefangen". Wer schon mehrere Verträge führt, sieht ihn nie.
+  const showSetupFinale = !setupIncomplete && stats.total > 0 && stats.total <= 3;
+
   const handleRefresh = () => {
     fetchData(true);
   };
@@ -645,7 +658,7 @@ export default function DashboardV2() {
             das nicht der Fall ist, bleibt die geführte Ansicht oben stehen; mit
             vorhandenen Verträgen erscheint das normale Dashboard darunter.
             ============================================ */}
-        {SETUP_GUIDE_ENABLED && setupIncomplete && !onboardingDismissed && (
+        {SETUP_GUIDE_ENABLED && (setupIncomplete || showSetupFinale) && !onboardingDismissed && (
           <SetupGuide
             checklist={user?.onboarding?.checklist}
             freeAnalyses={analysisUsage.isUnlimited ? null : Math.max(0, analysisUsage.remaining)}
