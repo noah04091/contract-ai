@@ -1571,7 +1571,9 @@ export default function ContractAnalysis({ file, contractName, contractId: propC
             {(result?.originalContractId || initialResult?.originalContractId) && (
               <motion.button
                 className={styles.primaryActionButton}
-                onClick={() => window.location.href = `/pulse/${result?.originalContractId || initialResult?.originalContractId}`}
+                // Gleiche Korrektur wie in ContractAnalysisV2 (24.08.2026): kein
+                // harter Seitenwechsel, sonst ist der Weg zurueck zur Analyse verloren.
+                onClick={() => navigate(`/pulse/${result?.originalContractId || initialResult?.originalContractId}`)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
