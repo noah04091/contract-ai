@@ -2033,13 +2033,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       </div>
 
       {/* Smart Contract Info (Payment/Cost Tracking) */}
-      {/* 🛠️ 24.08.2026 (Noahs Fund 2): Der Zahlungs-Bereich erschien NUR, wenn die Analyse
-          schon ein Zahlungs-Feld gefüllt hatte. Eine Quittung ohne vorbefülltes Feld fiel
-          heraus — obwohl das Status-Abzeichen oben sie längst als „Offen" führte (das nutzt
-          `documentCategory === 'invoice'`). Diese Uneinigkeit war die Wurzel. Jetzt an
-          DASSELBE Signal gekoppelt: Ist es eine Rechnung/Quittung, gibt es auch den Schalter,
-          damit der Nutzer den Status setzen kann. */}
-      {(contract.documentCategory === 'invoice' || contract.paymentMethod || contract.paymentAmount || contract.paymentStatus) && (
+      {/* 🛠️ 24.08.2026 (Noahs Funde): Der Zahlungs-Bereich erschien NUR, wenn ein Zahlungs-Feld
+          vorbefüllt war → eine Rechnung ohne befülltes Feld fiel heraus. Erste Korrektur koppelte
+          an `documentCategory === 'invoice'` — der Topf war aber ZU GROB (Kontoauszug=RECEIPT,
+          Bestell-Tabelle=TABLE_DOCUMENT landeten drin und zeigten faelschlich den Schalter).
+          Jetzt am PRÄZISEN Signal `documentType === 'INVOICE'` (echte Rechnung) — identisch zum
+          Status-Abzeichen. Die Zahlungs-/Kosten-Felder bleiben als Fallback fuer Abos/Kosten. */}
+      {(contract.documentType === 'INVOICE' || contract.paymentMethod || contract.paymentAmount || contract.paymentStatus) && (
         <div className={styles.section}>
           <SmartContractInfo
             contract={contract as Parameters<typeof SmartContractInfo>[0]['contract']}

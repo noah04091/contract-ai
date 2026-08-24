@@ -786,7 +786,13 @@ function calculateSmartStatusBackend(contract) {
   }
 
   // 2. Rechnung
-  if (contract.documentCategory === 'invoice') {
+  // 🛠️ 24.08.2026 (Noahs Fund): NUR echte Rechnungen bekommen den Zahl-Status „Offen/Bezahlt".
+  // Vorher haderte das an `documentCategory === 'invoice'` — dieser grobe Topf enthielt auch
+  // RECEIPT (Kontoauszug/Quittung) und TABLE_DOCUMENT (Bestell-Tabelle), die dann faelschlich
+  // „Offen" trugen. Gleichzeitig HATTEN 30 echte Rechnungen `documentType='INVOICE'`, aber
+  // `documentCategory=undefined` → die bekamen den Zahl-Status GAR NICHT. Das praezise Signal
+  // ist `documentType === 'INVOICE'`: schliesst Beleg/Tabelle aus UND erfasst alle echten Rechnungen.
+  if (contract.documentType === 'INVOICE') {
     return contract.paymentStatus === 'paid' ? 'Bezahlt' : 'Offen';
   }
 
