@@ -4,7 +4,7 @@
 const { ObjectId } = require("mongodb");
 const { queueEmail } = require("./emailRetryService");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
-const { generateUnsubscribeUrl } = require("./emailUnsubscribeService");
+const { generateUnsubscribeUrl, isUnsubscribed, EMAIL_CATEGORIES } = require("./emailUnsubscribeService");
 
 /**
  * Sammelt Events fuer einen User und erstellt eine Digest-E-Mail
@@ -278,8 +278,17 @@ async function processDigests(db) {
     try {
       // notificationSettings prüfen (default: alles aktiv)
       const ns = group.user?.notificationSettings;
-      if (ns?.email?.enabled === false || ns?.email?.contractDeadlines === false) {
-        console.log(`Skipping Digest für ${group.user.email} - deaktiviert`);
+      if (ns?.email?.enabled === false) {
+        console.log(`Skipping Digest für ${group.user.email} - E-Mails gesamt deaktiviert`);
+        continue;
+      }
+      // 24.08.2026: Dieser Pfad prüfte AUSSCHLIESSLICH den alten Profil-Schalter und kannte
+      // die Abmeldung über den Mail-Link ÜBERHAUPT NICHT — eine Sammelmail wäre also trotz
+      // Abmeldung rausgegangen. Heute folgenlos (0 Nutzer im Digest-Modus), aber halb repariert
+      // zurückzulassen wäre genau die Sorte stiller Altlast, die wir gerade abschaffen.
+      // Jetzt dieselbe eine Wahrheit wie die anderen beiden Versender.
+      if (await isUnsubscribed(db, group.user.email, EMAIL_CATEGORIES.CALENDAR)) {
+        console.log(`Skipping Digest für ${group.user.email} - von Fristen-Mails abgemeldet`);
         continue;
       }
 

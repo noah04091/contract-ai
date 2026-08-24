@@ -110,7 +110,11 @@ async function sendSeparateNotifications(db, userId, notifications) {
 
       // notificationSettings prüfen
       const ns = user.notificationSettings;
-      if (ns?.email?.enabled === false || ns?.email?.contractDeadlines === false) {
+      // 24.08.2026: Der contractDeadlines-Teil ist hier entfallen. Die Fristen-Wahrheit ist
+      // jetzt allein emailPreferences.calendar und wird ein paar Zeilen tiefer über
+      // isUnsubscribed(CALENDAR) geprüft. „E-Mails gesamt" bleibt als eigenes, breiteres
+      // Konzept bestehen.
+      if (ns?.email?.enabled === false) {
         console.log(`   Skipping ${user.email} - Benachrichtigungen deaktiviert`);
         await markAsSent(db, notification._id);
         continue;
@@ -185,7 +189,7 @@ async function sendGroupedNotification(db, userId, notifications) {
 
     // notificationSettings prüfen
     const ns = user.notificationSettings;
-    if (ns?.email?.enabled === false || ns?.email?.contractDeadlines === false) {
+    if (ns?.email?.enabled === false) {
       console.log(`   Skipping ${user.email} - Benachrichtigungen deaktiviert`);
       for (const n of notifications) await markAsSent(db, n._id);
       return { sent: 0, failed: 0 };

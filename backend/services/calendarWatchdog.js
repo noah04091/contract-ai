@@ -149,7 +149,11 @@ async function runCalendarWatchdog(db, opts = {}) {
   // hat noch offene Fristen? Dann fliegt er blind, und das darf nicht still passieren.
   // Bewusst KEIN Alarm bei Abgemeldeten ohne offene Fristen — das ist eine harmlose,
   // legitime Entscheidung.
-  // 24.08.2026 NACHGESCHÄRFT: Es gibt VIER unabhängige Aus-Schalter für Fristen-Mails,
+  // 24.08.2026 NACHGESCHÄRFT, dann VEREINFACHT: Es gab VIER unabhängige Aus-Schalter für
+  // Fristen-Mails; seit der Vereinheitlichung am selben Tag sind es DREI. Der vierte
+  // (notificationSettings.email.contractDeadlines) blockiert nichts mehr — der Profil-Schalter
+  // schreibt jetzt emailPreferences.calendar. Ihn hier weiter abzufragen würde einen FEHLALARM
+  // über einen Kunden erzeugen, der in Wahrheit ganz normal Mails bekommt. Historie:
   // nicht zwei. Neben emailOptOut und emailPreferences.calendar (Abmelde-Link) wirken
   // auch die beiden Profil-Schalter notificationSettings.email.enabled und
   // .contractDeadlines — gelesen von calendarNotifier.js:372, calendarDigestService.js:281
@@ -160,12 +164,11 @@ async function runCalendarWatchdog(db, opts = {}) {
     $or: [
       { emailOptOut: true },
       { 'emailPreferences.calendar': false },
-      { 'notificationSettings.email.enabled': false },
-      { 'notificationSettings.email.contractDeadlines': false }
+      { 'notificationSettings.email.enabled': false }
     ]
   }).project({
     _id: 1, email: 1, emailOptOut: 1, 'emailPreferences.calendar': 1,
-    'notificationSettings.email.enabled': 1, 'notificationSettings.email.contractDeadlines': 1
+    'notificationSettings.email.enabled': 1
   }).toArray();
   const blindeKunden = [];
   for (const u of unsubscribedUsers) {
@@ -177,8 +180,7 @@ async function runCalendarWatchdog(db, opts = {}) {
       const ns = u.notificationSettings?.email || {};
       const grund = u.emailOptOut === true ? 'emailOptOut (global)'
         : u.emailPreferences?.calendar === false ? 'Abmelde-Link (emailPreferences.calendar)'
-        : ns.enabled === false ? 'Profil: E-Mails gesamt aus'
-        : 'Profil: Fristen-Erinnerungen aus';
+        : 'Profil: E-Mails gesamt aus';
       blindeKunden.push({ id: String(u._id), offen, grund });
     }
   }

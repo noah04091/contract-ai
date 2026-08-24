@@ -369,10 +369,12 @@ async function checkAndSendNotifications(db) {
       // keine automatischen Fristen-Mails mehr — aber NICHT, dass sein eigener Wecker (z.B.
       // Reminder auf den 11.6.) still verschwindet. Darum: user-gewählte Exakt-Termine hier
       // ausnehmen. Echte abgeleitete Fristen-Events bleiben vom Schalter gestoppt.
-      if (ns?.email?.contractDeadlines === false && !isUserPickedDate && !isSignatureEvent) {
-        console.log(`Skipping ${maskEmail(event.user.email)} - Vertragsfristen-Mails deaktiviert`);
-        continue;
-      }
+      // 24.08.2026 ENTFALLEN: Hier stand ein zweites Fristen-Gate auf
+      // notificationSettings.email.contractDeadlines. Es ist redundant geworden — der
+      // Profil-Schalter schreibt jetzt emailPreferences.calendar, und genau das prüft das
+      // Abmelde-Tor weiter unten (:431) mit DENSELBEN zwei Ausnahmen (eigener Wecker,
+      // Signatur-Events). Zwei Gates für dieselbe Frage waren die Quelle der zwei Wahrheiten.
+      // Bestand wurde vorher per scripts/migrateFristenSchalter.js gleichgezogen.
 
       // deadlineReminders-Timing prüfen.
       // Bei Erinnerungs-Events zählt der GEMEINTE Vorlauf (metadata.daysUntil, z.B. 7

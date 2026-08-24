@@ -372,6 +372,18 @@ router.get("/settings", verifyToken, async (req, res) => {
       };
     }
 
+    // 24.08.2026 — EINE WAHRHEIT für die Fristen-Kategorie.
+    // Der Profil-Schalter zeigte bisher `notificationSettings.email.contractDeadlines`,
+    // der Abmelde-Link in der Mail schrieb aber `emailPreferences.calendar`. Folge: Wer sich
+    // per Mail abmeldete, sah im Profil weiter „Fristen-Erinnerungen: AN" — zwei Wahrheiten
+    // über dieselbe Sache. Ab jetzt ist `emailPreferences.calendar` die Wahrheit, genau wie
+    // Marketing es unten schon macht. Das ODER auf den Altwert ist eine Sicherheitsleine für
+    // den Übergang: Es kann nur ein fälschliches „AN" verhindern, nie ein fälschliches „AUS".
+    // (Bestand wurde per scripts/migrateFristenSchalter.js gleichgezogen, 1 Nutzer.)
+    settings.email = settings.email || {};
+    settings.email.contractDeadlines =
+      user?.emailPreferences?.calendar !== false && settings.email.contractDeadlines !== false;
+
     res.json({
       success: true,
       settings,
@@ -449,6 +461,16 @@ router.put("/settings", verifyToken, async (req, res) => {
       notificationSettings: validatedSettings,
       updatedAt: new Date()
     };
+
+    // 24.08.2026 — Fristen-Schalter in die EINE Wahrheit spiegeln (sync mit Abmelde-Link),
+    // exakt nach dem Muster von Marketing direkt darunter. Der Altwert in
+    // notificationSettings bleibt erhalten, wird aber von keinem Versender mehr gelesen —
+    // so bleibt die gespeicherte Struktur unverändert und ein Zurückrollen möglich.
+    // BEWUSST NICHT: emailOptOut zurücksetzen. Wer global alles abbestellt hat, soll das
+    // nicht nebenbei durch einen Fristen-Schalter verlieren. Die Abmelde-Seite sagt ihm
+    // stattdessen ehrlich, dass ein breiterer Schalter noch blockiert.
+    updateFields['emailPreferences.calendar'] = Boolean(settings.email?.contractDeadlines);
+    updateFields['emailPreferencesUpdatedAt'] = new Date();
 
     // Marketing-Präferenz separat aktualisieren (sync mit Abmelde-Link)
     if (req.body.marketing !== undefined) {

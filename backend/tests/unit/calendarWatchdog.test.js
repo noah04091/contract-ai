@@ -214,16 +214,32 @@ describe('runCalendarWatchdog', () => {
 
   // 24.08.2026: Invariante 6 kennt jetzt ALLE VIER Aus-Schalter, nicht nur die zwei
   // des Abmelde-Links. Die Profil-Schalter wirken beim Versand genauso.
-  test('Profil-Schalter "Fristen aus" + offene Fristen -> Alarm (war vorher blind)', async () => {
+  // 24.08.2026, nach der Vereinheitlichung: Der alte Profil-Schalter
+  // notificationSettings.email.contractDeadlines blockiert NICHTS mehr — der Schalter im
+  // Profil schreibt jetzt emailPreferences.calendar. Ein Altwert darf deshalb KEINEN Alarm
+  // mehr erzeugen, sonst meldete der Wächter einen Kunden, der ganz normal Mails bekommt.
+  // Dieser Test ersetzt seinen eigenen Vorgänger von heute früh und haelt die Umkehr fest.
+  test('Alter Profil-Schalter allein loest KEINEN Alarm mehr aus (blockiert nichts)', async () => {
     const cap = captureSpy();
     const stats = await runCalendarWatchdog(fakeDb({
       lock: { _id: 'reminder-calendar:2026-08-19' },
-      unsubscribed: [{ _id: oid('u6'), notificationSettings: { email: { contractDeadlines: false } } }],
+      unsubscribed: [],   // die Abfrage findet ihn gar nicht mehr
+      openPerUser: { [oid('u6')]: 2 }
+    }), { now: NOW, capture: cap });
+    expect(cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines')).toBeUndefined();
+    expect(stats.unsubscribedWithDeadlines).toBe(0);
+  });
+
+  test('Neue Wahrheit: emailPreferences.calendar aus + offene Fristen -> Alarm', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u6'), emailPreferences: { calendar: false } }],
       openPerUser: { [oid('u6')]: 2 }
     }), { now: NOW, capture: cap });
     const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
     expect(f).toBeDefined();
-    expect(f.message).toContain('Profil: Fristen-Erinnerungen aus');
+    expect(f.message).toContain('Abmelde-Link');
     expect(stats.unsubscribedWithDeadlines).toBe(1);
   });
 
