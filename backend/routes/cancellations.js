@@ -9,6 +9,7 @@ const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { logStatusChange } = require("../services/smartStatusUpdater");
 const { generateCancellationPdf } = require("../services/cancellationPdfGenerator");
 const { generateEventsForContract, cleanAndRegenerateAIEvents } = require("../services/calendarEvents");
+const { findContractWithOrgAccess } = require("../utils/orgContractAccess"); // 🔒 24.08.2026: Besitzpruefung (eigener + Org-Vertrag)
 
 // Multer für Confirmation-Upload (Memory Storage → dann S3)
 const confirmationUpload = multer({
@@ -130,6 +131,20 @@ router.post("/send", verifyToken, sensitiveLimiter, async (req, res) => {
     } = req.body;
 
     const userId = new ObjectId(req.user.userId);
+
+    // 🔒 24.08.2026 SICHERHEIT (TÜV): BESITZPRÜFUNG des Vertrags, bevor irgendetwas passiert.
+    // Vorher kam `contractId` frei aus req.body und wurde weiter unten OHNE Besitzprüfung
+    // auf status:"gekündigt" gesetzt (updateOne per _id allein). Ein eingeloggter Nutzer
+    // konnte damit einen FREMDEN Vertrag auf "gekündigt" flippen. Wir nutzen denselben
+    // Helfer wie die 48 anderen Stellen: er lässt den EIGENEN Vertrag UND Verträge der
+    // eigenen aktiven Organisation durch (Team), sonst null → 403. Kein Aussperren.
+    const zugang = await findContractWithOrgAccess(req.db.collection("contracts"), req.user.userId, contractId);
+    if (!zugang) {
+      return res.status(403).json({
+        success: false,
+        error: "Kein Zugriff auf diesen Vertrag."
+      });
+    }
 
     // Duplikat-Schutz: Prüfe ob bereits eine aktive Kündigung für diesen Vertrag existiert
     const existingCancellation = await req.db.collection("cancellations").findOne({
