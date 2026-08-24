@@ -31,18 +31,15 @@ import {
   MessageSquare, User, ArrowRight, ShieldCheck, Clock, LifeBuoy
 } from 'lucide-react';
 import styles from './SetupGuide.module.css';
+import { checkUploadFile, UPLOAD_ACCEPT_ATTR } from '../../constants/uploadTypes';
 
 // 🔌 EIN-ZEILEN-SCHALTER: auf false setzen, und das Dashboard zeigt sofort
 // wieder die bisherige Checkliste samt Willkommensbox. Kein weiterer Eingriff
 // nötig, kein Datenverlust.
 export const SETUP_GUIDE_ENABLED = true;
 
-const MAX_SIZE = 50 * 1024 * 1024;
-const ALLOWED = [
-  'application/pdf', 'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'image/jpeg', 'image/png', 'image/heic', 'image/heif', 'image/webp',
-];
+// Dateitypen kommen aus der gemeinsamen Quelle, damit dieser Weg und das
+// Onboarding-Fenster nicht wieder auseinanderlaufen (siehe constants/uploadTypes.ts).
 
 interface ChecklistState {
   accountCreated?: boolean;
@@ -100,13 +97,9 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
       : 'Noch zwei Schritte, danach verschwindet dieser Bereich und du siehst dein Dashboard.';
 
   const handleFile = useCallback(async (file: File) => {
-    if (!ALLOWED.includes(file.type)) {
-      setErrorMsg('Bitte eine PDF-, Word- oder Bilddatei auswählen.');
-      setState('error');
-      return;
-    }
-    if (file.size > MAX_SIZE) {
-      setErrorMsg('Die Datei ist größer als 50 MB.');
+    const problem = checkUploadFile(file);
+    if (problem) {
+      setErrorMsg(problem);
       setState('error');
       return;
     }
@@ -258,7 +251,7 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.heic,.webp"
+                accept={UPLOAD_ACCEPT_ATTR}
                 style={{ display: 'none' }}
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }}
               />

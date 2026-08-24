@@ -21,8 +21,10 @@ const ONBOARDING_SYNC_EVENT = 'onboarding-state-sync';
  * Kann von anderen Komponenten aufgerufen werden (z.B. nach Analyse, Upload, etc.)
  * um alle useOnboarding-Instanzen zum Neu-Laden zu veranlassen.
  */
+// Hinweis: In dieser Datei liefen sieben console.log-Ausgaben mit, eine davon gab
+// die E-Mail-Adresse des Nutzers aus. In der Produktion haben sie nichts verloren
+// (24.08.2026 entfernt).
 export function triggerOnboardingSync(): void {
-  console.log('🔄 [Onboarding] Manual sync triggered');
   window.dispatchEvent(new Event(ONBOARDING_SYNC_EVENT));
 }
 
@@ -156,7 +158,6 @@ export function useOnboarding(): UseOnboardingReturn {
 
   // Initial fetch + re-fetch when user changes (e.g., after login)
   useEffect(() => {
-    console.log('🎓 [Onboarding] Initial/User-change effect, user:', user?.email || 'null');
     fetchStatus();
   }, [fetchStatus, user?.email]); // Re-fetch when user email changes (login/logout)
 
@@ -181,7 +182,6 @@ export function useOnboarding(): UseOnboardingReturn {
   // user.onboarding kann stale sein nach Skip/Complete.
   useEffect(() => {
     if (user?.onboarding) {
-      console.log('🎓 [Onboarding] Syncing checklist from user.onboarding (NOT modal state!)');
 
       // Nur Checklist-Daten synchronisieren, NICHT shouldShowModal!
       const checklist = user.onboarding.checklist || {};
@@ -282,7 +282,6 @@ export function useOnboarding(): UseOnboardingReturn {
 
       // 🔄 WICHTIG: Alle anderen useOnboarding-Instanzen benachrichtigen!
       // Dies stellt sicher, dass z.B. OnboardingChecklist sofort aktualisiert wird.
-      console.log('🔄 [Onboarding] Dispatching sync event after complete');
       window.dispatchEvent(new Event(ONBOARDING_SYNC_EVENT));
 
       // ✅ Refetch um sicherzustellen dass alle Daten aktuell sind
@@ -320,7 +319,6 @@ export function useOnboarding(): UseOnboardingReturn {
       } : prev);
 
       // 🔄 WICHTIG: Alle anderen useOnboarding-Instanzen benachrichtigen!
-      console.log('🔄 [Onboarding] Dispatching sync event after skip');
       window.dispatchEvent(new Event(ONBOARDING_SYNC_EVENT));
 
       // ✅ Refetch für aktuelle Daten
@@ -456,7 +454,6 @@ export function useOnboarding(): UseOnboardingReturn {
 
       // Optimistic Update
       setShouldShowChecklist(false);
-      console.log('🙈 Checklist dauerhaft ausgeblendet');
 
       await fetchStatus();
     } catch (err) {
@@ -480,7 +477,6 @@ export function useOnboarding(): UseOnboardingReturn {
 
       if (!response.ok) throw new Error('Failed to show checklist');
 
-      console.log('👁️ Checklist wieder eingeblendet');
 
       await fetchStatus();
     } catch (err) {

@@ -77,24 +77,14 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   // Show modal automatically for new users on authenticated routes
   // ⚠️ NUR wenn es noch nicht dismissed wurde!
+  // Die früheren console.log-Ausgaben liefen bei jedem Kunden mit und legten den
+  // internen Zustand offen, sobald jemand die Entwicklerkonsole öffnet. Für die
+  // Fehlersuche waren sie hilfreich, in der Produktion haben sie nichts verloren.
   useEffect(() => {
-    console.log('🎓 [OnboardingProvider] Effect check:', {
-      shouldShowModal,
-      hasBeenDismissed,
-      isAuthenticatedRoute,
-      isExcludedRoute,
-      pathname: location.pathname,
-      willShowModal: shouldShowModal && isAuthenticatedRoute && !isExcludedRoute && !hasBeenDismissed
-    });
-
-    // 🔒 Zusätzlicher Check: hasBeenDismissed verhindert erneutes Öffnen
+    // 🔒 hasBeenDismissed verhindert erneutes Öffnen nach dem Schließen
     if (shouldShowModal && isAuthenticatedRoute && !isExcludedRoute && !hasBeenDismissed) {
-      console.log('🎓 [OnboardingProvider] Scheduling modal to open in 500ms');
-      // Small delay to let page render first
-      const timer = setTimeout(() => {
-        console.log('🎓 [OnboardingProvider] Opening modal NOW');
-        setIsModalOpen(true);
-      }, 500);
+      // Kurze Verzögerung, damit die Seite zuerst fertig zeichnet
+      const timer = setTimeout(() => setIsModalOpen(true), 500);
       return () => clearTimeout(timer);
     }
   }, [shouldShowModal, isAuthenticatedRoute, isExcludedRoute, location.pathname, hasBeenDismissed]);
@@ -103,7 +93,6 @@ export function OnboardingProvider({ children }: OnboardingProviderProps) {
 
   // 🔒 hideModal setzt auch hasBeenDismissed auf true
   const hideModal = () => {
-    console.log('🎓 [OnboardingProvider] Modal dismissed - will NOT auto-open again');
     setIsModalOpen(false);
     setHasBeenDismissed(true); // Verhindert erneutes automatisches Öffnen
   };

@@ -57,7 +57,11 @@ export default function Register() {
 
   // ===== Backend (1:1 aus der produktiven Komponente) =====
   const sendVerificationEmail = async (emailToVerify: string) => {
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // ⚠️ 24.08.2026: Hier stand eine künstliche Pause von 400 ms, zusammen mit einer
+    // weiteren Sekunde in handleRegister. Anderthalb Sekunden Wartezeit ohne Zweck,
+    // ausgerechnet im ungeduldigsten Moment der ganzen Strecke. Beide entfernt.
+    // Unkritisch, weil POST /auth/register die Bestätigungs-Mail seit dem 18.08.
+    // selbst anstößt; dieser Aufruf ist nur noch der Fallback.
     try {
       // 19.08.2026: direkt zur API statt über die Vercel-Weiterleitung — gleicher
       // Grund wie beim Registrieren oben: über den Umweg kommt die Kundenadresse
@@ -71,7 +75,10 @@ export default function Register() {
       });
       const data = await response.json();
       if (response.ok) {
-        return { success: true, message: data.message };
+        // status und retryAfter durchreichen: Der Server unterscheidet zwischen
+        // "verschickt" und "vor Kurzem schon verschickt". Ohne diese Werte konnte
+        // die Seite Erfolg melden, obwohl gar nichts rausging (siehe handleResendEmail).
+        return { success: true, message: data.message, status: data.status, retryAfter: data.retryAfter };
       }
       return { success: false, message: data.message || "Fehler beim Senden der E-Mail" };
     } catch {
@@ -84,8 +91,21 @@ export default function Register() {
     setResendLoading(true);
     const result = await sendVerificationEmail(email);
     if (result.success) {
-      setNotification({ message: "Bestätigungs-E-Mail wurde erneut gesendet", type: "success" });
-      setResendCooldown(60);
+      // ⚠️ 24.08.2026: Vorher meldete die Seite hier IMMER "wurde erneut gesendet",
+      // auch wenn der Server wegen seiner 60-Sekunden-Sperre gar nichts verschickt
+      // hatte. Genau der häufigste Fall: Man registriert sich, die erste Mail ist
+      // noch unterwegs, man klickt ungeduldig, bekommt eine Erfolgsmeldung und
+      // wartet auf eine zweite Mail, die nie kommt.
+      const bereitsUnterwegs = result.status === 'already_sent_recently';
+      setNotification({
+        message: bereitsUnterwegs
+          ? "Die E-Mail ist schon unterwegs. Schau in dein Postfach, auch im Spam-Ordner."
+          : "Bestätigungs-E-Mail wurde erneut gesendet",
+        type: bereitsUnterwegs ? "info" : "success"
+      });
+      setResendCooldown(typeof result.retryAfter === 'number' && result.retryAfter > 0
+        ? Math.ceil(result.retryAfter)
+        : 60);
       const countdown = setInterval(() => {
         setResendCooldown((prev) => {
           if (prev <= 1) { clearInterval(countdown); return 0; }
@@ -122,7 +142,6 @@ export default function Register() {
       const data = await res.json();
 
       if (res.ok) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
         const emailResult = await sendVerificationEmail(email);
 
         if (emailResult.success) {
@@ -204,7 +223,14 @@ export default function Register() {
               </div>
               <div className="ca-reg-trust-row ca-reg-trust-row-2">
                 <ShieldCheck size={15} />
-                <span>DSGVO-konform · Server in Deutschland · SSL-verschlüsselt</span>
+                {/* ⚠️ Hier stand "Server in Deutschland". Gemessen falsch: Die
+                    Vertragsdateien liegen in Stockholm, die KI-Verarbeitung läuft in
+                    den USA über Standardvertragsklauseln. Datenschutzrechtlich sauber,
+                    aber die Aussage stimmt nicht — und sie stand ausgerechnet neben
+                    "DSGVO-konform", wo sie am meisten Gewicht hat. Siehe
+                    project_serverstandort-aussage-falsch. Die Ersatzformulierung ist
+                    vollständig belegbar (öffentlicher AVV nach Art. 28 DSGVO). */}
+                <span>DSGVO-konform · Auftragsverarbeitung offengelegt · SSL-verschlüsselt</span>
               </div>
             </div>
           </div>

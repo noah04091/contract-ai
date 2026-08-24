@@ -27,13 +27,15 @@ import {
   Zap,
   CheckCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  MessageSquare
 } from 'lucide-react';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useAuth } from '../../context/AuthContext';
 import { useCelebrationContext } from '../Celebration';
 import type { OnboardingProfile } from '../../types/onboarding';
 import styles from './OnboardingModal.module.css';
+import { checkUploadFile, UPLOAD_ACCEPT_ATTR } from '../../constants/uploadTypes';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -73,28 +75,44 @@ const STEPS = [
 // ============================================
 const USE_CASES = [
   { id: 'analyze', Icon: Search, label: 'Verträge prüfen', hint: 'Risiken erkennen', color: '#3B82F6' },
-  { id: 'generate', Icon: PenTool, label: 'Verträge erstellen', hint: 'Generator nutzen', color: '#8B5CF6' },
+  // Kein Lila: Die Marke führt Blau, Grün steht für Erledigtes, Orange für Fristen.
+  { id: 'generate', Icon: PenTool, label: 'Verträge erstellen', hint: 'Generator nutzen', color: '#6366F1' },
   { id: 'manage', Icon: FolderOpen, label: 'Verträge verwalten', hint: 'Fristen im Blick', color: '#10B981' },
   { id: 'sign', Icon: FileSignature, label: 'Verträge signieren', hint: 'Digital unterschreiben', color: '#F59E0B' }
 ];
 
-const FEATURES_BY_USE_CASE: Record<string, Array<{ icon: React.ReactNode; title: string; description: string }>> = {
+// ⚠️ 24.08.2026: Diese Liste versprach neuen Nutzern durchweg Funktionen, die ein
+// kostenloses Konto nicht öffnen kann. Wer "Verträge erstellen" oder "signieren"
+// wählte, bekam DREI gesperrte Funktionen als persönliche Empfehlung präsentiert und
+// lief Minuten später gegen eine Wand. Das ist der schnellste Weg, Vertrauen zu
+// verlieren, und als Kaufanreiz wirkt es genau andersherum.
+// Deshalb trägt jede Zeile jetzt, ob sie im kostenlosen Konto enthalten ist.
+// Maßgeblich ist backend/constants/subscriptionPlans.js (PLAN_LIMITS.free):
+// analyze 3, chat 5, Fristen/Verwaltung inklusive — optimize, generate, compare,
+// envelopes, legalPulse und legalLens stehen dort auf 0 bzw. Business aufwärts.
+const FEATURES_BY_USE_CASE: Record<string, Array<{ icon: React.ReactNode; title: string; description: string; free?: boolean }>> = {
   analyze: [
-    { icon: <Shield size={28} />, title: 'KI-Analyse', description: 'Risiken und Schwachstellen automatisch erkennen' },
+    { icon: <Shield size={28} />, title: 'KI-Analyse', description: 'Risiken und Schwachstellen automatisch erkennen', free: true },
+    { icon: <MessageSquare size={28} />, title: 'Fragen zum Vertrag', description: 'Nachhaken, wenn eine Klausel unklar ist', free: true },
     { icon: <Sparkles size={28} />, title: 'Legal Lens', description: 'Jede Klausel verständlich erklärt' },
     { icon: <FileText size={28} />, title: 'Optimierung', description: 'Konkrete Verbesserungsvorschläge' }
   ],
   generate: [
-    { icon: <FileText size={28} />, title: 'Generator', description: 'Rechtssichere Verträge in Minuten' },
-    { icon: <Building2 size={28} />, title: 'Contract Builder', description: 'Visueller Drag & Drop Editor' },
+    // Bewusst mit einer freien Zeile eröffnet: Ohne sie bestünde dieser Schritt für
+    // ein kostenloses Konto ausschließlich aus Gesperrtem.
+    { icon: <Shield size={28} />, title: 'KI-Analyse', description: 'Bestehende Verträge prüfen, bevor du eigene schreibst', free: true },
+    { icon: <FileText size={28} />, title: 'Generator', description: '16 geprüfte Vorlagen vom Arbeitsvertrag bis zur Geheimhaltung' },
+    { icon: <Building2 size={28} />, title: 'Contract Builder', description: 'Klauseln zusammenstellen statt tippen' },
     { icon: <Sparkles size={28} />, title: 'KI-Assistent', description: 'Intelligente Formulierungshilfe' }
   ],
   manage: [
-    { icon: <Calendar size={28} />, title: 'Fristenkalender', description: 'Nie wieder Kündigungsfristen verpassen' },
-    { icon: <FileText size={28} />, title: 'Vertragsverwaltung', description: 'Alle Verträge an einem Ort' },
+    { icon: <Calendar size={28} />, title: 'Fristenkalender', description: 'Nie wieder Kündigungsfristen verpassen', free: true },
+    { icon: <FileText size={28} />, title: 'Vertragsverwaltung', description: 'Alle Verträge an einem Ort', free: true },
     { icon: <Sparkles size={28} />, title: 'Legal Pulse', description: 'Updates bei Gesetzesänderungen' }
   ],
   sign: [
+    // Auch hier eine freie Zeile voran, sonst wäre der ganze Schritt eine Verbotstafel.
+    { icon: <Shield size={28} />, title: 'KI-Analyse', description: 'Prüfen, was du unterschreiben sollst', free: true },
     { icon: <FileText size={28} />, title: 'Digitale Signatur', description: 'Rechtsgültig digital unterschreiben' },
     { icon: <Building2 size={28} />, title: 'Signatur-Workflows', description: 'Mehrere Unterzeichner verwalten' },
     { icon: <Calendar size={28} />, title: 'Status-Tracking', description: 'Unterschriften in Echtzeit verfolgen' }
@@ -104,6 +122,10 @@ const FEATURES_BY_USE_CASE: Record<string, Array<{ icon: React.ReactNode; title:
 export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const navigate = useNavigate();
   const { user, refetchUser } = useAuth();
+
+  // Ein neu registriertes Konto ist immer kostenlos; die Abfrage deckt den Fall ab,
+  // dass jemand die Tour später erneut startet, nachdem er gebucht hat.
+  const isFreePlan = (user?.subscriptionPlan || 'free').toLowerCase() === 'free';
   const {
     completeStep,
     completeOnboarding,
@@ -231,19 +253,15 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   // FILE UPLOAD HANDLERS
   // ============================================
   const handleFileUpload = useCallback(async (file: File) => {
-    // Validate file type
-    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (!validTypes.includes(file.type)) {
-      setUploadError('Bitte nur PDF oder Word-Dokumente hochladen');
-      setUploadState('error');
-      return;
-    }
-
-    // Validate file size — 🩹 17.08.2026: an das echte Backend-Limit angeglichen
-    // (50 MB, upload.js/analyze.js multer). Vorher wies das Onboarding Dateien
-    // ab, die der Rest des Produkts problemlos annimmt.
-    if (file.size > 50 * 1024 * 1024) {
-      setUploadError('Datei ist zu groß (max. 50 MB)');
+    // 🩹 24.08.2026: Hier standen eigene Regeln, die nur PDF und neues Word
+    // zuliessen. Ein Nutzer, der seinen Vertrag mit dem Handy fotografiert, wurde
+    // damit ausgerechnet beim allerersten Schritt abgewiesen ("Bitte nur PDF oder
+    // Word-Dokumente hochladen"), obwohl das übrige Produkt Fotos und altes .doc
+    // längst annimmt. Prüfung und Fehlertext kommen jetzt aus der gemeinsamen
+    // Quelle, damit die beiden Upload-Wege nicht erneut auseinanderlaufen.
+    const problem = checkUploadFile(file);
+    if (problem) {
+      setUploadError(problem);
       setUploadState('error');
       return;
     }
@@ -276,7 +294,6 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       }
 
       const data = await response.json();
-      console.log('✅ Onboarding Upload erfolgreich:', data);
 
       setUploadState('success');
       setUploadedContractId(data.contract?._id || data.contractId || null);
@@ -549,7 +566,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".pdf,.docx"
+              accept={UPLOAD_ACCEPT_ATTR}
               onChange={handleFileInputChange}
               style={{ display: 'none' }}
             />
@@ -574,8 +591,8 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                   >
                     <Upload className={styles.uploadIconLarge} size={48} />
                   </motion.div>
-                  <p className={styles.uploadTitle}>Drag & Drop oder klicken</p>
-                  <p className={styles.uploadHint}>PDF, DOCX (max. 50 MB)</p>
+                  <p className={styles.uploadTitle}>Datei hierher ziehen oder klicken</p>
+                  <p className={styles.uploadHint}>PDF, Word oder Foto · bis 50 MB</p>
                 </>
               )}
 
@@ -648,7 +665,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
       case 'features': {
         // Sammle Features für ALLE ausgewählten Use Cases (ohne Duplikate)
         const selectedCases = profile.useCases?.length ? profile.useCases : ['analyze'];
-        const allFeatures: Array<{ icon: React.ReactNode; title: string; description: string }> = [];
+        const allFeatures: Array<{ icon: React.ReactNode; title: string; description: string; free?: boolean }> = [];
         const seenTitles = new Set<string>();
 
         selectedCases.forEach(useCase => {
@@ -697,7 +714,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              Basierend auf deiner Auswahl empfehlen wir dir diese Features:
+              {isFreePlan
+                ? 'Das passt zu deiner Auswahl. Was dein kostenloses Konto schon kann, ist markiert.'
+                : 'Basierend auf deiner Auswahl empfehlen wir dir das hier:'}
             </motion.p>
 
             {/* 📌 Rein informative Feature-Liste - keine Klick-Aktionen */}
@@ -714,12 +733,28 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                     {feature.icon}
                   </div>
                   <div className={styles.featureContent}>
-                    <p className={styles.featureTitle}>{feature.title}</p>
+                    <p className={styles.featureTitle}>
+                      {feature.title}
+                      {/* Etikett nur für kostenlose Konten: Ein zahlender Kunde hat
+                          alles, ihm würde "ab Business" nur im Weg stehen. */}
+                      {isFreePlan && (
+                        <span className={feature.free ? styles.planTagFree : styles.planTagPaid}>
+                          {feature.free ? 'in deinem Plan' : 'ab Business'}
+                        </span>
+                      )}
+                    </p>
                     <p className={styles.featureDescription}>{feature.description}</p>
                   </div>
                 </motion.div>
               ))}
             </div>
+
+            {isFreePlan && (
+              <p className={styles.planNote}>
+                Zum Start hast du <strong>3 kostenlose Analysen</strong>, den Fristenkalender
+                und 5 Fragen an die KI. Ohne Kreditkarte.
+              </p>
+            )}
           </motion.div>
         );
       }
