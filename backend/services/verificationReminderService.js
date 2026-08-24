@@ -7,6 +7,7 @@ const sendEmail = require("../utils/sendEmail");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
 const { generateUnsubscribeUrl } = require("./emailUnsubscribeService");
 const { logSentEmail } = require("../utils/emailLogger");
+const { isVerificationReminderSuppressed } = require("../utils/verificationReminderOptOut");
 require("dotenv").config();
 
 // Konfiguration
@@ -72,11 +73,9 @@ async function sendVerificationReminders() {
     let skippedCount = 0;
 
     for (const user of unverifiedUsers) {
-      // Opt-Out Check: email_unsubscribes-Liste ODER User-Feld (24.08.2026).
-      // Der Abmelde-Link (/abmelden → routes/auth.js) schreibt emailPreferences.verification_reminder=false
-      // bzw. emailOptOut=true; diese Felder MÜSSEN hier greifen, sonst hätte der Widerspruch keine Wirkung.
-      const optedOutByField = user.emailOptOut === true || user.emailPreferences?.verification_reminder === false;
-      if (optOutEmails.has(user.email) || optedOutByField) {
+      // Opt-Out Check (24.08.2026): Liste ODER User-Feld ODER globaler Schalter.
+      // Reine Funktion in utils/verificationReminderOptOut.js, per Test festgenagelt.
+      if (isVerificationReminderSuppressed(user, optOutEmails)) {
         optedOutCount++;
         continue;
       }
