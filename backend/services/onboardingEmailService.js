@@ -9,6 +9,7 @@ const {
   generateAlertBox,
   generateActionBox,
   generateParagraph,
+  generateFeatureList,
   generateDivider
 } = require('../utils/emailTemplate');
 const { generateUnsubscribeUrl } = require('./emailUnsubscribeService');
@@ -52,6 +53,9 @@ const ONBOARDING_CATEGORIES = {
 function generateWelcomeEmail(user) {
   // 🆕 Nutze firstName aus Registrierung, Fallback auf name oder 'dort'
   const firstName = user.firstName || user.name?.split(' ')[0] || 'dort';
+  // Frisch registrierte Konten sind kostenlos; die Abfrage deckt den Fall ab, dass
+  // die Mail für ein bereits zahlendes Konto erzeugt wird.
+  const istKostenlos = (user.subscriptionPlan || 'free').toLowerCase() === 'free';
 
   const body = `
     ${generateParagraph(`Hallo ${firstName},`)}
@@ -76,11 +80,25 @@ function generateWelcomeEmail(user) {
 
     ${generateParagraph('Mit Contract AI kannst du:')}
 
-    ${generateParagraph('<strong>🔍 Verträge analysieren</strong> - Unsere KI erkennt Risiken und Fallstricke in Sekunden.')}
-    ${generateParagraph('<strong>📅 Fristen verwalten</strong> - Nie wieder eine Kündigungsfrist verpassen.')}
-    ${generateParagraph('<strong>✨ Verträge optimieren</strong> - Konkrete Verbesserungsvorschläge für bessere Konditionen.')}
-    ${generateParagraph('<strong>💬 Mit deinen Verträgen chatten</strong> - Stell Fragen und bekomm verständliche Antworten in Klartext.')}
-    ${generateParagraph('<strong>⚖️ Rechts-Radar</strong> - Wir warnen dich, wenn Gesetzesänderungen deine Verträge betreffen.')}
+    ${/* 24.08.2026, zwei Korrekturen an dieser Stelle:
+        1. Gestaltung: Vorher standen hier fünf gleich aussehende Absätze
+           untereinander. Optisch eine Textwand, in der die einzelnen Punkte
+           verschwimmen (Noahs Rückmeldung). Jetzt eine Liste mit feinen
+           Trennlinien.
+        2. Inhalt: Diese Mail geht an FRISCH REGISTRIERTE, also an kostenlose
+           Konten. Beworben wurden aber "Verträge optimieren" (PLAN_LIMITS
+           optimize = 0 für free) und das "Rechts-Radar" (Legal Pulse, Business
+           aufwärts). Zwei von fünf Punkten waren für den Empfänger gesperrt,
+           ohne jeden Hinweis. Genau die Enttäuschung, die im Onboarding-Fenster
+           schon behoben wurde. Das Etikett erscheint nur bei kostenlosen Konten,
+           ein zahlender Kunde hat ohnehin alles. */''}
+    ${generateFeatureList([
+      { icon: '🔍', title: 'Verträge analysieren', text: 'Unsere KI erkennt Risiken und Fallstricke in Sekunden.' },
+      { icon: '📅', title: 'Fristen verwalten', text: 'Nie wieder eine Kündigungsfrist verpassen.' },
+      { icon: '💬', title: 'Mit deinen Verträgen chatten', text: 'Stell Fragen und bekomm verständliche Antworten in Klartext.' },
+      { icon: '✨', title: 'Verträge optimieren', text: 'Konkrete Verbesserungsvorschläge für bessere Konditionen.', tag: istKostenlos ? 'ab Business' : null },
+      { icon: '⚖️', title: 'Rechts-Radar', text: 'Wir warnen dich, wenn Gesetzesänderungen deine Verträge betreffen.', tag: istKostenlos ? 'ab Business' : null }
+    ])}
 
     ${generateParagraph('…und vieles mehr.', { muted: true })}
 

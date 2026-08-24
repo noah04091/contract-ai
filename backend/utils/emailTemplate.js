@@ -274,6 +274,62 @@ function generateParagraph(text, options = {}) {
 }
 
 /**
+ * Funktions-Liste mit dezenten Trennlinien (24.08.2026).
+ *
+ * Vorher standen solche Aufzaehlungen als fuenf gleich aussehende Absaetze
+ * untereinander (Willkommens-Mail). Optisch war das eine Textwand: Das Auge findet
+ * keinen Halt, und die einzelnen Punkte verschwimmen (Noahs Rueckmeldung).
+ * Eine feine Linie pro Eintrag gliedert, ohne laut zu werden.
+ *
+ * items: [{ icon: '🔍', title: 'Verträge analysieren', text: '…', tag: 'ab Business' }]
+ * tag ist optional und erscheint als dezentes Etikett hinter dem Titel. Damit laesst
+ * sich ehrlich zeigen, was ein kostenloses Konto noch nicht oeffnen kann.
+ *
+ * Tabellen-Layout mit Inline-Styles, weil Outlook weder Flexbox noch <style> kennt.
+ */
+function generateFeatureList(items) {
+  if (!items || items.length === 0) return '';
+
+  const rows = items.map((item, i) => {
+    const trennlinie = i > 0
+      ? 'border-top: 1px solid #eef2f7; padding-top: 14px; margin-top: 14px;'
+      : '';
+    const etikett = item.tag
+      ? `<span style="display: inline-block; margin-left: 8px; padding: 1px 7px; font-size: 11px; font-weight: 600; color: #64748b; background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 999px; white-space: nowrap;">${item.tag}</span>`
+      : '';
+    const symbol = item.icon
+      ? `<td width="30" valign="top" style="font-size: 17px; line-height: 1.5; padding-right: 10px;">${item.icon}</td>`
+      : '';
+
+    return `
+                            <tr>
+                              <td style="${trennlinie} padding-bottom: ${i === items.length - 1 ? '0' : '0'};">
+                                <table width="100%" cellpadding="0" cellspacing="0">
+                                  <tr>
+                                    ${symbol}
+                                    <td valign="top">
+                                      <p style="margin: 0 0 3px 0; font-size: 15px; font-weight: 600; color: #0f172a; line-height: 1.5;">${item.title}${etikett}</p>
+                                      <p style="margin: 0; font-size: 14px; color: #475569; line-height: 1.6;">${item.text}</p>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>`;
+  }).join('');
+
+  return `
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 20px 0 24px 0;">
+                <tr>
+                  <td style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px 22px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${rows}
+                    </table>
+                  </td>
+                </tr>
+              </table>`;
+}
+
+/**
  * Divider
  */
 function generateDivider() {
@@ -401,6 +457,7 @@ module.exports = {
   generateActionBox,
   generateEventCard,
   generateParagraph,
+  generateFeatureList,
   generateDivider,
   logoUrl
 };
