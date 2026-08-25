@@ -257,10 +257,15 @@ html {
   left: 100%;
 }
 
-/* FIX: Prevent horizontal overflow */
+/* FIX: Prevent horizontal overflow.
+   overflow-x: hidden auf body macht ihn zum Clip-Container und bricht
+   position: sticky der Navbar (sie scrollte aus dem Bild). clip schützt
+   genauso vor seitlichem Überlauf, lässt Sticky aber intakt; hidden
+   bleibt als Fallback für alte Browser (dort Verhalten wie bisher). */
 html, body {
   width: 100%;
   overflow-x: hidden;
+  overflow-x: clip;
 }
 
 :root {
@@ -295,7 +300,8 @@ body {
   background-color: var(--bg-color);
   color: var(--text-color);
   line-height: 1.5;
-  overflow-x: hidden;
+  overflow-x: hidden; /* Fallback alte Browser */
+  overflow-x: clip; /* bricht position: sticky der Navbar nicht */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0 !important;
