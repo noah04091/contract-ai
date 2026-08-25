@@ -567,7 +567,7 @@ export default function Chat() {
         </Helmet>
         <div className={styles.premiumRequired}>
           <div className={styles.premiumIcon}>
-            <Scale size={32} aria-hidden="true" />
+            <Scale size={32} />
           </div>
           <h2>Dein Chat-Kontingent ist aufgebraucht</h2>
           <p>
@@ -616,7 +616,7 @@ export default function Chat() {
               <div className={styles.usageStats}>
                 <div className={styles.usageLabel}>
                   <span className={styles.usageTitle}>
-                    <MessageCircle size={13} aria-hidden="true" /> Chat-Nutzung
+                    <MessageCircle size={13} /> Chat-Nutzung
                   </span>
                   {usage.remaining < usage.limit * 0.2 && (
                     <span className={styles.warningBadge}>Niedrig</span>
@@ -729,7 +729,7 @@ export default function Chat() {
           <header className={styles.header}>
             <div>
               <span className={styles.headerIcon}>
-                <Scale size={16} aria-hidden="true" />
+                <Scale size={16} />
               </span>
               <span className={styles.headerTitle}>Legal Chat 2.0</span>
               <span className={styles.badge}>Rechtsanwalt für Vertragsrecht</span>
@@ -821,7 +821,7 @@ export default function Chat() {
                         style={{ cursor: att.s3Key ? "pointer" : "default" }}
                       >
                         <span className={styles.contractIcon}>
-                          <FileText size={16} aria-hidden="true" />
+                          <FileText size={16} />
                         </span>
                         <div className={styles.contractInfo}>
                           <span className={styles.contractName}>{att.name}</span>
@@ -839,7 +839,7 @@ export default function Chat() {
                   <div className={styles.smartQuestions}>
                     <div className={styles.smartQuestionsHeader}>
                       <span className={styles.lightbulbIcon}>
-                        <Lightbulb size={14} aria-hidden="true" />
+                        <Lightbulb size={14} />
                       </span>
                       <span className={styles.smartQuestionsTitle}>Vertragsspezifische Fragen:</span>
                     </div>
@@ -979,7 +979,7 @@ function Bubble({
   return (
     <div className={`${styles.bubble} ${role === "user" ? styles.userBubble : styles.aiBubble}`}>
       <div className={`${styles.avatar} ${role === "user" ? styles.userAvatar : styles.aiAvatar}`}>
-        {role === "assistant" ? <Scale size={15} aria-hidden="true" /> : <User size={15} aria-hidden="true" />}
+        {role === "assistant" ? <Scale size={15} /> : <User size={15} />}
       </div>
       <div className={styles.bubbleBody}>
         <div className={styles.bubbleHeader}>
@@ -991,7 +991,7 @@ function Bubble({
           {isTyping ? (
             <div className={styles.typingIndicator} aria-live="polite">
               <span>KI-Rechtsanwalt tippt</span>
-              <span className={styles.typingDots} aria-hidden="true">
+              <span className={styles.typingDots}>
                 <span></span>
                 <span></span>
                 <span></span>
@@ -1010,7 +1010,7 @@ function EmptyState({ suggestions, onPick }: { suggestions: string[]; onPick: (s
   return (
     <div className={styles.empty}>
       <div className={styles.heroIcon}>
-        <Scale size={28} aria-hidden="true" />
+        <Scale size={28} />
       </div>
       <h2>Willkommen beim Legal Chat 2.0</h2>
       <p>
