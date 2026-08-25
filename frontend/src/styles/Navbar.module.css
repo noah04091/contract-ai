@@ -35,12 +35,21 @@
   background: rgba(255, 255, 255, 0.97);
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  padding-top: 8px;
-  padding-bottom: 8px;
 }
 
 .navbarScrolled .navbarContent {
   height: 52px;
+}
+
+/* Desktop: die fixe Mitte (Nav-Links) und das Mega-Menü müssen die
+   kompakte Höhe mitmachen, sonst hängen sie auf 64px-Niveau fest */
+@media (min-width: 769px) {
+  .navbarScrolled .navbarContent .centerSection {
+    height: 52px;
+  }
+  .navbarScrolled .megaMenu {
+    top: 58px;
+  }
 }
 
 .navbarScrolled .logoImage,
@@ -188,6 +197,7 @@
   top: 0;
   height: 64px;
   pointer-events: auto;
+  transition: height 0.3s ease;
 }
 
 /* 📱 Mobile: Navbar Content Padding + Safe Areas */
