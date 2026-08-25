@@ -4,6 +4,7 @@
 const PulseNotification = require("../models/PulseNotification");
 const nodemailer = require("nodemailer");
 const { generateEmailTemplate } = require("../utils/emailTemplate");
+const { pulseDirectEmailSuppressed } = require("../utils/pulseDirectEmailGate");
 
 class PulseNotificationService {
   constructor() {
@@ -144,9 +145,13 @@ class PulseNotificationService {
       return false;
     }
 
-    // notificationSettings prüfen
-    const ns = user.notificationSettings;
-    if (ns?.email?.enabled === false || ns?.email?.legalPulse === false) {
+    // notificationSettings (Profil-Schalter) UND legalPulseSettings prüfen.
+    // 25.08.2026: Dieser Direkt-Versender (an der email_queue vorbei) prüfte bisher NUR den
+    // Profil-Schalter notificationSettings.email.legalPulse. Der Pulse-Abmelde-Link und alle
+    // vier V2-Versender nutzen aber legalPulseSettings (via pulseEmailsDisabled). Folge: Wer
+    // sich per Pulse-Mail abmeldete, wurde von genau diesem Versender weiter angeschrieben.
+    // Jetzt spiegelt er dieselbe eine Wahrheit — konsistent mit den V2-Jobs und dem Abmelde-Link.
+    if (pulseDirectEmailSuppressed(user)) {
       console.log(`[PULSE-NOTIFICATION] Skipping ${user.email} - legalPulse deaktiviert`);
       return false;
     }
