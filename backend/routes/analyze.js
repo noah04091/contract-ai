@@ -5271,9 +5271,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         success: false,
         // ✏️ 10.08.2026: Free-Limit ist einmalig (kein Monats-Reset, vgl. cron/resetAnalysisCount.js)
         // — "Monatlich" war für Free sachlich falsch. Frontend matcht auf "Limit erreicht" (beibehalten).
+        // ⚠️ 25.08.2026: Der Text trug ein rotes Kreuz und siezte, obwohl das ganze
+        // Produkt duzt. Ein aufgebrauchtes Kontingent ist kein Fehler, sondern der
+        // Moment, in dem jemand mehr will — er sollte nicht wie eine Abweisung klingen.
+        // ⚠️ Die Teilzeichenkette "Limit erreicht" MUSS erhalten bleiben: ContractsV2,
+        // ContractAnalysis und ContractAnalysisV2 erkennen den Fall per includes().
         message: plan === 'free'
-          ? "❌ Analyse-Limit erreicht: Die 3 kostenlosen Analysen sind aufgebraucht. Bitte upgraden Sie Ihr Paket."
-          : "❌ Monatliches Analyse-Limit erreicht. Bitte upgraden Sie Ihr Paket.",
+          ? "Analyse-Limit erreicht: Deine 3 kostenlosen Analysen sind aufgebraucht. Dein Vertrag bleibt gespeichert."
+          : "Analyse-Limit erreicht: Dein monatliches Kontingent ist aufgebraucht.",
         error: "LIMIT_EXCEEDED",
         currentCount: user.analysisCount ?? 0,
         limit: limit,

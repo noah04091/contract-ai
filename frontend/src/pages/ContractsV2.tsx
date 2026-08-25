@@ -3373,8 +3373,19 @@ export default function Contracts() {
     } catch (error) {
       console.error("❌ Error analyzing existing contract:", error);
       const errorMsg = error instanceof Error ? error.message : 'Analyse fehlgeschlagen';
-      setError(errorMsg);
-      toast.error(`Analyse fehlgeschlagen: ${errorMsg}`);
+
+      // ⚠️ 25.08.2026: Ein erreichtes Kontingent ist KEIN Fehlschlag. Vorher las der
+      // Nutzer hier "Analyse fehlgeschlagen: ❌ Analyse-Limit erreicht … Bitte upgraden
+      // Sie Ihr Paket" — doppelt negativ, in fremder Anrede, und ohne einen Weg.
+      // Das trifft ausgerechnet jemanden, der das Produkt dreimal genutzt hat und
+      // gerade ein viertes Mal will: der teuerste Moment, um jemanden zu verlieren.
+      if (errorMsg.includes('Limit erreicht')) {
+        setError('Deine 3 kostenlosen Analysen sind aufgebraucht. Dein Vertrag bleibt gespeichert.');
+        toast.info('Deine 3 kostenlosen Analysen sind aufgebraucht. Dein Vertrag bleibt gespeichert — mit einem Paket kannst du sofort weitermachen.', 9000);
+      } else {
+        setError(errorMsg);
+        toast.error(`Analyse fehlgeschlagen: ${errorMsg}`);
+      }
     } finally {
       // Loading States zurücksetzen
       clearInterval(progressInterval);
