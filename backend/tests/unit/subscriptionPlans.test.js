@@ -56,8 +56,10 @@ describe('Subscription Plans - Unit Tests', () => {
       expect(FEATURE_ACCESS.optimize).toContain(PLANS.ENTERPRISE);
     });
 
-    test('nur Business+ hat Zugriff auf Chat', () => {
-      expect(FEATURE_ACCESS.chat).not.toContain(PLANS.FREE);
+    // 📨 Welle 2 / Free-Chat-Launch: Free hat bewusst Chat-Zugang,
+    // begrenzt über PLAN_LIMITS (5/Monat) statt über die Zugriffsliste.
+    test('alle Pläne haben Zugriff auf Chat (Free seit Welle 2 mit Kontingent)', () => {
+      expect(FEATURE_ACCESS.chat).toContain(PLANS.FREE);
       expect(FEATURE_ACCESS.chat).toContain(PLANS.BUSINESS);
       expect(FEATURE_ACCESS.chat).toContain(PLANS.ENTERPRISE);
     });
