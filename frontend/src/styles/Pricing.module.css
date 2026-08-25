@@ -32,6 +32,25 @@
 .spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(0,0,0,.16); border-top-color: currentColor; animation: caSpin .7s linear infinite; display: inline-block; }
 
 /* --- Wrapper: Tokens + Basis NUR hier --- */
+/* Hinweis für Abbrecher (25.08.2026). Bewusst ruhig und in Blau statt in einer
+   Warnfarbe: Es ist kein Fehler passiert, und der Abbruch soll sich nicht wie
+   einer anfühlen. Er nimmt niemandem den Weg und lässt sich wegklicken. */
+.cancelBar {
+  display: flex; align-items: center; gap: 12px;
+  max-width: 720px; margin: 20px auto 0; padding: 12px 16px;
+  background: #EFF6FF; border: 1px solid #C7DDFD; border-radius: 12px;
+}
+.cancelDot {
+  width: 8px; height: 8px; border-radius: 50%; flex: none; background: #3B82F6;
+}
+.cancelTxt { flex: 1; font-size: 14px; line-height: 1.5; color: #1E3A5F; }
+.cancelTxt strong { color: #0B2545; font-weight: 650; }
+.cancelClose {
+  border: 0; background: none; font-family: inherit; font-size: 14px;
+  color: #6B85A8; cursor: pointer; padding: 4px 6px; border-radius: 6px; flex: none;
+}
+.cancelClose:hover { background: #DCEAFB; color: #0B2545; }
+
 .page {
   --accent: #2563EB;
   --accent-2: #3B82F6;

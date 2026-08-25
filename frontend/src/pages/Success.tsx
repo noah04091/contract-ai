@@ -24,7 +24,6 @@ const Success: React.FC = () => {
         const token = localStorage.getItem('authToken') || localStorage.getItem('token');
         if (!token) return false;
 
-        console.log('🚀 [FALLBACK] Versuche direkte Stripe-Verifizierung...');
 
         const response = await fetch('/api/stripe/verify-subscription', {
           method: 'POST',
@@ -43,7 +42,6 @@ const Success: React.FC = () => {
             setIsLoading(false);
             // 🔄 AuthContext aktualisieren damit alle Seiten den neuen Status haben
             refetchUser();
-            console.log(`✅ [FALLBACK] Subscription aktiviert: ${data.subscriptionPlan}`);
             return true;
           }
         }
@@ -65,18 +63,15 @@ const Success: React.FC = () => {
           setIsLoading(false);
           // 🔄 AuthContext aktualisieren damit alle Seiten den neuen Status haben
           refetchUser();
-          console.log(`✅ Subscription aktiviert: ${data.subscriptionPlan}`);
           return true; // Stop polling
         }
 
         pollCount++;
-        console.log(`🔄 Polling subscription status... (${pollCount}/${maxPolls})`);
 
         // Automatischer Fallback bei mehreren Intervallen (10s, 20s, 30s, 45s)
         const fallbackIntervals = [5, 10, 15, 22];
         if (fallbackIntervals.includes(pollCount) && fallbackAttempts < 4) {
           fallbackAttempts++;
-          console.log(`⏰ Automatischer Fallback #${fallbackAttempts} wird ausgelöst...`);
           const fallbackSuccess = await verifyWithStripe();
           if (fallbackSuccess) {
             return true; // Stop polling
@@ -85,14 +80,12 @@ const Success: React.FC = () => {
 
         if (pollCount >= maxPolls) {
           // Letzter Versuch mit Fallback
-          console.log('🔄 Letzter Fallback-Versuch...');
           const fallbackSuccess = await verifyWithStripe();
           if (fallbackSuccess) {
             return true;
           }
           // Auch wenn nicht aktiviert, Loading beenden - User kann zum Dashboard
           setIsLoading(false);
-          console.log('⚠️ Max polling attempts reached - User kann trotzdem fortfahren');
           return true; // Stop polling
         }
 
@@ -179,11 +172,16 @@ const Success: React.FC = () => {
           </div>
           
           <div className={styles.successContent}>
+            {/* ⚠️ 25.08.2026: Diese Seite hat gesiezt, während das gesamte übrige
+                Produkt duzt (Registrierung, Onboarding, Erststart, Mails). Der Wechsel
+                fiel ausgerechnet auf den Moment, in dem jemand gerade Geld überwiesen
+                hat — da wirkt eine plötzlich distanzierte Anrede wie ein anderes
+                Unternehmen. Durchgängig auf Du umgestellt. */}
             <h1 className={styles.title}>Bezahlung erfolgreich</h1>
 
             <p className={styles.message}>
-              Vielen Dank für Ihr Abonnement bei Contract AI.
-              Ihre Zahlung wurde erfolgreich verarbeitet{subscriptionActive ? ' und Ihr Konto wurde aktiviert' : ''}.
+              Danke für dein Vertrauen.
+              Deine Zahlung ist angekommen{subscriptionActive ? ' und dein Konto ist freigeschaltet' : ''}.
             </p>
 
             <div className={styles.detailsContainer}>
@@ -227,19 +225,33 @@ const Success: React.FC = () => {
               </div>
 
               <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Bestätigung</span>
-                <span className={styles.detailValue}>Per E-Mail gesendet</span>
+                <span className={styles.detailLabel}>Rechnung</span>
+                <span className={styles.detailValue}>Kommt per E-Mail</span>
               </div>
             </div>
-            
+
+            {/* ⚠️ 25.08.2026: Bleibt die Freischaltung nach 60 Sekunden aus, stand hier
+                bisher nur ein oranges "Aktivierung läuft…" — ohne jede Handlung für
+                jemanden, der gerade bezahlt hat. Das ist der unangenehmste denkbare
+                Moment für eine Sackgasse. Jetzt bekommt genau dieser Fall eine
+                Erklärung und einen Weg. */}
+            {!isLoading && !subscriptionActive && (
+              <p className={styles.message} style={{ fontSize: '14px', opacity: 0.9 }}>
+                Deine Zahlung ist durch, die Freischaltung dauert hier gerade länger als
+                gewöhnlich. Du kannst das Fenster schließen, sie läuft im Hintergrund weiter.
+                Ist in ein paar Minuten noch nichts passiert, schreib uns kurz, wir erledigen
+                das von Hand.
+              </p>
+            )}
+
             <div className={styles.buttonContainer}>
               <Link to="/dashboard" className={styles.dashboardButton}>
                 Weiter zum Dashboard
               </Link>
             </div>
-            
+
             <p className={styles.supportText}>
-              Falls Sie Fragen haben, kontaktieren Sie bitte unseren <Link to="/support" className={styles.supportLink}>Kundensupport</Link>.
+              Fragen? Schreib uns über den <Link to="/support" className={styles.supportLink}>Support</Link> oder antworte einfach auf die Bestätigungs-E-Mail.
             </p>
           </div>
         </div>

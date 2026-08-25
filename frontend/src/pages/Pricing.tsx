@@ -81,6 +81,14 @@ export default function Pricing() {
   const [searchParams] = useSearchParams();
   const urlPromoCode = searchParams.get('code')?.trim() || null;
 
+  // 💳 25.08.2026: Stripe schickt Abbrecher auf /pricing?canceled=true zurück.
+  // Der Parameter wurde nie ausgewertet — wer die Zahlung abbrach, landete
+  // kommentarlos wieder auf der Preisseite und musste selbst herausfinden, ob
+  // etwas passiert ist. Genau an dieser Stelle springen Leute endgültig ab.
+  // Kein Drängen, nur eine ruhige Einordnung: nichts wurde belastet, du kannst
+  // jederzeit weitermachen.
+  const [checkoutCanceled, setCheckoutCanceled] = useState(() => searchParams.get('canceled') === 'true');
+
   // Kampagne einmal beim Mount bestimmen (kein Neuberechnen pro Countdown-Tick → kein Animations-Restart)
   const campaign = useMemo(() => getCampaign(new Date()), []);
 
@@ -512,6 +520,25 @@ export default function Pricing() {
       </Helmet>
 
       <div className={styles.page}>
+        {/* Auffangen, wer die Zahlung abgebrochen hat. Siehe checkoutCanceled oben. */}
+        {checkoutCanceled && (
+          <div className={styles.cancelBar} role="status">
+            <span className={styles.cancelDot} />
+            <span className={styles.cancelTxt}>
+              <strong>Kein Problem, es wurde nichts abgebucht.</strong>{' '}
+              Du kannst jederzeit weitermachen, dein Konto bleibt wie es ist.
+            </span>
+            <button
+              type="button"
+              className={styles.cancelClose}
+              onClick={() => setCheckoutCanceled(false)}
+              aria-label="Hinweis schließen"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {/* HERO */}
         <section className={styles.hero}>
           <div className={styles.heroGlow} />

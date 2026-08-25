@@ -253,10 +253,22 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
                 )}
               </div>
 
+              {/* ⚠️ 25.08.2026: Ohne die Prüfung auf > 0 stand hier bei aufgebrauchtem
+                  Kontingent wörtlich "nutzt eine deiner 0 freien Analysen". Der Fall
+                  tritt auf, sobald jemand seine drei Analysen verbraucht hat, ohne dass
+                  das Häkchen für die erste Analyse gesetzt wurde. Dann ist die ehrliche
+                  Auskunft wichtiger als das Zählen: Der Vertrag wird gespeichert, die
+                  Prüfung braucht ein Paket. */}
               {state === 'idle' && (
                 <p className={styles.dropNote}>
-                  Die Prüfung startet direkt danach
-                  {freeAnalyses !== null && <> und nutzt <b>eine deiner {freeAnalyses} freien Analysen</b></>}.
+                  {freeAnalyses !== null && freeAnalyses <= 0 ? (
+                    <>Dein Vertrag wird gespeichert. Für die Prüfung brauchst du ein Paket, deine freien Analysen sind aufgebraucht.</>
+                  ) : (
+                    <>
+                      Die Prüfung startet direkt danach
+                      {freeAnalyses !== null && <> und nutzt <b>eine deiner {freeAnalyses} freien Analysen</b></>}.
+                    </>
+                  )}
                 </p>
               )}
 
@@ -373,7 +385,11 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
               verständlichem Deutsch statt in Juristensprache.
             </p>
             <span className={styles.heroMeta}>
-              {freeAnalyses !== null && <span className={styles.heroFree}>{freeAnalyses} Analysen frei</span>}
+              {/* Gleicher Grund wie oben: "0 Analysen frei" wäre kein Werbeversprechen,
+                  sondern eine Absage auf der wichtigsten Karte der Seite. */}
+              {freeAnalyses !== null && freeAnalyses > 0 && (
+                <span className={styles.heroFree}>{freeAnalyses} Analysen frei</span>
+              )}
               <span className={styles.heroGo}>Vertrag hochladen <span className={styles.heroArrow}>→</span></span>
             </span>
           </button>
