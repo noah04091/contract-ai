@@ -96,6 +96,10 @@
 .ca-reg-noti.error { background: rgba(255,59,48,0.08); border-color: rgba(255,59,48,0.3); color: #c81d13; }
 .ca-reg-noti-ico { flex-shrink: 0; font-weight: 700; }
 .ca-reg-noti-text { flex: 1; }
+/* Wege aus einer Meldung heraus (26.08.2026). Unterstrichen, damit sie auch dort als
+   Link erkennbar sind, wo die Meldung ohnehin farbig ist. */
+.ca-reg-noti-link { color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.ca-reg-noti-link:hover { opacity: 0.8; }
 .ca-reg-noti-close { flex-shrink: 0; background: none; border: none; cursor: pointer; color: inherit; opacity: 0.6; font-size: 14px; padding: 2px; line-height: 1; }
 .ca-reg-noti-close:hover { opacity: 1; }
 

@@ -19,7 +19,16 @@ interface AuthResponse {
 }
 
 export default function Login() {
-  const [email, setEmail] = useState("");
+  // 26.08.2026: Wer sich mit einer bereits vergebenen Adresse registrieren wollte,
+  // wird von der Registrierung hierher geschickt. Ohne diese Vorbelegung müsste er
+  // die Adresse, die er gerade eingetippt hat, ein zweites Mal eingeben.
+  const [email, setEmail] = useState(() => {
+    try {
+      return new URLSearchParams(window.location.search).get('email') || '';
+    } catch {
+      return '';
+    }
+  });
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

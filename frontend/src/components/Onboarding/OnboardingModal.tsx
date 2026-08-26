@@ -140,6 +140,34 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const [profile, setProfile] = useState<OnboardingProfile>({});
   const [direction, setDirection] = useState(1); // 1 = forward, -1 = backward
 
+  // 🔄 26.08.2026: Wer die Tour verlässt, ohne sie zu beenden (Seite neu laden,
+  // wegnavigieren, Gerät wechseln), fing beim nächsten Besuch wieder bei Schritt 1 an
+  // — und bekam "Lade deinen ersten Vertrag hoch" erneut vorgesetzt, obwohl er das
+  // längst getan hatte. Das Backend merkt sich die erledigten Schritte
+  // (onboarding.completedSteps) und liefert sie mit; genutzt wurden sie nie.
+  // Jetzt springt die Tour beim Öffnen auf den ersten offenen Schritt.
+  // Nur EINMAL pro Öffnen, sonst würde sie beim Zurückblättern wieder vorspringen.
+  const sprungGemacht = useRef(false);
+  useEffect(() => {
+    if (!isOpen) { sprungGemacht.current = false; return; }
+    if (sprungGemacht.current || !onboardingState) return;
+
+    const erledigt = new Set((onboardingState.completedSteps || []).map(s => s.stepId));
+    if (erledigt.size === 0) { sprungGemacht.current = true; return; }
+
+    // ⚠️ NICHT der erste offene Schritt: 'welcome', 'features' und 'complete' werden
+    // nie über completeStep gespeichert (nur 'personalization' und 'upload'), der
+    // erste offene wäre also immer 'welcome' und der Sprung liefe ins Leere.
+    // Maßgeblich ist der WEITESTE erledigte Schritt; von dort geht es weiter.
+    let weitester = -1;
+    STEPS.forEach((s, i) => { if (erledigt.has(s.id)) weitester = i; });
+
+    sprungGemacht.current = true;
+    if (weitester >= 0) {
+      setCurrentStep(Math.min(weitester + 1, STEPS.length - 1));
+    }
+  }, [isOpen, onboardingState]);
+
   // 📁 File Upload State
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');

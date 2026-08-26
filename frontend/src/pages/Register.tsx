@@ -25,7 +25,14 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "info" } | null>(null);
+  // action/secondary: optionale Wege aus einer Meldung heraus. Eine Fehlermeldung ohne
+  // Ausweg ist der häufigste Abbruchgrund an dieser Stelle (siehe 409-Fall unten).
+  const [notification, setNotification] = useState<{
+    message: string;
+    type?: "success" | "error" | "info";
+    action?: { label: string; to: string };
+    secondary?: { label: string; to: string };
+  } | null>(null);
   const [touched, setTouched] = useState<{ firstName?: boolean; lastName?: boolean; email?: boolean }>({});
 
   // E-Mail-Verification States
@@ -169,6 +176,17 @@ export default function Register() {
           setNotification({ message: "Registrierung erfolgreich, E-Mail konnte nicht gesendet werden.", type: "error" });
           setShowEmailVerification(true);
         }
+      } else if (res.status === 409) {
+        // ⚠️ 26.08.2026: Bisher stand hier nur "❌ E-Mail bereits registriert" und der
+        // Besucher saß fest. Der häufigste Fall dahinter ist banal: Er hat schon ein
+        // Konto und weiß es nicht mehr. Ohne Weg zur Anmeldung oder zum Passwort
+        // bricht genau hier jemand ab, der eigentlich schon Kunde ist.
+        setNotification({
+          message: "Für diese Adresse gibt es schon ein Konto.",
+          type: "info",
+          action: { label: "Jetzt anmelden", to: `/login?email=${encodeURIComponent(email)}` },
+          secondary: { label: "Passwort vergessen?", to: "/forgot-password" },
+        });
       } else {
         const errorMessage = data.errors && data.errors.length > 0
           ? data.errors.join('. ')
@@ -271,7 +289,25 @@ export default function Register() {
                 <span className="ca-reg-noti-ico">
                   {notification.type === "success" ? "✓" : notification.type === "error" ? "✕" : "ℹ"}
                 </span>
-                <span className="ca-reg-noti-text">{notification.message}</span>
+                <span className="ca-reg-noti-text">
+                  {notification.message}
+                  {notification.action && (
+                    <>
+                      {' '}
+                      <Link to={notification.action.to} className="ca-reg-noti-link">
+                        {notification.action.label}
+                      </Link>
+                    </>
+                  )}
+                  {notification.secondary && (
+                    <>
+                      {' · '}
+                      <Link to={notification.secondary.to} className="ca-reg-noti-link">
+                        {notification.secondary.label}
+                      </Link>
+                    </>
+                  )}
+                </span>
                 <button onClick={() => setNotification(null)} className="ca-reg-noti-close" aria-label="Schließen">✕</button>
               </div>
             )}
