@@ -176,45 +176,76 @@ function generateFeaturesEmail(user) {
   // Get features based on user's use case (from onboarding) or default
   const useCase = user.onboarding?.profile?.primaryUseCase || 'analyze';
 
+  // ⚠️ 26.08.2026, dritter Fund derselben Art (nach Onboarding-Fenster und
+  // Willkommens-Mail): Diese Mail geht 7 Tage nach der Registrierung raus, also
+  // ueberwiegend an KOSTENLOSE Konten — bewarb aber fast ausschliesslich Funktionen,
+  // die ein solches Konto nicht oeffnen kann. Bei "generate" und "sign" war sogar
+  // JEDE der drei empfohlenen Funktionen gesperrt. Wer daraufhin klickt, laeuft
+  // gegen eine Wand, und zwar in dem Moment, in dem er das Produkt gerade erst
+  // kennenlernt.
+  // `free` richtet sich nach backend/constants/subscriptionPlans.js (PLAN_LIMITS.free):
+  // analyze 3, chat 5, Fristen und Vertragsverwaltung inklusive. optimize, generate,
+  // compare, envelopes, legalPulse und legalLens stehen dort auf 0 bzw. Business aufwaerts.
+  const istKostenlos = (user.subscriptionPlan || 'free').toLowerCase() === 'free';
+
   const featuresByUseCase = {
     analyze: [
-      { icon: '🔍', title: 'Legal Lens', desc: 'Jede Vertragsklausel verständlich erklärt. Klicke auf eine Klausel und erhalte sofort eine Erklärung in einfacher Sprache.', url: '/legal-lens' },
-      { icon: '⚡', title: 'Optimizer', desc: 'Lass die KI deinen Vertrag optimieren. Du erhältst konkrete Vorschläge für bessere Formulierungen.', url: '/optimizer' },
-      { icon: '📊', title: 'Legal Pulse', desc: 'Bleibe informiert über Gesetzesänderungen, die deine Verträge betreffen könnten.', url: '/legalpulse' }
+      { icon: '🔍', title: 'Fragen zu deinem Vertrag', desc: 'Hak nach, wenn eine Klausel unklar ist. Antworten in Klartext, ohne Juristendeutsch.', free: true },
+      { icon: '🔎', title: 'Legal Lens', desc: 'Jede Vertragsklausel verständlich erklärt. Klicke auf eine Klausel und erhalte sofort eine Erklärung in einfacher Sprache.' },
+      { icon: '⚡', title: 'Optimizer', desc: 'Lass die KI deinen Vertrag optimieren. Du erhältst konkrete Vorschläge für bessere Formulierungen.' },
+      { icon: '📊', title: 'Legal Pulse', desc: 'Bleibe informiert über Gesetzesänderungen, die deine Verträge betreffen könnten.' }
     ],
     generate: [
-      { icon: '✍️', title: 'Vertragsgenerator', desc: 'Erstelle rechtssichere Verträge in Minuten. Wähle aus verschiedenen Vorlagen.', url: '/Generate' },
-      { icon: '🔧', title: 'Contract Builder', desc: 'Visueller Drag & Drop Editor für individuelle Verträge.', url: '/contract-builder' },
-      { icon: '✒️', title: 'Digitale Signatur', desc: 'Lasse Verträge rechtsgültig digital unterschreiben.', url: '/envelopes' }
+      // Ohne die erste Zeile bestuende dieser Abschnitt fuer ein kostenloses Konto
+      // ausschliesslich aus Gesperrtem.
+      { icon: '🔍', title: 'Verträge prüfen', desc: 'Bestehende Verträge analysieren lassen, bevor du eigene aufsetzt.', free: true },
+      { icon: '✍️', title: 'Vertragsgenerator', desc: '16 geprüfte Vorlagen, vom Arbeitsvertrag bis zur Geheimhaltung.' },
+      { icon: '🔧', title: 'Contract Builder', desc: 'Klauseln zusammenstellen statt tippen.' },
+      { icon: '✒️', title: 'Digitale Signatur', desc: 'Lasse Verträge rechtsgültig digital unterschreiben.' }
     ],
     manage: [
-      { icon: '📅', title: 'Fristenkalender', desc: 'Alle wichtigen Termine auf einen Blick. Automatische Erinnerungen vor Ablauf.', url: '/calendar' },
-      { icon: '📁', title: 'Smart Folders', desc: 'Organisiere deine Verträge automatisch mit KI-basierter Kategorisierung.', url: '/contracts' },
-      { icon: '📊', title: 'Legal Pulse', desc: 'Werde benachrichtigt, wenn Gesetzesänderungen deine Verträge betreffen.', url: '/legalpulse' }
+      { icon: '📅', title: 'Fristenkalender', desc: 'Alle wichtigen Termine auf einen Blick. Automatische Erinnerungen vor Ablauf.', free: true },
+      { icon: '📁', title: 'Ordner und Ablage', desc: 'Deine Verträge sortiert an einem Ort, statt verstreut im Postfach.', free: true },
+      { icon: '📊', title: 'Legal Pulse', desc: 'Werde benachrichtigt, wenn Gesetzesänderungen deine Verträge betreffen.' }
     ],
     sign: [
-      { icon: '✒️', title: 'Signatur-Dashboard', desc: 'Verwalte alle Signaturanfragen an einem Ort.', url: '/envelopes' },
-      { icon: '👥', title: 'Multi-Signatur', desc: 'Lasse Dokumente von mehreren Personen unterschreiben.', url: '/envelopes/new' },
-      { icon: '🔔', title: 'Status-Tracking', desc: 'Verfolge den Unterschriftenstatus in Echtzeit.', url: '/envelopes' }
+      // Auch hier eine freie Zeile voran, sonst waere der Abschnitt eine Verbotstafel.
+      { icon: '🔍', title: 'Vorher prüfen lassen', desc: 'Sieh nach, was drinsteht, bevor du unterschreibst.', free: true },
+      { icon: '✒️', title: 'Signatur-Dashboard', desc: 'Verwalte alle Signaturanfragen an einem Ort.' },
+      { icon: '👥', title: 'Multi-Signatur', desc: 'Lasse Dokumente von mehreren Personen unterschreiben.' },
+      { icon: '🔔', title: 'Status-Tracking', desc: 'Verfolge den Unterschriftenstatus in Echtzeit.' }
     ]
   };
 
   const features = featuresByUseCase[useCase] || featuresByUseCase.analyze;
 
-  const featuresHtml = features.map(f => `
-    ${generateParagraph(`<strong>${f.icon} ${f.title}</strong><br>${f.desc}`)}
-  `).join('');
+  // Gegliederte Liste mit feinen Trennlinien statt gleich aussehender Absaetze,
+  // dazu ein ehrliches Etikett pro Zeile. Etiketten nur fuer kostenlose Konten.
+  const featuresHtml = generateFeatureList(features.map(f => ({
+    icon: f.icon,
+    title: f.title,
+    text: f.desc,
+    tag: istKostenlos && !f.free ? 'ab Business' : null
+  })));
 
   // Universelle Bonus-Features — nur zeigen, wenn nicht schon in der Use-Case-Liste (keine Doppelung)
   const existingTitles = new Set(features.map(f => f.title));
+  // Gleiche Behandlung wie oben: Der Fristenkalender ist im kostenlosen Konto
+  // enthalten, der Vertragsvergleich nicht (PLAN_LIMITS.free.compare = 0).
   const bonusFeatures = [
-    { icon: '📅', title: 'Fristenkalender', desc: 'Automatische Warnung vor Kündigungs- und Ablauffristen – du verpasst keine Frist mehr.' },
+    { icon: '📅', title: 'Fristenkalender', desc: 'Automatische Warnung vor Kündigungs- und Ablauffristen, du verpasst keine Frist mehr.', free: true },
     { icon: '🔄', title: 'Vertragsvergleich', desc: 'Vergleiche zwei Verträge und finde heraus, welcher besser für dich ist.' }
   ];
-  const bonusHtml = bonusFeatures
-    .filter(f => !existingTitles.has(f.title))
-    .map(f => generateParagraph(`<strong>${f.icon} ${f.title}</strong><br>${f.desc}`))
-    .join('');
+  const bonusHtml = generateFeatureList(
+    bonusFeatures
+      .filter(f => !existingTitles.has(f.title))
+      .map(f => ({
+        icon: f.icon,
+        title: f.title,
+        text: f.desc,
+        tag: istKostenlos && !f.free ? 'ab Business' : null
+      }))
+  );
 
   const body = `
     ${generateParagraph(`Hallo ${firstName},`)}
