@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import {
   ChevronRight,
   ChevronLeft,
@@ -938,7 +938,17 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
 
   // Backdrop wird über ::backdrop pseudo-element gestyled (siehe CSS)
 
+  // ♿ 26.08.2026: In diesem Fenster stecken 83 bewegte Elemente (Einblenden,
+  // Verschieben, Skalieren, ein schwebendes Upload-Symbol). Die Systemeinstellung
+  // "Bewegung reduzieren" wurde vollständig ignoriert. Für Menschen mit
+  // Vestibularstörungen, Migräne oder Bewegungsempfindlichkeit ist das kein
+  // Schönheitsfehler, sondern ein Grund, die Seite zu verlassen — ausgerechnet im
+  // ersten Fenster, das sie von Contract AI sehen.
+  // MotionConfig mit reducedMotion="user" wirkt auf ALLE Bewegungen darin auf einmal,
+  // statt 83 Stellen einzeln anzufassen. Wer die Einstellung nicht gesetzt hat,
+  // sieht unverändert alles wie bisher.
   const modalContent = (
+    <MotionConfig reducedMotion="user">
     <dialog
       ref={dialogRef}
       style={dialogStyle}
@@ -1123,6 +1133,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         </div>
       </div>
     </dialog>
+    </MotionConfig>
   );
 
   // Native <dialog> mit showModal() braucht kein Portal - es wird automatisch in die "top layer" gerendert

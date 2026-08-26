@@ -176,8 +176,11 @@
   text-wrap: balance;
 }
 
+/* 26.08.2026: Hier stand ein Verlauf nach Lila (#8B5CF6) — ausgerechnet hinter dem
+   Namen des Nutzers in der Begrüßung, also an der sichtbarsten Stelle des Fensters.
+   Die Marke führt Blau. */
 .highlight {
-  background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -793,5 +796,21 @@
   .uploadActions .nextButton {
     width: 100%;
     justify-content: center;
+  }
+}
+
+/* ♿ Bewegung reduzieren (26.08.2026)
+   Wer im Betriebssystem "Bewegung reduzieren" eingestellt hat, tut das meist aus
+   einem handfesten Grund: Vestibularstörungen, Migräne, Bewegungsempfindlichkeit.
+   Diese Datei hat die Einstellung bisher vollständig ignoriert. Inhalte bleiben
+   unverändert sichtbar, nur die Bewegung dorthin entfällt. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
