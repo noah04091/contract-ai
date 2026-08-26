@@ -810,7 +810,7 @@ const AgenturvertragPruefen: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.whyGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className={`${styles.whyGrid} ${styles.whyGrid4col}`}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', color: '#8b5cf6' }}>
                   <Gavel size={28} />
@@ -1158,7 +1158,7 @@ const AgenturvertragPruefen: React.FC = () => {
               <h2 className={styles.sectionTitle}>Auch interessant</h2>
             </div>
 
-            <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <div className={`${styles.relatedGrid} ${styles.relatedGrid2col}`}>
               <Link to="/arbeitsvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>

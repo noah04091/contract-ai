@@ -37,13 +37,23 @@ const SeoCrossLinks: React.FC = () => {
           color: #d1d5db;
         }
       `}</style>
+      {/* {' '} zwischen den Elementen ist Pflicht: JSX entfernt Zeilenumbruch-
+          Whitespace, ohne echte Leerzeichen wird die Linkkette ein einziges
+          unumbrechbares "Wort" und läuft auf dem Handy seitlich aus dem Bild */}
       <span style={{ marginRight: '8px' }}>Auch als spezialisierte Vertragsprüfung verfügbar:</span>
+      {' '}
       <Link to="/arbeitsvertrag-pruefen" className="seo-inline-link">Arbeitsvertrag</Link>
+      {' '}
       <span className="seo-inline-sep">·</span>
+      {' '}
       <Link to="/mietvertrag-pruefen" className="seo-inline-link">Mietvertrag</Link>
+      {' '}
       <span className="seo-inline-sep">·</span>
+      {' '}
       <Link to="/nda-pruefen" className="seo-inline-link">NDA</Link>
+      {' '}
       <span className="seo-inline-sep">·</span>
+      {' '}
       <Link to="/kaufvertrag-pruefen" className="seo-inline-link">Kaufvertrag</Link>
     </div>
   );

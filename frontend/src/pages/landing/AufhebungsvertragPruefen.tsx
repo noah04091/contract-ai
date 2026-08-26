@@ -551,7 +551,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <h2 className={styles.sectionTitle}>Auch interessant</h2>
             </div>
-            <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <div className={`${styles.relatedGrid} ${styles.relatedGrid2col}`}>
               {/* 🆕 21.07.2026: Querverweis auf die neue Kündigungs-Seite (thematisch direkt verwandt) */}
               <Link to="/kuendigung-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><FileText size={20} /></span>

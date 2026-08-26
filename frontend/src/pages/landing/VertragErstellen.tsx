@@ -820,7 +820,7 @@ const VertragErstellen: React.FC = () => {
               </p>
             </div>
 
-            <div className={styles.whyGrid} style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <div className={`${styles.whyGrid} ${styles.whyGrid4col}`}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <MessageSquare size={28} />
@@ -1147,7 +1147,7 @@ const VertragErstellen: React.FC = () => {
               <h2 className={styles.sectionTitle}>Auch interessant</h2>
             </div>
 
-            <div className={styles.relatedGrid} style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+            <div className={`${styles.relatedGrid} ${styles.relatedGrid2col}`}>
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>

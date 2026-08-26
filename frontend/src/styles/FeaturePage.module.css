@@ -4185,3 +4185,34 @@
     padding: 10px 8px;
   }
 }
+
+/* ============================================
+   SPALTEN-MODIFIER (ersetzen Inline-gridTemplateColumns)
+   Inline-Styles schlagen Media Queries — dadurch blieben auf dem Handy
+   4 Spalten stehen und Karten wurden seitlich abgeschnitten. Diese
+   Klassen stehen bewusst am Dateiende, damit sie alle früheren
+   .whyGrid/.relatedGrid-Regeln deterministisch überstimmen.
+   ============================================ */
+.whyGrid4col {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.relatedGrid2col {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 1024px) {
+  .whyGrid4col {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .whyGrid4col {
+    grid-template-columns: 1fr;
+  }
+
+  .relatedGrid2col {
+    grid-template-columns: 1fr;
+  }
+}
