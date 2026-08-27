@@ -674,7 +674,11 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               {d.lawyerLevelAnalysis && (
                 <span
                   className={styles.fcStatusPill}
-                  style={{ background: "#f5f3ff", color: "#8b5cf6" }}
+                  /* 27.08.2026: Hier stand Lila (#8b5cf6 auf #f5f3ff) — auf Noahs
+                     Screenshot das einzige violette Element weit und breit. Die Marke
+                     führt Blau; als hochwertige Auszeichnung liest sich ein kräftiges
+                     Indigo genauso, ohne aus der Palette zu fallen. */
+                  style={{ background: "#EEF2FF", color: "#4338CA" }}
                   title="Premium-Analyse mit 7-Punkte-Check, Tiefenanalyse und Vollständigkeitsgarantie"
                 >
                   <Scale size={10} /> Premium-Analyse
@@ -1019,7 +1023,12 @@ export default function V2HeroSection({ data, fileName, serviceHealth, isInitial
               onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.03)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
             >
-            <div className={styles.scoreDonut} style={{ position: "relative", width: 160, height: 160 }}>
+            {/* ⚠️ 27.08.2026 (Noahs Screenshot): Hier standen width und height fest
+                bei 160 Pixeln direkt im Element. Inline-Angaben schlagen jede
+                Gestaltungsregel, deshalb blieb der Ring auf dem Handy 160 breit,
+                obwohl das Stylesheet dort 96 vorsieht. Die Größe kommt jetzt
+                ausschließlich aus .scoreDonut und schrumpft damit korrekt mit. */}
+            <div className={styles.scoreDonut} style={{ position: "relative" }}>
               {scoreNotMeaningful ? (
                 <svg viewBox="0 0 160 160" role="img" aria-label="Kein Risiko-Score, kein Vertragsdokument" style={{ width: "100%", height: "100%", position: "relative", zIndex: 1 }}>
                   <circle cx="80" cy="80" r={radius} fill="none" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="5 9" strokeLinecap="round" opacity="0.55" />

@@ -140,7 +140,13 @@ export default function SetupGuide({ checklist, freeAnalyses, showPossibilities 
       <section className={styles.setup}>
         <header className={styles.setupHead}>
           <span className={styles.ring}>
-            <svg width="58" height="58" aria-hidden="true">
+            {/* ⚠️ 27.08.2026 (Noahs Screenshot, rot eingekringelt): Hier fehlte die
+                viewBox. Ohne sie behalten die Kreise darin ihre festen Koordinaten,
+                auch wenn die Grafik per CSS kleiner gesetzt wird — der Inhalt wird
+                dann nicht skaliert, sondern ABGESCHNITTEN. Auf dem Handy ragte der
+                Ring dadurch aus seiner Fläche heraus. Mit viewBox skaliert alles
+                sauber mit, in jeder Größe. */}
+            <svg width="58" height="58" viewBox="0 0 58 58" aria-hidden="true">
               <circle cx="29" cy="29" r="23" fill="none" stroke="#DBE7FB" strokeWidth="5" />
               <circle cx="29" cy="29" r="23" fill="none" stroke="#3B82F6" strokeWidth="5"
                 strokeLinecap="round" strokeDasharray={ringLength} strokeDashoffset={ringOffset}

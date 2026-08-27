@@ -918,23 +918,63 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   }, [handleSkip]); // handleSkip als Dependency für korrekten Closure
 
   // Native dialog styles
-  const dialogStyle: React.CSSProperties = {
-    position: 'fixed',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    margin: 0,
-    padding: 0,
-    border: 'none',
-    background: '#fff',
-    borderRadius: 20,
-    width: '100%',
-    maxWidth: 560,
-    maxHeight: '90vh',
-    overflow: 'hidden',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-    zIndex: 2147483647,
-  };
+  // 📱 27.08.2026 (Noahs Handy-Test: "unten ist irgendwie so frei, man sieht den
+  // Hintergrund"): Das Fenster schwebte auch auf dem Handy mittig, mit Luft nach
+  // oben und unten. Auf einem schmalen Bildschirm wirkt das wie ein Fehler, und der
+  // Platz fehlt gleichzeitig dem Inhalt. Der Standard auf Telefonen ist ein Blatt,
+  // das am unteren Rand andockt und nur oben abgerundet ist — so kennt man es aus
+  // Apps, und es nutzt die Höhe voll aus.
+  // Die Positionierung steht inline, weil ein natives <dialog> eigene Browserstile
+  // mitbringt; deshalb hier eine echte Fallunterscheidung statt einer CSS-Regel.
+  const [istHandy, setIstHandy] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 640px)').matches
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 640px)');
+    const beiWechsel = (e: MediaQueryListEvent) => setIstHandy(e.matches);
+    mq.addEventListener('change', beiWechsel);
+    return () => mq.removeEventListener('change', beiWechsel);
+  }, []);
+
+  const dialogStyle: React.CSSProperties = istHandy
+    ? {
+        position: 'fixed',
+        top: 'auto',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        transform: 'none',
+        margin: 0,
+        padding: 0,
+        border: 'none',
+        background: '#fff',
+        borderRadius: '22px 22px 0 0',
+        width: '100%',
+        maxWidth: '100%',
+        // dvh statt vh: rechnet ohne die Browserleisten, die es auf dem Handy gibt.
+        maxHeight: '92dvh',
+        overflow: 'hidden',
+        boxShadow: '0 -10px 44px -8px rgba(0, 0, 0, 0.28)',
+        zIndex: 2147483647,
+      }
+    : {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        margin: 0,
+        padding: 0,
+        border: 'none',
+        background: '#fff',
+        borderRadius: 20,
+        width: '100%',
+        maxWidth: 560,
+        maxHeight: '90vh',
+        overflow: 'hidden',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        zIndex: 2147483647,
+      };
 
   // Backdrop wird über ::backdrop pseudo-element gestyled (siehe CSS)
 

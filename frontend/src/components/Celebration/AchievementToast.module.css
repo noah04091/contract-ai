@@ -10,13 +10,23 @@
  * Kein Lila — Blau führt, so wie überall sonst.
  */
 
+/* Zentrierung ohne transform (27.08.2026).
+   Vorher: left: 50% plus translateX(-50%). Die Verschiebung musste dafür auch in
+   framer-motion stehen, und von dort kam sie als Inline-Style — gegen den keine
+   Handy-Regel ankommt. Ergebnis: Die Meldung stand auf dem Handy links außerhalb
+   des Bildes.
+   Jetzt spannt der Container über die volle Breite (mit 16px Luft an beiden Rändern)
+   und zentriert seinen Inhalt per flex. Das funktioniert auf jeder Breite ohne
+   Sonderregel und lässt der Bewegung nur noch y und scale. */
 .toastContainer {
   position: fixed;
   top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 16px;
+  right: 16px;
   z-index: 10000;
   pointer-events: none;
+  display: flex;
+  justify-content: center;
 }
 
 .toast {
@@ -117,16 +127,19 @@
   border-radius: 0 0 14px 14px;
 }
 
-/* Responsive */
+/* Responsive — die Positionierung braucht hier keine Sonderregel mehr,
+   nur noch die Breite der Karte selbst. */
 @media (max-width: 480px) {
-  .toastContainer {
-    left: 16px;
-    right: 16px;
-    transform: none;
+  .toast {
+    min-width: 0;
+    width: 100%;
+    max-width: none;
+    padding: 14px 40px 14px 16px;
+    gap: 12px;
   }
 
-  .toast {
-    min-width: auto;
-    max-width: none;
-  }
+  .iconContainer { width: 38px; height: 38px; border-radius: 10px; }
+  .icon { font-size: 19px; }
+  .title { font-size: 14.5px; }
+  .description { font-size: 13px; }
 }
