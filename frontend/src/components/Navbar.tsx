@@ -172,6 +172,24 @@ export default function Navbar() {
   // Definiere geschützte Seiten
   const protectedRoutes = ["/dashboard", "/contracts", "/contracts-v2", "/contracts-legacy", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/generate", "/chat", "/envelopes", "/generate", "/legal-pulse", "/cancellations", "/playbook-review"];
   const isProtectedPage = protectedRoutes.includes(location.pathname);
+
+  // 26.08.2026 (Noahs Befund): In der eingeloggten App klebt die Navbar NICHT.
+  // Beim Arbeiten braucht der Inhalt die volle Höhe, und die Arbeitsseiten bringen
+  // eigene klebende Kopfzeilen mit (belegt: der Schritt-Balken in /generate lag
+  // komplett hinter der Navbar, die mit z-index 1000 alles überdeckt). Auf
+  // Marketing-Seiten bleibt sie sticky — dort ist die Navigation der Zweck.
+  // Diese Liste bewusst breiter als protectedRoutes oben: sie deckt auch /pulse,
+  // /legal-lens & Co. ab und matcht Unterseiten. NEUE ARBEITSSEITE? HIER EINTRAGEN.
+  const appPagePrefixes = [
+    "/dashboard", "/contracts", "/contracts-v2", "/contracts-legacy", "/optimizer",
+    "/compare", "/chat", "/generate", "/calendar", "/pulse", "/legal-pulse",
+    "/legal-lens", "/better-contracts", "/cancellations", "/playbook-review",
+    "/clause-library", "/contract-builder", "/envelopes", "/me", "/company-profile",
+    "/team", "/integrations", "/api-keys", "/premium", "/upgrade"
+  ];
+  const isAppPage = !!user && appPagePrefixes.some(
+    (p) => location.pathname === p || location.pathname.startsWith(p + "/")
+  );
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -1188,7 +1206,7 @@ export default function Navbar() {
   return (
     <>
       <motion.nav
-        className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""} ${!isHomePage ? styles.innerPageNavbar : ""} ${isAuthPage ? styles.authPageNavbar : ""}`}
+        className={`${styles.navbar} ${isScrolled && !isAppPage ? styles.navbarScrolled : ""} ${!isHomePage ? styles.innerPageNavbar : ""} ${isAuthPage ? styles.authPageNavbar : ""} ${isAppPage ? styles.appNavbar : ""}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.19, 1.0, 0.22, 1.0] }}

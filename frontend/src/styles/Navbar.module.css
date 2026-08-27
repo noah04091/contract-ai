@@ -2590,3 +2590,24 @@
   color: #6e6e73;
   line-height: 1.4;
 }
+
+/* ============================================
+   EINGELOGGTE APP-SEITEN — Navbar klebt NICHT
+   26.08.2026 (Noahs Befund). Beim Arbeiten gehört der Bildschirm dem Inhalt.
+   Belegt: Die Navbar (z-index 1000) überdeckte die seiteneigene klebende
+   Kopfzeile von /generate (Schritt-Balken, z-index 10) auf voller Höhe, und
+   Inhalt schimmerte durch die halbtransparente Leiste. Marketing-Seiten
+   bleiben sticky — dort ist die dauerhaft sichtbare Navigation der Zweck.
+   Steht am Dateiende, damit es die früheren .navbar-Regeln sicher überstimmt.
+   ============================================ */
+.appNavbar {
+  position: static;
+}
+
+/* Die Mitte (zentriertes Logo) ist sonst position:fixed und würde als
+   einzelnes Element über dem Inhalt kleben bleiben, wenn die Leiste wegscrollt.
+   Absolut in der Leiste zentriert = sie scrollt sauber mit weg. */
+.appNavbar .navbarContent .centerSection {
+  position: absolute;
+  height: 100%;
+}
