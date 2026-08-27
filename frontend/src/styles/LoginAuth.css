@@ -157,3 +157,14 @@
   .ca-login-glow-1, .ca-login-glow-2 { animation: none; }
   .ca-login-submit, .ca-login-input, .ca-login-pw-toggle, .ca-login-secondary { transition: none; }
 }
+
+/* Handy: Tippfläche des Wechsel-Links. Gemessen 182x20 px — er führt zur
+   Registrierung, liegt also auf dem Conversion-Weg. Fläche über Innenabstand,
+   Höhenwirkung per Gegen-Margin aufgehoben. Analog zu .ca-reg-switch a. */
+@media (max-width: 768px) {
+  .ca-login-switch a {
+    display: inline-block;
+    padding: 12px 10px;
+    margin: -12px -10px; /* Gegen-Margin in beide Richtungen: keine Wortlücke */
+  }
+}

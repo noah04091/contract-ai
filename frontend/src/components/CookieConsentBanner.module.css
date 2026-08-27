@@ -624,3 +624,15 @@
     transform: none;
   }
 }
+
+/* Handy: Tippfläche des Datenschutz-Links im Banner. Gemessen 106x15 px —
+   er erscheint auf JEDER Seite und ist ein Pflicht-Link. Fläche über
+   Innenabstand, Höhenwirkung per Gegen-Margin aufgehoben, damit das Banner
+   selbst unverändert bleibt. Schriftgröße bewusst nicht angefasst. */
+@media (max-width: 768px) {
+  .privacyLinkAnchor {
+    display: inline-block;
+    padding: 14px 8px;
+    margin: -14px -8px; /* hebt Innenabstand auf: KEINE sichtbare Wortlücke */
+  }
+}

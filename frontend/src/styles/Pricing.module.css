@@ -299,6 +299,11 @@
 .seoBottomLink { display: block; text-align: center; margin-top: 32px; }
 .seoBottomLink a { color: var(--accent); font-weight: 600; font-size: 14.5px; text-decoration: none; }
 .seoBottomLink a:hover { text-decoration: underline; }
+/* Handy: alleinstehender Link, gemessen nur 18px hoch. Er steht als einziges
+   Element in seiner Zeile, deshalb ist eine volle Tippfläche gefahrlos. */
+@media (max-width: 768px) {
+  .seoBottomLink a { display: inline-block; padding: 13px 12px; margin: -13px 0; }
+}
 
 /* ============================ TESTIMONIALS ============================ */
 .tst { max-width: 1180px; margin: 0 auto; padding: 110px 28px 0; }

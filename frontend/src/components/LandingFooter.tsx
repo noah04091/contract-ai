@@ -53,14 +53,14 @@ export default function LandingFooter() {
           ].map((col, ci) => (
             <div key={ci} style={s("flex:1 1 150px")}>
               <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>{col.h}</h4>
-              <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px")}>
+              <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column")}>
                 {col.links.map(([t, to], i) => <li key={i}><Link to={to} className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>{t}</Link></li>)}
               </ul>
             </div>
           ))}
           <div style={s("flex:1 1 150px")}>
             <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>Unternehmen</h4>
-            <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px")}>
+            <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column")}>
               <li><a href="mailto:info@contract-ai.de" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Kontakt</a></li>
               <li><Link to="/about" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Über uns</Link></li>
               <li><Link to="/fuer-agenturen" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Für Agenturen &amp; Teams</Link></li>
@@ -71,7 +71,7 @@ export default function LandingFooter() {
           </div>
           <div style={s("flex:1 1 150px")}>
             <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>Rechtliches</h4>
-            <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px")}>
+            <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column")}>
               <li><Link to="/datenschutz" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Datenschutz</Link></li>
               <li><Link to="/agb" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>AGB</Link></li>
               <li><Link to="/impressum" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Impressum</Link></li>

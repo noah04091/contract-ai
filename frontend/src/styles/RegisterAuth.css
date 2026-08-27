@@ -211,3 +211,32 @@
   .ca-reg-glow-1, .ca-reg-glow-2 { animation: none; }
   .ca-reg-submit, .ca-reg-pw-bar, .ca-reg-input, .ca-reg-pw-toggle, .ca-reg-secondary { transition: none; }
 }
+
+/* Handy: Tippflächen der Textlinks auf dem Anmeldeweg. Gemessen waren „AGB"
+   26x17 px und „Jetzt anmelden" 103x20 px. Die Fläche wächst über den
+   Innenabstand, die negative Gegen-Margin hebt die Höhenwirkung auf, damit
+   das Formular-Layout unverändert bleibt. Rein unsichtbar, nur die Trefferzone. */
+
+/* Wechsel-Link steht allein in seiner Zeile → volle Fläche gefahrlos.
+   Die Gegen-Margin läuft in BEIDE Richtungen, damit im Satz keine sichtbare
+   Wortlücke entsteht: die Trefferzone wächst, das Schriftbild bleibt gleich. */
+@media (max-width: 768px) {
+  .ca-reg-switch a {
+    display: inline-block;
+    padding: 12px 10px;
+    margin: -12px -10px;
+  }
+}
+
+/* Der Zustimmungssatz läuft dagegen über zwei Zeilen und enthält ZWEI Links.
+   Volle 44px Höhe würden hier in die Nachbarzeile ragen und sich gegenseitig
+   überlappen — dann trifft man beim Zielen auf „AGB" womöglich den anderen
+   Link. Deshalb hier vor allem in die BREITE (26px → 50px) und nur maßvoll in
+   die Höhe. Das deckt sich mit der WCAG-Ausnahme für Links im Fließtext. */
+@media (max-width: 768px) {
+  .ca-reg-terms a {
+    display: inline-block;
+    padding: 8px 10px;
+    margin: -8px -10px;
+  }
+}
