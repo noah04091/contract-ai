@@ -87,7 +87,11 @@ export const dashboardTour: TourConfig = {
     },
     {
       target: '[data-tour="dashboard-sidebar"]',
-      content: 'Über die Sidebar navigierst du zu allen Bereichen: Verträge, Kalender, Optimizer, und mehr.',
+      // ⚠️ 27.08.2026 (Noahs Handy-Test): Hier stand "Über die Sidebar navigierst du…".
+      // Auf dem Handy ist die Seitenleiste ausgeblendet, dort führt ein Menü oben
+      // links hin. Der Text erklärte also etwas, das der Leser gar nicht sehen konnte.
+      // Die neue Formulierung stimmt auf beiden Geräten.
+      content: 'Über das Menü erreichst du alle Bereiche: Verträge, Kalender, Optimierer und mehr.',
       title: '📍 Navigation',
       placement: 'right',
     },

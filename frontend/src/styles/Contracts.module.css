@@ -7052,6 +7052,14 @@
     gap: 0.625rem;
   }
 
+  /* 27.08.2026 (Noahs Handy-Screenshot): Bei DREI Knoepfen und zwei Spalten blieb
+     der dritte allein in der zweiten Reihe stehen — das sah zufaellig aus. Die
+     Hauptaktion gehoert ueber die volle Breite, die beiden Nebenwege darunter
+     nebeneinander. Nebenbei passt "Hochladen & analysieren" so wieder in eine Zeile. */
+  .multiFileActions .uploadButton {
+    grid-column: 1 / -1;
+  }
+
   .multiFileActions .uploadButton,
   .clearFilesButton {
     min-height: 44px;

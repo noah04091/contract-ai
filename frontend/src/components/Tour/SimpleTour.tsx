@@ -67,7 +67,20 @@ export function SimpleTour({
     const selector = currentStep.target as string;
     const element = document.querySelector(selector);
 
-    if (element) {
+    // ⚠️ 27.08.2026 (Noahs Handy-Test): Es genügt nicht, dass das Element im
+    // Dokument EXISTIERT — es muss auch sichtbar sein. Die Seitenleiste steht auf
+    // dem Handy zwar im Dokument, ist aber ausgeblendet; getBoundingClientRect
+    // liefert dann lauter Nullen, und die Tour zeichnete eine Hervorhebung der
+    // Größe null. Für den Nutzer sah es aus, als würde nichts hervorgehoben oder
+    // als säße der Rahmen an einer sinnlosen Stelle.
+    // Ohne sichtbares Ziel wird der Schritt jetzt wie ein zielloser behandelt:
+    // die Karte steht mittig, ohne falsche Hervorhebung.
+    const sichtbar = element instanceof HTMLElement
+      && element.getClientRects().length > 0
+      && element.offsetWidth > 0
+      && element.offsetHeight > 0;
+
+    if (element && sichtbar) {
       const rect = element.getBoundingClientRect();
       // Use viewport coordinates directly (for position: fixed)
       setTargetRect({
@@ -246,12 +259,22 @@ export function SimpleTour({
 
           {/* Tooltip - Transform-basierte Zentrierung auf WRAPPER (nicht motion.div!)
               So kann framer-motion das transform nicht überschreiben */}
+          {/* ⚠️ 27.08.2026 (Noahs Handy-Screenshot: "Dein / Command / Center" auf drei
+              Zeilen): Dieser Wrapper hatte KEINE Breite. Die Handy-Regel der Karte
+              (width: 100%) bezog sich damit auf einen Rahmen, der selbst nur so breit
+              ist wie sein Inhalt — die Angabe war zirkulär und wirkungslos. Zusammen
+              mit min-width: 0 schrumpfte die Karte auf die Breite des längsten Wortes.
+              Jetzt hat der Wrapper eine echte Breite: auf großen Bildschirmen 420 Pixel,
+              auf dem Handy die Bildschirmbreite abzüglich 32 Pixel Rand.
+              dvh statt vh, damit die Karte nicht hinter den Browserleisten sitzt. */}
           <div
             style={{
               position: 'fixed',
-              top: '50vh',
+              top: '50dvh',
               left: '50vw',
               transform: 'translate(-50%, -50%)',
+              width: 'min(420px, calc(100vw - 32px))',
+              maxHeight: 'calc(100dvh - 32px)',
               zIndex: 99999,
             }}
           >
