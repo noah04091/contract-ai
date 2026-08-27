@@ -955,6 +955,14 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         // dvh statt vh: rechnet ohne die Browserleisten, die es auf dem Handy gibt.
         maxHeight: '92dvh',
         overflow: 'hidden',
+        // ⚠️ 27.08.2026 (Noahs Screenshot: "Zurück" war unten abgeschnitten):
+        // Vorher wurde die Höhe des Inhalts ausgerechnet (92dvh minus fester Wert
+        // für die Fußzeile). Die Fußzeile ist auf dem Handy aber höher, weil die
+        // Knöpfe dort untereinander stehen — die Rechnung lag rund 40 Pixel daneben
+        // und schob sie aus dem Bild. Als Flex-Spalte verteilt sich die Höhe von
+        // selbst: Der Inhalt nimmt, was übrig ist, die Fußzeile bleibt immer sichtbar.
+        display: 'flex',
+        flexDirection: 'column',
         boxShadow: '0 -10px 44px -8px rgba(0, 0, 0, 0.28)',
         zIndex: 2147483647,
       }
@@ -972,6 +980,14 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
         maxWidth: 560,
         maxHeight: '90vh',
         overflow: 'hidden',
+        // ⚠️ 27.08.2026 (Noahs Screenshot: "Zurück" war unten abgeschnitten):
+        // Vorher wurde die Höhe des Inhalts ausgerechnet (92dvh minus fester Wert
+        // für die Fußzeile). Die Fußzeile ist auf dem Handy aber höher, weil die
+        // Knöpfe dort untereinander stehen — die Rechnung lag rund 40 Pixel daneben
+        // und schob sie aus dem Bild. Als Flex-Spalte verteilt sich die Höhe von
+        // selbst: Der Inhalt nimmt, was übrig ist, die Fußzeile bleibt immer sichtbar.
+        display: 'flex',
+        flexDirection: 'column',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         zIndex: 2147483647,
       };

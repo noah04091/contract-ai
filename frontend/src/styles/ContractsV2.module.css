@@ -10002,6 +10002,16 @@
     grid-template-columns: 1fr 1fr;
     gap: 0.6rem;
   }
+  /* ⚠️ 27.08.2026 (Noahs zweiter Screenshot): Bei DREI Knoepfen in zwei Spalten bleibt
+     der dritte allein in der zweiten Reihe stehen — das wirkt zufaellig, und
+     "Hochladen & analysieren" bricht dabei auf zwei Zeilen um.
+     Die Hauptaktion nimmt jetzt die volle Breite, die beiden Nebenwege stehen
+     darunter nebeneinander.
+     ⚠️ Meine erste Korrektur lag in Contracts.module.css — ContractsV2.tsx laedt
+     aber ContractsV2.module.css. Falsche Datei, deshalb blieb der Screenshot gleich. */
+  .multiFileActions .uploadButton {
+    grid-column: 1 / -1;
+  }
   .multiFileActions .uploadButton,
   .multiFileActions .clearFilesButton {
     min-height: 44px;

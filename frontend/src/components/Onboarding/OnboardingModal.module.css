@@ -41,17 +41,17 @@
 /* ============================================
    CONTENT CONTAINER
    ============================================ */
+/* Der Dialog ist eine Flex-Spalte (siehe OnboardingModal.tsx). Der Inhalt nimmt den
+   Platz, der nach der Fußzeile übrig bleibt, und scrollt bei Bedarf.
+   `min-height: 0` ist dabei nicht optional: Ohne diese Zeile weigert sich ein
+   Flex-Kind, kleiner als sein Inhalt zu werden, und schiebt die Fußzeile hinaus.
+   Vorher stand hier eine feste Rechnung (90dvh minus 100px). Die lag auf dem Handy
+   daneben, weil die Fußzeile dort höher ist — "Zurück" wurde abgeschnitten. */
 .content {
   padding: 32px 40px 24px;
   overflow-y: auto;
-  /* ⚠️ 27.08.2026 (Noahs Handy-Test "arg gequetscht"): Hier stand nur `90vh`.
-     Auf dem Handy rechnet `vh` mit der Bildschirmhöhe INKLUSIVE Adress- und
-     Werkzeugleiste — also mit Platz, den es gar nicht gibt. Das Fenster war
-     dadurch rechnerisch größer als der sichtbare Bereich, und der Inhalt wurde
-     in zu wenig Raum gepresst. `dvh` misst, was wirklich frei ist.
-     Die vh-Zeile bleibt als Rückfall für ältere Browser darüber stehen. */
-  max-height: calc(90vh - 100px);
-  max-height: calc(90dvh - 100px);
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 /* ============================================
@@ -753,10 +753,12 @@
 @media (max-width: 640px) {
   .content {
     padding: 20px 18px 16px;
-    /* Das Fenster dockt auf dem Handy unten an (92dvh, siehe OnboardingModal.tsx).
-       Der Scrollbereich muss darauf abgestimmt sein, sonst bleibt entweder Platz
-       ungenutzt oder die Fußzeile rutscht aus dem Bild. */
-    max-height: calc(92dvh - 96px);
+  }
+
+  /* Die Fußzeile darf nicht schrumpfen und nicht aus dem Bild wandern. */
+  .footer {
+    flex: 0 0 auto;
+    padding: 14px 18px 20px;
   }
 
   /* ⚠️ 27.08.2026 (Noahs Handy-Test): Diese Werte waren auf dem Handy unverändert

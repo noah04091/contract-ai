@@ -207,8 +207,17 @@
      Der Ring sitzt in einem <button>, und der ist von Haus aus inline-block —
      er nimmt also nur die Breite seines Inhalts ein und klebt links in seiner
      Zeile. Das `margin: 0 auto` am Ring darunter konnte deshalb nichts
-     zentrieren, weil schon sein Elternelement nicht die volle Breite hatte. */
-  .acHero > button { display: block; margin-left: auto; margin-right: auto; }
+     zentrieren, weil schon sein Elternelement nicht die volle Breite hatte.
+     ⚠️ NACHTRAG (zweiter Screenshot): Mein erster Versuch sprach `.acHero > button`
+     an — der Knopf ist aber KEIN direktes Kind, zwischen ihm und .acHero liegt
+     noch ein <div>. Deshalb blieb der Ring links stehen. Jetzt wird die ganze
+     erste Spalte zentriert, das erfasst beide Fälle (mit und ohne Score). */
+  .acHero > div:first-child {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .acHero > div:first-child > button { display: block; }
   .scoreDonut { width: 120px; height: 120px; margin: 0 auto; }
   .scoreRating { text-align: center; }
   .heroTitle { font-size: 20px; }

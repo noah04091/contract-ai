@@ -48,6 +48,26 @@ export function SimpleTour({
   const [mounted, setMounted] = useState(false);
   const observerRef = useRef<ResizeObserver | null>(null);
 
+  // 📱 27.08.2026 (Noahs Handy-Test): Auf dem Handy zeigt die Tour KEINE Elemente
+  // mehr, sondern nur noch ihre Karten. Grund ist nicht Bequemlichkeit, sondern
+  // dass das Hervorheben dort schlicht nicht funktioniert:
+  //   · Viele Ziele sind gar nicht sichtbar (Seitenleiste, breite Werkzeugleiste).
+  //   · Sichtbare Ziele liegen oft ausserhalb des Ausschnitts, man müsste scrollen.
+  //   · Das Herausheben per z-index reisst das Element aus seinem Zusammenhang —
+  //     auf Noahs Screenshot schwebte "Datei hierher ziehen" oben über allem.
+  // Der Text der Schritte trägt sich auch ohne Hervorhebung; er beschreibt, was es
+  // gibt, statt auf einen Punkt zu deuten.
+  const [istHandy, setIstHandy] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(max-width: 768px)');
+    const beiWechsel = (e: MediaQueryListEvent) => setIstHandy(e.matches);
+    mq.addEventListener('change', beiWechsel);
+    return () => mq.removeEventListener('change', beiWechsel);
+  }, []);
+
   // Mount check for portal
   useEffect(() => {
     setMounted(true);
@@ -59,7 +79,8 @@ export function SimpleTour({
 
   // Calculate target element position (viewport coordinates for fixed positioning)
   const updateTargetPosition = useCallback(() => {
-    if (!currentStep?.target || currentStep.target === 'body') {
+    // Auf dem Handy gibt es keine Hervorhebung (Begründung oben bei istHandy).
+    if (istHandy || !currentStep?.target || currentStep.target === 'body') {
       setTargetRect(null);
       return;
     }
@@ -92,7 +113,7 @@ export function SimpleTour({
     } else {
       setTargetRect(null);
     }
-  }, [currentStep]);
+  }, [currentStep, istHandy]);
 
   // Update position on step change and window resize
   useEffect(() => {
@@ -123,6 +144,9 @@ export function SimpleTour({
 
   // Bring target element to front (above overlay)
   useEffect(() => {
+    // Auf dem Handy NICHT herausheben: Das riss das Element aus seinem Zusammenhang
+    // und liess es an unpassender Stelle über allem schweben (Noahs Screenshot).
+    if (istHandy) return;
     if (!isRunning || !currentStep?.target || currentStep.target === 'body') return;
 
     const element = document.querySelector(currentStep.target as string) as HTMLElement;
@@ -140,7 +164,9 @@ export function SimpleTour({
       element.style.position = originalPosition;
       element.style.zIndex = originalZIndex;
     };
-  }, [isRunning, stepIndex, currentStep]);
+    // istHandy in den Abhängigkeiten: Dreht jemand das Gerät oder ändert die
+    // Fenstergröße, muss das Herausheben sofort greifen bzw. entfallen.
+  }, [isRunning, stepIndex, currentStep, istHandy]);
 
   // Handle next step
   const handleNext = useCallback(() => {
