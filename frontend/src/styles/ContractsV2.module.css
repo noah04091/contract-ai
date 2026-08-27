@@ -9991,11 +9991,25 @@
     align-items: stretch;
     gap: 0.85rem;
   }
+  /* ⚠️ 27.08.2026 (Noahs Screenshot: "der runde Kreis sieht so verloren aus, das
+     Icon darin ist mini"): Hier wurde der Kopf auf dem Handy zu einer Spalte
+     gestapelt — das Symbol stand dadurch allein und gross ueber dem Text, das
+     Zeichen darin wirkte im Verhaeltnis winzig. Nebeneinander ist es kompakter,
+     spart Hoehe und passt zur Datei-Zeile darunter, die ebenfalls waagerecht ist. */
   .multiFileInfo {
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    text-align: center;
-    gap: 0.5rem;
+    text-align: left;
+    gap: 0.75rem;
+  }
+  /* Kreis und Zeichen aufeinander abgestimmt: 20px Zeichen in 0.55rem Polster. */
+  .multiFileInfo svg {
+    width: 20px;
+    height: 20px;
+    padding: 0.55rem;
+    border-radius: 12px;
+    box-sizing: content-box;
+    flex: 0 0 auto;
   }
   .multiFileActions {
     display: grid;
@@ -10020,8 +10034,27 @@
   }
 
   /* Datei-Einträge: Name sauber kürzen, nicht überlaufen */
+  /* ⚠️ 27.08.2026 (Noahs Screenshot): Weiter oben in dieser Datei setzt eine frühere
+     768px-Regel `flex-direction: column` — deshalb stand das X zum Entfernen UNTER
+     dem Dateinamen, mit einem großen leeren Feld dazwischen. Gedacht war das für
+     lange Namen; die werden inzwischen aber ohnehin gekürzt (siehe .fileItemName
+     unten). Die Zeile bleibt jetzt waagerecht: Symbol und Name links, X rechts auf
+     derselben Höhe. */
   .fileItem {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.6rem;
     padding: 0.7rem 0.8rem;
+  }
+  .fileItemLeft {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  /* Darf nicht schrumpfen und nicht umbrechen, sonst rutscht das X wieder weg. */
+  .fileItemActions {
+    flex: 0 0 auto;
+    align-self: center;
   }
   .fileItemLeft,
   .fileItemInfo {

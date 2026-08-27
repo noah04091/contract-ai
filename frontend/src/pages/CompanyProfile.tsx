@@ -76,14 +76,14 @@ const COUNTRIES = [
 const getLabels = (profileType: ProfileType) => ({
   pageTitle: profileType === 'business' ? 'Firmenprofil' : 'Mein Profil',
   pageDescription: profileType === 'business'
-    ? 'Verwalten Sie Ihre Unternehmensdaten für automatische Vertragserstellung'
-    : 'Verwalten Sie Ihre persönlichen Daten für Verträge',
+    ? 'Verwalte deine Unternehmensdaten für die automatische Vertragserstellung'
+    : 'Verwalte deine persönlichen Daten für Verträge',
   nameField: profileType === 'business' ? 'Firmenname' : 'Vollständiger Name',
-  namePlaceholder: profileType === 'business' ? 'Ihre Firma GmbH' : 'Max Mustermann',
+  namePlaceholder: profileType === 'business' ? 'Deine Firma GmbH' : 'Max Mustermann',
   logoTitle: profileType === 'business' ? 'Firmenlogo' : 'Profilbild',
   logoSubtitle: profileType === 'business' ? 'Ihr visuelles Markenzeichen' : 'Ihr persönliches Bild',
   dataTitle: profileType === 'business' ? 'Unternehmensdaten' : 'Persönliche Daten',
-  dataSubtitle: profileType === 'business' ? 'Grundlegende Firmendaten' : 'Ihre Adresse und Kontakt',
+  dataSubtitle: profileType === 'business' ? 'Grundlegende Firmendaten' : 'Deine Adresse und Kontakt',
   legalTitle: profileType === 'business' ? 'Rechts- & Steuerangaben' : 'Steuerangaben',
   legalSubtitle: profileType === 'business' ? 'Gesetzlich erforderliche Daten' : 'Steuer-ID (optional)',
   statusField: profileType === 'business' ? 'Rechtsform' : 'Status',
@@ -91,7 +91,7 @@ const getLabels = (profileType: ProfileType) => ({
   emailPlaceholder: profileType === 'business' ? 'info@ihrefirma.de' : 'max@beispiel.de',
   vatLabel: profileType === 'business' ? 'USt-IdNr.' : 'Steuer-ID',
   vatPlaceholder: profileType === 'business' ? 'DE123456789' : 'Steuer-Identifikationsnummer',
-  vatHint: profileType === 'business' ? 'Umsatzsteuer-Identifikationsnummer' : 'Ihre Steuer-ID (optional)',
+  vatHint: profileType === 'business' ? 'Umsatzsteuer-Identifikationsnummer' : 'Deine Steuer-ID (optional)',
 });
 
 // Section configuration
@@ -347,14 +347,14 @@ export default function CompanyProfile() {
   const handleSave = async () => {
     if (!profile.companyName) {
       toast.error(profileType === 'business'
-        ? 'Bitte geben Sie einen Firmennamen ein'
-        : 'Bitte geben Sie Ihren Namen ein'
+        ? 'Bitte gib einen Firmennamen ein'
+        : 'Bitte gib deinen Namen ein'
       );
       return;
     }
 
     if (isPremium && (!profile.street || !profile.postalCode || !profile.city)) {
-      toast.error('Bitte füllen Sie alle Pflichtfelder aus');
+      toast.error('Bitte fülle alle Pflichtfelder aus');
       return;
     }
 
@@ -486,7 +486,7 @@ export default function CompanyProfile() {
               <Lock size={24} />
             </div>
             <h4>Enterprise Feature</h4>
-            <p>Schalten Sie alle Profilfelder frei für professionelle Verträge</p>
+            <p>Schalte alle Profilfelder frei für professionelle Verträge</p>
             <Link to="/pricing" className={styles.upgradeBtn}>
               <Sparkles size={16} />
               Jetzt freischalten
@@ -548,7 +548,7 @@ export default function CompanyProfile() {
                       }
                     </div>
                     <h4>{profileType === 'business' ? 'Logo hochladen' : 'Profilbild hochladen'}</h4>
-                    <p>Ziehen Sie ein Bild hierher oder klicken Sie zum Auswählen</p>
+                    <p>Zieh ein Bild hierher oder klicke zum Auswählen</p>
                     <span className={styles.dropzoneFormats}>PNG, JPG, SVG oder WebP bis 5MB</span>
                   </>
                 )}
@@ -703,7 +703,7 @@ export default function CompanyProfile() {
                 <Info size={18} />
                 <div className={styles.tipsContent}>
                   <strong>Info:</strong> Als Privatperson oder Freelancer ist die Steuer-ID optional.
-                  Sie wird nur benötigt, wenn Sie Rechnungen stellen möchten.
+                  Sie wird nur benötigt, wenn du Rechnungen stellen möchtest.
                 </div>
               </div>
             )}
@@ -1056,7 +1056,7 @@ export default function CompanyProfile() {
                   <div className={styles.tipsContent}>
                     <strong>Tipp:</strong>
                     {activeSection === 'logo' && (profileType === 'business'
-                      ? ' Ein professionelles Logo stärkt Ihre Markenidentität in Verträgen.'
+                      ? ' Ein professionelles Logo stärkt deine Markenidentität in Verträgen.'
                       : ' Ein Profilbild macht Ihre Verträge persönlicher und professioneller.'
                     )}
                     {activeSection === 'company' && (profileType === 'business'
