@@ -489,9 +489,52 @@
   .reassure { grid-template-columns: 1fr; gap: 14px; }
 }
 
+/* ⚠️ 27.08.2026 (Noahs Handy-Test "sehr stark Luft nach oben"): Dieser Bereich hatte
+   praktisch KEINE Handy-Anpassung. Alle Innenabstände (22px), Symbolgrößen und
+   Schriftgrößen galten auf 375 Pixel Breite unverändert weiter — deshalb wirkte alles
+   eng und überladen. `.canGrid` in der alten Regel war zudem längst tot, die Klasse
+   wurde beim Umbau durch `.canMix` ersetzt. */
 @media (max-width: 560px) {
-  .canGrid { grid-template-columns: 1fr; }
   .doneTag, .optTag { display: none; }
+
+  /* Kopfbereich: der Ring darf kleiner werden, der Text braucht die Breite. */
+  .setupHead { padding: 15px 16px 12px; gap: 12px; }
+  .ring { width: 46px; height: 46px; }
+  .ring svg { width: 46px; height: 46px; }
+  .ringTxt { font-size: 12px; }
+  .setupHeadTxt h2 { font-size: 17px; }
+  .setupHeadTxt p { font-size: 12.5px; }
+
+  .steps { padding: 2px 16px 16px; gap: 8px; }
+  .stepDone { padding: 9px 12px; gap: 11px; }
+  .sdTxt b { font-size: 13.5px; }
+  .sdTxt span { font-size: 12px; }
+
+  .saHead { padding: 13px 14px 10px; gap: 11px; }
+  .saTxt h3 { font-size: 15px; }
+
+  /* Die Ablagefläche bleibt großzügig genug zum Treffen, aber ohne Polster,
+     das auf einem schmalen Bildschirm nur Platz kostet. */
+  .drop { margin: 0 14px 10px; padding: 18px 14px; }
+  .dropNote { margin: 8px 16px 14px; font-size: 12px; }
+  .saBtn, .finishBtn { margin-left: 16px; margin-right: 16px; }
+
+  .stepIdle, .stepOpt { padding: 12px 14px; gap: 11px; }
+
+  /* Freiwilliger Schritt: Knopf unter den Text, statt ihn seitlich zu quetschen. */
+  .stepOpt { flex-wrap: wrap; }
+  .optBtn { margin-left: 39px; }
+
+  /* Möglichkeiten-Block */
+  .can { padding: 18px 16px; }
+  .canHead h2 { font-size: 16px; }
+  .canHead p { font-size: 13px; }
+  .heroCard { padding: 18px 16px; }
+  .heroCard h3 { font-size: 17px; }
+  .heroCard p { font-size: 13.5px; }
+  .heroIcon { width: 40px; height: 40px; border-radius: 11px; margin-bottom: 11px; }
+  .sideCard { padding: 12px 13px; }
+  .reassure { gap: 12px; }
 }
 
 /* ♿ Bewegung reduzieren (26.08.2026)

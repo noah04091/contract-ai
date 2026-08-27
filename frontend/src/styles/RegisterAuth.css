@@ -180,12 +180,32 @@
 @media (max-width: 900px) {
   .ca-reg-page { flex-direction: column; }
   .ca-reg-left { display: none; }
-  .ca-reg-right { padding: 34px 22px 48px; align-items: flex-start; justify-content: flex-start; min-height: 100vh; }
+  /* ⚠️ 27.08.2026: Hier stand nur `100vh`. Auf dem Handy rechnet `vh` mit der
+     Bildschirmhöhe INKLUSIVE Adress- und Werkzeugleiste, also mit Platz, den es
+     nicht gibt — die Seite wird dadurch höher als der sichtbare Bereich und
+     scrollt unnötig. `dvh` misst, was wirklich frei ist; die vh-Zeile bleibt als
+     Rückfall für ältere Browser. */
+  .ca-reg-right { padding: 34px 22px 48px; align-items: flex-start; justify-content: flex-start; min-height: 100vh; min-height: 100dvh; }
   .ca-reg-form-wrap { max-width: 480px; margin: 0 auto; }
   .ca-reg-mobilehead { display: flex; }
 }
+/* ⚠️ 27.08.2026 (Noahs Handy-Test): Unter 430 Pixeln wurden bisher NUR die beiden
+   Namensfelder untereinander gesetzt. Überschrift, Abstände und die Schrittanzeige
+   blieben unverändert und wirkten dadurch zu groß für die Fläche. */
 @media (max-width: 430px) {
   .ca-reg-row { flex-direction: column; }
+  .ca-reg-right { padding: 26px 16px 40px; }
+  .ca-reg-title { font-size: 25px; }
+  .ca-reg-subtitle { font-size: 15px; }
+  .ca-reg-form { gap: 15px; margin-top: 22px; }
+  /* Die drei Passwort-Regeln passen nebeneinander nicht mehr und brachen unschön um.
+     Untereinander sind sie beim Tippen ohnehin leichter zu verfolgen. */
+  .ca-reg-pw-rules { flex-direction: column; gap: 5px; }
+  /* Die Schritt-Anzeige (E-Mail öffnen · Link klicken · Zur Zahlung) stand auf
+     schmalen Geräten zu eng. */
+  .ca-reg-steps { gap: 6px; margin-bottom: 24px; }
+  .ca-reg-step { max-width: none; }
+  .ca-reg-verify-title { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ca-reg-glow-1, .ca-reg-glow-2 { animation: none; }

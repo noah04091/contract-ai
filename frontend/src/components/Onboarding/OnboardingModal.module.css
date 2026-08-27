@@ -44,7 +44,14 @@
 .content {
   padding: 32px 40px 24px;
   overflow-y: auto;
+  /* ⚠️ 27.08.2026 (Noahs Handy-Test "arg gequetscht"): Hier stand nur `90vh`.
+     Auf dem Handy rechnet `vh` mit der Bildschirmhöhe INKLUSIVE Adress- und
+     Werkzeugleiste — also mit Platz, den es gar nicht gibt. Das Fenster war
+     dadurch rechnerisch größer als der sichtbare Bereich, und der Inhalt wurde
+     in zu wenig Raum gepresst. `dvh` misst, was wirklich frei ist.
+     Die vh-Zeile bleibt als Rückfall für ältere Browser darüber stehen. */
   max-height: calc(90vh - 100px);
+  max-height: calc(90dvh - 100px);
 }
 
 /* ============================================
@@ -745,7 +752,53 @@
    ============================================ */
 @media (max-width: 640px) {
   .content {
-    padding: 24px 20px 20px;
+    padding: 20px 18px 16px;
+  }
+
+  /* ⚠️ 27.08.2026 (Noahs Handy-Test): Diese Werte waren auf dem Handy unverändert
+     geblieben und haben zusammen den Platz aufgefressen — allein Symbol und dessen
+     Abstand nahmen 96 Pixel, dazu eine erzwungene Mindesthöhe von 320 Pixeln für den
+     Inhalt. Auf einem Bildschirm mit rund 500 nutzbaren Pixeln bleibt danach nichts
+     mehr übrig, und alles wirkt zusammengedrückt.
+     Auf dem Handy darf der Inhalt so hoch sein, wie er ist. */
+  .stepContent {
+    min-height: auto;
+  }
+
+  .iconWrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    margin-bottom: 16px;
+  }
+
+  .iconWrapper svg { width: 26px; height: 26px; }
+
+  .stepDescription {
+    font-size: 14.5px;
+    margin-bottom: 20px;
+  }
+
+  /* Die Ablagefläche braucht auf dem Handy keine 36 Pixel Polster oben und unten;
+     der Daumen trifft die Fläche auch so, und es bleibt Platz für den Rest. */
+  .uploadZone {
+    padding: 24px 16px;
+  }
+
+  .useCaseCard {
+    padding: 15px 14px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+  }
+
+  .useCaseIconWrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    margin-bottom: 0;
+    flex: none;
   }
 
   .progressSteps {
