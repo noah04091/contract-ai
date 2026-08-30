@@ -262,9 +262,19 @@ export default function CompanyProfile() {
     });
 
     const completedSections = sections.filter(s => s.completion === 100 && !s.isLocked).length;
-    const totalSections = sections.filter(s => !s.isLocked).length;
+    const offeneAbschnitte = sections.filter(s => !s.isLocked);
+    const totalSections = offeneAbschnitte.length;
+
+    // ⚠️ 30.08.2026: Vorher zaehlte diese Zahl nur VOLLSTAENDIGE Abschnitte
+    // (completedSections / totalSections). Damit sprang sie in groben Stufen und
+    // stand bei einem kostenlosen Konto auf 0 — obwohl schon die halbe Firma
+    // eingetragen war, denn dort sind vier der fuenf Abschnitte gesperrt und der
+    // Ring zeigte "0/1". Das liest sich wie ein Fehler.
+    // Jetzt der tatsaechliche Ausfuellgrad: der Durchschnitt ueber alle offenen
+    // Abschnitte. Die Zahl bewegt sich mit jedem ausgefuellten Feld und sagt das,
+    // was der Nutzer wissen will — wie weit bin ich.
     const overallPercentage = totalSections > 0
-      ? Math.round((completedSections / totalSections) * 100)
+      ? Math.round(offeneAbschnitte.reduce((summe, s) => summe + s.completion, 0) / totalSections)
       : 0;
 
     return { sections, completedSections, totalSections, overallPercentage };
@@ -906,9 +916,15 @@ export default function CompanyProfile() {
                     transition={{ duration: 1, ease: 'easeOut' }}
                   />
                 </svg>
+                {/* ⚠️ 30.08.2026: Hier stand "0/1" — die Zahl vollstaendiger Abschnitte
+                    geteilt durch die freigeschalteten. Bei einem kostenlosen Konto sind
+                    vier von fuenf Abschnitten gesperrt, deshalb las sich das wie ein
+                    Fehler ("warum nur einer, ich sehe doch fuenf?"). Ausserdem passte
+                    es nicht zur Fuellung des Rings daneben, die nach Prozent laeuft.
+                    Jetzt zeigt der Ring genau das an, was er auch fuellt. */}
                 <div className={styles.progressText}>
-                  <span className={styles.progressValue}>{completionData.completedSections}</span>
-                  <span className={styles.progressLabel}>/{completionData.totalSections}</span>
+                  <span className={styles.progressValue}>{completionData.overallPercentage}</span>
+                  <span className={styles.progressLabel}>%</span>
                 </div>
               </div>
             </div>
