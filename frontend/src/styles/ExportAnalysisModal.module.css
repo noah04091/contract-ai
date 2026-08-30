@@ -25,6 +25,7 @@
   width: 100%;
   max-width: 540px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -318,6 +319,7 @@
 @media (max-width: 576px) {
   .modal {
     max-height: 95vh;
+    max-height: 95dvh;
     border-radius: 12px;
   }
 

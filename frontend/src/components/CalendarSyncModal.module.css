@@ -137,6 +137,7 @@
   flex: 1;
   overflow-y: auto;
   max-height: 50vh;
+  max-height: 50dvh;
 }
 
 .tabContent {

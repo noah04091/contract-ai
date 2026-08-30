@@ -115,6 +115,20 @@
   color: #4B5563;
 }
 
+/* 30.08.2026: Auf Touch-Geräten ist das Kreuz mit 24 Pixeln zu klein für einen
+   Finger (Richtwert Apple/Google: 44). Statt den Knopf optisch zu vergrößern,
+   erweitert ein unsichtbares Feld nur die Trefferfläche. Die Meldung sieht damit
+   exakt gleich aus, lässt sich aber zuverlässig schließen.
+   Das Kreuz steht allein in der Ecke, es gibt also keinen Nachbarknopf,
+   den man dadurch versehentlich treffen könnte. */
+@media (hover: none) {
+  .closeButton::after {
+    content: '';
+    position: absolute;
+    inset: -10px;
+  }
+}
+
 /* Laufzeit-Anzeige bis zum automatischen Schließen */
 .progressBar {
   position: absolute;

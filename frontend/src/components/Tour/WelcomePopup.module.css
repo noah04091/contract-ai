@@ -9,6 +9,7 @@
   bottom: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.4);
   z-index: 99990;
   display: flex;
@@ -24,6 +25,7 @@
   bottom: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;

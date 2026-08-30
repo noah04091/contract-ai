@@ -1154,6 +1154,32 @@
   color: #475569;
 }
 
+/* 30.08.2026: Beide Knöpfe sind 28 Pixel groß, für einen Finger zu klein
+   (Richtwert Apple/Google: 44). Auf Touch-Geräten erweitert ein unsichtbares
+   Feld die Trefferfläche, ohne die Optik zu verändern.
+   Der Abstand wächst dabei von 4 auf 16 Pixel: Bei je 8 Pixel Erweiterung
+   berühren sich die Flächen dann genau, statt sich zu überlappen. Sonst
+   träfe man am Rand den Nachbarknopf. Retry und Entfernen erscheinen zwar
+   nie gleichzeitig (Fehler bzw. wartend), aber die Regel soll auch dann
+   halten, wenn sich das einmal ändert. */
+@media (hover: none) {
+  .fileItemActions {
+    gap: 16px;
+  }
+
+  .retryButton,
+  .removeFileButton {
+    position: relative;
+  }
+
+  .retryButton::after,
+  .removeFileButton::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+  }
+}
+
 /* ✅ NEU: Progress Bar für Datei-Analyse */
 .fileItemProgress {
   position: absolute;
