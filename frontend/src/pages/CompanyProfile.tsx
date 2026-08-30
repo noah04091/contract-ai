@@ -957,7 +957,12 @@ export default function CompanyProfile() {
                         ) : isComplete ? (
                           <CheckCircle2 size={18} className={styles.checkIcon} />
                         ) : (
-                          <ChevronRight size={18} />
+                          // 30.08.2026: eigene Klasse, damit der Pfeil auf dem Handy
+                          // entfallen kann. Dort ist die Navigation eine Reiterleiste,
+                          // und ein Pfeil nach rechts würde dort etwas anderes bedeuten
+                          // als in einer Liste. Häkchen und Schloss bleiben sichtbar —
+                          // sie beantworten die wichtigste Frage: Was fehlt noch?
+                          <ChevronRight size={18} className={styles.chevronIcon} />
                         )}
                       </div>
                     </motion.button>

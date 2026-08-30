@@ -1185,9 +1185,21 @@
     flex: 0 0 auto;
   }
 
+  /* ⚠️ 30.08.2026 (Noah: "das Icon neben der Ueberschrift sieht gequetscht aus"):
+     Auf 375 Pixeln teilen sich Symbol, Titel, Beschreibung und Fortschrittsring
+     eine Zeile. Das Symbol ist dabei reine Dekoration — es sagt nichts, was die
+     Ueberschrift "Firmenprofil" nicht schon sagt, kostet aber die Breite, die der
+     Text braucht. Auf dem Handy entfaellt es und der Titel bekommt Luft. */
   .headerIcon {
-    width: 52px;
-    height: 52px;
+    display: none;
+  }
+
+  /* ⚠️ 30.08.2026 (Noahs Vorschlag, dem ich zustimme): Der "Dashboard"-Knopf nahm
+     eine ganze Zeile ein, obwohl es auf dem Handy zwei Wege zurueck gibt — das
+     Menue oben links und die Zurueck-Geste des Browsers. Ein eigener Knopf dafuer
+     ist auf einem kleinen Bildschirm verschenkter Platz. */
+  .backBtn {
+    display: none;
   }
 
   .headerText h1 {
@@ -1250,7 +1262,19 @@
   /* Auf einem Reiter waere der Untertitel nur Ballast und wuerde ihn doppelt so
      breit machen. */
   .navItemSubtitle { display: none; }
-  .navItemStatus { display: none; }
+
+  /* ⚠️ 30.08.2026: Ich hatte den Status hier ausgeblendet — das war falsch herum
+     gedacht. Gerade auf dem Handy ist "Was fehlt noch?" die wichtigste Information,
+     und der Haken ist die einzige Stelle, die sie beantwortet. Er bleibt.
+     Nur der Pfeil entfaellt: In einer Liste heisst er "hier geht es weiter", auf
+     einem Reiter waere er sinnlos. */
+  .navItemStatus {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+  .chevronIcon { display: none; }
+  .navItemStatus svg { width: 15px; height: 15px; }
 
   .navItemIcon {
     margin: 0;
