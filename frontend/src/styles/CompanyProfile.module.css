@@ -1162,18 +1162,27 @@
     font-size: 12px;
   }
 
+  /* ⚠️ 30.08.2026 (Noahs Screenshot: Ring ragte halb aus dem Bild):
+     Der Ring stand auf `position: absolute; right: 0`, aber .headerContent hat
+     keinen Bezugspunkt (kein position: relative). Er richtete sich damit an
+     irgendeinem Element weiter aussen aus und lief ueber den Rand hinaus.
+     Statt einen Bezugspunkt nachzuruesten, bleibt er jetzt einfach im Fluss:
+     Kopfzeile waagerecht, Text links, Ring rechts. Das kann per Definition nicht
+     ueberlaufen und spart zugleich die Hoehe, die das Stapeln gekostet hat. */
   .headerContent {
-    flex-direction: column;
+    flex-direction: row;
     align-items: flex-start;
-    gap: 1.5rem;
+    justify-content: space-between;
+    gap: 1rem;
   }
 
   .progressRing {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 60px;
-    height: 60px;
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 56px;
+    height: 56px;
+    flex: 0 0 auto;
   }
 
   .headerIcon {
@@ -1189,25 +1198,59 @@
     grid-template-columns: 1fr;
   }
 
-  /* ⚠️ 27.08.2026 (Noahs Screenshot): Hier wurde die Beschriftung ausgeblendet und
-     das Symbol mittig gesetzt — waehrend die Navigation direkt darueber auf EINE
-     Spalte ueber die volle Breite gestellt wird. Ergebnis: breite, hohe Kaesten mit
-     einem einsamen Symbol in der Mitte, ohne jede Erklaerung, was sich dahinter
-     verbirgt. Das Ausblenden ergibt nur bei schmalen, mehrspaltigen Kacheln Sinn.
-     Auf voller Breite ist reichlich Platz: Symbol links, Text daneben — die
-     natuerliche Listenform auf dem Handy. */
-  .navItemText {
-    display: block;
+  /* ══════════════════════════════════════════════════════════════════
+     30.08.2026 — NAVIGATION ALS REITERLEISTE (Noah: "erst kommen alle Reiter,
+     unten erst die Angaben, das ist bloed sortiert").
+     Ursache ist das Desktop-Raster: Seitenleiste links (320px), Inhalt rechts.
+     Einspaltig gestapelt heisst das FUENF Karten, bevor das erste Eingabefeld
+     kommt — der Nutzer scrollt an der Navigation vorbei zu dem, was er eigentlich
+     will. Auf dem Handy wird daraus eine waagerecht scrollbare Reiterleiste:
+     eine Zeile statt fuenf Karten, das Formular steht sofort im Blick.
+     Untertitel entfallen dabei bewusst — auf einem Reiter zaehlt das Etikett,
+     die Erklaerung steht im Abschnitt selbst.
+     ══════════════════════════════════════════════════════════════════ */
+  .sidebarNav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.15rem 0.15rem 0.6rem;
+    margin: 0 -0.15rem;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .sidebarNav::-webkit-scrollbar { display: none; }
 
   .navItem {
+    flex: 0 0 auto;
+    width: auto;
     justify-content: flex-start;
-    gap: 0.75rem;
-    padding: 0.85rem 0.9rem;
+    gap: 0.5rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    scroll-snap-align: start;
   }
 
-  .navItemTitle { font-size: 14.5px; }
-  .navItemSubtitle { font-size: 11.5px; }
+  /* Symbol als kleine Marke, nicht als Kachel. */
+  .navItemIcon {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+  }
+  .navItemIcon svg { width: 14px; height: 14px; }
+
+  .navItemText { display: block; }
+  .navItemTitle {
+    font-size: 13.5px;
+    margin-bottom: 0;
+    white-space: nowrap;
+  }
+  /* Auf einem Reiter waere der Untertitel nur Ballast und wuerde ihn doppelt so
+     breit machen. */
+  .navItemSubtitle { display: none; }
+  .navItemStatus { display: none; }
 
   .navItemIcon {
     margin: 0;

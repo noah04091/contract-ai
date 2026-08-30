@@ -10034,6 +10034,41 @@
   }
 
   /* Datei-Einträge: Name sauber kürzen, nicht überlaufen */
+  /* ══════════════════════════════════════════════════════════════════
+     30.08.2026 — ENTSCHACHTELUNG auf dem Handy (Noah: "alles umrandet wie in
+     einem Kasten, das sieht nicht schön aus").
+     Ursache: Drei Rahmen lagen ineinander — die äußere Upload-Karte, darin
+     .multiFilePreview (2px Rand, 20px Rundung, 1.75rem Polster) und darin
+     .fileItem (nochmal 2px Rand, 16px Rundung, 1.25rem Polster). Auf 375 Pixeln
+     fressen Ränder und Polster über hundert Pixel, bevor Inhalt kommt, und jeder
+     zusätzliche Rahmen wiederholt nur, was der übergeordnete schon sagt.
+     Auf dem Handy trägt die äußere Karte die Begrenzung allein. Innen wird durch
+     Weißraum und feine Linien getrennt, nicht durch Kästen.
+     ══════════════════════════════════════════════════════════════════ */
+  .multiFilePreview {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  /* Die Dateizeile bekommt einen leichten Grund statt eines kräftigen Rahmens:
+     erkennbar als eigenes Element, ohne einen zweiten Kasten aufzumachen. */
+  .fileItem {
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    border-radius: 10px;
+    box-shadow: none;
+  }
+
+  /* Trennlinie zwischen Kopf und Dateiliste statt eines Rahmens drumherum. */
+  .multiFileHeader {
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid #eef2f7;
+    margin-bottom: 0.9rem;
+  }
+
   /* ⚠️ 27.08.2026 (Noahs Screenshot): Weiter oben in dieser Datei setzt eine frühere
      768px-Regel `flex-direction: column` — deshalb stand das X zum Entfernen UNTER
      dem Dateinamen, mit einem großen leeren Feld dazwischen. Gedacht war das für
