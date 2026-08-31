@@ -53,25 +53,25 @@ const HelpCenter: React.FC = () => {
       id: 'upload-contract',
       icon: <Upload size={24} />,
       title: 'Vertrag hochladen & analysieren',
-      description: 'So laden Sie Ihren ersten Vertrag hoch und lassen ihn analysieren',
+      description: 'So lädst du deinen ersten Vertrag hoch und lässt ihn analysieren',
       category: 'basics',
       steps: [
         {
           title: '1. Zur Verträge-Seite navigieren',
-          description: 'Klicken Sie in der Navigation oben auf "Verträge" oder gehen Sie zu Dashboard und klicken dort auf "Neuer Vertrag".',
+          description: 'Klicke in der Navigation oben auf "Verträge" oder geh zu Dashboard und klicke dort auf "Neuer Vertrag".',
         },
         {
           title: '2. Datei auswählen',
-          description: 'Klicken Sie auf "Vertrag hochladen" oder ziehen Sie die PDF-Datei einfach per Drag & Drop in den markierten Bereich.',
+          description: 'Klicke auf "Vertrag hochladen" oder zieh die PDF-Datei einfach per Drag & Drop in den markierten Bereich.',
           tips: ['Unterstützte Formate: PDF, DOCX', 'Maximale Dateigröße: 10 MB', 'Mehrere Dateien gleichzeitig möglich']
         },
         {
           title: '3. Analyse warten',
-          description: 'Die KI analysiert Ihren Vertrag automatisch. Das dauert etwa 30-60 Sekunden. Sie sehen einen Fortschrittsbalken.',
+          description: 'Die KI analysiert deinen Vertrag automatisch. Das dauert etwa 30-60 Sekunden. Du siehst einen Fortschrittsbalken.',
         },
         {
           title: '4. Ergebnisse ansehen',
-          description: 'Nach der Analyse sehen Sie: Contract Score (0-100), erkannte Risiken, Verbesserungsvorschläge, Laufzeit & Kündigungsfrist.',
+          description: 'Nach der Analyse siehst du: Contract Score (0-100), erkannte Risiken, Verbesserungsvorschläge, Laufzeit & Kündigungsfrist.',
           tips: ['Grüner Score = guter Vertrag', 'Gelber Score = Vorsicht', 'Roter Score = hohe Risiken']
         }
       ]
@@ -85,7 +85,7 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Übersicht öffnen',
-          description: 'Das Dashboard ist Ihre Startseite nach dem Login. Hier sehen Sie alles auf einen Blick.',
+          description: 'Das Dashboard ist deine Startseite nach dem Login. Hier siehst du alles auf einen Blick.',
         },
         {
           title: '2. Prioritäts-Verträge',
@@ -93,11 +93,11 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '3. Statistiken',
-          description: 'Sehen Sie Diagramme: Anzahl Verträge, durchschnittlicher Contract Score, Verteilung nach Status.',
+          description: 'Sieh Diagramme: Anzahl Verträge, durchschnittlicher Contract Score, Verteilung nach Status.',
         },
         {
           title: '4. Anstehende Fristen',
-          description: 'Widget zeigt kommende Kündigungsfristen und wichtige Termine aus Ihrem Vertrags-Kalender.',
+          description: 'Widget zeigt kommende Kündigungsfristen und wichtige Termine aus deinem Vertrags-Kalender.',
         }
       ]
     },
@@ -105,29 +105,29 @@ const HelpCenter: React.FC = () => {
       id: 'optimizer',
       icon: <Wand2 size={24} />,
       title: 'Verträge optimieren',
-      description: 'So verbessern Sie Ihre Verträge mit KI-Unterstützung',
+      description: 'So verbesserst du deine Verträge mit KI-Unterstützung',
       category: 'premium',
       steps: [
         {
           title: '1. Optimizer öffnen',
-          description: 'Klicken Sie in der Navigation auf "Optimizer" oder öffnen Sie einen Vertrag und klicken auf "Optimieren".',
+          description: 'Klicke in der Navigation auf "Optimizer" oder öffne einen Vertrag und klicke auf "Optimieren".',
         },
         {
           title: '2. Vertrag auswählen',
-          description: 'Wählen Sie einen bestehenden Vertrag aus Ihrer Liste ODER laden Sie einen neuen Vertrag hoch.',
+          description: 'Wähle einen bestehenden Vertrag aus deiner Liste ODER lade einen neuen Vertrag hoch.',
         },
         {
           title: '3. Optimierungen prüfen',
-          description: 'Die KI zeigt Ihnen konkrete Verbesserungsvorschläge: Klauseln umformulieren, fehlende Regelungen ergänzen, Risiken entschärfen.',
+          description: 'Die KI zeigt dir konkrete Verbesserungsvorschläge: Klauseln umformulieren, fehlende Regelungen ergänzen, Risiken entschärfen.',
           tips: ['Jeder Vorschlag zeigt: Original vs. Verbesserung', 'Begründung für die Änderung', 'Schweregrad der Optimierung']
         },
         {
           title: '4. Änderungen übernehmen',
-          description: 'Wählen Sie die gewünschten Optimierungen aus und generieren Sie eine verbesserte Version als DOCX oder PDF.',
+          description: 'Wähle die gewünschten Optimierungen aus und generiere eine verbesserte Version als DOCX oder PDF.',
         },
         {
           title: '5. Speichern & Exportieren',
-          description: 'Laden Sie die optimierte Version herunter oder speichern Sie sie direkt in Ihrer Vertragsverwaltung.',
+          description: 'Lade die optimierte Version herunter oder speichere sie direkt in deiner Vertragsverwaltung.',
         }
       ]
     },
@@ -140,15 +140,15 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Compare-Tool öffnen',
-          description: 'Navigieren Sie zu "Vergleichen" in der Hauptnavigation.',
+          description: 'Navigiere zu "Vergleichen" in der Hauptnavigation.',
         },
         {
           title: '2. Profil auswählen',
-          description: 'Wählen Sie Ihr Profil: Privatperson, Freelancer oder Unternehmen. Die Analyse passt sich automatisch an.',
+          description: 'Wähle dein Profil: Privatperson, Freelancer oder Unternehmen. Die Analyse passt sich automatisch an.',
         },
         {
           title: '3. Zwei Verträge hochladen',
-          description: 'Laden Sie Vertrag 1 und Vertrag 2 hoch. Sie können auch aus Ihren bestehenden Verträgen auswählen.',
+          description: 'Lade Vertrag 1 und Vertrag 2 hoch. Du kannst auch aus deinen bestehenden Verträgen auswählen.',
         },
         {
           title: '4. Unterschiede analysieren',
@@ -157,7 +157,7 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '5. Empfehlung erhalten',
-          description: 'Am Ende gibt die KI eine klare Empfehlung: Welcher Vertrag ist für Sie besser und warum?',
+          description: 'Am Ende gibt die KI eine klare Empfehlung: Welcher Vertrag ist für dich besser und warum?',
         }
       ]
     },
@@ -170,24 +170,24 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Generator öffnen',
-          description: 'Klicken Sie auf "Generieren" in der Hauptnavigation.',
+          description: 'Klicke auf "Generieren" in der Hauptnavigation.',
         },
         {
           title: '2. Vertragstyp wählen',
-          description: 'Wählen Sie aus 15+ Vorlagen: Freelancer-Vertrag, Mietvertrag, NDA, Arbeitsvertrag, Kaufvertrag, uvm.',
+          description: 'Wähle aus 15+ Vorlagen: Freelancer-Vertrag, Mietvertrag, NDA, Arbeitsvertrag, Kaufvertrag, uvm.',
         },
         {
           title: '3. Formular ausfüllen',
-          description: 'Füllen Sie die Felder aus: Vertragspartner, Leistungsbeschreibung, Vergütung, Laufzeit, etc. Alle Felder haben Hilfe-Texte.',
+          description: 'Fülle die Felder aus: Vertragspartner, Leistungsbeschreibung, Vergütung, Laufzeit, etc. Alle Felder haben Hilfe-Texte.',
           tips: ['Pflichtfelder sind markiert', 'Validierung verhindert Fehler', 'Company Profile optional nutzbar']
         },
         {
           title: '4. Company Profile nutzen (optional)',
-          description: 'Speichern Sie Ihre Firmendaten einmal und nutzen Sie sie für alle Verträge: Firmenname, Adresse, USt-ID, Bankdaten, Logo.',
+          description: 'Speichere deine Firmendaten einmal und nutze sie für alle Verträge: Firmenname, Adresse, USt-ID, Bankdaten, Logo.',
         },
         {
           title: '5. Vertrag generieren',
-          description: 'Die KI erstellt einen rechtssicheren Vertrag basierend auf Ihren Eingaben. Sie können ihn als PDF/DOCX herunterladen oder direkt zur Signatur senden.',
+          description: 'Die KI erstellt einen rechtssicheren Vertrag basierend auf deinen Eingaben. Du kannst ihn als PDF/DOCX herunterladen oder direkt zur Signatur senden.',
         }
       ]
     },
@@ -195,29 +195,29 @@ const HelpCenter: React.FC = () => {
       id: 'chat',
       icon: <MessageSquare size={24} />,
       title: 'Legal Chat nutzen',
-      description: 'Mit der KI über Ihre Verträge chatten und Fragen stellen',
+      description: 'Mit der KI über deine Verträge chatten und Fragen stellen',
       category: 'premium',
       steps: [
         {
           title: '1. Chat öffnen',
-          description: 'Navigieren Sie zu "Chat" in der Hauptnavigation. Ein neuer Chat wird automatisch erstellt.',
+          description: 'Navigiere zu "Chat" in der Hauptnavigation. Ein neuer Chat wird automatisch erstellt.',
         },
         {
           title: '2. Vertrag hochladen (optional)',
-          description: 'Laden Sie einen Vertrag hoch, um spezifische Fragen dazu zu stellen. Die KI analysiert den Kontext automatisch.',
+          description: 'Lade einen Vertrag hoch, um spezifische Fragen dazu zu stellen. Die KI analysiert den Kontext automatisch.',
           tips: ['Smart Questions: Die KI schlägt passende Fragen vor', 'Mehrere Verträge gleichzeitig möglich']
         },
         {
           title: '3. Fragen stellen',
-          description: 'Stellen Sie Fragen in natürlicher Sprache: "Was bedeutet Klausel 5?", "Ist dieser Vertrag fair?", "Welche Risiken gibt es?"',
+          description: 'Stelle Fragen in natürlicher Sprache: "Was bedeutet Klausel 5?", "Ist dieser Vertrag fair?", "Welche Risiken gibt es?"',
         },
         {
           title: '4. Chat-Historie nutzen',
-          description: 'Alle Chats werden gespeichert. Klicken Sie links auf einen alten Chat, um die Unterhaltung fortzusetzen.',
+          description: 'Alle Chats werden gespeichert. Klicke links auf einen alten Chat, um die Unterhaltung fortzusetzen.',
         },
         {
           title: '5. Chats verwalten',
-          description: 'Benennen Sie Chats um, archivieren Sie alte Gespräche oder löschen Sie sie.',
+          description: 'Benenne Chats um, archiviere alte Gespräche oder lösche sie.',
         }
       ]
     },
@@ -230,11 +230,11 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Legal Pulse öffnen',
-          description: 'Klicken Sie auf "Legal Pulse" in der Navigation. Sie sehen Ihren Risiko-Score und aktuelle News.',
+          description: 'Klicke auf "Legal Pulse" in der Navigation. Du siehst deinen Risiko-Score und aktuelle News.',
         },
         {
           title: '2. Verträge überwachen',
-          description: 'Wählen Sie Verträge aus, die überwacht werden sollen. Legal Pulse prüft automatisch, ob neue Gesetze oder Urteile relevant sind.',
+          description: 'Wähle Verträge aus, die überwacht werden sollen. Legal Pulse prüft automatisch, ob neue Gesetze oder Urteile relevant sind.',
         },
         {
           title: '3. Risiko-Score verstehen',
@@ -247,7 +247,7 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '5. News-Feed lesen',
-          description: 'Sehen Sie aktuelle Gesetzesänderungen, wichtige Urteile und Rechts-Updates, die Ihre Verträge betreffen können.',
+          description: 'Sieh aktuelle Gesetzesänderungen, wichtige Urteile und Rechts-Updates, die deine Verträge betreffen können.',
         }
       ]
     },
@@ -260,7 +260,7 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Kalender öffnen',
-          description: 'Navigieren Sie zu "Kalender" in der Hauptnavigation. Alle Vertragstermine werden automatisch eingetragen.',
+          description: 'Navigiere zu "Kalender" in der Hauptnavigation. Alle Vertragstermine werden automatisch eingetragen.',
         },
         {
           title: '2. Events verstehen',
@@ -268,16 +268,16 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '3. Event-Details ansehen',
-          description: 'Klicken Sie auf einen Termin, um Details zu sehen: Vertragsname, Kündigungsfrist, empfohlene Aktion.',
+          description: 'Klicke auf einen Termin, um Details zu sehen: Vertragsname, Kündigungsfrist, empfohlene Aktion.',
           tips: ['Tage bis Fristende werden angezeigt', 'Quick Actions: Vertrag öffnen, Erinnerung setzen, Kündigung vorbereiten']
         },
         {
           title: '4. Erinnerungen aktivieren',
-          description: 'Aktivieren Sie Erinnerungen für wichtige Fristen. Sie erhalten E-Mails 30, 14 und 7 Tage vor Ablauf.',
+          description: 'Aktiviere Erinnerungen für wichtige Fristen. Du erhältst E-Mails 30, 14 und 7 Tage vor Ablauf.',
         },
         {
           title: '5. Kalender exportieren',
-          description: 'Exportieren Sie Events als ICS-Datei für Google Calendar, Outlook oder Apple Calendar.',
+          description: 'Exportiere Events als ICS-Datei für Google Calendar, Outlook oder Apple Calendar.',
         }
       ]
     },
@@ -290,28 +290,28 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Signatur-Feature öffnen',
-          description: 'Navigieren Sie zu "Signaturen" oder öffnen Sie einen Vertrag und klicken auf "Zur Signatur senden".',
+          description: 'Navigiere zu "Signaturen" oder öffne einen Vertrag und klicken auf "Zur Signatur senden".',
         },
         {
           title: '2. Envelope erstellen',
-          description: 'Ein "Envelope" ist ein Signatur-Paket. Geben Sie Titel und Nachricht ein (z.B. "Bitte bis Freitag unterschreiben").',
+          description: 'Ein "Envelope" ist ein Signatur-Paket. Gib Titel und Nachricht ein (z.B. "Bitte bis Freitag unterschreiben").',
         },
         {
           title: '3. Unterzeichner hinzufügen',
-          description: 'Fügen Sie 1-10 Unterzeichner hinzu: Name, E-Mail, Rolle (z.B. "Kunde", "Auftragnehmer"). Legen Sie die Reihenfolge fest.',
+          description: 'Füge 1-10 Unterzeichner hinzu: Name, E-Mail, Rolle (z.B. "Kunde", "Auftragnehmer"). Lege die Reihenfolge fest.',
           tips: ['Sequentielle Signatur: Erst Person 1, dann Person 2, usw.', 'Parallele Signatur: Alle gleichzeitig']
         },
         {
           title: '4. Signaturfelder platzieren',
-          description: 'Ziehen Sie Signaturfelder an die gewünschten Stellen im PDF. Jedes Feld wird automatisch dem richtigen Unterzeichner zugeordnet.',
+          description: 'Zieh Signaturfelder an die gewünschten Stellen im PDF. Jedes Feld wird automatisch dem richtigen Unterzeichner zugeordnet.',
         },
         {
           title: '5. Versenden & Tracking',
-          description: 'Senden Sie das Envelope. Unterzeichner erhalten einen Link. Sie sehen in Echtzeit, wer bereits unterschrieben hat.',
+          description: 'Sende das Envelope. Unterzeichner erhalten einen Link. Du siehst in Echtzeit, wer bereits unterschrieben hat.',
         },
         {
           title: '6. Fertiges Dokument',
-          description: 'Nach allen Signaturen wird das fertige PDF automatisch in Ihrer Vertragsverwaltung gespeichert.',
+          description: 'Nach allen Signaturen wird das fertige PDF automatisch in deiner Vertragsverwaltung gespeichert.',
         }
       ]
     },
@@ -324,15 +324,15 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Ordner erstellen',
-          description: 'Gehen Sie zu "Verträge" und klicken Sie auf "Neuer Ordner". Geben Sie einen Namen ein (z.B. "Mietverträge", "Kunden 2025").',
+          description: 'Geh zu "Verträge" und klicke auf "Neuer Ordner". Gib einen Namen ein (z.B. "Mietverträge", "Kunden 2025").',
         },
         {
           title: '2. Verträge in Ordner verschieben',
-          description: 'Ziehen Sie Verträge per Drag & Drop in Ordner ODER wählen Sie mehrere Verträge aus und klicken auf "In Ordner verschieben".',
+          description: 'Zieh Verträge per Drag & Drop in Ordner ODER wähle mehrere Verträge aus und klicke auf "In Ordner verschieben".',
         },
         {
           title: '3. Ordner filtern',
-          description: 'Klicken Sie oben auf einen Ordner, um nur Verträge aus diesem Ordner anzuzeigen.',
+          description: 'Klicke oben auf einen Ordner, um nur Verträge aus diesem Ordner anzuzeigen.',
         },
         {
           title: '4. Smart Folders nutzen',
@@ -349,16 +349,16 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Mehrfach-Auswahl',
-          description: 'Bei "Vertrag hochladen" können Sie mehrere PDFs gleichzeitig auswählen (Strg/Cmd + Klick) oder alle per Drag & Drop ziehen.',
+          description: 'Bei "Vertrag hochladen" kannst du mehrere PDFs gleichzeitig auswählen (Strg/Cmd + Klick) oder alle per Drag & Drop ziehen.',
         },
         {
           title: '2. Analyse-Warteschlange',
-          description: 'Alle Verträge werden nacheinander analysiert. Sie sehen eine Fortschrittsanzeige für jeden Vertrag.',
+          description: 'Alle Verträge werden nacheinander analysiert. Du siehst eine Fortschrittsanzeige für jeden Vertrag.',
           tips: ['Max. 10 Verträge gleichzeitig', 'Duplikatserkennung verhindert doppelte Uploads']
         },
         {
           title: '3. Ergebnisse prüfen',
-          description: 'Nach Abschluss sehen Sie eine Übersicht: Erfolgreich analysiert, Fehler, Duplikate.',
+          description: 'Nach Abschluss siehst du eine Übersicht: Erfolgreich analysiert, Fehler, Duplikate.',
         }
       ]
     },
@@ -371,16 +371,16 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. E-Mail-Adresse finden',
-          description: 'Gehen Sie zu "Verträge" → "E-Mail Upload". Dort finden Sie Ihre persönliche Upload-E-Mail-Adresse.',
+          description: 'Geh zu "Verträge" → "E-Mail Upload". Dort findest du deine persönliche Upload-E-Mail-Adresse.',
         },
         {
           title: '2. Vertrag per E-Mail senden',
-          description: 'Senden Sie eine E-Mail mit PDF-Anhang an diese Adresse. Betreff und Text sind optional.',
+          description: 'Sende eine E-Mail mit PDF-Anhang an diese Adresse. Betreff und Text sind optional.',
           tips: ['Mehrere PDFs pro E-Mail möglich', 'Max. 10 MB pro Anhang']
         },
         {
           title: '3. Automatische Analyse',
-          description: 'Der Vertrag wird automatisch hochgeladen und analysiert. Sie erhalten eine Bestätigungs-E-Mail.',
+          description: 'Der Vertrag wird automatisch hochgeladen und analysiert. Du erhältst eine Bestätigungs-E-Mail.',
         }
       ]
     },
@@ -393,19 +393,19 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Erinnerung aktivieren',
-          description: 'Öffnen Sie einen Vertrag und klicken Sie auf "Erinnerung aktivieren" (Glockensymbol).',
+          description: 'Öffne einen Vertrag und klicke auf "Erinnerung aktivieren" (Glockensymbol).',
         },
         {
           title: '2. Tage auswählen',
-          description: 'Wählen Sie, wann Sie erinnert werden möchten: 30, 14, 7, 3 oder 1 Tag vor Kündigungsfrist.',
+          description: 'Wähle, wann du erinnert werden möchtest: 30, 14, 7, 3 oder 1 Tag vor Kündigungsfrist.',
         },
         {
           title: '3. E-Mail-Benachrichtigungen',
-          description: 'Sie erhalten automatisch E-Mails mit allen Details: Vertrag, Frist, empfohlene Aktion.',
+          description: 'Du erhältst automatisch E-Mails mit allen Details: Vertrag, Frist, empfohlene Aktion.',
         },
         {
           title: '4. Erinnerungen verwalten',
-          description: 'In den Vertrags-Details sehen Sie alle aktiven Erinnerungen und können sie bearbeiten oder löschen.',
+          description: 'In den Vertrags-Details siehst du alle aktiven Erinnerungen und kannst sie bearbeiten oder löschen.',
         }
       ]
     },
@@ -418,16 +418,16 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Profil erstellen',
-          description: 'Gehen Sie zu "Generieren" → "Company Profile verwalten" → "Neues Profil".',
+          description: 'Geh zu "Generieren" → "Company Profile verwalten" → "Neues Profil".',
         },
         {
           title: '2. Daten eingeben',
-          description: 'Füllen Sie alle Firmeninfos aus: Name, Rechtsform, Adresse, USt-ID, Handelsregister, Bankverbindung.',
+          description: 'Fülle alle Firmeninfos aus: Name, Rechtsform, Adresse, USt-ID, Handelsregister, Bankverbindung.',
           tips: ['Logo hochladen (optional)', 'Mehrere Profile möglich (z.B. für mehrere Firmen)', 'Daten sind verschlüsselt gespeichert']
         },
         {
           title: '3. Bei Vertrags-Generierung nutzen',
-          description: 'Wenn Sie einen Vertrag generieren, wählen Sie einfach Ihr Profil aus. Alle Felder werden automatisch ausgefüllt.',
+          description: 'Wenn du einen Vertrag generierst, wähle einfach dein Profil aus. Alle Felder werden automatisch ausgefüllt.',
         }
       ]
     },
@@ -440,20 +440,20 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Vertrag öffnen',
-          description: 'Gehen Sie zu Ihren Verträgen und öffnen Sie die Detailansicht eines analysierten Vertrags.',
+          description: 'Geh zu deinen Verträgen und öffne die Detailansicht eines analysierten Vertrags.',
         },
         {
           title: '2. Export-Optionen',
-          description: 'Klicken Sie auf "Exportieren". Wählen Sie: Analyse-Report (PDF), Original-Vertrag, Beide kombiniert.',
+          description: 'Klicke auf "Exportieren". Wähle: Analyse-Report (PDF), Original-Vertrag, Beide kombiniert.',
         },
         {
           title: '3. PDF anpassen',
-          description: 'Wählen Sie, was im Report enthalten sein soll: Contract Score, Risiken, Optimierungen, Empfehlungen.',
+          description: 'Wähle, was im Report enthalten sein soll: Contract Score, Risiken, Optimierungen, Empfehlungen.',
         },
         {
           title: '4. Download oder Teilen',
-          description: 'Laden Sie die PDF herunter ODER generieren Sie einen Share-Link zum Teilen mit Kollegen/Anwälten.',
-          tips: ['Share-Links sind 7 Tage gültig', 'Passwort-Schutz optional', 'Tracking: Sehen Sie, wer die PDF geöffnet hat']
+          description: 'Lade die PDF herunter ODER generiere einen Share-Link zum Teilen mit Kollegen/Anwälten.',
+          tips: ['Share-Links sind 7 Tage gültig', 'Passwort-Schutz optional', 'Tracking: Sieh, wer die PDF geöffnet hat']
         }
       ]
     },
@@ -466,19 +466,19 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Profil öffnen',
-          description: 'Klicken Sie oben rechts auf Ihr Avatar-Symbol → "Profil".',
+          description: 'Klicke oben rechts auf dein Avatar-Symbol → "Profil".',
         },
         {
           title: '2. Passwort ändern',
-          description: 'Unter "Sicherheit" können Sie Ihr Passwort ändern. Geben Sie altes + neues Passwort ein.',
+          description: 'Unter "Sicherheit" kannst du dein Passwort ändern. Gib altes + neues Passwort ein.',
         },
         {
           title: '3. Daten exportieren (DSGVO)',
-          description: 'Unter "Datenschutz" können Sie alle Ihre Daten als ZIP-Archiv herunterladen.',
+          description: 'Unter "Datenschutz" kannst du alle deine Daten als ZIP-Archiv herunterladen.',
         },
         {
           title: '4. Konto löschen',
-          description: 'Wenn Sie Ihr Konto löschen möchten: "Konto löschen" → Bestätigung. Alle Daten werden sofort gelöscht.',
+          description: 'Wenn du dein Konto löschen möchtest: "Konto löschen" → Bestätigung. Alle Daten werden sofort gelöscht.',
         }
       ]
     },
@@ -491,23 +491,23 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Abo-Status sehen',
-          description: 'In Ihrem Profil sehen Sie: Aktueller Plan, Nutzungs-Limits, nächstes Abrechnungsdatum.',
+          description: 'In deinem Profil siehst du: Aktueller Plan, Nutzungs-Limits, nächstes Abrechnungsdatum.',
         },
         {
           title: '2. Plan upgraden',
-          description: 'Klicken Sie auf "Plan upgraden". Wählen Sie einen höheren Plan (Business, Premium, Enterprise). Zahlung per Stripe.',
+          description: 'Klicke auf "Plan upgraden". Wähle einen höheren Plan (Business, Premium, Enterprise). Zahlung per Stripe.',
         },
         {
           title: '3. Zahlungsmethode ändern',
-          description: 'Unter "Zahlungsmethoden" können Sie Kreditkarten hinzufügen, ändern oder löschen.',
+          description: 'Unter "Zahlungsmethoden" kannst du Kreditkarten hinzufügen, ändern oder löschen.',
         },
         {
           title: '4. Abonnement kündigen',
-          description: 'Klicken Sie auf "Abo kündigen". Ihr Zugang bleibt bis zum Ende der bezahlten Periode aktiv.',
+          description: 'Klicke auf "Abo kündigen". Dein Zugang bleibt bis zum Ende der bezahlten Periode aktiv.',
         },
         {
           title: '5. Rechnungen herunterladen',
-          description: 'Alle Rechnungen finden Sie unter "Rechnungen". Klicken Sie auf eine Rechnung, um sie als PDF herunterzuladen.',
+          description: 'Alle Rechnungen findest du unter "Rechnungen". Klicke auf eine Rechnung, um sie als PDF herunterzuladen.',
         }
       ]
     },
@@ -515,12 +515,12 @@ const HelpCenter: React.FC = () => {
       id: 'contract-score',
       icon: <BarChart3 size={24} />,
       title: 'Contract Score verstehen',
-      description: 'So wird Ihr Vertrag bewertet',
+      description: 'So wird dein Vertrag bewertet',
       category: 'basics',
       steps: [
         {
           title: '1. Was ist der Contract Score?',
-          description: 'Eine Zahl von 0-100, die die Qualität Ihres Vertrags bewertet. Je höher, desto besser.',
+          description: 'Eine Zahl von 0-100, die die Qualität deines Vertrags bewertet. Je höher, desto besser.',
         },
         {
           title: '2. Farbcodierung',
@@ -532,7 +532,7 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '4. Score verbessern',
-          description: 'Nutzen Sie den Optimizer, um den Score zu erhöhen. Jeder Optimierungsvorschlag zeigt die potenzielle Score-Verbesserung.',
+          description: 'Nutze den Optimizer, um den Score zu erhöhen. Jeder Optimierungsvorschlag zeigt die potenzielle Score-Verbesserung.',
         }
       ]
     },
@@ -545,7 +545,7 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Suchleiste nutzen',
-          description: 'Oben auf der Verträge-Seite: Geben Sie Vertragsnamen, Schlagworte oder Vertragspartner ein.',
+          description: 'Oben auf der Verträge-Seite: Gib Vertragsnamen, Schlagworte oder Vertragspartner ein.',
         },
         {
           title: '2. Nach Status filtern',
@@ -557,7 +557,7 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '4. Mehrfachauswahl',
-          description: 'Aktivieren Sie Checkboxen, um mehrere Verträge auszuwählen. Dann: In Ordner verschieben, Löschen, Exportieren.',
+          description: 'Aktiviere Checkboxen, um mehrere Verträge auszuwählen. Dann: In Ordner verschieben, Löschen, Exportieren.',
         }
       ]
     },
@@ -571,28 +571,28 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Legal Lens öffnen',
-          description: 'Navigieren Sie zu "Legal Lens" in der Hauptnavigation oder klicken Sie bei einem Vertrag auf "Tiefenanalyse starten".',
+          description: 'Navigiere zu "Legal Lens" in der Hauptnavigation oder klicke bei einem Vertrag auf "Tiefenanalyse starten".',
         },
         {
           title: '2. Vertrag auswählen oder hochladen',
-          description: 'Wählen Sie einen bestehenden Vertrag aus der Liste oder laden Sie einen neuen Vertrag direkt hoch.',
+          description: 'Wähle einen bestehenden Vertrag aus der Liste oder lade einen neuen Vertrag direkt hoch.',
         },
         {
           title: '3. Analyse-Ergebnisse verstehen',
-          description: 'Legal Lens zeigt Ihnen: Vertragsübersicht mit allen wichtigen Daten, Parteien-Identifikation, Klausel-für-Klausel-Analyse, Risikobewertung pro Abschnitt.',
+          description: 'Legal Lens zeigt dir: Vertragsübersicht mit allen wichtigen Daten, Parteien-Identifikation, Klausel-für-Klausel-Analyse, Risikobewertung pro Abschnitt.',
           tips: ['Grüne Klauseln = unbedenklich', 'Gelbe Klauseln = Überprüfung empfohlen', 'Rote Klauseln = kritisch, Handlungsbedarf']
         },
         {
           title: '4. Einzelne Klauseln analysieren',
-          description: 'Klicken Sie auf eine Klausel, um die detaillierte Bewertung zu sehen: Was bedeutet sie? Ist sie fair? Welche Risiken gibt es?',
+          description: 'Klicke auf eine Klausel, um die detaillierte Bewertung zu sehen: Was bedeutet sie? Ist sie fair? Welche Risiken gibt es?',
         },
         {
           title: '5. Handlungsempfehlungen',
-          description: 'Zu jeder problematischen Klausel erhalten Sie konkrete Handlungsempfehlungen und alternative Formulierungen.',
+          description: 'Zu jeder problematischen Klausel erhältst du konkrete Handlungsempfehlungen und alternative Formulierungen.',
         },
         {
           title: '6. Report exportieren',
-          description: 'Exportieren Sie die komplette Analyse als PDF-Report für Ihre Unterlagen oder zur Weitergabe an einen Anwalt.',
+          description: 'Exportiere die komplette Analyse als PDF-Report für deine Unterlagen oder zur Weitergabe an einen Anwalt.',
         }
       ]
     },
@@ -605,24 +605,24 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Klauselbibliothek öffnen',
-          description: 'Navigieren Sie zu "Klauselbibliothek" in der Navigation oder im Dashboard unter "Werkzeuge".',
+          description: 'Navigiere zu "Klauselbibliothek" in der Navigation oder im Dashboard unter "Werkzeuge".',
         },
         {
           title: '2. Klausel hinzufügen',
-          description: 'Klicken Sie auf "Neue Klausel" und geben Sie ein: Titel, Kategorie (z.B. Haftung, Kündigung), den Klauseltext.',
-          tips: ['Kategorien helfen beim späteren Finden', 'Sie können Klauseln auch aus analysierten Verträgen direkt speichern']
+          description: 'Klicke auf "Neue Klausel" und gib ein: Titel, Kategorie (z.B. Haftung, Kündigung), den Klauseltext.',
+          tips: ['Kategorien helfen beim späteren Finden', 'Du kannst Klauseln auch aus analysierten Verträgen direkt speichern']
         },
         {
           title: '3. Klauseln organisieren',
-          description: 'Sortieren Sie Klauseln nach Kategorien: Haftungsklauseln, Kündigungsklauseln, Geheimhaltung, Zahlungsbedingungen, etc.',
+          description: 'Sortiere Klauseln nach Kategorien: Haftungsklauseln, Kündigungsklauseln, Geheimhaltung, Zahlungsbedingungen, etc.',
         },
         {
           title: '4. Klauseln suchen',
-          description: 'Nutzen Sie die Suchfunktion, um schnell die richtige Klausel zu finden. Suchen Sie nach Titel oder Inhalt.',
+          description: 'Nutze die Suchfunktion, um schnell die richtige Klausel zu finden. Suche nach Titel oder Inhalt.',
         },
         {
           title: '5. Klauseln in Verträge einfügen',
-          description: 'Beim Erstellen eines neuen Vertrags (Generator/Contract Builder) können Sie gespeicherte Klauseln mit einem Klick einfügen.',
+          description: 'Beim Erstellen eines neuen Vertrags (Generator/Contract Builder) kannst du gespeicherte Klauseln mit einem Klick einfügen.',
         }
       ]
     },
@@ -635,32 +635,32 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Contract Builder öffnen',
-          description: 'Navigieren Sie zu "Contract Builder" in der Navigation. Sie sehen einen visuellen Editor mit Blöcken.',
+          description: 'Navigiere zu "Contract Builder" in der Navigation. Du siehst einen visuellen Editor mit Blöcken.',
         },
         {
           title: '2. Blöcke hinzufügen',
-          description: 'Ziehen Sie Bausteine aus der linken Seitenleiste in den Editor: Überschriften, Textblöcke, Klauseln, Tabellen, Unterschriftenfelder.',
+          description: 'Zieh Bausteine aus der linken Seitenleiste in den Editor: Überschriften, Textblöcke, Klauseln, Tabellen, Unterschriftenfelder.',
           tips: ['Doppelklick zum Bearbeiten', 'Drag & Drop zum Verschieben', 'Rechtsklick für weitere Optionen']
         },
         {
           title: '3. Variablen verwenden',
-          description: 'Fügen Sie Platzhalter ein wie {{Firmenname}}, {{Datum}}, {{Betrag}}. Diese werden später automatisch ausgefüllt.',
+          description: 'Füge Platzhalter ein wie {{Firmenname}}, {{Datum}}, {{Betrag}}. Diese werden später automatisch ausgefüllt.',
         },
         {
           title: '4. Design anpassen',
-          description: 'Passen Sie Schriftart, Farben und Layout an. Fügen Sie Ihr Firmenlogo hinzu.',
+          description: 'Passe Schriftart, Farben und Layout an. Füge dein Firmenlogo hinzu.',
         },
         {
           title: '5. KI-Unterstützung nutzen',
-          description: 'Klicken Sie auf "KI-Assistent" um: Klauseln rechtlich prüfen zu lassen, Formulierungen zu optimieren, fehlende Abschnitte vorschlagen zu lassen.',
+          description: 'Klicke auf "KI-Assistent" um: Klauseln rechtlich prüfen zu lassen, Formulierungen zu optimieren, fehlende Abschnitte vorschlagen zu lassen.',
         },
         {
           title: '6. Vorlage speichern',
-          description: 'Speichern Sie Ihren Vertrag als Vorlage für zukünftige Verwendung. Ideal für wiederkehrende Vertragstypen.',
+          description: 'Speichere deinen Vertrag als Vorlage für zukünftige Verwendung. Ideal für wiederkehrende Vertragstypen.',
         },
         {
           title: '7. Exportieren',
-          description: 'Exportieren Sie den fertigen Vertrag als PDF oder DOCX. Optional: Direkt zur digitalen Signatur senden.',
+          description: 'Exportiere den fertigen Vertrag als PDF oder DOCX. Optional: Direkt zur digitalen Signatur senden.',
         }
       ]
     },
@@ -673,12 +673,12 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Team-Bereich öffnen',
-          description: 'Navigieren Sie zu "Team" in der Navigation (nur für Business/Enterprise-Pläne verfügbar).',
+          description: 'Navigiere zu "Team" in der Navigation (nur für Business/Enterprise-Pläne verfügbar).',
         },
         {
           title: '2. Teammitglied einladen',
-          description: 'Klicken Sie auf "Mitglied einladen" und geben Sie die E-Mail-Adresse ein. Der Eingeladene erhält einen Link per E-Mail.',
-          tips: ['Einladungen sind 7 Tage gültig', 'Sie können die Rolle direkt bei der Einladung festlegen']
+          description: 'Klicke auf "Mitglied einladen" und gib die E-Mail-Adresse ein. Der Eingeladene erhält einen Link per E-Mail.',
+          tips: ['Einladungen sind 7 Tage gültig', 'Du kannst die Rolle direkt bei der Einladung festlegen']
         },
         {
           title: '3. Rollen verstehen',
@@ -686,15 +686,15 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '4. Berechtigungen anpassen',
-          description: 'Klicken Sie auf ein Teammitglied, um dessen Rolle zu ändern oder spezifische Berechtigungen festzulegen.',
+          description: 'Klicke auf ein Teammitglied, um dessen Rolle zu ändern oder spezifische Berechtigungen festzulegen.',
         },
         {
           title: '5. Verträge teilen',
-          description: 'Ordner und Verträge können mit dem Team geteilt werden. Legen Sie fest, wer welche Verträge sehen darf.',
+          description: 'Ordner und Verträge können mit dem Team geteilt werden. Lege fest, wer welche Verträge sehen darf.',
         },
         {
           title: '6. Aktivitäten nachverfolgen',
-          description: 'Im Team-Dashboard sehen Sie, wer wann welche Aktionen durchgeführt hat (Audit-Log).',
+          description: 'Im Team-Dashboard siehst du, wer wann welche Aktionen durchgeführt hat (Audit-Log).',
         }
       ]
     },
@@ -707,16 +707,16 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. API-Keys öffnen',
-          description: 'Navigieren Sie zu "API-Keys" in Ihrem Profil oder unter Einstellungen (nur Enterprise-Plan).',
+          description: 'Navigiere zu "API-Keys" in deinem Profil oder unter Einstellungen (nur Enterprise-Plan).',
         },
         {
           title: '2. Neuen Key erstellen',
-          description: 'Klicken Sie auf "Neuen API-Key erstellen". Geben Sie einen Namen ein (z.B. "Produktions-Server", "Entwicklung").',
-          tips: ['Der Key wird nur einmal angezeigt - kopieren Sie ihn sofort!', 'Speichern Sie Keys niemals im Code']
+          description: 'Klicke auf "Neuen API-Key erstellen". Gib einen Namen ein (z.B. "Produktions-Server", "Entwicklung").',
+          tips: ['Der Key wird nur einmal angezeigt - kopiere ihn sofort!', 'Speichere Keys niemals im Code']
         },
         {
           title: '3. Berechtigungen festlegen',
-          description: 'Wählen Sie, welche API-Endpoints der Key nutzen darf: Analyse, Generierung, Vergleich, etc.',
+          description: 'Wähle, welche API-Endpoints der Key nutzen darf: Analyse, Generierung, Vergleich, etc.',
         },
         {
           title: '4. Rate-Limits beachten',
@@ -724,11 +724,11 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '5. Key widerrufen',
-          description: 'Bei Sicherheitsbedenken können Sie einen Key jederzeit widerrufen. Er funktioniert dann sofort nicht mehr.',
+          description: 'Bei Sicherheitsbedenken kannst du einen Key jederzeit widerrufen. Er funktioniert dann sofort nicht mehr.',
         },
         {
           title: '6. API-Dokumentation',
-          description: 'Die vollständige API-Dokumentation finden Sie unter api.contract-ai.de/docs mit Beispielen für alle Endpoints.',
+          description: 'Die vollständige API-Dokumentation findest du unter api.contract-ai.de/docs mit Beispielen für alle Endpoints.',
         }
       ]
     },
@@ -741,7 +741,7 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Integrationen öffnen',
-          description: 'Navigieren Sie zu "Integrationen" in der Navigation oder unter Einstellungen.',
+          description: 'Navigiere zu "Integrationen" in der Navigation oder unter Einstellungen.',
         },
         {
           title: '2. Verfügbare Integrationen',
@@ -749,16 +749,16 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '3. Integration aktivieren',
-          description: 'Klicken Sie auf die gewünschte Integration und folgen Sie dem Authentifizierungs-Prozess (OAuth).',
-          tips: ['Sie werden zur Anmeldung beim Drittanbieter weitergeleitet', 'Contract AI erhält nur die notwendigen Berechtigungen']
+          description: 'Klicke auf die gewünschte Integration und folge dem Authentifizierungs-Prozess (OAuth).',
+          tips: ['Du wirst zur Anmeldung beim Drittanbieter weitergeleitet', 'Contract AI erhält nur die notwendigen Berechtigungen']
         },
         {
           title: '4. Automatisierungen einrichten',
-          description: 'Nach der Verbindung können Sie Automatisierungen erstellen: z.B. "Neuer Vertrag in Drive → automatisch analysieren".',
+          description: 'Nach der Verbindung kannst du Automatisierungen erstellen: z.B. "Neuer Vertrag in Drive → automatisch analysieren".',
         },
         {
           title: '5. Webhooks nutzen',
-          description: 'Für Entwickler: Richten Sie Webhooks ein, um bei bestimmten Events benachrichtigt zu werden (neue Analyse, Frist erreicht, etc.).',
+          description: 'Für Entwickler: Richte Webhooks ein, um bei bestimmten Events benachrichtigt zu werden (neue Analyse, Frist erreicht, etc.).',
         }
       ]
     },
@@ -775,20 +775,20 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '2. Kündigungsdaten prüfen',
-          description: 'Contract AI zeigt Ihnen: Kündigungsfrist, spätestes Kündigungsdatum, empfohlenes Absendedatum, Empfängeradresse.',
+          description: 'Contract AI zeigt dir: Kündigungsfrist, spätestes Kündigungsdatum, empfohlenes Absendedatum, Empfängeradresse.',
         },
         {
           title: '3. Kündigungsschreiben generieren',
-          description: 'Klicken Sie auf "Kündigungsschreiben erstellen". Die KI erstellt ein rechtssicheres Kündigungsschreiben mit allen wichtigen Angaben.',
+          description: 'Klicke auf "Kündigungsschreiben erstellen". Die KI erstellt ein rechtssicheres Kündigungsschreiben mit allen wichtigen Angaben.',
           tips: ['Einschreiben mit Rückschein empfohlen', 'PDF zum Ausdrucken oder direkt versenden']
         },
         {
           title: '4. Erinnerung aktivieren',
-          description: 'Aktivieren Sie eine Erinnerung, damit Sie die Kündigungsfrist nicht verpassen. Sie erhalten E-Mails 30, 14 und 7 Tage vorher.',
+          description: 'Aktiviere eine Erinnerung, damit du die Kündigungsfrist nicht verpasst. Du erhältst E-Mails 30, 14 und 7 Tage vorher.',
         },
         {
           title: '5. Status nachverfolgen',
-          description: 'Nach der Kündigung können Sie den Status aktualisieren: "Kündigung versendet", "Bestätigung erhalten", etc.',
+          description: 'Nach der Kündigung kannst du den Status aktualisieren: "Kündigung versendet", "Bestätigung erhalten", etc.',
         }
       ]
     },
@@ -801,11 +801,11 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Vertrag öffnen',
-          description: 'Klicken Sie in der Vertragsliste auf einen Vertrag, um die Detailansicht zu öffnen.',
+          description: 'Klicke in der Vertragsliste auf einen Vertrag, um die Detailansicht zu öffnen.',
         },
         {
           title: '2. Übersicht',
-          description: 'Oben sehen Sie: Vertragsname, Contract Score, Status (aktiv/abgelaufen), Hochladedatum, Laufzeit.',
+          description: 'Oben siehst du: Vertragsname, Contract Score, Status (aktiv/abgelaufen), Hochladedatum, Laufzeit.',
         },
         {
           title: '3. Analyse-Ergebnisse',
@@ -814,11 +814,11 @@ const HelpCenter: React.FC = () => {
         {
           title: '4. Extrahierte Daten',
           description: 'Contract AI extrahiert automatisch: Vertragsparteien, Laufzeit, Kündigungsfrist, Zahlungsbedingungen, wichtige Termine.',
-          tips: ['Falsch erkannte Daten können manuell korrigiert werden', 'Klicken Sie auf "Bearbeiten" neben jedem Feld']
+          tips: ['Falsch erkannte Daten können manuell korrigiert werden', 'Klicke auf "Bearbeiten" neben jedem Feld']
         },
         {
           title: '5. Original-Dokument',
-          description: 'Im Tab "Dokument" können Sie das Original-PDF ansehen, herunterladen oder eine neue Version hochladen.',
+          description: 'Im Tab "Dokument" kannst du das Original-PDF ansehen, herunterladen oder eine neue Version hochladen.',
         },
         {
           title: '6. Aktionen',
@@ -839,11 +839,11 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '2. QR-Code scannen',
-          description: 'Scannen Sie den QR-Code mit Ihrer Smartphone-Kamera oder einer QR-Code-App.',
+          description: 'Scanne den QR-Code mit deiner Smartphone-Kamera oder einer QR-Code-App.',
         },
         {
           title: '3. Verifizierung prüfen',
-          description: 'Sie werden zu contract-ai.de/verify/[ID] weitergeleitet. Dort sehen Sie: Ist der Vertrag echt? Wann wurde er erstellt? Wer hat unterschrieben?',
+          description: 'Du wirst zu contract-ai.de/verify/[ID] weitergeleitet. Dort siehst du: Ist der Vertrag echt? Wann wurde er erstellt? Wer hat unterschrieben?',
           tips: ['Grünes Häkchen = Vertrag ist verifiziert und unverändert', 'Rotes X = Vertrag wurde manipuliert oder ist ungültig']
         },
         {
@@ -861,15 +861,15 @@ const HelpCenter: React.FC = () => {
       steps: [
         {
           title: '1. Better Contracts öffnen',
-          description: 'Navigieren Sie zu "Better Contracts" oder klicken Sie bei einem Vertrag auf "Verbessern".',
+          description: 'Navigiere zu "Better Contracts" oder klicke bei einem Vertrag auf "Verbessern".',
         },
         {
           title: '2. Vertrag hochladen',
-          description: 'Laden Sie den Vertrag hoch, den Sie verbessern möchten. Unterstützt werden PDF und DOCX.',
+          description: 'Lade den Vertrag hoch, den du verbessern möchtest. Unterstützt werden PDF und DOCX.',
         },
         {
           title: '3. Verbesserungsoptionen wählen',
-          description: 'Wählen Sie, was verbessert werden soll: Rechtliche Sicherheit, Verständlichkeit, Fairness, Vollständigkeit.',
+          description: 'Wähle, was verbessert werden soll: Rechtliche Sicherheit, Verständlichkeit, Fairness, Vollständigkeit.',
         },
         {
           title: '4. KI-Analyse abwarten',
@@ -877,12 +877,12 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '5. Vorschläge prüfen',
-          description: 'Sie sehen eine Liste aller Vorschläge: Original-Formulierung vs. Verbesserung, mit Begründung warum.',
-          tips: ['Jeder Vorschlag kann einzeln angenommen oder abgelehnt werden', 'Sie behalten die volle Kontrolle']
+          description: 'Du siehst eine Liste aller Vorschläge: Original-Formulierung vs. Verbesserung, mit Begründung warum.',
+          tips: ['Jeder Vorschlag kann einzeln angenommen oder abgelehnt werden', 'Du behältst die volle Kontrolle']
         },
         {
           title: '6. Verbesserten Vertrag exportieren',
-          description: 'Laden Sie den verbesserten Vertrag als PDF oder DOCX herunter. Original bleibt erhalten.',
+          description: 'Lade den verbesserten Vertrag als PDF oder DOCX herunter. Original bleibt erhalten.',
         }
       ]
     }
@@ -895,7 +895,7 @@ const HelpCenter: React.FC = () => {
     // General
     {
       question: 'Wie sicher sind meine Vertragsdaten?',
-      answer: 'Höchste Sicherheit ist garantiert: Alle Daten werden verschlüsselt übertragen (TLS 1.3) und gespeichert (AES-256). Server stehen in Deutschland (DSGVO-konform). Zugriff nur Sie + verschlüsselte Backups. Automatische Löschung nach 30 Tagen (außer Sie verlängern). Keine Weitergabe an Dritte. Details zu Datenschutz und Sicherheit finden Sie in unserem <a href="/ki-vertragsanalyse">KI-Vertragsanalyse Guide</a>.',
+      answer: 'Höchste Sicherheit ist garantiert: Alle Daten werden verschlüsselt übertragen (TLS 1.3) und gespeichert (AES-256). Server stehen in Deutschland (DSGVO-konform). Zugriff nur du + verschlüsselte Backups. Automatische Löschung nach 30 Tagen (außer du verlängerst). Keine Weitergabe an Dritte. Details zu Datenschutz und Sicherheit findest du in unserem <a href="/ki-vertragsanalyse">KI-Vertragsanalyse Guide</a>.',
       category: 'security'
     },
     {
@@ -905,7 +905,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Ersetzt Contract AI einen Anwalt?',
-      answer: 'NEIN! Contract AI ist ein hochmodernes Analyse-Tool, das Sie bei der ersten Einschätzung unterstützt und Zeit spart. Bei komplexen rechtlichen Fragen, hohen Vertragssummen oder kritischen Verträgen empfehlen wir IMMER die Beratung durch einen Fachanwalt. Nutzen Sie unsere <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> als Grundlage für das Anwaltsgespräch.',
+      answer: 'NEIN! Contract AI ist ein hochmodernes Analyse-Tool, das dich bei der ersten Einschätzung unterstützt und Zeit spart. Bei komplexen rechtlichen Fragen, hohen Vertragssummen oder kritischen Verträgen empfehlen wir IMMER die Beratung durch einen Fachanwalt. Nutze unsere <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> als Grundlage für das Anwaltsgespräch.',
       category: 'general'
     },
     {
@@ -925,7 +925,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Wie lange dauert eine Analyse?',
-      answer: 'Standard-Analyse: 30-60 Sekunden pro Vertrag (je nach Länge). Optimizer: 2-3 Minuten. Vergleich: 2-4 Minuten. Generator: 1-2 Minuten. Sie können während der Analyse weitersurfen - Sie werden benachrichtigt, wenn die Analyse fertig ist.',
+      answer: 'Standard-Analyse: 30-60 Sekunden pro Vertrag (je nach Länge). Optimizer: 2-3 Minuten. Vergleich: 2-4 Minuten. Generator: 1-2 Minuten. Du kannst während der Analyse weitersurfen - du wirst benachrichtigt, wenn die Analyse fertig ist.',
       category: 'technical'
     },
     {
@@ -935,12 +935,12 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Kann ich Verträge mit mehreren Personen teilen?',
-      answer: 'JA! Sie können: 1) Analyse-Reports als PDF exportieren und per E-Mail teilen. 2) Share-Links generieren (7 Tage gültig, optional passwortgeschützt). 3) Team-Features (ab Business-Plan): Mehrere Nutzer pro Konto, gemeinsame Ordner. 4) Verträge zur Signatur an mehrere Personen senden.',
+      answer: 'JA! Du kannst: 1) Analyse-Reports als PDF exportieren und per E-Mail teilen. 2) Share-Links generieren (7 Tage gültig, optional passwortgeschützt). 3) Team-Features (ab Business-Plan): Mehrere Nutzer pro Konto, gemeinsame Ordner. 4) Verträge zur Signatur an mehrere Personen senden.',
       category: 'general'
     },
     {
       question: 'Werden meine Verträge zum KI-Training verwendet?',
-      answer: 'NEIN! Ihre Vertragsdaten werden NIEMALS für KI-Training verwendet. Wir nutzen OpenAI im "Zero Data Retention"-Modus: Ihre Daten werden nicht gespeichert, nicht analysiert, nicht für Model-Training verwendet. 100% Vertraulichkeit garantiert.',
+      answer: 'NEIN! Deine Vertragsdaten werden NIEMALS für KI-Training verwendet. Wir nutzen OpenAI im "Zero Data Retention"-Modus: deine Daten werden nicht gespeichert, nicht analysiert, nicht für Model-Training verwendet. 100% Vertraulichkeit garantiert.',
       category: 'security'
     },
     {
@@ -950,17 +950,17 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Was passiert mit meinen Daten nach der Kündigung?',
-      answer: 'Nach Abo-Ende: Sie haben 30 Tage Zeit, alle Daten zu exportieren. Danach werden alle Verträge, Analysen und persönliche Daten automatisch und unwiderruflich gelöscht. Sie erhalten 7 Tage vorher eine Erinnerungs-E-Mail.',
+      answer: 'Nach Abo-Ende: Du hast 30 Tage Zeit, alle Daten zu exportieren. Danach werden alle Verträge, Analysen und persönliche Daten automatisch und unwiderruflich gelöscht. Du erhältst 7 Tage vorher eine Erinnerungs-E-Mail.',
       category: 'security'
     },
     {
       question: 'Gibt es eine Geld-zurück-Garantie?',
-      answer: 'JA! 14 Tage Geld-zurück-Garantie ohne Wenn und Aber. Wenn Sie nicht zufrieden sind, schreiben Sie uns einfach eine E-Mail - Sie bekommen Ihr Geld zurück. Keine Fragen.',
+      answer: 'JA! 14 Tage Geld-zurück-Garantie ohne Wenn und Aber. Wenn du nicht zufrieden bist, schreib uns einfach eine E-Mail - du bekommst dein Geld zurück. Keine Fragen.',
       category: 'billing'
     },
     {
       question: 'Kann ich mehrere Company Profiles erstellen?',
-      answer: 'JA! Sie können unbegrenzt viele Company Profiles erstellen (z.B. für verschiedene Firmen oder Abteilungen). Bei der Vertrags-Generierung wählen Sie einfach das passende Profil aus.',
+      answer: 'JA! Du kannst unbegrenzt viele Company Profiles erstellen (z.B. für verschiedene Firmen oder Abteilungen). Bei der Vertrags-Generierung wähle einfach das passende Profil aus.',
       category: 'general'
     },
     {
@@ -970,7 +970,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Was ist der Unterschied zwischen Optimizer und Generator?',
-      answer: 'Optimizer: Verbessert BESTEHENDE Verträge. Analysiert Schwachstellen, schlägt Optimierungen vor. Generator: Erstellt NEUE Verträge von Grund auf. Basierend auf Vorlagen + Ihre Eingaben. Beide nutzen KI, aber für verschiedene Zwecke.',
+      answer: 'Optimizer: Verbessert BESTEHENDE Verträge. Analysiert Schwachstellen, schlägt Optimierungen vor. Generator: Erstellt NEUE Verträge von Grund auf. Basierend auf Vorlagen + deine Eingaben. Beide nutzen KI, aber für verschiedene Zwecke.',
       category: 'general'
     },
     {
@@ -980,12 +980,12 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Wie oft wird Legal Pulse aktualisiert?',
-      answer: 'Legal Pulse wird täglich aktualisiert! Neue Gesetze, Urteile und Rechts-Updates werden automatisch eingepflegt. Ihre überwachten Verträge werden wöchentlich neu geprüft. Bei kritischen Änderungen erhalten Sie sofort eine E-Mail.',
+      answer: 'Legal Pulse wird täglich aktualisiert! Neue Gesetze, Urteile und Rechts-Updates werden automatisch eingepflegt. Deine überwachten Verträge werden wöchentlich neu geprüft. Bei kritischen Änderungen erhältst du sofort eine E-Mail.',
       category: 'general'
     },
     {
       question: 'Gibt es eine API für Entwickler?',
-      answer: 'JA! Ab Enterprise-Plan haben Sie Zugriff auf unsere REST-API. Damit können Sie: Verträge hochladen, Analysen abrufen, Verträge generieren - alles programmatisch. Dokumentation: api.contract-ai.de/docs',
+      answer: 'JA! Ab Enterprise-Plan hast du Zugriff auf unsere REST-API. Damit kannst du: Verträge hochladen, Analysen abrufen, Verträge generieren - alles programmatisch. Dokumentation: api.contract-ai.de/docs',
       category: 'technical'
     },
     {
@@ -996,7 +996,7 @@ const HelpCenter: React.FC = () => {
     // ========== NEUE FAQs ==========
     {
       question: 'Was ist der Unterschied zwischen Legal Lens und normaler Analyse?',
-      answer: 'Die normale Analyse gibt Ihnen einen schnellen Überblick: Contract Score, wichtigste Risiken, Zusammenfassung. Legal Lens geht viel tiefer: Klausel-für-Klausel-Analyse, detaillierte Risikobewertung pro Abschnitt, konkrete Handlungsempfehlungen, Parteien-Identifikation, und ein exportierbarer Vollreport. Legal Lens ist ideal für wichtige oder komplexe Verträge.',
+      answer: 'Die normale Analyse gibt dir einen schnellen Überblick: Contract Score, wichtigste Risiken, Zusammenfassung. Legal Lens geht viel tiefer: Klausel-für-Klausel-Analyse, detaillierte Risikobewertung pro Abschnitt, konkrete Handlungsempfehlungen, Parteien-Identifikation, und ein exportierbarer Vollreport. Legal Lens ist ideal für wichtige oder komplexe Verträge.',
       category: 'general'
     },
     {
@@ -1006,22 +1006,22 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Wozu brauche ich die Klauselbibliothek?',
-      answer: 'Die Klauselbibliothek ist Ihre persönliche Sammlung von bewährten Vertragsklauseln. Speichern Sie Klauseln, die Sie häufig verwenden, und fügen Sie sie bei neuen Verträgen mit einem Klick ein. Zeit sparen + Konsistenz sicherstellen!',
+      answer: 'Die Klauselbibliothek ist deine persönliche Sammlung von bewährten Vertragsklauseln. Speichere Klauseln, die du häufig verwendest, und füge sie bei neuen Verträgen mit einem Klick ein. Zeit sparen + Konsistenz sicherstellen!',
       category: 'general'
     },
     {
       question: 'Kann ich mit mehreren Personen an Verträgen arbeiten?',
-      answer: 'JA! Mit dem Team-Feature (Business/Enterprise) können Sie Teammitglieder einladen, Rollen vergeben (Admin, Editor, Viewer), Verträge teilen und gemeinsam bearbeiten. Alle Aktivitäten werden im Audit-Log protokolliert.',
+      answer: 'JA! Mit dem Team-Feature (Business/Enterprise) kannst du Teammitglieder einladen, Rollen vergeben (Admin, Editor, Viewer), Verträge teilen und gemeinsam bearbeiten. Alle Aktivitäten werden im Audit-Log protokolliert.',
       category: 'general'
     },
     {
       question: 'Wie funktioniert die Kündigungshilfe?',
-      answer: 'Contract AI erkennt automatisch Kündigungsfristen in Ihren Verträgen. Sie können: 1) Erinnerungen aktivieren (E-Mail 30/14/7 Tage vorher), 2) Ein rechtssicheres Kündigungsschreiben per KI generieren lassen, 3) Den Kündigungsstatus tracken. Nie wieder eine Frist verpassen!',
+      answer: 'Contract AI erkennt automatisch Kündigungsfristen in deinen Verträgen. Du kannst: 1) Erinnerungen aktivieren (E-Mail 30/14/7 Tage vorher), 2) Ein rechtssicheres Kündigungsschreiben per KI generieren lassen, 3) Den Kündigungsstatus tracken. Nie wieder eine Frist verpassen!',
       category: 'general'
     },
     {
       question: 'Was bedeutet der QR-Code auf generierten Verträgen?',
-      answer: 'Jeder von Contract AI erstellte oder signierte Vertrag enthält einen QR-Code zur Echtheitsprüfung. Scannen Sie ihn mit dem Smartphone → Sie sehen sofort, ob der Vertrag echt ist, wann er erstellt wurde und wer unterschrieben hat. Perfekt gegen Fälschungen!',
+      answer: 'Jeder von Contract AI erstellte oder signierte Vertrag enthält einen QR-Code zur Echtheitsprüfung. Scanne ihn mit dem Smartphone → Du siehst sofort, ob der Vertrag echt ist, wann er erstellt wurde und wer unterschrieben hat. Perfekt gegen Fälschungen!',
       category: 'security'
     },
     {
@@ -1036,17 +1036,17 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Kann ich meine Daten exportieren?',
-      answer: 'JA! DSGVO-konform können Sie jederzeit alle Ihre Daten exportieren: Verträge (Original-PDFs), Analysen (als PDF), Kalender-Events (ICS), Kontodaten (JSON). Gehen Sie zu Profil → Datenschutz → "Alle Daten exportieren".',
+      answer: 'JA! DSGVO-konform kannst du jederzeit alle deine Daten exportieren: Verträge (Original-PDFs), Analysen (als PDF), Kalender-Events (ICS), Kontodaten (JSON). Geh zu Profil → Datenschutz → "Alle Daten exportieren".',
       category: 'security'
     },
     {
       question: 'Wie lange werden meine Verträge gespeichert?',
-      answer: 'Solange Ihr Konto aktiv ist, bleiben alle Verträge gespeichert. Nach Kündigung: 30 Tage zum Exportieren, dann dauerhafte Löschung. Sie können einzelne Verträge jederzeit selbst löschen. Gelöschte Verträge sind unwiderruflich weg (kein Papierkorb).',
+      answer: 'Solange dein Konto aktiv ist, bleiben alle Verträge gespeichert. Nach Kündigung: 30 Tage zum Exportieren, dann dauerhafte Löschung. Du kannst einzelne Verträge jederzeit selbst löschen. Gelöschte Verträge sind unwiderruflich weg (kein Papierkorb).',
       category: 'security'
     },
     {
       question: 'Funktioniert Contract AI offline?',
-      answer: 'NEIN. Contract AI ist eine Web-App und benötigt Internetverbindung. Die KI-Analyse läuft auf unseren Servern. Aber: Sie können Analysen und Verträge als PDF herunterladen für Offline-Nutzung.',
+      answer: 'NEIN. Contract AI ist eine Web-App und benötigt Internetverbindung. Die KI-Analyse läuft auf unseren Servern. Aber: Du kannst Analysen und Verträge als PDF herunterladen für Offline-Nutzung.',
       category: 'technical'
     },
     {
@@ -1061,7 +1061,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Kann ich mein Abo upgraden oder downgraden?',
-      answer: 'JA! Jederzeit. Upgrade: Sofort wirksam, nur der Differenzbetrag wird berechnet. Downgrade: Zum nächsten Abrechnungszeitpunkt wirksam. Gehen Sie zu Profil → Abonnement → "Plan ändern".',
+      answer: 'JA! Jederzeit. Upgrade: Sofort wirksam, nur der Differenzbetrag wird berechnet. Downgrade: Zum nächsten Abrechnungszeitpunkt wirksam. Geh zu Profil → Abonnement → "Plan ändern".',
       category: 'billing'
     },
     {
@@ -1071,37 +1071,37 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Bekomme ich eine Rechnung?',
-      answer: 'JA! Nach jeder Zahlung erhalten Sie automatisch eine Rechnung per E-Mail. Alle Rechnungen finden Sie auch unter Profil → Rechnungen. Format: PDF mit allen steuerlich relevanten Angaben (inkl. MwSt.).',
+      answer: 'JA! Nach jeder Zahlung erhältst du automatisch eine Rechnung per E-Mail. Alle Rechnungen findest du auch unter Profil → Rechnungen. Format: PDF mit allen steuerlich relevanten Angaben (inkl. MwSt.).',
       category: 'billing'
     },
     {
       question: 'Was ist, wenn mein Analyse-Kontingent aufgebraucht ist?',
-      answer: 'Sie werden benachrichtigt, wenn Sie 80% erreicht haben. Wenn alle Analysen verbraucht sind, können Sie: 1) Auf den nächsten Monat warten (Reset am 1.), 2) Einzelne Analysen nachkaufen (0,99€/Stück), 3) Ihren Plan upgraden. Bestehende Verträge bleiben verfügbar.',
+      answer: 'Du wirst benachrichtigt, wenn du 80 % erreicht hast. Wenn alle Analysen verbraucht sind, kannst du: 1) Auf den nächsten Monat warten (Reset am 1.), 2) Einzelne Analysen nachkaufen (0,99€/Stück), 3) deinen Plan upgraden. Bestehende Verträge bleiben verfügbar.',
       category: 'billing'
     },
     {
       question: 'Gibt es Rabatte für Startups oder NGOs?',
-      answer: 'JA! Startups (< 2 Jahre, < 10 Mitarbeiter) erhalten 50% Rabatt im ersten Jahr. NGOs und gemeinnützige Organisationen erhalten 30% dauerhaft. Schreiben Sie uns an support@contract-ai.de mit einem Nachweis.',
+      answer: 'JA! Startups (< 2 Jahre, < 10 Mitarbeiter) erhalten 50% Rabatt im ersten Jahr. NGOs und gemeinnützige Organisationen erhalten 30% dauerhaft. Schreib uns an support@contract-ai.de mit einem Nachweis.',
       category: 'billing'
     },
     {
       question: 'Was passiert bei technischen Problemen?',
-      answer: 'Sollte etwas nicht funktionieren: 1) Seite neu laden (Strg+F5), 2) Cache löschen, 3) Anderen Browser testen. Immer noch Probleme? Schreiben Sie an support@contract-ai.de mit Screenshot und Fehlerbeschreibung. Wir antworten innerhalb von 24h.',
+      answer: 'Sollte etwas nicht funktionieren: 1) Seite neu laden (Strg+F5), 2) Cache löschen, 3) Anderen Browser testen. Immer noch Probleme? Schreib an support@contract-ai.de mit Screenshot und Fehlerbeschreibung. Wir antworten innerhalb von 24h.',
       category: 'technical'
     },
     {
       question: 'Wie genau ist die KI-Analyse?',
-      answer: 'Sehr genau! Unsere KI wurde mit tausenden deutschen Verträgen trainiert und erreicht eine Erkennungsrate von über 95% bei Standardklauseln. WICHTIG: Die Analyse ist eine Unterstützung, kein Ersatz für Rechtsberatung. Bei kritischen Verträgen empfehlen wir immer zusätzlich einen Fachanwalt. Mehr zur Genauigkeit erfahren Sie in unserem <a href="/ki-vertragsanalyse">Guide zur KI-Vertragsanalyse</a>.',
+      answer: 'Sehr genau! Unsere KI wurde mit tausenden deutschen Verträgen trainiert und erreicht eine Erkennungsrate von über 95% bei Standardklauseln. WICHTIG: Die Analyse ist eine Unterstützung, kein Ersatz für Rechtsberatung. Bei kritischen Verträgen empfehlen wir immer zusätzlich einen Fachanwalt. Mehr zur Genauigkeit erfährst du in unserem <a href="/ki-vertragsanalyse">Guide zur KI-Vertragsanalyse</a>.',
       category: 'general'
     },
     {
       question: 'Kann ich Contract AI auf dem Handy nutzen?',
-      answer: 'JA! Die Web-App ist vollständig responsive und funktioniert perfekt auf Smartphone und Tablet. Sie können Verträge fotografieren und direkt hochladen. Eine native App für iOS/Android ist in Planung.',
+      answer: 'JA! Die Web-App ist vollständig responsive und funktioniert perfekt auf Smartphone und Tablet. Du kannst Verträge fotografieren und direkt hochladen. Eine native App für iOS/Android ist in Planung.',
       category: 'technical'
     },
     {
       question: 'Was ist Better Contracts?',
-      answer: 'Better Contracts ist unser KI-Feature zur automatischen Vertragsverbesserung. Laden Sie einen bestehenden Vertrag hoch → die KI findet Schwachstellen und schlägt bessere Formulierungen vor → Sie entscheiden, was übernommen wird → Download des verbesserten Vertrags.',
+      answer: 'Better Contracts ist unser KI-Feature zur automatischen Vertragsverbesserung. Lade einen bestehenden Vertrag hoch → die KI findet Schwachstellen und schlägt bessere Formulierungen vor → du entscheidest, was übernommen wird → Download des verbesserten Vertrags.',
       category: 'general'
     },
     {
@@ -1225,7 +1225,7 @@ const HelpCenter: React.FC = () => {
               <input
                 type="text"
                 className={styles.searchInput}
-                placeholder="Wonach suchen Sie? z.B. 'Vertrag hochladen', 'Signatur', 'Optimizer'..."
+                placeholder="Wonach suche? z.B. 'Vertrag hochladen', 'Signatur', 'Optimizer'..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -1512,7 +1512,7 @@ const HelpCenter: React.FC = () => {
                   <div className={styles.noResults}>
                     <Info size={48} />
                     <h3>Keine Anleitungen gefunden</h3>
-                    <p>Versuchen Sie einen anderen Suchbegriff.</p>
+                    <p>Versuche einen anderen Suchbegriff.</p>
                   </div>
                 )}
               </div>
@@ -1681,7 +1681,7 @@ const HelpCenter: React.FC = () => {
                   <div className={styles.noResults}>
                     <Info size={48} />
                     <h3>Keine FAQs gefunden</h3>
-                    <p>Versuchen Sie einen anderen Suchbegriff.</p>
+                    <p>Versuche einen anderen Suchbegriff.</p>
                   </div>
                 )}
               </div>
@@ -1693,8 +1693,8 @@ const HelpCenter: React.FC = () => {
         <section className={styles.helpSection}>
           <div className={styles.container}>
             <div className={styles.helpBox}>
-              <h2>Brauchen Sie weitere Hilfe?</h2>
-              <p>Unser Support-Team steht Ihnen gerne zur Verfügung!</p>
+              <h2>Brauchst du weitere Hilfe?</h2>
+              <p>Unser Support-Team steht dir gerne zur Verfügung!</p>
               <div className={styles.helpActions}>
                 <a href="mailto:support@contract-ai.de" className={styles.helpBtn}>
                   <Mail size={20} />
