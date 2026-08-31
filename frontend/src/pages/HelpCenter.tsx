@@ -1199,11 +1199,41 @@ const HelpCenter: React.FC = () => {
         {/* Hero Section */}
         <section className={styles.hero}>
           <div className={styles.container}>
-            <Sparkles className={styles.heroIcon} size={48} />
+            {/* 31.08.2026: von 48 auf 32 verkleinert. Der Kopf nahm auf dem Handy
+                rund 380 von 844 Pixeln ein, also fast die halbe Fläche, bevor
+                überhaupt das Suchfeld kam. Bei einem Hilfe-Center ist die Suche
+                das Wichtigste, nicht die Dekoration. */}
+            <Sparkles className={styles.heroIcon} size={32} />
             <h1 className={styles.heroTitle}>Hilfe-Center</h1>
             <p className={styles.heroSubtitle}>
-              Alles über Contract AI - verständlich erklärt, Schritt für Schritt
+              Alles über Contract AI, verständlich erklärt, Schritt für Schritt
             </p>
+
+            {/* 31.08.2026: Die Suche stand vorher in einem EIGENEN Abschnitt
+                unter dem Kopf. Dadurch füllte der blaue Block die halbe
+                Bildschirmfläche mit Titel, Untertitel und einem Knopf, bevor
+                das kam, weswegen man ein Hilfe-Center überhaupt öffnet.
+                Jetzt steht die Suche im Kopf: gleiche Fläche, aber der
+                wichtigste Bedienteil ist sofort da. */}
+            {/* Platzhalter bewusst kurz: die lange Fassung mit Beispielen
+                ("z.B. Vertrag hochladen, Signatur, Optimizer") wurde auf einem
+                390 Pixel breiten Handy mitten im Wort abgeschnitten. */}
+            <div className={styles.searchBar}>
+              <Search className={styles.searchIcon} size={20} />
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Wonach suchst du?"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button className={styles.clearSearch} onClick={() => setSearchTerm('')}>
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+
             <button
               className={styles.startTourButton}
               onClick={() => {
@@ -1214,27 +1244,6 @@ const HelpCenter: React.FC = () => {
               <Lightbulb size={18} />
               Interaktive Tour starten
             </button>
-          </div>
-        </section>
-
-        {/* Search Section */}
-        <section className={styles.searchSection}>
-          <div className={styles.container}>
-            <div className={styles.searchBar}>
-              <Search className={styles.searchIcon} size={20} />
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder="Wonach suche? z.B. 'Vertrag hochladen', 'Signatur', 'Optimizer'..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <button className={styles.clearSearch} onClick={() => setSearchTerm('')}>
-                  <X size={18} />
-                </button>
-              )}
-            </div>
           </div>
         </section>
 

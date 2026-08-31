@@ -19,8 +19,8 @@
    ======================================== */
 .hero {
   text-align: center;
-  padding: 100px 0 70px;
-  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  padding: 56px 0 40px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   position: relative;
   overflow: hidden;
@@ -51,7 +51,7 @@
 }
 
 .heroIcon {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
   position: relative;
   z-index: 1;
@@ -59,7 +59,7 @@
 }
 
 .heroTitle {
-  font-size: 52px;
+  font-size: 40px;
   font-weight: 800;
   margin-bottom: 16px;
   letter-spacing: -0.03em;
@@ -72,7 +72,7 @@
   font-size: 20px;
   opacity: 0.95;
   max-width: 600px;
-  margin: 0 auto 32px;
+  margin: 0 auto 24px;
   font-weight: 400;
   position: relative;
   z-index: 1;
@@ -136,10 +136,14 @@
   border-bottom: 1px solid #e5e7eb;
 }
 
+/* 31.08.2026: Die Suchleiste sitzt jetzt IM blauen Kopf (siehe HelpCenter.tsx).
+   z-index nötig, weil .hero::before/::after dekorative Ebenen darüberlegen und
+   das Eingabefeld sonst nicht anklickbar wäre. */
 .searchBar {
   position: relative;
-  max-width: 700px;
-  margin: 0 auto;
+  z-index: 2;
+  max-width: 640px;
+  margin: 0 auto 20px;
 }
 
 .searchInput {
@@ -155,9 +159,9 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: #007aff;
+  border-color: #3B82F6;
   background: white;
-  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.12);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
 .searchIcon {
@@ -188,7 +192,7 @@
 }
 
 .clearSearch:hover {
-  background: #007aff;
+  background: #3B82F6;
   color: white;
   transform: translateY(-50%) scale(1.1);
 }
@@ -231,9 +235,9 @@
 }
 
 .tabButton.active {
-  color: #007aff;
-  border-bottom-color: #007aff;
-  background: linear-gradient(to bottom, rgba(0, 122, 255, 0.04), transparent);
+  color: #3B82F6;
+  border-bottom-color: #3B82F6;
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.04), transparent);
 }
 
 .tabButton:hover:not(.active) {
@@ -294,7 +298,7 @@
 }
 
 .sectionTitleAccent {
-  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #0066FF 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -345,16 +349,16 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #007aff, #0052cc);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   border-radius: 10px;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .categoryHeading:hover .categoryIcon {
   transform: scale(1.08);
-  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .categoryIcon.premiumIcon {
@@ -400,7 +404,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #007aff, #0052cc, #007aff);
+  background: linear-gradient(90deg, #3B82F6, #2563EB, #3B82F6);
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 1;
@@ -411,8 +415,8 @@
 }
 
 .guideCard:hover {
-  border-color: rgba(0, 122, 255, 0.15);
-  box-shadow: 0 16px 40px rgba(0, 122, 255, 0.14);
+  border-color: rgba(59, 130, 246, 0.15);
+  box-shadow: 0 16px 40px rgba(59, 130, 246, 0.14);
   transform: translateY(-3px);
   background: linear-gradient(135deg, #ffffff 0%, #f0f5ff 100%);
 }
@@ -433,20 +437,20 @@
 .guideIcon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, #007aff, #0052cc);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .guideCard:hover .guideIcon {
   transform: scale(1.05);
-  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.45);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.45);
 }
 
 .guideInfo {
@@ -489,7 +493,7 @@
 
 .expandIcon.rotated {
   transform: rotate(180deg);
-  color: #007aff;
+  color: #3B82F6;
 }
 
 /* ========================================
@@ -516,13 +520,13 @@
   padding: 24px;
   border-radius: 16px;
   margin-bottom: 12px;
-  border-left: 4px solid #007aff;
+  border-left: 4px solid #3B82F6;
   transition: all 0.2s ease;
 }
 
 .step:hover {
-  border-left-color: #0052cc;
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.08);
+  border-left-color: #2563EB;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
 }
 
 .step:last-child {
@@ -539,7 +543,7 @@
 .stepNumber {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #007aff, #0052cc);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   color: white;
   border-radius: 50%;
   display: flex;
@@ -548,7 +552,7 @@
   font-weight: 700;
   font-size: 15px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .stepTitle {
@@ -573,10 +577,10 @@
 .stepTips {
   margin-top: 16px;
   padding: 16px 16px 16px 52px;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.08), rgba(0, 82, 204, 0.05));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(0, 82, 204, 0.05));
   border-radius: 12px;
-  border-left: 3px solid #007aff;
-  box-shadow: 0 2px 12px rgba(0, 122, 255, 0.06);
+  border-left: 3px solid #3B82F6;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.06);
   backdrop-filter: blur(4px);
 }
 
@@ -585,7 +589,7 @@
   align-items: center;
   gap: 8px;
   font-weight: 700;
-  color: #007aff;
+  color: #3B82F6;
   margin-bottom: 10px;
   font-size: 14px;
 }
@@ -632,7 +636,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #007aff, #0052cc, #007aff);
+  background: linear-gradient(90deg, #3B82F6, #2563EB, #3B82F6);
   opacity: 0;
   transition: opacity 0.3s ease;
   z-index: 1;
@@ -643,14 +647,14 @@
 }
 
 .faqItem:hover {
-  border-color: rgba(0, 122, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.08);
+  border-color: rgba(59, 130, 246, 0.12);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.08);
   transform: translateY(-1px);
 }
 
 .faqItem.open {
-  border-color: #007aff;
-  box-shadow: 0 8px 24px rgba(0, 122, 255, 0.12);
+  border-color: #3B82F6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.12);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 245, 255, 0.9));
   backdrop-filter: blur(8px);
 }
@@ -745,7 +749,7 @@
 
 .faqToggle.rotated {
   transform: rotate(180deg);
-  color: #007aff;
+  color: #3B82F6;
 }
 
 @keyframes expandAnswer {
@@ -771,7 +775,7 @@
 .noResults svg {
   margin-bottom: 20px;
   opacity: 0.5;
-  color: #007aff;
+  color: #3B82F6;
 }
 
 .noResults h3 {
@@ -792,7 +796,7 @@
    HELP SECTION (Still Need Help?) - CTA
    ======================================== */
 .helpSection {
-  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   padding: 100px 0;
   position: relative;
   overflow: hidden;
@@ -858,7 +862,7 @@
   gap: 10px;
   padding: 16px 32px;
   background: white;
-  color: #007aff;
+  color: #3B82F6;
   text-decoration: none;
   border-radius: 14px;
   font-weight: 600;
@@ -870,8 +874,8 @@
 
 .helpBtn:hover {
   transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 122, 255, 0.15);
-  color: #0052cc;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2), 0 0 20px rgba(59, 130, 246, 0.15);
+  color: #2563EB;
 }
 
 /* ========================================
@@ -879,7 +883,7 @@
    ======================================== */
 @media (max-width: 768px) {
   .heroTitle {
-    font-size: 36px;
+    font-size: 30px;
   }
 
   .heroSubtitle {
@@ -887,7 +891,7 @@
   }
 
   .hero {
-    padding: 80px 0 50px;
+    padding: 40px 0 28px;
   }
 
   .tabButtons {
@@ -1069,9 +1073,9 @@
   }
 
   .tabButton.active {
-    border-left-color: #007aff;
+    border-left-color: #3B82F6;
     border-bottom-color: transparent;
-    background: linear-gradient(to right, rgba(0, 122, 255, 0.05), transparent);
+    background: linear-gradient(to right, rgba(59, 130, 246, 0.05), transparent);
   }
 
   .sectionTitle {
@@ -1248,12 +1252,12 @@
 .categoryBtn:focus,
 .searchInput:focus,
 .helpBtn:focus {
-  outline: 2px solid #007aff;
+  outline: 2px solid #3B82F6;
   outline-offset: 2px;
 }
 
 .guideCard:focus-within {
-  outline: 2px solid #007aff;
+  outline: 2px solid #3B82F6;
   outline-offset: 4px;
 }
 
