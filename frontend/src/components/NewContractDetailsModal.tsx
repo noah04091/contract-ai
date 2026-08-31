@@ -1586,7 +1586,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 )}
               </div>
               <div className={styles.cancelBannerSub}>
-                Bestätigung steht noch aus — Prüfen Sie Ihren Posteingang
+                Bestätigung steht noch aus — Prüfe deinen Posteingang
               </div>
             </div>
           </div>
@@ -2278,7 +2278,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <p style={{ fontSize: '18px', fontWeight: 600 }}>Word-Dokument</p>
             <span className={styles.hint} style={{ maxWidth: '400px', lineHeight: '1.6' }}>
               Word-Dokumente können nicht direkt im Browser angezeigt werden.
-              Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.
+              Lade die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.
             </span>
             <a
               href={pdfUrl}

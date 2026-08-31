@@ -346,7 +346,7 @@ function CustomCalendarGrid({ currentDate, events, selectedDate, view, onDateCli
             <div className="day-view-empty" onClick={() => onDateClick(currentDate)}>
               <CalendarIcon size={48} style={{ color: '#d1d5db', marginBottom: '16px' }} />
               <p>Keine Ereignisse an diesem Tag</p>
-              <span>Klicken Sie, um ein Ereignis zu erstellen</span>
+              <span>Klicke, um ein Ereignis zu erstellen</span>
             </div>
           ) : (
             <div className="day-view-events">
@@ -600,7 +600,7 @@ ${customerName}`
                 value={reminderText}
                 onChange={(e) => setReminderText(e.target.value)}
                 rows={10}
-                placeholder="Ihre Nachricht an den Anbieter..."
+                placeholder="Deine Nachricht an den Anbieter..."
               />
             </div>
           </div>

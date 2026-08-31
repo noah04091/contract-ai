@@ -300,7 +300,7 @@ export default function Pricing() {
   const faqs = [
     {
       question: "Kann ich jederzeit kündigen?",
-      answer: "Ja, absolut. Es gibt keine Kündigungsfristen. Sie können Ihr Abo mit einem Klick im Dashboard kündigen und nutzen es bis zum Ende der bezahlten Periode."
+      answer: "Ja, absolut. Es gibt keine Kündigungsfristen. Du kannst dein Abo mit einem Klick im Dashboard kündigen und nutzt es bis zum Ende der bezahlten Periode."
     },
     {
       question: "Gibt es eine Geld-zurück-Garantie?",
@@ -312,7 +312,7 @@ export default function Pricing() {
     },
     {
       question: "Kann ich zwischen Plänen wechseln?",
-      answer: "Ja, Sie können jederzeit upgraden oder downgraden. Beim Upgrade wird die Differenz anteilig berechnet, beim Downgrade gilt der neue Preis ab der nächsten Periode."
+      answer: "Ja, du kannst jederzeit upgraden oder downgraden. Beim Upgrade wird die Differenz anteilig berechnet, beim Downgrade gilt der neue Preis ab der nächsten Periode."
     },
     {
       question: "Gibt es einen kostenlosen Plan?",

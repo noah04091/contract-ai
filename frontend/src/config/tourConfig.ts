@@ -256,14 +256,14 @@ export const contractBuilderGalleryTour: TourConfig = {
   steps: [
     {
       target: '[data-tour="gallery-header"]',
-      content: 'Willkommen im Contract Builder! Hier erstellen und verwalten Sie Ihre Verträge. Wählen Sie eine Vorlage als Ausgangspunkt — oder starten Sie von Grund auf.',
+      content: 'Willkommen im Contract Builder! Hier erstellst und verwaltest du deine Verträge. Wähle eine Vorlage als Ausgangspunkt — oder starte von Grund auf.',
       title: 'Contract Builder',
       placement: 'bottom',
       disableBeacon: true,
     },
     {
       target: '[data-tour="gallery-templates"]',
-      content: 'Über 17 professionelle Musterverträge stehen bereit — Arbeitsvertrag, Kaufvertrag, NDA und mehr. Klicken Sie auf eine Vorlage, füllen Sie die Details aus, und Ihr Vertrag wird automatisch erstellt.',
+      content: 'Über 17 professionelle Musterverträge stehen bereit — Arbeitsvertrag, Kaufvertrag, NDA und mehr. Klicke auf eine Vorlage, fülle die Details aus, und dein Vertrag wird automatisch erstellt.',
       title: 'Musterverträge',
       placement: 'top',
     },
@@ -275,13 +275,13 @@ export const contractBuilderGalleryTour: TourConfig = {
     },
     {
       target: '[data-tour="gallery-create"]',
-      content: 'Erstellen Sie eigene Vorlagen von Grund auf. Schreiben Sie Ihren Vertrag, markieren Sie Variablen, und speichern Sie ihn als wiederverwendbare Vorlage.',
+      content: 'Erstelle eigene Vorlagen von Grund auf. Schreibe deinen Vertrag, markiere Variablen, und speichere ihn als wiederverwendbare Vorlage.',
       title: 'Eigene Vorlage',
       placement: 'bottom',
     },
     {
       target: '[data-tour="gallery-search"]',
-      content: 'Nutzen Sie die Suche und Filter um schnell die richtige Vorlage zu finden.',
+      content: 'Nutze Suche und Filter, um schnell die richtige Vorlage zu finden.',
       title: 'Suche & Filter',
       placement: 'bottom',
     },
@@ -303,13 +303,13 @@ export const contractBuilderTour: TourConfig = {
     },
     {
       target: '[data-tour="builder-canvas"]',
-      content: 'Das ist Ihre Arbeitsfläche. Doppelklicken Sie auf eine Klausel zum Bearbeiten. Tipp: Markieren Sie Text und klicken Sie den Variable-Button, um Platzhalter wie Name oder Datum einzuf��gen.',
+      content: 'Das ist deine Arbeitsfläche. Doppelklicke auf eine Klausel zum Bearbeiten. Tipp: Markiere Text und klicke den Variable-Button, um Platzhalter wie Name oder Datum einzuf��gen.',
       title: 'Arbeitsfläche',
       placement: 'left',
     },
     {
       target: '[data-tour="builder-properties"]',
-      content: 'Wählen Sie einen Baustein aus und passen Sie hier Schrift, Farbe und Layout an. Im Variablen-Tab sehen Sie alle eingefügten Platzhalter.',
+      content: 'Wähle einen Baustein aus und passe hier Schrift, Farbe und Layout an. Im Variablen-Tab siehst du alle eingefügten Platzhalter.',
       title: 'Eigenschaften & Variablen',
       placement: 'left',
     },

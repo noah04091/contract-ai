@@ -300,10 +300,10 @@ export default function ContractDetailsV2() {
     : 'Datei';
   const nichtPdfHinweis =
     dateiTyp.variant === 'doc'
-      ? 'Word-Dokumente können nicht direkt im Browser angezeigt werden. Laden Sie die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.'
+      ? 'Word-Dokumente können nicht direkt im Browser angezeigt werden. Lade die Datei herunter, um sie in Microsoft Word oder Google Docs zu öffnen.'
       : dateiTyp.variant === 'image'
-      ? 'Dieses Dokument liegt als Bild vor. Laden Sie es herunter, um es in voller Größe anzusehen.'
-      : 'Diese Datei kann nicht direkt im Browser angezeigt werden. Laden Sie sie herunter, um sie zu öffnen.';
+      ? 'Dieses Dokument liegt als Bild vor. Lade es herunter, um es in voller Größe anzusehen.'
+      : 'Diese Datei kann nicht direkt im Browser angezeigt werden. Lade sie herunter, um sie zu öffnen.';
 
   // PDF Viewer State
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);

@@ -116,7 +116,7 @@ const GeneratedContractsSection: React.FC<GeneratedContractsSectionProps> = ({ c
             </svg>
           </div>
           <h3>Noch keine KI-Verträge erstellt</h3>
-          <p>Nutzen Sie unseren intelligenten Vertragsgenerator, um schnell rechtssichere Verträge zu erstellen.</p>
+          <p>Nutze unseren intelligenten Vertragsgenerator, um schnell rechtssichere Verträge zu erstellen.</p>
           <button 
             className={styles.createButton}
             onClick={() => navigate('/generate')}

@@ -1078,7 +1078,7 @@ export default function CompanyProfile() {
                     <strong>Tipp:</strong>
                     {activeSection === 'logo' && (profileType === 'business'
                       ? ' Ein professionelles Logo stärkt deine Markenidentität in Verträgen.'
-                      : ' Ein Profilbild macht Ihre Verträge persönlicher und professioneller.'
+                      : ' Ein Profilbild macht deine Verträge persönlicher und professioneller.'
                     )}
                     {activeSection === 'company' && (profileType === 'business'
                       ? ' Vollständige Firmendaten sorgen für rechtssichere Verträge.'

@@ -573,7 +573,7 @@ export default function ResultsDashboard({
                 // 🆕 Phase 3d.3: Microcopy - Standard-Erklärung für normale Verträge
                 <p>
                   Unsere KI empfiehlt Änderungen nur bei echten juristischen oder wirtschaftlichen Risiken.
-                  Keine Optimierungen zu haben ist das beste Ergebnis — Ihr Vertrag ist solide aufgestellt.
+                  Keine Optimierungen zu haben ist das beste Ergebnis — Dein Vertrag ist solide aufgestellt.
                 </p>
               )}
             </div>
@@ -615,7 +615,7 @@ export default function ResultsDashboard({
           </h2>
           <p className={styles.scoreSubtitle}>
             <strong>{optimizations.length} Optimierungen</strong> wurden in "{fileName}" identifiziert.
-            {priorityCounts.critical > 0 && ` ${priorityCounts.critical} kritische Punkte erfordern Ihre Aufmerksamkeit.`}
+            {priorityCounts.critical > 0 && ` ${priorityCounts.critical} kritische Punkte erfordern deine Aufmerksamkeit.`}
           </p>
 
           {/* Quick Metrics */}

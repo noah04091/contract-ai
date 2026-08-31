@@ -575,7 +575,7 @@ const BetterContracts: React.FC = () => {
                   id="contract-text"
                   value={contractText}
                   onChange={(e) => setContractText(e.target.value)}
-                  placeholder={isPremium ? "Fügen Sie Ihren Vertragstext hier ein..." : "Premium erforderlich für diese Funktion"}
+                  placeholder={isPremium ? "Füge deinen Vertragstext hier ein..." : "Premium erforderlich für diese Funktion"}
                   rows={8}
                   disabled={!isPremium}
                   style={{
@@ -615,7 +615,7 @@ const BetterContracts: React.FC = () => {
                     </svg>
                   </div>
                   <div className="info-text">
-                    <p>Geben Sie den monatlichen Preis ein, falls bekannt. Bei Verträgen ohne festen Monatspreis können Sie das Feld auch leer lassen.</p>
+                    <p>Gib den monatlichen Preis ein, falls bekannt. Bei Verträgen ohne festen Monatspreis kannst du das Feld auch leer lassen.</p>
                   </div>
                 </div>
                 
