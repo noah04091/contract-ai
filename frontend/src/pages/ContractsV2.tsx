@@ -4743,12 +4743,17 @@ export default function Contracts() {
                   <FileUp size={16} />
                   <span>Hochladen</span>
                 </button>
+                {/* 31.08.2026: Dieser Knopf hatte weder Beschriftung noch title
+                    noch aria-label — ein nacktes Symbol, auf jedem Gerät und
+                    auch für Screenreader. Jetzt beschriftet wie die Nachbarn. */}
                 <button
                   className={styles.toolbarButton}
                   onClick={() => fetchContracts()}
                   disabled={refreshing}
+                  title="Liste neu laden"
                 >
                   <RefreshCw size={16} className={refreshing ? styles.spinning : ''} />
+                  <span>Neu laden</span>
                 </button>
                 {/* Auswählen Button */}
                 <button

@@ -5409,20 +5409,31 @@
     gap: 0.375rem;
   }
 
+  /* 31.08.2026: Die Beschriftungen waren hier ausgeblendet ("nur Icons").
+     Das kostete auf dem Handy die Bedienbarkeit: übrig blieben vier nackte
+     Symbole, darunter ein leeres Quadrat für "Verträge auswählen". Erklärt
+     wurden sie nur über das title-Attribut — und das erscheint auf einem
+     Touchgerät NIE, weil es kein Schweben mit der Maus gibt. Am Desktop war
+     alles beschriftet, am Handy musste man raten.
+     Jetzt Symbol ÜBER Text, genau wie die untere Navigationsleiste auf
+     derselben Seite es bereits macht. Die Leiste ist waagerecht wischbar,
+     die etwas breiteren Knöpfe passen also. */
   .toolbarButton {
     flex-shrink: 0;
-    padding: 0.5rem 0.75rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.125rem;
+    padding: 0.375rem 0.625rem;
     font-size: 0.75rem;
-    min-height: 44px;
+    min-height: 50px;
     white-space: nowrap;
   }
 
   .toolbarButton span {
-    display: none; /* Text auf Mobile verstecken, nur Icons */
-  }
-
-  .toolbarButton.primary span {
-    display: inline; /* Hochladen-Text anzeigen */
+    display: block;
+    font-size: 0.625rem;
+    line-height: 1.15;
+    font-weight: 500;
   }
 
   .toolbarSearch {
