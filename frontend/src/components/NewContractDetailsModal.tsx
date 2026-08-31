@@ -1801,9 +1801,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             Noch keine Erinnerungen für diesen Vertrag.
             <br />
             <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+              {/* 31.08.2026: Hier stand für JEDEN Vertrag ohne Analysedaten
+                  "Analysiere ihn". Bei erstellten und optimierten Verträgen
+                  führt das ins Leere: shouldShowAnalyzeButton() in ContractsV2
+                  schliesst genau diese beiden Fälle aus ("sind bereits
+                  optimal"), es gibt also weder einen Knopf noch einen anderen
+                  Weg, und der Analyse-Reiter oben steht auf "nicht verfügbar".
+                  Der Nutzer wurde zu etwas aufgefordert, das nicht möglich ist. */}
               {hasAnalysisData(contract)
                 ? 'Oben mit dem +‑Knopf eine hinzufügen.'
-                : 'Analysiere ihn — dann legen wir Fristen automatisch an. Oder oben mit + selbst eine hinzufügen.'}
+                : (contract.isGenerated || contract.isOptimized)
+                  ? `${contract.isGenerated ? 'Erstellte' : 'Optimierte'} Verträge werden nicht noch einmal analysiert. Lege Fristen oben mit dem +‑Knopf selbst an.`
+                  : 'Analysiere ihn, dann legen wir Fristen automatisch an. Oder oben mit + selbst eine hinzufügen.'}
             </span>
           </p>
         ) : (() => {
