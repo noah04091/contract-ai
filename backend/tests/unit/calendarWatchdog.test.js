@@ -5,6 +5,9 @@
 const { runCalendarWatchdog, KNOWN_UNLINKED_IDS } = require('../../services/calendarWatchdog');
 
 const NOW = new Date('2026-08-19T07:45:00Z'); // 09:45 Berlin (Sommerzeit)
+// Invariante 6: Fenster RECENT_UNSUB_HOURS=48h → Cutoff 2026-08-17T07:45Z.
+const FRESH = new Date('2026-08-18T12:00:00Z'); // innerhalb 48h → frische Abmeldung, alarmt
+const OLD = new Date('2026-08-01T00:00:00Z');   // vor dem Fenster → bewusst, kein Alarm
 
 // Baut eine Fake-DB. Konfigurierbar: lock, log, unlinked[], active[], existingIds[],
 // notified[], mails[], stuck[]
@@ -178,7 +181,7 @@ describe('runCalendarWatchdog', () => {
     const cap = captureSpy();
     const stats = await runCalendarWatchdog(fakeDb({
       lock: { _id: 'reminder-calendar:2026-08-19' },
-      unsubscribed: [{ _id: oid('u1'), email: 'a@b.invalid', emailOptOut: true }],
+      unsubscribed: [{ _id: oid('u1'), email: 'a@b.invalid', emailOptOut: true, emailOptOutAt: FRESH }],
       openPerUser: { [oid('u1')]: 3 }
     }), { now: NOW, capture: cap });
     const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
@@ -205,7 +208,11 @@ describe('runCalendarWatchdog', () => {
     const cap = captureSpy();
     const stats = await runCalendarWatchdog(fakeDb({
       lock: { _id: 'reminder-calendar:2026-08-19' },
-      unsubscribed: [{ _id: oid('u3') }, { _id: oid('u4') }, { _id: oid('u5') }],
+      unsubscribed: [
+        { _id: oid('u3'), emailPreferencesUpdatedAt: FRESH },
+        { _id: oid('u4'), emailPreferencesUpdatedAt: FRESH },
+        { _id: oid('u5'), emailPreferencesUpdatedAt: FRESH }
+      ],
       openPerUser: { [oid('u3')]: 1, [oid('u4')]: 2, [oid('u5')]: 0 }
     }), { now: NOW, capture: cap });
     const treffer = cap.calls.filter(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
@@ -237,7 +244,7 @@ describe('runCalendarWatchdog', () => {
     const cap = captureSpy();
     const stats = await runCalendarWatchdog(fakeDb({
       lock: { _id: 'reminder-calendar:2026-08-19' },
-      unsubscribed: [{ _id: oid('u6'), emailPreferences: { calendar: false } }],
+      unsubscribed: [{ _id: oid('u6'), emailPreferences: { calendar: false }, emailPreferencesUpdatedAt: FRESH }],
       openPerUser: { [oid('u6')]: 2 }
     }), { now: NOW, capture: cap });
     const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
@@ -250,7 +257,7 @@ describe('runCalendarWatchdog', () => {
     const cap = captureSpy();
     await runCalendarWatchdog(fakeDb({
       lock: { _id: 'reminder-calendar:2026-08-19' },
-      unsubscribed: [{ _id: oid('u7'), notificationSettings: { email: { enabled: false } } }],
+      unsubscribed: [{ _id: oid('u7'), notificationSettings: { email: { enabled: false } }, emailPreferencesUpdatedAt: FRESH }],
       openPerUser: { [oid('u7')]: 1 }
     }), { now: NOW, capture: cap });
     const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
@@ -261,11 +268,49 @@ describe('runCalendarWatchdog', () => {
     const cap = captureSpy();
     await runCalendarWatchdog(fakeDb({
       lock: { _id: 'reminder-calendar:2026-08-19' },
-      unsubscribed: [{ _id: oid('u8'), emailOptOut: true, notificationSettings: { email: { contractDeadlines: false } } }],
+      unsubscribed: [{ _id: oid('u8'), emailOptOut: true, notificationSettings: { email: { contractDeadlines: false } }, emailOptOutAt: FRESH }],
       openPerUser: { [oid('u8')]: 1 }
     }), { now: NOW, capture: cap });
     const f = cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines');
     expect(f.message).toContain('emailOptOut (global)');
+  });
+
+  // ── 27.08.2026: Alarm-Müdigkeit entschärft. Nur FRISCHE Abmeldungen (Fenster 48h)
+  // lösen aus; dieselbe bewusste Abmeldung wird nicht mehr täglich wiederholt gemeldet. ──
+  test('ALTE, bewusste Abmeldung mit Fristen → KEIN Alarm mehr (voll gezählt, aber still)', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u9'), emailPreferences: { calendar: false }, emailPreferencesUpdatedAt: OLD }],
+      openPerUser: { [oid('u9')]: 4 }
+    }), { now: NOW, capture: cap });
+    expect(cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines')).toBeUndefined();
+    expect(stats.unsubscribedWithDeadlinesNew).toBe(0);
+    expect(stats.unsubscribedWithDeadlines).toBe(1); // in der vollen Sicht weiter gezählt
+    expect(stats.findings).toBe(0);
+  });
+
+  test('frische Abmeldung: stats.unsubscribedWithDeadlinesNew zählt sie', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u9b'), emailPreferences: { calendar: false }, emailPreferencesUpdatedAt: FRESH }],
+      openPerUser: { [oid('u9b')]: 2 }
+    }), { now: NOW, capture: cap });
+    expect(cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines')).toBeDefined();
+    expect(stats.unsubscribedWithDeadlinesNew).toBe(1);
+  });
+
+  test('Altbestand ohne emailPreferencesUpdatedAt → KEIN Alarm (fail-quiet)', async () => {
+    const cap = captureSpy();
+    const stats = await runCalendarWatchdog(fakeDb({
+      lock: { _id: 'reminder-calendar:2026-08-19' },
+      unsubscribed: [{ _id: oid('u10'), emailPreferences: { calendar: false } }],
+      openPerUser: { [oid('u10')]: 2 }
+    }), { now: NOW, capture: cap });
+    expect(cap.calls.find(c => c.name === 'CalendarWatchdogUnsubscribedWithDeadlines')).toBeUndefined();
+    expect(stats.unsubscribedWithDeadlinesNew).toBe(0);
+    expect(stats.unsubscribedWithDeadlines).toBe(1);
   });
 
   // ── Invariante 7 (24.08.2026): Die zweite Versand-Strecke war fuer alle sechs

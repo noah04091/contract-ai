@@ -32,6 +32,8 @@ const KNOWN_UNLINKED_IDS = ['6a649c84a31ad340c5ef19f8'];
 
 const REMINDER_TYPE = /_REMINDER_\d+D$/i;
 const STUCK_QUEUED_HOURS = 48;
+// Invariante 6: nur FRISCHE Abmeldungen alarmieren (Fenster in Stunden). Grund unten.
+const RECENT_UNSUB_HOURS = 48;
 
 function utcDayBucket(d) { return d.toISOString().slice(0, 10); }
 function utcDayStart(d) { const x = new Date(d); x.setUTCHours(0, 0, 0, 0); return x; }
@@ -160,6 +162,17 @@ async function runCalendarWatchdog(db, opts = {}) {
   // und notificationSender.js:113/188. Die erste Fassung dieser Invariante kannte nur die
   // ersten beiden; ein per Profil stummgeschalteter Kunde mit offenen Fristen fiel also
   // NICHT auf. Genau die Stille, gegen die diese Invariante gebaut wurde.
+  // 27.08.2026 ENTSCHÄRFT (Alarm-Müdigkeit): Diese Invariante feuerte JEDEN Tag als high
+  // über DIESELBEN Kunden, die sich bewusst abgemeldet haben (real: 26.+27.08. identischer
+  // Alarm über 3 seit Tagen abgemeldete Nutzer). Eine Regel, die täglich einen Dauerzustand
+  // meldet, wird ignoriert — dann geht der eine echte Alarm unter. Lösung wie bei Invariante 7:
+  // ZEITFENSTER. Nur wer sich in den letzten RECENT_UNSUB_HOURS abgemeldet hat, löst aus.
+  // Das passt fachlich sogar exakt: Ein Fehlklick ist frisch umkehrbar; wer nach dem Fenster
+  // noch abgemeldet ist, hat es gewollt und wird still honoriert (genau die Frage im Alarmtext).
+  // Zeitstempel: emailPreferencesUpdatedAt wird von ALLEN Abmelde-Wegen gesetzt (Abmelde-Link,
+  // global, Profil-Speicher spiegelt calendar) — eine frische Abmeldung hat ihn immer ~jetzt.
+  // Alle Blinden bleiben für stats/Log sichtbar; nur der ALARM ist auf frische Fälle begrenzt.
+  const frischCutoff = new Date(now.getTime() - RECENT_UNSUB_HOURS * 3600 * 1000);
   const unsubscribedUsers = await db.collection('users').find({
     $or: [
       { emailOptOut: true },
@@ -168,31 +181,36 @@ async function runCalendarWatchdog(db, opts = {}) {
     ]
   }).project({
     _id: 1, email: 1, emailOptOut: 1, 'emailPreferences.calendar': 1,
-    'notificationSettings.email.enabled': 1
+    'notificationSettings.email.enabled': 1, emailPreferencesUpdatedAt: 1, emailOptOutAt: 1
   }).toArray();
-  const blindeKunden = [];
+  const blindeKunden = [];   // ALLE Blinden (für stats/Log — volle Sicht)
+  const blindeNeu = [];      // nur FRISCH abgemeldet (für den Alarm)
   for (const u of unsubscribedUsers) {
     const offen = await db.collection('contract_events').countDocuments({
       userId: u._id, status: 'scheduled', date: { $gte: now },
       severity: { $in: ['info', 'warning', 'critical'] }
     });
     if (offen > 0) {
-      const ns = u.notificationSettings?.email || {};
       const grund = u.emailOptOut === true ? 'emailOptOut (global)'
         : u.emailPreferences?.calendar === false ? 'Abmelde-Link (emailPreferences.calendar)'
         : 'Profil: E-Mails gesamt aus';
-      blindeKunden.push({ id: String(u._id), offen, grund });
+      const eintrag = { id: String(u._id), offen, grund };
+      blindeKunden.push(eintrag);
+      const ts = u.emailPreferencesUpdatedAt || u.emailOptOutAt;
+      if (ts && new Date(ts) >= frischCutoff) blindeNeu.push(eintrag);
     }
   }
-  if (blindeKunden.length > 0) {
-    const gesamt = blindeKunden.reduce((s, k) => s + k.offen, 0);
+  if (blindeNeu.length > 0) {
+    const gesamt = blindeNeu.reduce((s, k) => s + k.offen, 0);
     await alarm('CalendarWatchdogUnsubscribedWithDeadlines', 'high',
-      `${blindeKunden.length} Kunde(n) sind von Kalender-Mails abgemeldet, haben aber zusammen ` +
-      `${gesamt} offene Frist(en) — sie bekommen dazu KEINE Erinnerung mehr und merken es nicht. ` +
-      `Prüfen, ob die Abmeldung gewollt war (Fehlklick im Mail-Programm ist möglich) und ggf. ` +
-      `zurücksetzen. Gründe: ${sample([...new Set(blindeKunden.map(k => k.grund))])}. ` +
-      `emailPreferences.calendar / emailOptOut zurücksetzen. Betroffen: ${sample(blindeKunden.map(k => k.id))}.`,
-      { users: blindeKunden.slice(0, 20) });
+      `${blindeNeu.length} Kunde(n) haben sich in den letzten ${RECENT_UNSUB_HOURS}h von Kalender-Mails abgemeldet, ` +
+      `haben aber zusammen ${gesamt} offene Frist(en) — sie bekommen dazu KEINE Erinnerung mehr und merken es nicht. ` +
+      `Frisch abgemeldet, daher evtl. Fehlklick und noch umkehrbar (ältere, bewusste Abmeldungen werden bewusst NICHT täglich wiederholt gemeldet). ` +
+      `Gründe: ${sample([...new Set(blindeNeu.map(k => k.grund))])}. ` +
+      `emailPreferences.calendar / emailOptOut zurücksetzen. Betroffen: ${sample(blindeNeu.map(k => k.id))}.`,
+      { users: blindeNeu.slice(0, 20), blindeGesamt: blindeKunden.length });
+  } else if (blindeKunden.length > 0) {
+    console.log(`🐕 Kalender-Wächter: ${blindeKunden.length} bekannte, bewusst abgemeldete Kunde(n) mit offenen Fristen — kein neuer Fall, nicht erneut gemeldet.`);
   }
 
   // ── 7) Die ZWEITE Versand-Strecke (notification_queue) ─────────────────────
@@ -236,6 +254,7 @@ async function runCalendarWatchdog(db, opts = {}) {
     notifiedWithoutMail: notifiedWithoutMail.length,
     stuckQueued: stuck.length,
     unsubscribedWithDeadlines: blindeKunden.length,
+    unsubscribedWithDeadlinesNew: blindeNeu.length,
     notificationQueueFailed: nqFailed.length,
     notificationQueueStale: nqUeberfaellig,
     checkedActiveRefs: active.length,
