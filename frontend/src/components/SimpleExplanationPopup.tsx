@@ -124,7 +124,7 @@ export default function SimpleExplanationPopup({
           {/* Header */}
           <div className={styles.header}>
             <div className={styles.headerIcon}>
-              <Lightbulb className="w-6 h-6" style={{ color: '#FF9500' }} />
+              <Lightbulb className="w-6 h-6" style={{ color: '#F59E0B' }} />
             </div>
             <h2 className={styles.title}>🧠 Einfach erklärt</h2>
             <button onClick={onClose} className={styles.closeButton}>
@@ -171,7 +171,7 @@ export default function SimpleExplanationPopup({
                     <p>{explanation.whyImportant}</p>
                   </div>
 
-                  <div className={styles.explanationBox} style={{ background: 'rgba(0, 122, 255, 0.05)', borderColor: '#007AFF' }}>
+                  <div className={styles.explanationBox} style={{ background: 'rgba(59, 130, 246, 0.05)', borderColor: '#3B82F6' }}>
                     <h4>💡 Beispiel aus dem echten Leben:</h4>
                     <p>{explanation.example}</p>
                   </div>
@@ -193,7 +193,7 @@ export default function SimpleExplanationPopup({
                         <strong>Einfach gesagt:</strong> {clauseExplanation.simple}
                       </p>
                       <div className={styles.clauseAnalogy}>
-                        <Lightbulb className="w-4 h-4" style={{ color: '#FF9500' }} />
+                        <Lightbulb className="w-4 h-4" style={{ color: '#F59E0B' }} />
                         <p><strong>Vergleich:</strong> {clauseExplanation.analogy}</p>
                       </div>
                     </div>
@@ -218,7 +218,7 @@ export default function SimpleExplanationPopup({
                     </div>
                   )}
 
-                  <div className={styles.detailBox} style={{ background: 'rgba(52, 199, 89, 0.05)', borderColor: '#34C759' }}>
+                  <div className={styles.detailBox} style={{ background: 'rgba(16, 185, 129, 0.05)', borderColor: '#10B981' }}>
                     <h4>✅ Optimierte Version:</h4>
                     <p className={styles.improvedText}>{improvedText.substring(0, 300)}{improvedText.length > 300 ? '...' : ''}</p>
                   </div>

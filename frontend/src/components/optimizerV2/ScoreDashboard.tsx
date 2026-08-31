@@ -15,17 +15,17 @@ interface Props {
 }
 
 const SCORE_CONFIGS = [
-  { key: 'risk', label: 'Risiko', icon: Shield, color: '#FF3B30' },
+  { key: 'risk', label: 'Risiko', icon: Shield, color: '#EF4444' },
   { key: 'fairness', label: 'Fairness', icon: Scale, color: '#AF52DE' },
-  { key: 'clarity', label: 'Klarheit', icon: Eye, color: '#007AFF' },
-  { key: 'completeness', label: 'Vollständigkeit', icon: CheckSquare, color: '#34C759' },
-  { key: 'marketStandard', label: 'Marktstandard', icon: BarChart3, color: '#FF9500' }
+  { key: 'clarity', label: 'Klarheit', icon: Eye, color: '#3B82F6' },
+  { key: 'completeness', label: 'Vollständigkeit', icon: CheckSquare, color: '#10B981' },
+  { key: 'marketStandard', label: 'Marktstandard', icon: BarChart3, color: '#F59E0B' }
 ] as const;
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return '#34C759';
-  if (score >= 60) return '#FF9500';
-  if (score >= 40) return '#FF3B30';
+  if (score >= 80) return '#10B981';
+  if (score >= 60) return '#F59E0B';
+  if (score >= 40) return '#EF4444';
   return '#AF52DE';
 }
 
@@ -128,18 +128,18 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
             <span className={styles.statLabel}>Klauseln</span>
           </div>
           <div className={styles.statItem}>
-            <span className={styles.statValue} style={{ color: '#FF9500' }}>{optimizedCount}</span>
+            <span className={styles.statValue} style={{ color: '#F59E0B' }}>{optimizedCount}</span>
             <span className={styles.statLabel}>Optimierbar</span>
           </div>
           {criticalCount > 0 && (
             <div className={styles.statItem}>
-              <span className={styles.statValue} style={{ color: '#FF3B30' }}>{criticalCount}</span>
+              <span className={styles.statValue} style={{ color: '#EF4444' }}>{criticalCount}</span>
               <span className={styles.statLabel}>Kritisch</span>
             </div>
           )}
           {weakCount > 0 && (
             <div className={styles.statItem}>
-              <span className={styles.statValue} style={{ color: '#FF9500' }}>{weakCount}</span>
+              <span className={styles.statValue} style={{ color: '#F59E0B' }}>{weakCount}</span>
               <span className={styles.statLabel}>Schwach</span>
             </div>
           )}
@@ -162,11 +162,11 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
             <p>Der Gesamtscore (0–100) setzt sich aus 6 gewichteten Dimensionen zusammen:</p>
             <div className={styles.scoreInfoGrid}>
               <div><span style={{ color: '#5856D6' }}>Klauselqualität (25%)</span> — Gewichteter Durchschnitt aller Einzelklausel-Bewertungen (wichtige Klauseln zählen stärker)</div>
-              <div><span style={{ color: '#FF3B30' }}>Risiko (20%)</span> — Wie gut schützt der Vertrag vor rechtlichen und finanziellen Risiken?</div>
+              <div><span style={{ color: '#EF4444' }}>Risiko (20%)</span> — Wie gut schützt der Vertrag vor rechtlichen und finanziellen Risiken?</div>
               <div><span style={{ color: '#AF52DE' }}>Fairness (20%)</span> — Sind die Rechte und Pflichten ausgewogen verteilt?</div>
-              <div><span style={{ color: '#007AFF' }}>Klarheit (15%)</span> — Sind die Formulierungen verständlich und eindeutig?</div>
-              <div><span style={{ color: '#34C759' }}>Vollständigkeit (10%)</span> — Sind alle branchenüblichen Klauseln vorhanden?</div>
-              <div><span style={{ color: '#FF9500' }}>Marktstandard (10%)</span> — Entspricht der Vertrag marktüblichen Regelungen?</div>
+              <div><span style={{ color: '#3B82F6' }}>Klarheit (15%)</span> — Sind die Formulierungen verständlich und eindeutig?</div>
+              <div><span style={{ color: '#10B981' }}>Vollständigkeit (10%)</span> — Sind alle branchenüblichen Klauseln vorhanden?</div>
+              <div><span style={{ color: '#F59E0B' }}>Marktstandard (10%)</span> — Entspricht der Vertrag marktüblichen Regelungen?</div>
             </div>
             <div className={styles.scoreInfoScale}>
               <span><strong>80–100</strong> Sehr gut</span>
@@ -207,7 +207,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
         <div className={styles.scoreWarnings}>
           {scores.warnings.map((w: { type: string; message: string }, i: number) => (
             <div key={i} className={styles.scoreWarning}>
-              <AlertTriangle size={16} style={{ color: '#FF3B30', flexShrink: 0 }} />
+              <AlertTriangle size={16} style={{ color: '#EF4444', flexShrink: 0 }} />
               <span>{w.message}</span>
             </div>
           ))}
@@ -243,8 +243,8 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
                 <div className={styles.strategyMeta}>
                   {point.powerBalance !== 'balanced' && (
                     <span className={styles.strategyTag} style={{
-                      color: point.powerBalance === 'extremely_one_sided' ? '#FF3B30' : '#FF9500',
-                      borderColor: point.powerBalance === 'extremely_one_sided' ? '#FF3B30' : '#FF9500'
+                      color: point.powerBalance === 'extremely_one_sided' ? '#EF4444' : '#F59E0B',
+                      borderColor: point.powerBalance === 'extremely_one_sided' ? '#EF4444' : '#F59E0B'
                     }}>
                       {PB_LABELS[point.powerBalance] || point.powerBalance}
                     </span>
@@ -259,7 +259,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
       {/* Importance distribution */}
       <div className={styles.importanceBar}>
         <div className={styles.importanceBarHeader}>
-          <Flame size={14} style={{ color: '#FF3B30' }} />
+          <Flame size={14} style={{ color: '#EF4444' }} />
           <span className={styles.importanceBarTitle}>Klausel-Priorität</span>
         </div>
         <div className={styles.importanceItems}>
@@ -286,7 +286,7 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
       {/* Quick insights */}
       {(criticalCount > 0 || weakCount > 0) && (
         <div className={styles.quickInsights}>
-          <AlertTriangle size={16} style={{ color: '#FF9500' }} />
+          <AlertTriangle size={16} style={{ color: '#F59E0B' }} />
           <span>
             {criticalCount > 0 && `${criticalCount} kritische Klausel${criticalCount > 1 ? 'n' : ''}`}
             {criticalCount > 0 && weakCount > 0 && ' und '}
@@ -343,9 +343,9 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
 
 // ── Missing Clauses Panel ──
 const SEVERITY_CONFIG: Record<string, { label: string; color: string }> = {
-  critical: { label: 'Kritisch', color: '#FF3B30' },
-  high: { label: 'Wichtig', color: '#FF9500' },
-  medium: { label: 'Empfohlen', color: '#007AFF' },
+  critical: { label: 'Kritisch', color: '#EF4444' },
+  high: { label: 'Wichtig', color: '#F59E0B' },
+  medium: { label: 'Empfohlen', color: '#3B82F6' },
   low: { label: 'Optional', color: '#8E8E93' }
 };
 
@@ -448,7 +448,7 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
     <>
       <div className={styles.missingClauses}>
         <div className={styles.missingClausesHeader}>
-          <FileWarning size={15} style={{ color: '#FF9500' }} />
+          <FileWarning size={15} style={{ color: '#F59E0B' }} />
           <span className={styles.missingClausesTitle}>
             Fehlende Klauseln ({trulyMissing.length} fehlend{miscategorized.length > 0 ? `, ${miscategorized.length} unvollständig` : ''})
           </span>
@@ -487,12 +487,12 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
           })}
           {miscategorized.map(mc => (
             <div key={mc.category} className={styles.missingClauseItem} style={{ opacity: 0.8 }}>
-              <Search size={12} style={{ color: '#FF9500', flexShrink: 0, marginTop: 2 }} />
+              <Search size={12} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 2 }} />
               <div className={styles.missingClauseInfo}>
                 <span className={styles.missingClauseName}>{mc.categoryLabel}</span>
                 <span className={styles.missingClauseDesc}>{mc.recommendation}</span>
               </div>
-              <span className={styles.missingClauseTag} style={{ color: '#FF9500', borderColor: '#FF9500' }}>
+              <span className={styles.missingClauseTag} style={{ color: '#F59E0B', borderColor: '#F59E0B' }}>
                 Im Text
               </span>
             </div>
@@ -506,7 +506,7 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
           <div className={styles.generatedClauseModal} onClick={e => e.stopPropagation()}>
             <div className={styles.generatedClauseHeader}>
               <div className={styles.generatedClauseHeaderLeft}>
-                <Sparkles size={16} style={{ color: '#007AFF' }} />
+                <Sparkles size={16} style={{ color: '#3B82F6' }} />
                 <span className={styles.generatedClauseTitle}>{visibleClause.label}</span>
               </div>
               <button className={styles.generatedClauseClose} onClick={() => setVisibleClause(null)}>
@@ -516,7 +516,7 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
             <pre className={styles.generatedClauseText}>{visibleClause.text}</pre>
             {visibleClause.whyImportant && (
               <div className={styles.whyImportant}>
-                <AlertTriangle size={14} style={{ color: '#FF9500', flexShrink: 0, marginTop: 1 }} />
+                <AlertTriangle size={14} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 1 }} />
                 <div>
                   <span className={styles.whyImportantTitle}>Warum ist diese Klausel wichtig?</span>
                   <span className={styles.whyImportantText}>{visibleClause.whyImportant}</span>
@@ -551,11 +551,11 @@ function MissingClausesPanel({ missingClauses, resultId }: { missingClauses?: Mi
 
 // ── Score Explanation Panel ──
 const SCORE_WEIGHTS = [
-  { key: 'risk', label: 'Risiko-Score', weight: 0.20, icon: Shield, color: '#FF3B30' },
+  { key: 'risk', label: 'Risiko-Score', weight: 0.20, icon: Shield, color: '#EF4444' },
   { key: 'fairness', label: 'Fairness-Score', weight: 0.20, icon: Scale, color: '#AF52DE' },
-  { key: 'clarity', label: 'Klarheits-Score', weight: 0.15, icon: Eye, color: '#007AFF' },
-  { key: 'completeness', label: 'Vollständigkeit', weight: 0.10, icon: CheckSquare, color: '#34C759' },
-  { key: 'marketStandard', label: 'Marktstandard', weight: 0.10, icon: BarChart3, color: '#FF9500' },
+  { key: 'clarity', label: 'Klarheits-Score', weight: 0.15, icon: Eye, color: '#3B82F6' },
+  { key: 'completeness', label: 'Vollständigkeit', weight: 0.10, icon: CheckSquare, color: '#10B981' },
+  { key: 'marketStandard', label: 'Marktstandard', weight: 0.10, icon: BarChart3, color: '#F59E0B' },
 ] as const;
 
 function ScoreExplanation({ scores, result }: { scores: Scores; result: AnalysisResult }) {
@@ -581,7 +581,7 @@ function ScoreExplanation({ scores, result }: { scores: Scores; result: Analysis
       items.push({
         label: `${clause?.title || 'Klausel'} stark einseitig`,
         impact: `−${Math.round(oneSided.length * 3)} Punkte`,
-        color: '#FF3B30'
+        color: '#EF4444'
       });
     }
 
@@ -591,7 +591,7 @@ function ScoreExplanation({ scores, result }: { scores: Scores; result: Analysis
       items.push({
         label: `${missing.length} essentielle Klausel${missing.length > 1 ? 'n' : ''} fehlen`,
         impact: `−${Math.round(missing.length * 6)} Punkte`,
-        color: '#FF9500'
+        color: '#F59E0B'
       });
     }
 
@@ -601,7 +601,7 @@ function ScoreExplanation({ scores, result }: { scores: Scores; result: Analysis
       items.push({
         label: `${highRisk.length} Klausel${highRisk.length > 1 ? 'n' : ''} mit hohem Risiko`,
         impact: `−${Math.round(highRisk.length * 4)} Punkte`,
-        color: '#FF3B30'
+        color: '#EF4444'
       });
     }
 
@@ -616,7 +616,7 @@ function ScoreExplanation({ scores, result }: { scores: Scores; result: Analysis
       items.push({
         label: `${strongCount} professionell formulierte Klauseln`,
         impact: `+${Math.round(strongCount * 2)} Punkte`,
-        color: '#34C759'
+        color: '#10B981'
       });
     }
 
@@ -625,7 +625,7 @@ function ScoreExplanation({ scores, result }: { scores: Scores; result: Analysis
       items.push({
         label: `${balancedCount} ausgewogene Klauseln`,
         impact: `+${Math.round(balancedCount * 1.5)} Punkte`,
-        color: '#34C759'
+        color: '#10B981'
       });
     }
 
@@ -635,7 +635,7 @@ function ScoreExplanation({ scores, result }: { scores: Scores; result: Analysis
   return (
     <div className={styles.scoreExplanation}>
       <div className={styles.scoreExplanationHeader}>
-        <Info size={15} style={{ color: '#007AFF' }} />
+        <Info size={15} style={{ color: '#3B82F6' }} />
         <span className={styles.scoreExplanationTitle}>Warum {scores.overall}/100?</span>
       </div>
 
@@ -689,9 +689,9 @@ function ScoreExplanation({ scores, result }: { scores: Scores; result: Analysis
 
 // ── Risk Heatmap Panel ──
 const RISK_COLORS: Record<string, string> = {
-  low: '#34C759',
-  medium: '#FF9500',
-  high: '#FF3B30',
+  low: '#10B981',
+  medium: '#F59E0B',
+  high: '#EF4444',
   critical: '#AF52DE'
 };
 
@@ -736,7 +736,7 @@ function RiskHeatmap({ result, onNavigate }: { result: AnalysisResult; onNavigat
   return (
     <div className={styles.riskHeatmap}>
       <div className={styles.riskHeatmapHeader}>
-        <Activity size={15} style={{ color: '#FF3B30' }} />
+        <Activity size={15} style={{ color: '#EF4444' }} />
         <span className={styles.riskHeatmapTitle}>Risk Heatmap nach Kategorie</span>
       </div>
       <div className={styles.riskHeatmapGrid}>
@@ -824,7 +824,7 @@ function TopRiskClauses({ result, onNavigate }: { result: AnalysisResult; onNavi
   return (
     <div className={styles.topRisks}>
       <div className={styles.topRisksHeader}>
-        <Crosshair size={15} style={{ color: '#FF3B30' }} />
+        <Crosshair size={15} style={{ color: '#EF4444' }} />
         <span className={styles.topRisksTitle}>Kritischste Klauseln</span>
       </div>
       <div className={styles.topRisksList}>
@@ -846,17 +846,17 @@ function TopRiskClauses({ result, onNavigate }: { result: AnalysisResult; onNavi
                 <span
                   className={styles.topRiskTag}
                   style={{
-                    color: analysis.powerBalance === 'extremely_one_sided' ? '#FF3B30' :
-                           analysis.powerBalance === 'strongly_one_sided' ? '#FF9500' : '#8E8E93',
-                    borderColor: analysis.powerBalance === 'extremely_one_sided' ? '#FF3B30' :
-                                 analysis.powerBalance === 'strongly_one_sided' ? '#FF9500' : '#8E8E93'
+                    color: analysis.powerBalance === 'extremely_one_sided' ? '#EF4444' :
+                           analysis.powerBalance === 'strongly_one_sided' ? '#F59E0B' : '#8E8E93',
+                    borderColor: analysis.powerBalance === 'extremely_one_sided' ? '#EF4444' :
+                                 analysis.powerBalance === 'strongly_one_sided' ? '#F59E0B' : '#8E8E93'
                   }}
                 >
                   {POWER_BALANCE_LABELS[analysis.powerBalance]}
                 </span>
               )}
               {analysis.riskLevel >= 6 && (
-                <span className={styles.topRiskTag} style={{ color: '#FF3B30', borderColor: '#FF3B30' }}>
+                <span className={styles.topRiskTag} style={{ color: '#EF4444', borderColor: '#EF4444' }}>
                   Risiko {analysis.riskLevel}/10
                 </span>
               )}

@@ -235,7 +235,7 @@ export default function RedlineView({
       <div className={styles.rlBody}>
         {changedCount === 0 && (
           <div style={{ padding: '32px 24px', textAlign: 'center', color: '#8E8E93', fontSize: 14 }}>
-            <Check size={24} style={{ margin: '0 auto 8px', display: 'block', color: '#34C759' }} />
+            <Check size={24} style={{ margin: '0 auto 8px', display: 'block', color: '#10B981' }} />
             Alle Klauseln sind in dieser Perspektive unverändert — keine Optimierungen vorgeschlagen.
           </div>
         )}

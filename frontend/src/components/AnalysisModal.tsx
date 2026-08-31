@@ -109,10 +109,10 @@ export default function AnalysisModal({ contract, show, onClose }: AnalysisModal
   };
 
   const getScoreColor = (score: number): string => {
-    if (score >= 80) return "#34c759";
-    if (score >= 60) return "#ff9500";
+    if (score >= 80) return "#10B981";
+    if (score >= 60) return "#F59E0B";
     if (score >= 40) return "#ff6b35";
-    return "#ff3b30";
+    return "#EF4444";
   };
 
   const getScoreLabel = (score: number): string => {

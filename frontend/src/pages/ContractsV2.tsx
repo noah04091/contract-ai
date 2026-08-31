@@ -1740,7 +1740,7 @@ export default function Contracts() {
                   width: 40px;
                   height: 40px;
                   border: 3px solid #e5e5e5;
-                  border-top: 3px solid #007aff;
+                  border-top: 3px solid #3B82F6;
                   border-radius: 50%;
                   animation: spin 1s linear infinite;
                   margin: 0 auto 20px;

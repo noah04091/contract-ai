@@ -18,7 +18,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(-45deg, rgba(0, 113, 227, 0.03), rgba(255, 149, 0, 0.03), rgba(52, 199, 89, 0.03), rgba(88, 86, 214, 0.03));
+  background: linear-gradient(-45deg, rgba(0, 113, 227, 0.03), rgba(245, 158, 11, 0.03), rgba(16, 185, 129, 0.03), rgba(88, 86, 214, 0.03));
   background-size: 400% 400%;
   animation: gradientShift 8s ease infinite;
   pointer-events: none;

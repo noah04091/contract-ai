@@ -2,11 +2,11 @@
 
 /* Design Tokens */
 :root {
-  --progress-blue: #007AFF;
+  --progress-blue: #3B82F6;
   --progress-purple: #2563eb;
-  --progress-green: #34C759;
-  --progress-red: #FF3B30;
-  --progress-orange: #FF9500;
+  --progress-green: #10B981;
+  --progress-red: #EF4444;
+  --progress-orange: #F59E0B;
   --progress-yellow: #FFCC00;
 }
 
@@ -37,9 +37,9 @@
   padding: 1px;
   background: linear-gradient(
     135deg,
-    rgba(0, 122, 255, 0.2) 0%,
+    rgba(59, 130, 246, 0.2) 0%,
     rgba(88, 86, 214, 0.2) 50%,
-    rgba(0, 122, 255, 0.2) 100%
+    rgba(59, 130, 246, 0.2) 100%
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
@@ -103,7 +103,7 @@
   letter-spacing: -0.04em;
   line-height: 1;
   display: block;
-  text-shadow: 0 2px 20px rgba(0, 122, 255, 0.3);
+  text-shadow: 0 2px 20px rgba(59, 130, 246, 0.3);
 }
 
 .eta {
@@ -136,7 +136,7 @@
   background: linear-gradient(90deg, var(--progress-blue) 0%, var(--progress-purple) 100%);
   border-radius: 4px;
   position: relative;
-  box-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
   transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
@@ -197,20 +197,20 @@
 }
 
 .step.active {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(88, 86, 214, 0.05) 100%);
-  box-shadow: 0 2px 12px rgba(0, 122, 255, 0.1);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(88, 86, 214, 0.05) 100%);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.1);
 }
 
 .step.done {
-  background: linear-gradient(135deg, rgba(52, 199, 89, 0.06) 0%, rgba(48, 209, 88, 0.03) 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.06) 0%, rgba(16, 185, 129, 0.03) 100%);
 }
 
 .step.error {
-  background: linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 69, 58, 0.04) 100%);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.04) 100%);
 }
 
 .step.warn {
-  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08) 0%, rgba(255, 204, 0, 0.04) 100%);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(255, 204, 0, 0.04) 100%);
 }
 
 /* Step Indicator */
@@ -231,13 +231,13 @@
 .step.done .stepIndicator {
   background: linear-gradient(135deg, var(--progress-green) 0%, #2FB34F 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .step.active .stepIndicator {
   background: linear-gradient(135deg, var(--progress-blue) 0%, var(--progress-purple) 100%);
   color: white;
-  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.4);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
 }
 
 .step.queued .stepIndicator {
@@ -248,13 +248,13 @@
 .step.error .stepIndicator {
   background: linear-gradient(135deg, var(--progress-red) 0%, #E5352A 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
 }
 
 .step.warn .stepIndicator {
   background: linear-gradient(135deg, var(--progress-orange) 0%, var(--progress-yellow) 100%);
   color: #1D1D1F;
-  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
 }
 
 /* Check Icon */
@@ -328,7 +328,7 @@
   font-weight: 600;
   margin-left: auto;
   padding: 4px 10px;
-  background: rgba(52, 199, 89, 0.1);
+  background: rgba(16, 185, 129, 0.1);
   border-radius: 8px;
   color: var(--progress-green);
 }
@@ -337,7 +337,7 @@
   font-size: 11px;
   font-weight: 700;
   color: #B86B00;
-  background: linear-gradient(135deg, rgba(255, 149, 0, 0.15) 0%, rgba(255, 204, 0, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(255, 204, 0, 0.1) 100%);
   padding: 4px 12px;
   border-radius: 12px;
   margin-left: auto;
@@ -357,9 +357,9 @@
 .errorContainer {
   margin-top: 12px;
   padding: 12px;
-  background: rgba(255, 59, 48, 0.06);
+  background: rgba(239, 68, 68, 0.06);
   border-radius: 12px;
-  border: 1px solid rgba(255, 59, 48, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.15);
 }
 
 .errorMessage {
@@ -393,24 +393,24 @@
 
 .logLink {
   color: var(--progress-blue);
-  background: rgba(0, 122, 255, 0.1);
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .logLink:hover {
-  background: rgba(0, 122, 255, 0.18);
+  background: rgba(59, 130, 246, 0.18);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .retryButton {
   color: white;
   background: linear-gradient(135deg, var(--progress-red) 0%, #E5352A 100%);
-  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
 .retryButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(255, 59, 48, 0.4);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
 }
 
 .retryButton:focus-visible,

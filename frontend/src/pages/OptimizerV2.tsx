@@ -151,7 +151,7 @@ export default function OptimizerV2() {
         <div className={styles.modalOverlay} onClick={actions.dismissDuplicate}>
           <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <History size={40} style={{ color: '#007AFF', marginBottom: 12 }} />
+              <History size={40} style={{ color: '#3B82F6', marginBottom: 12 }} />
               <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', color: '#111' }}>Vertrag bereits analysiert</h3>
               <p style={{ margin: 0, color: '#6B7280', fontSize: '0.9rem', lineHeight: 1.5 }}>
                 {duplicateInfo.existingContractType
@@ -225,7 +225,7 @@ export default function OptimizerV2() {
         {/* Loading saved result */}
         {loadingResultRef.current && status === 'idle' && (
           <div className={styles.pipelineContainer} style={{ textAlign: 'center', padding: '48px 24px' }}>
-            <Loader2 size={32} className={styles.spinIcon} style={{ margin: '0 auto 16px', display: 'block', color: '#007AFF' }} />
+            <Loader2 size={32} className={styles.spinIcon} style={{ margin: '0 auto 16px', display: 'block', color: '#3B82F6' }} />
             <p style={{ color: '#6B7280', fontSize: 14 }}>Gespeicherte Analyse wird geladen...</p>
           </div>
         )}

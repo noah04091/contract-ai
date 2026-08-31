@@ -127,7 +127,7 @@ export default function ClauseCard({
           )}
           {score && (
             <span className={styles.clauseScore} style={{
-              color: score.score >= 80 ? '#34C759' : score.score >= 60 ? '#FF9500' : score.score >= 40 ? '#FF3B30' : '#AF52DE'
+              color: score.score >= 80 ? '#10B981' : score.score >= 60 ? '#F59E0B' : score.score >= 40 ? '#EF4444' : '#AF52DE'
             }}>{score.score}</span>
           )}
           {isSelected ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -165,7 +165,7 @@ export default function ClauseCard({
                 <div className={styles.clauseInsights}>
                   {analysis.powerBalance && analysis.powerBalance !== 'balanced' && (
                     <div className={styles.insightItem}>
-                      <Scale size={14} style={{ color: analysis.powerBalance === 'extremely_one_sided' ? '#FF3B30' : analysis.powerBalance === 'strongly_one_sided' ? '#FF9500' : '#8E8E93' }} />
+                      <Scale size={14} style={{ color: analysis.powerBalance === 'extremely_one_sided' ? '#EF4444' : analysis.powerBalance === 'strongly_one_sided' ? '#F59E0B' : '#8E8E93' }} />
                       <span>{
                         analysis.powerBalance === 'slightly_one_sided' ? 'Leicht einseitig' :
                         analysis.powerBalance === 'strongly_one_sided' ? 'Deutlich einseitig' :
@@ -175,7 +175,7 @@ export default function ClauseCard({
                   )}
                   {analysis.marketComparison && analysis.marketComparison !== 'market_standard' && (
                     <div className={styles.insightItem}>
-                      <TrendingUp size={14} style={{ color: analysis.marketComparison === 'unusually_disadvantageous' ? '#FF3B30' : analysis.marketComparison === 'significantly_strict' ? '#FF9500' : '#007AFF' }} />
+                      <TrendingUp size={14} style={{ color: analysis.marketComparison === 'unusually_disadvantageous' ? '#EF4444' : analysis.marketComparison === 'significantly_strict' ? '#F59E0B' : '#3B82F6' }} />
                       <span>{
                         analysis.marketComparison === 'below_market' ? 'Unter Marktstandard' :
                         analysis.marketComparison === 'slightly_strict' ? 'Strenger als üblich' :

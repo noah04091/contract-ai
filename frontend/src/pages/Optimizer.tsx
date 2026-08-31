@@ -253,15 +253,15 @@ const CONTRACT_TYPE_INFO = {
   arbeitsvertrag: {
     name: 'Arbeitsvertrag',
     icon: <Users className="w-5 h-5" />,
-    color: '#007AFF',
-    gradient: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
+    color: '#3B82F6',
+    gradient: 'linear-gradient(135deg, #3B82F6 0%, #0051D5 100%)',
     description: 'Optimierung für Arbeitsverhältnisse'
   },
   mietvertrag: {
     name: 'Mietvertrag',
     icon: <Home className="w-5 h-5" />,
-    color: '#FF9500',
-    gradient: 'linear-gradient(135deg, #FF9500 0%, #FF7A00 100%)',
+    color: '#F59E0B',
+    gradient: 'linear-gradient(135deg, #F59E0B 0%, #FF7A00 100%)',
     description: 'Wohn- und Gewerberaummiete'
   },
   nda: {
@@ -274,15 +274,15 @@ const CONTRACT_TYPE_INFO = {
   saas_vertrag: {
     name: 'SaaS / Software',
     icon: <Cloud className="w-5 h-5" />,
-    color: '#34C759',
-    gradient: 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)',
+    color: '#10B981',
+    gradient: 'linear-gradient(135deg, #10B981 0%, #2EB150 100%)',
     description: 'Cloud & Software-Services'
   },
   kaufvertrag: {
     name: 'Kaufvertrag',
     icon: <DollarSign className="w-5 h-5" />,
-    color: '#FF3B30',
-    gradient: 'linear-gradient(135deg, #FF3B30 0%, #E5302A 100%)',
+    color: '#EF4444',
+    gradient: 'linear-gradient(135deg, #EF4444 0%, #E5302A 100%)',
     description: 'Kauf und Verkauf'
   },
   dienstvertrag: {
@@ -302,8 +302,8 @@ const CONTRACT_TYPE_INFO = {
   lizenzvertrag: {
     name: 'Lizenzvertrag',
     icon: <FileSignature className="w-5 h-5" />,
-    color: '#007AFF',
-    gradient: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
+    color: '#3B82F6',
+    gradient: 'linear-gradient(135deg, #3B82F6 0%, #0051D5 100%)',
     description: 'Software & IP-Lizenzen'
   },
   gesellschaftsvertrag: {
@@ -316,8 +316,8 @@ const CONTRACT_TYPE_INFO = {
   darlehensvertrag: {
     name: 'Darlehensvertrag',
     icon: <Calculator className="w-5 h-5" />,
-    color: '#30D158',
-    gradient: 'linear-gradient(135deg, #30D158 0%, #28B84C 100%)',
+    color: '#10B981',
+    gradient: 'linear-gradient(135deg, #10B981 0%, #28B84C 100%)',
     description: 'Kredite & Darlehen'
   },
   agb: {
@@ -2165,16 +2165,16 @@ Konfidenz: ${opt.confidence}%\n`
   <title>Vertragsanalyse - ${fileName}</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    h1 { color: #1D1D1F; border-bottom: 2px solid #34C759; padding-bottom: 10px; }
-    .score-badge { display: inline-block; background: linear-gradient(135deg, #34C759, #30D158); color: white; padding: 8px 20px; border-radius: 20px; font-size: 24px; font-weight: bold; margin: 20px 0; }
-    .success-box { background: #E5FFE5; border: 2px solid #34C759; border-radius: 12px; padding: 25px; margin: 20px 0; }
-    .success-title { color: #34C759; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+    h1 { color: #1D1D1F; border-bottom: 2px solid #10B981; padding-bottom: 10px; }
+    .score-badge { display: inline-block; background: linear-gradient(135deg, #10B981, #10B981); color: white; padding: 8px 20px; border-radius: 20px; font-size: 24px; font-weight: bold; margin: 20px 0; }
+    .success-box { background: #E5FFE5; border: 2px solid #10B981; border-radius: 12px; padding: 25px; margin: 20px 0; }
+    .success-title { color: #10B981; font-size: 20px; font-weight: bold; margin-bottom: 15px; }
     .assessment { color: #333; line-height: 1.6; }
     .clauses-list { margin-top: 20px; }
     .clauses-list h3 { color: #666; font-size: 14px; margin-bottom: 10px; }
     .clauses-list ul { list-style: none; padding: 0; }
     .clauses-list li { padding: 5px 0; padding-left: 20px; position: relative; }
-    .clauses-list li:before { content: "✓"; color: #34C759; position: absolute; left: 0; }
+    .clauses-list li:before { content: "✓"; color: #10B981; position: absolute; left: 0; }
     .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #999; font-size: 12px; }
   </style>
 </head>
@@ -2212,11 +2212,11 @@ Konfidenz: ${opt.confidence}%\n`
   <title>Vertragsanalyse - ${fileName}</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
-    h1 { color: #1D1D1F; border-bottom: 2px solid #007AFF; padding-bottom: 10px; }
+    h1 { color: #1D1D1F; border-bottom: 2px solid #3B82F6; padding-bottom: 10px; }
     h2 { color: #333; margin-top: 30px; }
     .opt-card { background: #f5f5f7; border-radius: 12px; padding: 20px; margin: 15px 0; }
     .opt-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-    .opt-category { font-weight: bold; color: #007AFF; text-transform: uppercase; font-size: 12px; }
+    .opt-category { font-weight: bold; color: #3B82F6; text-transform: uppercase; font-size: 12px; }
     .opt-priority { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
     .critical { background: #FFE5E5; color: #D00; }
     .high { background: #FFF3E5; color: #E65100; }
@@ -2893,7 +2893,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
               <div className="uploader-content">
                 {file ? (
                   <>
-                    <div className="upload-icon-wrapper" style={{ background: 'linear-gradient(135deg, #34C759 0%, #30D158 100%)' }}>
+                    <div className="upload-icon-wrapper" style={{ background: 'linear-gradient(135deg, #10B981 0%, #10B981 100%)' }}>
                       <CheckCircle size={32} color="white" />
                     </div>
                     <p className="upload-title">{file.name}</p>
@@ -2905,10 +2905,10 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                       style={{
                         marginTop: '12px',
                         padding: '8px 16px',
-                        background: 'rgba(255, 59, 48, 0.1)',
-                        border: '1px solid rgba(255, 59, 48, 0.2)',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.2)',
                         borderRadius: '8px',
-                        color: '#FF3B30',
+                        color: '#EF4444',
                         fontSize: '14px',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -2994,9 +2994,9 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                         gap: '6px',
                         padding: '10px 16px',
                         borderRadius: '12px',
-                        border: perspective === opt.id ? '2px solid #007AFF' : '1px solid #e2e8f0',
-                        background: perspective === opt.id ? 'rgba(0, 122, 255, 0.08)' : 'white',
-                        color: perspective === opt.id ? '#007AFF' : '#1d1d1f',
+                        border: perspective === opt.id ? '2px solid #3B82F6' : '1px solid #e2e8f0',
+                        background: perspective === opt.id ? 'rgba(59, 130, 246, 0.08)' : 'white',
+                        color: perspective === opt.id ? '#3B82F6' : '#1d1d1f',
                         fontSize: '14px',
                         fontWeight: 600,
                         cursor: 'pointer',
@@ -3175,10 +3175,10 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                   right: '24px',
                   zIndex: 1000000,
                   background: toast.type === 'success'
-                    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.95) 0%, rgba(46, 177, 80, 0.95) 100%)'
+                    ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.95) 0%, rgba(46, 177, 80, 0.95) 100%)'
                     : toast.type === 'error'
-                    ? 'linear-gradient(135deg, rgba(255, 59, 48, 0.95) 0%, rgba(229, 48, 42, 0.95) 100%)'
-                    : 'linear-gradient(135deg, rgba(0, 122, 255, 0.95) 0%, rgba(0, 81, 213, 0.95) 100%)',
+                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.95) 0%, rgba(229, 48, 42, 0.95) 100%)'
+                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.95) 0%, rgba(0, 81, 213, 0.95) 100%)',
                   color: 'white',
                   padding: '1rem 1.5rem',
                   borderRadius: '14px',
@@ -3240,7 +3240,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                         width: '48px',
                         height: '48px',
                         borderRadius: '12px',
-                        background: `${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#007AFF'}15`,
+                        background: `${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#3B82F6'}15`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -3317,7 +3317,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                   >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
                       <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.01em' }}>
-                        <BarChart3 className="w-5 h-5" style={{ color: '#007AFF' }} />
+                        <BarChart3 className="w-5 h-5" style={{ color: '#3B82F6' }} />
                         Analyse-Dashboard
                       </h3>
                       <button
@@ -3346,10 +3346,10 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
                       {[
-                        { label: 'Kritisch', count: statistics.criticalCount, color: '#FF3B30' },
-                        { label: 'Hoch', count: statistics.highCount, color: '#FF9500' },
+                        { label: 'Kritisch', count: statistics.criticalCount, color: '#EF4444' },
+                        { label: 'Hoch', count: statistics.highCount, color: '#F59E0B' },
                         { label: 'Mittel', count: statistics.mediumCount, color: '#FFCC00' },
-                        { label: 'Niedrig', count: statistics.lowCount, color: '#34C759' }
+                        { label: 'Niedrig', count: statistics.lowCount, color: '#10B981' }
                       ].map((item, idx) => (
                         <motion.div
                           key={item.label}
@@ -3386,19 +3386,19 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
                       <div style={{ textAlign: 'center', padding: '16px', borderRadius: '10px', background: '#F5F5F7' }}>
                         <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '6px', fontWeight: 500 }}>Ø Risiko</div>
-                        <div style={{ fontSize: '22px', fontWeight: 700, color: statistics.avgRisk >= 7 ? '#FF3B30' : statistics.avgRisk >= 5 ? '#FF9500' : '#34C759', letterSpacing: '-0.02em' }}>
+                        <div style={{ fontSize: '22px', fontWeight: 700, color: statistics.avgRisk >= 7 ? '#EF4444' : statistics.avgRisk >= 5 ? '#F59E0B' : '#10B981', letterSpacing: '-0.02em' }}>
                           {statistics.avgRisk}<span style={{ fontSize: '14px', fontWeight: 500, color: '#86868B' }}>/10</span>
                         </div>
                       </div>
                       <div style={{ textAlign: 'center', padding: '16px', borderRadius: '10px', background: '#F5F5F7' }}>
                         <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '6px', fontWeight: 500 }}>Ø Impact</div>
-                        <div style={{ fontSize: '22px', fontWeight: 700, color: '#007AFF', letterSpacing: '-0.02em' }}>
+                        <div style={{ fontSize: '22px', fontWeight: 700, color: '#3B82F6', letterSpacing: '-0.02em' }}>
                           {statistics.avgImpact}<span style={{ fontSize: '14px', fontWeight: 500, color: '#86868B' }}>/10</span>
                         </div>
                       </div>
                       <div style={{ textAlign: 'center', padding: '16px', borderRadius: '10px', background: '#F5F5F7' }}>
                         <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '6px', fontWeight: 500 }}>KI-Konfidenz</div>
-                        <div style={{ fontSize: '22px', fontWeight: 700, color: statistics.avgConfidence >= 85 ? '#34C759' : statistics.avgConfidence >= 70 ? '#FF9500' : '#FF3B30', letterSpacing: '-0.02em' }}>
+                        <div style={{ fontSize: '22px', fontWeight: 700, color: statistics.avgConfidence >= 85 ? '#10B981' : statistics.avgConfidence >= 70 ? '#F59E0B' : '#EF4444', letterSpacing: '-0.02em' }}>
                           {statistics.avgConfidence}<span style={{ fontSize: '14px', fontWeight: 500, color: '#86868B' }}>%</span>
                         </div>
                       </div>
@@ -3470,27 +3470,27 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                       fontWeight: 600,
                       background: isGeneratingContract || !file || optimizations.length === 0
                         ? '#C7C7CC'
-                        : 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)',
+                        : 'linear-gradient(135deg, #3B82F6 0%, #5856D6 100%)',
                       color: 'white',
                       border: 'none',
                       cursor: isGeneratingContract || !file || optimizations.length === 0 ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s ease',
                       boxShadow: isGeneratingContract || !file || optimizations.length === 0
                         ? 'none'
-                        : '0 4px 16px rgba(0, 122, 255, 0.3)',
+                        : '0 4px 16px rgba(59, 130, 246, 0.3)',
                       letterSpacing: '-0.01em'
                     }}
                     onMouseEnter={(e) => {
                       if (!isGeneratingContract && file && optimizations.length > 0) {
                         e.currentTarget.style.transform = 'translateY(-2px)';
-                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 122, 255, 0.4)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(59, 130, 246, 0.4)';
                       }
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';
                       e.currentTarget.style.boxShadow = isGeneratingContract || !file || optimizations.length === 0
                         ? 'none'
-                        : '0 4px 16px rgba(0, 122, 255, 0.3)';
+                        : '0 4px 16px rgba(59, 130, 246, 0.3)';
                     }}
                   >
                     {isGeneratingContract ? (
@@ -3532,7 +3532,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                    <Filter size={20} style={{ color: '#007AFF' }} />
+                    <Filter size={20} style={{ color: '#3B82F6' }} />
                     <h3 style={{
                       fontSize: '17px',
                       fontWeight: 600,
@@ -3570,15 +3570,15 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                             gap: '8px',
                             padding: '10px 16px',
                             borderRadius: '12px',
-                            border: isActive ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
-                            background: isActive ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
-                            color: isActive ? '#007AFF' : '#1D1D1F',
+                            border: isActive ? '1.5px solid #3B82F6' : '1px solid rgba(0, 0, 0, 0.1)',
+                            background: isActive ? 'rgba(59, 130, 246, 0.08)' : '#FFFFFF',
+                            color: isActive ? '#3B82F6' : '#1D1D1F',
                             fontSize: '14px',
                             fontWeight: isActive ? 600 : 500,
                             cursor: 'pointer',
                             transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
                             letterSpacing: '-0.01em',
-                            boxShadow: isActive ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                            boxShadow: isActive ? '0 2px 8px rgba(59, 130, 246, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
                           }}
                         >
                           <span style={{ fontSize: '18px' }}>{category.icon}</span>
@@ -3586,7 +3586,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           <span style={{
                             padding: '3px 9px',
                             borderRadius: '10px',
-                            background: isActive ? '#007AFF' : '#F5F5F7',
+                            background: isActive ? '#3B82F6' : '#F5F5F7',
                             color: isActive ? '#FFFFFF' : '#86868B',
                             fontSize: '12px',
                             fontWeight: 700,
@@ -3633,15 +3633,15 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                       gap: '8px',
                       padding: '10px 16px',
                       borderRadius: '12px',
-                      border: showAdvancedView ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
-                      background: showAdvancedView ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
-                      color: showAdvancedView ? '#007AFF' : '#1D1D1F',
+                      border: showAdvancedView ? '1.5px solid #3B82F6' : '1px solid rgba(0, 0, 0, 0.1)',
+                      background: showAdvancedView ? 'rgba(59, 130, 246, 0.08)' : '#FFFFFF',
+                      color: showAdvancedView ? '#3B82F6' : '#1D1D1F',
                       fontSize: '14px',
                       fontWeight: showAdvancedView ? 600 : 500,
                       cursor: 'pointer',
                       transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
                       letterSpacing: '-0.01em',
-                      boxShadow: showAdvancedView ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                      boxShadow: showAdvancedView ? '0 2px 8px rgba(59, 130, 246, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
                     }}
                   >
                     <CheckCircle2 size={16} />
@@ -3658,15 +3658,15 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                       gap: '8px',
                       padding: '10px 16px',
                       borderRadius: '12px',
-                      border: showQuickWinsFirst ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
-                      background: showQuickWinsFirst ? '#007AFF' : '#FFFFFF',
+                      border: showQuickWinsFirst ? '1.5px solid #3B82F6' : '1px solid rgba(0, 0, 0, 0.1)',
+                      background: showQuickWinsFirst ? '#3B82F6' : '#FFFFFF',
                       color: showQuickWinsFirst ? '#FFFFFF' : '#1D1D1F',
                       fontSize: '14px',
                       fontWeight: showQuickWinsFirst ? 600 : 500,
                       cursor: 'pointer',
                       transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
                       letterSpacing: '-0.01em',
-                      boxShadow: showQuickWinsFirst ? '0 2px 8px rgba(0, 122, 255, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                      boxShadow: showQuickWinsFirst ? '0 2px 8px rgba(59, 130, 246, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
                     }}
                   >
                     <Zap size={16} />
@@ -3858,7 +3858,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           </div>
                           <span style={{
                             fontSize: '11px',
-                            background: isLocked ? '#E5E5E7' : '#007AFF',
+                            background: isLocked ? '#E5E5E7' : '#3B82F6',
                             padding: '4px 8px',
                             borderRadius: '6px',
                             fontWeight: 600,
@@ -3910,12 +3910,12 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                         height: '3px',
                         borderRadius: '20px 20px 0 0',
                         background: optimization.priority === 'critical' 
-                          ? 'linear-gradient(90deg, #FF3B30 0%, #E5302A 100%)' : 
+                          ? 'linear-gradient(90deg, #EF4444 0%, #E5302A 100%)' : 
                                    optimization.priority === 'high' 
-                          ? 'linear-gradient(90deg, #FF9500 0%, #FF7A00 100%)' : 
+                          ? 'linear-gradient(90deg, #F59E0B 0%, #FF7A00 100%)' : 
                                    optimization.priority === 'medium' 
                           ? 'linear-gradient(90deg, #FFCC00 0%, #F5B800 100%)' 
-                          : 'linear-gradient(90deg, #34C759 0%, #2EB150 100%)'
+                          : 'linear-gradient(90deg, #10B981 0%, #2EB150 100%)'
                       }}></div>
 
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
@@ -3961,14 +3961,14 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                               fontSize: '12px',
                               borderRadius: '10px',
                               fontWeight: 600,
-                              background: optimization.priority === 'critical' ? 'rgba(255, 59, 48, 0.12)' :
-                                         optimization.priority === 'high' ? 'rgba(255, 149, 0, 0.12)' :
+                              background: optimization.priority === 'critical' ? 'rgba(239, 68, 68, 0.12)' :
+                                         optimization.priority === 'high' ? 'rgba(245, 158, 11, 0.12)' :
                                          optimization.priority === 'medium' ? 'rgba(255, 204, 0, 0.12)' :
-                                         'rgba(52, 199, 89, 0.12)',
-                              color: optimization.priority === 'critical' ? '#FF3B30' :
-                                    optimization.priority === 'high' ? '#FF9500' :
+                                         'rgba(16, 185, 129, 0.12)',
+                              color: optimization.priority === 'critical' ? '#EF4444' :
+                                    optimization.priority === 'high' ? '#F59E0B' :
                                     optimization.priority === 'medium' ? '#FFCC00' :
-                                    '#34C759'
+                                    '#10B981'
                             }}>
                               {optimization.priority === 'critical' ? 'Kritisch' :
                                optimization.priority === 'high' ? 'Hoch' :
@@ -3984,12 +3984,12 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                               display: 'flex',
                               alignItems: 'center',
                               gap: '6px',
-                              background: optimization.implementationDifficulty === 'easy' ? 'rgba(52, 199, 89, 0.12)' :
+                              background: optimization.implementationDifficulty === 'easy' ? 'rgba(16, 185, 129, 0.12)' :
                                          optimization.implementationDifficulty === 'medium' ? 'rgba(255, 204, 0, 0.12)' :
-                                         'rgba(255, 59, 48, 0.12)',
-                              color: optimization.implementationDifficulty === 'easy' ? '#34C759' :
+                                         'rgba(239, 68, 68, 0.12)',
+                              color: optimization.implementationDifficulty === 'easy' ? '#10B981' :
                                     optimization.implementationDifficulty === 'medium' ? '#FFCC00' :
-                                    '#FF3B30'
+                                    '#EF4444'
                             }}>
                               {optimization.implementationDifficulty === 'easy' ? '🟢 Einfach umsetzbar' :
                                optimization.implementationDifficulty === 'medium' ? '🟡 Mittlerer Aufwand' :
@@ -4014,7 +4014,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                 checked={selectedOptimizations.has(optimization.id)}
                                 onChange={() => toggleOptimizationSelection(optimization.id)}
                                 className="w-5 h-5"
-                                style={{ accentColor: '#007AFF' }}
+                                style={{ accentColor: '#3B82F6' }}
                               />
                               <span className="font-medium">Anwenden</span>
                             </label>
@@ -4038,12 +4038,12 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                             borderRadius: '10px',
                             fontSize: '13px',
                             fontWeight: !diffViewEnabled.get(optimization.id) ? 600 : 500,
-                            border: !diffViewEnabled.get(optimization.id) ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
-                            background: !diffViewEnabled.get(optimization.id) ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
-                            color: !diffViewEnabled.get(optimization.id) ? '#007AFF' : '#86868B',
+                            border: !diffViewEnabled.get(optimization.id) ? '1.5px solid #3B82F6' : '1px solid rgba(0, 0, 0, 0.1)',
+                            background: !diffViewEnabled.get(optimization.id) ? 'rgba(59, 130, 246, 0.08)' : '#FFFFFF',
+                            color: !diffViewEnabled.get(optimization.id) ? '#3B82F6' : '#86868B',
                             cursor: 'pointer',
                             transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                            boxShadow: !diffViewEnabled.get(optimization.id) ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                            boxShadow: !diffViewEnabled.get(optimization.id) ? '0 2px 8px rgba(59, 130, 246, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
                           }}
                         >
                           <AlignLeft size={14} />
@@ -4063,12 +4063,12 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                             borderRadius: '10px',
                             fontSize: '13px',
                             fontWeight: diffViewEnabled.get(optimization.id) ? 600 : 500,
-                            border: diffViewEnabled.get(optimization.id) ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
-                            background: diffViewEnabled.get(optimization.id) ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
-                            color: diffViewEnabled.get(optimization.id) ? '#007AFF' : '#86868B',
+                            border: diffViewEnabled.get(optimization.id) ? '1.5px solid #3B82F6' : '1px solid rgba(0, 0, 0, 0.1)',
+                            background: diffViewEnabled.get(optimization.id) ? 'rgba(59, 130, 246, 0.08)' : '#FFFFFF',
+                            color: diffViewEnabled.get(optimization.id) ? '#3B82F6' : '#86868B',
                             cursor: 'pointer',
                             transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                            boxShadow: diffViewEnabled.get(optimization.id) ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                            boxShadow: diffViewEnabled.get(optimization.id) ? '0 2px 8px rgba(59, 130, 246, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
                           }}
                         >
                           <Code2 size={14} />
@@ -4088,7 +4088,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           /* WARUM OPTIMIEREN? - Die KI-Begründung */
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                              <AlignLeft size={16} style={{ color: '#007AFF' }} />
+                              <AlignLeft size={16} style={{ color: '#3B82F6' }} />
                               <span style={{
                                 fontSize: '12px',
                                 fontWeight: 700,
@@ -4118,8 +4118,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                 gap: '8px',
                                 padding: '8px 16px',
                                 borderRadius: '20px',
-                                background: 'rgba(0, 122, 255, 0.1)',
-                                color: '#007AFF',
+                                background: 'rgba(59, 130, 246, 0.1)',
+                                color: '#3B82F6',
                                 fontSize: '12px',
                                 fontWeight: 700,
                                 letterSpacing: '0.5px',
@@ -4133,19 +4133,19 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                             {/* VORHER Box */}
                             <div style={{
                               borderRadius: '12px',
-                              border: '2px solid rgba(255, 59, 48, 0.3)',
-                              background: 'rgba(255, 59, 48, 0.05)',
+                              border: '2px solid rgba(239, 68, 68, 0.3)',
+                              background: 'rgba(239, 68, 68, 0.05)',
                               overflow: 'hidden'
                             }}>
                               <div style={{
                                 padding: '12px 16px',
-                                borderBottom: '1px solid rgba(255, 59, 48, 0.2)',
-                                background: 'rgba(255, 59, 48, 0.1)'
+                                borderBottom: '1px solid rgba(239, 68, 68, 0.2)',
+                                background: 'rgba(239, 68, 68, 0.1)'
                               }}>
                                 <span style={{
                                   fontSize: '12px',
                                   fontWeight: 700,
-                                  color: '#FF3B30',
+                                  color: '#EF4444',
                                   letterSpacing: '0.3px',
                                   textTransform: 'uppercase'
                                 }}>
@@ -4155,9 +4155,9 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                               <div style={{ padding: '16px' }}>
                                 {optimization.original === "FEHLT" || optimization.original.includes("FEHLT") ? (
                                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                                    <AlertTriangle size={16} style={{ color: '#FF3B30', marginTop: '2px', flexShrink: 0 }} />
+                                    <AlertTriangle size={16} style={{ color: '#EF4444', marginTop: '2px', flexShrink: 0 }} />
                                     <div>
-                                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#FF3B30', margin: '0 0 4px 0' }}>
+                                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#EF4444', margin: '0 0 4px 0' }}>
                                         Diese Klausel fehlt komplett!
                                       </p>
                                       <p style={{ fontSize: '13px', color: '#86868B', margin: 0 }}>
@@ -4184,7 +4184,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                               <div style={{
                                 padding: '10px 20px',
                                 borderRadius: '20px',
-                                background: 'linear-gradient(135deg, #007AFF 0%, #34C759 100%)',
+                                background: 'linear-gradient(135deg, #3B82F6 0%, #10B981 100%)',
                                 color: 'white'
                               }}>
                                 <span style={{
@@ -4201,19 +4201,19 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                             {/* NACHHER Box */}
                             <div style={{
                               borderRadius: '12px',
-                              border: '2px solid rgba(52, 199, 89, 0.3)',
-                              background: 'rgba(52, 199, 89, 0.05)',
+                              border: '2px solid rgba(16, 185, 129, 0.3)',
+                              background: 'rgba(16, 185, 129, 0.05)',
                               overflow: 'hidden'
                             }}>
                               <div style={{
                                 padding: '12px 16px',
-                                borderBottom: '1px solid rgba(52, 199, 89, 0.2)',
-                                background: 'rgba(52, 199, 89, 0.1)'
+                                borderBottom: '1px solid rgba(16, 185, 129, 0.2)',
+                                background: 'rgba(16, 185, 129, 0.1)'
                               }}>
                                 <span style={{
                                   fontSize: '12px',
                                   fontWeight: 700,
-                                  color: '#34C759',
+                                  color: '#10B981',
                                   letterSpacing: '0.3px',
                                   textTransform: 'uppercase'
                                 }}>
@@ -4234,7 +4234,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                 {optimization.improved.length > 500 && (
                                   <p style={{
                                     fontSize: '12px',
-                                    color: '#007AFF',
+                                    color: '#3B82F6',
                                     marginTop: '12px',
                                     display: 'flex',
                                     alignItems: 'center',
@@ -4252,7 +4252,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                         {showAdvancedView && (
                           <div className="mt-3 pt-3 border-t border-gray-200">
                             {optimization.original === "FEHLT" || optimization.original.includes("FEHLT") ? (
-                              <div className="mb-2 p-2 rounded-lg" style={{ background: 'rgba(255, 59, 48, 0.1)' }}>
+                              <div className="mb-2 p-2 rounded-lg" style={{ background: 'rgba(239, 68, 68, 0.1)' }}>
                                 <strong className="text-red-600">⚠️ Fehlende Pflichtklausel</strong>
                                 <p className="text-xs text-gray-600 mt-1">Diese wichtige Klausel fehlt komplett in deinem Vertrag</p>
                               </div>
@@ -4261,7 +4261,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                 <strong>Original:</strong> {optimization.original.substring(0, 100)}...
                               </p>
                             )}
-                            <div className="mt-2 p-2 rounded-lg" style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
+                            <div className="mt-2 p-2 rounded-lg" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
                               <p className="text-xs text-green-600">
                                 <strong>✅ Optimiert:</strong>
                               </p>
@@ -4297,7 +4297,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           letterSpacing: '0.5px',
                           textTransform: 'uppercase'
                         }}>
-                          <TrendingUp size={16} style={{ color: '#007AFF' }} />
+                          <TrendingUp size={16} style={{ color: '#3B82F6' }} />
                           Auswirkungen dieser Optimierung
                         </h5>
 
@@ -4306,7 +4306,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <Shield size={14} style={{ color: '#34C759' }} />
+                                <Shield size={14} style={{ color: '#10B981' }} />
                                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
                                   Rechtsschutz
                                 </span>
@@ -4316,7 +4316,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                   {optimization.legalRisk <= 3 ? 'Stark' : optimization.legalRisk <= 6 ? 'Mittel' : 'Schwach'}
                                 </span>
                                 <span style={{ color: '#86868B', margin: '0 4px' }}>→</span>
-                                <span style={{ color: '#34C759' }}>Stark</span>
+                                <span style={{ color: '#10B981' }}>Stark</span>
                               </span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -4326,14 +4326,14 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                   borderRadius: '3px',
                                   transition: 'all 0.5s ease',
                                   width: `${Math.max(20, 100 - (optimization.legalRisk || 5) * 10)}%`,
-                                  background: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : (optimization.legalRisk || 5) >= 4 ? '#FF9500' : '#34C759'
+                                  background: (optimization.legalRisk || 5) >= 7 ? '#EF4444' : (optimization.legalRisk || 5) >= 4 ? '#F59E0B' : '#10B981'
                                 }} />
                               </div>
                               <span style={{ fontSize: '12px', color: '#86868B' }}>→</span>
                               <div style={{
                                 flex: 1,
                                 height: '6px',
-                                background: 'linear-gradient(90deg, #34C759 0%, #2EB150 100%)',
+                                background: 'linear-gradient(90deg, #10B981 0%, #2EB150 100%)',
                                 borderRadius: '3px'
                               }} />
                             </div>
@@ -4343,7 +4343,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <TrendingUp size={14} style={{ color: '#007AFF' }} />
+                                <TrendingUp size={14} style={{ color: '#3B82F6' }} />
                                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
                                   Verhandlungsposition
                                 </span>
@@ -4353,7 +4353,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                   {(optimization.businessImpact || 5) <= 3 ? 'Ungünstig' : (optimization.businessImpact || 5) <= 7 ? 'Neutral' : 'Vorteilhaft'}
                                 </span>
                                 <span style={{ color: '#86868B', margin: '0 4px' }}>→</span>
-                                <span style={{ color: '#007AFF' }}>Vorteilhaft</span>
+                                <span style={{ color: '#3B82F6' }}>Vorteilhaft</span>
                               </span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -4363,14 +4363,14 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                   borderRadius: '3px',
                                   transition: 'all 0.5s ease',
                                   width: `${Math.max(20, (optimization.businessImpact || 5) * 10)}%`,
-                                  background: (optimization.businessImpact || 5) >= 7 ? '#34C759' : (optimization.businessImpact || 5) >= 4 ? '#FF9500' : '#FF3B30'
+                                  background: (optimization.businessImpact || 5) >= 7 ? '#10B981' : (optimization.businessImpact || 5) >= 4 ? '#F59E0B' : '#EF4444'
                                 }} />
                               </div>
                               <span style={{ fontSize: '12px', color: '#86868B' }}>→</span>
                               <div style={{
                                 flex: 1,
                                 height: '6px',
-                                background: 'linear-gradient(90deg, #007AFF 0%, #5856D6 100%)',
+                                background: 'linear-gradient(90deg, #3B82F6 0%, #5856D6 100%)',
                                 borderRadius: '3px'
                               }} />
                             </div>
@@ -4380,17 +4380,17 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                <AlertTriangle size={14} style={{ color: '#FF9500' }} />
+                                <AlertTriangle size={14} style={{ color: '#F59E0B' }} />
                                 <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
                                   Risiko-Level
                                 </span>
                               </div>
                               <span style={{ fontSize: '12px', fontWeight: 600 }}>
-                                <span style={{ color: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : '#86868B' }}>
+                                <span style={{ color: (optimization.legalRisk || 5) >= 7 ? '#EF4444' : '#86868B' }}>
                                   {(optimization.legalRisk || 5) >= 7 ? 'Hoch' : (optimization.legalRisk || 5) >= 4 ? 'Mittel' : 'Niedrig'}
                                 </span>
                                 <span style={{ color: '#86868B', margin: '0 4px' }}>→</span>
-                                <span style={{ color: '#34C759' }}>Niedrig</span>
+                                <span style={{ color: '#10B981' }}>Niedrig</span>
                               </span>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -4400,14 +4400,14 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                                   borderRadius: '3px',
                                   transition: 'all 0.5s ease',
                                   width: `${Math.max(20, (optimization.legalRisk || 5) * 10)}%`,
-                                  background: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : (optimization.legalRisk || 5) >= 4 ? '#FF9500' : '#34C759'
+                                  background: (optimization.legalRisk || 5) >= 7 ? '#EF4444' : (optimization.legalRisk || 5) >= 4 ? '#F59E0B' : '#10B981'
                                 }} />
                               </div>
                               <span style={{ fontSize: '12px', color: '#86868B' }}>→</span>
                               <div style={{
                                 flex: 1,
                                 height: '6px',
-                                background: 'linear-gradient(90deg, #34C759 0%, #2EB150 100%)',
+                                background: 'linear-gradient(90deg, #10B981 0%, #2EB150 100%)',
                                 borderRadius: '3px'
                               }} />
                             </div>
@@ -4424,7 +4424,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                             <span style={{
                               fontSize: '12px',
                               fontWeight: 700,
-                              color: '#FF9500',
+                              color: '#F59E0B',
                               letterSpacing: '0.3px'
                             }}>
                               💡 Nutzen:
@@ -4492,8 +4492,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           <div style={{
                             fontSize: '13px',
                             fontWeight: 600,
-                            color: optimization.implementationDifficulty === 'easy' ? '#34C759' :
-                                   optimization.implementationDifficulty === 'medium' ? '#FF9500' : '#FF3B30',
+                            color: optimization.implementationDifficulty === 'easy' ? '#10B981' :
+                                   optimization.implementationDifficulty === 'medium' ? '#F59E0B' : '#EF4444',
                             letterSpacing: '-0.01em'
                           }}>
                             {optimization.implementationDifficulty === 'easy' ? 'Einfach' :
@@ -4531,17 +4531,17 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                               gap: '8px',
                               padding: '10px 16px',
                               borderRadius: '12px',
-                              border: '1.5px solid #007AFF',
-                              background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.12) 100%)',
-                              color: '#007AFF',
+                              border: '1.5px solid #3B82F6',
+                              background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.12) 100%)',
+                              color: '#3B82F6',
                               fontSize: '14px',
                               fontWeight: 600,
                               cursor: 'pointer',
                               transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
                               letterSpacing: '-0.01em',
-                              boxShadow: '0 2px 8px rgba(0, 122, 255, 0.15)'
+                              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
                             }}
-                            whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(0, 122, 255, 0.25)' }}
+                            whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)' }}
                             whileTap={{ scale: 0.98 }}
                             title="Im Dokument anzeigen"
                           >
@@ -4559,17 +4559,17 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                             gap: '8px',
                             padding: '10px 16px',
                             borderRadius: '12px',
-                            border: '1.5px solid #FF9500',
-                            background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.08) 0%, rgba(255, 149, 0, 0.12) 100%)',
-                            color: '#FF9500',
+                            border: '1.5px solid #F59E0B',
+                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.12) 100%)',
+                            color: '#F59E0B',
                             fontSize: '14px',
                             fontWeight: 600,
                             cursor: 'pointer',
                             transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
                             letterSpacing: '-0.01em',
-                            boxShadow: '0 2px 8px rgba(255, 149, 0, 0.15)'
+                            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.15)'
                           }}
-                          whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(255, 149, 0, 0.25)' }}
+                          whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(245, 158, 11, 0.25)' }}
                           whileTap={{ scale: 0.98 }}
                           title="Einfach erklärt"
                         >
@@ -4787,8 +4787,8 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                       borderRadius: '10px',
                       cursor: 'pointer',
                       marginBottom: '8px',
-                      background: generateOptions[option.key as keyof typeof generateOptions] ? 'rgba(0, 122, 255, 0.08)' : '#F5F5F7',
-                      border: `2px solid ${generateOptions[option.key as keyof typeof generateOptions] ? '#007AFF' : 'transparent'}`,
+                      background: generateOptions[option.key as keyof typeof generateOptions] ? 'rgba(59, 130, 246, 0.08)' : '#F5F5F7',
+                      border: `2px solid ${generateOptions[option.key as keyof typeof generateOptions] ? '#3B82F6' : 'transparent'}`,
                       transition: 'all 0.2s'
                     }}
                   >
@@ -4927,7 +4927,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     padding: '14px 24px',
                     borderRadius: '10px',
                     border: 'none',
-                    background: isGeneratingContract ? '#C7C7CC' : 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)',
+                    background: isGeneratingContract ? '#C7C7CC' : 'linear-gradient(135deg, #3B82F6 0%, #5856D6 100%)',
                     color: '#FFFFFF',
                     fontSize: '16px',
                     fontWeight: 600,
@@ -5006,7 +5006,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     width: '48px',
                     height: '48px',
                     borderRadius: '12px',
-                    background: 'linear-gradient(135deg, #34C759 0%, #30D158 100%)',
+                    background: 'linear-gradient(135deg, #10B981 0%, #10B981 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
@@ -5103,10 +5103,10 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                         padding: '12px 8px',
                         borderRadius: '12px',
                         border: selectedDesignVariant === design.id
-                          ? '2px solid #007AFF'
+                          ? '2px solid #3B82F6'
                           : '2px solid #E5E5E7',
                         background: selectedDesignVariant === design.id
-                          ? 'rgba(0, 122, 255, 0.08)'
+                          ? 'rgba(59, 130, 246, 0.08)'
                           : '#FFFFFF',
                         cursor: isDownloadingPdf ? 'not-allowed' : 'pointer',
                         transition: 'all 0.2s',
@@ -5152,7 +5152,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                           width: '20px',
                           height: '20px',
                           borderRadius: '50%',
-                          background: '#007AFF',
+                          background: '#3B82F6',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center'
@@ -5204,7 +5204,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     border: 'none',
                     background: isDownloadingPdf
                       ? '#C7C7CC'
-                      : 'linear-gradient(135deg, #34C759 0%, #30D158 100%)',
+                      : 'linear-gradient(135deg, #10B981 0%, #10B981 100%)',
                     color: '#FFFFFF',
                     fontSize: '16px',
                     fontWeight: 600,
@@ -5213,7 +5213,7 @@ ${opt.improved.replace(/\n/g, '\\par ')}\\par
                     display: 'flex',
                     alignItems: 'center',
                     gap: '10px',
-                    boxShadow: isDownloadingPdf ? 'none' : '0 4px 15px rgba(52, 199, 89, 0.3)'
+                    boxShadow: isDownloadingPdf ? 'none' : '0 4px 15px rgba(16, 185, 129, 0.3)'
                   }}
                 >
                   {isDownloadingPdf ? (

@@ -66,7 +66,7 @@ export default function Register() {
   let score = (ruleLen ? 1 : 0) + (ruleCase ? 1 : 0) + (ruleNum ? 1 : 0);
   if (pwValid && password.length >= 12) score = 4;
   if (!pwEmpty && score === 0) score = 1;
-  const strengthColor = score >= 4 ? "#34C759" : score === 3 ? "#0d56c9" : score === 2 ? "#FF9500" : "#FF3B30";
+  const strengthColor = score >= 4 ? "#10B981" : score === 3 ? "#0d56c9" : score === 2 ? "#F59E0B" : "#EF4444";
   const strengthLabel = ["", "Schwach", "Mittel", "Stark", "Sehr stark"][score];
   const barColor = (i: number) => (pwEmpty || i >= score ? "#E5E5EA" : strengthColor);
   const firstNameError = touched.firstName && !firstName.trim() ? "Pflichtfeld" : "";

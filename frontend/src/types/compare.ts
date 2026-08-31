@@ -77,10 +77,10 @@ export const SEMANTIC_TYPE_LABELS: Record<SemanticType, string> = {
 };
 
 export const SEMANTIC_TYPE_COLORS: Record<SemanticType, string> = {
-  missing: '#ff453a',
+  missing: '#EF4444',
   conflicting: '#d70015',
-  weaker: '#ff9500',
-  stronger: '#34c759',
+  weaker: '#F59E0B',
+  stronger: '#10B981',
   different_scope: '#5856d6',
 };
 
@@ -233,9 +233,9 @@ export interface BenchmarkResult {
 }
 
 export const BENCHMARK_RATING_COLORS: Record<string, string> = {
-  above: '#34c759',
+  above: '#10B981',
   standard: '#3B82F6',
-  below: '#ff9500',
+  below: '#F59E0B',
   info: '#8e8e93',
 };
 

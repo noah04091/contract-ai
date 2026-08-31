@@ -196,19 +196,19 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
         <div className={styles.reasoningStructured}>
           {reasoning.problem && (
             <div className={styles.reasoningStep}>
-              <span className={styles.reasoningStepIcon} style={{ color: '#FF3B30' }}>Problem</span>
+              <span className={styles.reasoningStepIcon} style={{ color: '#EF4444' }}>Problem</span>
               <span className={styles.reasoningStepText}>{reasoning.problem}</span>
             </div>
           )}
           {reasoning.change && (
             <div className={styles.reasoningStep}>
-              <span className={styles.reasoningStepIcon} style={{ color: '#007AFF' }}>Änderung</span>
+              <span className={styles.reasoningStepIcon} style={{ color: '#3B82F6' }}>Änderung</span>
               <span className={styles.reasoningStepText}>{reasoning.change}</span>
             </div>
           )}
           {reasoning.impact && (
             <div className={styles.reasoningStep}>
-              <span className={styles.reasoningStepIcon} style={{ color: '#34C759' }}>Wirkung</span>
+              <span className={styles.reasoningStepIcon} style={{ color: '#10B981' }}>Wirkung</span>
               <span className={styles.reasoningStepText}>{reasoning.impact}</span>
             </div>
           )}
@@ -220,7 +220,7 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
       {/* Market benchmark */}
       {optimization.marketBenchmark && (
         <div className={styles.benchmarkCard}>
-          <BarChart3 size={13} style={{ color: '#FF9500', flexShrink: 0, marginTop: 1 }} />
+          <BarChart3 size={13} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 1 }} />
           <div>
             <span className={styles.benchmarkLabel}>Marktstandard</span>
             <span className={styles.benchmarkText}>{optimization.marketBenchmark}</span>
@@ -231,7 +231,7 @@ export default function ClauseAlternatives({ clauseId, originalText, optimizatio
       {/* Negotiation advice */}
       {optimization.negotiationAdvice && (
         <div className={styles.adviceCard}>
-          <Lightbulb size={13} style={{ color: '#34C759', flexShrink: 0, marginTop: 1 }} />
+          <Lightbulb size={13} style={{ color: '#10B981', flexShrink: 0, marginTop: 1 }} />
           <div>
             <span className={styles.adviceLabel}>Verhandlungstipp</span>
             <span className={styles.adviceText}>{optimization.negotiationAdvice}</span>

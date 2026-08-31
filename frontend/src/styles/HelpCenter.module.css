@@ -577,7 +577,7 @@
 .stepTips {
   margin-top: 16px;
   padding: 16px 16px 16px 52px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(0, 82, 204, 0.05));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.05));
   border-radius: 12px;
   border-left: 3px solid #3B82F6;
   box-shadow: 0 2px 12px rgba(59, 130, 246, 0.06);

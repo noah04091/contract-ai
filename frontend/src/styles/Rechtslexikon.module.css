@@ -717,7 +717,7 @@
   font-size: 1.05rem;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #0066ff 0%, #2563EB 100%);
   border-radius: var(--lex-r-pill);
   text-decoration: none;
   box-shadow: 0 4px 20px rgba(0, 102, 255, 0.32), 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -726,7 +726,7 @@
 
 .ctaButton:hover {
   transform: translateY(-2px);
-  background: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #003d99 100%);
   box-shadow: 0 8px 28px rgba(0, 102, 255, 0.42), 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 

@@ -330,16 +330,16 @@ export const CATEGORY_LABELS: Record<ClauseCategory, string> = {
 };
 
 export const IMPORTANCE_CONFIG: Record<ImportanceLevel, { label: string; color: string; icon: string }> = {
-  critical: { label: 'Kritisch', color: '#FF3B30', icon: '🔥' },
-  high: { label: 'Wichtig', color: '#FF9500', icon: '⚠️' },
-  medium: { label: 'Standard', color: '#007AFF', icon: 'ℹ️' },
+  critical: { label: 'Kritisch', color: '#EF4444', icon: '🔥' },
+  high: { label: 'Wichtig', color: '#F59E0B', icon: '⚠️' },
+  medium: { label: 'Standard', color: '#3B82F6', icon: 'ℹ️' },
   low: { label: 'Formal', color: '#8E8E93', icon: '·' }
 };
 
 export const STRENGTH_CONFIG: Record<ClauseStrength, { label: string; color: string }> = {
-  strong: { label: 'Stark', color: '#34C759' },
-  adequate: { label: 'Ausreichend', color: '#FF9500' },
-  weak: { label: 'Schwach', color: '#FF3B30' },
+  strong: { label: 'Stark', color: '#10B981' },
+  adequate: { label: 'Ausreichend', color: '#F59E0B' },
+  weak: { label: 'Schwach', color: '#EF4444' },
   critical: { label: 'Kritisch', color: '#AF52DE' }
 };
 
@@ -367,7 +367,7 @@ export const INDUSTRY_LABELS: Record<IndustryType, string> = {
 };
 
 export const MODE_LABELS: Record<OptimizationMode, { label: string; description: string; color: string }> = {
-  neutral: { label: 'Neutral', description: 'Fair für beide Parteien', color: '#007AFF' },
-  proCreator: { label: 'Pro Ersteller', description: 'Schützt den Vertragsersteller', color: '#34C759' },
-  proRecipient: { label: 'Pro Empfänger', description: 'Schützt den Vertragsempfänger', color: '#FF9500' }
+  neutral: { label: 'Neutral', description: 'Fair für beide Parteien', color: '#3B82F6' },
+  proCreator: { label: 'Pro Ersteller', description: 'Schützt den Vertragsersteller', color: '#10B981' },
+  proRecipient: { label: 'Pro Empfänger', description: 'Schützt den Vertragsempfänger', color: '#F59E0B' }
 };

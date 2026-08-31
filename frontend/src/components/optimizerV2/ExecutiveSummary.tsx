@@ -7,9 +7,9 @@ interface Props {
 }
 
 const TRAFFIC_CONFIG = {
-  green: { icon: CheckCircle2, color: '#34C759', bg: '#f0fdf4', border: '#bbf7d0' },
-  yellow: { icon: AlertTriangle, color: '#FF9500', bg: '#fffbeb', border: '#fde68a' },
-  red: { icon: XCircle, color: '#FF3B30', bg: '#fef2f2', border: '#fecaca' }
+  green: { icon: CheckCircle2, color: '#10B981', bg: '#f0fdf4', border: '#bbf7d0' },
+  yellow: { icon: AlertTriangle, color: '#F59E0B', bg: '#fffbeb', border: '#fde68a' },
+  red: { icon: XCircle, color: '#EF4444', bg: '#fef2f2', border: '#fecaca' }
 };
 
 export default function ExecutiveSummary({ summary }: Props) {
@@ -37,14 +37,14 @@ export default function ExecutiveSummary({ summary }: Props) {
       {/* Strengths / Weaknesses / Action */}
       <div className={styles.execBullets}>
         <div className={styles.execBullet}>
-          <ThumbsUp size={14} style={{ color: '#34C759', flexShrink: 0, marginTop: 1 }} />
+          <ThumbsUp size={14} style={{ color: '#10B981', flexShrink: 0, marginTop: 1 }} />
           <span className={styles.execBulletText}>
             <strong>Stärken:</strong> {summary.strengths}
           </span>
         </div>
         {summary.weaknesses && summary.weaknesses !== 'Keine wesentlichen Schwächen erkannt.' && (
           <div className={styles.execBullet}>
-            <AlertOctagon size={14} style={{ color: '#FF9500', flexShrink: 0, marginTop: 1 }} />
+            <AlertOctagon size={14} style={{ color: '#F59E0B', flexShrink: 0, marginTop: 1 }} />
             <span className={styles.execBulletText}>
               <strong>Schwächen:</strong> {summary.weaknesses}
             </span>

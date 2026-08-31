@@ -119,14 +119,14 @@
 }
 
 .success {
-  background: rgba(52, 199, 89, 0.15);
-  border: 1px solid rgba(52, 199, 89, 0.3);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   color: var(--success-green);
 }
 
 .error {
-  background: rgba(255, 69, 58, 0.15);
-  border: 1px solid rgba(255, 69, 58, 0.3);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   color: var(--error-red);
 }
 
@@ -387,8 +387,8 @@
   --apple-gray-400: #6e6e73;
   --apple-gray-500: #86868b;
   --apple-gray-800: #1d1d1f;
-  --success-green: #34c759;
-  --error-red: #ff453a;
+  --success-green: #10B981;
+  --error-red: #EF4444;
 
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: #f8fafc; /* Same as Legal Lens */
@@ -914,8 +914,8 @@
   align-items: flex-start;
   gap: 12px;
   padding: 14px 1.75rem;
-  background: rgba(255, 149, 0, 0.08);
-  border-bottom: 1px solid rgba(255, 149, 0, 0.2);
+  background: rgba(245, 158, 11, 0.08);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
   color: #cc7700;
 }
 
@@ -1053,11 +1053,11 @@
 .compatibilityBanner p { margin: 0; font-size: 0.87rem; line-height: 1.55; }
 .compatibilityBanner small { display: block; margin-top: 6px; font-size: 0.8rem; opacity: 0.85; }
 .compatibilityPartial {
-  background: rgba(255, 149, 0, 0.08);
-  border-color: rgba(255, 149, 0, 0.3);
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.3);
   color: #8a4b00;
 }
-.compatibilityPartial svg { color: #ff9500; }
+.compatibilityPartial svg { color: #F59E0B; }
 .compatibilityMeta {
   background: rgba(215, 0, 21, 0.07);
   border-color: rgba(215, 0, 21, 0.3);
@@ -1075,7 +1075,7 @@
   transition: all 0.2s ease;
 }
 
-.scoreCardRecommended { border-color: rgba(52, 199, 89, 0.4); background: rgba(52, 199, 89, 0.03); }
+.scoreCardRecommended { border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.03); }
 
 .scoreCardHeader { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; }
 .scoreCardHeader h4 { font-size: 1rem; font-weight: 600; margin: 0; color: #1d1d1f; }
@@ -1117,8 +1117,8 @@
   gap: 4px;
   padding: 4px 10px;
   border-radius: 6px;
-  background: rgba(52, 199, 89, 0.12);
-  color: #34c759;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
   font-size: 0.75rem;
   font-weight: 600;
 }
@@ -1148,9 +1148,9 @@
   margin-bottom: 1rem;
 }
 
-.riskBadge[data-level="low"] { background: rgba(52, 199, 89, 0.1); color: #34c759; }
-.riskBadge[data-level="medium"] { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
-.riskBadge[data-level="high"] { background: rgba(255, 69, 58, 0.1); color: #ff453a; }
+.riskBadge[data-level="low"] { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+.riskBadge[data-level="medium"] { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.riskBadge[data-level="high"] { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
 
 .categoryScores { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
 .categoryScoreRow { display: flex; align-items: center; gap: 8px; }
@@ -1161,15 +1161,15 @@
 
 .swSection { display: flex; flex-direction: column; gap: 0.75rem; }
 .strengthsList h5, .weaknessesList h5 { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; margin: 0 0 4px; }
-.strengthsList h5 { color: #34c759; }
-.weaknessesList h5 { color: #ff453a; }
+.strengthsList h5 { color: #10B981; }
+.weaknessesList h5 { color: #EF4444; }
 .strengthsList ul, .weaknessesList ul { margin: 0; padding-left: 1.2rem; list-style: disc; }
 .strengthsList li, .weaknessesList li { font-size: 0.82rem; color: #1d1d1f; line-height: 1.5; margin-bottom: 2px; }
 
 .quickStats { display: flex; gap: 1rem; justify-content: center; }
 .quickStat { display: flex; flex-direction: column; align-items: center; padding: 1rem 2rem; background: #f5f5f7; border-radius: 12px; min-width: 120px; }
 .quickStatValue { font-size: 1.8rem; font-weight: 700; color: #1d1d1f; line-height: 1; }
-.quickStatCritical { color: #ff453a; }
+.quickStatCritical { color: #EF4444; }
 .quickStatLabel { font-size: 0.78rem; color: #6e6e73; margin-top: 4px; }
 
 /* Benchmark Section */
@@ -1187,7 +1187,7 @@
 .benchmarkCell { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 80px; }
 .benchmarkCellLabel { font-size: 0.7rem; color: #8e8e93; font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
 .benchmarkCellValue { font-size: 0.92rem; font-weight: 600; }
-.benchmarkCellWinner { background: rgba(52, 199, 89, 0.06); border: 1px solid rgba(52, 199, 89, 0.2); border-radius: 8px; padding: 6px 8px; }
+.benchmarkCellWinner { background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; padding: 6px 8px; }
 .benchmarkSource { font-size: 0.68rem; color: #a1a1a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 .benchmarkRating { font-size: 0.68rem; font-weight: 600; padding: 1px 6px; border-radius: 4px; border: 1px solid; white-space: nowrap; }
 
@@ -1207,9 +1207,9 @@
 .benchmarkSummaryFill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
 .benchmarkSummaryCount { font-size: 0.82rem; font-weight: 700; color: #1d1d1f; width: 18px; text-align: right; }
 .benchmarkSummaryText { font-size: 0.8rem; color: #6e6e73; font-weight: 500; }
-.benchmarkSummaryWinner { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(52, 199, 89, 0.06); border: 1px solid rgba(52, 199, 89, 0.2); border-radius: 8px; font-size: 0.82rem; color: #1d1d1f; }
-.benchmarkSummaryWinner svg { color: #34c759; flex-shrink: 0; }
-.benchmarkSummaryWinner strong { color: #34c759; }
+.benchmarkSummaryWinner { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; font-size: 0.82rem; color: #1d1d1f; }
+.benchmarkSummaryWinner svg { color: #10B981; flex-shrink: 0; }
+.benchmarkSummaryWinner strong { color: #10B981; }
 
 /* Benchmark Insight */
 .benchmarkInsight {
@@ -1254,9 +1254,9 @@
 .severityOverview { display: flex; gap: 8px; flex-wrap: wrap; }
 .statBadge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; }
 .statCritical { background: rgba(215, 0, 21, 0.08); color: #d70015; }
-.statHigh { background: rgba(255, 69, 58, 0.08); color: #ff453a; }
-.statMedium { background: rgba(255, 149, 0, 0.08); color: #ff9500; }
-.statLow { background: rgba(52, 199, 89, 0.08); color: #34c759; }
+.statHigh { background: rgba(239, 68, 68, 0.08); color: #EF4444; }
+.statMedium { background: rgba(245, 158, 11, 0.08); color: #F59E0B; }
+.statLow { background: rgba(16, 185, 129, 0.08); color: #10B981; }
 
 .diffToolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .categoryFilter { flex: 1; min-width: 200px; }
@@ -1297,7 +1297,7 @@
 .diffExplanation { font-size: 0.88rem; line-height: 1.65; color: #1d1d1f; margin-bottom: 8px; }
 .diffImpact { display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; background: #f5f5f7; border-radius: 8px; font-size: 0.82rem; color: #6e6e73; margin-bottom: 8px; }
 .diffImpact svg { flex-shrink: 0; margin-top: 2px; }
-.diffFinancial { padding: 6px 12px; background: rgba(255, 149, 0, 0.06); border-radius: 6px; font-size: 0.8rem; color: #ff9500; font-weight: 500; margin-bottom: 8px; }
+.diffFinancial { padding: 6px 12px; background: rgba(245, 158, 11, 0.06); border-radius: 6px; font-size: 0.8rem; color: #F59E0B; font-weight: 500; margin-bottom: 8px; }
 .diffMarketContext { display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: rgba(59, 130, 246, 0.06); border-radius: 6px; font-size: 0.8rem; color: #3B82F6; font-weight: 500; margin-bottom: 8px; border: 1px solid rgba(59, 130, 246, 0.12); }
 
 .showQuotesBtn { display: flex; align-items: center; gap: 6px; padding: 6px 0; border: none; background: transparent; color: #0071e3; font-size: 0.82rem; font-weight: 500; cursor: pointer; font-family: inherit; }
@@ -1308,8 +1308,8 @@
 .sideBySideContent { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0; margin-top: 8px; }
 .contractColumn { padding: 12px; border-radius: 8px; background: #f9f9fb; border: 1px solid #e8e8ed; }
 .contractColumn h5 { font-size: 0.8rem; font-weight: 600; color: #6e6e73; margin: 0 0 6px; display: flex; align-items: center; gap: 6px; }
-.columnRecommended { border-color: rgba(52, 199, 89, 0.3); background: rgba(52, 199, 89, 0.04); }
-.recBadge { color: #34c759; font-weight: 700; }
+.columnRecommended { border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.04); }
+.recBadge { color: #10B981; font-weight: 700; }
 .contractText { font-size: 0.84rem; line-height: 1.55; color: #1d1d1f; }
 
 .vsDivider { display: flex; align-items: center; justify-content: center; width: 32px; margin: 12px 4px; border-radius: 4px; }
@@ -1318,8 +1318,8 @@
 .stackedQuotes { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .quoteBlock { padding: 10px 14px; background: #f9f9fb; border-radius: 8px; font-size: 0.84rem; line-height: 1.5; color: #1d1d1f; border: 1px solid #e8e8ed; }
 
-.diffRemoved { background: rgba(255, 69, 58, 0.15); text-decoration: line-through; text-decoration-color: rgba(255, 69, 58, 0.5); border-radius: 2px; padding: 0 1px; }
-.diffAdded { background: rgba(52, 199, 89, 0.15); border-radius: 2px; padding: 0 1px; }
+.diffRemoved { background: rgba(239, 68, 68, 0.15); text-decoration: line-through; text-decoration-color: rgba(239, 68, 68, 0.5); border-radius: 2px; padding: 0 1px; }
+.diffAdded { background: rgba(16, 185, 129, 0.15); border-radius: 2px; padding: 0 1px; }
 
 .diffRecommendation { display: flex; align-items: flex-start; gap: 8px; padding: 10px 14px; background: rgba(0, 113, 227, 0.04); border: 1px solid rgba(0, 113, 227, 0.1); border-radius: 8px; margin-top: 8px; font-size: 0.84rem; color: #1d1d1f; }
 .diffRecommendation svg { flex-shrink: 0; color: #0071e3; margin-top: 2px; }
@@ -1355,12 +1355,12 @@
 .contractBadge { padding: 3px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 500; background: #f5f5f7; color: #6e6e73; }
 .contractBadge[data-contract="1"] { background: rgba(0, 113, 227, 0.08); color: #0071e3; }
 .contractBadge[data-contract="2"] { background: rgba(88, 86, 214, 0.08); color: #5856d6; }
-.contractBadge[data-contract="both"] { background: rgba(255, 149, 0, 0.08); color: #ff9500; }
+.contractBadge[data-contract="both"] { background: rgba(245, 158, 11, 0.08); color: #F59E0B; }
 
 .riskCardContent { overflow: hidden; padding-top: 10px; }
 .riskDescription { font-size: 0.86rem; line-height: 1.6; color: #1d1d1f; margin: 0 0 8px; }
 .riskLegalBasis { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: #6e6e73; margin-bottom: 4px; }
-.riskFinancial { font-size: 0.82rem; color: #ff9500; font-weight: 500; }
+.riskFinancial { font-size: 0.82rem; color: #F59E0B; font-weight: 500; }
 
 /* ============================================
    RECOMMENDATIONS TAB
@@ -1378,16 +1378,16 @@
 
 .recComparison { display: flex; align-items: stretch; gap: 0; }
 .recCurrentBox, .recSuggestedBox { flex: 1; padding: 12px 14px; border-radius: 8px; font-size: 0.84rem; line-height: 1.55; }
-.recCurrentBox { background: rgba(255, 69, 58, 0.04); border: 1px solid rgba(255, 69, 58, 0.15); }
-.recSuggestedBox { background: rgba(52, 199, 89, 0.04); border: 1px solid rgba(52, 199, 89, 0.15); position: relative; }
+.recCurrentBox { background: rgba(239, 68, 68, 0.04); border: 1px solid rgba(239, 68, 68, 0.15); }
+.recSuggestedBox { background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.15); position: relative; }
 .recBoxLabel { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; opacity: 0.7; }
-.recCurrentBox .recBoxLabel { color: #ff453a; }
-.recSuggestedBox .recBoxLabel { color: #34c759; }
+.recCurrentBox .recBoxLabel { color: #EF4444; }
+.recSuggestedBox .recBoxLabel { color: #10B981; }
 .recCurrentBox p, .recSuggestedBox p { margin: 0; color: #1d1d1f; }
 .recArrow { display: flex; align-items: center; padding: 0 8px; color: #86868b; }
 
-.copyButton { display: flex; align-items: center; gap: 5px; margin-top: 10px; padding: 5px 12px; border: 1px solid rgba(52, 199, 89, 0.3); border-radius: 6px; background: rgba(52, 199, 89, 0.08); color: #34c759; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; font-family: inherit; }
-.copyButton:hover { background: rgba(52, 199, 89, 0.15); }
+.copyButton { display: flex; align-items: center; gap: 5px; margin-top: 10px; padding: 5px 12px; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; background: rgba(16, 185, 129, 0.08); color: #10B981; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all 0.15s ease; font-family: inherit; }
+.copyButton:hover { background: rgba(16, 185, 129, 0.15); }
 
 /* ============================================
    V2 RESPONSIVE
@@ -1447,9 +1447,9 @@
   display: inline-block;
 }
 
-.mapDotSame { background: #34c759; }
-.mapDotDiff { background: #ff9500; }
-.mapDotMissing { background: #ff453a; }
+.mapDotSame { background: #10B981; }
+.mapDotDiff { background: #F59E0B; }
+.mapDotMissing { background: #EF4444; }
 
 .mapExtractionHint {
   display: flex;
@@ -1514,10 +1514,10 @@
 
 .mapRow:hover { background: #fafafa; }
 
-.mapRow_same { border-left-color: #34c759; }
-.mapRow_different { border-left-color: #ff9500; background: rgba(255, 149, 0, 0.02); }
-.mapRow_only1 { border-left-color: #ff453a; background: rgba(255, 69, 58, 0.02); }
-.mapRow_only2 { border-left-color: #ff453a; background: rgba(255, 69, 58, 0.02); }
+.mapRow_same { border-left-color: #10B981; }
+.mapRow_different { border-left-color: #F59E0B; background: rgba(245, 158, 11, 0.02); }
+.mapRow_only1 { border-left-color: #EF4444; background: rgba(239, 68, 68, 0.02); }
+.mapRow_only2 { border-left-color: #EF4444; background: rgba(239, 68, 68, 0.02); }
 
 /* Area label cell */
 .mapRowArea {
@@ -1527,9 +1527,9 @@
   min-width: 0;
 }
 
-.mapIconSame { color: #34c759; flex-shrink: 0; }
-.mapIconDiff { color: #ff9500; flex-shrink: 0; }
-.mapIconMissing { color: #ff453a; flex-shrink: 0; }
+.mapIconSame { color: #10B981; flex-shrink: 0; }
+.mapIconDiff { color: #F59E0B; flex-shrink: 0; }
+.mapIconMissing { color: #EF4444; flex-shrink: 0; }
 
 .mapRowLabel {
   font-size: 0.88rem;
@@ -1550,9 +1550,9 @@
 }
 
 .mapSev_critical { background: rgba(215, 0, 21, 0.1); color: #d70015; }
-.mapSev_high { background: rgba(255, 69, 58, 0.1); color: #ff453a; }
-.mapSev_medium { background: rgba(255, 149, 0, 0.1); color: #ff9500; }
-.mapSev_low { background: rgba(52, 199, 89, 0.1); color: #34c759; }
+.mapSev_high { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+.mapSev_medium { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+.mapSev_low { background: rgba(16, 185, 129, 0.1); color: #10B981; }
 
 /* Contract cell */
 .mapRowCell {
@@ -1793,9 +1793,9 @@
 }
 
 .followUpClearBtn:hover {
-  border-color: #ff453a;
-  color: #ff453a;
-  background: rgba(255, 69, 58, 0.04);
+  border-color: #EF4444;
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.04);
 }
 
 .followUpChat {

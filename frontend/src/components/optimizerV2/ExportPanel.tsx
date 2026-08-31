@@ -498,7 +498,7 @@ Viele Grüße`;
         </div>
         {optimizedCount === 0 && (
           <p className={styles.exportEmptyHint} style={{ margin: '8px 4px 0', fontSize: '0.8rem', color: '#8E8E93', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Check size={14} style={{ color: '#34C759', flex: 'none' }} />
+            <Check size={14} style={{ color: '#10B981', flex: 'none' }} />
             Dieser Vertrag ist bereits optimal — es gibt keine Optimierungen und damit keinen optimierten Vertrag zu erstellen. Der Analysebericht oben lässt sich weiterhin herunterladen.
           </p>
         )}

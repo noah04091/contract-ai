@@ -71,7 +71,7 @@
 .contractIcon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #007AFF, #5856D6);
+  background: linear-gradient(135deg, #3B82F6, #5856D6);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -104,7 +104,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: linear-gradient(135deg, #FF9500, #FF6B35);
+  background: linear-gradient(135deg, #F59E0B, #FF6B35);
   color: white;
   font-size: 0.75rem;
   font-weight: 500;
@@ -139,18 +139,18 @@
 }
 
 .deleteBtn:hover {
-  background: rgba(255, 69, 58, 0.1);
-  color: #ff453a;
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
 }
 
 /* 🎨 Signature Details Button - Blue highlight for signature info */
 .signatureDetailsBtn {
-  background: rgba(0, 122, 255, 0.1);
-  color: #007aff;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
 }
 
 .signatureDetailsBtn:hover {
-  background: rgba(0, 122, 255, 0.2);
+  background: rgba(59, 130, 246, 0.2);
   color: #0051d5;
 }
 
@@ -195,18 +195,18 @@
 }
 
 .statusActive {
-  background: rgba(52, 199, 89, 0.1);
-  color: #34c759;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
 }
 
 .statusWarning {
-  background: rgba(255, 149, 0, 0.1);
-  color: #ff9500;
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
 }
 
 .statusCancelled {
-  background: rgba(255, 69, 58, 0.1);
-  color: #ff453a;
+  background: rgba(239, 68, 68, 0.1);
+  color: #EF4444;
 }
 
 .statusNeutral {
@@ -215,11 +215,11 @@
 }
 
 .statusIconActive {
-  color: #34c759;
+  color: #10B981;
 }
 
 .statusIconWarning {
-  color: #ff9500;
+  color: #F59E0B;
 }
 
 .statusIconNeutral {
@@ -273,12 +273,12 @@
 }
 
 .activeTab {
-  color: #007AFF;
-  border-bottom-color: #007AFF;
+  color: #3B82F6;
+  border-bottom-color: #3B82F6;
 }
 
 .comingSoon {
-  background: #ff9500;
+  background: #F59E0B;
   color: white;
   font-size: 0.65rem;
   padding: 2px 6px;
@@ -351,16 +351,16 @@
   display: flex;
   gap: 1rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, rgba(255, 149, 0, 0.05), rgba(255, 107, 53, 0.05));
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(255, 107, 53, 0.05));
   border-radius: 16px;
-  border: 1px solid rgba(255, 149, 0, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .aiNotice h4 {
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 0.5rem;
-  color: #ff9500;
+  color: #F59E0B;
 }
 
 .aiNotice p {
@@ -439,7 +439,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: #007AFF;
+  background: #3B82F6;
   color: white;
   border: none;
   border-radius: 10px;
@@ -561,9 +561,9 @@
   display: flex;
   gap: 2rem;
   padding: 1rem;
-  background: rgba(0, 122, 255, 0.05);
+  background: rgba(59, 130, 246, 0.05);
   border-radius: 10px;
-  border: 1px solid rgba(0, 122, 255, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.1);
   flex-wrap: wrap;
 }
 
@@ -581,7 +581,7 @@
 
 .statValue {
   font-size: 0.9rem;
-  color: #007AFF;
+  color: #3B82F6;
   font-weight: 600;
 }
 
@@ -627,7 +627,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: #007AFF;
+  background: #3B82F6;
   color: white;
   border: none;
   border-radius: 10px;
@@ -1279,8 +1279,8 @@
     font-weight: 700;
     border-radius: 16px;
     padding: 1rem 2rem;
-    background: linear-gradient(135deg, #007AFF, #0056b3);
-    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+    background: linear-gradient(135deg, #3B82F6, #0056b3);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   }
   
   .analyzeBtn:active {
@@ -1488,8 +1488,8 @@
   gap: 3px;
   font-size: 10px;
   font-weight: 600;
-  color: #ff9500;
-  background: rgba(255, 149, 0, 0.1);
+  color: #F59E0B;
+  background: rgba(245, 158, 11, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
   margin-left: 6px;
@@ -1569,7 +1569,7 @@
 }
 
 .mobileMenuDeleteBtn {
-  color: #ff3b30 !important;
+  color: #EF4444 !important;
 }
 
 /* Mobile Tabs - Segmented Control */
@@ -1608,7 +1608,7 @@
 }
 
 .mobileTabActive {
-  background: #007AFF;
+  background: #3B82F6;
   color: white;
 }
 
@@ -1650,7 +1650,7 @@
 }
 
 .mobileCardHeader svg {
-  color: #007AFF;
+  color: #3B82F6;
 }
 
 .mobileCardHeader h3 {
@@ -1779,7 +1779,7 @@
 }
 
 .mobileActionPrimary {
-  background: linear-gradient(135deg, #007AFF, #0056b3);
+  background: linear-gradient(135deg, #3B82F6, #0056b3);
   border: none;
   color: white;
 }
@@ -1805,20 +1805,20 @@
   display: flex;
   gap: 12px;
   padding: 16px;
-  background: linear-gradient(135deg, rgba(255, 149, 0, 0.08), rgba(255, 107, 53, 0.08));
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(255, 107, 53, 0.08));
   border-radius: 16px;
-  border: 1px solid rgba(255, 149, 0, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .mobileAiNotice svg {
-  color: #ff9500;
+  color: #F59E0B;
   flex-shrink: 0;
 }
 
 .mobileAiNotice h4 {
   font-size: 14px;
   font-weight: 600;
-  color: #ff9500;
+  color: #F59E0B;
   margin: 0 0 4px;
 }
 
@@ -1897,7 +1897,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #e5e7eb;
-  border-top-color: #007AFF;
+  border-top-color: #3B82F6;
   border-radius: 50%;
   animation: mobileSpin 1s linear infinite;
   margin: 0 auto 16px;
@@ -1945,7 +1945,7 @@
   align-items: center;
   justify-content: center;
   padding: 12px 24px;
-  background: #007AFF;
+  background: #3B82F6;
   color: white;
   border: none;
   border-radius: 12px;
@@ -2126,7 +2126,7 @@
 }
 
 .mobileAccordionTitle svg {
-  color: #007AFF;
+  color: #3B82F6;
 }
 
 .mobileAccordionTitle span {
@@ -2181,7 +2181,7 @@
   justify-content: center;
   gap: 8px;
   padding: 16px;
-  background: linear-gradient(135deg, #007AFF, #0056b3);
+  background: linear-gradient(135deg, #3B82F6, #0056b3);
   color: white;
   border: none;
   border-radius: 14px;
@@ -2274,7 +2274,7 @@
   justify-content: center;
   gap: 10px;
   padding: 16px 32px;
-  background: linear-gradient(135deg, #007AFF, #0056b3);
+  background: linear-gradient(135deg, #3B82F6, #0056b3);
   color: white;
   border: none;
   border-radius: 14px;

@@ -15,18 +15,18 @@
   left: 0;
   width: 100%;
   height: 4px;
-  background: rgba(0, 122, 255, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   z-index: 9999;
 }
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #007aff, #0052cc, #007aff);
+  background: linear-gradient(90deg, #3B82F6, #2563EB, #3B82F6);
   background-size: 200% 100%;
   animation: progressShimmer 3s ease infinite;
   transition: width 0.1s ease-out;
   border-radius: 0 2px 2px 0;
-  box-shadow: 0 0 8px rgba(0, 122, 255, 0.4);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
 }
 
 @keyframes progressShimmer {
@@ -44,7 +44,7 @@
 /* Article Hero */
 .articleHero {
   padding: 80px 0 60px;
-  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   position: relative;
   overflow: hidden;
@@ -200,15 +200,15 @@
 /* Highlight Box Styles (for content) */
 .content :global(.highlight-box) {
   background: #e6f3ff;
-  border-left: 4px solid #007aff;
+  border-left: 4px solid #3B82F6;
   padding: 24px 28px;
   margin: 32px 0;
   border-radius: 0 12px 12px 0;
-  box-shadow: 0 2px 12px rgba(0, 122, 255, 0.08);
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.08);
 }
 
 .content :global(.highlight-box) h4 {
-  color: #0052cc;
+  color: #2563EB;
   margin-bottom: 12px;
   font-weight: 600;
   margin-top: 0;
@@ -216,7 +216,7 @@
 
 .content :global(.highlight-box) p {
   margin-bottom: 0;
-  color: #0052cc;
+  color: #2563EB;
 }
 
 /* Tip Box */
@@ -303,10 +303,10 @@
 }
 
 .shareButton:hover {
-  border-color: #007aff;
-  color: #007aff;
+  border-color: #3B82F6;
+  color: #3B82F6;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 .shareButton.twitter:hover {
@@ -335,7 +335,7 @@
   display: flex;
   gap: 24px;
   align-items: flex-start;
-  border: 1px solid rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.08);
   position: relative;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
@@ -348,7 +348,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #007aff, #0052cc, #007aff);
+  background: linear-gradient(90deg, #3B82F6, #2563EB, #3B82F6);
   background-size: 200% 100%;
   animation: authorAccent 4s ease infinite;
 }
@@ -363,7 +363,7 @@
   width: 80px;
   height: 80px;
   border-radius: 20px;
-  background: linear-gradient(135deg, #007aff, #0052cc);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -371,7 +371,7 @@
   font-size: 32px;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
 }
 
 .authorInfo {
@@ -382,7 +382,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #007aff;
+  color: #3B82F6;
   font-weight: 600;
   margin-bottom: 4px;
 }
@@ -421,8 +421,8 @@
 }
 
 .authorSocialLink:hover {
-  background: #007aff;
-  border-color: #007aff;
+  background: #3B82F6;
+  border-color: #3B82F6;
   color: white;
 }
 
@@ -455,7 +455,7 @@
   transform: translateX(-50%);
   width: 60px;
   height: 3px;
-  background: linear-gradient(90deg, #007aff, #0052cc);
+  background: linear-gradient(90deg, #3B82F6, #2563EB);
   border-radius: 2px;
 }
 
@@ -474,7 +474,7 @@
   background: white;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   overflow: hidden;
@@ -490,7 +490,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #007aff, #0052cc, #007aff);
+  background: linear-gradient(90deg, #3B82F6, #2563EB, #3B82F6);
   z-index: 1;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -502,8 +502,8 @@
 
 .relatedCard:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 50px rgba(0, 122, 255, 0.15);
-  border-color: rgba(0, 122, 255, 0.2);
+  box-shadow: 0 20px 50px rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .relatedCardImage {
@@ -568,7 +568,7 @@
 }
 
 .relatedLink {
-  color: #007aff;
+  color: #3B82F6;
   font-weight: 600;
   font-size: 14px;
   transition: all 0.2s ease;
@@ -578,7 +578,7 @@
 }
 
 .relatedCard:hover .relatedLink {
-  color: #0052cc;
+  color: #2563EB;
 }
 
 .relatedCard:hover .relatedLink svg {
@@ -591,7 +591,7 @@
 
 /* CTA Section */
 .ctaSection {
-  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   padding: 100px 0;
   text-align: center;
@@ -632,7 +632,7 @@
 .ctaButton {
   display: inline-block;
   background: white;
-  color: #007aff;
+  color: #3B82F6;
   padding: 18px 40px;
   border-radius: 14px;
   border: none;
@@ -873,12 +873,12 @@
 /* Focus styles for accessibility */
 .backButton:focus,
 .ctaButton:focus {
-  outline: 2px solid #007aff;
+  outline: 2px solid #3B82F6;
   outline-offset: 2px;
 }
 
 .relatedCard:focus {
-  outline: 2px solid #007aff;
+  outline: 2px solid #3B82F6;
   outline-offset: 4px;
 }
 

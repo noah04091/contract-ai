@@ -174,7 +174,7 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
       <div className={styles.differencesList}>
         {filteredDifferences.length === 0 && selectedArea === 'all' && (
           <div style={{ textAlign: 'center', padding: '3rem 2rem', color: '#6b7280' }}>
-            <CheckCircle size={40} style={{ color: '#34c759', marginBottom: '1rem' }} />
+            <CheckCircle size={40} style={{ color: '#10B981', marginBottom: '1rem' }} />
             <h3 style={{ margin: '0 0 0.5rem', color: '#1d1d1f', fontWeight: 600 }}>Keine Unterschiede gefunden</h3>
             <p style={{ margin: 0, fontSize: '0.95rem' }}>
               Die Dokumente scheinen inhaltlich identisch zu sein oder weisen keine relevanten Abweichungen auf.
@@ -394,9 +394,9 @@ function SideBySideQuotes({
 function getSeverityColor(severity: string): string {
   switch (severity) {
     case 'critical': return '#d70015';
-    case 'high': return '#ff453a';
-    case 'medium': return '#ff9500';
-    case 'low': return '#34c759';
+    case 'high': return '#EF4444';
+    case 'medium': return '#F59E0B';
+    case 'low': return '#10B981';
     default: return '#6e6e73';
   }
 }

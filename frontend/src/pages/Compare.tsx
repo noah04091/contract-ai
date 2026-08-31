@@ -50,16 +50,16 @@ const ComparisonModeSelector: React.FC<{
       name: 'Best Practice',
       icon: FileCheck,
       description: 'Standards prüfen',
-      color: '#34c759',
-      gradient: 'linear-gradient(135deg, #34c759 0%, #30d158 100%)'
+      color: '#10B981',
+      gradient: 'linear-gradient(135deg, #10B981 0%, #10B981 100%)'
     },
     {
       id: 'competition',
       name: 'Anbieter',
       icon: Trophy,
       description: 'Angebote vergleichen',
-      color: '#ff9500',
-      gradient: 'linear-gradient(135deg, #ff9500 0%, #ff6b00 100%)'
+      color: '#F59E0B',
+      gradient: 'linear-gradient(135deg, #F59E0B 0%, #ff6b00 100%)'
     }
   ];
 
@@ -1029,8 +1029,8 @@ export default function EnhancedCompare() {
                         alignItems: 'center',
                         gap: '0.4rem',
                         padding: '0.4rem 0.8rem',
-                        background: 'rgba(255, 69, 58, 0.1)',
-                        color: '#ff453a',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#EF4444',
                         border: 'none',
                         borderRadius: '6px',
                         cursor: 'pointer',
@@ -1140,8 +1140,8 @@ export default function EnhancedCompare() {
                             gap: '0.3rem',
                             padding: '0.3rem 0.6rem',
                             borderRadius: '6px',
-                            background: item.recommended === 1 ? 'rgba(52, 199, 89, 0.1)' : 'rgba(88, 86, 214, 0.1)',
-                            color: item.recommended === 1 ? '#34c759' : '#5856d6',
+                            background: item.recommended === 1 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(88, 86, 214, 0.1)',
+                            color: item.recommended === 1 ? '#10B981' : '#5856d6',
                             fontSize: '0.8rem',
                             fontWeight: 500
                           }}>
@@ -1161,7 +1161,7 @@ export default function EnhancedCompare() {
                               width: '28px',
                               height: '28px',
                               background: 'transparent',
-                              color: '#ff453a',
+                              color: '#EF4444',
                               border: 'none',
                               borderRadius: '6px',
                               cursor: 'pointer',
@@ -1642,9 +1642,9 @@ export default function EnhancedCompare() {
                   minWidth: '300px',
                   maxWidth: '90%',
                   boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                  backgroundColor: notification.type === 'success' ? 'rgba(52, 199, 89, 0.15)' : 'rgba(255, 69, 58, 0.15)',
-                  border: `1px solid ${notification.type === 'success' ? 'rgba(52, 199, 89, 0.3)' : 'rgba(255, 69, 58, 0.3)'}`,
-                  color: notification.type === 'success' ? '#34c759' : '#ff453a'
+                  backgroundColor: notification.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  border: `1px solid ${notification.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                  color: notification.type === 'success' ? '#10B981' : '#EF4444'
                 }}
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1948,8 +1948,8 @@ export default function EnhancedCompare() {
 
           .premium-upload-card.has-file {
             border-style: solid;
-            border-color: #34c759;
-            background: linear-gradient(180deg, rgba(52, 199, 89, 0.03) 0%, rgba(52, 199, 89, 0.08) 100%);
+            border-color: #10B981;
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.03) 0%, rgba(16, 185, 129, 0.08) 100%);
           }
 
           .premium-upload-card.disabled {
@@ -2081,8 +2081,8 @@ export default function EnhancedCompare() {
           }
 
           .file-icon-wrapper.success {
-            background: linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(48, 209, 88, 0.15) 100%);
-            color: #34c759;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.15) 100%);
+            color: #10B981;
           }
 
           .file-icon-wrapper.alt {
@@ -2097,12 +2097,12 @@ export default function EnhancedCompare() {
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background: #34c759;
+            background: #10B981;
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 2px 8px rgba(52, 199, 89, 0.4);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
           }
 
           .file-info {
@@ -2136,9 +2136,9 @@ export default function EnhancedCompare() {
             width: 28px;
             height: 28px;
             border-radius: 8px;
-            background: rgba(255, 69, 58, 0.1);
+            background: rgba(239, 68, 68, 0.1);
             border: none;
-            color: #ff453a;
+            color: #EF4444;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -2147,7 +2147,7 @@ export default function EnhancedCompare() {
           }
 
           .remove-file:hover {
-            background: #ff453a;
+            background: #EF4444;
             color: white;
           }
 
@@ -2166,7 +2166,7 @@ export default function EnhancedCompare() {
             align-items: center;
             gap: 0.4rem;
             padding: 0.5rem 1rem;
-            background: linear-gradient(135deg, #f7b500 0%, #ff9500 100%);
+            background: linear-gradient(135deg, #f7b500 0%, #F59E0B 100%);
             color: white;
             font-size: 0.85rem;
             font-weight: 600;
@@ -2338,8 +2338,8 @@ export default function EnhancedCompare() {
           }
 
           .contract-score.recommended {
-            border-color: #34c759;
-            background: rgba(52, 199, 89, 0.02);
+            border-color: #10B981;
+            background: rgba(16, 185, 129, 0.02);
           }
 
           .score-header {
@@ -2360,7 +2360,7 @@ export default function EnhancedCompare() {
             display: flex;
             align-items: center;
             gap: 0.3rem;
-            background: #34c759;
+            background: #10B981;
             color: white;
             padding: 0.3rem 0.8rem;
             border-radius: 20px;
@@ -2414,18 +2414,18 @@ export default function EnhancedCompare() {
           }
 
           .risk-low {
-            background: rgba(52, 199, 89, 0.1);
-            color: #34c759;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10B981;
           }
 
           .risk-medium {
-            background: rgba(255, 149, 0, 0.1);
-            color: #ff9500;
+            background: rgba(245, 158, 11, 0.1);
+            color: #F59E0B;
           }
 
           .risk-high {
-            background: rgba(255, 69, 58, 0.1);
-            color: #ff453a;
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
           }
 
           .analysis-details {
@@ -2502,18 +2502,18 @@ export default function EnhancedCompare() {
           }
 
           .stat-high {
-            background: rgba(255, 69, 58, 0.1);
-            color: #ff453a;
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
           }
 
           .stat-medium {
-            background: rgba(255, 149, 0, 0.1);
-            color: #ff9500;
+            background: rgba(245, 158, 11, 0.1);
+            color: #F59E0B;
           }
 
           .stat-low {
-            background: rgba(52, 199, 89, 0.1);
-            color: #34c759;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10B981;
           }
 
           .difference-header {
@@ -2634,7 +2634,7 @@ export default function EnhancedCompare() {
           }
 
           .diff-removed {
-            background-color: rgba(255, 69, 58, 0.2);
+            background-color: rgba(239, 68, 68, 0.2);
             color: #d70015;
             text-decoration: line-through;
             border-radius: 2px;
@@ -2642,7 +2642,7 @@ export default function EnhancedCompare() {
           }
 
           .diff-added {
-            background-color: rgba(52, 199, 89, 0.2);
+            background-color: rgba(16, 185, 129, 0.2);
             color: #248a3d;
             font-weight: 500;
             border-radius: 2px;
@@ -2676,7 +2676,7 @@ export default function EnhancedCompare() {
           }
 
           .difference-item.severity-high {
-            background: rgba(255, 69, 58, 0.02);
+            background: rgba(239, 68, 68, 0.02);
           }
 
           .difference-header-item {
@@ -2738,8 +2738,8 @@ export default function EnhancedCompare() {
           }
 
           .contract-column.recommended {
-            border-color: #34c759;
-            background: rgba(52, 199, 89, 0.05);
+            border-color: #10B981;
+            background: rgba(16, 185, 129, 0.05);
           }
 
           .contract-column.not-recommended {
@@ -2763,7 +2763,7 @@ export default function EnhancedCompare() {
             justify-content: center;
             width: 18px;
             height: 18px;
-            background: #34c759;
+            background: #10B981;
             color: white;
             border-radius: 50%;
             font-size: 0.7rem;
@@ -2987,8 +2987,8 @@ export default function EnhancedCompare() {
           }
 
           .pdf-tab-close:hover {
-            color: #ff453a;
-            background: rgba(255, 69, 58, 0.05);
+            color: #EF4444;
+            background: rgba(239, 68, 68, 0.05);
           }
 
           .pdf-preview-viewer {

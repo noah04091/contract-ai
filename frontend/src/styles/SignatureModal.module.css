@@ -118,14 +118,14 @@
 }
 
 .radioOption:hover {
-  border-color: #007aff;
-  background: rgba(0, 122, 255, 0.02);
+  border-color: #3B82F6;
+  background: rgba(59, 130, 246, 0.02);
 }
 
 .radioOption:has(.radio:checked) {
-  border-color: #007aff;
-  background: rgba(0, 122, 255, 0.05);
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  border-color: #3B82F6;
+  background: rgba(59, 130, 246, 0.05);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .radio {
@@ -134,7 +134,7 @@
   margin-top: 2px;
   cursor: pointer;
   flex-shrink: 0;
-  accent-color: #007aff;
+  accent-color: #3B82F6;
 }
 
 .radioLabel {
@@ -189,12 +189,12 @@
 
 .dropdown:focus {
   outline: none;
-  border-color: #007aff;
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .dropdown:hover {
-  border-color: #007aff;
+  border-color: #3B82F6;
 }
 
 /* Add Signer Form */
@@ -237,8 +237,8 @@
 
 .input:focus {
   outline: none;
-  border-color: #007aff;
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .input::placeholder {
@@ -247,7 +247,7 @@
 
 .addBtn {
   padding: 0.75rem 1.25rem;
-  background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #0051d5 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -265,7 +265,7 @@
 .addBtn:hover:not(:disabled) {
   background: linear-gradient(135deg, #0051d5 0%, #003d9e 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .addBtn:disabled {
@@ -307,7 +307,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #0051d5 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -341,12 +341,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ff3b30;
+  color: #EF4444;
   transition: all 0.2s ease;
 }
 
 .removeBtn:hover {
-  background: rgba(255, 59, 48, 0.1);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* Textarea */
@@ -363,8 +363,8 @@
 
 .textarea:focus {
   outline: none;
-  border-color: #007aff;
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .textarea::placeholder {
@@ -400,7 +400,7 @@
 
 .sendBtn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #34c759 0%, #28a745 100%);
+  background: linear-gradient(135deg, #10B981 0%, #28a745 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -416,7 +416,7 @@
 .sendBtn:hover:not(:disabled) {
   background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .sendBtn:disabled {

@@ -1,6 +1,6 @@
 /* Apple-Inspired Minimalist Navbar Design */
 :root {
-  --apple-blue: #007AFF;
+  --apple-blue: #3B82F6;
   --apple-blue-hover: #0056CC;
   --apple-gray-1: #1d1d1f;
   --apple-gray-2: #424245;
@@ -334,7 +334,7 @@
 
 .navLink:hover {
   color: var(--apple-blue);
-  border-bottom-color: rgba(0, 122, 255, 0.3);
+  border-bottom-color: rgba(59, 130, 246, 0.3);
 }
 
 .navLink:hover .navLinkIcon {
@@ -452,7 +452,7 @@
 }
 
 .megaMenuFeature:hover {
-  background: rgba(0, 122, 255, 0.06);
+  background: rgba(59, 130, 246, 0.06);
 }
 
 .megaMenuFeatureIcon {
@@ -462,13 +462,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(59, 130, 246, 0.08);
   border-radius: 10px;
   flex-shrink: 0;
 }
 
 .megaMenuFeature:hover .megaMenuFeatureIcon {
-  background: rgba(0, 122, 255, 0.12);
+  background: rgba(59, 130, 246, 0.12);
   transform: scale(1.05);
 }
 
@@ -518,7 +518,7 @@
 }
 
 .megaMenuFooterLink:hover {
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .megaMenuFooterLink svg {
@@ -553,8 +553,8 @@
   display: flex;
   align-items: center;
   padding: 4px 8px;
-  background: rgba(0, 122, 255, 0.08);
-  border: 1px solid rgba(0, 122, 255, 0.15);
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   border-radius: 16px;
   font-weight: 500;
   font-size: 12px;
@@ -564,7 +564,7 @@
 }
 
 .premiumIndicator:hover {
-  background: rgba(0, 122, 255, 0.12);
+  background: rgba(59, 130, 246, 0.12);
 }
 
 .premiumIcon {
@@ -627,14 +627,14 @@
   font-weight: 500;
   transition: all 0.2s ease;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: -0.01em;
 }
 
 .registerButtonMobile:hover {
   background: var(--apple-blue-hover);
-  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.25);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
   transform: translateY(-0.5px);
 }
 
@@ -717,12 +717,12 @@
   justify-content: center;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: -0.01em;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.2);
 }
 
 .registerButton:hover {
   background: var(--apple-blue-hover);
-  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.25);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
   transform: translateY(-0.5px);
 }
 
@@ -833,14 +833,14 @@
 }
 
 .dropdownItem:hover {
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(59, 130, 246, 0.08);
   color: var(--apple-blue);
   transform: translateY(-0.5px);
 }
 
 .dropdownItem:active {
   transform: translateY(0);
-  background: rgba(0, 122, 255, 0.12);
+  background: rgba(59, 130, 246, 0.12);
 }
 
 .dropdownItem:first-child {
@@ -881,7 +881,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #007AFF, #5856D6);
+  background: linear-gradient(135deg, #3B82F6, #5856D6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -932,7 +932,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #007AFF, #5856D6);
+  background: linear-gradient(135deg, #3B82F6, #5856D6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -974,7 +974,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #007AFF, #5856D6);
+  background: linear-gradient(135deg, #3B82F6, #5856D6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1048,15 +1048,15 @@
 }
 
 .dropdownItemDanger {
-  color: #FF3B30;
+  color: #EF4444;
 }
 
 .dropdownItemDanger:hover {
-  background: rgba(255, 59, 48, 0.08);
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .dropdownItemDanger svg {
-  color: #FF3B30;
+  color: #EF4444;
 }
 
 .hamburger {
@@ -1149,7 +1149,7 @@
 }
 
 .activeMobileNavLink {
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(59, 130, 246, 0.08);
   color: var(--apple-blue);
   font-weight: 500;
 }
@@ -1424,14 +1424,14 @@
 .sidebarUserAvatar {
   width: 36px;
   height: 36px;
-  background: rgba(0, 122, 255, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 12px;
   color: var(--apple-blue);
-  border: 1px solid rgba(0, 122, 255, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
 .sidebarUserDetails {
@@ -1971,7 +1971,7 @@
 }
 
 .mobileNavLinkWithArrow:hover {
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(59, 130, 246, 0.08);
 }
 
 /* Regular Nav Link Item */
@@ -1985,7 +1985,7 @@
 }
 
 .mobileNavLinkItem:hover {
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .mobileNavLinkIcon {
@@ -2038,7 +2038,7 @@
 }
 
 .mobileNavFeature:hover {
-  background: rgba(0, 122, 255, 0.06);
+  background: rgba(59, 130, 246, 0.06);
 }
 
 .mobileNavFeatureIcon {
@@ -2127,13 +2127,13 @@
   font-weight: 600;
   text-decoration: none;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 .mobileNavRegisterBtn:hover {
   background: var(--apple-blue-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 /* Responsive adjustments for very small screens */

@@ -4,10 +4,10 @@
    ═══════════════════════════════════════════════════════ */
 
 :root {
-  --ov2-blue: #007AFF;
-  --ov2-green: #34C759;
-  --ov2-red: #FF3B30;
-  --ov2-orange: #FF9500;
+  --ov2-blue: #3B82F6;
+  --ov2-green: #10B981;
+  --ov2-red: #EF4444;
+  --ov2-orange: #F59E0B;
   --ov2-purple: #AF52DE;
   --ov2-gray-50: #F9FAFB;
   --ov2-gray-100: #F3F4F6;
@@ -67,7 +67,7 @@
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  background: #007AFF;
+  background: #3B82F6;
   color: #fff;
   cursor: pointer;
   transition: opacity 0.15s;
@@ -173,7 +173,7 @@
   font-size: 11px;
   font-weight: 500;
   color: var(--ov2-blue);
-  background: rgba(0,122,255,0.08);
+  background: rgba(59, 130, 246,0.08);
   padding: 2px 8px;
   border-radius: 10px;
   margin-left: 8px;
@@ -253,7 +253,7 @@
   width: 72px;
   height: 72px;
   margin: 0 auto 24px;
-  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #5856D6 100%);
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -277,7 +277,7 @@
 }
 
 .uploadHeroGradient {
-  background: linear-gradient(135deg, #007AFF 0%, #AF52DE 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #AF52DE 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -444,7 +444,7 @@
   height: 72px;
   margin-bottom: 12px;
   border-radius: 20px;
-  background: linear-gradient(135deg, #34C759 0%, #30D158 100%);
+  background: linear-gradient(135deg, #10B981 0%, #10B981 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -499,7 +499,7 @@
 .analyzeButton {
   width: 100%;
   padding: 16px 28px;
-  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #5856D6 100%);
   color: white;
   border: none;
   border-radius: 14px;
@@ -507,7 +507,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
   letter-spacing: -0.2px;
   display: flex;
   align-items: center;
@@ -516,7 +516,7 @@
 }
 .analyzeButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.4);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
 }
 .analyzeButton:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -696,9 +696,9 @@
   background: var(--ov2-gray-50);
   transition: all 0.2s;
 }
-.stage_running { background: rgba(0,122,255,0.06); }
+.stage_running { background: rgba(59, 130, 246,0.06); }
 .stage_completed { opacity: 0.7; }
-.stage_error { background: rgba(255,59,48,0.06); }
+.stage_error { background: rgba(239, 68, 68,0.06); }
 
 .stageIcon {
   width: 24px;
@@ -724,8 +724,8 @@
 .pipelineFunFact {
   margin-top: 28px;
   padding: 16px 18px;
-  background: linear-gradient(135deg, rgba(0,122,255,0.04), rgba(88,86,214,0.04));
-  border: 1px solid rgba(0,122,255,0.1);
+  background: linear-gradient(135deg, rgba(59, 130, 246,0.04), rgba(88,86,214,0.04));
+  border: 1px solid rgba(59, 130, 246,0.1);
   border-radius: var(--ov2-radius-xs);
 }
 .funFactHeader {
@@ -846,7 +846,7 @@
   box-sizing: border-box;
 }
 .overallScore:hover {
-  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 .overallScoreNumber { font-size: 28px; font-weight: 700; line-height: 1; }
 .overallScoreMax { font-size: 13px; color: var(--ov2-gray-400); line-height: 1; }
@@ -947,8 +947,8 @@
   align-items: flex-start;
   gap: 10px;
   padding: 12px 16px;
-  background: rgba(255, 59, 48, 0.08);
-  border: 1px solid rgba(255, 59, 48, 0.25);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 10px;
   color: var(--ov2-gray-900, #1a1a2e);
   font-size: 13px;
@@ -990,8 +990,8 @@
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: rgba(255,149,0,0.06);
-  border: 1px solid rgba(255,149,0,0.2);
+  background: rgba(245, 158, 11,0.06);
+  border: 1px solid rgba(245, 158, 11,0.2);
   border-radius: var(--ov2-radius-sm);
   font-size: 13px;
   color: var(--ov2-gray-700);
@@ -1036,7 +1036,7 @@
 /* Generate Clause Button */
 .generateClauseBtn {
   display: flex; align-items: center; gap: 5px; padding: 4px 10px;
-  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #5856D6 100%);
   color: white; border: none; border-radius: 4px; font-size: 11px; font-weight: 600;
   cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: opacity 0.15s, transform 0.1s;
   font-family: var(--ov2-font);
@@ -1099,7 +1099,7 @@
 .generateClauseBtnDone {
   color: var(--ov2-blue);
   border-color: var(--ov2-blue);
-  background: rgba(0,122,255,0.05);
+  background: rgba(59, 130, 246,0.05);
 }
 
 /* Why Important Section in Modal */
@@ -1107,7 +1107,7 @@
   display: flex; gap: 10px; padding: 12px 20px; margin: 0;
   background: #FFF8F0; border-top: 1px solid #FFE4C4;
 }
-.whyImportantTitle { display: block; font-size: 12px; font-weight: 600; color: #FF9500; margin-bottom: 3px; }
+.whyImportantTitle { display: block; font-size: 12px; font-weight: 600; color: #F59E0B; margin-bottom: 3px; }
 .whyImportantText { display: block; font-size: 12px; color: var(--ov2-gray-700); line-height: 1.5; }
 
 /* ── AI Contract Strategy Panel ── */
@@ -1234,7 +1234,7 @@
 .sortToggleActive {
   border-color: var(--ov2-blue);
   color: var(--ov2-blue);
-  background: rgba(0,122,255,0.04);
+  background: rgba(59, 130, 246,0.04);
 }
 
 /* ── Clause List ── */
@@ -1334,7 +1334,7 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--ov2-blue);
-  background: rgba(0,122,255,0.08);
+  background: rgba(59, 130, 246,0.08);
   padding: 2px 8px;
   border-radius: 4px;
   white-space: nowrap;
@@ -1370,7 +1370,7 @@
   gap: 4px;
   font-size: 11px;
   font-weight: 600;
-  color: #34C759;
+  color: #10B981;
   background: #f0fdf4;
   border: 1px solid #bbf7d0;
   border-radius: 6px;
@@ -1409,7 +1409,7 @@
   font-size: 12px;
   font-weight: 500;
   color: var(--ov2-orange);
-  background: rgba(255,149,0,0.08);
+  background: rgba(245, 158, 11,0.08);
   padding: 4px 10px;
   border-radius: 4px;
 }
@@ -1582,8 +1582,8 @@
   white-space: pre-wrap;
 }
 .comparisonTextOptimized {
-  border-color: rgba(0,122,255,0.25);
-  background: rgba(0,122,255,0.02);
+  border-color: rgba(59, 130, 246,0.25);
+  background: rgba(59, 130, 246,0.02);
 }
 .comparisonArrow {
   display: flex;
@@ -1610,9 +1610,9 @@
   gap: 6px;
   margin: 10px 0;
   padding: 10px 12px;
-  background: rgba(0,122,255,0.03);
+  background: rgba(59, 130, 246,0.03);
   border-radius: var(--ov2-radius-xs);
-  border: 1px solid rgba(0,122,255,0.08);
+  border: 1px solid rgba(59, 130, 246,0.08);
 }
 .reasoningStep {
   display: flex;
@@ -1640,7 +1640,7 @@
   margin: 8px 0;
   padding: 8px 12px;
   border-left: 3px solid var(--ov2-blue);
-  background: rgba(0,122,255,0.03);
+  background: rgba(59, 130, 246,0.03);
 }
 
 /* ── Benchmark & Advice Cards ── */
@@ -1648,8 +1648,8 @@
   display: flex;
   gap: 10px;
   padding: 10px 12px;
-  background: rgba(255,149,0,0.04);
-  border: 1px solid rgba(255,149,0,0.12);
+  background: rgba(245, 158, 11,0.04);
+  border: 1px solid rgba(245, 158, 11,0.12);
   border-radius: var(--ov2-radius-xs);
   margin: 8px 0;
 }
@@ -1659,7 +1659,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: #FF9500;
+  color: #F59E0B;
   margin-bottom: 2px;
 }
 .benchmarkText {
@@ -1673,8 +1673,8 @@
   display: flex;
   gap: 10px;
   padding: 10px 12px;
-  background: rgba(52,199,89,0.04);
-  border: 1px solid rgba(52,199,89,0.12);
+  background: rgba(16, 185, 129,0.04);
+  border: 1px solid rgba(16, 185, 129,0.12);
   border-radius: var(--ov2-radius-xs);
   margin: 8px 0;
 }
@@ -1684,7 +1684,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: #34C759;
+  color: #10B981;
   margin-bottom: 2px;
 }
 .adviceText {
@@ -1774,14 +1774,14 @@
   font-size: 13px;
 }
 .diffRemove {
-  background: rgba(255,59,48,0.12);
+  background: rgba(239, 68, 68,0.12);
   color: #CC2D25;
   text-decoration: line-through;
   padding: 1px 2px;
   border-radius: 2px;
 }
 .diffAdd {
-  background: rgba(52,199,89,0.15);
+  background: rgba(16, 185, 129,0.15);
   color: #1B8A3E;
   padding: 1px 2px;
   border-radius: 2px;
@@ -2137,7 +2137,7 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--ov2-blue);
-  background: rgba(0,122,255,0.07);
+  background: rgba(59, 130, 246,0.07);
   padding: 2px 8px;
   border-radius: 4px;
   letter-spacing: 0.01em;
@@ -2242,7 +2242,7 @@
 }
 .rlToggleBtn:hover {
   color: var(--ov2-blue);
-  background: rgba(0,122,255,0.06);
+  background: rgba(59, 130, 246,0.06);
 }
 
 /* Header actions */
@@ -2354,13 +2354,13 @@
   animation: rlFocusPulse 1.2s ease-out;
 }
 @keyframes rlFocusPulse {
-  0% { background-color: rgba(0, 122, 255, 0.12); }
+  0% { background-color: rgba(59, 130, 246, 0.12); }
   100% { background-color: transparent; }
 }
 
 /* Selected row (side panel) */
 .rlRowSelected {
-  background: rgba(0,122,255,0.04) !important;
+  background: rgba(59, 130, 246,0.04) !important;
 }
 
 /* Feature 5: Mode transition */
@@ -2513,7 +2513,7 @@
   transition: all 0.12s;
 }
 .rlPanelDetailBtn:hover {
-  background: rgba(0,122,255,0.04);
+  background: rgba(59, 130, 246,0.04);
   border-color: var(--ov2-blue);
 }
 
@@ -2853,7 +2853,7 @@
 /* ── DOCX Selection Panel ── */
 .exportOptionExpanded {
   border-color: var(--ov2-blue) !important;
-  background: rgba(0, 122, 255, 0.02);
+  background: rgba(59, 130, 246, 0.02);
 }
 
 .docxSelection {
@@ -2917,7 +2917,7 @@
   color: var(--ov2-gray-700);
 }
 .docxModeBtnActive {
-  background: rgba(0, 122, 255, 0.04);
+  background: rgba(59, 130, 246, 0.04);
   border-color: var(--ov2-blue);
   color: var(--ov2-blue);
 }
@@ -2941,7 +2941,7 @@
   font-family: var(--ov2-font);
 }
 .docxSelectAllBtn:hover {
-  background: rgba(0, 122, 255, 0.04);
+  background: rgba(59, 130, 246, 0.04);
   border-color: var(--ov2-blue);
 }
 .docxCount {
@@ -2979,12 +2979,12 @@
   background: var(--ov2-gray-50);
 }
 .docxClauseItemSelected {
-  border-color: rgba(0, 122, 255, 0.25);
-  background: rgba(0, 122, 255, 0.03);
+  border-color: rgba(59, 130, 246, 0.25);
+  background: rgba(59, 130, 246, 0.03);
 }
 .docxClauseItemSelected:hover {
-  border-color: rgba(0, 122, 255, 0.35);
-  background: rgba(0, 122, 255, 0.05);
+  border-color: rgba(59, 130, 246, 0.35);
+  background: rgba(59, 130, 246, 0.05);
 }
 
 .docxCheckbox {
@@ -3017,7 +3017,7 @@
   font-size: 11px;
   font-weight: 700;
   color: var(--ov2-blue);
-  background: rgba(0, 122, 255, 0.08);
+  background: rgba(59, 130, 246, 0.08);
   padding: 1px 5px;
   border-radius: 4px;
   flex-shrink: 0;
@@ -3063,18 +3063,18 @@
   padding: 12px 20px;
   border: none;
   border-radius: var(--ov2-radius-sm);
-  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #5856D6 100%);
   color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
   font-family: var(--ov2-font);
 }
 .docxGenerateBtn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.35);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
 }
 .docxGenerateBtn:disabled {
   opacity: 0.5;
@@ -3314,7 +3314,7 @@
   transition: border-color 0.15s;
 }
 .cmpSelect:hover { border-color: var(--ov2-gray-300); }
-.cmpSelect:focus { outline: none; border-color: var(--ov2-blue); box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1); }
+.cmpSelect:focus { outline: none; border-color: var(--ov2-blue); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 /* ── Compare Info Cards ── */
 .cmpInfoCards {
   display: flex;
@@ -3412,8 +3412,8 @@
   gap: 4px;
   color: var(--ov2-gray-400);
 }
-.cmpDeltaPositive { color: #34C759; display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; }
-.cmpDeltaNegative { color: #FF3B30; display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; }
+.cmpDeltaPositive { color: #10B981; display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; }
+.cmpDeltaNegative { color: #EF4444; display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 600; }
 .cmpDeltaNeutral { color: var(--ov2-gray-400); display: flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 500; }
 .cmpSubScores {
   display: flex;

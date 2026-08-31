@@ -191,10 +191,10 @@ export default function BatchAnalysisResults({ uploadFiles, onReset }: BatchAnal
 
 // Helper functions
 function getScoreColor(score: number): string {
-  if (score >= 80) return "#34C759";
-  if (score >= 60) return "#FF9500";
+  if (score >= 80) return "#10B981";
+  if (score >= 60) return "#F59E0B";
   if (score >= 40) return "#FF6B35";
-  return "#FF3B30";
+  return "#EF4444";
 }
 
 function getScoreLabel(score: number): string {
@@ -205,8 +205,8 @@ function getScoreLabel(score: number): string {
 }
 
 function getScoreIcon(score: number) {
-  if (score >= 80) return <Award size={16} style={{ color: '#34C759' }} />;
-  if (score >= 60) return <Target size={16} style={{ color: '#FF9500' }} />;
+  if (score >= 80) return <Award size={16} style={{ color: '#10B981' }} />;
+  if (score >= 60) return <Target size={16} style={{ color: '#F59E0B' }} />;
   if (score >= 40) return <AlertTriangle size={16} style={{ color: '#FF6B35' }} />;
-  return <AlertCircle size={16} style={{ color: '#FF3B30' }} />;
+  return <AlertCircle size={16} style={{ color: '#EF4444' }} />;
 }

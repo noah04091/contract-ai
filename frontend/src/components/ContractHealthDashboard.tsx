@@ -17,9 +17,9 @@ const ContractHealthDashboard: React.FC<ContractHealthDashboardProps> = ({
   newScore 
 }) => {
   const scoreColor = (s: number) => {
-    if (s >= 90) return '#34c759';
-    if (s >= 70) return '#ff9500';
-    if (s >= 50) return '#ff453a';
+    if (s >= 90) return '#10B981';
+    if (s >= 70) return '#F59E0B';
+    if (s >= 50) return '#EF4444';
     return '#d70015';
   };
 

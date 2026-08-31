@@ -268,10 +268,10 @@ export default function ContractDetailsView({
   };
 
   const getScoreColor = (score: number): string => {
-    if (score >= 80) return "#34c759";
-    if (score >= 60) return "#ff9500";
+    if (score >= 80) return "#10B981";
+    if (score >= 60) return "#F59E0B";
     if (score >= 40) return "#ff6b35";
-    return "#ff3b30";
+    return "#EF4444";
   };
 
   const getScoreLabel = (score: number): string => {
@@ -282,10 +282,10 @@ export default function ContractDetailsView({
   };
 
   const getRiskLevel = (score: number): { label: string; color: string } => {
-    if (score >= 80) return { label: "Niedriges Risiko", color: "#34c759" };
-    if (score >= 60) return { label: "Moderates Risiko", color: "#ff9500" };
+    if (score >= 80) return { label: "Niedriges Risiko", color: "#10B981" };
+    if (score >= 60) return { label: "Moderates Risiko", color: "#F59E0B" };
     if (score >= 40) return { label: "Erhöhtes Risiko", color: "#ff6b35" };
-    return { label: "Hohes Risiko", color: "#ff3b30" };
+    return { label: "Hohes Risiko", color: "#EF4444" };
   };
 
   // Desktop PDF view (new tab)
@@ -309,7 +309,7 @@ export default function ContractDetailsView({
               <title>Lade ${fixUtf8Display(contract.name)}...</title>
               <style>
                 body { font-family: -apple-system, system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f7; }
-                .spinner { width: 40px; height: 40px; border: 3px solid #e5e5e5; border-top: 3px solid #007aff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+                .spinner { width: 40px; height: 40px; border: 3px solid #e5e5e5; border-top: 3px solid #3B82F6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
                 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
               </style>
             </head>
@@ -1262,12 +1262,12 @@ export default function ContractDetailsView({
                       <div style={{ textAlign: 'center', padding: '1rem' }}>
                         <button
                           className={styles.viewContractButton}
-                          style={{ background: 'rgba(255, 149, 0, 0.1)', border: '1px solid rgba(255, 149, 0, 0.3)', color: '#ff9500' }}
+                          style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)', color: '#F59E0B' }}
                           onClick={handleViewContract}
                         >
                           Legacy-Vertrag (Info anzeigen)
                         </button>
-                        <p style={{ fontSize: '0.875rem', color: '#ff9500', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                        <p style={{ fontSize: '0.875rem', color: '#F59E0B', marginTop: '0.5rem', fontStyle: 'italic' }}>
                           Dieser Vertrag muss erneut hochgeladen werden.
                         </p>
                       </div>

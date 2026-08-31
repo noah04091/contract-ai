@@ -585,10 +585,10 @@ function BenchmarkBar({
 
   const getColor = (pos: number) => {
     if (direction === 'lower_better') {
-      return pos < typicalPos ? '#34c759' : pos > typicalPos + 10 ? '#ff453a' : '#ff9500';
+      return pos < typicalPos ? '#10B981' : pos > typicalPos + 10 ? '#EF4444' : '#F59E0B';
     }
     if (direction === 'higher_better') {
-      return pos > typicalPos ? '#34c759' : pos < typicalPos - 10 ? '#ff453a' : '#ff9500';
+      return pos > typicalPos ? '#10B981' : pos < typicalPos - 10 ? '#EF4444' : '#F59E0B';
     }
     return '#8e8e93';
   };
@@ -657,7 +657,7 @@ function BenchmarkSummary({ metrics, docName = 'Vertrag' }: { metrics: Benchmark
               className={styles.benchmarkSummaryFill}
               style={{
                 width: `${total > 0 ? (v1Wins / total) * 100 : 0}%`,
-                background: v1Wins >= v2Wins ? '#34c759' : '#e8e8ed',
+                background: v1Wins >= v2Wins ? '#10B981' : '#e8e8ed',
               }}
             />
           </div>
@@ -670,7 +670,7 @@ function BenchmarkSummary({ metrics, docName = 'Vertrag' }: { metrics: Benchmark
               className={styles.benchmarkSummaryFill}
               style={{
                 width: `${total > 0 ? (v2Wins / total) * 100 : 0}%`,
-                background: v2Wins >= v1Wins ? '#34c759' : '#e8e8ed',
+                background: v2Wins >= v1Wins ? '#10B981' : '#e8e8ed',
               }}
             />
           </div>
@@ -736,7 +736,7 @@ function BenchmarkValueCell({
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 75) return '#34c759';
-  if (score >= 50) return '#ff9500';
-  return '#ff453a';
+  if (score >= 75) return '#10B981';
+  if (score >= 50) return '#F59E0B';
+  return '#EF4444';
 }

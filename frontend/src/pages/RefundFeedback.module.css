@@ -98,7 +98,7 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%);
+  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -159,7 +159,7 @@
   height: 60px;
   margin: 0 auto 1.25rem;
   border-radius: 16px;
-  background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%);
+  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -247,7 +247,7 @@
 }
 
 .required {
-  color: #ff3b30;
+  color: #EF4444;
   margin-left: 0.25rem;
   font-size: 0.85rem;
 }
@@ -321,7 +321,7 @@
 .checkboxItemActive {
   border-color: #0066FF;
   background: rgba(0, 102, 255, 0.06);
-  color: #0052CC;
+  color: #2563EB;
   font-weight: 500;
 }
 
@@ -379,7 +379,7 @@
 .radioItemActive {
   border-color: #0066FF;
   background: rgba(0, 102, 255, 0.06);
-  color: #0052CC;
+  color: #2563EB;
   font-weight: 500;
 }
 
@@ -521,9 +521,9 @@
 }
 
 .npsButtonDetractor {
-  border-color: #ff3b30;
-  background: rgba(255, 59, 48, 0.06);
-  color: #ff3b30;
+  border-color: #EF4444;
+  background: rgba(239, 68, 68, 0.06);
+  color: #EF4444;
 }
 
 .npsButtonPassive {
@@ -576,13 +576,13 @@
 
 .importantNoteText {
   font-size: 0.88rem;
-  color: #0052CC;
+  color: #2563EB;
   line-height: 1.55;
 }
 
 /* Submit Button */
 .submitButton {
-  background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%);
+  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
   color: white;
   border: none;
   font-family: inherit;
@@ -680,7 +680,7 @@
 }
 
 .successHomeLink:hover {
-  color: #0052CC;
+  color: #2563EB;
 }
 
 /* Loading / Error */
@@ -761,11 +761,11 @@
 
 /* Inline Error */
 .errorMessage {
-  background: rgba(255, 59, 48, 0.06);
-  border: 1px solid rgba(255, 59, 48, 0.2);
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 12px;
   padding: 0.75rem 1rem;
-  color: #ff3b30;
+  color: #EF4444;
   font-size: 0.88rem;
   text-align: center;
 }

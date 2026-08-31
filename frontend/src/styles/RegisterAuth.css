@@ -21,9 +21,9 @@
   --ca-gray-8: #F2F2F7;
   --ca-border: rgba(0,0,0,0.08);
   --ca-border-strong: rgba(0,0,0,0.12);
-  --ca-success: #34C759;
-  --ca-warning: #FF9500;
-  --ca-danger: #FF3B30;
+  --ca-success: #10B981;
+  --ca-warning: #F59E0B;
+  --ca-danger: #EF4444;
   --ca-bg-grad: linear-gradient(180deg,#f0f4ff 0%,#fafbff 50%,#f8fafc 100%);
   --radius-sm: 8px;
 
@@ -92,8 +92,8 @@
 /* Notification */
 .ca-reg-noti { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; margin-bottom: 18px; font-size: 14px; line-height: 1.4; border: 1px solid; }
 .ca-reg-noti.info { background: var(--ca-blue-soft); border-color: var(--ca-blue-soft-2); color: var(--ca-blue); }
-.ca-reg-noti.success { background: rgba(52,199,89,0.1); border-color: rgba(52,199,89,0.3); color: #1f8a4c; }
-.ca-reg-noti.error { background: rgba(255,59,48,0.08); border-color: rgba(255,59,48,0.3); color: #c81d13; }
+.ca-reg-noti.success { background: rgba(16, 185, 129,0.1); border-color: rgba(16, 185, 129,0.3); color: #1f8a4c; }
+.ca-reg-noti.error { background: rgba(239, 68, 68,0.08); border-color: rgba(239, 68, 68,0.3); color: #c81d13; }
 .ca-reg-noti-ico { flex-shrink: 0; font-weight: 700; }
 .ca-reg-noti-text { flex: 1; }
 /* Wege aus einer Meldung heraus (26.08.2026). Unterstrichen, damit sie auch dort als
@@ -124,7 +124,7 @@
 .ca-reg-input::placeholder { color: var(--ca-gray-5); opacity: 1; }
 .ca-reg-input:focus { border-color: var(--ca-blue); box-shadow: 0 0 0 3px var(--ca-blue-soft); }
 .ca-reg-input.error { border-color: var(--ca-danger); }
-.ca-reg-input.error:focus { box-shadow: 0 0 0 3px rgba(255,59,48,0.1); }
+.ca-reg-input.error:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68,0.1); }
 .ca-reg-field-error { font-size: 12.5px; color: var(--ca-danger); margin: 0; }
 
 .ca-reg-email-wrap { position: relative; }
@@ -148,7 +148,7 @@
 .ca-reg-terms a { color: var(--ca-blue); text-decoration: none; font-weight: 500; }
 .ca-reg-terms a:hover { text-decoration: underline; }
 
-.ca-reg-submit { margin-top: 4px; width: 100%; height: 54px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 980px; background: var(--ca-blue); color: #fff; font-family: inherit; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; box-shadow: 0 1px 3px rgba(0,122,255,0.25); transition: transform 0.15s, background 0.2s, box-shadow 0.2s; }
+.ca-reg-submit { margin-top: 4px; width: 100%; height: 54px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: 980px; background: var(--ca-blue); color: #fff; font-family: inherit; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; box-shadow: 0 1px 3px rgba(59, 130, 246,0.25); transition: transform 0.15s, background 0.2s, box-shadow 0.2s; }
 .ca-reg-submit:hover:not(:disabled) { background: var(--ca-blue-hover); transform: translateY(-1px); box-shadow: 0 6px 16px -4px rgba(21,104,221,0.45); }
 .ca-reg-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 .ca-reg-spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; display: inline-block; animation: caRegSpin 0.7s linear infinite; }

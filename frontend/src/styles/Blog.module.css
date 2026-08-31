@@ -24,7 +24,7 @@
 .hero {
   text-align: center;
   padding: 80px 0 60px;
-  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   position: relative;
   overflow: hidden;
@@ -132,7 +132,7 @@
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 24px;
   overflow: hidden;
-  border: 1px solid rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.08);
   transition: all 0.3s ease;
   cursor: pointer;
   text-decoration: none;
@@ -140,7 +140,7 @@
 }
 
 .featuredArticle:hover {
-  box-shadow: 0 24px 80px rgba(0, 122, 255, 0.18);
+  box-shadow: 0 24px 80px rgba(59, 130, 246, 0.18);
   transform: translateY(-4px);
 }
 
@@ -157,7 +157,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.05) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -181,7 +181,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, #007aff, #0052cc);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   color: white;
   padding: 6px 14px;
   border-radius: 50px;
@@ -226,7 +226,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: #007aff;
+  background: #3B82F6;
   color: white;
   padding: 14px 28px;
   border-radius: 12px;
@@ -238,7 +238,7 @@
 }
 
 .featuredCta:hover {
-  background: #0052cc;
+  background: #2563EB;
   transform: translateX(4px);
 }
 
@@ -282,11 +282,11 @@
 
 .filterButton:hover,
 .filterButton.active {
-  background: #007aff;
+  background: #3B82F6;
   color: white;
-  border-color: #007aff;
+  border-color: #3B82F6;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .searchBar {
@@ -308,9 +308,9 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: #007aff;
+  border-color: #3B82F6;
   background: white;
-  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.15);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
 .searchIcon {
@@ -357,7 +357,7 @@
 }
 
 .sectionTitleAccent {
-  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #0066FF 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -379,7 +379,7 @@
   transform: translateX(-50%);
   width: 60px;
   height: 3px;
-  background: linear-gradient(90deg, #007aff, #0052cc);
+  background: linear-gradient(90deg, #3B82F6, #2563EB);
   border-radius: 2px;
 }
 
@@ -395,7 +395,7 @@
   border-radius: 20px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   display: flex;
@@ -412,7 +412,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #007aff, #0052cc, #007aff);
+  background: linear-gradient(90deg, #3B82F6, #2563EB, #3B82F6);
   z-index: 1;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -424,8 +424,8 @@
 
 .articleCard:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 50px rgba(0, 122, 255, 0.15);
-  border-color: rgba(0, 122, 255, 0.2);
+  box-shadow: 0 20px 50px rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .articleImage {
@@ -476,7 +476,7 @@
 
 .articleCategory {
   background: #e6f3ff;
-  color: #0052cc;
+  color: #2563EB;
   padding: 4px 12px;
   border-radius: 12px;
   font-weight: 500;
@@ -513,7 +513,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #007aff;
+  color: #3B82F6;
   font-weight: 600;
   font-size: 14px;
   transition: all 0.2s ease;
@@ -521,7 +521,7 @@
 }
 
 .articleCard:hover .articleCta {
-  color: #0052cc;
+  color: #2563EB;
 }
 
 .articleCard:hover .articleCta svg,
@@ -555,7 +555,7 @@
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 122, 255, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   border-radius: 24px;
   padding: 48px;
   margin: 48px 0;
@@ -565,7 +565,7 @@
   gap: 32px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 122, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.08);
 }
 
 .newsletterBanner::before {
@@ -575,7 +575,7 @@
   right: -40px;
   width: 160px;
   height: 160px;
-  background: radial-gradient(circle, rgba(0, 122, 255, 0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -587,7 +587,7 @@
   left: -30px;
   width: 120px;
   height: 120px;
-  background: radial-gradient(circle, rgba(0, 82, 204, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.1) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -599,14 +599,14 @@
 .newsletterIcon {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #007aff, #0052cc);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
 }
 
 .newsletterTitle {
@@ -640,13 +640,13 @@
 
 .newsletterInput:focus {
   outline: none;
-  border-color: #007aff;
-  box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 .newsletterButton {
   padding: 14px 28px;
-  background: linear-gradient(135deg, #007aff, #0052cc);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   color: white;
   border: none;
   border-radius: 12px;
@@ -660,7 +660,7 @@
 
 .newsletterButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
 }
 
 /* Author Badge in Cards */
@@ -677,7 +677,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #007aff, #0052cc);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -698,7 +698,7 @@
 
 /* CTA Section */
 .ctaSection {
-  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   padding: 100px 0;
   text-align: center;
@@ -739,7 +739,7 @@
 .ctaButton {
   display: inline-block;
   background: white;
-  color: #007aff;
+  color: #3B82F6;
   padding: 18px 40px;
   border-radius: 14px;
   border: none;
@@ -1019,12 +1019,12 @@
 .filterButton:focus,
 .searchInput:focus,
 .ctaButton:focus {
-  outline: 2px solid #007aff;
+  outline: 2px solid #3B82F6;
   outline-offset: 2px;
 }
 
 .articleCard:focus {
-  outline: 2px solid #007aff;
+  outline: 2px solid #3B82F6;
   outline-offset: 4px;
 }
 

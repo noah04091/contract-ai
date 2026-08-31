@@ -11,8 +11,8 @@
   --apple-gray-400: #6e6e73;
   --apple-gray-500: #86868b;
   --apple-gray-800: #1d1d1f;
-  --success-green: #34c759;
-  --error-red: #ff453a;
+  --success-green: #10B981;
+  --error-red: #EF4444;
 
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--apple-gray-50);
@@ -218,14 +218,14 @@
 }
 
 .success {
-  background: rgba(52, 199, 89, 0.15);
-  border: 1px solid rgba(52, 199, 89, 0.3);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   color: var(--success-green);
 }
 
 .error {
-  background: rgba(255, 69, 58, 0.15);
-  border: 1px solid rgba(255, 69, 58, 0.3);
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   color: var(--error-red);
 }
 

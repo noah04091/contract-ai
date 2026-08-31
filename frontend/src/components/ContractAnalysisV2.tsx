@@ -601,10 +601,10 @@ export default function ContractAnalysisV2({ file, contractName, contractId: pro
   };
 
   const getScoreColor = (score: number): string => {
-    if (score >= 80) return "#34C759";
-    if (score >= 60) return "#FF9500";
+    if (score >= 80) return "#10B981";
+    if (score >= 60) return "#F59E0B";
     if (score >= 40) return "#FF6B35";
-    return "#FF3B30";
+    return "#EF4444";
   };
 
   const getScoreLabel = (score: number): string => {

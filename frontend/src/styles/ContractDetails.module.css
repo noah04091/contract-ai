@@ -14,7 +14,7 @@
   --apple-text-secondary: #515154;
   --apple-success: #32d74b;
   --apple-warning: #ff9f0a;
-  --apple-danger: #ff453a;
+  --apple-danger: #EF4444;
   --apple-glass-bg: rgba(255, 255, 255, 0.8);
   --apple-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
   --apple-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
@@ -22,8 +22,8 @@
   --apple-transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   
   /* Legal Pulse Colors */
-  --risk-high: #ff453a;
-  --risk-high-bg: rgba(255, 69, 58, 0.1);
+  --risk-high: #EF4444;
+  --risk-high-bg: rgba(239, 68, 68, 0.1);
   --risk-medium: #ff9f0a;
   --risk-medium-bg: rgba(255, 159, 10, 0.1);
   --risk-low: #32d74b;
@@ -145,7 +145,7 @@
 }
 
 .statusCancelled {
-  background-color: rgba(255, 69, 58, 0.1);
+  background-color: rgba(239, 68, 68, 0.1);
   color: var(--apple-danger);
 }
 
@@ -269,7 +269,7 @@
 .riskHigh {
   background: var(--risk-high);
   color: white;
-  box-shadow: 0 4px 12px rgba(255, 69, 58, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .riskMedium {
@@ -588,9 +588,9 @@ input:checked + .slider:before {
 }
 
 .dangerButton:hover {
-  background: #ff3b30;
+  background: #EF4444;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 69, 58, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
 .actionButtons {

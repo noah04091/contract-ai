@@ -3,9 +3,9 @@
   --primary-dark: #0058b1;
   --primary-light: #4da3ff;
   --secondary-color: #86868b;
-  --success-color: #34c759;
+  --success-color: #10B981;
   --warning-color: #ff9f0a;
-  --error-color: #ff3b30;
+  --error-color: #EF4444;
   --text-primary: #1d1d1f;
   --text-secondary: #515154;
   --text-tertiary: #86868b;
@@ -21,7 +21,7 @@
   --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.08), 0 24px 48px rgba(0, 0, 0, 0.1);
   /* Farbige Schatten für Akzente */
   --shadow-primary: 0 4px 14px rgba(0, 113, 227, 0.2);
-  --shadow-success: 0 4px 14px rgba(52, 199, 89, 0.2);
+  --shadow-success: 0 4px 14px rgba(16, 185, 129, 0.2);
   --shadow-warning: 0 4px 14px rgba(255, 159, 10, 0.2);
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -413,7 +413,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: rgba(255, 59, 48, 0.1);
+  background-color: rgba(239, 68, 68, 0.1);
   border: 1px solid var(--error-color);
   border-radius: var(--radius-md);
   padding: 1rem;

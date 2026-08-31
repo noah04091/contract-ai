@@ -86,7 +86,7 @@ export default function Cancel() {
         background: '#f5f5f7'
       }}>
         <div style={{ textAlign: 'center' }}>
-          <Loader2 className="animate-spin" size={48} style={{ color: '#007aff' }} />
+          <Loader2 className="animate-spin" size={48} style={{ color: '#3B82F6' }} />
           <p style={{ marginTop: '16px', color: '#86868b' }}>Vertrag wird geladen...</p>
         </div>
       </div>
@@ -110,12 +110,12 @@ export default function Cancel() {
           textAlign: 'center',
           maxWidth: '400px'
         }}>
-          <h2 style={{ color: '#ff3b30', marginBottom: '16px' }}>Fehler</h2>
+          <h2 style={{ color: '#EF4444', marginBottom: '16px' }}>Fehler</h2>
           <p style={{ color: '#86868b', marginBottom: '24px' }}>{error}</p>
           <button
             onClick={() => navigate(-1)}
             style={{
-              background: '#007aff',
+              background: '#3B82F6',
               color: 'white',
               border: 'none',
               padding: '12px 24px',

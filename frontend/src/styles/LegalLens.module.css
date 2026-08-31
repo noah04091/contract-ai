@@ -50,10 +50,10 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #0051D5 100%);
   border-radius: 10px;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
   flex-shrink: 0;
 }
 

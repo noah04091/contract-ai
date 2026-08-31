@@ -69,7 +69,7 @@ const Blog: React.FC = () => {
       kaufvertraege: { color: '#9333ea', background: '#faf5ff' },
       agb: { color: '#dc2626', background: '#fef2f2' },
     };
-    return colors[categoryKey] || { color: '#0052cc', background: '#e6f3ff' };
+    return colors[categoryKey] || { color: '#2563EB', background: '#e6f3ff' };
   };
 
   // Featured Article (neuester Artikel)

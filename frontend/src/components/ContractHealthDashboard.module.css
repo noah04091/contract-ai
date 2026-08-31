@@ -72,14 +72,14 @@
   align-items: center;
   gap: 0.8rem;
   padding: 1rem;
-  background-color: rgba(52, 199, 89, 0.1);
+  background-color: rgba(16, 185, 129, 0.1);
   border-radius: 16px;
   margin-bottom: 1.5rem;
-  border: 1px solid rgba(52, 199, 89, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .simulationBanner svg {
-  color: #34c759;
+  color: #10B981;
 }
 
 .simulationTitle {
@@ -128,11 +128,11 @@
 }
 
 .trendUp {
-  color: #34c759;
+  color: #10B981;
 }
 
 .trendDown {
-  color: #ff453a;
+  color: #EF4444;
   transform: rotate(180deg);
 }
 

@@ -76,7 +76,7 @@ export default function AnalysisPipeline({ stages, progress, message, error, onC
     return (
       <div className={styles.pipelineContainer}>
         <div className={styles.pipelineHeader}>
-          <h2 className={styles.pipelineTitle} style={{ color: '#FF3B30' }}>Analyse fehlgeschlagen</h2>
+          <h2 className={styles.pipelineTitle} style={{ color: '#EF4444' }}>Analyse fehlgeschlagen</h2>
         </div>
 
         {/* Show stages with error state */}
@@ -102,7 +102,7 @@ export default function AnalysisPipeline({ stages, progress, message, error, onC
 
         <div style={{ display: 'flex', gap: 8 }}>
           {onRetry && (
-            <button className={styles.cancelButton} style={{ background: '#007AFF', color: '#fff', border: 'none' }} onClick={onRetry}>
+            <button className={styles.cancelButton} style={{ background: '#3B82F6', color: '#fff', border: 'none' }} onClick={onRetry}>
               Erneut versuchen
             </button>
           )}

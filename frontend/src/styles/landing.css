@@ -394,7 +394,7 @@ a {
 }
 
 .features-title h2 .text-gradient {
-  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #0066FF 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -2022,9 +2022,9 @@ a {
   height: 100%;
   background: linear-gradient(180deg,
     transparent 0%,
-    rgba(0, 122, 255, 0.3) 20%,
-    rgba(0, 122, 255, 0.6) 50%,
-    rgba(0, 122, 255, 0.3) 80%,
+    rgba(59, 130, 246, 0.3) 20%,
+    rgba(59, 130, 246, 0.6) 50%,
+    rgba(59, 130, 246, 0.3) 80%,
     transparent 100%
   );
   z-index: 100;
@@ -2041,9 +2041,9 @@ a {
   height: 100%;
   background: linear-gradient(180deg,
     transparent 0%,
-    rgba(0, 122, 255, 0.3) 20%,
-    rgba(0, 122, 255, 0.6) 50%,
-    rgba(0, 122, 255, 0.3) 80%,
+    rgba(59, 130, 246, 0.3) 20%,
+    rgba(59, 130, 246, 0.6) 50%,
+    rgba(59, 130, 246, 0.3) 80%,
     transparent 100%
   );
   z-index: 100;
@@ -2065,7 +2065,7 @@ a {
   height: 100px;
   background: linear-gradient(180deg,
     transparent 0%,
-    rgba(0, 122, 255, 0.6) 50%,
+    rgba(59, 130, 246, 0.6) 50%,
     transparent 100%
   );
   border-radius: 3px;
@@ -2536,11 +2536,11 @@ a {
 }
 
 .sophisticated-cta-button.sophisticated-primary {
-  background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #5856d6 100%);
   color: white;
   border: none;
   box-shadow: 
-    0 8px 30px rgba(0, 122, 255, 0.3),
+    0 8px 30px rgba(59, 130, 246, 0.3),
     0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -2563,7 +2563,7 @@ a {
 .sophisticated-cta-button.sophisticated-primary:hover {
   transform: translateY(-3px);
   box-shadow: 
-    0 12px 40px rgba(0, 122, 255, 0.4),
+    0 12px 40px rgba(59, 130, 246, 0.4),
     0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
@@ -3162,18 +3162,18 @@ a {
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 82, 204, 0.1) 100%);
-  border: 1px solid rgba(0, 122, 255, 0.2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 50px;
   font-size: 13px;
   font-weight: 600;
-  color: #007aff;
+  color: #3B82F6;
   margin-bottom: 20px;
   letter-spacing: 0.3px;
 }
 
 .cm-badge svg {
-  color: #007aff;
+  color: #3B82F6;
 }
 
 /* Moderne Headline für Sektionen */
@@ -3187,7 +3187,7 @@ a {
 }
 
 .cm-headline .text-gradient {
-  background: linear-gradient(135deg, #0052cc 0%, #0066FF 50%, #38bdf8 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #0066FF 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -3201,14 +3201,14 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.18) 0%, rgba(0, 122, 255, 0.12) 100%);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(59, 130, 246, 0.12) 100%);
   border-radius: 12px;
-  color: #007aff;
+  color: #3B82F6;
   transition: all 0.3s ease;
 }
 
 .cm-bullets li:hover .cm-bullet-icon {
-  background: linear-gradient(135deg, #007aff 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   transform: scale(1.05);
 }
@@ -3262,7 +3262,7 @@ a {
   left: -10%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(0, 122, 255, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -4580,7 +4580,7 @@ a[href*="kontakt"]:hover,
 
 /* Sale Badge Inline */
 .plan-sale-badge-inline {
-  background: linear-gradient(135deg, #ff3b30, #ff6b35);
+  background: linear-gradient(135deg, #EF4444, #ff6b35);
   color: white;
   font-size: 0.65rem;
   font-weight: 700;
@@ -4588,7 +4588,7 @@ a[href*="kontakt"]:hover,
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 3px 10px rgba(255, 59, 48, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
   white-space: nowrap;
 }
@@ -5122,7 +5122,7 @@ a[href*="kontakt"]:hover,
 
 /* Icon für Highlight-Card - Unternehmens-Blau */
 .hp-icon-light {
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.12) 0%, rgba(0, 82, 204, 0.12) 100%);
+  background: linear-gradient(135deg, rgba(0, 102, 255, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
   color: #0066FF;
 }
 
@@ -5343,7 +5343,7 @@ a[href*="kontakt"]:hover,
 }
 
 .hp-btn-primary {
-  background: linear-gradient(135deg, #0066FF 0%, #0052CC 100%);
+  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
   color: white;
   border: none;
   box-shadow:
@@ -5848,14 +5848,14 @@ a[href*="kontakt"]:hover,
 }
 
 .cta-section .cta-button.primary {
-  background: #007aff;
+  background: #3B82F6;
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 .cta-section .cta-button.primary:hover {
   background: #0056cc;
-  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.3);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
   transform: translateY(-1px);
 }
 
@@ -6079,7 +6079,7 @@ a[href*="kontakt"]:hover,
   border-radius: 50%;
   border: 3px solid #ffffff;
   margin-left: -12px;
-  background: linear-gradient(135deg, #0066FF, #0052cc);
+  background: linear-gradient(135deg, #0066FF, #2563EB);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6148,7 +6148,7 @@ a[href*="kontakt"]:hover,
   align-items: center;
   gap: 0.75rem;
   padding: 1.25rem 2.5rem;
-  background: linear-gradient(135deg, #0066FF 0%, #0052cc 100%);
+  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
   color: #ffffff;
   border: none;
   border-radius: 100px;
@@ -6185,7 +6185,7 @@ a[href*="kontakt"]:hover,
   box-shadow:
     0 8px 30px rgba(0, 102, 255, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.15);
-  background: linear-gradient(135deg, #0052cc 0%, #003d99 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #003d99 100%);
   color: #ffffff;
 }
 
@@ -7264,8 +7264,8 @@ a[href*="kontakt"]:hover,
 .sophisticated-cta-button:focus {
   outline: none;
   box-shadow: 
-    0 0 0 4px rgba(0, 122, 255, 0.2),
-    0 8px 30px rgba(0, 122, 255, 0.3);
+    0 0 0 4px rgba(59, 130, 246, 0.2),
+    0 8px 30px rgba(59, 130, 246, 0.3);
 }
 
 /* Reduced motion for users who prefer it */

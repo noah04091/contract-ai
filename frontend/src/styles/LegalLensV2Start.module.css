@@ -76,7 +76,7 @@
   width: 72px;
   height: 72px;
   margin: 0 auto 24px;
-  background: linear-gradient(135deg, #007AFF 0%, #5856D6 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #5856D6 100%);
   border-radius: 20px;
   display: flex;
   align-items: center;
@@ -116,7 +116,7 @@
 }
 
 .gradientText {
-  background: linear-gradient(135deg, #007AFF 0%, #AF52DE 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #AF52DE 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -157,7 +157,7 @@
 .featurePill svg {
   width: 16px;
   height: 16px;
-  color: #007AFF;
+  color: #3B82F6;
 }
 
 /* ========================================

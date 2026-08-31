@@ -379,7 +379,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         background: '#FAFAFA'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <FileText size={18} style={{ color: '#007AFF' }} />
+          <FileText size={18} style={{ color: '#3B82F6' }} />
           <span style={{
             fontSize: '13px',
             fontWeight: 600,
@@ -394,8 +394,8 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
               style={{
                 fontSize: '11px',
                 fontWeight: 600,
-                color: isSearching ? '#007AFF' : foundOnPage ? '#34C759' : '#FF9500',
-                background: isSearching ? 'rgba(0, 122, 255, 0.1)' : foundOnPage ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 149, 0, 0.1)',
+                color: isSearching ? '#3B82F6' : foundOnPage ? '#10B981' : '#F59E0B',
+                background: isSearching ? 'rgba(59, 130, 246, 0.1)' : foundOnPage ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
                 padding: '3px 7px',
                 borderRadius: '6px',
                 letterSpacing: '0.3px',
@@ -530,13 +530,13 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             style={{
-              background: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(255, 149, 0, 0.15) 100%)',
+              background: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%)',
               border: '2px solid #FFCC00',
-              borderLeft: '4px solid #FF9500',
+              borderLeft: '4px solid #F59E0B',
               padding: '12px 16px',
               margin: '0 16px',
               borderRadius: '0 0 10px 10px',
-              boxShadow: '0 4px 12px rgba(255, 149, 0, 0.2)',
+              boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)',
               overflow: 'hidden'
             }}
           >
@@ -566,7 +566,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
                   fontFamily: 'monospace',
                   maxHeight: '60px',
                   overflowY: 'auto',
-                  border: '1px solid rgba(255, 149, 0, 0.3)'
+                  border: '1px solid rgba(245, 158, 11, 0.3)'
                 }}>
                   {highlightText}
                 </div>
@@ -598,7 +598,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
             <div style={{ textAlign: 'center', padding: '40px', color: '#86868B' }}>
               <div style={{
                 width: '36px', height: '36px',
-                border: '3px solid #E5E5E7', borderTop: '3px solid #007AFF',
+                border: '3px solid #E5E5E7', borderTop: '3px solid #3B82F6',
                 borderRadius: '50%', margin: '0 auto 12px',
                 animation: 'spin 1s linear infinite'
               }} />

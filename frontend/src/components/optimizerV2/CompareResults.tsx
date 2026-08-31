@@ -19,11 +19,11 @@ interface Props {
 }
 
 const SCORE_KEYS: { key: keyof Omit<Scores, 'overall' | 'perClause' | 'explanation'>; label: string; color: string }[] = [
-  { key: 'risk', label: 'Risiko', color: '#FF3B30' },
+  { key: 'risk', label: 'Risiko', color: '#EF4444' },
   { key: 'fairness', label: 'Fairness', color: '#AF52DE' },
-  { key: 'clarity', label: 'Klarheit', color: '#007AFF' },
-  { key: 'completeness', label: 'Vollständigkeit', color: '#34C759' },
-  { key: 'marketStandard', label: 'Marktstandard', color: '#FF9500' }
+  { key: 'clarity', label: 'Klarheit', color: '#3B82F6' },
+  { key: 'completeness', label: 'Vollständigkeit', color: '#10B981' },
+  { key: 'marketStandard', label: 'Marktstandard', color: '#F59E0B' }
 ];
 
 function ScoreDelta({ value, size = 'normal' }: { value: number; size?: 'normal' | 'large' }) {
@@ -169,7 +169,7 @@ export default function CompareResults({ currentResult }: Props) {
               <h4>Aktuelle Analyse</h4>
               <div className={styles.cmpIntroStats}>
                 <div className={styles.cmpIntroStat}>
-                  <span className={styles.cmpIntroStatValue} style={{ color: currentResult.scores.overall >= 60 ? '#34C759' : currentResult.scores.overall >= 40 ? '#FF9500' : '#FF3B30' }}>
+                  <span className={styles.cmpIntroStatValue} style={{ color: currentResult.scores.overall >= 60 ? '#10B981' : currentResult.scores.overall >= 40 ? '#F59E0B' : '#EF4444' }}>
                     {currentResult.scores.overall}
                   </span>
                   <span className={styles.cmpIntroStatLabel}>Score</span>
@@ -179,7 +179,7 @@ export default function CompareResults({ currentResult }: Props) {
                   <span className={styles.cmpIntroStatLabel}>Klauseln</span>
                 </div>
                 <div className={styles.cmpIntroStat}>
-                  <span className={styles.cmpIntroStatValue} style={{ color: '#FF9500' }}>
+                  <span className={styles.cmpIntroStatValue} style={{ color: '#F59E0B' }}>
                     {currentResult.optimizations.filter(o => o.needsOptimization).length}
                   </span>
                   <span className={styles.cmpIntroStatLabel}>Optimierbar</span>
@@ -192,15 +192,15 @@ export default function CompareResults({ currentResult }: Props) {
           </div>
           <div className={styles.cmpIntroFeatures}>
             <div className={styles.cmpIntroFeature}>
-              <ArrowUpRight size={16} style={{ color: '#34C759' }} />
+              <ArrowUpRight size={16} style={{ color: '#10B981' }} />
               <span>Score-Veränderungen auf einen Blick</span>
             </div>
             <div className={styles.cmpIntroFeature}>
-              <BarChart3 size={16} style={{ color: '#007AFF' }} />
+              <BarChart3 size={16} style={{ color: '#3B82F6' }} />
               <span>5 Sub-Scores im direkten Vergleich</span>
             </div>
             <div className={styles.cmpIntroFeature}>
-              <FileText size={16} style={{ color: '#FF9500' }} />
+              <FileText size={16} style={{ color: '#F59E0B' }} />
               <span>Klausel- und Optimierungsstatistik</span>
             </div>
           </div>
@@ -264,7 +264,7 @@ export default function CompareResults({ currentResult }: Props) {
             </div>
             <div className={styles.cmpScoreBox}>
               <span className={styles.cmpScoreLabel}>{currentResult.fileName || 'Aktuell'}</span>
-              <span className={styles.cmpScoreValue} style={{ color: deltas.overall > 0 ? '#34C759' : deltas.overall < 0 ? '#FF3B30' : undefined }}>
+              <span className={styles.cmpScoreValue} style={{ color: deltas.overall > 0 ? '#10B981' : deltas.overall < 0 ? '#EF4444' : undefined }}>
                 {currentResult.scores.overall}
               </span>
               <span className={styles.cmpScoreMax}>/100</span>

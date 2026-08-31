@@ -25,19 +25,19 @@ interface HistoryItem {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 80) return '#34C759';
-  if (score >= 60) return '#FF9500';
-  if (score >= 40) return '#FF3B30';
+  if (score >= 80) return '#10B981';
+  if (score >= 60) return '#F59E0B';
+  if (score >= 40) return '#EF4444';
   return '#AF52DE';
 }
 
 function getStatusConfig(status: HistoryItem['status']) {
   switch (status) {
-    case 'completed': return { label: 'Abgeschlossen', color: '#34C759' };
-    case 'running': return { label: 'Läuft...', color: '#007AFF' };
-    case 'failed': return { label: 'Fehlgeschlagen', color: '#FF3B30' };
+    case 'completed': return { label: 'Abgeschlossen', color: '#10B981' };
+    case 'running': return { label: 'Läuft...', color: '#3B82F6' };
+    case 'failed': return { label: 'Fehlgeschlagen', color: '#EF4444' };
     case 'cancelled': return { label: 'Abgebrochen', color: '#8E8E93' };
-    default: return { label: 'Ausstehend', color: '#FF9500' };
+    default: return { label: 'Ausstehend', color: '#F59E0B' };
   }
 }
 

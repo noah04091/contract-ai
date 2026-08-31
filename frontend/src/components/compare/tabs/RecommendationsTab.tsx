@@ -16,9 +16,9 @@ interface RecommendationsTabProps {
 
 const PRIORITY_CONFIG = {
   critical: { label: 'Kritisch', color: '#d70015', bg: 'rgba(215, 0, 21, 0.08)' },
-  high: { label: 'Hoch', color: '#ff453a', bg: 'rgba(255, 69, 58, 0.08)' },
-  medium: { label: 'Mittel', color: '#ff9500', bg: 'rgba(255, 149, 0, 0.08)' },
-  low: { label: 'Niedrig', color: '#34c759', bg: 'rgba(52, 199, 89, 0.08)' },
+  high: { label: 'Hoch', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.08)' },
+  medium: { label: 'Mittel', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.08)' },
+  low: { label: 'Niedrig', color: '#10B981', bg: 'rgba(16, 185, 129, 0.08)' },
 };
 
 export default function RecommendationsTab({ recommendations, docName = 'Vertrag' }: RecommendationsTabProps) {
