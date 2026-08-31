@@ -205,6 +205,12 @@ export default function Unsubscribe() {
                       : 'Du erhältst dann keine E-Mail-Benachrichtigungen mehr von uns.'}
             </p>
 
+            {category === 'calendar' && (
+              <p style={{ color: '#b45309', fontSize: '14px', lineHeight: 1.6, background: '#fdf6e7', border: '1px solid #f0dfb6', borderRadius: '10px', padding: '12px 14px', marginBottom: '24px', textAlign: 'left' }}>
+                <strong>Wichtig:</strong> Ohne diese Erinnerungen kannst du Kündigungs- und Vertragsfristen übersehen und dich dadurch ungewollt verlängern. Du kannst sie jederzeit wieder einschalten, über „Wieder anmelden" auf der nächsten Seite oder in deinem Profil unter den Benachrichtigungs-Einstellungen.
+              </p>
+            )}
+
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={() => navigate('/')}
@@ -268,6 +274,11 @@ export default function Unsubscribe() {
             <p style={{ color: '#666', fontSize: '15px', marginBottom: '8px' }}>
               Du erhältst keine {categoryLabel(category)} mehr.
             </p>
+            {category === 'calendar' && (
+              <p style={{ color: '#b45309', fontSize: '13px', lineHeight: 1.6, background: '#fdf6e7', border: '1px solid #f0dfb6', borderRadius: '10px', padding: '10px 12px', margin: '0 0 16px', textAlign: 'left' }}>
+                <strong>Bitte beachte:</strong> Du wirst jetzt nicht mehr an ablaufende Verträge und Kündigungsfristen erinnert. Über „Wieder anmelden" unten oder in deinem Profil unter den Benachrichtigungs-Einstellungen kannst du das jederzeit rückgängig machen.
+              </p>
+            )}
             {email && (
               <p style={{ color: '#999', fontSize: '13px', marginBottom: '24px' }}>
                 E-Mail: <strong>{email}</strong>
