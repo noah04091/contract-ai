@@ -130,7 +130,7 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       fields: ['companyName', 'legalForm', 'street', 'postalCode', 'city', 'country'],
       premiumOnly: false,
       gradient: profileType === 'business'
-        ? 'linear-gradient(135deg, #0066ff 0%, #00d4ff 100%)'
+        ? 'linear-gradient(135deg, #3B82F6 0%, #00d4ff 100%)'
         : 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)'
     },
     {

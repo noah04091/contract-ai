@@ -24,7 +24,7 @@
   right: -10%;
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(0, 102, 255, 0.08) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 65%);
   border-radius: 50%;
   filter: blur(80px);
   animation: orbFloat1 25s ease-in-out infinite;
@@ -48,7 +48,7 @@
   left: 50%;
   width: 450px;
   height: 450px;
-  background: radial-gradient(circle, rgba(0, 102, 255, 0.05) 0%, transparent 65%);
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 65%);
   border-radius: 50%;
   filter: blur(80px);
   animation: orbFloat3 22s ease-in-out infinite;
@@ -98,12 +98,12 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
 }
 
 /* Progress bar */
@@ -121,7 +121,7 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, #0066FF, #409CFF);
+  background: linear-gradient(90deg, #3B82F6, #409CFF);
   border-radius: 3px;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -159,11 +159,11 @@
   height: 60px;
   margin: 0 auto 1.25rem;
   border-radius: 16px;
-  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 102, 255, 0.3);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
   color: white;
 }
 
@@ -222,8 +222,8 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: rgba(0, 102, 255, 0.08);
-  color: #0066FF;
+  background: rgba(59, 130, 246, 0.08);
+  color: #3B82F6;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -314,13 +314,13 @@
 }
 
 .checkboxItem:hover {
-  border-color: rgba(0, 102, 255, 0.3);
-  background: rgba(0, 102, 255, 0.04);
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.04);
 }
 
 .checkboxItemActive {
-  border-color: #0066FF;
-  background: rgba(0, 102, 255, 0.06);
+  border-color: #3B82F6;
+  background: rgba(59, 130, 246, 0.06);
   color: #2563EB;
   font-weight: 500;
 }
@@ -344,9 +344,9 @@
 }
 
 .checkmarkActive {
-  background: #0066FF;
-  border-color: #0066FF;
-  box-shadow: 0 2px 8px rgba(0, 102, 255, 0.3);
+  background: #3B82F6;
+  border-color: #3B82F6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 /* Radio Buttons */
@@ -372,13 +372,13 @@
 }
 
 .radioItem:hover {
-  border-color: rgba(0, 102, 255, 0.3);
-  background: rgba(0, 102, 255, 0.04);
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.04);
 }
 
 .radioItemActive {
-  border-color: #0066FF;
-  background: rgba(0, 102, 255, 0.06);
+  border-color: #3B82F6;
+  background: rgba(59, 130, 246, 0.06);
   color: #2563EB;
   font-weight: 500;
 }
@@ -400,21 +400,21 @@
 }
 
 .radioDotActive {
-  border-color: #0066FF;
+  border-color: #3B82F6;
 }
 
 .radioDotInner {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #0066FF;
+  background: #3B82F6;
   transform: scale(0);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .radioDotInnerActive {
   transform: scale(1);
-  box-shadow: 0 0 8px rgba(0, 102, 255, 0.35);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.35);
 }
 
 /* Feature Ratings */
@@ -478,8 +478,8 @@
 }
 
 .textarea:focus {
-  border-color: #0066FF;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.12);
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
 .textarea::placeholder {
@@ -515,9 +515,9 @@
 }
 
 .npsButton:hover {
-  border-color: rgba(0, 102, 255, 0.3);
-  background: rgba(0, 102, 255, 0.04);
-  color: #0066FF;
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.04);
+  color: #3B82F6;
 }
 
 .npsButtonDetractor {
@@ -558,8 +558,8 @@
 
 /* Important Note */
 .importantNote {
-  background: rgba(0, 102, 255, 0.04);
-  border: 1px solid rgba(0, 102, 255, 0.12);
+  background: rgba(59, 130, 246, 0.04);
+  border: 1px solid rgba(59, 130, 246, 0.12);
   border-radius: 14px;
   padding: 1rem 1.25rem;
   display: flex;
@@ -571,7 +571,7 @@
   font-size: 1.2rem;
   flex-shrink: 0;
   line-height: 1.5;
-  color: #0066FF;
+  color: #3B82F6;
 }
 
 .importantNoteText {
@@ -582,7 +582,7 @@
 
 /* Submit Button */
 .submitButton {
-  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   border: none;
   font-family: inherit;
@@ -596,13 +596,13 @@
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.35);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
   letter-spacing: -0.01em;
 }
 
 .submitButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 102, 255, 0.45);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.45);
 }
 
 .submitButton:disabled {
@@ -672,7 +672,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #0066FF;
+  color: #3B82F6;
   text-decoration: none;
   font-weight: 500;
   font-size: 0.95rem;
@@ -695,7 +695,7 @@
   width: 40px;
   height: 40px;
   border: 2.5px solid rgba(0, 0, 0, 0.08);
-  border-top-color: #0066FF;
+  border-top-color: #3B82F6;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1.25rem;

@@ -274,34 +274,37 @@
   margin-bottom: 12px;
 }
 
+/* 31.08.2026: Die Kategorie-Zeile war eine Pille mit Farbverlauf, Rahmen,
+   voller Rundung und fetten Großbuchstaben. Der Verlauf ging dabei von einem
+   Blau zum selben Blau, war also wirkungslos. Vier Gestaltungsmittel für ein
+   Wort. Jetzt eine ruhige Schriftzeile: dieselbe Information, kein Lärm. */
 .sectionEyebrow {
   display: inline-block;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-  color: #0066FF;
+  color: #64748b;
   font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  border-radius: 100px;
-  margin-bottom: 1.25rem;
-  border: 1px solid rgba(0, 102, 255, 0.2);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.75rem;
 }
 
 .sectionTitle {
   text-align: center;
   margin: 0 0 12px;
-  font-size: 3rem;
+  /* 3rem waren auf einem 390-Pixel-Handy zu wuchtig; skaliert jetzt mit */
+  font-size: clamp(1.75rem, 4.5vw, 2.5rem);
   font-weight: 700;
-  color: #1a1a1a;
-  letter-spacing: -0.02em;
+  color: #0f172a;
+  letter-spacing: -0.025em;
   line-height: 1.15;
+  text-wrap: balance;
 }
 
+/* 31.08.2026: Der Akzent war ein dreifarbiger Verlauf im Text (Blau über Blau
+   nach Hellblau). Das war um 2021 herum üblich, wirkt heute unruhig und wird
+   auf hellem Grund schnell blass. Jetzt ein klares, einfarbiges Markenblau:
+   ruhiger, kontrastreicher und überall identisch reproduzierbar. */
 .sectionTitleAccent {
-  background: linear-gradient(135deg, #2563EB 0%, #0066FF 50%, #38bdf8 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #2563EB;
 }
 
 .sectionSubtitle {

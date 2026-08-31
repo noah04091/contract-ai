@@ -240,7 +240,7 @@ div[class*="__floater"] {
 /* Primary Button (Verstanden) */
 .react-joyride__tooltip button[data-action="primary"],
 div[class*="react-joyride"] button[data-action="primary"] {
-  background-color: #0066ff !important;
+  background-color: #3B82F6 !important;
   color: #ffffff !important;
   border-radius: 10px !important;
   padding: 14px 28px !important;
@@ -248,7 +248,7 @@ div[class*="react-joyride"] button[data-action="primary"] {
   font-weight: 600 !important;
   border: none !important;
   cursor: pointer !important;
-  box-shadow: 0 4px 14px rgba(0, 102, 255, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35) !important;
 }
 
 /* Skip Button (Überspringen) */

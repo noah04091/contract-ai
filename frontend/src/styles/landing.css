@@ -377,14 +377,14 @@ a {
 .section-badge {
   display: inline-block;
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
-  color: #0066FF;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  color: #3B82F6;
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   border-radius: 100px;
   margin-bottom: 1.25rem;
-  border: 1px solid rgba(0, 102, 255, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .features-title h2 {
@@ -394,7 +394,7 @@ a {
 }
 
 .features-title h2 .text-gradient {
-  background: linear-gradient(135deg, #2563EB 0%, #0066FF 50%, #38bdf8 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -3187,7 +3187,7 @@ a {
 }
 
 .cm-headline .text-gradient {
-  background: linear-gradient(135deg, #2563EB 0%, #0066FF 50%, #38bdf8 100%);
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -5046,11 +5046,11 @@ a[href*="kontakt"]:hover,
 /* === HIGHLIGHT CARD (Enterprise) === */
 .hp-card-highlight {
   background: #ffffff;
-  border: 2px solid #0066FF;
+  border: 2px solid #3B82F6;
   transform: scale(1.03);
   box-shadow:
-    0 0 0 4px rgba(0, 102, 255, 0.1),
-    0 10px 25px -5px rgba(0, 102, 255, 0.2),
+    0 0 0 4px rgba(59, 130, 246, 0.1),
+    0 10px 25px -5px rgba(59, 130, 246, 0.2),
     0 20px 50px -10px rgba(0, 0, 0, 0.1);
   z-index: 2;
 }
@@ -5058,8 +5058,8 @@ a[href*="kontakt"]:hover,
 .hp-card-highlight:hover {
   transform: scale(1.03) translateY(-8px);
   box-shadow:
-    0 0 0 4px rgba(0, 102, 255, 0.15),
-    0 15px 35px -5px rgba(0, 102, 255, 0.25),
+    0 0 0 4px rgba(59, 130, 246, 0.15),
+    0 15px 35px -5px rgba(59, 130, 246, 0.25),
     0 30px 60px -15px rgba(0, 0, 0, 0.12);
 }
 
@@ -5077,12 +5077,12 @@ a[href*="kontakt"]:hover,
   align-items: center;
   gap: 6px;
   background: white;
-  color: #0066FF;
+  color: #3B82F6;
   font-size: 12px;
   font-weight: 700;
   padding: 8px 16px;
   border-radius: 50px;
-  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.25);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
   white-space: nowrap;
   z-index: 10;
 }
@@ -5122,8 +5122,8 @@ a[href*="kontakt"]:hover,
 
 /* Icon für Highlight-Card - Unternehmens-Blau */
 .hp-icon-light {
-  background: linear-gradient(135deg, rgba(0, 102, 255, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
-  color: #0066FF;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(37, 99, 235, 0.12) 100%);
+  color: #3B82F6;
 }
 
 .hp-titles {
@@ -5343,11 +5343,11 @@ a[href*="kontakt"]:hover,
 }
 
 .hp-btn-primary {
-  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   border: none;
   box-shadow:
-    0 4px 14px rgba(0, 102, 255, 0.35),
+    0 4px 14px rgba(59, 130, 246, 0.35),
     0 2px 6px rgba(0, 0, 0, 0.1);
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -5356,7 +5356,7 @@ a[href*="kontakt"]:hover,
 .hp-btn-primary:hover {
   transform: translateY(-3px);
   box-shadow:
-    0 8px 25px rgba(0, 102, 255, 0.45),
+    0 8px 25px rgba(59, 130, 246, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.15);
   background: linear-gradient(135deg, #0073FF 0%, #005CE6 100%);
 }
@@ -6003,7 +6003,7 @@ a[href*="kontakt"]:hover,
   transform: translateX(-50%);
   width: 120px;
   height: 4px;
-  background: linear-gradient(90deg, #3b82f6, #0066FF);
+  background: linear-gradient(90deg, #3b82f6, #3B82F6);
   border-radius: 2px;
   z-index: 1;
 }
@@ -6079,7 +6079,7 @@ a[href*="kontakt"]:hover,
   border-radius: 50%;
   border: 3px solid #ffffff;
   margin-left: -12px;
-  background: linear-gradient(135deg, #0066FF, #2563EB);
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6148,7 +6148,7 @@ a[href*="kontakt"]:hover,
   align-items: center;
   gap: 0.75rem;
   padding: 1.25rem 2.5rem;
-  background: linear-gradient(135deg, #0066FF 0%, #2563EB 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: #ffffff;
   border: none;
   border-radius: 100px;
@@ -6156,7 +6156,7 @@ a[href*="kontakt"]:hover,
   font-weight: 700;
   cursor: pointer;
   box-shadow:
-    0 4px 20px rgba(0, 102, 255, 0.35),
+    0 4px 20px rgba(59, 130, 246, 0.35),
     0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   letter-spacing: 0.01em;
@@ -6183,7 +6183,7 @@ a[href*="kontakt"]:hover,
 .final-cta-primary:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow:
-    0 8px 30px rgba(0, 102, 255, 0.45),
+    0 8px 30px rgba(59, 130, 246, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.15);
   background: linear-gradient(135deg, #2563EB 0%, #003d99 100%);
   color: #ffffff;
@@ -6203,9 +6203,9 @@ a[href*="kontakt"]:hover,
 }
 
 .final-cta-secondary:hover {
-  color: #0066FF;
-  border-color: #0066FF;
-  background: rgba(0, 102, 255, 0.05);
+  color: #3B82F6;
+  border-color: #3B82F6;
+  background: rgba(59, 130, 246, 0.05);
 }
 
 .final-cta-trust-badges {
@@ -6229,7 +6229,7 @@ a[href*="kontakt"]:hover,
 }
 
 .final-cta-trust-badge:hover {
-  color: #0066FF;
+  color: #3B82F6;
 }
 
 .final-cta-trust-badge svg {
@@ -7707,7 +7707,7 @@ main,
   transform: translateX(-50%);
   width: 120px;
   height: 4px;
-  background: linear-gradient(90deg, #0066FF, #38bdf8);
+  background: linear-gradient(90deg, #3B82F6, #38bdf8);
   border-radius: 2px;
 }
 
@@ -7931,7 +7931,7 @@ main,
 .logo-marquee-item:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  border-color: rgba(0, 102, 255, 0.15);
+  border-color: rgba(59, 130, 246, 0.15);
 }
 
 /* SVG Logos */
@@ -8128,8 +8128,8 @@ main,
 }
 
 .more-feature-card:hover {
-  border-color: #0066FF;
-  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.1);
+  border-color: #3B82F6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
   transform: translateY(-2px);
 }
 
@@ -8202,7 +8202,7 @@ main,
 }
 
 .more-feature-card:hover .more-feature-arrow {
-  color: #0066FF;
+  color: #3B82F6;
   transform: translateX(4px);
 }
 
@@ -8215,7 +8215,7 @@ main,
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #0066FF;
+  color: #3B82F6;
   font-weight: 600;
   text-decoration: none;
   font-size: 1rem;
