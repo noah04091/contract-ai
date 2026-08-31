@@ -31,6 +31,9 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  /* Aus demselben Grund wie bei .tabs: bei noch knapperer Hoehe wuerde sonst
+     auch der Kopf gestaucht und die Ueberschrift abgeschnitten. */
+  flex-shrink: 0;
   padding: 24px 24px 20px;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
   border-bottom: 1px solid rgba(99, 102, 241, 0.1);
@@ -97,6 +100,13 @@
   border-bottom: 1px solid #e5e7eb;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  /* 30.08.2026: Ohne dies wurde die Leiste auf einem 390x600-Handy von 64 auf
+     35 Pixel zusammengedrueckt, weil .modal eine Flex-Spalte mit begrenzter
+     Hoehe ist und ALLE Kinder per Voreinstellung schrumpfen. Die Reiter darin
+     behielten ihre 44 Pixel und ragten heraus, der Inhaltsbereich legte sich
+     darueber: die untere Haelfte von "Google", "Outlook" usw. war verdeckt.
+     Schrumpfen darf nur .content, das ist scrollbar. */
+  flex-shrink: 0;
 }
 
 .tab {
@@ -520,6 +530,9 @@
   background: #f9fafb;
   border-top: 1px solid #e5e7eb;
   text-align: center;
+  /* Wie Kopf und Reiterleiste: nicht schrumpfen, sonst verschwindet der
+     Hinweis am Fuss auf kleinen Bildschirmen. */
+  flex-shrink: 0;
 }
 
 .regenerateBtn {

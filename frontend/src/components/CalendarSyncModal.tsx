@@ -93,7 +93,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
     try {
       const token = localStorage.getItem('authToken');
       if (!token) {
-        setError('Bitte melden Sie sich an.');
+        setError('Bitte melde dich an.');
         return;
       }
 
@@ -198,7 +198,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepContent}>
                   <h4>URL kopieren</h4>
-                  <p>Kopieren Sie diese Kalender-URL:</p>
+                  <p>Kopiere diese Kalender-URL:</p>
                   <div className={styles.urlBox}>
                     <code>{syncLinks.download}</code>
                     <motion.button
@@ -218,7 +218,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepContent}>
                   <h4>Google Kalender öffnen</h4>
-                  <p>Klicken Sie auf den Button unten, um Google Kalender zu öffnen:</p>
+                  <p>Klicke auf den Button unten, um Google Kalender zu öffnen:</p>
                   <motion.button
                     className={styles.primaryBtn}
                     onClick={() => openLink('https://calendar.google.com/calendar/u/0/r/settings/addbyurl')}
@@ -236,7 +236,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 <div className={styles.stepNumber}>3</div>
                 <div className={styles.stepContent}>
                   <h4>URL einfügen</h4>
-                  <p>Fügen Sie die kopierte URL in das Feld "URL des Kalenders" ein und klicken Sie auf "Kalender hinzufügen".</p>
+                  <p>Füge die kopierte URL in das Feld "URL des Kalenders" ein und klicke auf "Kalender hinzufügen".</p>
                 </div>
               </div>
 
@@ -246,7 +246,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 </div>
                 <div className={styles.stepContent}>
                   <h4>Fertig!</h4>
-                  <p>Ihre Vertragstermine werden automatisch synchronisiert (Updates alle 15-60 Min).</p>
+                  <p>Deine Vertragstermine werden automatisch synchronisiert (Updates alle 15-60 Min).</p>
                 </div>
               </div>
             </div>
@@ -255,7 +255,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               <Shield size={18} />
               <div>
                 <strong>Sicher & Privat</strong>
-                <p>Contract AI erstellt einen separaten Kalender. Ihre bestehenden Termine werden nicht verändert.</p>
+                <p>Contract AI erstellt einen separaten Kalender. Deine bestehenden Termine werden nicht verändert.</p>
               </div>
             </div>
           </div>
@@ -285,7 +285,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               <div className={styles.step}>
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepContent}>
-                  <h4>Klicken Sie auf den Button</h4>
+                  <h4>Klicke auf den Button</h4>
                   <p>Der Link öffnet Outlook und fügt den Contract AI Kalender automatisch hinzu.</p>
                   <motion.button
                     className={styles.primaryBtn}
@@ -305,7 +305,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepContent}>
                   <h4>Abonnement bestätigen</h4>
-                  <p>Bestätigen Sie das Hinzufügen des Kalenders in Outlook.</p>
+                  <p>Bestätige das Hinzufügen des Kalenders in Outlook.</p>
                 </div>
               </div>
 
@@ -325,13 +325,13 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               <p>
                 <strong>Gut zu wissen:</strong> Das Kalender-Abo synchronisiert automatisch alle paar Stunden,
                 zeigt in Outlook aber nur <strong>zukünftige</strong> Termine an. Für eine vollständige Übersicht
-                inkl. vergangener Ereignisse nutzen Sie den einmaligen Import (siehe unten).
+                inkl. vergangener Ereignisse nutze den einmaligen Import (siehe unten).
               </p>
             </div>
 
             <div className={styles.alternativeMethod}>
               <h4>Einmaliger Import (inkl. vergangene Ereignisse)</h4>
-              <p>Laden Sie die Kalender-Datei herunter und öffnen Sie diese mit Doppelklick in Outlook.
+              <p>Lade die Kalender-Datei herunter und öffne sie mit Doppelklick in Outlook.
                  So werden alle Ereignisse importiert — auch vergangene.</p>
               <motion.button
                 className={styles.primaryBtn}
@@ -350,7 +350,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
 
             <div className={styles.alternativeMethod}>
               <h4>Alternative: Desktop Outlook (Abo per URL)</h4>
-              <p>Für ein Kalender-Abo in Outlook Desktop kopieren Sie diese URL:</p>
+              <p>Für ein Kalender-Abo in Outlook Desktop kopiere diese URL:</p>
               <div className={styles.urlBox}>
                 <code>{syncLinks.download}</code>
                 <button
@@ -409,7 +409,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               <div className={styles.step}>
                 <div className={styles.stepNumber}>1</div>
                 <div className={styles.stepContent}>
-                  <h4>Klicken Sie auf den Button</h4>
+                  <h4>Klicke auf den Button</h4>
                   <p>Der webcal://-Link öffnet automatisch die Kalender-App.</p>
                   <motion.button
                     className={styles.primaryBtn}
@@ -429,7 +429,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 <div className={styles.stepNumber}>2</div>
                 <div className={styles.stepContent}>
                   <h4>Abonnieren bestätigen</h4>
-                  <p>Klicken Sie auf "Abonnieren" im Popup-Dialog.</p>
+                  <p>Klicke auf "Abonnieren" im Popup-Dialog.</p>
                 </div>
               </div>
 
@@ -439,7 +439,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 </div>
                 <div className={styles.stepContent}>
                   <h4>Fertig!</h4>
-                  <p>Contract AI Termine erscheinen jetzt in Ihrer Kalender-App.</p>
+                  <p>Contract AI Termine erscheinen jetzt in deiner Kalender-App.</p>
                 </div>
               </div>
             </div>
@@ -448,7 +448,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               <Zap size={18} />
               <div>
                 <strong>iCloud Sync</strong>
-                <p>Wenn Sie iCloud Kalender nutzen, wird der Contract AI Kalender automatisch auf allen Ihren Apple-Geräten synchronisiert.</p>
+                <p>Wenn du iCloud Kalender nutzt, wird der Contract AI Kalender automatisch auf allen deinen Apple-Geräten synchronisiert.</p>
               </div>
             </div>
           </div>
@@ -463,7 +463,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
             </div>
 
             <p className={styles.introText}>
-              Kopieren Sie die ICS-URL und fügen Sie sie in Ihrer Kalender-App als Abonnement hinzu.
+              Kopiere die ICS-URL und füge sie in deiner Kalender-App als Abonnement hinzu.
             </p>
 
             <div className={styles.urlSection}>
@@ -569,7 +569,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               </div>
               <div>
                 <h2>Kalender synchronisieren</h2>
-                <p>Verbinden Sie Contract AI mit Ihrem Kalender</p>
+                <p>Verbinde Contract AI mit deinem Kalender</p>
               </div>
             </div>
             <button className={styles.closeBtn} onClick={onClose}>
@@ -607,7 +607,7 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               <span>Neuen Link generieren</span>
             </button>
             <p className={styles.footerHint}>
-              Generieren Sie einen neuen Link, falls Sie den alten deaktivieren möchten.
+              Generiere einen neuen Link, falls du den alten deaktivieren möchtest.
             </p>
           </div>
         </motion.div>
