@@ -12,7 +12,36 @@
  * Bei Fehler/Timeout: Fallback auf leeres Array — Hauptanalyse bleibt unberührt.
  */
 
-const DATE_HUNT_MODEL = 'gpt-4-turbo';
+// ═══════════════════════════════════════════════════════════════════════════
+// 🔀 Strang A (01.09.2026): Modell + Token-Limits als ATOMARE Konfigurationseinheit.
+// Lehre aus dem Gate-2-Vorfall: gpt-4-turbo hat ein hartes Completion-Cap von
+// 4096 — die Kombination turbo+6000 fuehrte zu HTTP-400-Ausfaellen von Junior/
+// Senior. Deshalb waehlt EIN Env-Wert (DATE_HUNT_MODEL) IMMER das gekoppelte
+// Paar aus Modell UND Grenzen; ein Rollback (Env leeren/auf gpt-4-turbo setzen)
+// stellt automatisch die alte Produktionskonfiguration (2500) wieder her.
+// Ungueltige Kombinationen sind durch den Startup-Assert strukturell unmoeglich:
+// ein falsch konfigurierter Prozess STARTET NICHT (Fail-Fast statt stiller
+// Fallback-Ausfaelle). Muster analog DATEHUNT_SKIP_NONCONTRACT_ENABLED.
+const DATE_HUNT_MODEL_CONFIGS = {
+  'gpt-4-turbo': {
+    juniorMaxTokens: 2500, seniorMaxTokens: 2500,   // nachweislich alte Produktionskonfiguration
+    completionCap: 4096
+  },
+  'gpt-4.1-mini': {
+    juniorMaxTokens: 6000, seniorMaxTokens: 6000,   // Benchmark-validiert (Zweitmeinung 28.08.: 2500→6000 hob 172→190 Termine; Gate 1: 0 Truncations)
+    completionCap: 32768
+  }
+};
+const DATE_HUNT_MODEL = process.env.DATE_HUNT_MODEL || 'gpt-4-turbo';
+const DATE_HUNT_MODEL_CFG = DATE_HUNT_MODEL_CONFIGS[DATE_HUNT_MODEL];
+if (!DATE_HUNT_MODEL_CFG) {
+  throw new Error(`DATE_HUNT_MODEL="${DATE_HUNT_MODEL}" hat keine gekoppelte Token-Konfiguration (erlaubt: ${Object.keys(DATE_HUNT_MODEL_CONFIGS).join(', ')})`);
+}
+for (const [k, v] of Object.entries(DATE_HUNT_MODEL_CFG)) {
+  if (k.endsWith('MaxTokens') && v > DATE_HUNT_MODEL_CFG.completionCap) {
+    throw new Error(`DATE_HUNT-Konfigurationsfehler: ${k}=${v} > completionCap=${DATE_HUNT_MODEL_CFG.completionCap} fuer ${DATE_HUNT_MODEL}`);
+  }
+}
 const MAX_DATES = 10;
 
 // ─── Phase 4: Kanzlei-Kaskade ─────────────────────────────────────────────
@@ -32,11 +61,11 @@ const MAX_DATES = 10;
 // Timeouts verdoppelt (decken Render-Cold-Start + OpenAI Tail-Latency p99 ab).
 // Pipeline-Cap auf 240s erhöht (Render Standard 300s als Safety-Net).
 const JUNIOR_TIMEOUT_MS = 90_000;
-const JUNIOR_MAX_TOKENS = 2500;
+const JUNIOR_MAX_TOKENS = DATE_HUNT_MODEL_CFG.juniorMaxTokens; // gekoppelt an DATE_HUNT_MODEL (Strang A)
 const CHUNK_AUDIT_TIMEOUT_MS = 60_000;     // pro Chunk
 const CHUNK_AUDIT_MAX_TOKENS = 1200;       // pro Chunk — meist deutlich weniger nötig
 const SENIOR_TIMEOUT_MS = 90_000;
-const SENIOR_MAX_TOKENS = 2500;
+const SENIOR_MAX_TOKENS = DATE_HUNT_MODEL_CFG.seniorMaxTokens; // gekoppelt an DATE_HUNT_MODEL (Strang A)
 const TOTAL_PIPELINE_TIMEOUT_MS = 240_000;
 
 // Schicht 2 — Sequential Re-Run für gefailte ClauseAudit-Chunks
@@ -47,6 +76,12 @@ const CHUNK_RETRY_TOTAL_BUDGET_MS = 90_000;// gesamtes Re-Run-Budget
 // Schicht 3 — Anomaly Sanity Pass
 const ANOMALY_TIMEOUT_MS = 45_000;
 const ANOMALY_MAX_TOKENS = 1500;
+// Startup-Assert auch fuer die festen Stufen-Grenzen (Schutz bei kuenftigen Aenderungen):
+for (const [name, v] of [['CHUNK_AUDIT_MAX_TOKENS', 1200], ['ANOMALY_MAX_TOKENS', ANOMALY_MAX_TOKENS], ['JUNIOR_MAX_TOKENS', JUNIOR_MAX_TOKENS], ['SENIOR_MAX_TOKENS', SENIOR_MAX_TOKENS]]) {
+  if (v > DATE_HUNT_MODEL_CFG.completionCap) {
+    throw new Error(`DATE_HUNT-Konfigurationsfehler: ${name}=${v} > completionCap=${DATE_HUNT_MODEL_CFG.completionCap} fuer ${DATE_HUNT_MODEL}`);
+  }
+}
 const ANOMALY_TRIGGER_MIN_CONTRACT_LEN = 10_000;  // ab hier "Anomalie wenn <2 Datums"
 const ANOMALY_TRIGGER_MAX_DATES = 2;              // <2 Datums = anomalieverdächtig
 const ANOMALY_SAMPLE_LEN = 3000;                  // Anfang + Ende, je 3000 chars
