@@ -102,6 +102,13 @@
   gap: 12px;
 }
 
+/* 01.09.2026 Mobile-Kopf: Kurztext unter dem Symbol existiert nur am Handy
+   (JSX rendert ihn nur bei isMobile; dieser Backstop hält den Desktop sauber,
+   falls sich isMobile beim Fenster-Verkleinern einmal nicht sofort aktualisiert). */
+.btn-label-mobile {
+  display: none;
+}
+
 /* ========== Buttons ========== */
 .btn {
   display: flex;
@@ -1755,13 +1762,16 @@
   }
 
   /* ========== PAGE HEADER - Kompakt & Modern ========== */
+  /* 01.09.2026: von einzeilig (row) auf ZWEI Zeilen — vorher quetschten sich Titel
+     und 5 Knöpfe in eine Zeile und der blaue Plus-Knopf ÜBERDECKTE die Überschrift
+     („Vertragska[+]r", Screenshot-Beweis 390px). Zeile 1 = Titel, Zeile 2 = Leiste. */
   .page-header {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
     padding-bottom: 16px;
     margin-bottom: 16px;
-    gap: 12px;
+    gap: 14px;
     flex-wrap: nowrap;
     border-bottom: none;
   }
@@ -1785,7 +1795,7 @@
   }
 
   .page-title h1 {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     white-space: nowrap;
     overflow: hidden;
@@ -1797,21 +1807,27 @@
     display: none;
   }
 
-  /* Header Actions - Gr\u00f6\u00dfere Touch-Targets */
+  /* Header Actions - App-Leiste: Symbol \u00dcBER Kurztext (R6-Muster der Vertragsliste,
+     \u201etitle" erscheint auf Touchger\u00e4ten nie \u2014 nackte Symbole waren unverst\u00e4ndlich).
+     Alle 5 Kn\u00f6pfe teilen sich die Breite, ohne Wischen. */
   .header-actions {
     gap: 8px;
     flex-shrink: 0;
+    width: 100%;
   }
 
   .header-actions .btn {
-    padding: 0;
-    min-width: 48px;
-    min-height: 48px;
-    width: 48px;
-    height: 48px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 8px 2px;
+    min-height: 58px;
+    width: auto;
+    height: auto;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 5px;
     border-radius: 12px;
     background: white;
     border: 1px solid var(--border);
@@ -1831,6 +1847,16 @@
 
   .header-actions .btn-text {
     display: none !important;
+  }
+
+  .header-actions .btn .btn-label-mobile {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.1px;
+    color: inherit;
+    white-space: nowrap;
   }
 
   /* Calendar Container */
@@ -2380,11 +2406,13 @@
     font-size: 16px;
   }
 
+  /* 01.09.2026: App-Leiste aus dem 768er-Block erben (flex:1, Symbol über Text) —
+     die alten 44px-Fixmaße machten die Knöpfe hier wieder quadratisch. */
   .header-actions .btn {
-    min-width: 44px;
-    min-height: 44px;
-    width: 44px;
-    height: 44px;
+    min-width: 0;
+    min-height: 54px;
+    width: auto;
+    height: auto;
     border-radius: 10px;
   }
 

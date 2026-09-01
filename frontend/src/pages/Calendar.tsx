@@ -3813,6 +3813,10 @@ export default function CalendarPage() {
               >
                 <Plus size={18} />
                 {!isMobile && <span className="btn-text">Ereignis erstellen</span>}
+                {/* 01.09.2026 Mobile-Kopf: Symbol ÜBER Kurztext (R6-Muster der Vertragsliste) —
+                    title ist auf Touchgeräten wertlos, nackte Symbole waren unverständlich.
+                    Desktop unverändert (btn-label-mobile ist dort display:none). */}
+                {isMobile && <span className="btn-label-mobile">Neu</span>}
               </button>
               {!isMobile && (
                 <button
@@ -3840,6 +3844,7 @@ export default function CalendarPage() {
               >
                 <Link2 size={18} />
                 {!isMobile && <span className="btn-text">Kalender Sync</span>}
+                {isMobile && <span className="btn-label-mobile">Sync</span>}
               </button>
               <button
                 className="btn btn-secondary"
@@ -3847,6 +3852,7 @@ export default function CalendarPage() {
                 title="Erinnerungseinstellungen"
               >
                 <Bell size={18} />
+                {isMobile && <span className="btn-label-mobile">Erinnern</span>}
               </button>
               <button
                 className="btn btn-secondary"
@@ -3855,6 +3861,7 @@ export default function CalendarPage() {
                 title="Aktualisieren"
               >
                 <RefreshCw size={18} className={refreshing ? 'spinning' : ''} />
+                {isMobile && <span className="btn-label-mobile">Neu laden</span>}
               </button>
               <button
                 className="btn btn-secondary"
@@ -3862,6 +3869,7 @@ export default function CalendarPage() {
                 title="Wie funktionieren Erinnerungen?"
               >
                 <HelpCircle size={18} />
+                {isMobile && <span className="btn-label-mobile">Hilfe</span>}
               </button>
             </div>
           </header>
