@@ -74,7 +74,9 @@ describe('verifyToken: der email-import-Skip greift NUR beim exakten Pfad', () =
 
   test('✅ mit GUELTIGEM Token laeuft eine normale Route durch', () => {
     let passed = false;
-    const token = jwt.sign({ userId: 'abc123' }, process.env.JWT_SECRET);
+    // 01.09.2026: email ergänzt — verifyToken verlangt seit der Token-Form-Härtung
+    // (utils/tokenShape.js) echte Session-Payloads (email + userId, kein type).
+    const token = jwt.sign({ userId: 'abc123', email: 'test@example.com' }, process.env.JWT_SECRET);
     const req = mkReq('/api/contracts', { authorization: `Bearer ${token}` });
     const res = mkRes();
     verifyToken(req, res, () => { passed = true; });

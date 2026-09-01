@@ -809,7 +809,24 @@ router.get("/ics", async (req, res) => {
       return res.send(generateEmptyICS("Token ungültig oder abgelaufen - bitte neu synchronisieren"));
     }
 
+    // 🔒 01.09.2026 (Stufe 0): identische Härtung wie in der AKTIVEN Route in
+    // server.js (~Z.514, die zuerst registriert ist und deshalb immer gewinnt —
+    // diese Fassung hier ist toter Code, wird aber konsistent gehalten, damit ein
+    // späteres Umhängen keine ungehärtete Route reaktiviert). Details: utils/tokenShape.js.
+    const { isCalendarSyncPayload, isStoredSyncToken } = require("../utils/tokenShape");
+    if (!isCalendarSyncPayload(decoded) || !ObjectId.isValid(decoded.userId)) {
+      return res.send(generateEmptyICS("Token ungültig - bitte neu synchronisieren"));
+    }
+
     const userId = new ObjectId(decoded.userId);
+
+    const feedUser = await req.db.collection("users").findOne(
+      { _id: userId },
+      { projection: { calendarSyncToken: 1 } }
+    );
+    if (!isStoredSyncToken(token, feedUser)) {
+      return res.send(generateEmptyICS("Token widerrufen - bitte neu synchronisieren"));
+    }
 
     // 03.08.2026 (TÜV-Nachzügler, Noah-Wunsch): Derselbe Sichtbarkeits-Filter wie in
     // ALLEN App-Ansichten (Kalender, "Bald fällig", Glocke) — der Filter-Kommentar in
@@ -1076,20 +1093,41 @@ router.get("/sync-links", verifyToken, async (req, res) => {
     }
 
     let syncToken = user.calendarSyncToken;
+    let tokenCreatedAt = user.calendarSyncTokenCreatedAt;
 
     // Generate new sync token if none exists
+    // 🔒 01.09.2026 (Stufe 0): Seit dem Widerrufs-Abgleich im ICS-Feed liefert NUR
+    // noch der in der DB gespeicherte Token Termine. Das alte Lese-dann-Schreib-
+    // Muster konnte bei zwei parallelen Erst-Aufrufen (zwei Tabs/Geräte) zwei
+    // verschiedene Tokens ausliefern, von denen nur einer gespeichert wurde —
+    // vorher harmlos, jetzt wäre der Verlierer-Link tot. Deshalb: Schreiben nur,
+    // wenn noch keiner existiert (Filter matcht fehlend UND null), danach den
+    // tatsächlich gespeicherten Wert lesen und GENAU DEN ausliefern.
     if (!syncToken) {
-      syncToken = generateSyncToken(userId);
+      const kandidat = generateSyncToken(userId);
 
       await req.db.collection("users").updateOne(
-        { _id: userId },
+        { _id: userId, calendarSyncToken: null },
         {
           $set: {
-            calendarSyncToken: syncToken,
+            calendarSyncToken: kandidat,
             calendarSyncTokenCreatedAt: new Date()
           }
         }
       );
+
+      const fresh = await req.db.collection("users").findOne(
+        { _id: userId },
+        { projection: { calendarSyncToken: 1, calendarSyncTokenCreatedAt: 1 } }
+      );
+      syncToken = fresh?.calendarSyncToken;
+      tokenCreatedAt = fresh?.calendarSyncTokenCreatedAt;
+
+      if (!syncToken) {
+        // Sollte nie eintreten (User existiert, s. Check oben) — lieber ehrlicher
+        // Fehler als ein Link, den der Feed sofort ablehnt.
+        return res.status(500).json({ success: false, error: "Sync-Token konnte nicht gespeichert werden" });
+      }
     }
 
     // Generate calendar links using the sync token
@@ -1098,7 +1136,7 @@ router.get("/sync-links", verifyToken, async (req, res) => {
     res.json({
       success: true,
       links,
-      tokenCreatedAt: user.calendarSyncTokenCreatedAt
+      tokenCreatedAt
     });
 
   } catch (error) {
@@ -1118,7 +1156,7 @@ router.post("/regenerate-sync-token", verifyToken, async (req, res) => {
     // Generate new sync token
     const syncToken = generateSyncToken(userId);
 
-    await req.db.collection("users").updateOne(
+    const schreibErgebnis = await req.db.collection("users").updateOne(
       { _id: userId },
       {
         $set: {
@@ -1127,6 +1165,14 @@ router.post("/regenerate-sync-token", verifyToken, async (req, res) => {
         }
       }
     );
+
+    // 🔒 01.09.2026 (Stufe 0): Seit dem Widerrufs-Abgleich liefert nur der
+    // GESPEICHERTE Token den Feed. Traf das Update niemanden (User-Doc weg),
+    // wäre der frisch signierte Link sofort tot — dann ehrlich 404 statt
+    // "success" mit unbrauchbaren Links.
+    if (schreibErgebnis.matchedCount !== 1) {
+      return res.status(404).json({ success: false, error: "Benutzer nicht gefunden" });
+    }
 
     // Generate calendar links using the new sync token
     const links = generateCalendarLinks(syncToken);

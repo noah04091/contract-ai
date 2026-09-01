@@ -24,7 +24,12 @@ const optionalAuth = (req, res, next) => {
   const token = req.cookies?.token || req.headers.authorization?.replace("Bearer ", "");
   if (token) {
     try {
-      req.user = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // 🔒 01.09.2026: Nur echte Session-Tokens zaehlen als angemeldet — Zweck-Tokens
+      // (Kalender-Feed, Mail-Quick-Action) fallen auf Gast zurueck. Siehe utils/tokenShape.js.
+      if (require("../utils/tokenShape").isSessionTokenPayload(decoded)) {
+        req.user = decoded;
+      }
     } catch (e) {
       // Token ungueltig oder abgelaufen: Nutzer bleibt Gast, kein Fehler
     }

@@ -23,7 +23,13 @@ const optionalAuth = (req, res, next) => {
   if (token) {
     try {
       const jwt = require("jsonwebtoken");
-      req.user = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // 🔒 01.09.2026: Nur echte Session-Tokens zaehlen als angemeldet — Zweck-Tokens
+      // (Kalender-Feed, Mail-Quick-Action) fallen auf Gast zurueck. Siehe utils/tokenShape.js.
+      // WICHTIG: Gast-Fallback, KEIN 403 — sonst braeche die oeffentliche Abmelde-Seite.
+      if (require("../utils/tokenShape").isSessionTokenPayload(decoded)) {
+        req.user = decoded;
+      }
     } catch (e) {
       // Token ungueltig - kein Problem, User bleibt anonym
     }

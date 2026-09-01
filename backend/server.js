@@ -522,12 +522,13 @@ const connectDB = async () => {
           const { token } = req.query;
 
           if (!token) {
-            return res.send(generateEmptyICSHelper("Token fehlt"));
+            return res.send(generateEmptyICSHelper("Token fehlt - bitte neu synchronisieren"));
           }
 
           // Verify token manually
           const jwt = require("jsonwebtoken");
           const { ObjectId } = require("mongodb");
+          const { isCalendarSyncPayload, isStoredSyncToken } = require("./utils/tokenShape");
 
           let decoded;
           try {
@@ -537,7 +538,30 @@ const connectDB = async () => {
             return res.send(generateEmptyICSHelper("Token ungültig oder abgelaufen"));
           }
 
+          // 🔒 01.09.2026 (Stufe 0, Kalender-Sync-Audit) — Reihenfolge ist Absicht:
+          // (1) NUR echte Feed-Tokens (type 'calendar_sync', seit Commit 8840313b in
+          //     jedem je ausgegebenen Token) — ein Login-JWT funktioniert nicht mehr
+          //     als Feed-Adresse. Check VOR new ObjectId, damit Fremd-Tokens ohne
+          //     brauchbare userId nie einen TypeError in den Termin-Titel werfen.
+          if (!isCalendarSyncPayload(decoded) || !ObjectId.isValid(decoded.userId)) {
+            console.warn("❌ ICS: kein Kalender-Sync-Token");
+            return res.send(generateEmptyICSHelper("Token ungültig - bitte neu synchronisieren"));
+          }
+
           const userId = new ObjectId(decoded.userId);
+
+          // (2) Widerrufs-Abgleich: nur der AKTUELL gespeicherte Token liefert den
+          //     Feed. Damit macht "Neuen Link generieren" alte Links wirklich
+          //     ungültig — vorher blieb jeder signierte Token 365 Tage nutzbar.
+          //     Null-sicher (fehlendes User-Doc/Feld → Hinweis-ICS, kein Throw).
+          const feedUser = await req.db.collection("users").findOne(
+            { _id: userId },
+            { projection: { calendarSyncToken: 1 } }
+          );
+          if (!isStoredSyncToken(token, feedUser)) {
+            console.warn(`❌ ICS: Token widerrufen oder unbekannt für User ${userId}`);
+            return res.send(generateEmptyICSHelper("Token widerrufen - bitte neu synchronisieren"));
+          }
 
           // Get events from DB
           const events = await req.db.collection("contract_events")

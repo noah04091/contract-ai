@@ -1,5 +1,6 @@
 // 📁 middleware/verifyToken.js
 const jwt = require("jsonwebtoken");
+const { isSessionTokenPayload } = require("../utils/tokenShape");
 
 // 🔄 Konfiguration für Silent Token Refresh
 const TOKEN_REFRESH_THRESHOLD_SECONDS = 30 * 60; // 30 Minuten vor Ablauf erneuern
@@ -64,6 +65,19 @@ module.exports = function (req, res, next) {
   // ✅ Token prüfen
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 🔒 01.09.2026 (Kalender-Sync-Audit, Stufe 0): Nur echte Session-Tokens
+    // (email + userId, kein type-Feld) gelten als Login. Vorher wurde JEDER mit
+    // JWT_SECRET signierte Zweck-Token akzeptiert — der Kalender-Feed-Token
+    // (365 Tage, liegt bei Google/Apple) und der Mail-Quick-Action-Token (7 Tage,
+    // in jeder Erinnerungs-Mail) waren damit vollwertige Konto-Zugänge.
+    // Antwort identisch zum Signatur-Fehler (kein Orakel für Angreifer).
+    // Invariante + Beweis: utils/tokenShape.js.
+    if (!isSessionTokenPayload(decoded)) {
+      console.warn("❌ JWT abgelehnt: kein Session-Token (Zweck-Token als Login versucht)");
+      return res.status(403).json({ error: "TOKEN_EXPIRED", message: "Sitzung abgelaufen oder ungültig. Bitte erneut einloggen." });
+    }
+
     req.user = decoded;
     req.userId = decoded.userId; // 📁 For Mongoose routes
     req.tokenSource = source;
