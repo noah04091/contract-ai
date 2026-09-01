@@ -611,8 +611,8 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
             </button>
             <p className={styles.footerHint}>
               Der alte Link wird dabei sofort ungültig. Ein damit verbundener Kalender
-              zeigt dann keine Termine mehr &ndash; entferne ihn in deiner Kalender-App
-              und verbinde den neuen Link.
+              zeigt dann keine Termine mehr. Entferne ihn in deiner Kalender-App und
+              verbinde den neuen Link.
             </p>
           </div>
         </motion.div>

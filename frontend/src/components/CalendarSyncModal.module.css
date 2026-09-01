@@ -649,23 +649,32 @@
     gap: 2px;
   }
 
+  /* R10 (01.09.2026): Symbol ÜBER Text, ALLE Beschriftungen sichtbar — vorher
+     zeigten die inaktiven Reiter nur nackte Icons (Outlook-Logo, Apfel, Weltkugel
+     waren nicht deutbar; gleiches Kernmuster wie R6/R9). Vier Reiter teilen sich
+     die Breite, Konsistenz mit der neuen Kopf-Leiste der Kalender-Seite. */
   .tab {
-    padding: 8px 12px;
-    font-size: 13px;
-    min-height: 44px;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 2px;
+    font-size: 11px;
+    min-height: 48px;
   }
 
   .tab svg {
     width: 18px;
     height: 18px;
+    flex-shrink: 0;
   }
 
   .tab span {
-    display: none;
-  }
-
-  .activeTab span {
-    display: inline;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
   }
 
   .tabContent {
@@ -754,6 +763,14 @@
 
   .urlBox code {
     font-size: 11px;
+    /* R10 (01.09.2026): Die Feed-URL (10+ Zeilen Token) nicht mehr komplett
+       ausbreiten — 3 Zeilen reichen zum Wiedererkennen, kopiert wird ohnehin
+       der volle Wert aus dem State (nicht aus dem DOM). Nebeneffekt: weniger
+       Token-Klartext auf Screenshots (Demo-Video-Lehre). */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
