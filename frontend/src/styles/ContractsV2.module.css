@@ -7950,10 +7950,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.5625rem;
+  /* 01.09.2026: 0.5625rem sind 9px. Das war am unteren Rand der Lesbarkeit,
+     zumal in Großbuchstaben und mit Sperrung. 0.6875rem = 11px bleibt
+     unauffällig, ist aber lesbar. Etwas mehr Innenabstand, damit das
+     Abzeichen dabei nicht gedrungen wirkt. */
+  font-size: 0.6875rem;
   font-weight: 700;
-  padding: 0.0625rem 0.25rem;
-  border-radius: 3px;
+  padding: 0.125rem 0.3125rem;
+  border-radius: 4px;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -8654,6 +8658,22 @@
   cursor: pointer;
   z-index: 99;
   transition: all 0.2s ease;
+}
+
+/* 01.09.2026: Beim Scrollen nach unten weicht der Knopf aus, weil er sonst die
+   Aktionsknöpfe der Listenzeilen überdeckt (gemessen: Knopf x=326..374,
+   Zeilenknöpfe x=292..382). Er fährt nach unten weg statt nur zu verblassen,
+   damit er auch nicht mehr angetippt werden kann.
+   pointer-events: none ist dabei wichtig: ein nur unsichtbarer Knopf würde
+   Tippen weiterhin abfangen und das Problem gerade NICHT lösen. */
+.mobileFabVersteckt {
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileFab { transition: none; }
 }
 
 .mobileFab:active {

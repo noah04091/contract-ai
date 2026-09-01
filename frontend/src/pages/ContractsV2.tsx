@@ -800,6 +800,50 @@ export default function Contracts() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const contentAreaRef = useRef<HTMLDivElement>(null); // ✅ Ref für scrollbaren Content-Bereich
+
+  // 📱 01.09.2026: Der schwebende Hochladen-Knopf (mobileFab) liegt gemessen bei
+  // x=326..374. Die beiden Aktionsknöpfe JEDER Listenzeile ("PDF öffnen", "Mehr")
+  // liegen bei x=292..382 — er überdeckt sie also, solange man scrollt.
+  // Ersatzlos entfernen wäre Funktionsverlust: er öffnet DIREKT den Dateiwähler,
+  // während "Hochladen" oben erst in die Upload-Ansicht wechselt.
+  // Lösung: Beim Scrollen nach unten ausblenden, beim Scrollen nach oben oder im
+  // Stillstand wieder einblenden. Gängiges Muster, Funktion bleibt vollständig.
+  const [fabVersteckt, setFabVersteckt] = useState(false);
+
+  useEffect(() => {
+    // Scroll-Ereignisse steigen NICHT auf. Deshalb in der Erfassungsphase am
+    // Fenster lauschen (dritter Parameter true): so werden Scrolls JEDES
+    // Elements erfasst, egal ob .contentArea, das Dokument oder ein anderer
+    // Container. Gemessen scrollt hier .contentArea, das Dokument ist gar
+    // nicht scrollbar — der Weg über die Erfassungsphase macht die Regel
+    // unabhängig davon, falls sich das Layout einmal ändert.
+    let letzteHoehe = 0;
+    let ruheZeitgeber: ReturnType<typeof setTimeout> | null = null;
+
+    const beiScroll = (e: Event) => {
+      const ziel = e.target as HTMLElement | Document | null;
+      const y = ziel && (ziel as HTMLElement).scrollTop !== undefined
+        ? (ziel as HTMLElement).scrollTop
+        : window.scrollY;
+      const differenz = y - letzteHoehe;
+
+      // Kleine Bewegungen ignorieren, sonst flackert der Knopf.
+      if (Math.abs(differenz) > 12) {
+        setFabVersteckt(differenz > 0 && y > 80);
+        letzteHoehe = y;
+      }
+      // Sicherheitsnetz: Nach dem Anhalten kommt der Knopf IMMER zurück.
+      // Ohne das könnte er in einem versteckten Zustand hängen bleiben.
+      if (ruheZeitgeber) clearTimeout(ruheZeitgeber);
+      ruheZeitgeber = setTimeout(() => setFabVersteckt(false), 900);
+    };
+
+    window.addEventListener('scroll', beiScroll, true);
+    return () => {
+      window.removeEventListener('scroll', beiScroll, true);
+      if (ruheZeitgeber) clearTimeout(ruheZeitgeber);
+    };
+  }, []);
   const hasScrolledRef = useRef(false); // (Legacy-Flag; vom robusten Callback-Ref-Observer nicht mehr als Gate genutzt)
   // 🆕 Robuster Infinite-Scroll: Callback-Ref-Observer + stets frische Werte (gegen Attach-Race + Stale-Closure)
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -7491,9 +7535,10 @@ export default function Contracts() {
       {/* 📱 MOBILE-FIRST 2025: Floating Action Button - nur bei Vertrags-Liste anzeigen */}
       {activeSection === 'contracts' && !showDetails && !quickAnalysisModal.show && !showMobileFilterSheet && !showMobileFolderSheet && (
       <button
-        className={styles.mobileFab}
+        className={`${styles.mobileFab} ${fabVersteckt ? styles.mobileFabVersteckt : ''}`}
         onClick={() => fileInputRef.current?.click()}
         title="Neuen Vertrag hochladen"
+        aria-label="Neuen Vertrag hochladen"
       >
         <Plus />
       </button>
