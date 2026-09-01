@@ -4093,6 +4093,30 @@ router.patch("/:id/reminder-settings", async (req, res) => {
     const { reminderDays, reminderSettings } = req.body;
     const userId = new ObjectId(req.user.userId);
 
+    // 🔒 Stufe 1 (01.09.2026): Eigene Erinnerungen sind Business+ — die App sperrt
+    // das an allen anderen Türen (POST /api/calendar/events → 403, UI-Hinweise),
+    // aber DIESE Route war offen: Free erreichte sie sogar per Klick über
+    // "Erinnerung einrichten" in der Vertragsliste. Gleiche Entscheidung wie
+    // checkCalendarAccess in routes/calendar.js (effektiver Plan inkl. Org-Vererbung).
+    {
+      const { resolveEffectivePlan } = require("../utils/planAccess");
+      const { isBusinessOrHigher } = require("../constants/subscriptionPlans");
+      const nutzer = await req.db.collection("users").findOne(
+        { _id: userId },
+        { projection: { subscriptionPlan: 1, subscriptionActive: 1, role: 1 } }
+      );
+      const effektiverPlan = await resolveEffectivePlan(req.db, nutzer);
+      const istAktiv = !nutzer || nutzer.subscriptionActive !== false;
+      if (!nutzer || !istAktiv || !isBusinessOrHigher(effektiverPlan)) {
+        return res.status(403).json({
+          success: false,
+          error: "Eigene Erinnerungen erfordern ein Business- oder Enterprise-Abo",
+          upgradeRequired: true,
+          requiredPlans: ["business", "enterprise"]
+        });
+      }
+    }
+
     // New format: reminderSettings array
     if (reminderSettings && Array.isArray(reminderSettings)) {
       // Validate each setting

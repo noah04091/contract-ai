@@ -8,7 +8,7 @@ const { generateEventsForContract, cleanAndRegenerateAIEvents, regenerateAllEven
 const { generateICSFeed, generateCalendarLinks, foldICSLine, escapeICS } = require("../utils/icsGenerator");
 const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
 // Plan-Entscheidungen zentral: normalisiert Alt-Namen (premium/legendary) mit.
-const { isBusinessOrHigher } = require("../constants/subscriptionPlans");
+const { isBusinessOrHigher, isEnterpriseOrHigher } = require("../constants/subscriptionPlans");
 // Effektiver Plan inkl. Org-Vererbung (siehe utils/planAccess.js).
 const { resolveEffectivePlan } = require("../utils/planAccess");
 
@@ -28,6 +28,24 @@ const router = express.Router();
 // legacy-Premium-Konten den Kalender-Vollzugriff verloren, obwohl sie ueberall sonst
 // als business-or-higher gelten. normalizePlan() deckt solche Alt-Namen zentral ab.
 const CALENDAR_FULL_ACCESS_PLANS = ["business", "enterprise"];
+// Kalender-Sync (ICS-Feed für Google/Apple/Outlook) ist Enterprise-only —
+// Noahs Entscheidung 01.09.2026, deckt sich mit FEATURE_ACCESS.calendarSync
+// und der Pricing-Matrix. Bis Stufe 1 stand dieses Gate NUR im Frontend.
+const CALENDAR_SYNC_PLANS = ["enterprise"];
+
+/**
+ * Pure Entscheidungslogik (unit-getestet in tests/unit/calendarPlanAccess.test.js):
+ * Voll-Zugriff (erstellen/bearbeiten/löschen/snooze) ab Business,
+ * Kalender-Sync ab Enterprise. Alt-Pläne premium/legendary zählen über
+ * normalizePlan als Enterprise.
+ */
+function accessFromPlan(plan, subscriptionActive) {
+  const isActive = subscriptionActive !== false; // Default true für Legacy
+  return {
+    hasAccess: isActive && isBusinessOrHigher(plan),
+    hasSyncAccess: isActive && isEnterpriseOrHigher(plan)
+  };
+}
 
 /**
  * Prüft ob User vollen Kalender-Zugriff hat
@@ -51,11 +69,13 @@ async function checkCalendarAccess(db, userId) {
     // Organisation haben ihr eigenes Feld auf "free" und hatten daher nur Lese-Zugriff
     // auf den Kalender, obwohl ihre Organisation zahlt.
     const plan = await resolveEffectivePlan(db, user);
-    const isActive = user.subscriptionActive !== false; // Default true für Legacy
-    const hasAccess = isActive && isBusinessOrHigher(plan);
+    const { hasAccess, hasSyncAccess } = accessFromPlan(plan, user.subscriptionActive);
 
     return {
       hasAccess,
+      // Stufe 1 (01.09.2026): Sync-Berechtigung zentral mitliefern — Frontend
+      // entscheidet über access.canSync statt über rohe Plan-String-Vergleiche.
+      hasSyncAccess,
       plan,
       message: hasAccess
         ? "Vollzugriff"
@@ -63,7 +83,7 @@ async function checkCalendarAccess(db, userId) {
     };
   } catch (error) {
     console.error("❌ Error checking calendar access:", error);
-    return { hasAccess: false, plan: null, message: "Fehler bei der Berechtigungsprüfung" };
+    return { hasAccess: false, hasSyncAccess: false, plan: null, message: "Fehler bei der Berechtigungsprüfung" };
   }
 }
 
@@ -293,6 +313,10 @@ router.get("/events", verifyToken, async (req, res) => {
         canDelete: access.hasAccess,
         canSnooze: access.hasAccess,
         canDismiss: access.hasAccess,
+        // Stufe 1 (01.09.2026): Sync = Enterprise-only, serverseitig entschieden.
+        // Ersetzt den rohen `plan === 'enterprise'`-Vergleich im Frontend
+        // (der Alt-Pläne premium/legendary fälschlich aussperrte).
+        canSync: access.hasSyncAccess,
         plan: access.plan,
         upgradeRequired: !access.hasAccess,
         requiredPlans: CALENDAR_FULL_ACCESS_PLANS
@@ -396,6 +420,20 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     const eventId = safeObjectId(req.params.eventId);
     if (!eventId) return res.status(400).json({ success: false, error: "Ungültige Event-ID" });
     const userId = new ObjectId(req.user.userId);
+
+    // 🔒 Stufe 1 (01.09.2026): Bearbeiten ist Business+ — POST und DELETE prüften
+    // das längst, PATCH war die offene Hintertür (Datum/Titel/Status/Snooze frei
+    // für Free per Direkt-Aufruf, während die UI das Upgrade-Modal zeigte).
+    const access = await checkCalendarAccess(req.db, req.user.userId);
+    if (!access.hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: access.message,
+        upgradeRequired: true,
+        requiredPlans: CALENDAR_FULL_ACCESS_PLANS
+      });
+    }
+
     const { status, notes, snoozeDays, date, title, description, type, severity, recurrence, deleteRecurrence } = req.body;
     
     // Verify event ownership
@@ -1078,9 +1116,21 @@ router.get("/quick-action", async (req, res) => {
 });
 
 // GET /api/calendar/sync-links - Sync-Links für externe Kalender abrufen
+// 🔒 Enterprise-only (Stufe 1, 01.09.2026): Das Gate stand bisher NUR im Frontend —
+// jeder eingeloggte Free-/Business-Nutzer konnte sich die Links direkt holen.
 router.get("/sync-links", verifyToken, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
+
+    const access = await checkCalendarAccess(req.db, req.user.userId);
+    if (!access.hasSyncAccess) {
+      return res.status(403).json({
+        success: false,
+        error: "Kalender-Synchronisation erfordert ein Enterprise-Abo",
+        upgradeRequired: true,
+        requiredPlans: CALENDAR_SYNC_PLANS
+      });
+    }
 
     // Check if user has a sync token, create one if not
     let user = await req.db.collection("users").findOne({ _id: userId });
@@ -1149,9 +1199,20 @@ router.get("/sync-links", verifyToken, async (req, res) => {
 });
 
 // POST /api/calendar/regenerate-sync-token - Neuen Sync-Token generieren
+// 🔒 Enterprise-only (Stufe 1, 01.09.2026) — wie /sync-links.
 router.post("/regenerate-sync-token", verifyToken, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
+
+    const access = await checkCalendarAccess(req.db, req.user.userId);
+    if (!access.hasSyncAccess) {
+      return res.status(403).json({
+        success: false,
+        error: "Kalender-Synchronisation erfordert ein Enterprise-Abo",
+        upgradeRequired: true,
+        requiredPlans: CALENDAR_SYNC_PLANS
+      });
+    }
 
     // Generate new sync token
     const syncToken = generateSyncToken(userId);
@@ -1450,3 +1511,6 @@ router.put("/email-preferences", verifyToken, async (req, res) => {
 });
 
 module.exports = router;
+// Pure Entscheidungslogik für Unit-Tests (tests/unit/calendarPlanAccess.test.js) —
+// der Router selbst bleibt der Default-Export, server.js ist unberührt.
+module.exports.accessFromPlan = accessFromPlan;

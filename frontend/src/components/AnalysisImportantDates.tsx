@@ -982,9 +982,13 @@ export default function AnalysisImportantDates({
           {/* Wording-Iteration (Noahs Feedback 11.08.): Frage-Haken statt Feature-Liste.
               Ehrlich bleiben: BENACHRICHTIGT wird Free seit Stufe 1a kostenlos — Business
               verkauft den EIGENEN Kalender (Sync Google/Apple/Outlook + eigene Termine). */}
+          {/* Stufe 1 (01.09.2026): Text korrigiert — der Google/Apple/Outlook-Sync ist
+              Enterprise-only (Noahs Entscheidung, serverseitig durchgesetzt). Vorher
+              versprach die Zeile den Sync fälschlich fürs Business-Abo. */}
           <span className={styles.upsellText}>
-            <strong>Deine Fristen auch in Google, Apple oder Outlook?</strong> Mit Business landen
-            alle Termine automatisch in deinem Kalender — und du ergänzt eigene mit einem Klick.
+            <strong>Deine Fristen auch in Google, Apple oder Outlook?</strong> Mit Enterprise landen
+            alle Termine automatisch in deinem Kalender. Eigene Erinnerungen legst du schon mit
+            Business per Klick an.
           </span>
           <button type="button" className={styles.upsellButton} onClick={handleAddClick}>
             Jetzt upgraden

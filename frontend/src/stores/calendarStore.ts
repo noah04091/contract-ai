@@ -15,6 +15,9 @@ export interface CalendarAccess {
   canDelete: boolean;
   canSnooze: boolean;
   canDismiss: boolean;
+  // Stufe 1 (01.09.2026): Sync = Enterprise-only, serverseitig entschieden.
+  // Optional, weil alte persistierte Caches das Feld noch nicht tragen.
+  canSync?: boolean;
   plan: string;
   upgradeRequired: boolean;
   requiredPlans: string[];

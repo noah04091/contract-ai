@@ -3831,9 +3831,12 @@ export default function CalendarPage() {
               <button
                 className="btn btn-secondary"
                 onClick={() => {
-                  // Kalender-Sync nur für Enterprise User
-                  const isEnterprise = access?.plan === 'enterprise';
-                  if (!isEnterprise) {
+                  // Kalender-Sync nur für Enterprise. Stufe 1 (01.09.2026): Die
+                  // Entscheidung kommt jetzt vom Server (access.canSync, normalisiert
+                  // inkl. Alt-Pläne/Org-Vererbung); der rohe String-Vergleich bleibt
+                  // nur als Fallback für alte persistierte Caches ohne das Feld.
+                  const kannSyncen = access?.canSync ?? (access?.plan === 'enterprise');
+                  if (!kannSyncen) {
                     setUpgradeAction('Kalender-Synchronisierung');
                     setShowUpgradeModal(true);
                     return;
