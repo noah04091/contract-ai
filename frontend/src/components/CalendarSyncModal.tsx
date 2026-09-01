@@ -80,8 +80,11 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
   }, []);
 
   // Fetch sync links when modal opens
+  // 01.09.2026 (Stufe 0): bei JEDEM Öffnen frisch laden (vorher nur einmal pro
+  // Seiten-Session). Seit "Neuen Link generieren" alte Links wirklich widerruft,
+  // würde eine gecachte URL aus einem anderen Tab/Gerät sonst tot angezeigt.
   useEffect(() => {
-    if (isOpen && !syncLinks) {
+    if (isOpen) {
       fetchSyncLinks();
     }
   }, [isOpen]);
@@ -607,7 +610,9 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
               <span>Neuen Link generieren</span>
             </button>
             <p className={styles.footerHint}>
-              Generiere einen neuen Link, falls du den alten deaktivieren möchtest.
+              Der alte Link wird dabei sofort ungültig. Ein damit verbundener Kalender
+              zeigt dann keine Termine mehr &ndash; entferne ihn in deiner Kalender-App
+              und verbinde den neuen Link.
             </p>
           </div>
         </motion.div>
