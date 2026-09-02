@@ -1654,7 +1654,7 @@ router.post("/", async (req, res) => {
     console.log(`✅ Rate Limit OK`);
 
     // 🆕 STEP 3: Erweiterte Input-Validierung
-    const { contractText, searchQuery, contractType } = req.body;
+    const { contractText, searchQuery, contractType, queryVomNutzer } = req.body;
     console.log(`🔍 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
 
     const validation = validateInput(contractText, searchQuery);
@@ -1802,10 +1802,22 @@ router.post("/", async (req, res) => {
       console.log(`🎯 GPT generierte ${enhancedQueries.length} B2B-Queries`);
     }
 
-    // Benutzer-Query als erste Option hinzufügen
+    // 02.09.2026: Nur eine ECHTE Nutzereingabe kommt nach vorn.
+    //
+    // Vorher wurde IMMER die vom Frontend erzeugte Anfrage vorangestellt. Gibt der
+    // Nutzer nichts ein (der Normalfall), baut generateSearchQuery() sie aus dem
+    // groben Typ-Etikett: aus "beratung" wird "beratung services anbieter
+    // deutschland". Diese Anfrage belegte damit einen von nur drei Suchplaetzen und
+    // lieferte bei Noahs KI-Weiterbildung vor allem Verzeichnisse und Wikipedia.
+    // Die GPT-Anfragen kennen dagegen den Vertragstext und treffen deutlich besser.
     if (cleanSearchQuery && cleanSearchQuery.length > 0) {
-      enhancedQueries.unshift(cleanSearchQuery);
-      console.log(`➕ Added user query to front: "${cleanSearchQuery}"`);
+      if (queryVomNutzer === true) {
+        enhancedQueries.unshift(cleanSearchQuery);
+        console.log('➕ Eigene Suchanfrage des Nutzers zuerst: "' + cleanSearchQuery + '"');
+      } else {
+        enhancedQueries.push(cleanSearchQuery);
+        console.log('↩️ Automatisch erzeugte Suchanfrage ans Ende gestellt: "' + cleanSearchQuery + '" (GPT-Anfragen kennen den Vertragstext)');
+      }
     }
 
     // 🌍 ULTIMATIVE STANDORT-INTEGRATION\n    console.log(`🌍 Starting location detection...`);\n    let userLocation = null;\n    try {\n      userLocation = await getLocationFromIP();\n      if (userLocation && userLocation.success) {\n        console.log(`🏙️ Standort erfolgreich erkannt: ${userLocation.cityName}`);\n        \n        // Erweitere Queries mit standort-spezifischen Suchen\n        const locationEnhancedQueries = enhanceQueriesWithLocation(enhancedQueries, userLocation, detectedType);\n        enhancedQueries.splice(0, enhancedQueries.length, ...locationEnhancedQueries);\n        \n        console.log(`🌍 Queries um ${locationEnhancedQueries.length - enhancedQueries.length} Standort-Queries erweitert`);\n      } else {\n        console.log(`⚠️ Kein spezifischer Standort erkannt, verwende Standard-Queries`);\n      }\n    } catch (locationError) {\n      console.warn(`❌ Standort-Erkennung fehlgeschlagen:`, locationError.message);\n    }\n\n    console.log(`🎯 Final Suchanfragen (${enhancedQueries.length}):`, enhancedQueries.slice(0, 3));
@@ -2739,6 +2751,22 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
         const cat = categoryMap.get(i);
         if (cat) r.gptCategory = cat;
       });
+
+      // 02.09.2026: Nicht die ANZAHL der Treffer zaehlt, sondern wie viele davon
+      // echte Anbieter sind. 18 Treffer, die alle Verzeichnisse und Ratgeber sind,
+      // sind fuer den Nutzer wertlos. Diese Verteilung macht das messbar.
+      const verteilung = { anbieter: 0, portale: 0, infoquellen: 0, istAnbieter: 0 };
+      for (const r of enrichedResults) {
+        if (r.gptCategory === 'direct_competitor') verteilung.anbieter++;
+        else if (r.gptCategory === 'comparison_portal') verteilung.portale++;
+        else if (r.gptCategory === 'info_source') verteilung.infoquellen++;
+        else if (r.gptCategory === 'current_provider') verteilung.istAnbieter++;
+      }
+      if (suchBilanz) suchBilanz.trefferArten = verteilung;
+      console.log('🏷️ Trefferarten: ' + verteilung.anbieter + ' echte Anbieter, ' + verteilung.portale + ' Portale, ' + verteilung.infoquellen + ' Infoquellen, ' + verteilung.istAnbieter + ' aktueller Anbieter');
+      if (verteilung.anbieter === 0 && enrichedResults.length > 0) {
+        console.warn('⚠️ KEIN einziger direkter Anbieter unter ' + enrichedResults.length + ' Treffern — die Suchanfragen finden den Markt nicht.');
+      }
     }
 
     // Ergebnis strukturieren (MIT PARTNER-INFO + B2B-FELDER)

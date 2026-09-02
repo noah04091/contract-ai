@@ -340,6 +340,11 @@ const BetterContracts: React.FC = () => {
       setContractType(detectedType);
 
       // Step 2: Generate search query
+      // 02.09.2026: Wir merken uns, ob die Suchanfrage vom Nutzer stammt.
+      // Nur dann darf der Server sie vorrangig behandeln. Eine automatisch aus
+      // dem Vertragstyp gebaute Anfrage ist die schwaechste von allen und stand
+      // vorher trotzdem an erster Stelle.
+      const eigeneEingabe = Boolean(searchQuery && searchQuery.trim().length > 0);
       const generatedQuery = searchQuery || generateSearchQuery(detectedType);
       setSearchQuery(generatedQuery);
 
@@ -354,6 +359,7 @@ const BetterContracts: React.FC = () => {
         body: JSON.stringify({
           contractText: contractText,
           searchQuery: generatedQuery,
+          queryVomNutzer: eigeneEingabe,
           // 01.09.2026: Der oben ermittelte Typ wird jetzt mitgesendet. Vorher
           // fehlte dieses Feld, weshalb der Server ein zweites Mal klassifiziert
           // hat — mit anderem Modell und widersprüchlichem Ergebnis.
