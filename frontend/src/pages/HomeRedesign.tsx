@@ -588,7 +588,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== STATS ===== */}
-        <section style={s("padding:56px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 20%,#eef3ff 80%,#ffffff)")}>
+        <section style={s("padding:56px 24px")}>
           <div style={s("max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:18px")} className="ca-lp-stagger">
             {[
               { to: 500, suffix: "+", txt: "500+", label: "Zufriedene Kunden" },
@@ -605,7 +605,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== FEATURES ===== */}
-        <section id="features" style={s("padding:64px 24px 40px;background:radial-gradient(900px 520px at 82% -8%,rgba(37,99,235,0.05),transparent 60%);position:relative;overflow:hidden;isolation:isolate")}>
+        <section id="features" style={s("padding:64px 24px 40px;position:relative;overflow:hidden;isolation:isolate")}>
           <span style={s("position:absolute;z-index:-1;top:120px;right:18%;font-weight:700;font-size:64px;line-height:1;color:rgba(37,99,235,0.035);pointer-events:none;user-select:none;animation:caDriftB 13s ease-in-out infinite")}>§</span>
           <span style={s("position:absolute;z-index:-1;top:40px;left:4%;font-weight:700;font-size:150px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftA 16s ease-in-out infinite")}>§</span>
           <span style={s("position:absolute;z-index:-1;bottom:30px;right:6%;font-weight:700;font-size:110px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftB 19s ease-in-out infinite")}>§</span>
@@ -633,7 +633,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== INTEGRATIONEN ===== */}
-        <section style={s("padding:60px 0 60px;background:#ffffff")}>
+        <section style={s("padding:60px 0 60px")}>
           <div style={s("max-width:1200px;margin:0 auto;padding:0 24px")}>
             <div style={s("max-width:640px;margin:0 auto;text-align:center")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Integrationen</span>
@@ -654,7 +654,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== VERTRAGSVERWALTUNG (01) ===== */}
-        <section style={s("padding:80px 24px 28px;background:linear-gradient(180deg,#ffffff,#eef3ff 45%,#eef3ff)")}>
+        <section style={s("padding:80px 24px 28px")}>
           <div style={s("max-width:1140px;margin:0 auto")} className="ca-lp-reveal">
             <div className="ca-lp-2col" style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
               <div className="ca-lp-rowtext">
@@ -701,7 +701,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== E-MAIL UPLOAD (02) ===== */}
-        <section style={s("padding:28px 24px 88px;background:linear-gradient(180deg,#eef3ff,#eef3ff 55%,#ffffff)")}>
+        <section style={s("padding:28px 24px 88px")}>
           <div style={s("max-width:1140px;margin:0 auto")} className="ca-lp-reveal">
             <div className="ca-lp-2col" style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
               <div className="ca-lp-rowgfx" style={s("order:1;display:flex;flex-direction:column;align-items:center;gap:18px")}>
@@ -733,7 +733,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== FUNKTIONEN SHOWCASE (Videos) ===== */}
-        <section style={s("padding:56px 24px;background:#ffffff")}>
+        <section style={s("padding:56px 24px")}>
           <div style={s("max-width:1200px;margin:0 auto")}>
             <div style={s("max-width:720px;margin:0 auto;text-align:center")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Funktionen</span>
@@ -786,7 +786,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== VERTRAGSTYPEN ===== */}
-        <section id="types" style={s("padding:72px 24px;background:linear-gradient(180deg,#ffffff,#eef3ff 20%,#eef3ff 80%,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
+        <section id="types" style={s("padding:72px 24px;position:relative;overflow:hidden;isolation:isolate")}>
           <span style={s("position:absolute;z-index:-1;top:60px;right:5%;font-weight:700;font-size:130px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftB 18s ease-in-out infinite")}>§</span>
           <span style={s("position:absolute;z-index:-1;bottom:50px;left:4%;font-weight:700;font-size:100px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftA 21s ease-in-out infinite")}>¶</span>
           <div style={s("max-width:1200px;margin:0 auto")}>
@@ -810,7 +810,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== KUNDENSTIMMEN ===== */}
-        <section id="voices" style={s("padding:64px 0 72px;background:radial-gradient(820px 480px at 14% 2%,rgba(6,182,212,0.06),transparent 58%);position:relative;overflow:hidden;isolation:isolate")}>
+        <section id="voices" style={s("padding:64px 0 72px;position:relative;overflow:hidden;isolation:isolate")}>
           <div style={s("max-width:1200px;margin:0 auto;padding:0 24px")}>
             <div style={s("text-align:center;max-width:640px;margin:0 auto")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Kundenstimmen</span>
@@ -861,7 +861,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== VERGLEICHSTABELLE ===== */}
-        <section style={s("padding:64px 24px;background:#ffffff;position:relative;overflow:hidden;isolation:isolate")}>
+        <section style={s("padding:64px 24px;position:relative;overflow:hidden;isolation:isolate")}>
           <div style={s("max-width:980px;margin:0 auto")}>
             <div style={s("text-align:center;max-width:640px;margin:0 auto")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Im Vergleich</span>
@@ -890,7 +890,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== PREISE (Design-Karten, echte Preise) ===== */}
-        <section id="pricing" style={s("padding:64px 24px 80px;background:linear-gradient(180deg,#ffffff,#eef3ff 20%,#eef3ff 80%,#ffffff);position:relative;overflow:hidden;isolation:isolate")}>
+        <section id="pricing" style={s("padding:64px 24px 80px;position:relative;overflow:hidden;isolation:isolate")}>
           <span style={s("position:absolute;z-index:-1;top:70px;left:5%;font-weight:700;font-size:140px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftB 18s ease-in-out infinite")}>€</span>
           <span style={s("position:absolute;z-index:-1;bottom:60px;right:5%;font-weight:700;font-size:130px;line-height:1;color:rgba(37,99,235,0.055);pointer-events:none;user-select:none;animation:caDriftA 15s ease-in-out infinite")}>%</span>
           <div style={s("max-width:1200px;margin:0 auto")}>
@@ -974,7 +974,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== FAQ ===== */}
-        <section style={s("padding:72px 24px;background:#ffffff;position:relative;overflow:hidden;isolation:isolate")}>
+        <section style={s("padding:72px 24px;position:relative;overflow:hidden;isolation:isolate")}>
           <span style={s("position:absolute;z-index:-1;top:50px;left:6%;font-weight:700;font-size:120px;line-height:1;color:rgba(37,99,235,0.05);pointer-events:none;user-select:none;animation:caDriftA 18s ease-in-out infinite")}>?</span>
           <span style={s("position:absolute;z-index:-1;bottom:40px;right:7%;font-weight:700;font-size:90px;line-height:1;color:rgba(37,99,235,0.045);pointer-events:none;user-select:none;animation:caDriftB 16s ease-in-out infinite")}>?</span>
           <div style={s("max-width:780px;margin:0 auto")}>

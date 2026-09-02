@@ -154,3 +154,42 @@
   .ca-lp-page .ca-lp-finalcta > div > p { font-size: 15px !important; }
   .ca-lp-page .ca-lp-finalcta a { width: 100%; justify-content: center; padding: 15px 18px !important; font-size: 16px !important; box-sizing: border-box; }
 }
+
+/* ============================================================================
+   SEITEN-HINTERGRUND (02.09.2026)
+   Vorher: elf einzelne Sektions-Hintergründe (weiß / #eef3ff / zwei radiale
+   Wolken in blau bzw. cyan). Ergebnis waren zehn Farbwechsel auf 12.338 px,
+   fünf verschiedene Übergangsmuster und eine sichtbare Kante bei y≈3.784.
+   Jetzt: EINE durchgehende Ebene für die ganze Seite. Die Sektionen sind
+   transparent, deshalb gibt es keine Grenzen mehr, an denen etwas abreißen
+   könnte. Die Farbe wird über die Seitenlänge leicht heller und wieder
+   kräftiger ("atmet"), die Übergänge laufen jeweils über 700-1300 px.
+   Rückbau: diesen Block entfernen und die background-Angaben in
+   HomeRedesign.tsx wiederherstellen (beides in EINEM Commit).
+   ========================================================================== */
+.ca-lp-page {
+  background:
+    radial-gradient(1500px 1000px at 14% 9%,  rgba(37, 99, 235, 0.085), transparent 60%),
+    radial-gradient(1200px  850px at 88% 20%, rgba(59, 130, 246, 0.055), transparent 58%),
+    radial-gradient(1400px 1000px at 18% 56%, rgba(37, 99, 235, 0.07),  transparent 60%),
+    radial-gradient(1300px  900px at 84% 64%, rgba(59, 130, 246, 0.05),  transparent 58%),
+    radial-gradient(1600px 1100px at 76% 80%, rgba(37, 99, 235, 0.095), transparent 62%),
+    linear-gradient(180deg,
+      #ffffff 0%,
+      #fbfcff 5%,
+      #f2f6fd 13%,
+      #f7fafe 23%,
+      #ffffff 33%,
+      #fdfeff 43%,
+      #f3f7fd 55%,
+      #f8fbfe 66%,
+      #ffffff 72%,
+      #f1f5fd 80%,
+      #f9fbfe 89%,
+      #ffffff 97%
+    );
+}
+
+/* Sicherheitsnetz: falls eine Sektion doch noch einen eigenen Grund mitbringt,
+   würde genau dort wieder eine Kante entstehen. */
+.ca-lp-page > section { background: transparent; }
