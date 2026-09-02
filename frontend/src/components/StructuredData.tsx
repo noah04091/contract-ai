@@ -129,7 +129,7 @@ export default function StructuredData({ type, data, breadcrumbs }: StructuredDa
           name: "Contract AI",
           applicationCategory: "BusinessApplication",
           applicationSubCategory: "Legal Tech Software",
-          operatingSystem: "Web, iOS, Android",
+          operatingSystem: "Web",
           browserRequirements: "Requires JavaScript. Requires HTML5.",
           softwareVersion: "2.0",
           releaseNotes: "https://www.contract-ai.de/blog",

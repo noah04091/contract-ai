@@ -249,7 +249,8 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 </div>
                 <div className={styles.stepContent}>
                   <h4>Fertig!</h4>
-                  <p>Deine Vertragstermine werden automatisch synchronisiert (Updates alle 15-60 Min).</p>
+                  <p>Neue Termine erscheinen automatisch. Wie oft Google aktualisiert, entscheidet
+                     Google selbst, in der Regel innerhalb eines Tages.</p>
                 </div>
               </div>
             </div>
@@ -326,16 +327,18 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
             <div className={styles.syncNotice}>
               <AlertCircle size={16} />
               <p>
-                <strong>Gut zu wissen:</strong> Das Kalender-Abo synchronisiert automatisch alle paar Stunden,
-                zeigt in Outlook aber nur <strong>zukünftige</strong> Termine an. Für eine vollständige Übersicht
-                inkl. vergangener Ereignisse nutze den einmaligen Import (siehe unten).
+                <strong>Gut zu wissen:</strong> Das Kalender-Abo aktualisiert sich automatisch alle
+                paar Stunden und zeigt deine anstehenden Vertragstermine in Outlook an.
               </p>
             </div>
 
             <div className={styles.alternativeMethod}>
-              <h4>Einmaliger Import (inkl. vergangene Ereignisse)</h4>
+              {/* Stufe 3 (02.09.2026): "inkl. vergangene Ereignisse" war falsch — der Feed
+                  liefert nur zukünftige Termine (server.js filtert date >= heute). */}
+              <h4>Einmaliger Import (ohne automatische Updates)</h4>
               <p>Lade die Kalender-Datei herunter und öffne sie mit Doppelklick in Outlook.
-                 So werden alle Ereignisse importiert — auch vergangene.</p>
+                 Hinweis: Der einmalige Import aktualisiert sich nicht von selbst. Für
+                 automatische Updates nutze das Abo oben.</p>
               <motion.button
                 className={styles.primaryBtn}
                 onClick={() => openLink(syncLinks.download)}
@@ -450,8 +453,10 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
             <div className={styles.infoBox}>
               <Zap size={18} />
               <div>
-                <strong>iCloud Sync</strong>
-                <p>Wenn du iCloud Kalender nutzt, wird der Contract AI Kalender automatisch auf allen deinen Apple-Geräten synchronisiert.</p>
+                <strong>Tipp für mehrere Geräte</strong>
+                <p>Abonnierst du den Kalender am Mac, kannst du ihn dort in iCloud ablegen.
+                   Dann erscheint er auf allen deinen Apple-Geräten. Ein Abo direkt auf dem
+                   iPhone bleibt nur auf diesem Gerät.</p>
               </div>
             </div>
           </div>
@@ -523,7 +528,9 @@ export default function CalendarSyncModal({ isOpen, onClose }: CalendarSyncModal
                 <Smartphone size={24} />
                 <div>
                   <strong>Android</strong>
-                  <p>Einstellungen → Konten → Konto hinzufügen → Kalenderabonnement</p>
+                  {/* Stufe 3 (02.09.2026): Der alte Menüpfad existiert in Android nicht. */}
+                  <p>Füge den Kalender einmalig über calendar.google.com im Browser hinzu.
+                     Danach erscheint er automatisch in der Google-Kalender-App auf deinem Handy.</p>
                 </div>
               </div>
             </div>

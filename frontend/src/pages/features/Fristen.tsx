@@ -663,7 +663,8 @@ const Fristen: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle
-                  iCal-kompatiblen Apps. Die Synchronisation erfolgt bidirektional.
+                  iCal-kompatiblen Apps. Ihre Fristen werden automatisch dorthin übertragen
+                  und bleiben bei Änderungen aktuell.
                 </p>
               </details>
 

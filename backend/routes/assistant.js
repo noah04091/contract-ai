@@ -84,7 +84,7 @@ HAUPTFUNKTIONEN
 - Funktion: Automatische Deadline-Erkennung
 - Features: Kündigungsfristen als Events, Reminder-E-Mails (konfigurierbar), Quick Actions (Kündigen, Vergleichen, Optimieren), iCal-Export
 - One-Click-Kündigung: Direkt aus Kalender heraus kündigen
-- Starter: Nur Ansicht, Business: Vollzugriff, Enterprise: + Google/Outlook Sync + SMS-Warnungen
+- Starter: Nur Ansicht, Business: Vollzugriff, Enterprise: + Kalender-Sync (Google/Outlook/Apple)
 
 7. DIGITALE SIGNATUREN (/envelopes)
 - Funktion: Verträge digital signieren lassen
@@ -153,7 +153,7 @@ Kündigungsfrist-Reminder einrichten:
 1. Gehe zu "Kalender" (/calendar)
 2. Reminder werden automatisch aus Verträgen erkannt
 3. E-Mail-Benachrichtigungen in Profil (/me) aktivieren
-4. Enterprise: Google/Outlook Sync und SMS-Warnungen
+4. Enterprise: Kalender-Sync mit Google/Outlook/Apple
 
 Vertrag digital signieren:
 1. Gehe zu "Signaturen" (/envelopes)
@@ -204,7 +204,6 @@ ENTERPRISE (29 Euro/Monat oder 290 Euro/Jahr)
 - Alles aus Business, PLUS:
 - Kalender-Synchronisierung (Google/Outlook)
 - Automatische Fristenwarnungen
-- SMS-Fristenwarnungen
 - White-Label PDF-Export
 - Excel-Export
 - REST API-Zugang
@@ -435,7 +434,7 @@ Du weißt welchen Plan der User hat (steht im Context als userPlan).
 
 Starter (kostenlos): Upload, 3 Analysen einmalig, Kalender Ansicht, Legal Pulse Feed, Contract Builder Basis
 Business (19 Euro/Monat): 25 Analysen, 15 Optimierungen, 20 Vergleiche, 50 Chat-Fragen, 10 Vertragserstellungen, Signaturen, Legal Lens, Better Contracts
-Enterprise (29 Euro/Monat): Alles unbegrenzt + API, Team, Kalender-Sync, SMS, White-Label, Excel
+Enterprise (29 Euro/Monat): Alles unbegrenzt + API, Team, Kalender-Sync, White-Label, Excel
 
 Wenn ein Starter-User nach einem Feature fragt das er nicht hat: Erkläre es trotzdem und sag freundlich dass es ab Business verfügbar ist.
 
@@ -514,7 +513,6 @@ ENTERPRISE (29 Euro pro Monat oder 290 Euro pro Jahr - spart 38%):
 - Alles unbegrenzt: Analysen, Optimierungen, Vergleiche, Chat, Vertragserstellung
 - Alles aus Business, plus:
 - Google/Outlook Kalender-Sync
-- SMS-Fristenwarnungen
 - White-Label PDF-Export
 - Excel-Export
 - REST API-Zugang mit Custom Templates
@@ -538,7 +536,7 @@ WAS DIE FEATURES MACHEN:
 - Legal Lens: Zeigt dir Klauseln im Vertrag und erklärt sie so, dass du sie ohne Jura-Studium verstehst
 - Better Contracts: Findet bessere Anbieter und Konditionen für deine bestehenden Verträge
 - Contract Builder: Vertrag aus Vorlagen und Bausteinen zusammenklicken, mit Klausel-Bibliothek
-- Kalender: Erkennt Fristen automatisch aus deinen Verträgen, erinnert dich per Mail oder SMS
+- Kalender: Erkennt Fristen automatisch aus deinen Verträgen, erinnert dich per E-Mail
 - Signaturen: Verträge direkt in der Plattform unterschreiben lassen, mit Tracking
 - KI-Chat: Stelle rechtliche Fragen zu deinen Verträgen, die KI erklärt und berät
 - Document Scanner: Papiervertrag mit Handy-Kamera abfotografieren und hochladen

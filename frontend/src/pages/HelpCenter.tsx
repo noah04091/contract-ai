@@ -276,8 +276,8 @@ const HelpCenter: React.FC = () => {
           description: 'Aktiviere Erinnerungen für wichtige Fristen. Du erhältst E-Mails 30, 14 und 7 Tage vor Ablauf.',
         },
         {
-          title: '5. Kalender exportieren',
-          description: 'Exportiere Events als ICS-Datei für Google Calendar, Outlook oder Apple Calendar.',
+          title: '5. Kalender verbinden (Enterprise)',
+          description: 'Mit Enterprise verbindest du deinen Kalender über den Knopf "Kalender Sync": Google, Outlook und Apple holen sich neue Termine dann automatisch.',
         }
       ]
     },
@@ -745,7 +745,7 @@ const HelpCenter: React.FC = () => {
         },
         {
           title: '2. Verfügbare Integrationen',
-          description: 'Aktuell verfügbar: Google Drive, Dropbox, OneDrive, Slack, Microsoft Teams, Zapier, Make (Integromat).',
+          description: 'Integrationen befinden sich im Aufbau. Enterprise-Kunden können individuelle Anbindungen anfragen.',
         },
         {
           title: '3. Integration aktivieren',
@@ -920,7 +920,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Kann ich Contract AI auch mobil nutzen?',
-      answer: 'JA! Contract AI funktioniert perfekt auf Smartphone und Tablet. Die Web-App ist vollständig responsive und für alle Bildschirmgrößen optimiert. Eine native App für iOS und Android ist in Planung (Q3 2025).',
+      answer: 'JA! Contract AI funktioniert perfekt auf Smartphone und Tablet. Die Web-App ist vollständig responsive und für alle Bildschirmgrößen optimiert.',
       category: 'technical'
     },
     {
@@ -1026,7 +1026,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Welche Integrationen gibt es?',
-      answer: 'Aktuell verfügbar: Google Drive, Dropbox, OneDrive (Dokumente automatisch synchronisieren), Slack & Microsoft Teams (Benachrichtigungen), Zapier & Make (Automatisierungen). Weitere Integrationen werden regelmäßig hinzugefügt. Enterprise-Kunden können auch individuelle Integrationen anfragen.',
+      answer: 'Integrationen befinden sich derzeit im Aufbau. Schon heute verbindest du mit Enterprise deinen Kalender (Google, Outlook, Apple) und nutzt die API für eigene Anbindungen. Enterprise-Kunden können außerdem individuelle Integrationen anfragen, melde dich dazu gern beim Support.',
       category: 'technical'
     },
     {
@@ -1036,7 +1036,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Kann ich meine Daten exportieren?',
-      answer: 'JA! DSGVO-konform kannst du jederzeit alle deine Daten exportieren: Verträge (Original-PDFs), Analysen (als PDF), Kalender-Events (ICS), Kontodaten (JSON). Geh zu Profil → Datenschutz → "Alle Daten exportieren".',
+      answer: 'JA! DSGVO-konform kannst du jederzeit alle deine Daten als Datei exportieren (Verträge, Termine, Kontodaten): Profil → Datenschutz → "Alle Daten exportieren". Deine Original-PDFs lädst du zusätzlich direkt in der Vertragsansicht herunter.',
       category: 'security'
     },
     {
@@ -1096,7 +1096,7 @@ const HelpCenter: React.FC = () => {
     },
     {
       question: 'Kann ich Contract AI auf dem Handy nutzen?',
-      answer: 'JA! Die Web-App ist vollständig responsive und funktioniert perfekt auf Smartphone und Tablet. Du kannst Verträge fotografieren und direkt hochladen. Eine native App für iOS/Android ist in Planung.',
+      answer: 'JA! Die Web-App ist vollständig responsive und funktioniert perfekt auf Smartphone und Tablet. Du kannst Verträge fotografieren und direkt hochladen.',
       category: 'technical'
     },
     {
