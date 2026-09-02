@@ -177,15 +177,15 @@
     linear-gradient(180deg,
       #ffffff 0%,
       #fbfcff 5%,
-      #f2f6fd 13%,
-      #f7fafe 23%,
+      #edf2fc 13%,
+      #f4f8fd 23%,
       #ffffff 33%,
       #fdfeff 43%,
-      #f3f7fd 55%,
-      #f8fbfe 66%,
+      #eef4fc 55%,
+      #f5f9fd 66%,
       #ffffff 72%,
-      #f1f5fd 80%,
-      #f9fbfe 89%,
+      #ebf1fb 80%,
+      #f6f9fd 89%,
       #ffffff 97%
     );
 }
@@ -193,3 +193,37 @@
 /* Sicherheitsnetz: falls eine Sektion doch noch einen eigenen Grund mitbringt,
    würde genau dort wieder eine Kante entstehen. */
 .ca-lp-page > section { background: transparent; }
+
+/* ---------------------------------------------------------------------------
+   BETONTE ABSCHNITTE (02.09.2026)
+   Drei Abschnitte tragen Vertrauen und Kaufentscheidung und bekommen deshalb
+   sichtbar mehr Farbe: die Zahlen, die Kundenstimmen und die Preise.
+
+   Der Verlauf liegt INNERHALB der jeweiligen Sektion und ist an deren oberem
+   und unterem Rand bereits vollständig transparent (vertikaler Radius 58 %,
+   Farbe endet bei 72 % davon = 42 % der halben Höhe). Dadurch gibt es an den
+   Sektionsgrenzen nichts, was anfangen oder aufhören könnte — keine Kante.
+
+   Warum an der Sektion und nicht an der Seitenhöhe: So wandert die Betonung
+   mit ihrem Abschnitt mit. Kommt später eine Sektion dazu, bleibt die Farbe
+   dort, wo sie hingehört.
+   ------------------------------------------------------------------------- */
+.ca-lp-page > section#proof,
+.ca-lp-page > section#voices,
+.ca-lp-page > section#pricing {
+  background:
+    radial-gradient(125% 58% at 50% 50%,
+      rgba(37, 99, 235, 0.10) 0%,
+      rgba(37, 99, 235, 0.055) 45%,
+      transparent 72%);
+}
+
+/* Die Preise sind der wichtigste Abschnitt der Seite und dürfen einen Hauch
+   kräftiger sein als die anderen beiden. */
+.ca-lp-page > section#pricing {
+  background:
+    radial-gradient(125% 58% at 50% 50%,
+      rgba(37, 99, 235, 0.125) 0%,
+      rgba(37, 99, 235, 0.07) 45%,
+      transparent 72%);
+}

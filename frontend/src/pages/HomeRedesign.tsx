@@ -588,7 +588,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* ===== STATS ===== */}
-        <section style={s("padding:56px 24px")}>
+        <section id="proof" style={s("padding:56px 24px")}>
           <div style={s("max-width:1100px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:18px")} className="ca-lp-stagger">
             {[
               { to: 500, suffix: "+", txt: "500+", label: "Zufriedene Kunden" },
