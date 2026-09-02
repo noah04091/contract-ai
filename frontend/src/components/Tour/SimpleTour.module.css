@@ -205,11 +205,22 @@
 }
 
 /* Step counter */
-.stepCounter {
+/* 02.09.2026: Zähler sitzt im Wrapper neben der Karte, nicht mehr in ihr (siehe
+   SimpleTour.tsx). Zentrierung über Flex statt transform, damit framer-motion
+   nichts überschreiben kann. Kein bottom: -36px mehr: genau dieser Überhang war
+   der Scrollweg der Karte. */
+.stepCounterWrap {
   position: absolute;
-  bottom: -36px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 7px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.stepCounter {
   font-size: 13px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);

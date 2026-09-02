@@ -351,11 +351,20 @@ export function SimpleTour({
                 </div>
               </div>
 
-              {/* Step counter */}
+            </motion.div>
+
+            {/* Step counter — 02.09.2026 (Noahs Fund: Karte war um 36px scrollbar).
+                Der Zähler hing vorher als absolut positioniertes Kind 36px UNTER der
+                Karte. Seit die Karte overflow-y: auto hat (27.08., lange Texte auf dem
+                Handy), zählt so ein Kind zum scrollbaren Bereich, und der Zähler liess
+                sich in die Karte hineinscrollen (bei jedem Schritt aufs Neue).
+                Jetzt ist er ein Geschwister der Karte in diesem Wrapper, der kein
+                overflow hat. Optik unverändert: mittig, 7px unter der Karte. */}
+            <div className={styles.stepCounterWrap}>
               <div className={styles.stepCounter}>
                 {stepIndex + 1} / {totalSteps}
               </div>
-            </motion.div>
+            </div>
           </div>
         </>
       )}
