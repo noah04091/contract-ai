@@ -105,12 +105,20 @@ const legalPulseV2ResultSchema = new mongoose.Schema({
     autoRenewal: Boolean,
     provider: String,
     portfolioSize: Number,
-    relatedContracts: [{
+    // 02.09.2026 (Masterplan Phase 3) — MONGOOSE-type-FALLE: Das Feld heißt "type",
+    // deshalb las Mongoose das Objekt-Literal als TYP-DEKLARATION und kompilierte
+    // den Pfad zu [String]. Folge: Sobald ein Vertrag einen Anbieter mit weiteren
+    // Verträgen hatte, warf das Speichern "Cast to [string] failed ... at path
+    // context.relatedContracts.0" und die GANZE Analyse stand auf failed — jeden
+    // Sonntag seit 22.03.2026. Bei portfolioInsights (unten) wurde die Falle
+    // korrekt mit { type: { type: String } } umschifft, hier nicht. Jetzt ein
+    // explizites Sub-Schema; Frontend (ContractDetail.tsx liest rc.name) erwartet
+    // ohnehin Objekte.
+    relatedContracts: [new mongoose.Schema({
       name: String,
-      type: String,
+      type: { type: String },
       endDate: Date,
-      _id: false,
-    }],
+    }, { _id: false })],
     previousAnalysisCount: Number,
     lastAnalysisDate: Date,
     riskTrend: String,

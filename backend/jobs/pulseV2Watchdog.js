@@ -16,6 +16,9 @@
  *   B) Feeds trocken         → jüngster Sync: result.inserted + result.updated === 0
  *   C) Gesetze veraltet      → neuestes laws.updatedAt älter als LAWS_MAX_AGE_H
  *   D) Radar lief nicht      → kein status=completed pulse-v2-radar in >RADAR_MAX_AGE_H
+ *   E) Wochen-Bericht fehlt  → kein pulse-v2-weekly-report in >8 Tagen (nur bei aktivem
+ *                              PULSE_WEEKLY_REPORT_ENABLED; ergänzt 02.09.2026)
+ *   F) Prüf-Erinnerung fehlt → kein pulse-v2-staleness in >8 Tagen (ergänzt 02.09.2026)
  *   X) Wächter blind         → eine Prüfung selbst wirft (DB unlesbar) → eigener Alarm
  *
  * Schwellen aus echten Prod-Daten (25.06.2026): pro Tag ~46–159 laws updated (NIE 0),
@@ -31,6 +34,9 @@ const HOUR = 60 * 60 * 1000;
 const SYNC_MAX_AGE_H = Number(process.env.PULSE_WATCHDOG_SYNC_MAX_AGE_H) || 30;
 const RADAR_MAX_AGE_H = Number(process.env.PULSE_WATCHDOG_RADAR_MAX_AGE_H) || 30;
 const LAWS_MAX_AGE_H = Number(process.env.PULSE_WATCHDOG_LAWS_MAX_AGE_H) || 48;
+// 02.09.2026: Schwelle für die Wochen-Jobs (Wach-Bericht Mo 11:00, Staleness Mo 08:00):
+// 8 Tage = eine verpasste Woche + 1 Tag Puffer, kein Fehlalarm am Montagmorgen selbst.
+const WEEKLY_MAX_AGE_H = Number(process.env.PULSE_WATCHDOG_WEEKLY_MAX_AGE_H) || 8 * 24;
 
 /**
  * Empfänger — kann NIEMALS null sein (sonst wäre der Wächter selbst ein stiller Tod).
@@ -175,6 +181,69 @@ async function evaluateHealth(db) {
     });
   }
 
+  // --- E) Lief der Wochen-Wach-Bericht? (Mo 11:00 UTC) ---
+  // 02.09.2026 (Masterplan Phase 3): Der Bericht läuft nur 1x/Woche. Fiel der
+  // Montagslauf aus (z. B. Render-Neustart um 11:00), meldete das bisher NIEMAND —
+  // es wäre frühestens eine Woche später aufgefallen. Schwelle 8 Tage = Montag
+  // + 1 Tag Puffer. Nur geprüft, wenn der Bericht per Env-Schalter überhaupt an
+  // ist (Wächter läuft im selben Prozess und sieht denselben Schalter).
+  if (process.env.PULSE_WEEKLY_REPORT_ENABLED === "true") {
+    try {
+      const weekly = await latestCompletedRun(db, "pulse-v2-weekly-report");
+      facts.lastWeeklyReportAt = weekly?.startedAt || null;
+      if (!weekly) {
+        alarms.push({
+          code: "E",
+          severity: "high",
+          title: "Wochen-Wach-Bericht hat NIE erfolgreich gelaufen (kein Log)",
+          detail: "Kein erfolgreicher pulse-v2-weekly-report in cron_logs (30-Tage-Fenster), obwohl PULSE_WEEKLY_REPORT_ENABLED=true.",
+        });
+      } else if (ageHours(weekly.startedAt) > WEEKLY_MAX_AGE_H) {
+        alarms.push({
+          code: "E",
+          severity: "high",
+          title: "Wochen-Wach-Bericht ist ausgefallen",
+          detail: `Letzter erfolgreicher Lauf vor ${(ageHours(weekly.startedAt) / 24).toFixed(1)} Tagen (Grenze ${WEEKLY_MAX_AGE_H / 24} Tage). Kunden bekommen keinen Montags-Bericht mehr.`,
+        });
+      }
+    } catch (err) {
+      alarms.push({
+        code: "X",
+        severity: "high",
+        title: "Wächter konnte cron_logs (Wochenbericht) nicht lesen",
+        detail: err.message,
+      });
+    }
+  }
+
+  // --- F) Lief die Prüf-Erinnerung? (Mo 08:00 UTC, kein Kill-Switch) ---
+  try {
+    const staleness = await latestCompletedRun(db, "pulse-v2-staleness");
+    facts.lastStalenessAt = staleness?.startedAt || null;
+    if (!staleness) {
+      alarms.push({
+        code: "F",
+        severity: "high",
+        title: "Prüf-Erinnerung hat NIE erfolgreich gelaufen (kein Log)",
+        detail: "Kein erfolgreicher pulse-v2-staleness in cron_logs (30-Tage-Fenster).",
+      });
+    } else if (ageHours(staleness.startedAt) > WEEKLY_MAX_AGE_H) {
+      alarms.push({
+        code: "F",
+        severity: "high",
+        title: "Prüf-Erinnerung ist ausgefallen",
+        detail: `Letzter erfolgreicher Lauf vor ${(ageHours(staleness.startedAt) / 24).toFixed(1)} Tagen (Grenze ${WEEKLY_MAX_AGE_H / 24} Tage).`,
+      });
+    }
+  } catch (err) {
+    alarms.push({
+      code: "X",
+      severity: "high",
+      title: "Wächter konnte cron_logs (Staleness) nicht lesen",
+      detail: err.message,
+    });
+  }
+
   return { healthy: alarms.length === 0, alarms, facts };
 }
 
@@ -219,6 +288,8 @@ function buildAlertEmail(verdict) {
       ${factLine("Davon neu+aktualisiert", f.lastSyncFresh)}
       ${factLine("Neuestes Gesetz", f.newestLawAt ? new Date(f.newestLawAt).toISOString() : null)}
       ${factLine("Letzter Radar-Lauf", f.lastRadarAt ? new Date(f.lastRadarAt).toISOString() : null)}
+      ${factLine("Letzter Wochen-Bericht", f.lastWeeklyReportAt ? new Date(f.lastWeeklyReportAt).toISOString() : null)}
+      ${factLine("Letzte Prüf-Erinnerung", f.lastStalenessAt ? new Date(f.lastStalenessAt).toISOString() : null)}
     </ul>
 
     <p style="margin-top:18px;">Bitte prüfen: Render-Logs der Cron-Jobs sowie die RSS-Feed-URLs

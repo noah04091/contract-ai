@@ -297,12 +297,13 @@ export const LegalAlertsPanel: React.FC<LegalAlertsPanelProps> = ({ alerts, onDi
                   So funktioniert der Legal Radar
                 </div>
                 <p style={{ margin: '0 0 8px' }}>
-                  Der Legal Radar pr&uuml;ft automatisch <strong>2x t&auml;glich</strong> aktuelle Gesetzesänderungen,
+                  Der Legal Radar pr&uuml;ft automatisch <strong>jeden Morgen</strong> aktuelle Gesetzesänderungen,
                   Urteile und EU-Verordnungen gegen Ihre analysierten Vertr&auml;ge.
                 </p>
                 <p style={{ margin: '0 0 8px' }}>
-                  <strong>Datenquellen:</strong> Bundesgesetzblatt, BGH/BAG-Rechtsprechung,
-                  EU-Amtsblatt, Fachpublikationen — &uuml;ber 26 RSS-Feeds.
+                  <strong>Datenquellen:</strong> 27 amtliche Quellen — Bundesgesetzblatt,
+                  Bundesgerichte (BGH, BAG u.&nbsp;a.), Ministerien, Aufsichtsbeh&ouml;rden, EU-Gesetzgebung.
+                  Keine Blogs, keine ungepr&uuml;ften Quellen.
                 </p>
                 <p style={{ margin: '0 0 8px' }}>
                   <strong>Alerts bleiben sichtbar</strong>, bis Sie sie per &#10003; als <strong>erledigt</strong> markieren

@@ -120,7 +120,10 @@ const Team = lazy(() => import("./pages/Team")); // 👥 Team-Management (Enterp
 // bereits verschickte Mail-Links wie /subscribe?plan=business.
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
-const LegalPulse = lazy(() => import("./pages/LegalPulse"));
+// 02.09.2026: V1-Seite /legalpulse entroutet (Pulse-Masterplan Phase 2). Sie zeigte
+// erfundene Werte ("Vertrag analysiert: 100 %" ist eine Konstante, "Konfidenz" addierte
+// feste Summanden, "Geprüft gegen N offizielle Quellen" zählte das Sprachmodell mit)
+// und hing am stillgelegten Legacy-Stack. Redirect statt Route, Code bleibt für Rollback.
 const PulseV2 = lazy(() => import("./pages/PulseV2"));
 const LegalLens = lazy(() => import("./pages/LegalLens")); // 🔍 NEU: Interaktive Vertragsanalyse
 const LegalLensStart = lazy(() => import("./pages/LegalLensStart")); // 🔍 NEU: Legal Lens Startseite
@@ -310,8 +313,8 @@ function AppWithLoader() {
             <Route path="/optimize/:contractId" element={<Navigate to="/optimizer" replace />} />
 
             {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
-            <Route path="/legalpulse" element={<RequireAuth><LegalPulse /></RequireAuth>} />
-            <Route path="/legalpulse/:contractId" element={<RequireAuth><LegalPulse /></RequireAuth>} />
+            <Route path="/legalpulse" element={<Navigate to="/pulse" replace />} />
+            <Route path="/legalpulse/:contractId" element={<Navigate to="/pulse" replace />} />
 
             {/* 🔍 Legal Pulse V2 - Deep Contract Analysis */}
             <Route path="/pulse" element={<RequireAuth><PulseV2 /></RequireAuth>} />

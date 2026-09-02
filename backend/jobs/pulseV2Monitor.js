@@ -68,6 +68,12 @@ async function runPulseV2Monitor(db) {
       const result = await monitorUserContracts(db, user);
       totalAnalyzed += result.analyzed;
       totalAlerts += result.alerts;
+      // 02.09.2026 (Masterplan Phase 3): Vertrags-Fehlschläge zählten vorher NICHT
+      // in errors — ein Lauf, in dem jede Analyse abstürzte, stand in cron_logs als
+      // completed mit errors:0. Genau so blieb der relatedContracts-CastError vom
+      // 22.03. bis 02.09. unsichtbar (belegt: Lauf 30.08. meldete errors:0, während
+      // zur selben Sekunde 2 Analysen auf failed liefen).
+      errors += result.failed || 0;
     } catch (err) {
       console.error(`[PulseV2Monitor] Error for user ${user.userId}:`, err.message);
       errors++;
@@ -97,8 +103,16 @@ async function findUsersForMonitoring(db) {
   // Load user emails for notification
   const users = [];
   for (const userId of userIds) {
+    // 02.09.2026: createFromHexString wirft bei einer nicht-hex userId SYNCHRON und
+    // stand hier als einziger der 4 Jobs ohne Schutz — eine einzige kaputte userId
+    // in den results hätte den kompletten Sonntagslauf gekillt (Radar/Staleness
+    // haben genau dafür try/catch). Jetzt wie dort: ObjectId-Variante nur wenn gültig.
+    const idVarianten = [{ _id: userId }];
+    try {
+      idVarianten.push({ _id: require("mongodb").ObjectId.createFromHexString(String(userId)) });
+    } catch { /* userId ist kein 24-Hex-String — String-Variante reicht */ }
     const user = await db.collection("users").findOne(
-      { $or: [{ _id: userId }, { _id: require("mongodb").ObjectId.createFromHexString(userId) }] },
+      { $or: idVarianten },
       { projection: { email: 1, name: 1, firstName: 1, legalPulseSettings: 1, ...PULSE_ACCESS_PROJECTION } }
     );
     if (!user || !user.email) continue;
@@ -149,12 +163,13 @@ async function monitorUserContracts(db, user) {
     { $limit: MAX_PER_USER },
   ]);
 
-  if (staleResults.length === 0) return { analyzed: 0, alerts: 0 };
+  if (staleResults.length === 0) return { analyzed: 0, alerts: 0, failed: 0 };
 
   console.log(`[PulseV2Monitor] User ${user.userId}: ${staleResults.length} contracts due for re-scan`);
 
   let analyzed = 0;
   let alerts = 0;
+  let failed = 0;
   const newFindingsSummary = [];
 
   for (const entry of staleResults) {
@@ -201,6 +216,21 @@ async function monitorUserContracts(db, user) {
       }
     } catch (err) {
       console.error(`[PulseV2Monitor] Pipeline failed for ${contractId}:`, err.message);
+      // 02.09.2026 (Masterplan Phase 3): Ein Fehlschlag existierte vorher nur als
+      // stdout-Zeile — kein error_logs-Eintrag, kein Zähler. So lief derselbe
+      // Vertrag 23 Sonntage in Folge gegen den gleichen CastError, unsichtbar.
+      failed++;
+      try {
+        const { captureError } = require("../services/errorMonitoring");
+        await captureError(err, {
+          route: "CRON:pulse-v2-monitor",
+          method: "SCHEDULED",
+          severity: "high",
+          context: { job: "pulse-v2-monitor", contractId: String(contractId), userId: String(user.userId) },
+        });
+      } catch (logErr) {
+        console.error("[PulseV2Monitor] captureError selbst fehlgeschlagen:", logErr.message);
+      }
     }
   }
 
@@ -209,7 +239,7 @@ async function monitorUserContracts(db, user) {
     await sendAlertEmail(db, user, newFindingsSummary);
   }
 
-  return { analyzed, alerts };
+  return { analyzed, alerts, failed };
 }
 
 /**
@@ -341,10 +371,11 @@ async function sendAlertEmail(db, user, contractSummaries) {
     buttonText: "Im Tool ansehen",
     buttonUrl: "https://contract-ai.de/pulse",
   });
-  // "jederzeit in den Einstellungen" war nicht einlösbar (keine erreichbare
-  // Pulse-Einstellungs-Seite) — der Abmelde-Link in der Fußzeile funktioniert.
+  // 02.09.2026: Beide Abmelde-Wege existieren und stoppen dasselbe (nur Legal Pulse,
+  // Kategorie legal_pulse): der Footer-Link und der Schalter auf /pulse
+  // (PulseEmailSettings, seit 19.08. live). Fristen-Mails bleiben unberührt.
   body += pulseNote(
-    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Nur die Legal-Pulse-Mails abschalten kannst du unten auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;; &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail stoppt alle Benachrichtigungs-Mails von uns."
+    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Die Legal-Pulse-Mails kannst du jederzeit abschalten &mdash; über &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail oder auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;. Deine Fristen-Erinnerungen bleiben davon unberührt."
   );
 
   const html = generatePulseEmailTemplate({

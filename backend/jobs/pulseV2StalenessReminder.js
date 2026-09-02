@@ -281,10 +281,11 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
     buttonText: "Jetzt prüfen",
     buttonUrl: "https://contract-ai.de/pulse",
   });
-  // "jederzeit in den Einstellungen" war nicht einlösbar (keine erreichbare
-  // Pulse-Einstellungs-Seite) — der Abmelde-Link in der Fußzeile funktioniert.
+  // 02.09.2026: Beide Abmelde-Wege existieren und stoppen dasselbe (nur Legal Pulse,
+  // Kategorie legal_pulse): der Footer-Link und der Schalter auf /pulse
+  // (PulseEmailSettings, seit 19.08. live). Fristen-Mails bleiben unberührt.
   body += pulseNote(
-    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Nur die Legal-Pulse-Mails abschalten kannst du unten auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;; &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail stoppt alle Benachrichtigungs-Mails von uns."
+    "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Die Legal-Pulse-Mails kannst du jederzeit abschalten &mdash; über &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail oder auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;. Deine Fristen-Erinnerungen bleiben davon unberührt."
   );
 
   const subject = criticalContracts.length > 0

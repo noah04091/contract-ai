@@ -240,7 +240,7 @@ function buildWeeklyReportEmail({ userName, monitoredCount, changesEvaluated, st
   // Es gibt keine für Nutzer erreichbare Pulse-Einstellungs-Seite. Der Abmelde-Link in
   // der Fußzeile funktioniert dagegen (Token-URL, gleiche Mechanik wie der Mail-Header).
   body += pulseNote(
-    "Gepr&uuml;ft werden die f&uuml;r deine Vertragsarten relevantesten Rechts&auml;nderungen aus offiziellen Quellen (Gesetzbl&auml;tter, Bundesgerichte, Ministerien, Aufsichtsbeh&ouml;rden). Alle Zahlen stammen aus den tats&auml;chlichen Pr&uuml;fl&auml;ufen dieser Woche. Du bekommst diesen &Uuml;berblick w&ouml;chentlich. Nur die Legal-Pulse-Mails abschalten kannst du unten auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;; &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail stoppt alle Benachrichtigungs-Mails von uns."
+    "Gepr&uuml;ft werden die f&uuml;r deine Vertragsarten relevantesten Rechts&auml;nderungen aus offiziellen Quellen (Gesetzbl&auml;tter, Bundesgerichte, Ministerien, Aufsichtsbeh&ouml;rden). Alle Zahlen stammen aus den tats&auml;chlichen Pr&uuml;fl&auml;ufen dieser Woche. Du bekommst diesen &Uuml;berblick w&ouml;chentlich. Die Legal-Pulse-Mails kannst du jederzeit abschalten &mdash; über &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail oder auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;. Deine Fristen-Erinnerungen bleiben davon unberührt."
   );
 
   const subject = allClear

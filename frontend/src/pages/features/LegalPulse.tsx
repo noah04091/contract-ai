@@ -70,7 +70,7 @@ const LegalPulse: React.FC = () => {
         "name": "Welche Rechtsquellen überwacht Legal Pulse?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Offizielle EU- und deutsche Rechtsquellen: Bundesanzeiger, EU-Amtsblätter, BGH/BVerfG-Entscheidungen, Ministerialblätter, Branchenverbände."
+          "text": "27 amtliche Quellen: Bundesgesetzblatt, Bundestag und Bundesrat, Bundesgerichte (BGH, BAG, BVerfG, BFH u. a.), Ministerien, Datenschutz-Aufsichtsbehörden, BaFin, Bundesnetzagentur und EU-Gesetzgebung. Keine Blogs oder ungeprüfte Quellen."
         }
       },
       {
@@ -78,7 +78,7 @@ const LegalPulse: React.FC = () => {
         "name": "Wie aktuell sind die Informationen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Legal Pulse prüft kontinuierlich und reagiert binnen 48 Stunden auf relevante Änderungen."
+          "text": "Legal Pulse holt jede Nacht die neuesten Gesetze, Urteile und Verordnungen aus den amtlichen Quellen und prüft sie jeden Morgen gegen Ihre Verträge. Bei einem relevanten Treffer werden Sie noch am selben Morgen benachrichtigt."
         }
       },
       {
@@ -191,7 +191,7 @@ const LegalPulse: React.FC = () => {
                   <span className={`${styles.demoDot} ${styles.demoDotRed}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotYellow}`}></span>
                   <span className={`${styles.demoDot} ${styles.demoDotGreen}`}></span>
-                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Legal Pulse</span>
+                  <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#64748b', fontWeight: 500 }}>Legal Pulse – Beispielansicht</span>
                 </div>
                 <div className={styles.demoContent} style={{ padding: '12px' }}>
                   {/* Pulse Animation Bar */}
@@ -303,9 +303,9 @@ const LegalPulse: React.FC = () => {
                 <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
                   <Activity size={24} />
                 </div>
-                <h3 className={styles.functionTitle}>Kontinuierliches Monitoring</h3>
+                <h3 className={styles.functionTitle}>Täglicher Prüflauf</h3>
                 <p className={styles.functionDesc}>
-                  Tägliche Überwachung offizieller Rechtsquellen, Rechtsprechung und Compliance-Entwicklungen.
+                  Jeden Morgen ein automatischer Abgleich neuer Gesetze, Urteile und Verordnungen aus amtlichen Quellen – priorisiert nach Relevanz für Ihre Verträge.
                 </p>
               </div>
 
@@ -335,7 +335,7 @@ const LegalPulse: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Proaktive Alerts</h3>
                 <p className={styles.functionDesc}>
-                  Sofortige Benachrichtigung bei relevanten Änderungen mit konkreten Textvorschlägen.
+                  Benachrichtigung noch am Morgen des Fundes, wenn eine Änderung Ihre Verträge betrifft – mit konkreten Empfehlungen.
                 </p>
               </div>
 
@@ -378,14 +378,19 @@ const LegalPulse: React.FC = () => {
                   rechtssicher war, ist heute womöglich angreifbar.
                 </p>
 
+                {/* 02.09.2026: vorher standen hier erfundene Zahlen („47 % veraltet",
+                    „200+ Änderungen/Jahr") ohne Quelle. Jetzt belegbare Werte aus dem
+                    eigenen Betrieb: die laws-Collection erfasste im Messfenster
+                    14.-28.08.2026 rund 575 amtliche Meldungen in 14 Tagen (~1.230/Monat,
+                    Spanne 25-102/Tag) — „1.000+" ist damit gedeckt. */}
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>47%</div>
-                    <div className={styles.problemStatLabel}>der Verträge sind nach 2 Jahren veraltet</div>
+                    <div className={styles.problemStatValue}>1.000+</div>
+                    <div className={styles.problemStatLabel}>amtliche Meldungen pro Monat in unseren Quellen</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>200+</div>
-                    <div className={styles.problemStatLabel}>Rechtsänderungen pro Jahr in Deutschland</div>
+                    <div className={styles.problemStatValue}>1</div>
+                    <div className={styles.problemStatLabel}>neues Urteil kann genügen, um eine Klausel angreifbar zu machen</div>
                   </div>
                 </div>
               </div>
@@ -469,7 +474,7 @@ const LegalPulse: React.FC = () => {
                     </div>
                     <div className={styles.comparisonTime}>
                       <Zap size={16} />
-                      Sofort informiert
+                      Am Morgen des Fundes informiert
                     </div>
                   </div>
                 </div>
@@ -489,8 +494,8 @@ const LegalPulse: React.FC = () => {
                       <Activity size={20} />
                     </div>
                     <div className={styles.solutionFeatureText}>
-                      <h4>100+ Rechtsquellen</h4>
-                      <p>EU-Recht, Bundesrecht, Branchenstandards – alles im Blick</p>
+                      <h4>27 amtliche Quellen</h4>
+                      <p>Gesetzblätter, Bundesgerichte, Ministerien, Aufsichtsbehörden, EU-Gesetzgebung</p>
                     </div>
                   </div>
 
@@ -563,8 +568,8 @@ const LegalPulse: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Proaktive Alerts & Updates</h3>
                     <p className={styles.processDesc}>
-                      Sofortige Benachrichtigung bei relevanten Änderungen mit konkreten
-                      Handlungsempfehlungen und Textvorschlägen.
+                      Benachrichtigung noch am Morgen des Fundes bei relevanten Änderungen –
+                      mit konkreten Handlungsempfehlungen.
                     </p>
                   </div>
                 </div>
@@ -589,8 +594,8 @@ const LegalPulse: React.FC = () => {
                 <div className={styles.statLabel}>automatischer Prüflauf — jeden Morgen</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>100 %</div>
-                <div className={styles.statLabel}>der Alerts wörtlich am Vertragstext belegt</div>
+                <div className={styles.statNumber}>2-stufig</div>
+                <div className={styles.statLabel}>Verdachtsfälle werden vor dem Alarm am echten Klauseltext gegengeprüft</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.statNumber}>~ 27</div>
@@ -617,9 +622,9 @@ const LegalPulse: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Offizielle EU- und deutsche Rechtsquellen: Bundesanzeiger, EU-Amtsblätter,
-                  BGH/BVerfG-Entscheidungen, Ministerialblätter, Branchenverbände. Keine Blogs
-                  oder ungeprüfte Quellen.
+                  27 amtliche Quellen: Bundesgesetzblatt, Bundestag und Bundesrat, Bundesgerichte
+                  (BGH, BAG, BVerfG, BFH u.&nbsp;a.), Ministerien, Datenschutz-Aufsichtsbehörden,
+                  BaFin, Bundesnetzagentur und EU-Gesetzgebung. Keine Blogs oder ungeprüfte Quellen.
                 </p>
               </details>
 
@@ -629,8 +634,9 @@ const LegalPulse: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Legal Pulse prüft kontinuierlich und reagiert binnen 48 Stunden auf relevante
-                  Änderungen. Bei kritischen Updates erfolgen Eilmeldungen.
+                  Jede Nacht werden die neuesten Gesetze, Urteile und Verordnungen aus den
+                  amtlichen Quellen geholt, jeden Morgen gegen Ihre Verträge geprüft. Bei einem
+                  relevanten Treffer werden Sie noch am selben Morgen benachrichtigt.
                 </p>
               </details>
 
@@ -640,8 +646,9 @@ const LegalPulse: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, Sie können Themenbereiche und Risikostufen filtern. Vollständig
-                  konfigurierbar nach Ihren Bedürfnissen.
+                  Legal Pulse priorisiert automatisch nach Ihren Vertragsarten – Sie müssen
+                  nichts konfigurieren. Die E-Mail-Benachrichtigungen können Sie jederzeit auf
+                  Ihrer Pulse-Seite abschalten; die Überwachung läuft dann weiter.
                 </p>
               </details>
 
@@ -651,8 +658,8 @@ const LegalPulse: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, Legal Pulse erkennt Ihren Geschäftsbereich und fokussiert auf relevante
-                  Regelungen: FinTech, SaaS, E-Commerce, Immobilien, Gesundheitswesen etc.
+                  Legal Pulse richtet sich nach Ihren Vertragsarten – etwa SaaS-, Arbeits-,
+                  Miet- oder Kaufverträge – und priorisiert die dafür relevanten Rechtsänderungen.
                 </p>
               </details>
 

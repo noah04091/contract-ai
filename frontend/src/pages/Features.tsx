@@ -133,10 +133,10 @@ const Features: React.FC = () => {
       marker: '03 · Verwalten',
       label: 'Verwalten',
       title: 'Behalten Sie den Überblick',
-      description: 'Zentrale Verwaltung, automatische Fristen-Erinnerungen und Echtzeit-Updates bei Gesetzesänderungen.',
+      description: 'Zentrale Verwaltung, automatische Fristen-Erinnerungen und tägliche Prüfung auf Gesetzesänderungen.',
       features: [
         { icon: <Calendar size={22} />, name: 'Fristenverwaltung', desc: 'Nie wieder Kündigungsfristen verpassen', link: '/features/fristen' },
-        { icon: <Activity size={22} />, name: 'Legal Pulse', desc: 'Frühwarnsystem für rechtliche Änderungen', link: '/features/legalpulse', badge: 'Enterprise' },
+        { icon: <Activity size={22} />, name: 'Legal Pulse', desc: 'Frühwarnsystem für rechtliche Änderungen', link: '/features/legalpulse', badge: 'Business' },
         { icon: <FolderOpen size={22} />, name: 'Vertragsverwaltung', desc: 'Intelligente Suche und automatische Tags', link: '/features/vertragsverwaltung' },
         { icon: <Mail size={22} />, name: 'E-Mail Upload', desc: 'Verträge per E-Mail automatisch erfassen', link: '/features/email-upload' },
       ]

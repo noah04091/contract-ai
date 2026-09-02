@@ -106,13 +106,16 @@ describe("Wach-Bericht: sichtbarer Abmelde-Link", () => {
     expect(html).not.toContain('>Benachrichtigungen abmelden</a>');
   });
 
-  test("kein 'in den Einstellungen'-Versprechen mehr, stattdessen beide ehrlichen Wege", () => {
+  test("kein 'in den Einstellungen'-Versprechen mehr, stattdessen der ehrliche Abmelde-Satz", () => {
     const { html } = buildWeeklyReportEmail({ ...base, stats: emptyStats(0) });
     expect(html).not.toContain("in den Einstellungen");
-    // Feiner Weg (Schalter auf /pulse, stoppt nur Pulse-Mails) + globaler Weg
-    // (Footer-Link, stoppt ALLE Benachrichtigungs-Mails) — beide korrekt benannt.
-    expect(html).toContain("Nur die Legal-Pulse-Mails abschalten kannst du unten auf deiner Pulse-Seite");
-    expect(html).toContain("stoppt alle Benachrichtigungs-Mails von uns");
+    // 02.09.2026 (Masterplan Phase 2): Der Footer-Link trägt seit 24.08. die Kategorie
+    // legal_pulse und stoppt NUR Pulse-Mails — der alte Satz „stoppt alle
+    // Benachrichtigungs-Mails" war dadurch falsch geworden (widersprach der
+    // Abmelde-Seite, die korrekt sagt: Fristen bleiben unberührt).
+    expect(html).not.toContain("stoppt alle Benachrichtigungs-Mails");
+    expect(html).toContain("Die Legal-Pulse-Mails kannst du jederzeit abschalten");
+    expect(html).toContain("Deine Fristen-Erinnerungen bleiben davon unber");
   });
 });
 
