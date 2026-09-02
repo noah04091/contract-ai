@@ -70,6 +70,7 @@ interface ResultsProps {
   // B2B-spezifische Props
   isB2B?: boolean;
   sucheGestoert?: boolean;
+  stoerungsgrund?: string | null;
   aiSuggestedAlternatives?: Alternative[];
 }
 
@@ -87,6 +88,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   partnerOffers = [],
   isB2B = false,
   sucheGestoert = false,
+  stoerungsgrund = null,
   aiSuggestedAlternatives = []
 }) => {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
@@ -1004,10 +1006,9 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           <div className="meta-item meta-item-hinweis meta-item-stoerung">
             <span className="meta-label">Hinweis zur Suche</span>
             <span className="meta-value">
-              Die Anbietersuche im Web war bei diesem Durchlauf nicht erreichbar. Die unten
-              gezeigten Anbieter stammen deshalb ausschließlich aus dem Wissen der KI und
-              wurden nicht über eine Suche bestätigt. Ein erneuter Versuch später kann mehr
-              Ergebnisse liefern.
+              {stoerungsgrund === 'keine-treffer-zu-den-suchanfragen'
+                ? 'Die Websuche lief, hat zu diesem Vertrag aber keine passenden Anbieterseiten gefunden. Die unten gezeigten Anbieter stammen deshalb aus dem Wissen der KI und wurden nicht über eine Suche bestätigt. Eine eigene Suchanfrage im Feld oben führt hier oft schneller zum Ziel.'
+                : 'Die Anbietersuche im Web war bei diesem Durchlauf nicht erreichbar. Die unten gezeigten Anbieter stammen deshalb ausschließlich aus dem Wissen der KI und wurden nicht über eine Suche bestätigt. Ein erneuter Versuch später kann mehr Ergebnisse liefern.'}
             </span>
           </div>
         ) : enhancedAlternatives.every(a => !a.monthlyPrice && (!a.prices || a.prices.length === 0)) && (

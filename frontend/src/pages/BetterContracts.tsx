@@ -746,6 +746,7 @@ const BetterContracts: React.FC = () => {
                 fromCache={results.fromCache}
                 isB2B={results.isB2B || false}
                 sucheGestoert={results.sucheGestoert || false}
+                stoerungsgrund={results.stoerungsgrund || null}
                 aiSuggestedAlternatives={results.aiSuggestedAlternatives || []}
               />
               

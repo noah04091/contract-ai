@@ -1025,7 +1025,10 @@ function getDefaultB2BEnrichment(searchResults) {
 // Nutzer wie fuer uns. Belegt an Noahs Testlauf vom 02.09.: 0 Treffer, 36 Sekunden.
 async function performMultiSourceSearch(searchQueries, SERP_API_KEY) {
   const allResults = [];
-  const diagnose = { versuche: 0, fehlgeschlagen: 0, gruende: [] };
+  // 02.09.2026 erweitert: "keine Anfrage fehlgeschlagen" heisst noch lange nicht
+  // "Treffer erhalten". Genau diese Luecke blieb nach dem ersten Fix offen —
+  // eine erfolgreiche Anfrage mit leerem Ergebnis sah aus wie ein Erfolg.
+  const diagnose = { versuche: 0, fehlgeschlagen: 0, mitTreffern: 0, roheTreffer: 0, gruende: [] };
 
   // Probiere mehrere Suchanfragen nacheinander
   for (let i = 0; i < Math.min(searchQueries.length, 3); i++) {
@@ -1046,6 +1049,8 @@ async function performMultiSourceSearch(searchQueries, SERP_API_KEY) {
       });
 
       const results = serpRes.data.organic_results || [];
+      diagnose.roheTreffer += results.length;
+      if (results.length > 0) diagnose.mitTreffern++;
       console.log(`📊 Query ${i + 1}: ${results.length} Ergebnisse`);
 
       if (results.length > 0) {
@@ -1684,7 +1689,7 @@ router.post("/", async (req, res) => {
       // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
       // Fire-and-forget wie in den neun anderen Routen.
       require('../services/featureUsage').getInstance()
-        .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'cache', sucheGestoert, stoerungsgrund } })
+        .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'cache', sucheGestoert, stoerungsgrund, suchBilanz } })
         .catch(() => {});
       return res.json({
         ...cachedResult,
@@ -1814,12 +1819,22 @@ router.post("/", async (req, res) => {
     // leeres Suchergebnis — bei einem kaum genutzten Feature faellt das niemandem auf.
     let sucheGestoert = false;
     let stoerungsgrund = null;
+    let suchBilanz = null;   // rohe Zahlen fuer die Messung: wie viel kam an, wie viel blieb uebrig
     try {
       organicResults = await performMultiSourceSearch(enhancedQueries, SERP_API_KEY);
       const d = organicResults.diagnose;
       if (d && d.versuche > 0 && d.fehlgeschlagen === d.versuche) {
         sucheGestoert = true;
         stoerungsgrund = [...new Set(d.gruende)].join(', ');
+      } else if (d && d.versuche > 0 && d.roheTreffer === 0) {
+        // Anfragen kamen durch, lieferten aber nichts: das liegt an den
+        // Suchanfragen selbst, nicht am Dienst. Andere Ursache, anderer Fix.
+        sucheGestoert = true;
+        stoerungsgrund = 'keine-treffer-zu-den-suchanfragen';
+      }
+      if (d) {
+        suchBilanz = { versuche: d.versuche, fehlgeschlagen: d.fehlgeschlagen, mitTreffern: d.mitTreffern, roheTreffer: d.roheTreffer };
+        console.log(`🔎 Suchbilanz: ${d.versuche} Anfragen, ${d.fehlgeschlagen} fehlgeschlagen, ${d.mitTreffern} mit Treffern, ${d.roheTreffer} Rohtreffer`);
       }
       console.log(`✅ Multi-search completed with ${organicResults.length} results${sucheGestoert ? ' — ABER ALLE ANFRAGEN FEHLGESCHLAGEN: ' + stoerungsgrund : ''}`);
     } catch (searchError) {
@@ -2327,6 +2342,16 @@ router.post("/", async (req, res) => {
     // gibt es bereits generateConsumerAiSuggestions() und enrichB2BResultsWithGPT(),
     // deren Ergebnisse im Frontend klar als KI-Vorschlag gekennzeichnet werden.
 
+    if (suchBilanz) {
+      suchBilanz.nachFilter = filteredResults.length;
+      const verworfen = suchBilanz.roheTreffer - filteredResults.length;
+      if (suchBilanz.roheTreffer > 0 && filteredResults.length === 0) {
+        console.error(`🚨 FILTER VERWIRFT ALLES: ${suchBilanz.roheTreffer} Rohtreffer, 0 uebrig (Filtertyp: ${filterType}). Das ist KEIN leeres Suchergebnis.`);
+      } else if (verworfen > 0) {
+        console.log(`🧹 Filter (${filterType}): ${suchBilanz.roheTreffer} Rohtreffer → ${filteredResults.length} uebrig (${verworfen} verworfen)`);
+      }
+    }
+
     // Überschreibe die organicResults mit gefilterten
     organicResults = filteredResults;
 
@@ -2371,6 +2396,7 @@ router.post("/", async (req, res) => {
               alternatives: [],
               sucheGestoert,
               stoerungsgrund,
+              suchBilanz,
               aiSuggestedAlternatives: aiSuggested,
               isB2B: true,
               searchQuery: cleanSearchQuery,
@@ -2391,7 +2417,7 @@ router.post("/", async (req, res) => {
             // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
             // Fire-and-forget wie in den neun anderen Routen.
             require('../services/featureUsage').getInstance()
-              .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'nur-ki-vorschlaege', sucheGestoert, stoerungsgrund } })
+              .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'nur-ki-vorschlaege', sucheGestoert, stoerungsgrund, suchBilanz } })
               .catch(() => {});
             return res.json(zeroResult);
           }
@@ -2698,6 +2724,7 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
       analysis,
       sucheGestoert,
       stoerungsgrund,
+      suchBilanz,
       alternatives: enrichedResults,
       aiSuggestedAlternatives: aiSuggestedAlternatives,
       isB2B: !isConsumerContract,
@@ -2719,7 +2746,7 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
     // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
     // Fire-and-forget wie in den neun anderen Routen.
     require('../services/featureUsage').getInstance()
-      .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'vollstaendig', sucheGestoert, stoerungsgrund } })
+      .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'vollstaendig', sucheGestoert, stoerungsgrund, suchBilanz } })
       .catch(() => {});
 
     // Cache speichern
