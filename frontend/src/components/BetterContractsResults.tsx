@@ -16,6 +16,11 @@ interface Alternative {
   link: string;
   snippet: string;
   prices: string[];
+  // 01.09.2026: strukturierte Preise vom Backend. Vorher musste die Zahl aus der
+  // Zeichenkette zurückgerechnet werden, wobei "4.452 €" wieder als 4,45 landete.
+  monatspreise?: number[];
+  jahrespreise?: number[];
+  einmalpreise?: number[];
   relevantInfo: string;
   hasDetailedData: boolean;
   recommendation?: 'best' | 'value' | 'premium';
@@ -327,20 +332,33 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   };
 
   // Extract price from strings and estimate monthly cost
-  const extractPrice = (priceStrings: string[]): number | null => {
-    for (const priceStr of priceStrings) {
-      const match = priceStr.match(/(\d+)[,.]?(\d*)\s*(€|EUR)/);
-      if (match) {
-        const price = parseFloat(match[1] + '.' + (match[2] || '0'));
-        return price;
-      }
+  // 01.09.2026: Der eingegebene Vergleichspreis ist laut Eingabefeld ein MONATS-
+  // betrag. Verglichen wird deshalb nur mit Monatspreisen der Alternative.
+  //
+  // Vorher wurde die Zahl aus der Anzeige-Zeichenkette zurückgerechnet
+  // (/(\d+)[,.]?(\d*)/), was deutsche Tausenderpunkte erneut falsch las: aus
+  // "4.452 €" wurde 4,45. Zusätzlich landete jeder Betrag im Vergleich, auch ein
+  // Einmalpreis, der neben einem Monatsbeitrag nichts zu suchen hat.
+  // Das Backend liefert die Werte jetzt strukturiert in `monatspreise`.
+  const monatspreisVon = (alt: Alternative): number | null => {
+    if (Array.isArray(alt.monatspreise) && alt.monatspreise.length > 0) {
+      return alt.monatspreise[0];
     }
     return null;
   };
 
+  // Deutsche Schreibweise. Vorher stand in der grossen Preisanzeige
+  // `toFixed(2)` — also "1299.00€", während in der Liste darunter
+  // "1.299 €/Monat" stand. Zwei Formate für dieselbe Zahl auf einer Karte.
+  const euro = (n: number): string =>
+    n.toLocaleString('de-DE', {
+      minimumFractionDigits: Math.round(n * 100) % 100 === 0 ? 0 : 2,
+      maximumFractionDigits: 2
+    }) + ' €';
+
   // Enhance alternatives with extracted data
   const enhancedAlternatives = alternatives.map(alt => {
-    const extractedPrice = extractPrice(alt.prices);
+    const extractedPrice = monatspreisVon(alt);
     return {
       ...alt,
       monthlyPrice: extractedPrice,
@@ -354,8 +372,11 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   const sortedAlternatives = [...enhancedAlternatives].sort((a, b) => {
     switch (sortBy) {
       case 'price': {
-        const priceA = a.monthlyPrice || 999;
-        const priceB = b.monthlyPrice || 999;
+        // Ohne Preis ans Ende, nicht auf einen erfundenen Platz in der Mitte.
+        // Vorher galt pauschal 999, wodurch ein Eintrag ohne Preisangabe VOR
+        // einem echten Monatsbeitrag von z.B. 2.500 € einsortiert wurde.
+        const priceA = a.monthlyPrice ?? Number.POSITIVE_INFINITY;
+        const priceB = b.monthlyPrice ?? Number.POSITIVE_INFINITY;
         return priceA - priceB;
       }
       case 'features': {
@@ -760,14 +781,12 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
                     </div>
                   )}
 
-                  {index === 0 && (
-                    <div className="recommendation-badge best">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                      </svg>
-                      Beste Option
-                    </div>
-                  )}
+                  {/* 01.09.2026 ENTFERNT: Etikett "Beste Option" an Position 0. Es wurde
+                      allein nach Listenposition vergeben, und auf Position 0 steht per
+                      Sortierung das Partner-Widget. Damit trug ein Werbemittel die
+                      Auszeichnung "beste Option", ohne dass irgendetwas verglichen wurde.
+                      Ein belegtes Etikett kann zurueckkehren, sobald die Preiserkennung
+                      verlaesslich ist (Stufe 3). */}
 
                   {savings && savings > 5 && (
                     <div className="savings-badge">
@@ -793,7 +812,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
 
                     {alternative.monthlyPrice && (
                       <div className="price-display">
-                        <span className="price-amount">{alternative.monthlyPrice.toFixed(2)}€</span>
+                        <span className="price-amount">{euro(alternative.monthlyPrice)}</span>
                         <span className="price-period">/Monat</span>
                       </div>
                     )}
@@ -971,6 +990,23 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
             {enhancedAlternatives.filter(a => a.hasDetailedData).length} von {alternatives.length} mit Details
           </span>
         </div>
+
+        {/* Wenn zu keinem Treffer ein Preis gefunden wurde, sagen wir warum.
+            Vorher stand die Liste einfach ohne Preise da und wirkte defekt,
+            obwohl es der Normalfall ist: bei Geschäfts- und Dienstleistungs-
+            verträgen wird individuell kalkuliert, im Privatbereich hängt der
+            Preis an den eigenen Angaben und wird erst im Rechner ermittelt. */}
+        {alternatives.length > 0 &&
+          enhancedAlternatives.every(a => !a.monthlyPrice && (!a.prices || a.prices.length === 0)) && (
+          <div className="meta-item meta-item-hinweis">
+            <span className="meta-label">Warum keine Preise?</span>
+            <span className="meta-value">
+              {isB2B
+                ? 'Bei Geschäfts- und Dienstleistungsverträgen nennen Anbieter ihre Preise fast nie öffentlich, sie kalkulieren pro Kunde. Frag die Anbieter direkt an und vergleiche die Angebote mit deinem aktuellen Vertrag.'
+                : 'Dein Preis hängt von deinen eigenen Angaben ab, etwa Verbrauch, Postleitzahl oder Fahrzeug. Verlässliche Zahlen bekommst du erst im Tarifrechner, nicht auf der Anbieterseite.'}
+            </span>
+          </div>
+        )}
         {/* 🆕 Partner Info */}
         {partnerOffers && partnerOffers.length > 0 && (
           <div className="meta-item">

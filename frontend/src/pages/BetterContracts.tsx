@@ -349,7 +349,11 @@ const BetterContracts: React.FC = () => {
         credentials: "include",
         body: JSON.stringify({
           contractText: contractText,
-          searchQuery: generatedQuery
+          searchQuery: generatedQuery,
+          // 01.09.2026: Der oben ermittelte Typ wird jetzt mitgesendet. Vorher
+          // fehlte dieses Feld, weshalb der Server ein zweites Mal klassifiziert
+          // hat — mit anderem Modell und widersprüchlichem Ergebnis.
+          contractType: detectedType
         })
       });
 
@@ -459,13 +463,13 @@ const BetterContracts: React.FC = () => {
             <h1>Finde <span className="gradient-text">bessere</span> Alternativen</h1>
 
             <p className="contract-description">
-              Lade deinen Vertrag hoch und wir finden automatisch günstigere Anbieter mit besseren Konditionen.
+              Lade deinen Vertrag hoch. Wir recherchieren, wer dieselbe Leistung anbietet, wie in diesem Markt abgerechnet wird und wo du Verhandlungsspielraum hast.
             </p>
 
             <div className="contract-feature-pills">
               <div className="contract-feature-pill">
                 <TrendingDown size={16} />
-                Bis zu 60% sparen
+                Sparpotenzial prüfen
               </div>
               <div className="contract-feature-pill">
                 <SearchCheck size={16} />

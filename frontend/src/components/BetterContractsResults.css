@@ -660,6 +660,26 @@
   text-align: right;
 }
 
+/* Erklärung, wenn zu keinem Treffer ein Preis gefunden wurde.
+   Braucht die volle Breite und linksbündigen Fließtext — in der 250px-Spalte
+   des Rasters wäre der Satz rechtsbündig zusammengequetscht.
+   Bewusst unter .results-meta geschachtelt, damit die Regel nicht global leckt. */
+.results-meta .meta-item-hinweis {
+  grid-column: 1 / -1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.results-meta .meta-item-hinweis .meta-value {
+  text-align: left;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
 /* ========== 🆕 PARTNER WIDGET MODAL ========== */
 .widget-modal-overlay {
   position: fixed;

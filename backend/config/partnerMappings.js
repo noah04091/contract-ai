@@ -1132,61 +1132,51 @@ function generatePartnerOffers(category, extractedData = {}) {
     // 🔴 VERBESSERTE Beschreibungen basierend auf Kategorie
     const categoryDescriptions = {
       'rechtsschutz': {
-        title: 'Rechtsschutzversicherung Vergleich',
-        snippet: 'Finden Sie die beste Rechtsschutzversicherung aus über 100 Tarifen. Durchschnittliche Ersparnis: 40% gegenüber Direktabschluss.',
+        title: 'Rechtsschutzversicherung vergleichen',
+        snippet: 'Tarifrechner für Rechtsschutzversicherungen. Der Vergleich läuft beim Portal mit Ihren eigenen Angaben.',
         features: [
-          '✔ Über 100 spezialisierte Rechtsschutz-Tarife',
-          '✔ Inklusive Verkehrs-, Privat- und Berufsrechtsschutz',
-          '✔ Selbstbeteiligung flexibel wählbar',
-          '✔ Sofortiger Online-Abschluss möglich'
-        ],
-        priceRange: ['Ab 8€/Monat', 'Ab 12€/Monat', 'Ab 20€/Monat']
+          '✔ Verkehrs-, Privat- und Berufsrechtsschutz wählbar',
+          '✔ Selbstbeteiligung einstellbar',
+          '✔ Abschluss direkt beim Anbieter'
+        ]
       },
       'haftpflicht': {
-        title: 'Haftpflichtversicherung Vergleich', 
-        snippet: 'Privathaftpflicht ab 2,50€ monatlich. Vergleichen Sie alle Top-Anbieter und sparen Sie bis zu 65%.',
+        title: 'Haftpflichtversicherung vergleichen',
+        snippet: 'Tarifrechner für die Privathaftpflicht. Der Vergleich läuft beim Portal mit Ihren eigenen Angaben.',
         features: [
-          '✔ Deckungssummen bis 50 Mio. Euro',
-          '✔ Weltweiter Schutz inklusive',
-          '✔ Schlüsselverlust mitversichert',
-          '✔ Familientarife verfügbar'
-        ],
-        priceRange: ['Ab 2,50€/Monat', 'Ab 4€/Monat', 'Ab 7€/Monat']
+          '✔ Deckungssumme und Umfang einstellbar',
+          '✔ Einzel- und Familientarife',
+          '✔ Abschluss direkt beim Anbieter'
+        ]
       },
       'kfzversicherung': {
-        title: 'KFZ-Versicherung Vergleich',
-        snippet: 'Bis zu 850€ jährlich sparen. Vergleichen Sie über 330 Tarife der führenden Autoversicherer.',
+        title: 'KFZ-Versicherung vergleichen',
+        snippet: 'Tarifrechner für die KFZ-Versicherung. Ihr Preis hängt von Fahrzeug und Schadenfreiheitsklasse ab und wird beim Portal berechnet.',
         features: [
-          '✔ Über 330 KFZ-Tarife im Vergleich',
+          '✔ Haftpflicht, Teil- und Vollkasko wählbar',
           '✔ Werkstattbindung optional',
-          '✔ Kaskoversicherung inklusive',
-          '✔ Schadenfreiheitsklasse übertragbar'
-        ],
-        priceRange: ['Ab 19€/Monat', 'Ab 35€/Monat', 'Ab 60€/Monat']
+          '✔ Schadenfreiheitsklasse wird berücksichtigt'
+        ]
       },
       'hausrat': {
-        title: 'Hausratversicherung Vergleich',
-        snippet: 'Schützen Sie Ihr Hab und Gut ab 2€ monatlich. Top-Tarife mit Elementarschutz.',
+        title: 'Hausratversicherung vergleichen',
+        snippet: 'Tarifrechner für die Hausratversicherung. Der Preis hängt von Wohnfläche und Umfang ab und wird beim Portal berechnet.',
         features: [
-          '✔ Neuwerterstattung garantiert',
-          '✔ Elementarschäden versicherbar',
-          '✔ Fahrraddiebstahl inklusive',
-          '✔ Glasbruch mitversichert'
-        ],
-        priceRange: ['Ab 2€/Monat', 'Ab 4€/Monat', 'Ab 8€/Monat']
+          '✔ Elementarschäden zuwählbar',
+          '✔ Fahrraddiebstahl und Glasbruch optional',
+          '✔ Abschluss direkt beim Anbieter'
+        ]
       }
     };
     
     const defaultDesc = {
-      title: `${mapping.name} Vergleich`,
-      snippet: `Vergleichen Sie die besten ${mapping.name}-Angebote und sparen Sie Geld.`,
+      title: `${mapping.name} vergleichen`,
+      snippet: `Tarifrechner für ${mapping.name}. Der Vergleich läuft beim Portal mit Ihren eigenen Angaben.`,
       features: [
-        '✔ Große Anbieterauswahl',
-        '✔ Transparenter Vergleich',
-        '✔ Kostenlos & unverbindlich',
-        '✔ TÜV-geprüfter Service'
-      ],
-      priceRange: ['Ab 10€/Monat', 'Ab 20€/Monat', 'Ab 30€/Monat']
+        '✔ Vergleich mit Ihren eigenen Angaben',
+        '✔ Kostenlos und unverbindlich',
+        '✔ Abschluss direkt beim Anbieter'
+      ]
     };
     
     const desc = categoryDescriptions[category] || defaultDesc;
@@ -1201,15 +1191,21 @@ function generatePartnerOffers(category, extractedData = {}) {
         title: `${providerName} - ${desc.title}`,
         snippet: desc.snippet,
         link: '#partner-widget',
-        price: extractedData.price || desc.priceRange[0],
-        prices: extractedData.prices?.length > 0 ? extractedData.prices : desc.priceRange,
+        // 01.09.2026: Preise kommen ausschliesslich aus echten Daten.
+        // Vorher stand hier eine hartcodierte Liste (z.B. 'Ab 19EUR/Monat'), die als
+        // gefundener Preis angezeigt, zum Sortieren benutzt und mit einem
+        // Verifiziert-Haken versehen wurde. Der Rechner selbst liefert echte Preise.
+        price: extractedData.price || null,
+        prices: extractedData.prices?.length > 0 ? extractedData.prices : [],
         features: desc.features,
         relevantInfo: `${providerName} ist Deutschlands führendes Vergleichsportal mit Bestpreis-Garantie.`,
         widget: mapping.widgets.fullCalculator,
         directLink: mapping.widgets.directLink || null,
         scoreBonus: mapping.scoreBonus || 10,
-        isVerified: true,
-        hasDetailedData: true,
+        // Ein Vergleichsrechner ist ein Werbemittel, kein von uns geprueftes Angebot.
+        isVerified: false,
+        hasDetailedData: false,
+        isComparisonCalculator: true,
         isPriorityPortal: true,
         category: category
       });

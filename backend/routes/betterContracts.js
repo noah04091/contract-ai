@@ -24,6 +24,9 @@ const {
   partnerMappings 
 } = require('../config/partnerMappings');
 
+// 💶 01.09.2026: Preiserkennung ausgelagert und getestet (tests/unit/preisErkennung.test.js)
+const { extrahierePreise, formatiereEuro } = require('../utils/preisErkennung');
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // Ausschliesslich aus der Umgebung. Kein Fallback im Code — ein hier hinterlegter
 // Schluessel waere ueber das oeffentliche Repo und die Git-Historie lesbar.
@@ -39,6 +42,23 @@ if (!SERP_API_KEY) {
   console.error(`🚨 SERP_API_KEY fehlt — die Anbietersuche in Better Contracts bleibt deaktiviert.`);
 } else {
   console.log(`✅ SERP_API_KEY erfolgreich geladen!`);
+}
+
+// 💰 01.09.2026: Kostenerfassung. Better Contracts war das einzige Feature, dessen
+// KI-Verbrauch in cost_tracking gar nicht auftauchte — bis zu 6 Aufrufe pro Durchlauf
+// (darunter 3x gpt-4o) waren damit unsichtbar. Fire-and-forget, darf nie etwas brechen.
+function spurKosten(completion, model, phase, userId) {
+  try {
+    if (!completion || !completion.usage) return;
+    require('../services/costTracking').getInstance().trackAPICall({
+      userId: userId || null,
+      model,
+      inputTokens: completion.usage.prompt_tokens || 0,
+      outputTokens: completion.usage.completion_tokens || 0,
+      feature: 'better-contracts',
+      metadata: { phase }
+    }).catch(() => { /* Kostenerfassung darf die Anfrage nie stoeren */ });
+  } catch { /* costTracking optional */ }
 }
 
 // 🆕 STEP 3: Rate Limiting (einfache In-Memory Lösung)
@@ -544,7 +564,7 @@ function isKnownConsumerType(detectedType) {
   return KNOWN_CONSUMER_TYPES.includes(detectedType.toLowerCase());
 }
 
-async function generateGPTSearchQueries(detectedType, contractText, openaiClient) {
+async function generateGPTSearchQueries(detectedType, contractText, openaiClient, userId) {
   try {
     console.log(`🤖 Generiere GPT-Suchqueries für B2B-Typ: ${detectedType}`);
 
@@ -589,6 +609,7 @@ Antworte NUR mit einem JSON-Array von 4 Strings. Keine Erklärungen.`
       temperature: 0.3,
       max_tokens: 200
     });
+    spurKosten(completion, "gpt-4o-mini", "suchanfragen", userId);
 
     const responseText = completion.choices[0].message.content.trim();
 
@@ -619,7 +640,7 @@ Antworte NUR mit einem JSON-Array von 4 Strings. Keine Erklärungen.`
 }
 
 // 🆕 B2B GPT Structured Enrichment
-async function enrichB2BResultsWithGPT(searchResults, contractText, detectedType, openaiClient) {
+async function enrichB2BResultsWithGPT(searchResults, contractText, detectedType, openaiClient, userId) {
   try {
     console.log(`🏢 Starte B2B GPT-Enrichment für ${searchResults.length} Ergebnisse...`);
 
@@ -688,6 +709,7 @@ REGELN:
       max_tokens: 2000
     });
 
+    spurKosten(completion, "gpt-4o", "b2b-anreicherung", userId);
     const responseText = completion.choices[0].message.content;
     const parsed = JSON.parse(responseText);
 
@@ -779,7 +801,7 @@ function mergeB2BEnrichment(enrichedResults, b2bEnrichment) {
 
 // 🆕 Consumer-KI-Vorschläge: GPT generiert bekannte Anbieter aus Marktwissen
 // (B2B nutzt enrichB2BResultsWithGPT; Consumer hatte bisher 0 KI-Vorschläge)
-async function generateConsumerAiSuggestions(contractText, detectedType, openaiClient) {
+async function generateConsumerAiSuggestions(contractText, detectedType, openaiClient, userId) {
   try {
     console.log(`🛒 Consumer-KI-Vorschläge für Typ: ${detectedType}`);
 
@@ -825,6 +847,7 @@ ANTWORTE NUR mit validem JSON:
       max_tokens: 1500
     });
 
+    spurKosten(completion, "gpt-4o", "consumer-vorschlaege", userId);
     const parsed = JSON.parse(completion.choices[0].message.content);
     if (!parsed.providers || !Array.isArray(parsed.providers)) {
       console.warn(`⚠️ Consumer-KI: providers-Array fehlt oder ungültig`);
@@ -842,7 +865,7 @@ ANTWORTE NUR mit validem JSON:
 // 🆕 GPT-Validation-Layer: Klassifiziert jeden Treffer in 4 Kategorien
 // Wird NACH allen anderen Schritten aufgerufen — saubere Trennung im Frontend
 // Bei Fehler: Fallback auf Frontend-Heuristik (kein gptCategory gesetzt)
-async function classifyResultsWithGPT(results, contractText, detectedType, openaiClient) {
+async function classifyResultsWithGPT(results, contractText, detectedType, openaiClient, userId) {
   if (!Array.isArray(results) || results.length === 0) return new Map();
 
   try {
@@ -899,6 +922,7 @@ ANTWORTE NUR mit validem JSON (keine Erklärung, kein Markdown):
       temperature: 0.1,
       max_tokens: 1500
     });
+    spurKosten(completion, "gpt-4o-mini", "trefferklassifikation", userId);
 
     const responseText = completion.choices[0].message.content.trim();
     const cleaned = responseText
@@ -1159,76 +1183,76 @@ async function extractWebContent(url) {
     // Extrahiere Provider aus URL oder Seiten-Content
     if (url.includes('check24.de')) {
       provider = 'CHECK24';
-      betterDescription = 'Deutschlands größtes Vergleichsportal. Über 300 Tarife im direkten Vergleich mit Best-Preis-Garantie.';
+      betterDescription = 'Vergleichsportal für Versicherungen, Energie, Finanzen und Telekommunikation.';
     } else if (url.includes('verivox.de')) {
       provider = 'Verivox';
-      betterDescription = 'TÜV-geprüftes Vergleichsportal. Transparent, unabhängig und kostenlos.';
+      betterDescription = 'Vergleichsportal für Energie, Telekommunikation und Versicherungen.';
     } else if (url.includes('tarifcheck.de')) {
       provider = 'TarifCheck';
-      betterDescription = 'Unabhängiger Versicherungsvergleich mit persönlicher Expertenberatung.';
+      betterDescription = 'Vergleichsportal für Versicherungen und Tarife.';
     } else if (url.includes('finanztip.de')) {
       provider = 'Finanztip';
-      betterDescription = 'Gemeinnützige Verbraucher-Redaktion. 100% werbefrei und unabhängig.';
+      betterDescription = 'Verbraucherportal mit Ratgeberartikeln und Vergleichen.';
     } else if (url.includes('test.de') || url.includes('stiftung-warentest')) {
       provider = 'Stiftung Warentest';
-      betterDescription = 'Deutschlands bekannteste Testorganisation. Objektive Tests seit 1964.';
+      betterDescription = 'Testorganisation für Waren und Dienstleistungen.';
     } else if (url.includes('preisvergleich.de')) {
       provider = 'PREISVERGLEICH.de';
-      betterDescription = 'Unabhängiges Vergleichsportal mit Preisgarantie.';
+      betterDescription = 'Vergleichsportal.';
     } else if (url.includes('strom-gas24.de')) {
       provider = 'strom-gas24.de';
       betterDescription = 'Energie-Vergleichsportal mit aktuellen Tarifen.';
     } else if (url.includes('finanzfluss.de')) {
       provider = 'Finanzfluss';
-      betterDescription = 'Unabhängige Finanzbildung. Transparente Vergleiche ohne versteckte Provisionen.';
+      betterDescription = 'Portal für Finanzthemen mit Ratgebern und Vergleichen.';
     } else if (url.includes('financescout24')) {
       provider = 'FinanceScout24';
-      betterDescription = 'Versicherungsvergleich mit über 250 Tarifen von mehr als 70 Anbietern.';
+      betterDescription = 'Vergleichsportal für Versicherungen und Finanzprodukte.';
     } else if (url.includes('toptarif.de')) {
       provider = 'TopTarif';
       betterDescription = 'Vergleichsportal für Versicherungen, Energie und Finanzen.';
     } else if (url.includes('stromauskunft.de')) {
       provider = 'Stromauskunft';
-      betterDescription = 'Unabhängiges Stromvergleichsportal mit aktuellen Tarifen und Wechselservice.';
+      betterDescription = 'Vergleichsportal für Strom und Gas.';
     } else if (url.includes('arag.de')) {
       provider = 'ARAG';
-      betterDescription = 'Europas größter Rechtsschutzversicherer. Direkt beim Spezialisten abschließen.';
+      betterDescription = 'Rechtsschutzversicherer.';
     } else if (url.includes('roland-rechtsschutz')) {
       provider = 'ROLAND';
-      betterDescription = 'Rechtsschutz-Spezialist seit 1957. Schnelle Hilfe im Rechtsfall.';
+      betterDescription = 'Rechtsschutzversicherer.';
     } else if (url.includes('adam-riese')) {
       provider = 'Adam Riese';
-      betterDescription = 'Digitaler Versicherer der Württembergischen. Flexibel und transparent.';
+      betterDescription = 'Digitalversicherer der Württembergischen.';
     } else if (url.includes('huk.de') || url.includes('huk24') || url.includes('huk-coburg')) {
       provider = 'HUK-COBURG';
-      betterDescription = 'Deutschlands Versicherer im Bausparen. Faire Preise, starke Leistungen.';
+      betterDescription = 'Versicherer mit breitem Privatkundenangebot.';
     } else if (url.includes('allianz')) {
       provider = 'Allianz';
-      betterDescription = 'Weltgrößter Versicherer. Umfassender Schutz mit persönlicher Beratung.';
+      betterDescription = 'Versicherungskonzern.';
     } else if (url.includes('axa.de')) {
       provider = 'AXA';
-      betterDescription = 'Internationale Versicherungsgruppe. Von Krankenakte bis Lebensschutz.';
+      betterDescription = 'Internationale Versicherungsgruppe.';
     } else if (url.includes('ergo.de')) {
       provider = 'ERGO';
-      betterDescription = 'Die Versicherung an Ihrer Seite. Teil der Munich Re Gruppe.';
+      betterDescription = 'Versicherer, Teil der Munich-Re-Gruppe.';
     } else if (url.includes('cosmosdirekt')) {
       provider = 'CosmosDirekt';
-      betterDescription = 'Deutschlands führender Online-Versicherer. Direkt abschließen und sparen.';
+      betterDescription = 'Direktversicherer.';
     } else if (url.includes('generali')) {
       provider = 'Generali';
-      betterDescription = 'Traditionsversicherer seit 1831. Einer der größten Erstversicherer weltweit.';
+      betterDescription = 'Internationale Versicherungsgruppe.';
     } else if (url.includes('friday')) {
       provider = 'Friday';
-      betterDescription = 'Digitaler Versicherer. Minutenschneller Abschluss per App.';
+      betterDescription = 'Digitalversicherer.';
     } else if (url.includes('getsafe')) {
       provider = 'GetSafe';
-      betterDescription = 'Neo-Versicherer. Komplett digital mit Schadenregulierung per App.';
+      betterDescription = 'Digitalversicherer.';
     } else if (url.includes('nexible')) {
       provider = 'Nexible';
-      betterDescription = 'Die digitale Kfz-Versicherung der Allianz. Günstig und flexibel.';
+      betterDescription = 'Digitale Kfz-Versicherung der Allianz.';
     } else if (url.includes('bavariadirekt')) {
       provider = 'BavariaDirekt';
-      betterDescription = 'Online-Versicherer der Sparkassen. Regional verwurzelt, digital unterwegs.';
+      betterDescription = 'Direktversicherer.';
     } else {
       // Versuche Provider aus Title oder Meta-Tags zu extrahieren
       const siteTitle = $('title').text();
@@ -1243,112 +1267,40 @@ async function extractWebContent(url) {
         provider = provider.substring(0, 25).trim();
       }
       
-      // Generische Beschreibung für unbekannte Anbieter
-      betterDescription = 'Online-Vergleichsportal für bessere Tarife.';
+      // 01.09.2026: keine generische Behauptung mehr. Frueher stand hier fuer JEDEN
+      // unbekannten Treffer "Online-Vergleichsportal fuer bessere Tarife" — auch dann,
+      // wenn es weder ein Portal war noch bessere Tarife bot. Leer lassen, damit
+      // stattdessen die echte Meta-Beschreibung der Zielseite verwendet wird.
+      betterDescription = '';
     }
 
-    // 🔴🔴🔴 NEUE INTELLIGENTE PREIS-EXTRAKTION 🔴🔴🔴
-    const prices = [];
-    const savings = [];
-    const features = [];
-    
-    // Definiere Patterns für verschiedene Preis-Typen
-    const patterns = {
-      // ECHTE PREISE (was man zahlt)
-      monthlyPrice: [
-        /ab\s+(\d+[,.]?\d*)\s*€(?:\s*\/?\s*(?:pro\s+)?monat(?:lich)?)?/gi,
-        /(\d+[,.]?\d*)\s*€\s*(?:pro\s+)?monat(?:lich)?/gi,
-        /monatlich(?:er)?\s+(?:ab\s+)?(\d+[,.]?\d*)\s*€/gi,
-        /mtl\.\s*(\d+[,.]?\d*)\s*€/gi,
-        /(\d+[,.]?\d*)\s*€\/mtl/gi,
-        /grundpreis:?\s*(\d+[,.]?\d*)\s*€/gi,
-        /arbeitspreis:?\s*(\d+[,.]?\d*)\s*cent/gi
-      ],
-      yearlyPrice: [
-        /(\d+[,.]?\d*)\s*€\s*(?:pro\s+)?jahr/gi,
-        /jährlich(?:er)?\s+(?:ab\s+)?(\d+[,.]?\d*)\s*€/gi,
-        /(\d+[,.]?\d*)\s*€\s*p\.?\s*a\.?/gi,
-        /(\d+[,.]?\d*)\s*€\/jahr/gi
-      ],
-      // ERSPARNISSE (was man sparen kann)
-      savingsAmount: [
-        /(?:spare(?:n)?|ersparnis|einspar(?:en)?|spar(?:en)?)\s+(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
-        /bis\s+zu\s+(\d+[,.]?\d*)\s*€\s+(?:spare|ersparnis|günstiger|weniger)/gi,
-        /(\d+[,.]?\d*)\s*€\s+(?:ersparnis|einsparung|sparpotenzial|bonus|prämie|cashback)/gi,
-        /bonus:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
-        /prämie:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
-        /wechselbonus:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
-        /neukundenbonus:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
-        /sofortbonus:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi
-      ]
-    };
-    
-    // Extrahiere ECHTE PREISE
-    patterns.monthlyPrice.forEach(pattern => {
-      const matches = bodyText.matchAll(pattern);
-      for (const match of matches) {
-        const price = match[1].replace(',', '.');
-        const priceNum = parseFloat(price);
-        // Plausibilitätsprüfung für Monatspreise
-        if (priceNum > 0 && priceNum < 500) { // Strompreise über 500€/Monat sind unwahrscheinlich
-          prices.push(`${priceNum.toFixed(2)}€/Monat`);
-        }
-      }
-    });
-    
-    patterns.yearlyPrice.forEach(pattern => {
-      const matches = bodyText.matchAll(pattern);
-      for (const match of matches) {
-        const price = match[1].replace(',', '.');
-        const priceNum = parseFloat(price);
-        // Plausibilitätsprüfung für Jahrespreise
-        if (priceNum > 50 && priceNum < 6000) { // Plausible Jahrespreise
-          const monthlyEquivalent = (priceNum / 12).toFixed(2);
-          prices.push(`${priceNum.toFixed(2)}€/Jahr (${monthlyEquivalent}€/Monat)`);
-        }
-      }
-    });
-    
-    // Extrahiere ERSPARNISSE (NICHT als Preise!)
-    patterns.savingsAmount.forEach(pattern => {
-      const matches = bodyText.matchAll(pattern);
-      for (const match of matches) {
-        const saving = match[1].replace(',', '.');
-        const savingNum = parseFloat(saving);
-        if (savingNum > 0 && savingNum < 10000) { // Plausible Ersparnisse
-          savings.push(`Bis zu ${savingNum.toFixed(0)}€ Ersparnis`);
-        }
-      }
-    });
-    
-    // Wenn keine echten Preise gefunden, suche nach Preis-Ranges
-    if (prices.length === 0) {
-      const rangePattern = /tarife?\s+(?:ab|von)\s+(\d+[,.]?\d*)\s*(?:bis|[-–])\s*(\d+[,.]?\d*)\s*€/gi;
-      const rangeMatches = bodyText.matchAll(rangePattern);
-      for (const match of rangeMatches) {
-        const min = parseFloat(match[1].replace(',', '.'));
-        const max = parseFloat(match[2].replace(',', '.'));
-        if (min > 0 && min < 500 && max > min && max < 1000) {
-          prices.push(`${min.toFixed(2)}€ - ${max.toFixed(2)}€/Monat`);
-        }
-      }
-    }
-    
-    // Portal-spezifische Extraktion für CHECK24/Verivox
+    // 💶 01.09.2026: Preiserkennung ausgelagert nach utils/preisErkennung.js.
+    // Die frueheren Muster standen hier inline und hatten zwei Fehler:
+    // deutsche Tausenderpunkte wurden als Dezimaltrenner gelesen ("4.452 €" -> 4,45 €),
+    // und Einmalpreise gab es als Kategorie nicht, weil jedes Muster ein Zeitwort
+    // verlangte. Alles, was durchkam, wurde pauschal als "/Monat" ausgezeichnet.
+    // Testfaelle: tests/unit/preisErkennung.test.js
+    const gefundenePreise = extrahierePreise(bodyText);
+
+    // Vergleichsportale halten Preise oft in eigenen Elementen statt im Fliesstext.
+    // Deren Text laeuft durch DIESELBE Erkennung, damit nirgends eine zweite
+    // Zahlenlogik entsteht (genau daran ist die alte Fassung gescheitert).
     if (url.includes('check24') || url.includes('verivox') || url.includes('tarifcheck')) {
-      // Spezielle Selektoren für Vergleichsportale
-      $('.price-value, .monthly-price, .tariff-price, [data-price], .result-price').each((i, el) => {
-        const priceText = $(el).text().trim();
-        const priceMatch = priceText.match(/(\d+[,.]?\d*)\s*€/);
-        if (priceMatch && prices.length < 5) {
-          const price = parseFloat(priceMatch[1].replace(',', '.'));
-          if (price > 0 && price < 500) {
-            prices.push(`${price.toFixed(2)}€/Monat`);
-          }
-        }
-      });
+      const portalText = $('.price-value, .monthly-price, .tariff-price, [data-price], .result-price')
+        .map((idx, el) => $(el).text().trim()).get().join(' . ');
+      if (portalText) {
+        const portalPreise = extrahierePreise(portalText);
+        gefundenePreise.anzeige.push(...portalPreise.anzeige);
+        gefundenePreise.monatlich.push(...portalPreise.monatlich);
+        gefundenePreise.jaehrlich.push(...portalPreise.jaehrlich);
+        gefundenePreise.einmalig.push(...portalPreise.einmalig);
+      }
     }
-    
+
+    const prices = gefundenePreise.anzeige;
+    const savings = gefundenePreise.ersparnisse.map(n => `Bis zu ${formatiereEuro(n)} Ersparnis`);
+    const features = [];
+
     // Features extrahieren (verbessert)
     $('.feature-list li, .tariff-details li, .comparison-feature, .benefit-item').each((i, el) => {
       const feature = $(el).text().trim();
@@ -1408,7 +1360,13 @@ async function extractWebContent(url) {
       url,
       title: title.slice(0, 120),
       description: description.slice(0, 250) || relevantInfo.slice(0, 250),
-      prices: uniquePrices, // NUR echte Preise, KEINE Ersparnisse
+      prices: uniquePrices, // beschriftete Anzeigewerte
+      // Strukturierte Zahlen fuer Vergleich und Sortierung. Vorher musste das
+      // Frontend die Zahl aus der Zeichenkette zurueckrechnen und las dabei
+      // "4.452" wieder als 4,45.
+      monatspreise: [...new Set(gefundenePreise.monatlich)].sort((a, b) => a - b),
+      jahrespreise: [...new Set(gefundenePreise.jaehrlich)].sort((a, b) => a - b),
+      einmalpreise: [...new Set(gefundenePreise.einmalig)].sort((a, b) => a - b),
       savings: uniqueSavings, // Ersparnisse separat
       features: uniqueFeatures,
       provider: provider,
@@ -1670,7 +1628,7 @@ router.post("/", async (req, res) => {
     console.log(`✅ Rate Limit OK`);
 
     // 🆕 STEP 3: Erweiterte Input-Validierung
-    const { contractText, searchQuery } = req.body;
+    const { contractText, searchQuery, contractType } = req.body;
     console.log(`🔍 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
 
     const validation = validateInput(contractText, searchQuery);
@@ -1686,6 +1644,9 @@ router.post("/", async (req, res) => {
 
     const cleanContractText = validation.cleanContractText;
     const cleanSearchQuery = validation.cleanSearchQuery;
+    // Die Route ist mit verifyToken gemountet (server.js), req.user ist also gesetzt.
+    // Defensiv trotzdem optional lesen, damit ein Mount-Umbau nichts bricht.
+    const userId = req.user?.userId || null;
     console.log(`✅ Clean Input - ContractText: ${cleanContractText.length} chars, SearchQuery: "${cleanSearchQuery}"`);
 
     console.log(`🚀 POINT 1: Input validation passed`);
@@ -1698,6 +1659,12 @@ router.post("/", async (req, res) => {
 
     if (cachedResult) {
       console.log(`💾 Cache HIT für Key: ${cacheKey}`);
+      // 📊 01.09.2026: Nutzungs-Tracking. Better Contracts war das einzige Premium-Feature
+      // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
+      // Fire-and-forget wie in den neun anderen Routen.
+      require('../services/featureUsage').getInstance()
+        .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'cache' } })
+        .catch(() => {});
       return res.json({
         ...cachedResult,
         fromCache: true,
@@ -1718,8 +1685,25 @@ router.post("/", async (req, res) => {
 
     // 🆕 Contract Type Detection with OpenAI directly (no internal fetch)
     let detectedType = 'unbekannt';
+
+    // 🔁 01.09.2026: Der Vertragstyp wurde ZWEIMAL bestimmt. Die Seite ermittelt
+    // ihn ueber /api/analyze-type/public (gpt-4) und baut daraus die Suchanfrage,
+    // konnte ihn aber nicht mitschicken, weil der Auftrag kein Feld dafuer hatte.
+    // Der Server klassifizierte deshalb neu, mit anderem Modell und anderer
+    // Typenliste — im Livelauf vom 15.08.2026 kam vorne "beratung" heraus und
+    // hier "unbekannt". Der zweite Wert gewann und zog Suchanfragen, Filterwort,
+    // Relevanzbonus und KI-Anreicherung mit sich.
+    // Jetzt: mitgesendeter Typ hat Vorrang, eigene Erkennung nur als Rueckfall.
+    const uebergebenerTyp = typeof contractType === 'string'
+      ? contractType.trim().toLowerCase().slice(0, 40).replace(/[^a-zäöüß0-9 -]/g, '')
+      : '';
+
+    if (uebergebenerTyp && uebergebenerTyp !== 'unbekannt') {
+      detectedType = uebergebenerTyp;
+      console.log(`📊 Vertragstyp von der Seite uebernommen: ${detectedType} (zweite Erkennung entfaellt)`);
+    } else {
     try {
-      console.log(`🤖 Rufe OpenAI für Vertragstyp-Erkennung auf...`);
+      console.log(`🤖 Kein Typ mitgesendet — eigene Vertragstyp-Erkennung...`);
 
       const typeCompletion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -1758,12 +1742,14 @@ router.post("/", async (req, res) => {
         max_tokens: 50
       });
 
+      spurKosten(typeCompletion, "gpt-4o-mini", "typerkennung", userId);
       detectedType = typeCompletion.choices[0].message.content.trim().toLowerCase();
       console.log(`📊 Erkannter Vertragstyp: ${detectedType}`);
 
     } catch (typeError) {
       console.error(`❌ Vertragstyp-Erkennung fehlgeschlagen:`, typeError.message);
       detectedType = 'unbekannt';
+    }
     }
 
     console.log(`🚀 POINT 4: Contract type detected: ${detectedType}`);
@@ -1785,7 +1771,7 @@ router.post("/", async (req, res) => {
     } else {
       // B2B/Unbekannte Typen: GPT-basierte Queries generieren
       console.log(`🏢 B2B/Unbekannter Typ "${detectedType}" - generiere GPT-Queries`);
-      enhancedQueries = await generateGPTSearchQueries(detectedType, cleanContractText, openai);
+      enhancedQueries = await generateGPTSearchQueries(detectedType, cleanContractText, openai, userId);
       contractContext = analyzeContractContext(cleanContractText);
       console.log(`🎯 GPT generierte ${enhancedQueries.length} B2B-Queries`);
     }
@@ -2299,96 +2285,15 @@ router.post("/", async (req, res) => {
     console.log(`🧹 Deduplizierung abgeschlossen: ${filteredResults.length} → ${deduplicatedResults.length}`);
     filteredResults = deduplicatedResults;
     
-    // 🔴 SCHRITT 4: Wenn zu wenige Ergebnisse, füge PROFESSIONELLE Fallbacks hinzu
-    if (filteredResults.length < 3 && filterType === 'rechtsschutz') {
-      console.log(`⚠️ Zu wenige Ergebnisse - füge Rechtsschutz-Fallbacks hinzu`);
-      
-      const fallbackResults = [
-        {
-          title: "ARAG SE - Rechtsschutz direkt vom Marktführer",
-          link: "https://www.arag.de/rechtsschutzversicherung/",
-          snippet: "ARAG - Europas größter Rechtsschutzversicherer. Mehrfacher Testsieger mit über 85 Jahren Erfahrung. Flexible Tarife mit oder ohne Selbstbeteiligung.",
-          position: 98,
-          provider: 'ARAG'
-        },
-        {
-          title: "ROLAND Rechtsschutz - Spezialist seit 1957",
-          link: "https://www.roland-rechtsschutz.de/",
-          snippet: "ROLAND Rechtsschutzversicherung - Ihr Spezialist für Rechtsschutz. Schnelle Hilfe im Rechtsfall mit 24/7 Hotline.",
-          position: 99,
-          provider: 'ROLAND'
-        }
-      ];
-      
-      // Nur hinzufügen wenn nicht schon vorhanden
-      for (const fallback of fallbackResults) {
-        const alreadyExists = filteredResults.some(r => 
-          r.link?.includes('arag.de') || r.link?.includes('roland-rechtsschutz')
-        );
-        if (!alreadyExists) {
-          filteredResults.push(fallback);
-        }
-      }
-    } else if (filteredResults.length < 3 && filterType === 'haftpflicht') {
-      console.log(`⚠️ Zu wenige Ergebnisse - füge Haftpflicht-Fallbacks hinzu`);
-      
-      const fallbackResults = [
-        {
-          title: "HUK-COBURG - Haftpflicht direkt vom Testsieger",
-          link: "https://www.huk.de/haftpflichtversicherung/",
-          snippet: "Deutschlands Versicherer im Bausparen. Haftpflichtschutz ab 2,87€ monatlich mit Deckungssummen bis 50 Mio. Euro.",
-          position: 98,
-          provider: 'HUK-COBURG'
-        },
-        {
-          title: "Allianz - Privathaftpflicht online abschließen",
-          link: "https://www.allianz.de/haftpflichtversicherung/",
-          snippet: "Die Allianz Haftpflichtversicherung schützt Sie weltweit. Flexible Tarife für Singles, Paare und Familien mit ausgezeichnetem Service.",
-          position: 99,
-          provider: 'Allianz'
-        }
-      ];
-      
-      // Nur hinzufügen wenn nicht schon vorhanden
-      for (const fallback of fallbackResults) {
-        const alreadyExists = filteredResults.some(r => 
-          r.link?.includes('huk.de') || r.link?.includes('allianz.de')
-        );
-        if (!alreadyExists) {
-          filteredResults.push(fallback);
-        }
-      }
-    } else if (filteredResults.length < 3 && filterType === 'strom') {
-      console.log(`⚠️ Zu wenige Ergebnisse - füge Strom-Fallbacks hinzu`);
-      
-      const fallbackResults = [
-        {
-          title: "CHECK24 - Stromvergleich 2024",
-          link: "https://www.check24.de/strom/",
-          snippet: "Stromvergleich beim Testsieger. Über 1.000 Stromanbieter im Vergleich. Bis zu 850€ sparen mit Sofortbonus.",
-          position: 98,
-          provider: 'CHECK24'
-        },
-        {
-          title: "Verivox - Stromtarife vergleichen",
-          link: "https://www.verivox.de/strom/",
-          snippet: "TÜV-geprüfter Stromvergleich. Günstige Tarife mit Preisgarantie. Einfacher Wechsel in 5 Minuten.",
-          position: 99,
-          provider: 'Verivox'
-        }
-      ];
-      
-      // Nur hinzufügen wenn nicht schon vorhanden
-      for (const fallback of fallbackResults) {
-        const alreadyExists = filteredResults.some(r => 
-          r.link?.includes('check24.de/strom') || r.link?.includes('verivox.de/strom')
-        );
-        if (!alreadyExists) {
-          filteredResults.push(fallback);
-        }
-      }
-    }
-    
+    // 01.09.2026 ENTFERNT: drei Bloecke, die bei zu wenigen Treffern erfundene
+    // Suchergebnisse einschoben (Rechtsschutz/Haftpflicht/Strom, position 98/99) —
+    // mit Texten wie "Bis zu 850EUR sparen mit Sofortbonus", "TUEV-geprueft" und
+    // "Haftpflichtschutz ab 2,87EUR monatlich". Das waren Behauptungen ohne
+    // Grundlage, ausgegeben als gefundene Treffer.
+    // Wenn die Suche wenig liefert, ist das die Wahrheit. Fuer den ehrlichen Fall
+    // gibt es bereits generateConsumerAiSuggestions() und enrichB2BResultsWithGPT(),
+    // deren Ergebnisse im Frontend klar als KI-Vorschlag gekennzeichnet werden.
+
     // Überschreibe die organicResults mit gefilterten
     organicResults = filteredResults;
 
@@ -2405,65 +2310,17 @@ router.post("/", async (req, res) => {
       console.log(`❌ Multi-Search Problem - Keine Ergebnisse gefunden`);
       console.log(`🔍 Versuchte Queries:`, enhancedQueries.slice(0, 3));
 
-      // 🆕 FALLBACK: Wenn SERP nicht funktioniert, erstelle Mock-Ergebnisse
+      // 01.09.2026 ENTFERNT: Mock-Antwort bei fehlendem SERP-Schluessel. Sie lieferte
+      // erfundene Preise UND einen hartcodierten Satz ueber den Vertrag des Nutzers
+      // ("Ihr aktueller BavariaDirekt Haftpflichtvertrag kostet 37,99EUR jaehrlich"),
+      // identisch fuer jeden Nutzer und jedes Dokument. Stattdessen ehrliche Meldung.
       if (!SERP_API_KEY) {
-        console.log(`🔧 FALLBACK: Erstelle Mock-Ergebnisse da SERP API Key fehlt`);
-
-        const mockResults = [
-          {
-            title: "Check24 - Haftpflichtversicherung Vergleich",
-            link: "https://www.check24.de/haftpflichtversicherung/",
-            snippet: "Vergleichen Sie über 100 Haftpflichtversicherungen und sparen bis zu 43%. Kostenloser Vergleich mit Sofort-Online-Abschluss.",
-            prices: ["19,90€", "24,99€", "32,50€"],
-            features: ["Deckungssumme bis 50 Mio. €", "Weltweiter Schutz", "Schlüsselverlust mitversichert"],
-            provider: "Check24",
-            relevantInfo: "Haftpflichtversicherung ab 19,90€ jährlich. Deckungssumme bis 50 Millionen Euro.",
-            hasDetailedData: true,
-            isPriorityPortal: true,
-            position: 1
-          },
-          {
-            title: "Verivox - Haftpflicht günstiger",
-            link: "https://www.verivox.de/haftpflichtversicherung/",
-            snippet: "Jetzt Haftpflichtversicherung vergleichen und bis zu 40% sparen. Über 70 Tarife im Vergleich.",
-            prices: ["22,80€", "28,95€", "35,40€"],
-            features: ["Online-Rabatt", "Sofortschutz", "Kostenlose Beratung"],
-            provider: "Verivox",
-            relevantInfo: "Haftpflichtversicherung mit Online-Rabatt. Sofortschutz verfügbar.",
-            hasDetailedData: true,
-            isPriorityPortal: true,
-            position: 2
-          },
-          {
-            title: "Allianz Haftpflichtversicherung",
-            link: "https://www.allianz.de/recht-und-eigentum/haftpflichtversicherung/",
-            snippet: "Schützen Sie sich vor hohen Schadenersatzforderungen. Allianz Haftpflicht ab 47,88€ pro Jahr.",
-            prices: ["47,88€", "69,90€"],
-            features: ["Allianz Markenqualität", "24/7 Schadenservice", "Flexible Zahlungsweise"],
-            provider: "Allianz",
-            relevantInfo: "Markenversicherung mit 24/7 Service. Flexible Zahlungsoptionen verfügbar.",
-            hasDetailedData: true,
-            isPriorityPortal: false,
-            position: 3
-          }
-        ];
-
-        return res.json({
-          analysis: `## 📊 Vertragsanalyse\nIhr aktueller BavariaDirekt Haftpflichtvertrag kostet 37,99€ jährlich. Das ist ein sehr guter Preis für eine Haftpflichtversicherung.\n\n## 🏆 Top 3 Alternativen\n1. **Check24 Tarife** - Bereits ab 19,90€ verfügbar, könnte bis zu 18€ jährlich sparen\n2. **Verivox Angebote** - Ab 22,80€ mit Online-Rabatt, Ersparnis von ca. 15€\n3. **Allianz Premium** - Höherpreisig (47,88€) aber Markenqualität\n\n## 💡 Empfehlung\nIhr aktueller Tarif ist bereits sehr günstig positioniert. Ein Wechsel könnte minimal sparen, aber prüfen Sie die Leistungsunterschiede.\n\n## 💰 Potenzielle Ersparnis\nBis zu 18€ jährlich möglich, aber Vorsicht bei Leistungseinschränkungen.`,
-          alternatives: mockResults,
-          searchQuery: enhancedQueries[0],
-          contractType: detectedType,
-          partnerCategory: partnerCategory,
-          partnerOffers: partnerOffers,
-          performance: {
-            totalAlternatives: mockResults.length,
-            detailedExtractions: mockResults.length,
-            partnerOffersCount: partnerOffers.length,
-            timestamp: new Date().toISOString(),
-            warning: "DEMO MODE: SERP API nicht verfügbar - Mock-Daten verwendet"
-          },
-          fromCache: false,
-          demoMode: true
+        console.error('❌ SERP_API_KEY fehlt — Anbietersuche nicht moeglich.');
+        return res.status(503).json({
+          error: "Anbietersuche derzeit nicht verfügbar",
+          message: "Die Suche nach Alternativen ist vorübergehend nicht erreichbar. Bitte versuchen Sie es später erneut.",
+          searchQuery: cleanSearchQuery,
+          contractType: detectedType
         });
       }
 
@@ -2471,7 +2328,7 @@ router.post("/", async (req, res) => {
       if (!isConsumer) {
         console.log(`🏢 B2B Zero-Results: Rufe GPT für KI-Vorschläge auf...`);
         try {
-          const b2bEnrichment = await enrichB2BResultsWithGPT([], cleanContractText, detectedType, openai);
+          const b2bEnrichment = await enrichB2BResultsWithGPT([], cleanContractText, detectedType, openai, userId);
           const aiSuggested = createAiSuggestedAlternatives(b2bEnrichment.aiSuggestedProviders);
           const b2bAnalysis = formatB2BAnalysis(b2bEnrichment);
 
@@ -2495,6 +2352,12 @@ router.post("/", async (req, res) => {
               fromCache: false
             };
             saveToCache(cacheKey, zeroResult);
+            // 📊 01.09.2026: Nutzungs-Tracking. Better Contracts war das einzige Premium-Feature
+            // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
+            // Fire-and-forget wie in den neun anderen Routen.
+            require('../services/featureUsage').getInstance()
+              .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'nur-ki-vorschlaege' } })
+              .catch(() => {});
             return res.json(zeroResult);
           }
         } catch (b2bError) {
@@ -2698,7 +2561,7 @@ router.post("/", async (req, res) => {
     if (!isConsumerContract) {
       // 🏢 B2B: Structured Enrichment statt Freitext-Analyse
       console.log(`🏢 B2B-Modus: Starte Structured GPT-Enrichment...`);
-      const b2bEnrichment = await enrichB2BResultsWithGPT(enrichedResults, cleanContractText, detectedType, openai);
+      const b2bEnrichment = await enrichB2BResultsWithGPT(enrichedResults, cleanContractText, detectedType, openai, userId);
       enrichedResults = mergeB2BEnrichment(enrichedResults, b2bEnrichment);
       aiSuggestedAlternatives = createAiSuggestedAlternatives(b2bEnrichment.aiSuggestedProviders);
       analysis = formatB2BAnalysis(b2bEnrichment);
@@ -2760,7 +2623,7 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
 
       // PARALLEL: KI-Vorschläge + Analyse (spart ~3 Sek vs. sequenziell)
       const [consumerAiProviders, completion] = await Promise.all([
-        generateConsumerAiSuggestions(cleanContractText, detectedType, openai),
+        generateConsumerAiSuggestions(cleanContractText, detectedType, openai, userId),
         openai.chat.completions.create({
           model: "gpt-4o",
           messages: [
@@ -2775,6 +2638,7 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
       aiSuggestedAlternatives = createAiSuggestedAlternatives(consumerAiProviders);
       console.log(`✅ Consumer parallel abgeschlossen — KI-Vorschläge: ${aiSuggestedAlternatives.length}`);
 
+      spurKosten(completion, "gpt-4o", "consumer-analyse", userId);
       analysis = completion.choices[0].message.content;
     }
 
@@ -2784,7 +2648,8 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
       enrichedResults,
       cleanContractText,
       detectedType,
-      openai
+      openai,
+      userId
     );
     if (categoryMap.size > 0) {
       enrichedResults.forEach((r, i) => {
@@ -2812,6 +2677,13 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
         processingTimeMs: Date.now() - startTime
       }
     };
+
+    // 📊 01.09.2026: Nutzungs-Tracking. Better Contracts war das einzige Premium-Feature
+    // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
+    // Fire-and-forget wie in den neun anderen Routen.
+    require('../services/featureUsage').getInstance()
+      .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'vollstaendig' } })
+      .catch(() => {});
 
     // Cache speichern
     saveToCache(cacheKey, result);
