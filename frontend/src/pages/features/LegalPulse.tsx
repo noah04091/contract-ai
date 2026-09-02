@@ -17,7 +17,9 @@ const legalPulseVideo = "/Videos/legalpulse.mp4";
 const LegalPulse: React.FC = () => {
   const { user } = useAuth();
   const isAuthenticated = user && user.subscriptionActive;
-  const targetInApp = "/legal-pulse";
+  // 02.09.2026: war "/legal-pulse" — diese Route existiert nicht (nur /legalpulse
+  // und /pulse), beide "Legal Pulse aktivieren"-CTAs landeten auf der 404-Seite.
+  const targetInApp = "/pulse";
   const target = isAuthenticated ? targetInApp : `/login?next=${encodeURIComponent(targetInApp)}`;
 
   const animatedRefs = useRef<(HTMLElement | null)[]>([]);
