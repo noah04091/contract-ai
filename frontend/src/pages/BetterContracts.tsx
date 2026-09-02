@@ -36,6 +36,10 @@ interface ApiResponse {
     b2bSummary?: string;
   }>;
   isB2B?: boolean;
+  // 02.09.2026: meldet, ob die Anbietersuche ueberhaupt durchkam. Ohne dieses
+  // Feld sah ein gestoerter Suchdienst genauso aus wie ein leeres Suchergebnis.
+  sucheGestoert?: boolean;
+  stoerungsgrund?: string | null;
   searchQuery: string;
   performance: {
     totalAlternatives: number;
@@ -741,6 +745,7 @@ const BetterContracts: React.FC = () => {
                 contractType={contractType}
                 fromCache={results.fromCache}
                 isB2B={results.isB2B || false}
+                sucheGestoert={results.sucheGestoert || false}
                 aiSuggestedAlternatives={results.aiSuggestedAlternatives || []}
               />
               

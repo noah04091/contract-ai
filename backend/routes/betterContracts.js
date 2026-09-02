@@ -1018,12 +1018,19 @@ function getDefaultB2BEnrichment(searchResults) {
 }
 
 // 🆕 Multi-Source Search Function
+// 02.09.2026: Die Funktion meldet jetzt mit, ob die Suche ueberhaupt durchkam.
+// Vorher verschluckte der catch jeden Fehler mit "continue" und gab ein leeres
+// Array zurueck — ein kaputter Suchdienst (Timeout, ungueltiger Schluessel,
+// aufgebrauchtes Kontingent) sah damit exakt aus wie "nichts gefunden", fuer den
+// Nutzer wie fuer uns. Belegt an Noahs Testlauf vom 02.09.: 0 Treffer, 36 Sekunden.
 async function performMultiSourceSearch(searchQueries, SERP_API_KEY) {
   const allResults = [];
+  const diagnose = { versuche: 0, fehlgeschlagen: 0, gruende: [] };
 
   // Probiere mehrere Suchanfragen nacheinander
   for (let i = 0; i < Math.min(searchQueries.length, 3); i++) {
     const query = searchQueries[i];
+    diagnose.versuche++;
     console.log(`🔍 Suche ${i + 1}: "${query}"`);
 
     try {
@@ -1052,9 +1059,20 @@ async function performMultiSourceSearch(searchQueries, SERP_API_KEY) {
       await new Promise(resolve => setTimeout(resolve, 500));
 
     } catch (error) {
-      console.warn(`⚠️ Query ${i + 1} fehlgeschlagen:`, error.message);
+      diagnose.fehlgeschlagen++;
+      const grund = error.code === 'ECONNABORTED' ? 'zeitueberschreitung'
+        : error.response?.status === 401 ? 'schluessel-abgelehnt'
+        : error.response?.status === 429 ? 'kontingent-erschoepft'
+        : error.response?.status ? ('http-' + error.response.status)
+        : 'netzwerk';
+      diagnose.gruende.push(grund);
+      console.warn(`⚠️ Query ${i + 1} fehlgeschlagen (${grund}):`, error.message);
       continue;
     }
+  }
+
+  if (diagnose.versuche > 0 && diagnose.fehlgeschlagen === diagnose.versuche) {
+    console.error(`🚨 ANBIETERSUCHE GESTOERT: alle ${diagnose.versuche} Anfragen fehlgeschlagen (${[...new Set(diagnose.gruende)].join(', ')}). Die Ergebnisliste ist deshalb leer — das ist KEIN leeres Suchergebnis.`);
   }
 
   // Deduplizierung basierend auf URL
@@ -1069,6 +1087,9 @@ async function performMultiSourceSearch(searchQueries, SERP_API_KEY) {
   }
 
   console.log(`✅ Multi-Search: ${uniqueResults.length} eindeutige Ergebnisse`);
+  // Diagnose am Array mitgeben — der Aufrufer bekommt weiterhin ein Array und
+  // kann zusaetzlich unterscheiden, ob wirklich gesucht wurde.
+  uniqueResults.diagnose = diagnose;
   return uniqueResults;
 }
 
@@ -1663,7 +1684,7 @@ router.post("/", async (req, res) => {
       // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
       // Fire-and-forget wie in den neun anderen Routen.
       require('../services/featureUsage').getInstance()
-        .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'cache' } })
+        .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'cache', sucheGestoert, stoerungsgrund } })
         .catch(() => {});
       return res.json({
         ...cachedResult,
@@ -1788,12 +1809,24 @@ router.post("/", async (req, res) => {
 
     // 🆕 Step 3: Multi-Source Search
     let organicResults;
+    // 02.09.2026: sucheGestoert unterscheidet "nichts gefunden" von "Suche kam nicht durch".
+    // Ohne diese Unterscheidung sieht ein ausgefallener Suchdienst monatelang aus wie ein
+    // leeres Suchergebnis — bei einem kaum genutzten Feature faellt das niemandem auf.
+    let sucheGestoert = false;
+    let stoerungsgrund = null;
     try {
       organicResults = await performMultiSourceSearch(enhancedQueries, SERP_API_KEY);
-      console.log(`✅ Multi-search completed with ${organicResults.length} results`);
+      const d = organicResults.diagnose;
+      if (d && d.versuche > 0 && d.fehlgeschlagen === d.versuche) {
+        sucheGestoert = true;
+        stoerungsgrund = [...new Set(d.gruende)].join(', ');
+      }
+      console.log(`✅ Multi-search completed with ${organicResults.length} results${sucheGestoert ? ' — ABER ALLE ANFRAGEN FEHLGESCHLAGEN: ' + stoerungsgrund : ''}`);
     } catch (searchError) {
       console.error(`❌ Multi-source search failed:`, searchError);
       organicResults = [];
+      sucheGestoert = true;
+      stoerungsgrund = 'unerwarteter-fehler';
     }
 
     // 🔴🔴🔴 SOFORT-FILTERUNG DIREKT NACH DER SUCHE 🔴🔴🔴
@@ -2336,6 +2369,8 @@ router.post("/", async (req, res) => {
             const zeroResult = {
               analysis: b2bAnalysis || '## 📊 Marktanalyse\nKeine Suchergebnisse gefunden, aber KI-basierte Anbietervorschläge verfügbar.',
               alternatives: [],
+              sucheGestoert,
+              stoerungsgrund,
               aiSuggestedAlternatives: aiSuggested,
               isB2B: true,
               searchQuery: cleanSearchQuery,
@@ -2356,7 +2391,7 @@ router.post("/", async (req, res) => {
             // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
             // Fire-and-forget wie in den neun anderen Routen.
             require('../services/featureUsage').getInstance()
-              .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'nur-ki-vorschlaege' } })
+              .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'nur-ki-vorschlaege', sucheGestoert, stoerungsgrund } })
               .catch(() => {});
             return res.json(zeroResult);
           }
@@ -2661,6 +2696,8 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
     // Ergebnis strukturieren (MIT PARTNER-INFO + B2B-FELDER)
     const result = {
       analysis,
+      sucheGestoert,
+      stoerungsgrund,
       alternatives: enrichedResults,
       aiSuggestedAlternatives: aiSuggestedAlternatives,
       isB2B: !isConsumerContract,
@@ -2682,7 +2719,7 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
     // ohne Eintrag in feature_usage — es liess sich nicht messen, ob es jemand benutzt.
     // Fire-and-forget wie in den neun anderen Routen.
     require('../services/featureUsage').getInstance()
-      .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'vollstaendig' } })
+      .trackFeatureUsage({ userId, feature: 'better-contracts', metadata: { ergebnis: 'vollstaendig', sucheGestoert, stoerungsgrund } })
       .catch(() => {});
 
     // Cache speichern

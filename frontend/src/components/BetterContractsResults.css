@@ -680,6 +680,24 @@
   color: #4b5563;
 }
 
+/* Die Anbietersuche kam nicht durch. Deutlicher markiert als der normale
+   Preis-Hinweis, weil hier eine Störung vorliegt und nicht die Marktlage. */
+.results-meta .meta-item-stoerung {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.results-meta .meta-item-stoerung .meta-label {
+  color: #92400e;
+  font-weight: 600;
+}
+
+.results-meta .meta-item-stoerung .meta-value {
+  color: #78350f;
+}
+
 /* ========== 🆕 PARTNER WIDGET MODAL ========== */
 .widget-modal-overlay {
   position: fixed;

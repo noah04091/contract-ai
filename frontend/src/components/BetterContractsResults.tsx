@@ -69,6 +69,7 @@ interface ResultsProps {
   partnerOffers?: Alternative[];
   // B2B-spezifische Props
   isB2B?: boolean;
+  sucheGestoert?: boolean;
   aiSuggestedAlternatives?: Alternative[];
 }
 
@@ -85,6 +86,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   partnerCategory = null,
   partnerOffers = [],
   isB2B = false,
+  sucheGestoert = false,
   aiSuggestedAlternatives = []
 }) => {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
@@ -984,20 +986,31 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           <span className="meta-label">Suchanfrage:</span>
           <span className="meta-value">"{searchQuery}"</span>
         </div>
-        <div className="meta-item">
-          <span className="meta-label">Datenqualität:</span>
-          <span className="meta-value">
-            {enhancedAlternatives.filter(a => a.hasDetailedData).length} von {alternatives.length} mit Details
-          </span>
-        </div>
+        {alternatives.length > 0 && (
+          <div className="meta-item">
+            <span className="meta-label">Datenqualität:</span>
+            <span className="meta-value">
+              {enhancedAlternatives.filter(a => a.hasDetailedData).length} von {alternatives.length} mit Details
+            </span>
+          </div>
+        )}
 
         {/* Wenn zu keinem Treffer ein Preis gefunden wurde, sagen wir warum.
             Vorher stand die Liste einfach ohne Preise da und wirkte defekt,
             obwohl es der Normalfall ist: bei Geschäfts- und Dienstleistungs-
             verträgen wird individuell kalkuliert, im Privatbereich hängt der
             Preis an den eigenen Angaben und wird erst im Rechner ermittelt. */}
-        {alternatives.length > 0 &&
-          enhancedAlternatives.every(a => !a.monthlyPrice && (!a.prices || a.prices.length === 0)) && (
+        {sucheGestoert ? (
+          <div className="meta-item meta-item-hinweis meta-item-stoerung">
+            <span className="meta-label">Hinweis zur Suche</span>
+            <span className="meta-value">
+              Die Anbietersuche im Web war bei diesem Durchlauf nicht erreichbar. Die unten
+              gezeigten Anbieter stammen deshalb ausschließlich aus dem Wissen der KI und
+              wurden nicht über eine Suche bestätigt. Ein erneuter Versuch später kann mehr
+              Ergebnisse liefern.
+            </span>
+          </div>
+        ) : enhancedAlternatives.every(a => !a.monthlyPrice && (!a.prices || a.prices.length === 0)) && (
           <div className="meta-item meta-item-hinweis">
             <span className="meta-label">Warum keine Preise?</span>
             <span className="meta-value">
