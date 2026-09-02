@@ -1907,9 +1907,31 @@ router.post("/", async (req, res) => {
     // 🔴 SCHRITT 1: Erkenne den Versicherungstyp präzise
     let filterType = 'unknown';
     const textLower = cleanContractText.toLowerCase();
-    
+
+    // 🛡️ 02.09.2026: Schutz gegen Fehlklassifikation durch ein einzelnes Wort.
+    //
+    // Die Zuordnung unten sucht Teilzeichenketten im VERTRAGSTEXT. Ein einziges
+    // Wort kippt damit den Filtertyp — und jeder Consumer-Filtertyp schaltet eine
+    // Domain-Whitelist scharf, die alles ausserhalb von 10 bis 18 Adressen verwirft.
+    // Gemessen an Noahs Testlauf vom 02.09. (Weiterbildung "KI-Manager"):
+    //   19 Rohtreffer aus der Suche -> 0 nach dem Filter.
+    // Ursachen im Detail:
+    //   "Software" im Text              -> 'software' -> nur adobe/microsoft/slack/...
+    //   "Server"                        -> 'hosting'  -> nur ionos/strato/hetzner/...
+    //   "Automatisierung" + Versicherung -> 'kfz'     -> nur Versicherer-Domains
+    //   "Gastronomie" (enthaelt "gas")  -> 'gas'      -> Energie-Domains
+    //
+    // Fuer Geschaefts- und Dienstleistungsvertraege gibt es keine sinnvolle
+    // Whitelist: der Markt besteht dort aus tausenden Anbietern. Deshalb bleibt
+    // es bei 'universal', sobald der erkannte Vertragstyp kein Consumer-Typ ist.
+    const istConsumerVertrag = isKnownConsumerType(detectedType);
+    if (!istConsumerVertrag) {
+      filterType = 'universal';
+      console.log('🛡️ Kein Consumer-Vertragstyp ("' + detectedType + '") — Filter bleibt universell, keine Domain-Whitelist');
+    }
+
     // Prüfe explizit auf bekannte Vertragstypen
-    if (textLower.includes('rechtsschutz') || detectedType.includes('rechtsschutz')) {
+    else if (textLower.includes('rechtsschutz') || detectedType.includes('rechtsschutz')) {
       filterType = 'rechtsschutz';
     } else if (textLower.includes('haftpflicht') || detectedType.includes('haftpflicht')) {
       filterType = 'haftpflicht';
