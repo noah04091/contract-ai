@@ -2281,13 +2281,29 @@ router.post("/", async (req, res) => {
         ];
       }
       
-      // Anwenden der Domain-Filter NUR bei bekannten Kategorien (NICHT bei Energie!)
+      // 🔀 03.09.2026: Die Domain-Positivliste ist keine Tür mehr.
+      //
+      // Gemessen an Noahs Mobilfunk-Testlauf vom 03.09. 09:05: 20 Rohtreffer aus
+      // der Suche, 3 nach dem Filter, davon 1 echter Anbieter und 3 Portale.
+      // Ursache war diese Liste: für Mobilfunk enthält sie 11 Domains. Der
+      // deutsche Markt hat ein Vielfaches davon (Aldi Talk, WinSIM, PremiumSIM,
+      // Blau, otelo, Lidl Connect, freenet, sim.de …). Jeder davon flog raus,
+      // nur weil er nicht auf der Liste stand — bei einem Feature, das genau
+      // diese Anbieter finden soll.
+      //
+      // Ein Ausschluss ist hier auch unnötig: Der INHALTLICHE Filter greift
+      // bereits davor (mustInclude, für Mobilfunk 'handy'/'mobilfunk'/
+      // 'smartphone', dazu mustNotInclude). Was thematisch nicht passt, ist
+      // längst verworfen. Und die GPT-Klassifikation ordnet jeden verbleibenden
+      // Treffer sichtbar in "Anbieter / Vergleichsportal / Info-Quelle" ein.
+      //
+      // Grundsatz: filtern, was sicher falsch ist. Sortieren, was
+      // unterschiedlich wertvoll ist. Eine Positivliste kann das Zweite,
+      // nicht das Erste.
       if (filterType !== 'universal' && filterType !== 'strom' && filterType !== 'gas' && allowedDomains.length > 0) {
         const isDomainAllowed = allowedDomains.some(domain => url.includes(domain));
-        
-        if (!isDomainAllowed) {
-          console.log(`   ❌ BLOCKIERT: Nicht in Whitelist für ${filterType}`);
-          return false;
+        if (!isDomainAllowed && index < 5) {
+          console.log(`   ℹ️ ${filterType}: nicht auf der bekannten Anbieterliste, bleibt aber drin`);
         }
       }
       
