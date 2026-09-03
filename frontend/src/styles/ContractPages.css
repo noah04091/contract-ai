@@ -104,11 +104,11 @@
   height: 72px;
   margin: 0 auto 24px;
   background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
-  border-radius: 20px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 4px 12px -4px rgba(15, 24, 38, 0.12);
   color: white;
 }
 
@@ -128,7 +128,7 @@
      Better Contracts, Vergleich, Optimierer. */
   background: rgba(59, 130, 246, 0.08);
   border: 1px solid rgba(59, 130, 246, 0.22);
-  border-radius: 100px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
   color: var(--apple-blue);
@@ -139,7 +139,7 @@
 
 .contract-header h1 {
   font-size: clamp(28px, 5vw, 42px);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
   margin-bottom: 12px;
@@ -176,7 +176,7 @@
   gap: 6px;
   padding: 8px 16px;
   background: rgba(0, 0, 0, 0.04);
-  border-radius: 100px;
+  border-radius: 999px;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
@@ -204,9 +204,9 @@
   max-width: 600px;
   padding: 24px 32px;
   background: white;
-  border-radius: 20px;
+  border-radius: 14px;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(15, 24, 38, 0.05);
 }
 
 .step {
@@ -220,7 +220,7 @@
 .step-number {
   width: 52px;
   height: 52px;
-  border-radius: 16px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -261,7 +261,7 @@
 .step.active .step-number {
   background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
   border-color: transparent;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 1px 2px rgba(15, 24, 38, 0.05);
 }
 
 .step.active .step-number::after {
@@ -327,12 +327,10 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 28px;
+  border-radius: 14px;
   padding: 40px;
   margin-bottom: 24px;
-  box-shadow:
-    0 4px 6px rgba(0, 0, 0, 0.02),
-    0 12px 40px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 12px -4px rgba(15, 24, 38, 0.12);
   animation: slideInUp 0.35s ease-out;
 }
 
@@ -341,7 +339,7 @@
    ============================================ */
 .contract-uploader {
   border: 2px dashed #d1d5db;
-  border-radius: 20px;
+  border-radius: 14px;
   padding: 48px 32px;
   text-align: center;
   cursor: pointer;
@@ -373,7 +371,7 @@
   border-color: var(--apple-blue);
   background: linear-gradient(180deg, #f0f7ff 0%, #e8f4ff 100%);
   transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 4px 12px -4px rgba(15, 24, 38, 0.12);
 }
 
 .contract-uploader.drag-active {
@@ -381,7 +379,7 @@
   border-style: solid;
   background: linear-gradient(180deg, #e0f0ff 0%, #d0e8ff 100%);
   transform: scale(1.01);
-  box-shadow: 0 16px 48px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.28);
 }
 
 .contract-uploader.disabled {
@@ -402,7 +400,7 @@
   width: 72px;
   height: 72px;
   margin-bottom: 12px;
-  border-radius: 20px;
+  border-radius: 14px;
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
   display: flex;
   align-items: center;
@@ -417,8 +415,8 @@
 }
 
 .upload-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-primary);
   margin: 0;
 }
@@ -439,14 +437,14 @@
 .format-tag {
   padding: 6px 12px;
   background: rgba(0, 0, 0, 0.04);
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 12px;
   color: var(--text-secondary);
   font-weight: 600;
 }
 
 .file-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--apple-blue);
   margin: 0;
@@ -484,7 +482,7 @@
   padding: 10px 16px;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
@@ -538,7 +536,7 @@
 .contract-text-toggle {
   margin-top: 20px;
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #ffffff;
   overflow: hidden;
 }
@@ -629,14 +627,14 @@
   background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
   border: none;
   border-radius: 14px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: white;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 1px 2px rgba(15, 24, 38, 0.08);
   margin-top: 16px;
   align-self: flex-end;
 }
@@ -655,7 +653,7 @@
 
 .contract-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 4px 12px -4px rgba(37, 99, 235, 0.35);
 }
 
 .contract-button:hover:not(:disabled)::before {
@@ -699,7 +697,7 @@
   opacity: 0.85;
   cursor: progress;
   transform: none;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 1px 2px rgba(15, 24, 38, 0.08);
 }
 
 /* Analyzing-Progress: full-width statt 200px-Cap (greift NUR im Step-2 Analyze-Block) */
@@ -762,7 +760,7 @@
   padding: 14px 40px 14px 16px;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  font-size: 15px;
+  font-size: 14px;
   outline: none;
   background: #f8fafc;
   transition: all 0.2s ease;
@@ -780,7 +778,7 @@
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-secondary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -903,9 +901,9 @@
   margin-top: 32px;
   padding: 24px;
   background: white;
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(15, 24, 38, 0.05);
   max-width: 500px;
   margin-left: auto;
   margin-right: auto;
@@ -940,7 +938,7 @@
   background: var(--apple-blue);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -971,9 +969,9 @@
 .saved-alternatives-wrapper {
   background: white;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 24px;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 12px -4px rgba(15, 24, 38, 0.12);
 }
 
 .saved-alternatives-header {
@@ -995,11 +993,11 @@
   width: 44px;
   height: 44px;
   background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
-  border-radius: 12px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  box-shadow: none;
   color: white;
 }
 
@@ -1010,8 +1008,8 @@
 
 .saved-alternatives-title-group h2 {
   margin: 0 0 4px 0;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -1025,7 +1023,7 @@
   padding: 6px 14px;
   background: rgba(59, 130, 246, 0.1);
   border: 1px solid rgba(59, 130, 246, 0.2);
-  border-radius: 100px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
   color: var(--apple-blue);
@@ -1041,7 +1039,7 @@
   text-align: center;
   background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
   border: 2px dashed #e5e7eb;
-  border-radius: 16px;
+  border-radius: 14px;
 }
 
 .saved-alternatives-content .full-empty-icon {
@@ -1080,8 +1078,8 @@
   height: 56px;
   background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-indigo) 100%);
   border: none;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+  border-radius: 14px;
+  box-shadow: 0 6px 16px -4px rgba(37, 99, 235, 0.4);
   cursor: pointer;
   z-index: 1000;
   display: flex;
@@ -1093,7 +1091,7 @@
 
 .fab-saved-alternatives:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 10px 24px -6px rgba(37, 99, 235, 0.45);
 }
 
 .fab-saved-alternatives svg {
@@ -1113,7 +1111,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   border: 2px solid white;
 }
@@ -1141,7 +1139,7 @@
   }
 
   .contract-header h1 {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .contract-description {
@@ -1183,7 +1181,7 @@
 
   .contract-step-container {
     padding: 24px;
-    border-radius: 20px;
+    border-radius: 14px;
   }
 
   .contract-uploader {
@@ -1247,7 +1245,7 @@
 
 @media (max-width: 480px) {
   .contract-header h1 {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .step-number {
@@ -1262,7 +1260,7 @@
 
   .contract-step-container {
     padding: 20px;
-    border-radius: 16px;
+    border-radius: 14px;
   }
 
   .contract-hero-icon {
