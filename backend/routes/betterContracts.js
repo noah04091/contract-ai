@@ -99,7 +99,15 @@ function extractBrandFromUrl(url) {
   try {
     const hostname = new URL(url).hostname.replace(/^www\./i, '');
     const parts = hostname.split('.');
-    const brand = parts[0];
+    // 03.09.2026: generische Unterdomains überspringen. Vorher wurde aus
+    // home.1und1.de der Anbietername "Home" — genau so stand es in Noahs
+    // Testlauf über einem 1&1-Tarif und sah nach einem Fehler aus.
+    const generisch = new Set(['home', 'shop', 'web', 'info', 'portal', 'app', 'my',
+                               'mein', 'meine', 'kunde', 'kunden', 'service', 'start',
+                               'm', 'mobil', 'mobile', 'de']);
+    let i = 0;
+    while (i < parts.length - 2 && generisch.has(parts[i].toLowerCase())) i++;
+    const brand = parts[i];
     if (!brand || brand.length < 2) return 'Anbieter';
     return brand.charAt(0).toUpperCase() + brand.slice(1);
   } catch (e) {
@@ -538,6 +546,16 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
         "günstige service alternative"
       );
     }
+  }
+
+  // 03.09.2026: Anbieterorientierte Anfrage VORANSTELLEN.
+  // Gemessen an Noahs Mobilfunk-Testlauf: von 4 Treffern war genau EINER ein
+  // echter Anbieter, drei waren Vergleichsportale. Grund: zwei der drei
+  // hartcodierten Anfragen enthalten das Wort "vergleich", und das zieht
+  // zwangsläufig Portale nach oben. Da nur die ersten 3 Anfragen überhaupt
+  // durchsucht werden, blieb für die Anbieter selbst kein Platz.
+  if (detectedType && detectedType !== 'unbekannt') {
+    enhancedQueries.unshift(`${detectedType} anbieter deutschland tarife`);
   }
 
   // 5. Remove duplicates and limit
@@ -1045,7 +1063,11 @@ async function performMultiSourceSearch(searchQueries, SERP_API_KEY) {
           gl: "de",
           hl: "de"
         },
-        timeout: 8000
+        // 03.09.2026: von 8 auf 14 Sekunden. Über vier Testläufe gemessen liefen
+        // erst 1 von 3, dann 2 von 3 Anfragen in die Zeitgrenze. Jede gescheiterte
+        // Anfrage kostet ein Drittel der möglichen Treffer. Die Gesamtlaufzeit
+        // leidet kaum, weil bei 15 Ergebnissen ohnehin früher abgebrochen wird.
+        timeout: 14000
       });
 
       const results = serpRes.data.organic_results || [];
