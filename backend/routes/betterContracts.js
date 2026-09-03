@@ -582,6 +582,69 @@ function isKnownConsumerType(detectedType) {
   return KNOWN_CONSUMER_TYPES.includes(detectedType.toLowerCase());
 }
 
+/**
+ * Zieht die Eckdaten aus dem Vertragstext — fuer die Faktenkarte, die dem
+ * Nutzer VOR der Suche zeigt, was wir gelesen haben.
+ *
+ * Halluzinations-Regel: Jedes Feld ist null, wenn es nicht im Text steht.
+ * Lieber ein leeres Feld als eine erfundene Angabe — genau daran ist dieses
+ * Feature schon einmal gescheitert (erfundene Preise, siehe 01.09.2026).
+ */
+async function extrahiereVertragsfakten(contractText, openaiClient, userId) {
+  try {
+    const completion = await openaiClient.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Du liest einen Vertrag oder eine Rechnung und gibst die Eckdaten zurueck.
+
+ANTWORTE NUR mit validem JSON in genau dieser Form:
+{
+  "anbieter": "Name des Anbieters" oder null,
+  "vertragsart": "kurz, z.B. Mobilfunk, Stromliefervertrag, Weiterbildung" oder null,
+  "preisMonatlich": "29,99 €" oder null,
+  "preisEinmalig": "4.452 €" oder null,
+  "leistung": "kurz, z.B. Allnet-Flat 40 GB, 3.500 kWh/Jahr" oder null,
+  "laufzeitBis": "23.09.2026" oder null,
+  "kuendigungsfrist": "1 Monat" oder null
+}
+
+EISERNE REGEL: Ein Feld ist null, wenn die Angabe NICHT im Text steht.
+Niemals schaetzen, niemals aus Erfahrung ergaenzen, niemals rechnen.
+Steht kein Monatspreis da, ist preisMonatlich null — auch wenn ein Jahrespreis
+dasteht, aus dem man ihn ableiten koennte.
+Preise mit Waehrungszeichen und in deutscher Schreibweise uebernehmen, genau
+wie sie im Dokument stehen.`
+        },
+        { role: "user", content: contractText.slice(0, 3000) }
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0,
+      max_tokens: 300
+    });
+    spurKosten(completion, "gpt-4o-mini", "vertragsfakten", userId);
+
+    const f = JSON.parse(completion.choices[0].message.content);
+    const feld = (v) => (typeof v === 'string' && v.trim() && v.trim().toLowerCase() !== 'null') ? v.trim() : null;
+    const fakten = {
+      anbieter: feld(f.anbieter),
+      vertragsart: feld(f.vertragsart),
+      preisMonatlich: feld(f.preisMonatlich),
+      preisEinmalig: feld(f.preisEinmalig),
+      leistung: feld(f.leistung),
+      laufzeitBis: feld(f.laufzeitBis),
+      kuendigungsfrist: feld(f.kuendigungsfrist),
+    };
+    const gefunden = Object.values(fakten).filter(Boolean).length;
+    console.log(`📄 Vertragsfakten: ${gefunden} von 7 Feldern gelesen` + (fakten.anbieter ? ` (${fakten.anbieter})` : ''));
+    return gefunden > 0 ? fakten : null;
+  } catch (e) {
+    console.warn('⚠️ Vertragsfakten konnten nicht gelesen werden:', e.message);
+    return null;   // Die Faktenkarte entfaellt dann einfach, der Rest laeuft weiter
+  }
+}
+
 async function generateGPTSearchQueries(detectedType, contractText, openaiClient, userId) {
   try {
     console.log(`🤖 Generiere GPT-Suchqueries für B2B-Typ: ${detectedType}`);
@@ -1805,6 +1868,10 @@ router.post("/", async (req, res) => {
     // 🆕 Step 2: Generate Enhanced Search Queries
     console.log(`🚀 POINT 5: Generating search queries`);
 
+    // 03.09.2026: Fakten fuer die Karte "Das haben wir gelesen". Startet hier,
+    // damit sie parallel zur Query-Generierung laeuft und keine Zeit kostet.
+    const faktenLaeuft = extrahiereVertragsfakten(cleanContractText, openai, userId);
+
     // Prüfe ob der erkannte Typ ein bekannter Consumer-Typ ist
     const isConsumer = isKnownConsumerType(detectedType);
     let enhancedQueries;
@@ -2463,7 +2530,9 @@ router.post("/", async (req, res) => {
           const b2bAnalysis = formatB2BAnalysis(b2bEnrichment);
 
           if (aiSuggested.length > 0) {
+            const zeroFakten = await faktenLaeuft.catch(() => null);
             const zeroResult = {
+              vertragsfakten: zeroFakten,
               analysis: b2bAnalysis || '## Marktanalyse\nKeine Suchergebnisse gefunden, aber KI-basierte Anbietervorschläge verfügbar.',
               alternatives: [],
               sucheGestoert,
@@ -2807,9 +2876,13 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
       }
     }
 
+    // Fakten einsammeln (laeuft seit Beginn der Suche, ist also laengst fertig)
+    const vertragsfakten = await faktenLaeuft.catch(() => null);
+
     // Ergebnis strukturieren (MIT PARTNER-INFO + B2B-FELDER)
     const result = {
       analysis,
+      vertragsfakten,
       sucheGestoert,
       stoerungsgrund,
       suchBilanz,

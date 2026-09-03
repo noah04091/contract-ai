@@ -70,6 +70,134 @@
   font-size: 1rem;
 }
 
+/* ══════════ DOKUMENTKOPF (03.09.2026) ══════════
+   Steht über der Ergebnisliste, damit beim Vergleichen immer sichtbar ist,
+   WOMIT verglichen wird. Zeigt nur Felder, die wirklich im Dokument standen.
+   Ein fehlendes Feld erscheint gar nicht — besser leer als geraten. */
+.doc-head {
+  background: #ffffff;
+  border: 1px solid var(--bc-line);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.doc-head-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.15rem;
+}
+
+.doc-file-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--bc-sunk);
+  border: 1px solid var(--bc-line);
+  color: var(--bc-ink-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.doc-file-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-file-title {
+  margin: 0 0 0.15rem;
+  font-size: 0.975rem;
+  font-weight: 600;
+  color: var(--bc-ink);
+  line-height: 1.35;
+}
+
+.doc-file-name {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--bc-ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-open-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--bc-accent-line);
+  background: var(--bc-accent-soft);
+  color: var(--bc-accent);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.doc-open-btn:hover { background: #dde9fd; }
+
+.doc-open-btn:focus-visible {
+  outline: 2px solid var(--bc-accent);
+  outline-offset: 2px;
+}
+
+.doc-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  border-top: 1px solid var(--bc-line);
+}
+
+.doc-fact {
+  padding: 0.7rem 1.15rem;
+  border-right: 1px solid var(--bc-line);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.doc-fact:last-child { border-right: none; }
+
+.doc-fact-k {
+  font-size: 0.75rem;
+  color: var(--bc-ink-3);
+}
+
+.doc-fact-v {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--bc-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.doc-fact-v small {
+  font-weight: 400;
+  font-size: 0.775rem;
+  color: var(--bc-ink-3);
+  margin-left: 0.25rem;
+}
+
+.doc-head-note {
+  margin: 0;
+  padding: 0.6rem 1.15rem;
+  border-top: 1px solid var(--bc-line);
+  background: var(--bc-sunk);
+  font-size: 0.8125rem;
+  color: var(--bc-ink-3);
+}
+
+@media (max-width: 640px) {
+  .doc-fact { border-right: none; border-top: 1px solid var(--bc-line); }
+  .doc-facts { border-top: none; }
+  .doc-open-btn span { display: none; }
+}
+
 /* ========== HEADER SECTION ========== */
 .results-header {
   background: #ffffff;

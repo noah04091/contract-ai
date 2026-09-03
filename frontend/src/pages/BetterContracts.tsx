@@ -40,6 +40,17 @@ interface ApiResponse {
   // Feld sah ein gestoerter Suchdienst genauso aus wie ein leeres Suchergebnis.
   sucheGestoert?: boolean;
   stoerungsgrund?: string | null;
+  // 03.09.2026: Eckdaten aus dem Dokument fuer den Kopf ueber der Ergebnisliste.
+  // Jedes Feld kann null sein — lieber leer als geraten.
+  vertragsfakten?: {
+    anbieter: string | null;
+    vertragsart: string | null;
+    preisMonatlich: string | null;
+    preisEinmalig: string | null;
+    leistung: string | null;
+    laufzeitBis: string | null;
+    kuendigungsfrist: string | null;
+  } | null;
   // 03.09.2026: Zusammensetzung der Treffer. Nicht die Anzahl entscheidet
   // ueber den Nutzen, sondern wie viele davon echte Anbieter sind.
   suchBilanz?: {
@@ -84,6 +95,9 @@ const BetterContracts: React.FC = () => {
   const [results, setResults] = useState<ApiResponse | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
+  // 03.09.2026: Die hochgeladene Datei bleibt im Speicher, damit der Nutzer sie
+  // in der Ergebnisanzeige oeffnen kann. Sie verlaesst den Browser dafuer nicht.
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [step, setStep] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analyzingProgress, setAnalyzingProgress] = useState(0);
@@ -249,6 +263,7 @@ const BetterContracts: React.FC = () => {
     
     setError("");
     setFileName(file.name);
+    setUploadedFile(file);
     setUploadProgress(0);
     
     const progressInterval = setInterval(() => {
@@ -421,6 +436,7 @@ const BetterContracts: React.FC = () => {
     setCurrentPrice(null);
     setSearchQuery("");
     setFileName("");
+    setUploadedFile(null);
     setResults(null);
     setError("");
   };
@@ -765,6 +781,15 @@ const BetterContracts: React.FC = () => {
                 sucheGestoert={results.sucheGestoert || false}
                 stoerungsgrund={results.stoerungsgrund || null}
                 trefferArten={results.suchBilanz?.trefferArten || null}
+                vertragsfakten={results.vertragsfakten || null}
+                fileName={fileName}
+                onOpenDocument={uploadedFile ? () => {
+                  const url = URL.createObjectURL(uploadedFile);
+                  const fenster = window.open(url, "_blank");
+                  // Objekt-URL wieder freigeben, sonst bleibt die Datei im Speicher liegen
+                  if (fenster) { fenster.addEventListener("load", () => URL.revokeObjectURL(url), { once: true }); }
+                  setTimeout(() => URL.revokeObjectURL(url), 60000);
+                } : undefined}
                 aiSuggestedAlternatives={results.aiSuggestedAlternatives || []}
               />
               

@@ -72,6 +72,17 @@ interface ResultsProps {
   sucheGestoert?: boolean;
   stoerungsgrund?: string | null;
   trefferArten?: { anbieter: number; portale: number; infoquellen: number; istAnbieter: number } | null;
+  vertragsfakten?: {
+    anbieter: string | null;
+    vertragsart: string | null;
+    preisMonatlich: string | null;
+    preisEinmalig: string | null;
+    leistung: string | null;
+    laufzeitBis: string | null;
+    kuendigungsfrist: string | null;
+  } | null;
+  fileName?: string;
+  onOpenDocument?: () => void;
   aiSuggestedAlternatives?: Alternative[];
 }
 
@@ -91,6 +102,9 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   sucheGestoert = false,
   stoerungsgrund = null,
   trefferArten = null,
+  vertragsfakten = null,
+  fileName = "",
+  onOpenDocument,
   aiSuggestedAlternatives = []
 }) => {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
@@ -612,6 +626,61 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
 
   return (
     <div className="results-container">
+
+      {/* 03.09.2026: Dokumentkopf. Beim Vergleichen soll immer sichtbar sein,
+          WOMIT verglichen wird. Zeigt nur Felder, die wirklich im Dokument
+          standen — ein leeres Feld ist besser als eine geratene Angabe. */}
+      {(vertragsfakten || fileName) && (
+        <div className="doc-head">
+          <div className="doc-head-top">
+            <div className="doc-file-icon" aria-hidden="true">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>
+              </svg>
+            </div>
+            <div className="doc-file-meta">
+              <p className="doc-file-title">
+                {[vertragsfakten?.anbieter, vertragsfakten?.vertragsart, vertragsfakten?.leistung]
+                  .filter(Boolean).join(' · ') || 'Dein Vertrag'}
+              </p>
+              {fileName && <p className="doc-file-name">{fileName}</p>}
+            </div>
+            {onOpenDocument && (
+              <button type="button" className="doc-open-btn" onClick={onOpenDocument}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                Dokument ansehen
+              </button>
+            )}
+          </div>
+
+          {vertragsfakten && (
+            <div className="doc-facts">
+              {vertragsfakten.preisMonatlich && (
+                <div className="doc-fact"><span className="doc-fact-k">Dein Preis</span><span className="doc-fact-v">{vertragsfakten.preisMonatlich}<small>/Monat</small></span></div>
+              )}
+              {vertragsfakten.preisEinmalig && !vertragsfakten.preisMonatlich && (
+                <div className="doc-fact"><span className="doc-fact-k">Dein Preis</span><span className="doc-fact-v">{vertragsfakten.preisEinmalig}<small>einmalig</small></span></div>
+              )}
+              {vertragsfakten.leistung && (
+                <div className="doc-fact"><span className="doc-fact-k">Leistung</span><span className="doc-fact-v">{vertragsfakten.leistung}</span></div>
+              )}
+              {vertragsfakten.laufzeitBis && (
+                <div className="doc-fact"><span className="doc-fact-k">Läuft bis</span><span className="doc-fact-v">{vertragsfakten.laufzeitBis}</span></div>
+              )}
+              {vertragsfakten.kuendigungsfrist && (
+                <div className="doc-fact"><span className="doc-fact-k">Kündigungsfrist</span><span className="doc-fact-v">{vertragsfakten.kuendigungsfrist}</span></div>
+              )}
+            </div>
+          )}
+
+          {vertragsfakten && (
+            <p className="doc-head-note">Aus deinem Dokument gelesen, nicht geschätzt. Fehlende Angaben standen nicht darin.</p>
+          )}
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="results-header">
         <div className="results-badge">
