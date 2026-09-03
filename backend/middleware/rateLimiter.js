@@ -183,6 +183,25 @@ const accountDeletionLimiter = rateLimit({
   keyGenerator: (req) => req.user?.userId || req.user?.id || ipKeyGenerator(req.ip)
 });
 
+// 03.09.2026 (Mail-Knopf-Fix): Limiter für die ÖFFENTLICHE Mail-Aktions-Route
+// (GET Bestätigungsseite + POST Ausführung, routes/emailQuickAction.js). Die Route
+// hat keine Session — Schlüssel ist die echte Client-Adresse (cf-connecting-ip,
+// dieselbe Entscheidung wie bei der Drosselung: kein trust proxy). 30/15min reicht
+// für jeden legitimen Mail-Klick und bremst Scans/Replay. Antwort als HTML, nicht
+// JSON — die Route wird im Browser eines Mail-Empfängers geöffnet.
+const mailActionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: clientAddressKey,
+  handler: (req, res) => {
+    res.status(429)
+      .set({ 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' })
+      .send('<!doctype html><html lang="de"><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;padding:40px;text-align:center;color:#0f172a;"><h2>Zu viele Anfragen</h2><p>Bitte warte ein paar Minuten und öffne den Link aus deiner E-Mail erneut.</p></body></html>');
+  }
+});
+
 module.exports = {
   standardLimiter,
   authLimiter,
@@ -192,6 +211,7 @@ module.exports = {
   sensitiveLimiter,
   sseLimiter,
   accountDeletionLimiter,
+  mailActionLimiter,
   createDynamicLimiter,
   skipForPremium
 };

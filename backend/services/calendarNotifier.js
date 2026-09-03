@@ -770,6 +770,10 @@ async function generateActionToken(eventId, userId) {
     {
       eventId: eventId.toString(),
       userId: userId.toString(),
+      // 03.09.2026: Zweck-Stempel gemäß der tokenShape-Invariante (jede Token-
+      // Familie eindeutig erkennbar). Die Mail-Route akzeptiert übergangsweise
+      // auch Alt-Tokens OHNE type (bis zu 7 Tage im Umlauf).
+      type: 'mail_action',
       exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60)
     },
     process.env.JWT_SECRET
@@ -927,14 +931,9 @@ function generateSignatureReminderEmail(event, daysUntilExpiry) {
 // 11.08.2026: Titel/Beschreibung stammen aus Upload-Dateinamen + KI-Labels —
 // beim Einsetzen ins Mail-HTML neutralisieren (&<>"'), sonst zerschießt ein
 // Dateiname mit HTML-Zeichen das Layout. Umlaute/Emojis bleiben unberührt.
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+// 03.09.2026: nach utils/escapeHtml.js extrahiert (geteilt mit der neuen
+// Mail-Bestätigungsseite in routes/emailQuickAction.js) — Verhalten identisch.
+const { escapeHtml } = require("../utils/escapeHtml");
 
 function generateGenericEmail(event) {
   return `
@@ -944,6 +943,14 @@ function generateGenericEmail(event) {
 }
 
 function generateQuickActionLinks(event, token, baseUrl) {
+  // 03.09.2026: Signatur-Mails bekommen KEINE Snooze/Dismiss-Knöpfe mehr — dort
+  // logen sie: die Signaturanfrage läuft unabhängig vom Erinnerungs-Event ab,
+  // "Erinnern in 7 Tagen" hätte eine Zusatz-Erinnerung NACH Ablauf versprochen.
+  if (/^SIGNATURE_/i.test(event?.type || "")) {
+    return [
+      { icon: "", text: "Im Kalender anzeigen", url: `${baseUrl}/calendar?eventId=${event._id}` }
+    ];
+  }
   return [
     { icon: "", text: "Im Kalender anzeigen", url: `${baseUrl}/calendar?eventId=${event._id}` },
     { icon: "", text: "Erinnern in 7 Tagen", url: `${baseUrl}/api/calendar/quick-action?token=${token}&action=snooze&days=7` },

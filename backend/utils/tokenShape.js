@@ -7,16 +7,18 @@
 // und den Mail-Quick-Action-Token (7 Tage, steht im Klartext in jeder Erinnerungs-Mail).
 // Beide tragen eine userId und wurden damit zum vollwertigen Konto-Zugriff.
 //
-// INVARIANTE (am 01.09.2026 gegen ALLE 7 jwt.sign-Stellen des Backends verifiziert):
+// INVARIANTE (01.09.2026 verifiziert, 03.09. präzisiert: es sind 8 produktive
+// jwt.sign-Stellen — campaignTrackingService signiert an ZWEI Stellen):
 //   • Session-Tokens tragen IMMER `email` + `userId` und NIE ein `type`-Feld.
 //     Erzeuger: routes/auth.js (Login), routes/emailVerification.js,
 //     routes/organizations.js (Einladung), middleware/verifyToken.js (Refresh).
 //   • Zweck-Tokens tragen NIE `email` und `userId` zusammen:
-//     calendar_sync {userId, type, nonce} · Quick-Action {eventId, userId} ·
-//     Kampagnen-Tracking {c, r, t}.
+//     calendar_sync {userId, type, nonce} · Mail-Aktion {eventId, userId,
+//     type:'mail_action'} (vor 03.09. ohne type; calendarNotifier) ·
+//     Kampagnen-Tracking {c, r, t} (2 Signier-Stellen).
 // ⚠️ Wer eine NEUE Token-Familie einführt: niemals `email` + `userId` gemeinsam in
-// die Payload legen (sonst wird der Token hier zur Login-Session), und diese Datei
-// samt tests/unit/tokenShape.test.js ergänzen.
+// die Payload legen (sonst wird der Token hier zur Login-Session), ein `type`-Feld
+// vergeben, und diese Datei samt tests/unit/tokenShape.test.js ergänzen.
 
 /**
  * Ist die Payload eine Login-Session? (email + userId vorhanden, kein Zweck-Feld `type`)
@@ -59,4 +61,20 @@ function isStoredSyncToken(tokenString, user) {
     && user.calendarSyncToken === tokenString;
 }
 
-module.exports = { isSessionTokenPayload, isCalendarSyncPayload, isStoredSyncToken };
+/**
+ * Ist die Payload ein Mail-Aktions-Token (Knöpfe "Erinnern in 7 Tagen" /
+ * "Erinnerung ausschalten" in Erinnerungs-Mails)? {eventId, userId}, 7 Tage.
+ * Übergang: Tokens von VOR dem 03.09.2026 tragen kein type-Feld und sind bis zu
+ * 7 Tage im Umlauf — beide Formen gelten, ein FALSCHES type-Feld nie.
+ * email ist ausgeschlossen (sonst wäre eine Session-Payload hier gültig).
+ */
+function isQuickActionPayload(decoded) {
+  return !!decoded
+    && typeof decoded === 'object'
+    && !!decoded.eventId
+    && !!decoded.userId
+    && !decoded.email
+    && (decoded.type === undefined || decoded.type === 'mail_action');
+}
+
+module.exports = { isSessionTokenPayload, isCalendarSyncPayload, isStoredSyncToken, isQuickActionPayload };

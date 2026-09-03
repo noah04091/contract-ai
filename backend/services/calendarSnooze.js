@@ -42,7 +42,10 @@ function isDateShiftable(event) {
  */
 async function applySnooze(db, event, snoozeDaysRaw) {
   const parsed = parseInt(snoozeDaysRaw);
-  const days = Number.isFinite(parsed) && parsed > 0 ? parsed : 7;
+  // 03.09.2026 (Mail-Knopf-Fix, Review-Auflage): Obergrenze hier im Service,
+  // nicht nur an einzelnen Routen — der App-Pfad (POST /quick-action, data.days)
+  // war bisher völlig ungebunden. 1..30 Tage; alles andere fällt auf 7.
+  const days = Number.isFinite(parsed) && parsed >= 1 && parsed <= 30 ? parsed : 7;
   const now = new Date();
   const fmt = (d) => new Date(d).toLocaleDateString("de-DE");
 
@@ -74,6 +77,23 @@ async function applySnooze(db, event, snoozeDaysRaw) {
   const origStr = fmt(event.date);
   const message = `Zusätzliche Erinnerung am ${fmt(remindDate)} angelegt — der Termin selbst bleibt am ${origStr}.`;
   if (existing) return { mode: "extraReminder", newDate: remindDate, message };
+
+  // 03.09.2026 (Review-Auflage gegen Event-Spam): pro Ursprungs-Termin höchstens
+  // 5 aktive Zusatz-Erinnerungen — der Mail-Token ist 7 Tage gültig, ohne Deckel
+  // ließe sich der Kalender mit beliebig vielen Terminen fluten.
+  const aktive = await db.collection("contract_events").countDocuments({
+    userId: event.userId,
+    type: "CUSTOM_REMINDER",
+    "metadata.originEventId": event._id.toString(),
+    status: { $ne: "dismissed" }
+  });
+  if (aktive >= 5) {
+    return {
+      mode: "extraReminder",
+      newDate: remindDate,
+      message: `Für diesen Termin bestehen bereits ${aktive} Zusatz-Erinnerungen — verwalte sie im Kalender, bevor du neue anlegst.`
+    };
+  }
 
   const cleanTitle = (event.title || "Termin").replace(/^[^0-9A-Za-zÀ-ÿ]+/, "");
   await db.collection("contract_events").insertOne({

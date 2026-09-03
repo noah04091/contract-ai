@@ -511,6 +511,18 @@ const connectDB = async () => {
       // Externe Kalender (Google, Apple, Outlook) können keine Auth-Header senden
       const { generateICSFeed } = require("./utils/icsGenerator");
 
+      // 📧 03.09.2026 Mail-Knöpfe ("Erinnern in 7 Tagen"/"Ausschalten"): ebenfalls
+      // VOR verifyToken — der signierte 7-Tage-Token im Link trägt die Autorisierung,
+      // Mail-Empfänger haben keine Browser-Sitzung. Bewusst NUR app.get auf dem
+      // Alt-Pfad (ein app.use würde den App-internen POST /quick-action mit
+      // Bearer+Plan-Gate in routes/calendar.js verschlucken); die Ausführung läuft
+      // über den eigenen /confirm-Unterpfad. Details: routes/emailQuickAction.js.
+      const { renderMailActionPage, executeMailAction } = require("./routes/emailQuickAction");
+      const { mailActionLimiter } = require("./middleware/rateLimiter");
+      app.get("/api/calendar/quick-action", mailActionLimiter, renderMailActionPage);
+      app.post("/api/calendar/quick-action/confirm", mailActionLimiter, executeMailAction);
+      console.log("✅ Mail-Aktions-Endpoints registriert (ohne Auth, Token-basiert)");
+
       app.get("/api/calendar/ics", async (req, res) => {
         // Setze ICS-Header immer zuerst
         res.setHeader("Content-Type", "text/calendar; charset=utf-8");
