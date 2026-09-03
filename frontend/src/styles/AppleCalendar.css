@@ -2185,6 +2185,12 @@
   }
 
   /* ========== WEEK VIEW - Mobile Optimiert ========== */
+  /* R11 (03.09.2026): Die alten 80px-Spalten mit 10-11px-Schrift und word-break
+     zerhackten jede Wochenkarte ("Kuendigun g", Screenshot-Beweis 390px).
+     Jetzt: 132px-Spalten, gemeinsam wischbar (Header+Inhalt teilen den Scroller
+     .calendar-week-view und fluchten über identische min-width), Wortumbruch nur
+     wenn nötig, Titel auf 3 Zeilen gedeckelt. ~2,9 sichtbare Spalten = die
+     angeschnittene dritte Spalte IST der Wisch-Hinweis. */
   .calendar-week-view {
     border-radius: 16px;
     overflow-x: auto;
@@ -2192,12 +2198,12 @@
   }
 
   .week-header {
-    min-width: 560px; /* 7 * 80px */
+    min-width: 924px; /* 7 * 132px — MUSS mit .week-content identisch bleiben */
   }
 
   .week-day-header {
-    padding: 12px 4px;
-    min-width: 80px;
+    padding: 12px 6px;
+    min-width: 132px;
   }
 
   .week-day-name {
@@ -2212,17 +2218,17 @@
 
   .week-content {
     min-height: 280px;
-    min-width: 560px;
+    min-width: 924px;
   }
 
   .week-day-column {
-    padding: 8px 4px;
+    padding: 10px 6px;
     min-height: 250px;
-    min-width: 80px;
+    min-width: 132px;
   }
 
   .week-day-empty {
-    font-size: 10px;
+    font-size: 11px;
     text-align: center;
     padding: 8px 2px;
   }
@@ -2232,7 +2238,7 @@
   }
 
   .week-event-card {
-    padding: 8px 6px;
+    padding: 9px 8px;
     gap: 4px;
     flex-direction: column;
     align-items: flex-start;
@@ -2246,10 +2252,15 @@
   }
 
   .week-event-title {
-    font-size: 11px;
+    font-size: 12.5px;
     white-space: normal;
-    word-break: break-word;
-    line-height: 1.3;
+    word-break: normal;
+    overflow-wrap: anywhere; /* bricht NUR Endlos-IDs, keine normalen Wörter */
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .week-event-type {
@@ -2528,21 +2539,23 @@
     font-size: 16px;
   }
 
+  /* R11 (03.09.2026): die alten 70px/10px-Verengungen zerstörten die Lesbarkeit
+     wieder — kleine Handys erben jetzt die 132px-Wisch-Spalten aus dem 768er-Block. */
   .week-content {
-    min-width: 490px;
+    min-width: 924px;
   }
 
   .week-day-column {
-    padding: 6px 3px;
-    min-width: 70px;
+    padding: 8px 5px;
+    min-width: 132px;
   }
 
   .week-event-card {
-    padding: 6px 4px;
+    padding: 8px 7px;
   }
 
   .week-event-title {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   /* Modal */
