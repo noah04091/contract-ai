@@ -75,7 +75,7 @@ async function applySnooze(db, event, snoozeDaysRaw) {
     status: { $ne: "dismissed" }
   });
   const origStr = fmt(event.date);
-  const message = `Zusätzliche Erinnerung am ${fmt(remindDate)} angelegt — der Termin selbst bleibt am ${origStr}.`;
+  const message = `Zusätzliche Erinnerung am ${fmt(remindDate)} angelegt. Der Termin selbst bleibt am ${origStr}.`;
   if (existing) return { mode: "extraReminder", newDate: remindDate, message };
 
   // 03.09.2026 (Review-Auflage gegen Event-Spam): pro Ursprungs-Termin höchstens
@@ -91,7 +91,7 @@ async function applySnooze(db, event, snoozeDaysRaw) {
     return {
       mode: "extraReminder",
       newDate: remindDate,
-      message: `Für diesen Termin bestehen bereits ${aktive} Zusatz-Erinnerungen — verwalte sie im Kalender, bevor du neue anlegst.`
+      message: `Für diesen Termin bestehen bereits ${aktive} Zusatz-Erinnerungen. Verwalte sie im Kalender, bevor du neue anlegst.`
     };
   }
 
