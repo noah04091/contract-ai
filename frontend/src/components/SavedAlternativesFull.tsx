@@ -72,7 +72,7 @@ const SavedAlternativesFull: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Möchten Sie diese Alternative wirklich löschen?')) return;
+    if (!confirm('Diese Alternative aus der Merkliste entfernen?')) return;
 
     try {
       const response = await fetch(`/api/saved-alternatives/${id}`, {
@@ -179,7 +179,6 @@ const SavedAlternativesFull: React.FC = () => {
   return (
     <div className="full-saved-alternatives">
       <div className="full-saved-alternatives-header">
-        <h2>Merkliste</h2>
 
         {stats && (
           <div className="full-stats-summary">
@@ -201,7 +200,7 @@ const SavedAlternativesFull: React.FC = () => {
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
           </div>
           <h3>Noch keine Alternativen gespeichert</h3>
-          <p>Laden Sie einen Vertrag hoch und speichern Sie interessante Alternativen.</p>
+          <p>Lade einen Vertrag hoch und merke dir Alternativen, die dich interessieren.</p>
         </div>
       ) : (
         <>

@@ -279,7 +279,7 @@ const BetterContracts: React.FC = () => {
       }
     } catch (err) {
       console.error("Fehler beim Extrahieren:", err);
-      setError("Fehler beim Datei-Upload. Bitte versuchen Sie es erneut.");
+      setError("Die Datei konnte nicht gelesen werden. Bitte versuche es erneut.");
       // ✅ Reset file input auch bei Fehlern
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -385,11 +385,11 @@ const BetterContracts: React.FC = () => {
       
       // User-friendly error messages
       if (errorMessage.includes('429')) {
-        setError("Zu viele Anfragen. Bitte warten Sie eine Minute und versuchen Sie es erneut.");
+        setError("Zu viele Anfragen. Bitte warte eine Minute und versuche es erneut.");
       } else if (errorMessage.includes('timeout') || errorMessage.includes('408')) {
-        setError("Die Analyse dauert zu lange. Bitte versuchen Sie es mit einem kürzeren Vertrag.");
+        setError("Die Suche dauert zu lange. Versuche es mit einem kürzeren Vertragstext.");
       } else if (errorMessage.includes('404')) {
-        setError("Keine passenden Alternativen gefunden. Versuchen Sie es mit einem anderen Vertragstyp.");
+        setError("Wir haben keine passenden Alternativen gefunden. Ein eigenes Stichwort im Suchfeld hilft oft weiter.");
       } else {
         setError(`Fehler bei der Analyse: ${errorMessage}`);
       }
@@ -670,7 +670,7 @@ const BetterContracts: React.FC = () => {
                     }}
                   />
                   <p className="input-help">
-                    {isPremium ? "Lassen Sie das Feld leer für automatische Erkennung" : "Premium erforderlich für diese Funktion"}
+                    {isPremium ? "Leer lassen: dann suchen wir anhand des Vertragsinhalts" : "Premium erforderlich für diese Funktion"}
                   </p>
                 </div>
                 
@@ -808,7 +808,8 @@ const BetterContracts: React.FC = () => {
           )}
         </div>
 
-        {/* 📖 Meine gespeicherten Alternativen - Seiten-Sektion */}
+        {/* Merkliste als Seiten-Abschnitt. Die Ueberschrift steht NUR hier —
+            die Komponente darin bringt keine eigene mehr mit (03.09.2026). */}
         <div className="saved-alternatives-section">
           <div className="saved-alternatives-wrapper">
             <div className="saved-alternatives-header">
@@ -816,8 +817,8 @@ const BetterContracts: React.FC = () => {
                 <Bookmark size={24} />
               </div>
               <div className="saved-alternatives-title-group">
-                <h2>Meine gespeicherten Alternativen</h2>
-                <p>Verwalten Sie Ihre gemerkten Vertragsalternativen und behalten Sie den Überblick</p>
+                <h2>Merkliste</h2>
+                <p>Alternativen, die du dir für später gemerkt hast</p>
               </div>
             </div>
 

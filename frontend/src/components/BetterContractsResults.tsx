@@ -248,7 +248,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
       }
     } catch (error) {
       console.error('Error saving alternative:', error);
-      alert('Fehler beim Speichern der Alternative. Bitte versuchen Sie es erneut.');
+      alert('Die Alternative konnte nicht gemerkt werden. Bitte versuche es erneut.');
     } finally {
       setSavingStates(prev => ({ ...prev, [alternativeKey]: false }));
     }
