@@ -1001,15 +1001,15 @@ function formatB2BAnalysis(b2bEnrichment) {
   const parts = [];
 
   if (b2bEnrichment.marketOverview) {
-    parts.push(`## 📊 Marktüberblick\n${b2bEnrichment.marketOverview}`);
+    parts.push(`## Marktüberblick\n${b2bEnrichment.marketOverview}`);
   }
 
   if (b2bEnrichment.negotiationTips && b2bEnrichment.negotiationTips.length > 0) {
-    parts.push(`## 💡 Verhandlungstipps\n${b2bEnrichment.negotiationTips.map((tip, i) => `${i + 1}. ${tip}`).join('\n')}`);
+    parts.push(`## Verhandlungstipps\n${b2bEnrichment.negotiationTips.map((tip, i) => `${i + 1}. ${tip}`).join('\n')}`);
   }
 
   if (parts.length === 0) {
-    return '## 📊 Marktanalyse\nFür diesen Vertragstyp wurden alternative Anbieter recherchiert. Vergleichen Sie die Konditionen direkt bei den Anbietern.';
+    return '## Marktanalyse\nFür diesen Vertragstyp wurden alternative Anbieter recherchiert. Vergleichen Sie die Konditionen direkt bei den Anbietern.';
   }
 
   return parts.join('\n\n');
@@ -2464,7 +2464,7 @@ router.post("/", async (req, res) => {
 
           if (aiSuggested.length > 0) {
             const zeroResult = {
-              analysis: b2bAnalysis || '## 📊 Marktanalyse\nKeine Suchergebnisse gefunden, aber KI-basierte Anbietervorschläge verfügbar.',
+              analysis: b2bAnalysis || '## Marktanalyse\nKeine Suchergebnisse gefunden, aber KI-basierte Anbietervorschläge verfügbar.',
               alternatives: [],
               sucheGestoert,
               stoerungsgrund,
@@ -2714,18 +2714,18 @@ WICHTIG:
 - Partner-Angebote (Check24, TarifCheck) bieten oft umfassende Vergleiche.
 
 ANTWORTE IN DIESEM FORMAT:
-## 📊 Zusammenfassung
+## Zusammenfassung
 [2-3 Sätze über den aktuellen Vertrag]
 
-## 🏆 Top 3 Alternativen
+## Top 3 Alternativen
 1. **[Name]** - [Vorteile/Nachteile]
 2. **[Name]** - [Vorteile/Nachteile]
 3. **[Name]** - [Vorteile/Nachteile]
 
-## 💡 Empfehlung
+## Empfehlung
 [Klare Handlungsempfehlung mit Begründung]
 
-## 💰 Potenzielle Ersparnis
+## Potenzielle Ersparnis
 [Geschätzte monatliche/jährliche Ersparnis basierend auf echten Preisen, nicht auf Ersparnisangaben]`;
 
       const userPrompt = `**AKTUELLER VERTRAG:**

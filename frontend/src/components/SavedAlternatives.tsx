@@ -162,7 +162,9 @@ const SavedAlternatives: React.FC = () => {
 
       {alternatives.length === 0 ? (
         <div className="empty-state">
-          <div className="empty-icon">📌</div>
+          <div className="empty-icon" aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </div>
           <h3>Noch keine Alternativen gespeichert</h3>
           <p>Speichern Sie Alternativen in Better Contracts, um sie hier zu verwalten.</p>
           <button

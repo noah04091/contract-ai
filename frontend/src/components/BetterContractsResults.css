@@ -1,3 +1,27 @@
+/* ────────────────────────────────────────────────────────────────
+   Farbwelt Better Contracts (03.09.2026)
+   Blau ist der einzige Akzent. Gruen bleibt NUR fuer echte
+   Bestaetigungen (gespeichert, Qualitaetshaken) — vorher war es mit 12
+   Vorkommen die haeufigste Farbe der Seite, vor dem Marken-Blau (8).
+   Kein Lila mehr (war an fuenf Stellen, entgegen der Markenvorgabe).
+   Keine Verlaeufe als Flaeche.
+   ──────────────────────────────────────────────────────────────── */
+.results-container,
+.full-saved-alternatives {
+  --bc-accent: #2563eb;
+  --bc-accent-dark: #1d4ed8;
+  --bc-accent-soft: #ebf2fe;
+  --bc-accent-line: #c7dbfc;
+  --bc-ink: #0f1826;
+  --bc-ink-2: #3e4a5c;
+  --bc-ink-3: #6b7686;
+  --bc-line: #e3e9f2;
+  --bc-line-strong: #d3dbe8;
+  --bc-sunk: #f1f4f9;
+  --bc-ok: #0f7b55;
+  --bc-ok-soft: #e8f5ef;
+}
+
 /* 🎯 src/styles/BetterContractsResults.css */
 /* ERWEITERTE VERSION MIT PARTNER-INTEGRATION */
 
@@ -48,7 +72,7 @@
 
 /* ========== HEADER SECTION ========== */
 .results-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #ffffff;
   border-radius: 24px;
   padding: 2.5rem;
   margin-bottom: 2rem;
@@ -63,9 +87,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  padding: 0.5rem 1rem;
+  background: var(--bc-accent-soft);
+  border: 1px solid var(--bc-accent-line);
+  color: var(--bc-accent);
+  padding: 0.4rem 0.85rem;
   border-radius: 50px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -78,10 +103,7 @@
   font-weight: 700;
   color: #0f172a;
   margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--bc-ink);
 }
 
 .results-summary {
@@ -110,13 +132,13 @@
 
 /* 🆕 Partner Badge in Summary */
 .summary-value.partner-badge {
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
+  background: var(--bc-sunk);
+  border: 1px solid var(--bc-line);
+  color: var(--bc-ink-2);
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-size: 0.875rem;
   display: inline-block;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 /* ========== FILTERS ========== */
@@ -188,13 +210,13 @@
 }
 
 .alternative-card.detailed {
-  border-left: 3px solid #10b981;
+  border-left: 3px solid var(--bc-line-strong);
 }
 
 /* 🆕 Partner Card Styling */
 .alternative-card.partner-card {
-  background: linear-gradient(to right, #f0fdf4 0%, white 100%);
-  border: 2px solid #10b981;
+  background: #ffffff;
+  border: 1px solid var(--bc-line);
   position: relative;
   overflow: hidden;
 }
@@ -206,7 +228,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(to bottom, #10b981, #059669);
+  background: var(--bc-line-strong);
 }
 
 /* 🆕 Partner Indicator */
@@ -214,8 +236,9 @@
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
+  background: var(--bc-sunk);
+  border: 1px solid var(--bc-line);
+  color: var(--bc-ink-2);
   padding: 0.25rem 0.625rem;
   border-radius: 6px;
   font-size: 0.65rem;
@@ -223,7 +246,6 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -233,8 +255,9 @@
   position: absolute;
   top: 0.75rem;
   right: 1rem;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
+  background: var(--bc-sunk);
+  border: 1px solid var(--bc-line);
+  color: var(--bc-ink-2);
   padding: 0.25rem 0.625rem;
   border-radius: 6px;
   font-size: 0.7rem;
@@ -279,11 +302,12 @@
   width: 40px;
   height: 40px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: var(--bc-sunk);
+  border: 1px solid var(--bc-line);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--bc-ink-2);
   font-weight: 600;
   font-size: 1rem;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
@@ -292,8 +316,10 @@
 
 /* 🆕 Partner Avatar */
 .provider-avatar.partner {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+  background: var(--bc-sunk);
+  border: 1px solid var(--bc-line);
+  color: var(--bc-ink-2);
+  box-shadow: none;
 }
 
 .provider-details {
@@ -342,8 +368,8 @@
 
 .price-amount {
   font-size: 1.25rem;
-  font-weight: 700;
-  color: #059669;
+  font-weight: 640;
+  color: var(--bc-ink);
   display: block;
   line-height: 1;
 }
@@ -453,14 +479,14 @@
 
 /* 🆕 Partner Button Style */
 .action-button.primary.partner {
-  background: linear-gradient(135deg, #10b981, #059669);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  background: var(--bc-accent);
+  box-shadow: none;
 }
 
 .action-button.primary.partner:hover {
-  background: linear-gradient(135deg, #059669, #047857);
+  background: var(--bc-accent-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  box-shadow: none;
 }
 
 .action-button.primary:hover {
@@ -567,7 +593,7 @@
 
 /* ========== ANALYSIS SECTION ========== */
 .analysis-section {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  background: #ffffff;
   border-radius: 20px;
   padding: 2rem;
   margin-bottom: 2rem;
@@ -586,11 +612,12 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  background: var(--bc-sunk);
+  border: 1px solid var(--bc-line);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--bc-ink-2);
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
 }
 
@@ -732,8 +759,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
+  background: var(--bc-sunk);
+  border-bottom: 1px solid var(--bc-line);
+  color: var(--bc-ink);
   border-radius: 16px 16px 0 0;
 }
 
@@ -1073,18 +1101,18 @@
 
 /* B2B Card Base */
 .alternative-card.b2b-card {
-  border-left: 4px solid #7c3aed;
+  border-left: 3px solid var(--bc-line-strong);
   position: relative;
 }
 
 .alternative-card.b2b-card:hover {
-  border-left-color: #6d28d9;
+  border-left-color: var(--bc-accent);
 }
 
 /* AI-Suggested Card */
 .alternative-card.ai-suggested-card {
-  background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 50%, #ffffff 100%);
-  border-left-color: #a78bfa;
+  background: #ffffff;
+  border-left-color: var(--bc-accent-line);
 }
 
 /* AI-Suggested Card: Header braucht Platz für die absolute KI-Vorschlag-Badge */
@@ -1102,8 +1130,9 @@
   position: absolute;
   top: 0.75rem;
   left: 0.75rem;
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  color: white;
+  background: var(--bc-accent-soft);
+  border: 1px solid var(--bc-accent-line);
+  color: var(--bc-accent);
   padding: 0.25rem 0.625rem;
   border-radius: 6px;
   font-size: 0.65rem;
@@ -1146,8 +1175,10 @@
 
 /* B2B Provider Avatar */
 .provider-avatar.b2b {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+  background: var(--bc-sunk);
+  border: 1px solid var(--bc-line);
+  color: var(--bc-ink-2);
+  box-shadow: none;
 }
 
 /* B2B Content Grid */
@@ -1243,7 +1274,7 @@
 }
 
 .b2b-section-header.ai-suggested h3 {
-  color: #6d28d9;
+  color: var(--bc-ink);
 }
 
 /* Marktrecherche-Sektion: dezent in Slate-Grau, signalisiert "informational" */
