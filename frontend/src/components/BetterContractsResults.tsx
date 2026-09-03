@@ -1017,7 +1017,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
             <span className="meta-value">
               {isB2B
                 ? 'Bei Geschäfts- und Dienstleistungsverträgen nennen Anbieter ihre Preise fast nie öffentlich, sie kalkulieren pro Kunde. Frag die Anbieter direkt an und vergleiche die Angebote mit deinem aktuellen Vertrag.'
-                : 'Dein Preis hängt von deinen eigenen Angaben ab, etwa Verbrauch, Postleitzahl oder Fahrzeug. Verlässliche Zahlen bekommst du erst im Tarifrechner, nicht auf der Anbieterseite.'}
+                : 'Dein Preis hängt von deinen eigenen Angaben ab. Anbieterseiten zeigen deshalb meist nur Startpreise. Verlässliche Zahlen bekommst du erst im Tarifrechner, wenn deine Daten eingetragen sind.'}
             </span>
           </div>
         )}
