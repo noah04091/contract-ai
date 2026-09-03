@@ -4263,11 +4263,30 @@ section.hero {
    der Sektion und ist an deren oberem und unterem Rand bereits transparent
    (58 % vertikaler Radius, Farbe endet bei 72 % davon = 42 % der halben
    Hoehe) — deshalb entsteht an den Grenzen keine Kante. */
+/* Betonte Abschnitte im WECHSEL, damit die Seite einen Rhythmus bekommt:
+   Hero (getoent) - Video (ruhig) - Problem (getoent) - Loesung (ruhig) -
+   Warum (getoent) - Risiken (ruhig) - Zahlen (getoent) - FAQ (ruhig) -
+   Verwandte (ruhig) - Schluss-Aufruf (getoent).
+   Jede Zone liegt INNERHALB ihrer Sektion und ist an deren oberem und unterem
+   Rand bereits transparent (58 % vertikaler Radius, Farbe endet bei 72 % davon
+   = 42 % der halben Hoehe). An den Sektionsgrenzen faengt also nichts an und
+   hoert nichts auf - deshalb sichtbar UND ohne Kante. */
+.problemSection,
+.whySection,
 .statsSection,
 .ctaSection {
   background:
     radial-gradient(125% 58% at 50% 50%,
-      rgba(37, 99, 235, 0.11) 0%,
-      rgba(37, 99, 235, 0.06) 45%,
+      rgba(37, 99, 235, 0.13) 0%,
+      rgba(37, 99, 235, 0.07) 45%,
+      transparent 72%);
+}
+
+/* Der Schluss-Aufruf traegt die Handlung und darf einen Hauch kraeftiger sein. */
+.ctaSection {
+  background:
+    radial-gradient(125% 58% at 50% 50%,
+      rgba(37, 99, 235, 0.155) 0%,
+      rgba(37, 99, 235, 0.085) 45%,
       transparent 72%);
 }
