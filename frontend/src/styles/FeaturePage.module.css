@@ -4,9 +4,35 @@
 .pageBackground {
   width: 100%;
   min-height: 100vh;
-  background: #ffffff;
   position: relative;
   overflow: hidden;
+
+  /* SEITEN-HINTERGRUND (03.09.2026)
+     Vorher brachte jede Sektion ihren eigenen Verlauf mit (weiss / #eff6ff /
+     #f8fafc). Weil die Verlaeufe nicht aufeinander abgestimmt waren, stiessen
+     an sieben von zehn Sektionsgrenzen zwei verschiedene Farben aufeinander —
+     sichtbar als harte Linien quer ueber die Seite.
+     Jetzt liegt der Hintergrund EINMAL hier; die Sektionen sind transparent.
+     Gleicher Aufbau wie auf der Landingpage (.ca-lp-page), damit Startseite
+     und Feature-Seiten wie eine Familie wirken. */
+  background:
+    radial-gradient(1400px 900px at 12% 4%,  rgba(37, 99, 235, 0.10), transparent 58%),
+    radial-gradient(1200px 850px at 88% 26%, rgba(59, 130, 246, 0.055), transparent 58%),
+    radial-gradient(1300px 900px at 15% 62%, rgba(37, 99, 235, 0.06), transparent 60%),
+    radial-gradient(1400px 950px at 82% 88%, rgba(37, 99, 235, 0.09), transparent 60%),
+    linear-gradient(180deg,
+      #ffffff 0%,
+      #fbfcff 6%,
+      #edf2fc 15%,
+      #f5f9fd 26%,
+      #ffffff 38%,
+      #fcfdff 48%,
+      #eef4fc 60%,
+      #f6fafd 72%,
+      #ffffff 80%,
+      #edf2fc 90%,
+      #f8fbfe 97%
+    );
 }
 
 /* Ambient Orb 1 - Top Right */
@@ -827,7 +853,7 @@
 /* Stats Section - V5 Premium Light */
 .statsSection {
   margin-bottom: 0;
-  background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
   padding: 100px 48px;
   margin-left: 0;
   margin-right: 0;
@@ -948,7 +974,7 @@
 .ctaSection {
   margin-bottom: 0;
   padding: 80px 0 100px;
-  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 .ctaCard {
@@ -2151,7 +2177,7 @@
    ======================================== */
 .relatedSection {
   padding: 80px 0 0;
-  background: linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 .relatedGrid {
@@ -2233,7 +2259,7 @@
   padding: 100px 0 120px;
   position: relative;
   z-index: 1;
-  background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 .videoContainer {
@@ -2788,7 +2814,7 @@
 /* Problem Section */
 .problemSection {
   padding: 100px 0;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 .problemGrid {
@@ -2975,7 +3001,7 @@
 /* Solution Section - V5 with blue tint */
 .solutionSection {
   padding: 100px 0;
-  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 .solutionGrid {
@@ -3159,7 +3185,7 @@
 /* Why Section */
 .whySection {
   padding: 100px 0;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 .whyGrid {
@@ -3305,7 +3331,7 @@
    ============================================ */
 .functionsSection {
   padding: 100px 0;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 .functionsGrid {
@@ -3404,7 +3430,7 @@
    ============================================ */
 .risksSection {
   padding: 100px 0;
-  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 .risksGrid {
@@ -3566,7 +3592,7 @@
 /* FAQ Section */
 .faqSection {
   padding: 100px 0;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  /* Hintergrund entfernt 03.09.2026 - liegt jetzt durchgehend auf .pageBackground */
 }
 
 /* CTA Section - V5 */
@@ -4215,4 +4241,33 @@
   .relatedGrid2col {
     grid-template-columns: 1fr;
   }
+}
+/* ===========================================================================
+   HERO UND BETONTE ABSCHNITTE (03.09.2026)
+   =========================================================================== */
+
+/* Der Hero bekommt oben etwas Farbe und laeuft nach unten aus, damit am
+   Uebergang zur naechsten Sektion nichts abreisst.
+   ⚠️ NUR die Sektion ansprechen, NICHT [class*="hero"] allgemein: die
+   Ueberschrift nutzt einen Farbverlauf, der durch den Text sichtbar gemacht
+   wird (background-clip). Ein Hintergrund auf ihr loescht die Schrift. */
+section.hero {
+  background:
+    radial-gradient(120% 70% at 50% 12%,
+      rgba(37, 99, 235, 0.13) 0%,
+      rgba(37, 99, 235, 0.05) 48%,
+      transparent 74%);
+}
+
+/* Zahlen und Schluss-Aufruf duerfen sich abheben. Der Verlauf liegt innerhalb
+   der Sektion und ist an deren oberem und unterem Rand bereits transparent
+   (58 % vertikaler Radius, Farbe endet bei 72 % davon = 42 % der halben
+   Hoehe) — deshalb entsteht an den Grenzen keine Kante. */
+.statsSection,
+.ctaSection {
+  background:
+    radial-gradient(125% 58% at 50% 50%,
+      rgba(37, 99, 235, 0.11) 0%,
+      rgba(37, 99, 235, 0.06) 45%,
+      transparent 72%);
 }
