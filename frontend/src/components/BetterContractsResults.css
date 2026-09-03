@@ -130,6 +130,39 @@
   color: #1e293b;
 }
 
+/* Zusammensetzung der Treffer (03.09.2026).
+   Steht direkt unter der Gesamtzahl, weil die Gesamtzahl allein nichts über
+   den Nutzen sagt: 10 Treffer mit 6 echten Anbietern sind etwas anderes als
+   10 Treffer mit 1 Anbieter und 9 Verzeichnissen. */
+.summary-item.summary-item-arten {
+  grid-column: 1 / -1;
+}
+
+.summary-item-arten .summary-value {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.art-pill {
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  border: 1px solid var(--bc-line);
+  background: var(--bc-sunk);
+  color: var(--bc-ink-2);
+  white-space: nowrap;
+}
+
+/* Die einzige Zahl, auf die es wirklich ankommt */
+.art-pill.art-pill-anbieter {
+  border-color: var(--bc-accent-line);
+  background: var(--bc-accent-soft);
+  color: var(--bc-accent);
+  font-weight: 600;
+}
+
 /* 🆕 Partner Badge in Summary */
 .summary-value.partner-badge {
   background: var(--bc-sunk);

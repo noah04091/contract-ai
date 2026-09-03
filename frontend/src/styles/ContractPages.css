@@ -122,12 +122,16 @@
   align-items: center;
   gap: 6px;
   padding: 6px 14px;
-  background: linear-gradient(135deg, rgba(175, 82, 222, 0.1) 0%, rgba(88, 86, 214, 0.1) 100%);
-  border: 1px solid rgba(175, 82, 222, 0.2);
+  /* 03.09.2026: von Lila auf die Markenfarbe. Die Vorgabe lautet "Primaerfarbe
+     #3b82f6, kein Lila" — hier stand ein Lila-Verlauf mit Lila-Rand und
+     Lila-Schrift. Gilt fuer alle drei Seiten, die diese Datei teilen:
+     Better Contracts, Vergleich, Optimierer. */
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.22);
   border-radius: 100px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--apple-purple);
+  color: var(--apple-blue);
   margin-bottom: 20px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -142,11 +146,12 @@
   color: var(--text-primary);
 }
 
+/* 03.09.2026: Das hervorgehobene Wort der Ueberschrift war ein Blau-Lila-
+   Verlaufstext ("Finde bessere Alternativen", "Vertragsvergleich",
+   "KI-Vertragsoptimierung"). Jetzt einfarbig in der Markenfarbe.
+   Der Klassenname bleibt, damit die drei Seiten unveraendert bleiben. */
 .contract-header .gradient-text {
-  background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-purple) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--apple-blue);
 }
 
 .contract-description {
@@ -525,6 +530,55 @@
 /* ============================================
    TEXT INPUT
    ============================================ */
+
+/* 03.09.2026: Der Weg "Text einfügen" liegt eingeklappt unter der Ablagefläche.
+   Vorher stand das Textfeld gleich groß daneben und konkurrierte mit dem
+   Hauptweg, obwohl kaum jemand einen Vertrag abtippt.
+   Nur auf der Better-Contracts-Seite im Einsatz. */
+.contract-text-toggle {
+  margin-top: 20px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.contract-text-toggle > summary {
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+
+.contract-text-toggle > summary::-webkit-details-marker { display: none; }
+
+.contract-text-toggle > summary::before {
+  content: "+";
+  font-size: 16px;
+  line-height: 1;
+  color: var(--apple-blue);
+  font-weight: 600;
+}
+
+.contract-text-toggle[open] > summary::before { content: "–"; }
+
+.contract-text-toggle > summary:hover { color: var(--apple-blue); }
+
+.contract-text-toggle > summary:focus-visible {
+  outline: 2px solid var(--apple-blue);
+  outline-offset: -2px;
+}
+
+.contract-text-toggle .contract-text-form {
+  padding: 0 16px 16px;
+}
+
 .contract-text-form {
   display: flex;
   flex-direction: column;

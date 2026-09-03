@@ -40,6 +40,15 @@ interface ApiResponse {
   // Feld sah ein gestoerter Suchdienst genauso aus wie ein leeres Suchergebnis.
   sucheGestoert?: boolean;
   stoerungsgrund?: string | null;
+  // 03.09.2026: Zusammensetzung der Treffer. Nicht die Anzahl entscheidet
+  // ueber den Nutzen, sondern wie viele davon echte Anbieter sind.
+  suchBilanz?: {
+    versuche?: number;
+    fehlgeschlagen?: number;
+    roheTreffer?: number;
+    nachFilter?: number;
+    trefferArten?: { anbieter: number; portale: number; infoquellen: number; istAnbieter: number };
+  } | null;
   searchQuery: string;
   performance: {
     totalAlternatives: number;
@@ -577,14 +586,15 @@ const BetterContracts: React.FC = () => {
                 </div>
               )}
 
-              <div className="divider-container">
-                <div className="divider"></div>
-                <span className="divider-text">oder</span>
-                <div className="divider"></div>
-              </div>
+              {/* 03.09.2026: Das Textfeld war genauso gross wie die Ablageflaeche
+                  und stand damit gleichrangig daneben, obwohl kaum jemand einen
+                  Vertrag abtippt. Es liegt jetzt eingeklappt darunter und ist
+                  einen Klick entfernt, statt den halben Bildschirm zu belegen. */}
+              <details className="contract-text-toggle">
+                <summary>Stattdessen Text einfügen</summary>
 
               <div className="contract-text-form">
-                <label htmlFor="contract-text">Vertrag manuell eingeben</label>
+                <label htmlFor="contract-text">Vertragstext</label>
                 <textarea
                   id="contract-text"
                   value={contractText}
@@ -614,6 +624,7 @@ const BetterContracts: React.FC = () => {
                   </svg>
                 </button>
               </div>
+              </details>
             </div>
           )}
 
@@ -753,6 +764,7 @@ const BetterContracts: React.FC = () => {
                 isB2B={results.isB2B || false}
                 sucheGestoert={results.sucheGestoert || false}
                 stoerungsgrund={results.stoerungsgrund || null}
+                trefferArten={results.suchBilanz?.trefferArten || null}
                 aiSuggestedAlternatives={results.aiSuggestedAlternatives || []}
               />
               

@@ -71,6 +71,7 @@ interface ResultsProps {
   isB2B?: boolean;
   sucheGestoert?: boolean;
   stoerungsgrund?: string | null;
+  trefferArten?: { anbieter: number; portale: number; infoquellen: number; istAnbieter: number } | null;
   aiSuggestedAlternatives?: Alternative[];
 }
 
@@ -89,6 +90,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   isB2B = false,
   sucheGestoert = false,
   stoerungsgrund = null,
+  trefferArten = null,
   aiSuggestedAlternatives = []
 }) => {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
@@ -635,9 +637,29 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           <div className="summary-item">
             <span className="summary-label">Gefundene Alternativen:</span>
             <span className="summary-value">
-              {alternatives.length}{isB2B && aiSuggestedAlternatives.length > 0 ? ` + ${aiSuggestedAlternatives.length} KI` : ''}
+              {alternatives.length}{aiSuggestedAlternatives.length > 0 ? ` + ${aiSuggestedAlternatives.length} KI` : ''}
             </span>
           </div>
+
+          {/* 03.09.2026: Zusammensetzung statt nackter Gesamtzahl. "10 Alternativen"
+              heisst etwas anderes, wenn 6 davon echte Anbieter sind als wenn es
+              1 Anbieter und 9 Verzeichnisse sind. */}
+          {trefferArten && (trefferArten.anbieter + trefferArten.portale + trefferArten.infoquellen) > 0 && (
+            <div className="summary-item summary-item-arten">
+              <span className="summary-label">Davon:</span>
+              <span className="summary-value">
+                <span className="art-pill art-pill-anbieter">
+                  {trefferArten.anbieter} {trefferArten.anbieter === 1 ? 'direkter Anbieter' : 'direkte Anbieter'}
+                </span>
+                {trefferArten.portale > 0 && (
+                  <span className="art-pill">{trefferArten.portale} {trefferArten.portale === 1 ? 'Vergleichsportal' : 'Vergleichsportale'}</span>
+                )}
+                {trefferArten.infoquellen > 0 && (
+                  <span className="art-pill">{trefferArten.infoquellen} {trefferArten.infoquellen === 1 ? 'Infoquelle' : 'Infoquellen'}</span>
+                )}
+              </span>
+            </div>
+          )}
           {/* Partner Category Badge */}
           {partnerCategory && (
             <div className="summary-item">
