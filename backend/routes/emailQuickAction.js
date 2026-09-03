@@ -55,7 +55,9 @@ function fmt(d) {
 }
 
 // Gemeinsames Seitengerüst: kein externes Asset (der Token steht in der URL —
-// jeder Fremd-Request wäre ein potenzielles Leck über Referer), strenge Header.
+// jeder Fremd-Request, auch ein <img src>-Logo, wäre ein potenzielles Leck über
+// Referer/Logs). Die Marken-Optik ist deshalb KOMPLETT eingebettet: Wortmarken-
+// Logo als HTML/CSS, Icons als Inline-SVG. Strenge Header bleiben.
 function sende(res, status, titel, inhaltHtml) {
   res.status(status).set({
     "Content-Type": "text/html; charset=utf-8",
@@ -63,25 +65,61 @@ function sende(res, status, titel, inhaltHtml) {
     "Referrer-Policy": "no-referrer",
     "X-Robots-Tag": "noindex, nofollow",
     // Durchgesetzte CSP nur für diese Seiten (global ist CSP bewusst aus):
-    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action " + BACKEND_URL + "; frame-ancestors 'none'; base-uri 'none'"
+    "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:; form-action " + BACKEND_URL + "; frame-ancestors 'none'; base-uri 'none'"
   }).send(`<!doctype html>
-<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(titel)} · Contract AI</title></head>
-<body style="margin:0;background:#f5f7fb;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
-  <div style="max-width:440px;margin:0 auto;padding:48px 20px;">
-    <div style="text-align:center;margin-bottom:18px;font-weight:800;font-size:17px;letter-spacing:.2px;color:#1d4ed8;">CONTRACT AI</div>
-    <div style="background:#ffffff;border:1px solid #e5e9f0;border-radius:16px;padding:28px 24px;box-shadow:0 6px 24px rgba(15,23,42,.06);">
-      ${inhaltHtml}
-    </div>
-    <p style="text-align:center;font-size:12px;color:#94a3b8;margin-top:18px;">Du kannst alle Erinnerungen jederzeit in deinem <a href="${FRONTEND_URL}/calendar" style="color:#3b82f6;text-decoration:none;">Kalender</a> verwalten.</p>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(titel)} · Contract AI</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin:0; background:linear-gradient(180deg,#eef4ff 0%,#f6f8fc 240px,#f6f8fc 100%); font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#0f172a; -webkit-font-smoothing:antialiased; }
+  .huelle { max-width:460px; margin:0 auto; padding:44px 20px 32px; }
+  .logo { display:flex; align-items:center; justify-content:center; gap:7px; margin-bottom:22px; user-select:none; }
+  .logo .wort { font-weight:800; font-size:19px; letter-spacing:1.5px; color:#0f172a; }
+  .logo .ai { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; font-weight:800; font-size:12.5px; letter-spacing:.3px; box-shadow:0 3px 10px rgba(37,99,235,.35); }
+  .karte { background:#ffffff; border:1px solid #e6eaf2; border-radius:18px; padding:30px 26px; box-shadow:0 10px 34px rgba(15,23,42,.08); }
+  .ikon { width:56px; height:56px; border-radius:16px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; }
+  .ikon.blau { background:#eff6ff; } .ikon.gruen { background:#ecfdf5; } .ikon.grau { background:#f1f5f9; }
+  h1 { margin:0 0 10px; font-size:20px; text-align:center; letter-spacing:-.2px; }
+  .text { margin:0; font-size:15px; line-height:1.6; color:#475569; text-align:center; }
+  .termin { margin:18px 0 0; background:#f8fafc; border:1px solid #e8edf4; border-radius:12px; padding:13px 15px; display:flex; gap:11px; align-items:flex-start; text-align:left; }
+  .termin .t-titel { font-weight:600; font-size:14.5px; color:#0f172a; line-height:1.4; overflow-wrap:anywhere; }
+  .termin .t-datum { font-size:13px; color:#64748b; margin-top:2px; }
+  .knopf { display:block; width:100%; margin-top:20px; background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff; border:none; font-weight:600; font-size:15.5px; font-family:inherit; padding:14px 20px; border-radius:11px; cursor:pointer; text-align:center; text-decoration:none; box-shadow:0 4px 14px rgba(37,99,235,.30); }
+  .knopf:hover { filter:brightness(1.05); }
+  .zweitlink { display:block; margin-top:14px; text-align:center; color:#64748b; font-size:13.5px; text-decoration:none; }
+  .fuss { text-align:center; font-size:12.5px; color:#94a3b8; margin-top:20px; line-height:1.5; }
+  .fuss a { color:#3b82f6; text-decoration:none; }
+</style></head>
+<body>
+  <div class="huelle">
+    <div class="logo"><span class="wort">CONTRACT</span><span class="ai">AI</span></div>
+    <div class="karte">${inhaltHtml}</div>
+    <p class="fuss">Du kannst alle Erinnerungen jederzeit in deinem <a href="${FRONTEND_URL}/calendar">Kalender</a> verwalten.<br>Contract AI · Dein Vertrags-Assistent</p>
   </div>
 </body></html>`);
 }
 
-function fehlerSeite(res, status, ueberschrift, text) {
+// Inline-SVG-Icons (kein externer Request; stroke = Markenblau bzw. Grün)
+const ICONS = {
+  glocke: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+  glockeAus: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+  haken: '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  info: '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  kalender: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+};
+
+function terminBox(event) {
+  const titel = escapeHtml(event.title || "Termin");
+  const datum = escapeHtml(fmt(event.date));
+  return `<div class="termin">${ICONS.kalender}<div><div class="t-titel">${titel}</div>${datum ? `<div class="t-datum">Termin am ${datum}</div>` : ""}</div></div>`;
+}
+
+function fehlerSeite(res, status, ueberschrift, text, ikon = "info") {
+  const ikonKlasse = ikon === "haken" ? "gruen" : "grau";
   sende(res, status, ueberschrift, `
-    <h1 style="margin:0 0 10px 0;font-size:19px;">${escapeHtml(ueberschrift)}</h1>
-    <p style="margin:0;font-size:14.5px;line-height:1.55;color:#475569;">${escapeHtml(text)}</p>
-    <p style="margin:18px 0 0 0;"><a href="${FRONTEND_URL}/calendar" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;font-weight:600;font-size:14.5px;padding:11px 20px;border-radius:9px;">Zum Kalender</a></p>`);
+    <div class="ikon ${ikonKlasse}">${ICONS[ikon] || ICONS.info}</div>
+    <h1>${escapeHtml(ueberschrift)}</h1>
+    <p class="text">${escapeHtml(text)}</p>
+    <a class="knopf" href="${FRONTEND_URL}/calendar">Zum Kalender</a>`);
 }
 
 /**
@@ -129,7 +167,7 @@ function bereitsErledigtSeite(res, action) {
   const text = action === "dismiss"
     ? "Diese Erinnerung wurde über diesen Link bereits ausgeschaltet."
     : "Diese Erinnerung wurde über diesen Link bereits verschoben. In der nächsten Erinnerungs-Mail bekommst du neue Knöpfe.";
-  fehlerSeite(res, 200, "Schon erledigt ✓", text);
+  fehlerSeite(res, 200, "Schon erledigt", text, "haken");
 }
 
 // ============ GET: Bestätigungsseite (führt NIE aus) ============
@@ -142,27 +180,27 @@ async function renderMailActionPage(req, res) {
     if (event.metadata?.lastMailActionKey === schluessel) return bereitsErledigtSeite(res, action);
 
     if (event.status === "dismissed") {
-      if (action === "dismiss") return fehlerSeite(res, 200, "Bereits ausgeschaltet ✓", "Diese Erinnerung ist schon ausgeschaltet — du musst nichts weiter tun.");
+      if (action === "dismiss") return fehlerSeite(res, 200, "Bereits ausgeschaltet", "Diese Erinnerung ist schon ausgeschaltet — du musst nichts weiter tun.", "haken");
       return fehlerSeite(res, 200, "Erinnerung ist ausgeschaltet", "Diese Erinnerung wurde ausgeschaltet und wird nicht verschoben. Wenn du sie wieder brauchst, aktiviere sie im Kalender.");
     }
 
-    const titel = escapeHtml(event.title || "Termin");
-    const datum = escapeHtml(fmt(event.date));
     const frage = action === "snooze"
-      ? `Möchtest du in <strong>${days} Tagen</strong> erneut an <strong>„${titel}"</strong>${datum ? ` (${datum})` : ""} erinnert werden?`
-      : `Möchtest du die Erinnerung <strong>„${titel}"</strong>${datum ? ` (${datum})` : ""} ausschalten? Du bekommst dazu dann keine E-Mails mehr.`;
+      ? `Möchtest du in <strong>${days} Tagen</strong> erneut an diesen Termin erinnert werden?`
+      : `Möchtest du diese Erinnerung ausschalten? Du bekommst dazu dann keine E-Mails mehr.`;
     const knopf = action === "snooze" ? `Ja, in ${days} Tagen erinnern` : "Ja, Erinnerung ausschalten";
 
     sende(res, 200, action === "snooze" ? "Später erinnern" : "Erinnerung ausschalten", `
-      <h1 style="margin:0 0 10px 0;font-size:19px;">${action === "snooze" ? "Später erinnern?" : "Erinnerung ausschalten?"}</h1>
-      <p style="margin:0 0 20px 0;font-size:14.5px;line-height:1.55;color:#475569;">${frage}</p>
+      <div class="ikon ${action === "snooze" ? "blau" : "grau"}">${action === "snooze" ? ICONS.glocke : ICONS.glockeAus}</div>
+      <h1>${action === "snooze" ? "Später erinnern?" : "Erinnerung ausschalten?"}</h1>
+      <p class="text">${frage}</p>
+      ${terminBox(event)}
       <form method="POST" action="${BACKEND_URL}/api/calendar/quick-action/confirm" style="margin:0;">
         <input type="hidden" name="token" value="${escapeHtml(req.query.token)}">
         <input type="hidden" name="action" value="${escapeHtml(action)}">
         <input type="hidden" name="days" value="${days}">
-        <button type="submit" style="width:100%;background:#3b82f6;color:#fff;border:none;font-weight:600;font-size:15px;padding:13px 20px;border-radius:9px;cursor:pointer;">${escapeHtml(knopf)}</button>
+        <button type="submit" class="knopf">${escapeHtml(knopf)}</button>
       </form>
-      <p style="margin:14px 0 0 0;text-align:center;"><a href="${FRONTEND_URL}/calendar" style="color:#64748b;font-size:13.5px;text-decoration:none;">Abbrechen und zum Kalender</a></p>`);
+      <a class="zweitlink" href="${FRONTEND_URL}/calendar">Abbrechen und zum Kalender</a>`);
   } catch (err) {
     console.error("❌ Mail-Aktion (GET) fehlgeschlagen:", err.message);
     fehlerSeite(res, 500, "Etwas ist schiefgelaufen", "Bitte versuche es in ein paar Minuten erneut oder verwalte die Erinnerung direkt im Kalender.");
@@ -206,10 +244,11 @@ async function executeMailAction(req, res) {
     );
 
     sende(res, 200, "Erledigt", `
-      <div style="text-align:center;font-size:34px;line-height:1;margin-bottom:10px;">✅</div>
-      <h1 style="margin:0 0 10px 0;font-size:19px;text-align:center;">Erledigt!</h1>
-      <p style="margin:0;font-size:14.5px;line-height:1.55;color:#475569;text-align:center;">${escapeHtml(ergebnisText)}</p>
-      <p style="margin:20px 0 0 0;text-align:center;"><a href="${FRONTEND_URL}/calendar" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;font-weight:600;font-size:14.5px;padding:11px 20px;border-radius:9px;">Zum Kalender</a></p>`);
+      <div class="ikon gruen">${ICONS.haken}</div>
+      <h1>Erledigt!</h1>
+      <p class="text">${escapeHtml(ergebnisText)}</p>
+      ${terminBox(event)}
+      <a class="knopf" href="${FRONTEND_URL}/calendar">Zum Kalender</a>`);
   } catch (err) {
     console.error("❌ Mail-Aktion (POST) fehlgeschlagen:", err.message);
     fehlerSeite(res, 500, "Etwas ist schiefgelaufen", "Bitte versuche es in ein paar Minuten erneut oder verwalte die Erinnerung direkt im Kalender.");
