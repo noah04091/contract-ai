@@ -13,15 +13,18 @@ import { useDocumentScanner } from "../hooks/useDocumentScanner";
 /* Nur die Felder, die die Liste wirklich zeigt. Alles ist optional, weil
    nicht jeder der Vertraege jedes Feld traegt; fehlende Angaben werden
    weggelassen statt mit "unbekannt" gefuellt. */
+/* 05.09.2026: Die Felder stehen bewusst auf unknown. Vorher standen hier
+   string und number, und genau das war die Luege, die die Seite zum
+   Absturz brachte: TypeScript prueft nur, was man selbst behauptet, eine
+   Antwort aus dem Netz prueft es nicht. provider kam als Objekt an, und
+   .trim() gibt es darauf nicht. Mit unknown erzwingt der Compiler, dass
+   jeder Zugriff durch eine Wandlung geht. */
 interface EigenerVertrag {
   _id: string;
-  name?: string;
-  provider?: string;
-  amount?: number;
-  expiryDate?: string;
-  laufzeit?: string;
-  kuendigung?: string;
-  createdAt?: string;
+  name?: unknown;
+  provider?: unknown;
+  amount?: unknown;
+  expiryDate?: unknown;
 }
 
 interface ApiResponse {
@@ -122,6 +125,7 @@ const BetterContracts: React.FC = () => {
   const [vertraegeGesamt, setVertraegeGesamt] = useState(0);
   const [holeVertrag, setHoleVertrag] = useState<string | null>(null);
   const [letzteGemerkte, setLetzteGemerkte] = useState<Array<{ _id: string; title: string; monthlyPrice: number | null }>>([]);
+  // Titel und Preis werden beim Einlesen gewandelt, nicht erst beim Anzeigen.
   const [analyzingProgress, setAnalyzingProgress] = useState(0);
 
   // FAB States for saved alternatives
@@ -188,9 +192,17 @@ const BetterContracts: React.FC = () => {
         if (!antwort.ok) return;
         const daten = await antwort.json();
         const liste = Array.isArray(daten) ? daten : (daten.alternatives || daten.data || []);
-        setLetzteGemerkte(liste.slice(0, 3).map((a: { _id: string; title: string; monthlyPrice: number | null }) => ({
-          _id: a._id, title: a.title, monthlyPrice: a.monthlyPrice
-        })));
+        setLetzteGemerkte(
+          liste
+            .slice(0, 3)
+            .map((a: Record<string, unknown>) => ({
+              _id: String(a._id ?? ''),
+              title: typeof a.title === 'string' ? a.title.trim() : '',
+              monthlyPrice: typeof a.monthlyPrice === 'number' && Number.isFinite(a.monthlyPrice)
+                ? a.monthlyPrice : null
+            }))
+            .filter((a: { _id: string; title: string }) => a._id && a.title)
+        );
       } catch {
         /* stumm */
       }
@@ -552,6 +564,32 @@ const BetterContracts: React.FC = () => {
   };
 
   // FAB scroll to saved alternatives
+  /* 05.09.2026: Wandlungen fuer alles, was aus dem Netz kommt. Ein Wert,
+     der kein Text ist, wird zu leer statt die Seite abzuschiessen. Objekte
+     werden ausdruecklich NICHT per String() umgewandelt, sonst stuende dort
+     "[object Object]" — lieber gar nichts anzeigen. */
+  const alsText = (wert: unknown): string => {
+    if (typeof wert === 'string') return wert.trim();
+    if (typeof wert === 'number' && Number.isFinite(wert)) return String(wert);
+    return '';
+  };
+
+  const alsZahl = (wert: unknown): number | null => {
+    if (typeof wert === 'number' && Number.isFinite(wert)) return wert;
+    if (typeof wert === 'string') {
+      const z = parseFloat(wert.replace(',', '.'));
+      return Number.isFinite(z) ? z : null;
+    }
+    return null;
+  };
+
+  const alsDatum = (wert: unknown): string => {
+    const text = alsText(wert);
+    if (!text) return '';
+    const d = new Date(text);
+    return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('de-DE');
+  };
+
   /* 04.09.2026: Einen bereits gespeicherten Vertrag als Grundlage nehmen.
      Der Text steckt je nach Alter des Datensatzes in fullText oder content.
      Fehlt beides, sagen wir das klar, statt mit leerem Text weiterzulaufen
@@ -569,7 +607,7 @@ const BetterContracts: React.FC = () => {
 
       const daten = await antwort.json();
       const datensatz = daten.contract || daten.data || daten;
-      const text: string = datensatz.fullText || datensatz.content || datensatz.extractedText || "";
+      const text: string = alsText(datensatz.fullText) || alsText(datensatz.content) || alsText(datensatz.extractedText);
 
       if (text.trim().length < 20) {
         setError("Für diesen Vertrag liegt kein eingelesener Text vor. Bitte lade die Datei direkt hoch.");
@@ -577,11 +615,11 @@ const BetterContracts: React.FC = () => {
       }
 
       setContractText(text);
-      setFileName(vertrag.name || datensatz.name || "Gespeicherter Vertrag");
+      setFileName(alsText(vertrag.name) || alsText(datensatz.name) || "Gespeicherter Vertrag");
       // Kein uploadedFile: die Datei liegt auf dem Server, nicht im Browser.
       // Der Knopf "Ansehen" haengt bewusst an uploadedFile und entfaellt hier.
       setUploadedFile(null);
-      setCurrentPrice(typeof datensatz.amount === "number" ? datensatz.amount : null);
+      setCurrentPrice(alsZahl(datensatz.amount));
       setStep(2);
 
       // Vertragsart gleich ermitteln, wie beim Hochladen auch
@@ -776,21 +814,28 @@ const BetterContracts: React.FC = () => {
                               disabled={holeVertrag !== null}
                             >
                               <span className="bcw-z-symbol">
-                                {(v.provider || v.name || '?').trim().slice(0, 2).toUpperCase()}
+                                {(alsText(v.provider) || alsText(v.name) || '–').slice(0, 2).toUpperCase()}
                               </span>
                               <span className="bcw-z-text">
-                                <span className="bcw-z-name">{v.name || v.provider || 'Ohne Namen'}</span>
+                                <span className="bcw-z-name">
+                                  {alsText(v.name) || alsText(v.provider) || 'Ohne Namen'}
+                                </span>
                                 <span className="bcw-z-meta">
-                                  {v.provider && v.name !== v.provider ? v.provider : ''}
-                                  {v.provider && v.name !== v.provider && v.expiryDate ? ' · ' : ''}
-                                  {v.expiryDate ? `läuft bis ${new Date(v.expiryDate).toLocaleDateString('de-DE')}` : ''}
+                                  {[
+                                    alsText(v.provider) && alsText(v.provider) !== alsText(v.name)
+                                      ? alsText(v.provider) : '',
+                                    alsDatum(v.expiryDate) ? `läuft bis ${alsDatum(v.expiryDate)}` : ''
+                                  ].filter(Boolean).join(' · ')}
                                 </span>
                               </span>
-                              {typeof v.amount === 'number' && v.amount > 0 && (
-                                <span className="bcw-z-preis">
-                                  {v.amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                                </span>
-                              )}
+                              {(() => {
+                                const betrag = alsZahl(v.amount);
+                                return betrag !== null && betrag > 0 ? (
+                                  <span className="bcw-z-preis">
+                                    {betrag.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                                  </span>
+                                ) : null;
+                              })()}
                               {holeVertrag === v._id
                                 ? <span className="bcw-z-laedt"></span>
                                 : <ChevronRight className="bcw-z-pfeil" size={15} />}
