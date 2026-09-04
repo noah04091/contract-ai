@@ -23,8 +23,12 @@
      Ergebnisliste dieselbe Sprache sprechen. Kein Lila, Gruen nur fuer
      echte Bestaetigungen. */
   --bcw-grund: #ffffff;
-  --bcw-senke: #f5f7fa;
-  --bcw-senke-2: #eef2f7;
+  /* 04.09.2026: Seitengrund und Buehne hatten dieselbe Farbe, dadurch war
+     der Schirm nur ueber einen 1px-Strich vom Grund getrennt und alles
+     verlief ineinander. Jetzt drei Stufen. */
+  --bcw-tiefe: #e8ecf3;
+  --bcw-senke: #f4f7fb;
+  --bcw-senke-2: #eaeff6;
   --bcw-linie: #e4e9f0;
   --bcw-linie-satt: #d2dae5;
   --bcw-tinte: #0f1826;
@@ -43,7 +47,7 @@
 
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--bcw-senke);
+  background: var(--bcw-tiefe);
   padding: 28px 20px 64px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--bcw-tinte);
@@ -60,9 +64,10 @@
   max-width: 1180px;
   margin: 0 auto;
   background: var(--bcw-grund);
-  border: 1px solid var(--bcw-linie);
+  border: 1px solid var(--bcw-linie-satt);
   border-radius: var(--bcw-r-gross);
   overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 24, 38, 0.06);
 }
 
 /* ══════════ KOPFLEISTE ══════════
@@ -883,5 +888,55 @@
   .bcw-fab {
     bottom: 18px;
     right: 18px;
+  }
+}
+
+
+/* ══════════ NACHTRAG 04.09.2026: EBENEN ══════════
+   Die Merkliste stand ohne eigene Flaeche auf dem Seitengrund. Solange der
+   Grund fast weiss war, fiel das nicht auf. Mit der jetzt tieferen Tonung
+   braucht auch sie ihre eigene Flaeche, sonst schwebt ihr Inhalt im Nichts. */
+.bcw-merk-schirm {
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie-satt);
+  border-radius: var(--bcw-r-gross);
+  box-shadow: 0 1px 3px rgba(15, 24, 38, 0.06);
+  padding: 18px 22px 22px;
+}
+
+.bcw-merk-schirm .bcw-merk-kopf {
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+/* Der Ladehinweis in der Faktenkarte: ein ruhig atmender Punkt zeigt, dass
+   wirklich etwas laeuft. Vorher stand dort ein "Wird ermittelt", hinter dem
+   nichts passierte. */
+.bcw-ermittelt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--bcw-tinte-3);
+  font-weight: 400;
+}
+
+.bcw-punkt {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--bcw-akzent);
+  animation: bcw-atmen 1.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes bcw-atmen {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bcw-punkt {
+    animation: none;
+    opacity: 0.7;
   }
 }

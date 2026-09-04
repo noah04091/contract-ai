@@ -101,6 +101,8 @@ const BetterContracts: React.FC = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [step, setStep] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
+  // 04.09.2026: true, solange die Vertragsart nach dem Hochladen ermittelt wird
+  const [typLaeuft, setTypLaeuft] = useState(false);
   const [analyzingProgress, setAnalyzingProgress] = useState(0);
 
   // FAB States for saved alternatives
@@ -303,8 +305,36 @@ const BetterContracts: React.FC = () => {
       setTimeout(() => setUploadProgress(0), 500);
       
       const data = await res.json();
-      setContractText(data.text || '');
+      const gelesenerText = data.text || '';
+      setContractText(gelesenerText);
       setStep(2);
+
+      /* 04.09.2026: Vertragsart gleich hier ermitteln, damit Schritt 2 sie
+         zeigen kann. Bewusst ohne await, sonst wartet der Nutzer laenger auf
+         Schritt 2 als noetig. handleAnalyze ueberspringt den Aufruf danach,
+         der Vertrag wird also nicht zweimal durch gpt-4 geschickt. */
+      if (gelesenerText.trim().length >= 20) {
+        setTypLaeuft(true);
+        fetch("/api/analyze-type/public", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ text: gelesenerText })
+        })
+          .then(antwort => antwort.ok ? antwort.json() : null)
+          .then(ergebnis => {
+            if (ergebnis && ergebnis.contractType) {
+              setContractType(ergebnis.contractType);
+              /* searchQuery wird hier BEWUSST NICHT vorbefuellt. handleAnalyze
+                 leitet aus einem gefuellten Feld ab, dass die Anfrage vom
+                 Nutzer stammt (eigeneEingabe), und der Server gewichtet sie
+                 dann vorrangig. Eine automatisch erzeugte Anfrage ist aber
+                 die schwaechste von allen; genau das wurde am 02.09. behoben. */
+            }
+          })
+          .catch(() => { /* stumm: handleAnalyze erkennt die Art dann selbst */ })
+          .finally(() => setTypLaeuft(false));
+      }
 
       // ✅ Reset file input nach erfolgreichem Upload
       if (fileInputRef.current) {
@@ -355,22 +385,32 @@ const BetterContracts: React.FC = () => {
     setLoading(true);
 
     try {
-      // Step 1: Detect contract type
-      console.log("🔍 Erkenne Vertragstyp...");
-      const typeRes = await fetch("/api/analyze-type/public", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ text: contractText })
-      });
+      /* Step 1: Detect contract type
+         04.09.2026: Beim Hochladen wurde die Art meist schon ermittelt. Dann
+         entfaellt dieser Aufruf, denn er laeuft auf gpt-4. Ist sie nicht
+         bekannt (eingefuegter Text, Fehler beim Hochladen, sehr schneller
+         Klick), laeuft alles unveraendert wie bisher. */
+      let detectedType = contractType;
 
-      if (!typeRes.ok) {
-        throw new Error(`Vertragstyp-Erkennung fehlgeschlagen: ${typeRes.status}`);
+      if (!detectedType) {
+        console.log("🔍 Erkenne Vertragstyp...");
+        const typeRes = await fetch("/api/analyze-type/public", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ text: contractText })
+        });
+
+        if (!typeRes.ok) {
+          throw new Error(`Vertragstyp-Erkennung fehlgeschlagen: ${typeRes.status}`);
+        }
+
+        const typeData = await typeRes.json();
+        detectedType = typeData.contractType || 'unbekannt';
+        setContractType(detectedType);
+      } else {
+        console.log("🔍 Vertragstyp schon beim Hochladen erkannt:", detectedType);
       }
-
-      const typeData = await typeRes.json();
-      const detectedType = typeData.contractType || 'unbekannt';
-      setContractType(detectedType);
 
       // Step 2: Generate search query
       // 02.09.2026: Wir merken uns, ob die Suchanfrage vom Nutzer stammt.
@@ -442,6 +482,7 @@ const BetterContracts: React.FC = () => {
     setStep(1);
     setContractText("");
     setContractType("");
+    setTypLaeuft(false);
     setCurrentPrice(null);
     setSearchQuery("");
     setFileName("");
@@ -664,7 +705,7 @@ const BetterContracts: React.FC = () => {
                         </div>
                         <div className="bcw-fakten-text">
                           <div className="bcw-fakten-titel">
-                            {contractType ? contractType : 'Vertrag eingelesen'}
+                            {contractType || (typLaeuft ? 'Vertrag wird eingeordnet' : 'Vertrag eingelesen')}
                           </div>
                           <div className="bcw-fakten-datei">{fileName || 'Eingefügter Text'}</div>
                         </div>
@@ -687,7 +728,13 @@ const BetterContracts: React.FC = () => {
                       <div className="bcw-gitter">
                         <div className="bcw-feld">
                           <div className="bcw-feld-name">Erkannte Art</div>
-                          <div className="bcw-feld-wert">{contractType || 'Wird ermittelt'}</div>
+                          <div className="bcw-feld-wert">
+                            {contractType
+                              ? contractType
+                              : typLaeuft
+                                ? <span className="bcw-ermittelt"><span className="bcw-punkt"></span>wird ermittelt</span>
+                                : 'nicht erkannt'}
+                          </div>
                         </div>
                         <div className="bcw-feld">
                           <div className="bcw-feld-name">Eingelesen</div>
@@ -836,6 +883,7 @@ const BetterContracts: React.FC = () => {
             dadurch verloren. Jetzt ein eigener Bereich mit eigener
             Ueberschrift. Die Komponente darin bringt keine eigene mit. */}
         <div className="bcw-merkliste">
+          <div className="bcw-merk-schirm">
           <div className="bcw-merk-kopf">
             <h2>Merkliste</h2>
             {savedAlternativesCount > 0 && (
@@ -845,6 +893,7 @@ const BetterContracts: React.FC = () => {
           </div>
 
           <SavedAlternativesFull />
+          </div>
         </div>
 
         {showFAB && (
