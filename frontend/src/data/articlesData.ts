@@ -23,6 +23,159 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: 24,
+    slug: 'automatische-vertragsverlaengerung-stoppen',
+    title: 'Automatische Vertragsverlängerung stoppen: So kommst du raus',
+    subtitle: 'Handyvertrag, Fitnessstudio, Software-Abo – viele Verträge verlängern sich von selbst. Diese Regeln schützen dich, und so verpasst du nie wieder den Ausstieg.',
+    excerpt: 'Seit März 2022 gelten strenge Regeln für automatische Vertragsverlängerungen: maximal 1 Monat Kündigungsfrist nach der Erstlaufzeit, Pflicht zum Kündigungsbutton. Wir zeigen, welche Klauseln überhaupt wirksam sind, wie du laufende Verträge beendest und wie du Fristen nie wieder verpasst.',
+    category: 'tipps',
+    date: '4. September 2026',
+    readTime: '7 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '🔁',
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80',
+    faqs: [
+      {
+        question: 'Wie lange darf sich ein Vertrag automatisch verlängern?',
+        answer: 'Bei Verbraucherverträgen mit AGB, die seit dem 1. März 2022 geschlossen wurden, darf sich der Vertrag nach der Erstlaufzeit nur noch auf unbestimmte Zeit verlängern – und ist dann jederzeit mit einer Frist von höchstens einem Monat kündbar (§ 309 Nr. 9 BGB). Starre Verlängerungen um ein weiteres Jahr sind in solchen AGB unwirksam.'
+      },
+      {
+        question: 'Was gilt für ältere Verträge, die vor März 2022 geschlossen wurden?',
+        answer: 'Für Altverträge kann noch die frühere Rechtslage gelten – dort waren automatische Verlängerungen um bis zu ein Jahr und längere Kündigungsfristen in AGB zulässig. Umso wichtiger ist es, bei alten Verträgen die konkrete Klausel zu prüfen und die Frist im Kalender zu haben.'
+      },
+      {
+        question: 'Was ist der Kündigungsbutton und was bringt er mir?',
+        answer: 'Seit dem 1. Juli 2022 müssen online abschließbare Dauerverträge mit Verbrauchern eine gut sichtbare Schaltfläche zum Kündigen bieten (§ 312k BGB). Fehlt dieser Kündigungsbutton, kannst du den Vertrag jederzeit und ohne Frist kündigen.'
+      },
+      {
+        question: 'Wie verhindere ich, dass ich die Kündigungsfrist wieder verpasse?',
+        answer: 'Der zuverlässigste Weg ist, die Frist gar nicht selbst im Kopf behalten zu müssen: Lade den Vertrag bei Contract AI hoch – die KI liest Laufzeit, Verlängerungsklausel und Kündigungsfrist aus dem Text, trägt die Stichtage in deinen Kalender ein und erinnert dich rechtzeitig per E-Mail.'
+      },
+      {
+        question: 'Gilt § 309 Nr. 9 BGB auch für Verträge zwischen Unternehmen?',
+        answer: 'Nein, die strengen Klauselverbote des § 309 BGB gelten unmittelbar nur gegenüber Verbrauchern. Im B2B-Bereich sind längere Bindungen möglich – hier zählt umso mehr, dass du Laufzeiten und Fristen systematisch überwachst.'
+      }
+    ],
+    content: `
+      <div class="highlight-box">
+        <h4>📅 Nie wieder eine Kündigungsfrist verpassen</h4>
+        <p>Lade deinen Vertrag hoch – die KI erkennt Laufzeit, Verlängerungsklausel und Kündigungsfrist automatisch und erinnert dich rechtzeitig per E-Mail und Kalender. <a href="/features/fristen"><strong>Vertragsfristen automatisch überwachen →</strong></a></p>
+      </div>
+
+      <h2>Warum sich Verträge „von selbst" verlängern</h2>
+      <p>Handyvertrag, Fitnessstudio, Streaming, Software-Abo, Wartungsvertrag: Viele Dauerverträge enthalten eine <strong>Verlängerungsklausel</strong>. Kündigst du nicht rechtzeitig, läuft der Vertrag weiter – früher oft gleich um ein ganzes weiteres Jahr. Das ist kein Versehen der Anbieter, sondern Kalkül: Ein erheblicher Teil der Kundschaft verpasst den Stichtag.</p>
+      <p>Die gute Nachricht: Der Gesetzgeber hat die Spielregeln deutlich verschärft. Die schlechte: Die neuen Regeln gelten nicht für jeden Vertrag – und wer seine Fristen nicht kennt, zahlt trotzdem weiter.</p>
+
+      <h2>Die Rechtslage seit März 2022: enge Grenzen für AGB</h2>
+      <p>Für Verbraucherverträge mit AGB, die seit dem <strong>1. März 2022</strong> geschlossen wurden, gilt (§ 309 Nr. 9 BGB):</p>
+      <ul>
+        <li>Die <strong>Erstlaufzeit</strong> darf höchstens <strong>24 Monate</strong> betragen.</li>
+        <li>Nach Ablauf darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern – und ist dann jederzeit mit einer Frist von <strong>maximal einem Monat</strong> kündbar.</li>
+      </ul>
+      <p>Eine Klausel, die dich nach der Erstlaufzeit erneut für zwölf Monate bindet, ist in solchen AGB <strong>unwirksam</strong> – du bist daran nicht gebunden.</p>
+      <p><strong>Achtung bei Altverträgen:</strong> Wurde dein Vertrag vor dem 1. März 2022 geschlossen, kann noch die alte Rechtslage gelten. Dort waren Verlängerungen um bis zu ein Jahr und bis zu drei Monate Kündigungsfrist in AGB zulässig. Gerade bei alten Verträgen lohnt sich also der Blick in die konkrete Klausel.</p>
+
+      <h2>Der Kündigungsbutton: dein Notausgang</h2>
+      <p>Seit dem <strong>1. Juli 2022</strong> müssen Anbieter, bei denen Verbraucher Dauerverträge online abschließen können, eine gut sichtbare Schaltfläche zum Kündigen bereitstellen (§ 312k BGB). Fehlt dieser <strong>Kündigungsbutton</strong>, kannst du als Verbraucher den Vertrag <strong>jederzeit und fristlos</strong> beenden. Es lohnt sich also, auf der Website des Anbieters gezielt danach zu suchen – auch als Druckmittel, wenn eine Kündigung „nicht ankommt".</p>
+
+      <h2>So stoppst du eine ungewollte Verlängerung – Schritt für Schritt</h2>
+      <h3>1. Vertrag und Klausel prüfen</h3>
+      <p>Welche Laufzeit, welche Verlängerung, welche Frist steht wirklich im Vertrag? Und ist die Klausel nach heutigem Recht überhaupt wirksam? Genau das liest die <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> in unter einer Minute aus dem Dokument – inklusive Risiko-Einstufung der Klauseln.</p>
+      <h3>2. Kündigung rechtzeitig und nachweisbar erklären</h3>
+      <p>Kündige schriftlich oder über den Kündigungsbutton und sichere dir einen <strong>Nachweis</strong> (Eingangsbestätigung, Screenshot mit Datum). Ohne Bestätigung im Zweifel nachhaken.</p>
+      <h3>3. Zum nächstmöglichen Termin kündigen – sofort</h3>
+      <p>Selbst wenn die aktuelle Frist schon verstrichen ist: Kündige <strong>jetzt</strong> zum nächstmöglichen Termin. So kann dich die nächste Verlängerung nicht mehr erwischen. Was du sonst noch tun kannst, zeigt unser Ratgeber <a href="/blog/kuendigungsfrist-verpasst-was-nun">Kündigungsfrist verpasst – was jetzt?</a>.</p>
+      <h3>4. Fristen aus dem Kopf in ein System verlagern</h3>
+      <p>Der eigentliche Fehler ist selten die einzelne Kündigung – es ist das Verwalten von Stichtagen im Kopf oder in einer Excel-Liste. Mit dem <a href="/features/fristen">Fristenkalender von Contract AI</a> liest die KI die Fristen direkt aus deinen Verträgen, trägt sie in deinen Kalender ein (Google, Outlook, Apple) und erinnert dich rechtzeitig per E-Mail.</p>
+
+      <h2>Häufige Fragen</h2>
+      <h3>Wie lange darf sich ein Vertrag automatisch verlängern?</h3>
+      <p>Bei Verbraucherverträgen mit AGB seit dem 1. März 2022: nur noch auf unbestimmte Zeit, kündbar mit höchstens einem Monat Frist (§ 309 Nr. 9 BGB). Starre Jahres-Verlängerungen sind in solchen AGB unwirksam.</p>
+      <h3>Was gilt für ältere Verträge?</h3>
+      <p>Für Verträge von vor März 2022 kann die frühere Rechtslage gelten – Verlängerung um bis zu ein Jahr und längere Fristen waren zulässig. Klausel prüfen und Stichtag in den Kalender.</p>
+      <h3>Was bringt mir der Kündigungsbutton?</h3>
+      <p>Fehlt er bei online abschließbaren Dauerverträgen mit Verbrauchern, kannst du als Verbraucher jederzeit fristlos kündigen (§ 312k BGB).</p>
+      <h3>Gilt das alles auch zwischen Unternehmen?</h3>
+      <p>Nein – § 309 BGB schützt unmittelbar nur Verbraucher. Im B2B-Bereich sind längere Bindungen möglich; dort ist systematische <a href="/features/legalpulse">Vertragsüberwachung</a> umso wichtiger.</p>
+
+      <h2>Fazit</h2>
+      <p>Automatische Verlängerungen sind kein Schicksal: Seit 2022 sitzt du bei neuen Verbraucherverträgen am längeren Hebel – höchstens ein Monat Kündigungsfrist nach der Erstlaufzeit, plus Kündigungsbutton als Notausgang. Der Rest ist Organisation. Wer seine Fristen automatisch <a href="/features/fristen">überwachen</a> lässt, verpasst keinen Stichtag mehr – und wer zusätzlich wissen will, ob neue Gesetze oder Urteile die eigenen Verträge betreffen, aktiviert <a href="/features/legalpulse">Legal Pulse</a>.</p>
+    `
+  },
+  {
+    id: 23,
+    slug: 'kuendigungsfrist-verpasst-was-nun',
+    title: 'Kündigungsfrist verpasst – was jetzt? Deine Optionen',
+    subtitle: 'Der Stichtag ist vorbei, der Vertrag läuft weiter. Bevor du zähneknirschend weiterzahlst: Diese Auswege gibt es – und so passiert es dir nie wieder.',
+    excerpt: 'Kündigungsfrist verpasst? Nicht jede Verlängerungsklausel ist wirksam, ein fehlender Kündigungsbutton eröffnet die fristlose Kündigung, und aus wichtigem Grund kommst du auch aus laufenden Verträgen. Wir zeigen die Optionen – und wie du Fristen künftig automatisch im Blick behältst.',
+    category: 'tipps',
+    date: '4. September 2026',
+    readTime: '7 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '⏰',
+    image: 'https://images.unsplash.com/photo-1501139083538-0139583c060f?w=800&q=80',
+    faqs: [
+      {
+        question: 'Ich habe die Kündigungsfrist verpasst – muss ich jetzt ein weiteres Jahr zahlen?',
+        answer: 'Nicht unbedingt. Bei Verbraucherverträgen mit AGB, die seit dem 1. März 2022 geschlossen wurden, darf sich der Vertrag nur auf unbestimmte Zeit verlängern und ist jederzeit mit höchstens einem Monat Frist kündbar (§ 309 Nr. 9 BGB). Eine Klausel, die dich erneut für ein Jahr bindet, ist in solchen AGB unwirksam. Prüfe also zuerst die Klausel, bevor du weiterzahlst.'
+      },
+      {
+        question: 'Der Anbieter hat keinen Kündigungsbutton – hilft mir das?',
+        answer: 'Ja. Online abschließbare Dauerverträge mit Verbrauchern müssen seit dem 1. Juli 2022 eine gut sichtbare Kündigungs-Schaltfläche haben (§ 312k BGB). Fehlt sie, kannst du als Verbraucher jederzeit und ohne Frist kündigen.'
+      },
+      {
+        question: 'Kann ich trotz Laufzeit außerordentlich kündigen?',
+        answer: 'Dauerschuldverhältnisse können aus wichtigem Grund ohne Einhaltung einer Frist gekündigt werden (§ 314 BGB) – etwa bei schweren Vertragsverletzungen des Anbieters. Auch bei Preiserhöhungen oder Vertragsänderungen besteht je nach Vertragstyp ein Sonderkündigungsrecht. Der wichtige Grund muss aber wirklich vorliegen; reine Unzufriedenheit genügt nicht.'
+      },
+      {
+        question: 'Gilt bei einer verspäteten Kündigung gar nichts?',
+        answer: 'Doch: Eine verspätete oder falsch datierte Kündigung wird im Zweifel regelmäßig als Kündigung zum nächstzulässigen Termin verstanden. Du solltest trotzdem sofort ausdrücklich zum nächstmöglichen Termin kündigen und dir den Zugang bestätigen lassen – dann ist die nächste Verlängerung sicher vom Tisch.'
+      },
+      {
+        question: 'Wie sorge ich dafür, dass mir das nicht wieder passiert?',
+        answer: 'Verlagere die Fristen aus dem Kopf in ein System: Contract AI liest Kündigungsfristen, Laufzeiten und Verlängerungen automatisch aus deinen Verträgen, trägt sie in deinen Kalender ein und erinnert dich rechtzeitig – bevor die Frist abläuft.'
+      }
+    ],
+    content: `
+      <div class="highlight-box">
+        <h4>⏰ Fristen künftig automatisch im Blick</h4>
+        <p>Lade deine Verträge hoch – die KI erkennt jede Kündigungsfrist und erinnert dich rechtzeitig per E-Mail und Kalender. <a href="/features/fristen"><strong>Vertragsfristen automatisch überwachen →</strong></a></p>
+      </div>
+
+      <h2>Erst mal durchatmen: verpasst heißt nicht machtlos</h2>
+      <p>Die Frist ist vorbei, die Verlängerungs-Bestätigung liegt im Postfach – ein Ärgernis, aber selten das Ende. In vielen Fällen gibt es noch Hebel: unwirksame Klauseln, fehlende Kündigungsbuttons, Sonderkündigungsrechte. Gehen wir sie der Reihe nach durch.</p>
+
+      <h2>Option 1: Prüfen, ob die Verlängerungsklausel überhaupt wirksam ist</h2>
+      <p>Bei Verbraucherverträgen mit AGB, die seit dem <strong>1. März 2022</strong> geschlossen wurden, gilt § 309 Nr. 9 BGB: Nach der Erstlaufzeit darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern und ist jederzeit mit einer Frist von <strong>höchstens einem Monat</strong> kündbar. Steht in deinen AGB eine automatische Verlängerung um ein weiteres Jahr, ist diese Klausel <strong>unwirksam</strong> – die lange Bindung gilt dann nicht.</p>
+      <p>Ob deine Klausel dazugehört, hängt vom Vertragsdatum und vom Wortlaut ab. Die <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> liest genau das in unter einer Minute aus deinem Vertrag und stuft die Klauseln ein. Hintergründe findest du auch im Ratgeber <a href="/blog/automatische-vertragsverlaengerung-stoppen">Automatische Vertragsverlängerung stoppen</a>.</p>
+
+      <h2>Option 2: Der fehlende Kündigungsbutton</h2>
+      <p>Können Verbraucher den Vertrag online abschließen, muss der Anbieter seit dem <strong>1. Juli 2022</strong> eine gut sichtbare Kündigungs-Schaltfläche vorhalten (§ 312k BGB). Fehlt sie, kannst du als Verbraucher <strong>jederzeit und fristlos</strong> kündigen. Sieh also auf der Website des Anbieters nach – dieser Hebel wird oft übersehen.</p>
+
+      <h2>Option 3: Außerordentliche Kündigung und Sonderkündigungsrechte</h2>
+      <p>Dauerschuldverhältnisse lassen sich <strong>aus wichtigem Grund</strong> ohne Einhaltung einer Kündigungsfrist beenden (§ 314 BGB) – etwa wenn der Anbieter seine Pflichten schwer verletzt. Daneben lösen <strong>Preiserhöhungen oder Vertragsänderungen</strong> je nach Vertragstyp ein Sonderkündigungsrecht aus. Wichtig: Der Grund muss belastbar sein und die Kündigung sollte zeitnah nach Bekanntwerden erfolgen.</p>
+
+      <h2>Option 4: Sofort zum nächstmöglichen Termin kündigen</h2>
+      <p>Greift keiner der Hebel, gilt: <strong>Jetzt kündigen</strong>, nicht erst kurz vor der nächsten Frist. Eine verspätete Kündigung wird im Zweifel regelmäßig als Kündigung zum nächstzulässigen Termin verstanden – sicherer ist, das ausdrücklich so zu erklären („hilfsweise zum nächstmöglichen Zeitpunkt") und sich den Zugang bestätigen zu lassen. Damit ist die übernächste Verlängerung sicher abgewendet.</p>
+
+      <h2>Sonderfall Arbeitsvertrag</h2>
+      <p>Beim Arbeitsverhältnis gelten die gesetzlichen Fristen des § 622 BGB (Grundfrist: vier Wochen zum 15. oder zum Monatsende, für Arbeitgeber nach Betriebszugehörigkeit gestaffelt). Eine zu knapp datierte Eigenkündigung beendet das Arbeitsverhältnis im Zweifel zum nächstzulässigen Termin. Mehr dazu im Ratgeber <a href="/blog/kuendigung-arbeitsvertrag-fristen">Kündigung Arbeitsvertrag: Fristen und Formvorschriften</a> – und wenn du selbst eine Kündigung <em>erhalten</em> hast, zählt die 3-Wochen-Klagefrist: <a href="/kuendigung-pruefen">Kündigung prüfen lassen</a>.</p>
+
+      <h2>Häufige Fragen</h2>
+      <h3>Muss ich nach der verpassten Frist ein weiteres Jahr zahlen?</h3>
+      <p>Bei neueren Verbraucherverträgen (AGB seit 1. März 2022) meist nicht: Die Verlängerung darf nur auf unbestimmte Zeit erfolgen, kündbar mit höchstens einem Monat Frist (§ 309 Nr. 9 BGB).</p>
+      <h3>Was bringt der fehlende Kündigungsbutton?</h3>
+      <p>Fehlt er bei online abschließbaren Dauerverträgen mit Verbrauchern, kannst du als Verbraucher jederzeit fristlos kündigen (§ 312k BGB).</p>
+      <h3>Wann greift § 314 BGB?</h3>
+      <p>Bei einem wichtigen Grund, der die Fortsetzung bis zum regulären Ende unzumutbar macht – zum Beispiel schwere Pflichtverletzungen. Reine Unzufriedenheit genügt nicht.</p>
+      <h3>Wie verhindere ich das nächste Mal?</h3>
+      <p>Mit automatischer Fristenüberwachung: Die KI liest die Stichtage aus deinen Verträgen und erinnert dich rechtzeitig – <a href="/features/fristen">so funktioniert es</a>.</p>
+
+      <h2>Fazit</h2>
+      <p>Eine verpasste Kündigungsfrist ist ärgerlich, aber oft reparabel: Klausel prüfen, Kündigungsbutton suchen, Sonderkündigungsrechte checken – und in jedem Fall sofort zum nächstmöglichen Termin kündigen. Damit es beim einen Mal bleibt, gehört jede Frist in ein System statt in den Kopf: <a href="/features/fristen">Vertragsfristen automatisch überwachen</a>. Und wer auch inhaltlich auf dem Laufenden bleiben will, lässt seine Verträge mit <a href="/features/legalpulse">Legal Pulse</a> laufend gegen neue Gesetze und Urteile prüfen.</p>
+    `
+  },
+  {
     id: 22,
     slug: 'freelancer-vertrag-pruefen',
     title: 'Freelancer-Vertrag prüfen: 7 Klauseln, die dich Geld kosten',
@@ -1893,7 +2046,7 @@ export const articles: Article[] = [
         <li>Nach Ablauf darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern – und ist dann jederzeit mit einer Frist von maximal einem Monat <strong>kündbar</strong> (§ 309 Nr. 9 BGB).</li>
       </ul>
 
-      <p>Dazu kommt die <strong>Kündigungsbutton-Pflicht</strong> (§ 312k BGB, seit 1. Juli 2022): Online geschlossene Dauerverträge müssen eine gut sichtbare Schaltfläche zum Kündigen bieten. Fehlt dieser Button, kannst du den Vertrag <strong>jederzeit und fristlos</strong> beenden.</p>
+      <p>Dazu kommt die <strong>Kündigungsbutton-Pflicht</strong> (§ 312k BGB, seit 1. Juli 2022): Online geschlossene Dauerverträge müssen eine gut sichtbare Schaltfläche zum Kündigen bieten. Fehlt dieser Button, kannst du den Vertrag <strong>jederzeit und fristlos</strong> beenden. Und damit dich die nächste Verlängerung nicht wieder überrascht: Mit dem <a href="/features/fristen">Fristenkalender von Contract AI</a> werden Laufzeiten und Kündigungsfristen automatisch überwacht.</p>
 
       <h2>Falle 2: Versteckte Kosten und die "Button-Lösung"</h2>
 
@@ -2206,7 +2359,7 @@ export const articles: Article[] = [
         <p>Bevor du kündigst oder gekündigt wirst: Lass deinen Arbeitsvertrag in 60 Sekunden auf unwirksame Wettbewerbsverbote, überhöhte Vertragsstrafen und Rückzahlungsklauseln prüfen — Wissen, das in Verhandlungen entscheidend ist. <a href="/arbeitsvertrag-pruefen"><strong>Jetzt Arbeitsvertrag prüfen →</strong></a></p>
       </div>
 
-      <p>Eine Kündigung ist ein wichtiger rechtlicher Schritt. Dabei gibt es viele Fallstricke und Formvorschriften zu beachten.</p>
+      <p>Eine Kündigung ist ein wichtiger rechtlicher Schritt. Dabei gibt es viele Fallstricke und Formvorschriften zu beachten. Und weil die halbe Miete das rechtzeitige Handeln ist: Mit dem <a href="/features/fristen">Fristenkalender von Contract AI</a> behältst du Kündigungsfristen aus allen Verträgen automatisch im Blick.</p>
 
       <h2>Kündigungsfristen im Überblick</h2>
       

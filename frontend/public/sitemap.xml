@@ -157,7 +157,7 @@
 
   <url>
     <loc>https://www.contract-ai.de/features/fristen</loc>
-    <lastmod>2026-02-26</lastmod>
+    <lastmod>2026-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -178,7 +178,7 @@
 
   <url>
     <loc>https://www.contract-ai.de/features/legalpulse</loc>
-    <lastmod>2026-02-26</lastmod>
+    <lastmod>2026-09-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -230,6 +230,20 @@
   </url>
 
   <!-- Blog-Artikel — B2B Cluster -->
+  <url>
+    <loc>https://www.contract-ai.de/blog/automatische-vertragsverlaengerung-stoppen</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://www.contract-ai.de/blog/kuendigungsfrist-verpasst-was-nun</loc>
+    <lastmod>2026-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <url>
     <loc>https://www.contract-ai.de/blog/ki-vertragsmanagement-agenturen-anwendungsfaelle</loc>
     <lastmod>2026-05-13</lastmod>

@@ -83,6 +83,22 @@ const LegalPulse: React.FC = () => {
       },
       {
         "@type": "Question",
+        "name": "Kann ich die Alerts anpassen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Legal Pulse priorisiert automatisch nach Ihren Vertragsarten – Sie müssen nichts konfigurieren. Die E-Mail-Benachrichtigungen können Sie jederzeit auf Ihrer Pulse-Seite abschalten; die Überwachung läuft dann weiter."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Gibt es branchenspezifische Überwachung?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Legal Pulse richtet sich nach Ihren Vertragsarten – etwa SaaS-, Arbeits-, Miet- oder Kaufverträge – und priorisiert die dafür relevanten Rechtsänderungen."
+        }
+      },
+      {
+        "@type": "Question",
         "name": "Was kostet Legal Pulse?",
         "acceptedAnswer": {
           "@type": "Answer",
@@ -95,15 +111,19 @@ const LegalPulse: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Vertragsrisiken erkennen – Frühwarnsystem | Contract AI</title>
-        <meta name="description" content="Vertragsrisiken früh erkennen mit Legal Pulse: Automatisches Monitoring, Risiko-Alerts bei Problemen, konkrete Handlungsempfehlungen. Proaktiv statt reaktiv. ✓ Jetzt aktivieren" />
-        <meta name="keywords" content="Vertragsrisiken erkennen, Vertragsüberwachung, Risiko-Monitoring, Frühwarnsystem Verträge, Vertragsrisiken, Legal Pulse, Contract AI" />
+        {/* 04.09.2026 (SEO): Legal Pulse ankert auf dem Überwachungs-Feld („Verträge
+            automatisch überwachen", „Vertragsüberwachung Software") — bewusst GETRENNT
+            von den Fristen-Keywords, die /features/fristen besetzt (Noahs Vorgabe:
+            Fristen und Rechtslage-Überwachung nicht vermischen). */}
+        <title>Verträge automatisch überwachen – Legal Pulse | Contract AI</title>
+        <meta name="description" content="Verträge automatisch überwachen mit Legal Pulse: Täglicher Abgleich mit neuen Gesetzen und Urteilen aus 27 amtlichen Quellen, Risiko-Alerts, konkrete Handlungsempfehlungen. ✓ Jetzt aktivieren" />
+        <meta name="keywords" content="Verträge automatisch überwachen, Vertragsüberwachung Software, Vertragsüberwachung, Gesetzesänderungen Verträge, Vertragsrisiken erkennen, Risiko-Monitoring, Frühwarnsystem Verträge, Rechtsänderungen überwachen, Legal Pulse, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/legalpulse" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Vertragsrisiken erkennen – Frühwarnsystem | Contract AI" />
-        <meta property="og:description" content="Vertragsrisiken früh erkennen: Automatisches Monitoring, Risiko-Alerts, Handlungsempfehlungen. ✓ Jetzt aktivieren" />
+        <meta property="og:title" content="Verträge automatisch überwachen – Legal Pulse | Contract AI" />
+        <meta property="og:description" content="Verträge automatisch überwachen: täglicher Abgleich mit neuen Gesetzen und Urteilen, Risiko-Alerts, Handlungsempfehlungen. ✓ Jetzt aktivieren" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/legalpulse" />
         <meta property="og:image" content="https://www.contract-ai.de/og/og-legalpulse.png" />
@@ -111,8 +131,8 @@ const LegalPulse: React.FC = () => {
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Vertragsrisiken erkennen – Frühwarnsystem | Contract AI" />
-        <meta name="twitter:description" content="Vertragsrisiken früh erkennen: Automatisches Monitoring, Risiko-Alerts, Handlungsempfehlungen. ✓ Jetzt aktivieren" />
+        <meta name="twitter:title" content="Verträge automatisch überwachen – Legal Pulse | Contract AI" />
+        <meta name="twitter:description" content="Verträge automatisch überwachen: täglicher Abgleich mit neuen Gesetzen und Urteilen, Risiko-Alerts, Handlungsempfehlungen. ✓ Jetzt aktivieren" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-legalpulse.png" />
 
         <script type="application/ld+json">

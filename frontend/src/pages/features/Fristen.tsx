@@ -8,7 +8,7 @@ import SeoCrossLinks from "../../components/SeoCrossLinks";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
   Calendar, Clock, AlertTriangle, Mail, Shield,
-  ArrowRight, ChevronDown, Bell, FileText, Zap, Target, FolderOpen, Search
+  ArrowRight, ChevronDown, Bell, FileText, Zap, Target, FolderOpen, Search, Activity
 } from "lucide-react";
 
 // Video
@@ -61,6 +61,10 @@ const Fristen: React.FC = () => {
     ]
   };
 
+  // 04.09.2026 (SEO-Pillar-Aufwertung): FAQ-Schema war mit 3 Einträgen asynchron zu den
+  // 5 sichtbaren FAQ-Blöcken (Google-Richtlinie: Schema = sichtbarer Inhalt). Jetzt 1:1.
+  // Die unbelegte „über 95%"-Zahl ist raus (gleiche Klasse wie die am 28.07. bereinigten
+  // Fantasie-Statistiken der Schwester-Seiten).
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -70,7 +74,7 @@ const Fristen: React.FC = () => {
         "name": "Welche Arten von Fristen erkennt die KI?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Kündigungsfristen, Mindestlaufzeiten, automatische Verlängerungen, Zahlungsfristen, Gewährleistungszeiten und andere vertraglich relevante Stichtage."
+          "text": "Kündigungsfristen, Mindestlaufzeiten, automatische Verlängerungen, Zahlungsfristen, Gewährleistungszeiten und andere vertraglich relevante Stichtage. Auch komplexe Berechnungen wie \"3 Monate zum Monatsende\"."
         }
       },
       {
@@ -78,7 +82,15 @@ const Fristen: React.FC = () => {
         "name": "Wie genau ist die automatische Erkennung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Die KI erreicht eine Genauigkeit von über 95% bei Standardverträgen."
+          "text": "Die KI liest Fristen, Laufzeiten und Verlängerungsklauseln direkt aus dem Vertragstext. Bei unklaren Formulierungen markiert sie potenzielle Fristen zur manuellen Überprüfung — Sie behalten immer die Kontrolle."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kann ich eigene Erinnerungszeiten festlegen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ja, Sie können für jeden Vertragstyp individuelle Vorlaufzeiten definieren. Standard sind 90, 60, 30 und 14 Tage, aber Sie können beliebige Zeiträume wählen."
         }
       },
       {
@@ -86,23 +98,48 @@ const Fristen: React.FC = () => {
         "name": "Funktioniert die Kalenderintegration mit allen Anbietern?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle iCal-kompatiblen Apps."
+          "text": "Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle iCal-kompatiblen Apps. Ihre Fristen werden automatisch dorthin übertragen und bleiben bei Änderungen aktuell."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Was passiert bei Vertragsänderungen?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Bei Upload einer neuen Version erkennt die KI Änderungen an Fristen und aktualisiert automatisch alle Erinnerungen und Kalendereinträge."
         }
       }
+    ]
+  };
+
+  // HowTo-Schema (Muster: KuendigungPruefen.tsx / KiVertragsanalyse.tsx — die Schritte
+  // spiegeln die sichtbare Prozess-Sektion, nichts Erfundenes).
+  const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    "name": "Vertragsfristen automatisch überwachen",
+    "description": "So behalten Sie Kündigungsfristen und Vertragslaufzeiten automatisch im Blick.",
+    "step": [
+      { "@type": "HowToStep", "position": 1, "name": "Vertrag hochladen", "text": "Vertrag als PDF hochladen oder per E-Mail einreichen — die KI liest den Text automatisch." },
+      { "@type": "HowToStep", "position": 2, "name": "Fristen-Extraktion", "text": "Die KI erkennt Kündigungsfristen, Laufzeiten und automatische Verlängerungen direkt aus dem Vertragstext." },
+      { "@type": "HowToStep", "position": 3, "name": "Automatische Erinnerungen", "text": "Rechtzeitige Erinnerungen per E-Mail und Kalender-Sync (Google, Outlook, Apple) — bevor die Frist abläuft." }
     ]
   };
 
   return (
     <>
       <Helmet>
-        <title>Kündigungsfrist nie wieder verpassen | Contract AI</title>
-        <meta name="description" content="Nie wieder Kündigungsfristen verpassen! KI erkennt alle Fristen automatisch, erinnert per E-Mail & synchronisiert mit Google/Outlook Kalender. Wie AboAlarm, nur besser. ✓ Kostenlos starten" />
-        <meta name="keywords" content="Kündigungsfrist vergessen, Kündigungsfrist verpassen, Fristenkalender, Vertragsfristen verwalten, Kündigungserinnerung, AboAlarm Alternative, Contract AI" />
+        {/* 04.09.2026 (SEO-Pillar): Hauptkeyword „Vertragsfristen überwachen" in den Title —
+            das Feld war vorher nur im keywords-Tag besetzt. Kündigungsfrist bleibt in
+            Description + Keywords erhalten. */}
+        <title>Vertragsfristen automatisch überwachen | Contract AI</title>
+        <meta name="description" content="Vertragsfristen & Kündigungsfristen automatisch überwachen: KI erkennt alle Fristen im Vertrag, erinnert rechtzeitig per E-Mail & synchronisiert mit Google/Outlook Kalender. ✓ Kostenlos starten" />
+        <meta name="keywords" content="Vertragsfristen überwachen, Kündigungsfristen überwachen, Vertragsfristen verwalten, Kündigungsfrist verpassen, Fristenkalender, Fristenmanagement Verträge, Vertragslaufzeiten überwachen, automatische Vertragserinnerung, Vertragsverlängerung vermeiden, Kündigungserinnerung, AboAlarm Alternative, Contract AI" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/fristen" />
         <meta name="robots" content="index,follow" />
 
-        <meta property="og:title" content="Kündigungsfrist nie wieder verpassen | Contract AI" />
+        <meta property="og:title" content="Vertragsfristen automatisch überwachen | Contract AI" />
         <meta property="og:description" content="Nie wieder Kündigungsfristen verpassen! KI erkennt Fristen automatisch, erinnert per E-Mail & Kalender. ✓ Kostenlos starten" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://www.contract-ai.de/features/fristen" />
@@ -111,7 +148,7 @@ const Fristen: React.FC = () => {
         <meta property="og:site_name" content="Contract AI" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Kündigungsfrist nie wieder verpassen | Contract AI" />
+        <meta name="twitter:title" content="Vertragsfristen automatisch überwachen | Contract AI" />
         <meta name="twitter:description" content="Nie wieder Kündigungsfristen verpassen! KI erkennt Fristen automatisch, erinnert per E-Mail & Kalender. ✓ Kostenlos starten" />
         <meta name="twitter:image" content="https://www.contract-ai.de/og/og-fristen.png" />
 
@@ -120,6 +157,9 @@ const Fristen: React.FC = () => {
         </script>
         <script type="application/ld+json">
           {JSON.stringify(breadcrumbSchema)}
+        </script>
+        <script type="application/ld+json">
+          {JSON.stringify(howToSchema)}
         </script>
 
       </Helmet>
@@ -325,20 +365,28 @@ const Fristen: React.FC = () => {
               <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Das Problem</span>
                 <h2 className={styles.sectionTitleLeft}>Automatische Verlängerungen – die teure Falle</h2>
+                {/* 04.09.2026 (TÜV-Mitnahme): Versicherungen/Mietverträge aus der Beispielreihe
+                    direkt über den § 309-Nr.-9-Kacheln gelöst — beide fallen NICHT unter die Norm
+                    (Versicherung: § 11 VVG; Miete: Gebrauchsüberlassung), haben aber eigene Fristen. */}
                 <p className={styles.problemText}>
-                  Versicherungen, Mobilfunkverträge, SaaS-Abos oder Mietverträge verlängern sich oft automatisch.
-                  Wer Kündigungsfristen verpasst, zahlt weiter – teils über Jahre. Ein übersehener Stichtag
-                  kann Sie Hunderte oder Tausende Euro kosten.
+                  Mobilfunkverträge, Fitnessstudio-, Streaming- und SaaS-Abos verlängern sich oft automatisch –
+                  und auch Versicherungen oder Mietverhältnisse haben ihre eigenen Kündigungsfristen.
+                  Wer einen Stichtag verpasst, zahlt weiter – teils über Jahre. Wie Sie ungewollte
+                  Verlängerungen stoppen, zeigt unser Ratgeber <Link to="/blog/automatische-vertragsverlaengerung-stoppen">Automatische
+                  Vertragsverlängerung stoppen</Link>.
                 </p>
 
+                {/* 04.09.2026: vorher unbelegte Zahlen („67 %", „500 EUR") — dieselbe Klasse
+                    wie die am 28.07. bereinigten Fantasie-Statistiken der Schwester-Seiten
+                    (diese Seite fehlte damals in der Runde). Jetzt echte Rechtsfakten. */}
                 <div className={styles.problemStats}>
                   <div className={`${styles.problemStat} ${styles.danger}`}>
-                    <div className={styles.problemStatValue}>67%</div>
-                    <div className={styles.problemStatLabel}>verpassen mindestens eine Kündigungsfrist pro Jahr</div>
+                    <div className={styles.problemStatValue}>2 Jahre</div>
+                    <div className={styles.problemStatLabel}>maximale Erstlaufzeit in Verbraucher-AGB (§ 309 Nr. 9 BGB)</div>
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
-                    <div className={styles.problemStatValue}>500 EUR</div>
-                    <div className={styles.problemStatLabel}>durchschnittliche Kosten pro verpasster Frist</div>
+                    <div className={styles.problemStatValue}>1 Monat</div>
+                    <div className={styles.problemStatLabel}>maximale Kündigungsfrist nach stillschweigender Verlängerung (§ 309 Nr. 9 BGB)</div>
                   </div>
                 </div>
               </div>
@@ -403,7 +451,7 @@ const Fristen: React.FC = () => {
                     </div>
                     <div className={styles.comparisonTime}>
                       <AlertTriangle size={16} />
-                      67% verpassen Fristen
+                      Stichtage im Kopf oder in Excel
                     </div>
                   </div>
 
@@ -594,18 +642,20 @@ const Fristen: React.FC = () => {
               <h2 className={styles.sectionTitle}>Zuverlässige <span className={styles.sectionTitleAccent}>Fristenerkennung</span></h2>
             </div>
 
+            {/* 04.09.2026: „95%+ Erkennungsgenauigkeit" und „500€+ Ersparnis" waren
+                unbelegt (TÜV-Blocker B1) — jetzt nur noch belegbare Fakten. */}
             <div className={styles.statsGrid}>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>95%+</div>
-                <div className={styles.statLabel}>Erkennungsgenauigkeit</div>
+                <div className={styles.statNumber}>~2 Min.</div>
+                <div className={styles.statLabel}>vom Upload bis zu den erkannten Fristen</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>30 Tage</div>
-                <div className={styles.statLabel}>Standard-Vorlaufzeit</div>
+                <div className={styles.statNumber}>90/60/30/14</div>
+                <div className={styles.statLabel}>Tage Vorlauf — Erinnerungsstufen frei wählbar</div>
               </div>
               <div className={`${styles.statItem} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.statNumber}>500€+</div>
-                <div className={styles.statLabel}>Durchschnittliche Ersparnis</div>
+                <div className={styles.statNumber}>3 Kalender</div>
+                <div className={styles.statLabel}>Google, Outlook und Apple — plus jede iCal-App</div>
               </div>
             </div>
           </div>
@@ -640,8 +690,9 @@ const Fristen: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Die KI erreicht eine Genauigkeit von über 95% bei Standardverträgen. Bei unklaren
-                  Formulierungen markiert sie potenzielle Fristen zur manuellen Überprüfung.
+                  Die KI liest Fristen, Laufzeiten und Verlängerungsklauseln direkt aus dem
+                  Vertragstext. Bei unklaren Formulierungen markiert sie potenzielle Fristen zur
+                  manuellen Überprüfung — Sie behalten immer die Kontrolle.
                 </p>
               </details>
 
@@ -721,6 +772,19 @@ const Fristen: React.FC = () => {
                   <div className={styles.relatedTitle}>E-Mail Upload</div>
                   <div className={styles.relatedDescription}>
                     Verträge per E-Mail hochladen – automatisch erkannt und importiert
+                  </div>
+                </div>
+                <ArrowRight size={20} className={styles.relatedArrow} />
+              </Link>
+
+              {/* 04.09.2026: Brücke Fristen → Legal Pulse („nächste Stufe"): Fristen sind
+                  Termine, Legal Pulse überwacht zusätzlich die Rechtslage. */}
+              <Link to="/features/legalpulse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
+                <span className={styles.relatedIcon} style={{ color: '#dc2626' }}><Activity size={20} /></span>
+                <div className={styles.relatedContent}>
+                  <div className={styles.relatedTitle}>Legal Pulse</div>
+                  <div className={styles.relatedDescription}>
+                    Die nächste Stufe: Verträge laufend auf neue Gesetze und Urteile überwachen
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
