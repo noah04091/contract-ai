@@ -374,3 +374,44 @@
     font-size: 0.8rem;
   }
 }
+/* ══════════ GRUPPEN NACH VERTRAGSART (04.09.2026) ══════════
+   Vorher eine durchlaufende Liste nach Datum: wer sich zu drei Vertraegen
+   je zwei Alternativen gemerkt hat, musste selbst zusammensuchen, was
+   zusammengehoert. Gruppiert wird nach Vertragsart, weil nur die im
+   Datensatz steht; der konkrete Ursprungsvertrag wird nicht gespeichert. */
+.merk-gruppe {
+  margin-bottom: 1.5rem;
+}
+
+.merk-gruppe:last-child {
+  margin-bottom: 0;
+}
+
+.merk-gruppe-kopf {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #55606f;
+}
+
+.merk-gruppe-kopf svg {
+  color: #8590a0;
+  flex-shrink: 0;
+}
+
+.merk-gruppe-name {
+  color: #0f1826;
+}
+
+.merk-gruppe-zahl {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #55606f;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

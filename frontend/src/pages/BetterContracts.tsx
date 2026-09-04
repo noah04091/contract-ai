@@ -2,11 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Helmet } from "react-helmet-async";
-import { SearchCheck, TrendingDown, Bookmark, Camera, Upload } from "lucide-react";
+import { Bookmark, Camera, Upload, FileText, Eye, Check, ArrowLeft, ArrowRight, RotateCcw, AlertCircle, ChevronRight, Info } from "lucide-react";
 import BetterContractsResults from "../components/BetterContractsResults";
 import SavedAlternativesFull from "../components/SavedAlternativesFull";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import "../styles/ContractPages.css";
+import "../styles/BetterContractsWerkbank.css";
 import { useDocumentScanner } from "../hooks/useDocumentScanner";
 
 interface ApiResponse {
@@ -480,403 +481,373 @@ const BetterContracts: React.FC = () => {
         />
       )}
 
-      <div className={`contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
+      {/* ══════════════════════════════════════════════════════════════
+          WERKBANK (04.09.2026)
 
-        {/* WICHTIG: Dynamische Container-Breite für Step 3 */}
-        <div className={`contract-container ${step === 3 && results ? 'has-results' : ''}`} style={step === 3 && results ? { maxWidth: '1200px' } : {}}>
+          Vorher standen neun Bloecke vor der ersten Handlung: Hero-Symbol,
+          Abzeichen "Enterprise Feature", Verlaufsueberschrift, Beschreibungs-
+          satz, drei Feature-Pillen und ein breites Fortschrittsband. Zusammen
+          rund 420 px Werbung an jemanden, der bereits eingeloggt ist und
+          bezahlt hat. Jetzt eine 54 px hohe Kopfleiste, dadurch steht die
+          Ablageflaeche im ersten Bildschirm.
 
-          {/* Hero Section */}
-          <div className="contract-header">
-            <div className="contract-hero-icon">
-              <SearchCheck size={36} />
+          Eingaben laufen in einer gefassten Spalte von 760 px. Eine
+          Ablageflaeche ueber die volle Fensterbreite wirkt immer leer.
+          ══════════════════════════════════════════════════════════════ */}
+      <div className={`bcw-seite ${!isPremium ? 'mit-banner' : ''}`}>
+
+        <div className="bcw-schirm">
+
+          <div className="bcw-kopf">
+            <div>
+              <div className="bcw-kopf-titel">Bessere Alternativen finden</div>
+              <div className="bcw-kopf-sub">Wir vergleichen deinen Vertrag mit dem aktuellen Markt</div>
             </div>
 
-            {!isPremium && (
-              <div className="contract-hero-badge">Enterprise Feature</div>
-            )}
-
-            <h1>Finde <span className="gradient-text">bessere</span> Alternativen</h1>
-
-            <p className="contract-description">
-              Lade deinen Vertrag hoch. Wir recherchieren, wer dieselbe Leistung anbietet, wie in diesem Markt abgerechnet wird und wo du Verhandlungsspielraum hast.
-            </p>
-
-            <div className="contract-feature-pills">
-              <div className="contract-feature-pill">
-                <TrendingDown size={16} />
-                Sparpotenzial prüfen
+            <div className="bcw-schritte">
+              <div className={`bcw-schritt ${step === 1 ? 'jetzt' : ''} ${step > 1 ? 'fertig' : ''}`}>
+                <span className="bcw-schritt-punkt">{step > 1 ? <Check size={11} strokeWidth={3.5} /> : '1'}</span>
+                <span className="bcw-schritt-wort">Vertrag</span>
               </div>
-              <div className="contract-feature-pill">
-                <SearchCheck size={16} />
-                Echte Marktanalyse
+              <div className="bcw-schritt-strich"></div>
+              <div className={`bcw-schritt ${step === 2 ? 'jetzt' : ''} ${step > 2 ? 'fertig' : ''}`}>
+                <span className="bcw-schritt-punkt">{step > 2 ? <Check size={11} strokeWidth={3.5} /> : '2'}</span>
+                <span className="bcw-schritt-wort">Preis</span>
               </div>
-              <div className="contract-feature-pill">
-                <Bookmark size={16} />
-                Merkliste
+              <div className="bcw-schritt-strich"></div>
+              <div className={`bcw-schritt ${step === 3 ? 'jetzt' : ''}`}>
+                <span className="bcw-schritt-punkt">3</span>
+                <span className="bcw-schritt-wort">Alternativen</span>
               </div>
             </div>
           </div>
 
-          <div className="contract-progress-steps">
-                <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
-                  <div className="step-number">1</div>
-                  <div className="step-label">Vertrag hochladen</div>
-                </div>
-                <div className="step-connector"></div>
-                <div className={`step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
-                  <div className="step-number">2</div>
-                  <div className="step-label">Preis & Analyse</div>
-                </div>
-                <div className="step-connector"></div>
-                <div className={`step ${step >= 3 ? 'active' : ''}`}>
-                  <div className="step-number">3</div>
-                  <div className="step-label">Bessere Alternativen</div>
-                </div>
-              </div>
+          <div className="bcw-buehne">
 
-          {step === 1 && (
-            <div className="contract-step-container">
-              {/* ✅ File input outside the clickable area to prevent conflicts */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept=".pdf,.docx"
-                style={{ display: 'none' }}
-                disabled={!isPremium}
-              />
-              <div
-                className={`contract-uploader ${dragActive ? 'drag-active' : ''} ${!isPremium ? 'disabled' : ''}`}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onClick={handleFileSelect}
-                style={{
-                  opacity: isPremium ? 1 : 0.6,
-                  cursor: isPremium ? 'pointer' : 'not-allowed'
-                }}
-              >
+            {/* ══════════ SCHRITT 1 ══════════ */}
+            {step === 1 && (
+              <div className="bcw-spalte">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept=".pdf,.docx"
+                  style={{ display: 'none' }}
+                  disabled={!isPremium}
+                />
 
-                <div className="uploader-content">
-                  <div className="upload-icon-wrapper">
-                    <Upload size={32} />
+                <div
+                  className={`bcw-ablage ${dragActive ? 'zieht' : ''} ${!isPremium ? 'gesperrt' : ''}`}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onClick={handleFileSelect}
+                  style={{
+                    opacity: isPremium ? 1 : 0.6,
+                    cursor: isPremium ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  <div className="bcw-ablage-symbol">
+                    <Upload size={21} strokeWidth={1.8} />
                   </div>
 
                   {fileName ? (
-                    <p className="file-name">{fileName}</p>
+                    <p className="bcw-dateiname">{fileName}</p>
                   ) : (
                     <>
-                      <p className="upload-title">Vertrag hochladen</p>
-                      <p className="upload-subtitle">
-                        {isPremium ? "Datei hierher ziehen oder klicken" : "Premium erforderlich"}
+                      <h2>{isPremium ? 'Vertrag hierher ziehen' : 'Premium erforderlich'}</h2>
+                      <p>
+                        {isPremium
+                          ? <>oder <span className="bcw-ablage-link">Datei auswählen</span></>
+                          : 'Diese Funktion ist Teil der Premium-Mitgliedschaft'}
                       </p>
                     </>
                   )}
 
-                  {isPremium && !fileName && (
-                    <div className="upload-formats">
-                      <span className="format-tag">PDF</span>
-                      <span className="format-tag">DOCX</span>
-                      <span className="format-tag">TXT</span>
-                    </div>
-                  )}
-
                   {uploadProgress > 0 && (
-                    <div className="progress-container">
-                      <div
-                        className="progress-bar"
-                        style={{ width: `${uploadProgress}%` }}
-                      ></div>
+                    <div className="bcw-balken"><i style={{ width: `${uploadProgress}%` }} /></div>
+                  )}
+
+                  {isPremium && !fileName && (
+                    <div className="bcw-ablage-fuss">
+                      <span className="bcw-typ">PDF</span>
+                      <span className="bcw-typ">DOCX</span>
+                      <span className="bcw-typ">TXT</span>
+                      <span className="bcw-trenner">·</span>
+                      <span>bis 10 MB</span>
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Quick Actions */}
-              {isPremium && (
-                <div className="quick-actions">
-                  <button className="quick-action-btn" onClick={openScanner}>
-                    <Camera size={16} />
-                    Foto scannen
-                  </button>
-                </div>
-              )}
-
-              {/* 03.09.2026: Das Textfeld war genauso gross wie die Ablageflaeche
-                  und stand damit gleichrangig daneben, obwohl kaum jemand einen
-                  Vertrag abtippt. Es liegt jetzt eingeklappt darunter und ist
-                  einen Klick entfernt, statt den halben Bildschirm zu belegen. */}
-              <details className="contract-text-toggle">
-                <summary>Stattdessen Text einfügen</summary>
-
-              <div className="contract-text-form">
-                <label htmlFor="contract-text">Vertragstext</label>
-                <textarea
-                  id="contract-text"
-                  value={contractText}
-                  onChange={(e) => setContractText(e.target.value)}
-                  placeholder={isPremium ? "Füge deinen Vertragstext hier ein..." : "Premium erforderlich für diese Funktion"}
-                  rows={8}
-                  disabled={!isPremium}
-                  style={{
-                    opacity: isPremium ? 1 : 0.6,
-                    cursor: isPremium ? 'text' : 'not-allowed'
-                  }}
-                />
-                
-                <button 
-                  className="contract-button"
-                  onClick={() => isPremium && contractText.trim().length >= 20 ? setStep(2) : setError(isPremium ? "Vertragstext muss mindestens 20 Zeichen lang sein." : "Premium erforderlich für diese Funktion.")}
-                  disabled={!isPremium || contractText.trim().length < 20}
-                  style={{
-                    opacity: isPremium && contractText.trim().length >= 20 ? 1 : 0.6,
-                    cursor: isPremium && contractText.trim().length >= 20 ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  Weiter
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                  </svg>
-                </button>
-              </div>
-              </details>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="contract-step-container">
-              <div className="price-input-section">
-                <div className="contract-info-box">
-                  <div className="info-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <path d="M12 16v-4"></path>
-                      <path d="M12 8h.01"></path>
-                    </svg>
+                {isPremium && (
+                  <div className="bcw-nebenwege">
+                    <button className="bcw-nebenweg" onClick={openScanner}>
+                      <Camera size={16} />
+                      Vertrag abfotografieren
+                    </button>
                   </div>
-                  <div className="info-text">
-                    <p>Gib den monatlichen Preis ein, falls bekannt. Bei Verträgen ohne festen Monatspreis kannst du das Feld auch leer lassen.</p>
-                  </div>
-                </div>
-                
-                <div className="price-input-container">
-                  <label htmlFor="price-input">Geschätzte monatliche Kosten (€) — optional</label>
-                  <div className="currency-input">
-                    <input
-                      id="price-input"
-                      type="number"
-                      placeholder="0,00"
-                      value={currentPrice ?? ""}
-                      onChange={(e) => setCurrentPrice(parseFloat(e.target.value))}
-                      min="0"
-                      step="0.01"
+                )}
+
+                {/* Kaum jemand tippt einen Vertrag ab, deshalb liegt der
+                    Textweg eingeklappt darunter statt gleichrangig daneben. */}
+                <details className="bcw-textweg">
+                  <summary>
+                    <ChevronRight className="bcw-pfeil" size={15} />
+                    Vertragstext stattdessen einfügen
+                  </summary>
+
+                  <div className="bcw-textfeld">
+                    <label htmlFor="contract-text">Vertragstext</label>
+                    <textarea
+                      id="contract-text"
+                      value={contractText}
+                      onChange={(e) => setContractText(e.target.value)}
+                      placeholder={isPremium ? "Füge deinen Vertragstext hier ein..." : "Premium erforderlich für diese Funktion"}
+                      rows={8}
                       disabled={!isPremium}
                       style={{
                         opacity: isPremium ? 1 : 0.6,
                         cursor: isPremium ? 'text' : 'not-allowed'
                       }}
                     />
-                    <span className="currency-symbol">€</span>
-                  </div>
-                </div>
 
-                {/* Optional: Custom Search Query */}
-                <div className="search-input-container">
-                  <label htmlFor="search-query">Suchanfrage (optional)</label>
-                  <input
-                    id="search-query"
-                    type="text"
-                    placeholder={isPremium ? "z.B. 'factoring anbieter vergleich' (wird automatisch generiert)" : "Premium erforderlich"}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    disabled={!isPremium}
-                    style={{
-                      opacity: isPremium ? 1 : 0.6,
-                      cursor: isPremium ? 'text' : 'not-allowed'
-                    }}
-                  />
-                  <p className="input-help">
-                    {isPremium ? "Leer lassen: dann suchen wir anhand des Vertragsinhalts" : "Premium erforderlich für diese Funktion"}
-                  </p>
-                </div>
-                
-                <div className="contract-text-preview">
-                  <label>Vertragstext (Ausschnitt)</label>
-                  <div className="text-preview">
-                    {contractText.length > 150 
-                      ? contractText.substring(0, 150) + "..."
-                      : contractText}
-                  </div>
-                </div>
-                
-                <div className="contract-actions">
-                  <button 
-                    className="contract-button secondary"
-                    onClick={() => setStep(1)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m12 19-7-7 7-7"></path>
-                      <path d="M19 12H5"></path>
-                    </svg>
-                    Zurück
-                  </button>
-                  
-                  <button
-                    className={`contract-button ${loading ? 'is-loading' : ''}`}
-                    onClick={handleAnalyze}
-                    disabled={!isPremium || loading}
-                    style={{
-                      opacity: isPremium ? 1 : 0.6,
-                      cursor: isPremium && !loading ? 'pointer' : 'not-allowed'
-                    }}
-                  >
-                    {loading ? (
-                      <>
-                        <div className="spinner"></div>
-                        Analysiere...
-                      </>
-                    ) : (
-                      <>
-                        {isPremium ? "Alternativen finden" : "Premium erforderlich"}
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M5 12h14"></path>
-                          <path d="m12 5 7 7-7 7"></path>
-                        </svg>
-                      </>
-                    )}
-                  </button>
-                </div>
-                
-                {loading && isPremium && (
-                  <div className="analyzing-progress">
-                    <div className="progress-container">
-                      <div
-                        className="progress-bar"
-                        style={{ width: `${analyzingProgress}%` }}
-                      ></div>
+                    <div className="bcw-knopfreihe">
+                      <button
+                        className="bcw-knopf bcw-schieb"
+                        onClick={() => isPremium && contractText.trim().length >= 20 ? setStep(2) : setError(isPremium ? "Vertragstext muss mindestens 20 Zeichen lang sein." : "Premium erforderlich für diese Funktion.")}
+                        disabled={!isPremium || contractText.trim().length < 20}
+                      >
+                        Weiter
+                        <ArrowRight size={15} strokeWidth={1.8} />
+                      </button>
                     </div>
-                    <p className="analyzing-text">
-                      {analyzingProgress < 30 ? "Erkenne Vertragstyp..." :
-                       analyzingProgress < 60 ? "Suche nach Alternativen..." :
-                       analyzingProgress < 90 ? "Analysiere Websites..." :
-                       "Erstelle Empfehlungen..."}
-                    </p>
                   </div>
+                </details>
+              </div>
+            )}
+
+            {/* ══════════ SCHRITT 2 ══════════ */}
+            {step === 2 && (
+              <div className="bcw-spalte">
+
+                {loading && isPremium ? (
+                  /* Der alte Ladekreis sass oben statt mittig, weil sein
+                     Kasten per Flexbox zentrierte, aber keine eigene Hoehe
+                     hatte. Er war damit genau so hoch wie sein Inhalt. */
+                  <div className="bcw-laden">
+                    <div className="bcw-kreis"></div>
+                    <h3>
+                      {analyzingProgress < 30 ? "Vertragstyp wird erkannt" :
+                       analyzingProgress < 60 ? "Suche nach Alternativen" :
+                       analyzingProgress < 90 ? "Angebote werden geprüft" :
+                       "Empfehlung wird erstellt"}
+                    </h3>
+                    <p>Das dauert einen Moment. Wir durchsuchen den Markt für dich.</p>
+                    <div className="bcw-balken"><i style={{ width: `${analyzingProgress}%` }} /></div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Hier stand ein Ausschnitt von 150 rohen Zeichen
+                        Vertragstext, der aussah wie ein Fehler. */}
+                    <div className="bcw-fakten">
+                      <div className="bcw-fakten-kopf">
+                        <div className="bcw-fakten-symbol">
+                          <FileText size={17} strokeWidth={1.8} />
+                        </div>
+                        <div className="bcw-fakten-text">
+                          <div className="bcw-fakten-titel">
+                            {contractType ? contractType : 'Vertrag eingelesen'}
+                          </div>
+                          <div className="bcw-fakten-datei">{fileName || 'Eingefügter Text'}</div>
+                        </div>
+                        {uploadedFile && (
+                          <button
+                            className="bcw-ansehen"
+                            onClick={() => {
+                              const url = URL.createObjectURL(uploadedFile);
+                              const fenster = window.open(url, "_blank");
+                              if (fenster) { fenster.addEventListener("load", () => URL.revokeObjectURL(url), { once: true }); }
+                              setTimeout(() => URL.revokeObjectURL(url), 60000);
+                            }}
+                          >
+                            <Eye size={14} strokeWidth={1.8} />
+                            Ansehen
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="bcw-gitter">
+                        <div className="bcw-feld">
+                          <div className="bcw-feld-name">Erkannte Art</div>
+                          <div className="bcw-feld-wert">{contractType || 'Wird ermittelt'}</div>
+                        </div>
+                        <div className="bcw-feld">
+                          <div className="bcw-feld-name">Eingelesen</div>
+                          <div className="bcw-feld-wert">{contractText.length.toLocaleString('de-DE')} Zeichen</div>
+                        </div>
+                        <div className="bcw-feld">
+                          <div className="bcw-feld-name">Quelle</div>
+                          <div className="bcw-feld-wert">{fileName ? 'Datei' : 'Eingefügter Text'}</div>
+                        </div>
+                      </div>
+
+                      <div className="bcw-fakten-fuss">
+                        <Info size={12} />
+                        Aus deinem Dokument gelesen, nicht geschätzt.
+                      </div>
+                    </div>
+
+                    <div className="bcw-eingabe-block">
+                      <div className="bcw-paar">
+                        <div className="bcw-feldgruppe">
+                          <label htmlFor="price-input">Dein Preis pro Monat</label>
+                          <div className="bcw-eingabe">
+                            <input
+                              id="price-input"
+                              type="number"
+                              placeholder="0,00"
+                              value={currentPrice ?? ""}
+                              onChange={(e) => setCurrentPrice(parseFloat(e.target.value))}
+                              min="0"
+                              step="0.01"
+                              disabled={!isPremium}
+                            />
+                            <span className="bcw-einheit">€</span>
+                          </div>
+                          <div className="bcw-hilfe">Optional. Ohne festen Monatspreis leer lassen.</div>
+                        </div>
+
+                        <div className="bcw-feldgruppe">
+                          <label htmlFor="search-query">Wonach gesucht wird</label>
+                          <div className="bcw-eingabe">
+                            <input
+                              id="search-query"
+                              type="text"
+                              placeholder={isPremium ? "wird automatisch aus dem Vertrag erzeugt" : "Premium erforderlich"}
+                              value={searchQuery}
+                              onChange={(e) => setSearchQuery(e.target.value)}
+                              disabled={!isPremium}
+                            />
+                          </div>
+                          <div className="bcw-hilfe">
+                            {isPremium ? "Anpassen, wenn du etwas Bestimmtes suchst. Sonst einfach lassen." : "Premium erforderlich für diese Funktion"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bcw-knopfreihe">
+                      <button className="bcw-knopf still" onClick={() => setStep(1)}>
+                        <ArrowLeft size={15} strokeWidth={1.8} />
+                        Zurück
+                      </button>
+
+                      <button
+                        className="bcw-knopf bcw-schieb"
+                        onClick={handleAnalyze}
+                        disabled={!isPremium || loading}
+                      >
+                        {isPremium ? "Alternativen finden" : "Premium erforderlich"}
+                        <ArrowRight size={15} strokeWidth={1.8} />
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
-            </div>
-          )}
+            )}
 
-          {step === 3 && results && isPremium && (
-            <div className="contract-step-container results-step">
-              <BetterContractsResults
-                analysis={results.analysis}
-                alternatives={results.alternatives}
-                searchQuery={results.searchQuery}
-                currentPrice={currentPrice ?? 0}
-                contractType={contractType}
-                fromCache={results.fromCache}
-                isB2B={results.isB2B || false}
-                sucheGestoert={results.sucheGestoert || false}
-                stoerungsgrund={results.stoerungsgrund || null}
-                trefferArten={results.suchBilanz?.trefferArten || null}
-                vertragsfakten={results.vertragsfakten || null}
-                fileName={fileName}
-                onOpenDocument={uploadedFile ? () => {
-                  const url = URL.createObjectURL(uploadedFile);
-                  const fenster = window.open(url, "_blank");
-                  // Objekt-URL wieder freigeben, sonst bleibt die Datei im Speicher liegen
-                  if (fenster) { fenster.addEventListener("load", () => URL.revokeObjectURL(url), { once: true }); }
-                  setTimeout(() => URL.revokeObjectURL(url), 60000);
-                } : undefined}
-                aiSuggestedAlternatives={results.aiSuggestedAlternatives || []}
-              />
-              
-              <div className="step-actions">
-                <button 
-                  className="contract-button secondary"
-                  onClick={handleRetry}
-                  disabled={loading || !isPremium}
-                  style={{
-                    opacity: isPremium && !loading ? 1 : 0.6,
-                    cursor: isPremium && !loading ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                    <path d="M3 3v5h5"></path>
-                  </svg>
-                  Erneut suchen
-                </button>
-                
-                <button 
-                  className="contract-button secondary"
-                  onClick={handleStartOver}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                    <path d="M3 3v5h5"></path>
-                  </svg>
-                  Neuer Vertrag
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {error && (
-            <div className="error-message">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="8" x2="12" y2="12"></line>
-                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-              </svg>
-              {error}
-              {step === 2 && isPremium && (
-                <button
-                  className="retry-button"
-                  onClick={handleRetry}
-                  disabled={loading}
-                >
-                  Erneut versuchen
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+            {/* ══════════ SCHRITT 3 ══════════ */}
+            {step === 3 && results && isPremium && (
+              <div className="bcw-spalte-breit">
+                <BetterContractsResults
+                  analysis={results.analysis}
+                  alternatives={results.alternatives}
+                  searchQuery={results.searchQuery}
+                  currentPrice={currentPrice ?? 0}
+                  contractType={contractType}
+                  fromCache={results.fromCache}
+                  isB2B={results.isB2B || false}
+                  sucheGestoert={results.sucheGestoert || false}
+                  stoerungsgrund={results.stoerungsgrund || null}
+                  trefferArten={results.suchBilanz?.trefferArten || null}
+                  vertragsfakten={results.vertragsfakten || null}
+                  fileName={fileName}
+                  onOpenDocument={uploadedFile ? () => {
+                    const url = URL.createObjectURL(uploadedFile);
+                    const fenster = window.open(url, "_blank");
+                    // Objekt-URL wieder freigeben, sonst bleibt die Datei im Speicher liegen
+                    if (fenster) { fenster.addEventListener("load", () => URL.revokeObjectURL(url), { once: true }); }
+                    setTimeout(() => URL.revokeObjectURL(url), 60000);
+                  } : undefined}
+                  aiSuggestedAlternatives={results.aiSuggestedAlternatives || []}
+                />
 
-        {/* Merkliste als Seiten-Abschnitt. Die Ueberschrift steht NUR hier —
-            die Komponente darin bringt keine eigene mehr mit (03.09.2026). */}
-        <div className="saved-alternatives-section">
-          <div className="saved-alternatives-wrapper">
-            <div className="saved-alternatives-header">
-              <div className="saved-alternatives-icon">
-                <Bookmark size={24} />
+                {/* Die beiden Knoepfe standen frei im Nichts unter der
+                    Ergebnisliste. Jetzt haengen sie an einem Satz, der
+                    sagt, wofuer sie da sind. */}
+                <div className="bcw-ergebnis-fuss">
+                  <span className="bcw-fuss-text">
+                    Nichts Passendes dabei? Du kannst dieselbe Suche wiederholen oder einen anderen Vertrag prüfen.
+                  </span>
+                  <button
+                    className="bcw-knopf still"
+                    onClick={handleRetry}
+                    disabled={loading || !isPremium}
+                  >
+                    <RotateCcw size={15} strokeWidth={1.8} />
+                    Erneut suchen
+                  </button>
+                  <button className="bcw-knopf still" onClick={handleStartOver}>
+                    <Upload size={15} strokeWidth={1.8} />
+                    Neuer Vertrag
+                  </button>
+                </div>
               </div>
-              <div className="saved-alternatives-title-group">
-                <h2>Merkliste</h2>
-                <p>Alternativen, die du dir für später gemerkt hast</p>
-              </div>
-            </div>
+            )}
 
-            <div className="saved-alternatives-content">
-              <SavedAlternativesFull />
-            </div>
           </div>
         </div>
 
-        {/* Floating Action Button für gespeicherte Alternativen */}
+        {error && (
+          <div className="bcw-fehler">
+            <AlertCircle size={17} />
+            {error}
+            {step === 2 && isPremium && (
+              <button
+                className="bcw-fehler-knopf"
+                onClick={handleRetry}
+                disabled={loading}
+              >
+                Erneut versuchen
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Die Merkliste stand ohne Zaesur unter dem Ergebnis und wirkte
+            dadurch verloren. Jetzt ein eigener Bereich mit eigener
+            Ueberschrift. Die Komponente darin bringt keine eigene mit. */}
+        <div className="bcw-merkliste">
+          <div className="bcw-merk-kopf">
+            <h2>Merkliste</h2>
+            {savedAlternativesCount > 0 && (
+              <span className="bcw-merk-anzahl">{savedAlternativesCount}</span>
+            )}
+            <p style={{ marginLeft: 'auto' }}>Alternativen, die du dir für später gemerkt hast</p>
+          </div>
+
+          <SavedAlternativesFull />
+        </div>
+
         {showFAB && (
           <button
             onClick={scrollToSavedAlternatives}
-            className="fab-saved-alternatives"
+            className="bcw-fab"
             title={`Zu gespeicherten Alternativen (${savedAlternativesCount})`}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-            </svg>
+            <Bookmark size={20} strokeWidth={2} />
             {savedAlternativesCount > 0 && (
-              <span className="fab-badge">{savedAlternativesCount}</span>
+              <span className="bcw-fab-zahl">{savedAlternativesCount}</span>
             )}
           </button>
         )}

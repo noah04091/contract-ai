@@ -1,0 +1,887 @@
+/* ══════════════════════════════════════════════════════════════════
+   BETTER CONTRACTS WERKBANK (04.09.2026)
+
+   Eigener Namensraum fuer die Seitenhuelle von Better Contracts.
+
+   WARUM EINE EIGENE DATEI:
+   ContractPages.css wird von DREI Seiten geteilt (Better Contracts,
+   Vergleich, Optimierer). Jede Layout-Aenderung dort trifft auch die
+   beiden anderen. Diese Datei aendert deshalb NICHTS an bestehenden
+   Klassen, sondern legt einen eigenen Satz daneben. Alle Regeln
+   beginnen mit .bcw- und liegen zusaetzlich unter .bcw-seite, damit
+   nichts auf andere Seiten ausstrahlen kann.
+
+   LEITGEDANKE:
+   Hier wird gearbeitet, nicht geworben. Wer diese Seite sieht, ist
+   eingeloggt und hat bezahlt. Der alte Kopf (Hero-Symbol, Abzeichen,
+   Verlaufsueberschrift, Beschreibungssatz, drei Feature-Pillen)
+   belegte rund 420 px, bevor die erste Handlung moeglich war.
+   ══════════════════════════════════════════════════════════════════ */
+
+.bcw-seite {
+  /* Farben: uebernommen aus BetterContractsResults.css, damit Huelle und
+     Ergebnisliste dieselbe Sprache sprechen. Kein Lila, Gruen nur fuer
+     echte Bestaetigungen. */
+  --bcw-grund: #ffffff;
+  --bcw-senke: #f5f7fa;
+  --bcw-senke-2: #eef2f7;
+  --bcw-linie: #e4e9f0;
+  --bcw-linie-satt: #d2dae5;
+  --bcw-tinte: #0f1826;
+  --bcw-tinte-2: #55606f;
+  --bcw-tinte-3: #8590a0;
+  --bcw-akzent: #2563eb;
+  --bcw-akzent-dunkel: #1d4ed8;
+  --bcw-akzent-sanft: #eef4fe;
+  --bcw-akzent-linie: #cadcfb;
+  --bcw-gut: #0f7b55;
+  --bcw-gut-sanft: #e9f5f0;
+
+  --bcw-r-klein: 6px;
+  --bcw-r-mittel: 10px;
+  --bcw-r-gross: 14px;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bcw-senke);
+  padding: 28px 20px 64px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--bcw-tinte);
+}
+
+.bcw-seite.mit-banner {
+  padding-top: 12px;
+}
+
+/* Der Rahmen. Eingaben laufen in einer gefassten Spalte, Ergebnisse
+   duerfen breiter werden. Eine Ablageflaeche ueber die volle
+   Fensterbreite wirkt immer leer, egal wie gut sie gestaltet ist. */
+.bcw-schirm {
+  max-width: 1180px;
+  margin: 0 auto;
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-gross);
+  overflow: hidden;
+}
+
+/* ══════════ KOPFLEISTE ══════════
+   Ersetzt Hero-Symbol, Abzeichen, Verlaufsueberschrift, Beschreibung,
+   drei Feature-Pillen und das breite Fortschrittsband. Rund 420 px
+   werden zu 54 px, dadurch steht die Ablageflaeche im ersten Bildschirm. */
+.bcw-kopf {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--bcw-linie);
+  background: var(--bcw-grund);
+}
+
+.bcw-kopf-titel {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.bcw-kopf-sub {
+  font-size: 13px;
+  color: var(--bcw-tinte-3);
+  line-height: 1.4;
+}
+
+.bcw-schritte {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.bcw-schritt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--bcw-tinte-3);
+  white-space: nowrap;
+}
+
+.bcw-schritt-punkt {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--bcw-linie-satt);
+  background: var(--bcw-grund);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--bcw-tinte-3);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.bcw-schritt.jetzt {
+  color: var(--bcw-tinte);
+  font-weight: 500;
+}
+
+.bcw-schritt.jetzt .bcw-schritt-punkt {
+  background: var(--bcw-akzent);
+  border-color: var(--bcw-akzent);
+  color: #fff;
+}
+
+.bcw-schritt.fertig .bcw-schritt-punkt {
+  background: var(--bcw-gut-sanft);
+  border-color: #b9ded0;
+  color: var(--bcw-gut);
+}
+
+.bcw-schritt-strich {
+  width: 22px;
+  height: 1px;
+  background: var(--bcw-linie-satt);
+  flex-shrink: 0;
+}
+
+/* ══════════ ARBEITSFLAECHE ══════════ */
+.bcw-buehne {
+  padding: 30px 22px 34px;
+  background: var(--bcw-senke);
+}
+
+.bcw-spalte {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.bcw-spalte-breit {
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* ══════════ ABLAGEFLAECHE ══════════ */
+.bcw-ablage {
+  background: var(--bcw-grund);
+  border: 1px dashed var(--bcw-linie-satt);
+  border-radius: var(--bcw-r-gross);
+  padding: 38px 30px;
+  text-align: center;
+  transition: border-color 0.18s, background 0.18s;
+}
+
+.bcw-ablage:hover:not(.gesperrt) {
+  border-color: var(--bcw-akzent-linie);
+  background: #fcfdff;
+}
+
+.bcw-ablage.zieht {
+  border-color: var(--bcw-akzent);
+  border-style: solid;
+  background: var(--bcw-akzent-sanft);
+}
+
+.bcw-ablage-symbol {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 15px;
+  border-radius: var(--bcw-r-mittel);
+  background: var(--bcw-akzent-sanft);
+  border: 1px solid var(--bcw-akzent-linie);
+  display: grid;
+  place-items: center;
+  color: var(--bcw-akzent);
+}
+
+.bcw-ablage h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 5px;
+  letter-spacing: -0.01em;
+  color: var(--bcw-tinte);
+}
+
+.bcw-ablage p {
+  margin: 0;
+  color: var(--bcw-tinte-2);
+  font-size: 14px;
+}
+
+.bcw-ablage-link {
+  color: var(--bcw-akzent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.bcw-dateiname {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--bcw-tinte);
+  margin: 0;
+  word-break: break-word;
+}
+
+.bcw-ablage-fuss {
+  margin-top: 17px;
+  padding-top: 15px;
+  border-top: 1px solid var(--bcw-linie);
+  font-size: 12.5px;
+  color: var(--bcw-tinte-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bcw-typ {
+  padding: 2px 7px;
+  border-radius: var(--bcw-r-klein);
+  background: var(--bcw-senke-2);
+  color: var(--bcw-tinte-2);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.bcw-trenner {
+  color: var(--bcw-linie-satt);
+}
+
+/* Fortschrittsbalken beim Hochladen */
+.bcw-balken {
+  width: 100%;
+  max-width: 260px;
+  height: 3px;
+  margin: 16px auto 0;
+  background: var(--bcw-senke-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bcw-balken i {
+  display: block;
+  height: 100%;
+  background: var(--bcw-akzent);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+/* ══════════ NEBENWEGE ══════════ */
+.bcw-nebenwege {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.bcw-nebenweg {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-mittel);
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--bcw-tinte-2);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.bcw-nebenweg:hover {
+  border-color: var(--bcw-akzent-linie);
+  color: var(--bcw-akzent);
+}
+
+.bcw-nebenweg svg {
+  color: var(--bcw-tinte-3);
+  flex-shrink: 0;
+}
+
+.bcw-nebenweg:hover svg {
+  color: var(--bcw-akzent);
+}
+
+/* Der Textweg als Aufklapper: kaum jemand tippt einen Vertrag ab,
+   deshalb einen Klick entfernt statt gleichrangig daneben. */
+.bcw-textweg {
+  margin-top: 10px;
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-mittel);
+  overflow: hidden;
+}
+
+.bcw-textweg > summary {
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 13.5px;
+  color: var(--bcw-tinte-2);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.bcw-textweg > summary::-webkit-details-marker {
+  display: none;
+}
+
+.bcw-textweg > summary:hover {
+  background: var(--bcw-senke);
+}
+
+.bcw-textweg[open] > summary {
+  border-bottom: 1px solid var(--bcw-linie);
+}
+
+.bcw-pfeil {
+  color: var(--bcw-tinte-3);
+  transition: transform 0.18s;
+  flex-shrink: 0;
+}
+
+.bcw-textweg[open] .bcw-pfeil {
+  transform: rotate(90deg);
+}
+
+.bcw-textfeld {
+  padding: 16px;
+}
+
+.bcw-textfeld label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 7px;
+  color: var(--bcw-tinte);
+}
+
+.bcw-textfeld textarea {
+  width: 100%;
+  border: 1px solid var(--bcw-linie-satt);
+  border-radius: var(--bcw-r-mittel);
+  padding: 11px 13px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--bcw-tinte);
+  background: var(--bcw-grund);
+  resize: vertical;
+  outline: 0;
+}
+
+.bcw-textfeld textarea:focus {
+  border-color: var(--bcw-akzent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* ══════════ FAKTENKARTE ══════════
+   Ersetzt den Block mit 150 rohen Zeichen Vertragstext, der wie ein
+   Fehler aussah. */
+.bcw-fakten {
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-gross);
+  overflow: hidden;
+}
+
+.bcw-fakten-kopf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--bcw-linie);
+}
+
+.bcw-fakten-symbol {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--bcw-r-klein);
+  background: var(--bcw-akzent-sanft);
+  border: 1px solid var(--bcw-akzent-linie);
+  color: var(--bcw-akzent);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.bcw-fakten-text {
+  min-width: 0;
+}
+
+.bcw-fakten-titel {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--bcw-tinte);
+}
+
+.bcw-fakten-datei {
+  font-size: 12.5px;
+  color: var(--bcw-tinte-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bcw-ansehen {
+  margin-left: auto;
+  padding: 6px 12px;
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie-satt);
+  border-radius: var(--bcw-r-klein);
+  color: var(--bcw-tinte-2);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.bcw-ansehen:hover {
+  border-color: var(--bcw-akzent-linie);
+  color: var(--bcw-akzent);
+}
+
+.bcw-gitter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.bcw-feld {
+  padding: 13px 18px;
+  border-right: 1px solid var(--bcw-linie);
+}
+
+.bcw-feld:last-child {
+  border-right: 0;
+}
+
+.bcw-feld-name {
+  font-size: 11.5px;
+  color: var(--bcw-tinte-3);
+  letter-spacing: 0.02em;
+  margin-bottom: 3px;
+}
+
+.bcw-feld-wert {
+  font-size: 14.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--bcw-tinte);
+}
+
+.bcw-fakten-fuss {
+  padding: 9px 18px;
+  background: var(--bcw-senke);
+  border-top: 1px solid var(--bcw-linie);
+  font-size: 12px;
+  color: var(--bcw-tinte-3);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.bcw-fakten-fuss svg {
+  flex-shrink: 0;
+}
+
+/* ══════════ EINGABEN ══════════ */
+.bcw-eingabe-block {
+  margin-top: 14px;
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-gross);
+  padding: 18px;
+}
+
+.bcw-paar {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 14px;
+}
+
+.bcw-feldgruppe label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--bcw-tinte);
+}
+
+.bcw-eingabe {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--bcw-linie-satt);
+  border-radius: var(--bcw-r-mittel);
+  background: var(--bcw-grund);
+  overflow: hidden;
+}
+
+.bcw-eingabe:focus-within {
+  border-color: var(--bcw-akzent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.bcw-eingabe input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 14.5px;
+  color: var(--bcw-tinte);
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+.bcw-einheit {
+  padding: 0 12px;
+  color: var(--bcw-tinte-3);
+  font-size: 14px;
+  border-left: 1px solid var(--bcw-linie);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.bcw-hilfe {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--bcw-tinte-3);
+}
+
+/* ══════════ KNOEPFE ══════════ */
+.bcw-knopfreihe {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.bcw-knopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--bcw-r-mittel);
+  background: var(--bcw-akzent);
+  color: #fff;
+  border: 1px solid var(--bcw-akzent);
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bcw-knopf:hover:not(:disabled) {
+  background: var(--bcw-akzent-dunkel);
+  border-color: var(--bcw-akzent-dunkel);
+}
+
+.bcw-knopf:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bcw-knopf.still {
+  background: var(--bcw-grund);
+  color: var(--bcw-tinte-2);
+  border-color: var(--bcw-linie-satt);
+}
+
+.bcw-knopf.still:hover:not(:disabled) {
+  background: var(--bcw-senke);
+  color: var(--bcw-tinte);
+}
+
+.bcw-schieb {
+  margin-left: auto;
+}
+
+.bcw-kreisel {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: bcw-dreh 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes bcw-dreh {
+  to { transform: rotate(360deg); }
+}
+
+/* ══════════ LADEZUSTAND ══════════
+   Der alte Ladekreis sass oben statt mittig, weil der Kasten per
+   Flexbox zentrierte, aber keine eigene Hoehe hatte. Er war damit
+   genau so hoch wie sein Inhalt, und mittig heisst dann oben. */
+.bcw-laden {
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-gross);
+  text-align: center;
+  padding: 32px 24px;
+}
+
+.bcw-kreis {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2.5px solid var(--bcw-linie-satt);
+  border-top-color: var(--bcw-akzent);
+  animation: bcw-dreh 0.9s linear infinite;
+  margin-bottom: 18px;
+}
+
+.bcw-laden h3 {
+  margin: 0 0 5px;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--bcw-tinte);
+}
+
+.bcw-laden p {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  color: var(--bcw-tinte-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bcw-kreis,
+  .bcw-kreisel {
+    animation: none;
+  }
+}
+
+/* ══════════ FUSSLEISTE DER ERGEBNISSE ══════════
+   Die Knoepfe standen frei im Nichts. Jetzt haengen sie an einem Satz,
+   der sagt, wofuer sie da sind. */
+.bcw-ergebnis-fuss {
+  margin-top: 20px;
+  padding: 14px 18px;
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-gross);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bcw-fuss-text {
+  font-size: 13.5px;
+  color: var(--bcw-tinte-2);
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ══════════ MERKLISTE ══════════
+   Stand ohne Zaesur unter dem Ergebnis und wirkte dadurch verloren.
+   Jetzt ein eigener Bereich mit eigener Ueberschrift. */
+.bcw-merkliste {
+  max-width: 1180px;
+  margin: 44px auto 0;
+}
+
+.bcw-merk-kopf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--bcw-linie-satt);
+}
+
+.bcw-merk-kopf h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--bcw-tinte);
+}
+
+.bcw-merk-kopf p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--bcw-tinte-3);
+}
+
+.bcw-merk-anzahl {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bcw-senke-2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bcw-tinte-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ══════════ FEHLERMELDUNG ══════════ */
+.bcw-fehler {
+  max-width: 1180px;
+  margin: 14px auto 0;
+  padding: 12px 16px;
+  background: #fef4f4;
+  border: 1px solid #f6d5d5;
+  border-radius: var(--bcw-r-mittel);
+  color: #a72929;
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bcw-fehler svg {
+  flex-shrink: 0;
+}
+
+.bcw-fehler-knopf {
+  margin-left: auto;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid #f0c4c4;
+  border-radius: var(--bcw-r-klein);
+  color: #a72929;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.bcw-fehler-knopf:hover:not(:disabled) {
+  background: #fdeaea;
+}
+
+/* ══════════ SCHWEBENDER KNOPF ══════════ */
+.bcw-fab {
+  position: fixed;
+  bottom: 26px;
+  right: 26px;
+  width: 50px;
+  height: 50px;
+  border-radius: var(--bcw-r-gross);
+  background: var(--bcw-akzent);
+  border: none;
+  box-shadow: 0 6px 16px -4px rgba(37, 99, 235, 0.4);
+  cursor: pointer;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: background 0.15s, transform 0.2s;
+}
+
+.bcw-fab:hover {
+  background: var(--bcw-akzent-dunkel);
+  transform: translateY(-2px);
+}
+
+.bcw-fab-zahl {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--bcw-akzent);
+  border: 1px solid var(--bcw-akzent-linie);
+  font-size: 11px;
+  font-weight: 600;
+  display: grid;
+  place-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ══════════ HANDY ══════════ */
+@media (max-width: 860px) {
+  .bcw-seite {
+    padding: 16px 12px 56px;
+  }
+
+  .bcw-kopf {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .bcw-schritte {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  /* Auf schmalen Schirmen tragen die Zahlen die Orientierung,
+     die Woerter passen nicht mehr daneben. */
+  .bcw-schritt-wort {
+    display: none;
+  }
+
+  .bcw-schritt-strich {
+    flex: 1;
+    width: auto;
+  }
+
+  .bcw-buehne {
+    padding: 20px 14px 24px;
+  }
+
+  .bcw-ablage {
+    padding: 30px 18px;
+  }
+
+  .bcw-gitter {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .bcw-feld:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .bcw-feld:not(:nth-last-child(-n+2)) {
+    border-bottom: 1px solid var(--bcw-linie);
+  }
+
+  .bcw-paar {
+    grid-template-columns: 1fr;
+  }
+
+  .bcw-knopfreihe .bcw-knopf {
+    flex: 1;
+  }
+
+  .bcw-schieb {
+    margin-left: 0;
+  }
+
+  .bcw-fab {
+    bottom: 18px;
+    right: 18px;
+  }
+}

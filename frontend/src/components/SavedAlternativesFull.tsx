@@ -157,6 +157,19 @@ const SavedAlternativesFull: React.FC = () => {
   // Get unique contract types for filter
   const contractTypes = Array.from(new Set(alternatives.map(alt => alt.contractType)));
 
+  /* 04.09.2026: nach Vertragsart gruppieren statt einer Datumswurst.
+     Die bestehende Sortierung bleibt erhalten und wirkt innerhalb der
+     Gruppen, weil filteredAlternatives bereits sortiert hereinkommt und
+     reduce die Reihenfolge nicht antastet. */
+  const gruppen = filteredAlternatives.reduce((acc, alt) => {
+    const art = alt.contractType || 'Ohne Kategorie';
+    if (!acc[art]) acc[art] = [];
+    acc[art].push(alt);
+    return acc;
+  }, {} as Record<string, SavedAlternative[]>);
+
+  const gruppenNamen = Object.keys(gruppen).sort((a, b) => a.localeCompare(b, 'de'));
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'saved': return '#6b7280';
@@ -234,8 +247,19 @@ const SavedAlternativesFull: React.FC = () => {
             </div>
           </div>
 
+          {gruppenNamen.map((art) => (
+            <div key={art} className="merk-gruppe">
+              <div className="merk-gruppe-kopf">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <path d="M14 2v6h6"/>
+                </svg>
+                <span className="merk-gruppe-name">{art}</span>
+                <span className="merk-gruppe-zahl">{gruppen[art].length}</span>
+              </div>
+
           <div className="full-alternatives-grid">
-            {filteredAlternatives.map((alternative) => (
+            {gruppen[art].map((alternative) => (
               <div key={alternative._id} className="full-alternative-card">
                 <div className="full-card-header">
                   <h3 className="full-alternative-title">{alternative.title}</h3>
@@ -309,6 +333,8 @@ const SavedAlternativesFull: React.FC = () => {
               </div>
             ))}
           </div>
+            </div>
+          ))}
         </>
       )}
     </div>

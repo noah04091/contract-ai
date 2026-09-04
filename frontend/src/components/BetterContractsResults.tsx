@@ -1057,77 +1057,94 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
         </>
       )}
 
-      {/* AI Analysis Section */}
+      {/* ══════════════════════════════════════════════════════════════
+          Diese beiden Hinweise erklaeren dem Nutzer, warum das Ergebnis so
+          aussieht, wie es aussieht. Sie standen frueher unter "ferner
+          liefen" zwischen Suchanfrage und Cache-Vermerk. Sie gehoeren
+          direkt an die Liste, auf die sie sich beziehen.
+          ══════════════════════════════════════════════════════════════ */}
+      {sucheGestoert ? (
+        <div className="ergebnis-hinweis ergebnis-hinweis-stoerung">
+          <div className="hinweis-marke">Hinweis zur Suche</div>
+          <p>
+            {stoerungsgrund === 'keine-treffer-zu-den-suchanfragen'
+              ? 'Die Websuche lief, hat zu diesem Vertrag aber keine passenden Anbieterseiten gefunden. Die gezeigten Anbieter stammen deshalb aus dem Wissen der KI und wurden nicht über eine Suche bestätigt. Eine eigene Suchanfrage führt hier oft schneller zum Ziel.'
+              : 'Die Anbietersuche im Web war bei diesem Durchlauf nicht erreichbar. Die gezeigten Anbieter stammen deshalb ausschließlich aus dem Wissen der KI und wurden nicht über eine Suche bestätigt. Ein erneuter Versuch später kann mehr Ergebnisse liefern.'}
+          </p>
+        </div>
+      ) : enhancedAlternatives.every(a => !a.monthlyPrice && (!a.prices || a.prices.length === 0)) && alternatives.length > 0 && (
+        <div className="ergebnis-hinweis">
+          <div className="hinweis-marke">Warum keine Preise?</div>
+          <p>
+            {isB2B
+              ? 'Bei Geschäfts- und Dienstleistungsverträgen nennen Anbieter ihre Preise fast nie öffentlich, sie kalkulieren pro Kunde. Frag die Anbieter direkt an und vergleiche die Angebote mit deinem aktuellen Vertrag.'
+              : 'Dein Preis hängt von deinen eigenen Angaben ab. Anbieterseiten zeigen deshalb meist nur Startpreise. Verlässliche Zahlen bekommst du erst im Tarifrechner, wenn deine Daten eingetragen sind.'}
+          </p>
+        </div>
+      )}
+
+      {/* Die Empfehlung war eine weitere Karte in einer Reihe gleicher
+          Karten und ging darin unter. Sie bekommt jetzt eine eigene
+          Flaeche, weil sie das Ergebnis der ganzen Suche ist. */}
       <div className="analysis-section">
         <div className="analysis-header">
           <div className="analysis-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
             </svg>
           </div>
-          <h3>KI-Analyse & Empfehlung</h3>
+          <h3>Empfehlung</h3>
         </div>
-        
+
         <div className="analysis-content">
           {formatAnalysis(analysis)}
         </div>
       </div>
 
-      {/* Meta Information */}
-      <div className="results-meta">
-        <div className="meta-item">
-          <span className="meta-label">Suchanfrage:</span>
-          <span className="meta-value">"{searchQuery}"</span>
+      {/* Wie gesucht wurde, ist Diagnose. Auffindbar fuer den, der es
+          wissen will, aber nicht im selben Rang wie das Ergebnis. */}
+      <details className="such-diagnose">
+        <summary>
+          <svg className="diagnose-pfeil" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+          Wie wurde gesucht?
+        </summary>
+        <div className="diagnose-inhalt">
+          <div className="diagnose-zeile">
+            <span className="diagnose-name">Suchanfrage</span>
+            <span className="diagnose-wert"><code>{searchQuery}</code></span>
+          </div>
+          {alternatives.length > 0 && (
+            <div className="diagnose-zeile">
+              <span className="diagnose-name">Datenqualität</span>
+              <span className="diagnose-wert">
+                {enhancedAlternatives.filter(a => a.hasDetailedData).length} von {alternatives.length} Treffern mit Preisangabe im Text
+              </span>
+            </div>
+          )}
+          {contractType && (
+            <div className="diagnose-zeile">
+              <span className="diagnose-name">Erkannte Vertragsart</span>
+              <span className="diagnose-wert">{contractType}</span>
+            </div>
+          )}
+          {partnerOffers && partnerOffers.length > 0 && (
+            <div className="diagnose-zeile">
+              <span className="diagnose-name">Vergleichsportale</span>
+              <span className="diagnose-wert">
+                {partnerOffers.length} Portal{partnerOffers.length > 1 ? 'e' : ''} mit Rechner verfügbar
+              </span>
+            </div>
+          )}
+          {fromCache && (
+            <div className="diagnose-zeile">
+              <span className="diagnose-name">Herkunft</span>
+              <span className="diagnose-wert">Ergebnis aus dem Zwischenspeicher, kein neuer Suchlauf</span>
+            </div>
+          )}
         </div>
-        {alternatives.length > 0 && (
-          <div className="meta-item">
-            <span className="meta-label">Datenqualität:</span>
-            <span className="meta-value">
-              {enhancedAlternatives.filter(a => a.hasDetailedData).length} von {alternatives.length} mit Details
-            </span>
-          </div>
-        )}
-
-        {/* Wenn zu keinem Treffer ein Preis gefunden wurde, sagen wir warum.
-            Vorher stand die Liste einfach ohne Preise da und wirkte defekt,
-            obwohl es der Normalfall ist: bei Geschäfts- und Dienstleistungs-
-            verträgen wird individuell kalkuliert, im Privatbereich hängt der
-            Preis an den eigenen Angaben und wird erst im Rechner ermittelt. */}
-        {sucheGestoert ? (
-          <div className="meta-item meta-item-hinweis meta-item-stoerung">
-            <span className="meta-label">Hinweis zur Suche</span>
-            <span className="meta-value">
-              {stoerungsgrund === 'keine-treffer-zu-den-suchanfragen'
-                ? 'Die Websuche lief, hat zu diesem Vertrag aber keine passenden Anbieterseiten gefunden. Die unten gezeigten Anbieter stammen deshalb aus dem Wissen der KI und wurden nicht über eine Suche bestätigt. Eine eigene Suchanfrage im Feld oben führt hier oft schneller zum Ziel.'
-                : 'Die Anbietersuche im Web war bei diesem Durchlauf nicht erreichbar. Die unten gezeigten Anbieter stammen deshalb ausschließlich aus dem Wissen der KI und wurden nicht über eine Suche bestätigt. Ein erneuter Versuch später kann mehr Ergebnisse liefern.'}
-            </span>
-          </div>
-        ) : enhancedAlternatives.every(a => !a.monthlyPrice && (!a.prices || a.prices.length === 0)) && (
-          <div className="meta-item meta-item-hinweis">
-            <span className="meta-label">Warum keine Preise?</span>
-            <span className="meta-value">
-              {isB2B
-                ? 'Bei Geschäfts- und Dienstleistungsverträgen nennen Anbieter ihre Preise fast nie öffentlich, sie kalkulieren pro Kunde. Frag die Anbieter direkt an und vergleiche die Angebote mit deinem aktuellen Vertrag.'
-                : 'Dein Preis hängt von deinen eigenen Angaben ab. Anbieterseiten zeigen deshalb meist nur Startpreise. Verlässliche Zahlen bekommst du erst im Tarifrechner, wenn deine Daten eingetragen sind.'}
-            </span>
-          </div>
-        )}
-        {/* 🆕 Partner Info */}
-        {partnerOffers && partnerOffers.length > 0 && (
-          <div className="meta-item">
-            <span className="meta-label">Partner-Angebote:</span>
-            <span className="meta-value">
-              {partnerOffers.length} Vergleichsportal{partnerOffers.length > 1 ? 'e' : ''} verfügbar
-            </span>
-          </div>
-        )}
-        {fromCache && (
-          <div className="meta-item">
-            <span className="meta-label">Cache:</span>
-            <span className="meta-value">Ergebnis aus Cache geladen</span>
-          </div>
-        )}
-      </div>
+      </details>
 
       {/* 🆕 Partner Widget Modal */}
       {selectedWidget && (
