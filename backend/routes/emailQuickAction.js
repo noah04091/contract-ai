@@ -31,9 +31,25 @@
 
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const { ObjectId } = require("mongodb");
 const { isQuickActionPayload } = require("../utils/tokenShape");
 const { escapeHtml } = require("../utils/escapeHtml");
+
+// Echtes Contract-AI-Logo, EINGEBETTET als Data-URI (Noahs Auflage 03.09.:
+// "wir haben doch ein Logo"). Quelle: backend/assets/logo-mail.png (280px-Retina-
+// Ableitung von frontend/public/logo.png via sharp, 10 KB). Eingebettet statt
+// verlinkt, damit die Seite weiterhin NULL externe Requests macht (Token in der
+// URL). Einmal beim Modulladen gelesen; fehlt die Datei, fällt der Kopf auf die
+// Text-Wortmarke zurück statt zu crashen.
+let LOGO_DATA_URI = null;
+try {
+  const png = fs.readFileSync(path.join(__dirname, "..", "assets", "logo-mail.png"));
+  LOGO_DATA_URI = `data:image/png;base64,${png.toString("base64")}`;
+} catch (e) {
+  console.warn("⚠️ emailQuickAction: logo-mail.png nicht gefunden, nutze Text-Wortmarke");
+}
 
 const BACKEND_URL = process.env.BACKEND_URL || "https://api.contract-ai.de";
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://www.contract-ai.de";
@@ -70,30 +86,39 @@ function sende(res, status, titel, inhaltHtml) {
 <html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(titel)} · Contract AI</title>
 <style>
   * { box-sizing: border-box; }
-  body { margin:0; background:linear-gradient(180deg,#eef4ff 0%,#f6f8fc 240px,#f6f8fc 100%); font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#0f172a; -webkit-font-smoothing:antialiased; }
-  .huelle { max-width:460px; margin:0 auto; padding:44px 20px 32px; }
-  .logo { display:flex; align-items:center; justify-content:center; gap:7px; margin-bottom:22px; user-select:none; }
-  .logo .wort { font-weight:800; font-size:19px; letter-spacing:1.5px; color:#0f172a; }
-  .logo .ai { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; font-weight:800; font-size:12.5px; letter-spacing:.3px; box-shadow:0 3px 10px rgba(37,99,235,.35); }
-  .karte { background:#ffffff; border:1px solid #e6eaf2; border-radius:18px; padding:30px 26px; box-shadow:0 10px 34px rgba(15,23,42,.08); }
-  .ikon { width:56px; height:56px; border-radius:16px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; }
+  html, body { min-height: 100%; }
+  /* Ruhige Grundfläche + weicher Licht-Schein oben, no-repeat — der alte
+     lineare Verlauf wiederholte sich unterhalb kurzer Inhalte als harte Kante. */
+  body { margin:0; background: radial-gradient(120% 260px at 50% -40px, #e3edff 0%, rgba(227,237,255,0) 100%) no-repeat, #f6f8fc; font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; color:#0f172a; -webkit-font-smoothing:antialiased; }
+  .huelle { max-width:430px; margin:0 auto; padding:44px 20px 36px; }
+  .logo { display:flex; justify-content:center; margin-bottom:26px; user-select:none; }
+  .logo img { height:34px; width:auto; display:block; }
+  .logo .wort { font-weight:800; font-size:19px; letter-spacing:1.5px; }
+  .logo .ai { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:50%; background:linear-gradient(135deg,#3b82f6,#1d4ed8); color:#fff; font-weight:800; font-size:12.5px; margin-left:7px; }
+  .karte { background:#ffffff; border:1px solid #e6eaf2; border-radius:20px; padding:32px 26px 28px; box-shadow:0 1px 2px rgba(15,23,42,.04), 0 12px 32px rgba(15,23,42,.07); }
+  .ikon { width:54px; height:54px; border-radius:16px; margin:0 auto 16px; display:flex; align-items:center; justify-content:center; }
   .ikon.blau { background:#eff6ff; } .ikon.gruen { background:#ecfdf5; } .ikon.grau { background:#f1f5f9; }
-  h1 { margin:0 0 10px; font-size:20px; text-align:center; letter-spacing:-.2px; }
-  .text { margin:0; font-size:15px; line-height:1.6; color:#475569; text-align:center; }
-  .termin { margin:18px 0 0; background:#f8fafc; border:1px solid #e8edf4; border-radius:12px; padding:13px 15px; display:flex; gap:11px; align-items:flex-start; text-align:left; }
-  .termin .t-titel { font-weight:600; font-size:14.5px; color:#0f172a; line-height:1.4; overflow-wrap:anywhere; }
-  .termin .t-datum { font-size:13px; color:#64748b; margin-top:2px; }
-  .knopf { display:block; width:100%; margin-top:20px; background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff; border:none; font-weight:600; font-size:15.5px; font-family:inherit; padding:14px 20px; border-radius:11px; cursor:pointer; text-align:center; text-decoration:none; box-shadow:0 4px 14px rgba(37,99,235,.30); }
-  .knopf:hover { filter:brightness(1.05); }
-  .zweitlink { display:block; margin-top:14px; text-align:center; color:#64748b; font-size:13.5px; text-decoration:none; }
-  .fuss { text-align:center; font-size:12.5px; color:#94a3b8; margin-top:20px; line-height:1.5; }
+  h1 { margin:0 0 8px; font-size:21px; font-weight:700; text-align:center; letter-spacing:-.3px; line-height:1.3; }
+  .text { margin:0 auto; max-width:34ch; font-size:14.5px; line-height:1.6; color:#5b6472; text-align:center; text-wrap:balance; }
+  .termin { margin:20px 0 0; background:#f8fafc; border:1px solid #e8edf4; border-radius:13px; padding:13px 15px; display:flex; gap:11px; align-items:flex-start; text-align:left; }
+  .termin .t-titel { font-weight:600; font-size:14px; color:#0f172a; line-height:1.45; overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .termin .t-zeile { font-size:12.5px; color:#64748b; margin-top:3px; }
+  .termin .t-zeile strong { color:#334155; font-weight:600; }
+  .knopf { display:block; width:100%; margin-top:22px; background:linear-gradient(135deg,#3b82f6,#2563eb); color:#fff; border:none; font-weight:600; font-size:15.5px; font-family:inherit; padding:14px 20px; border-radius:12px; cursor:pointer; text-align:center; text-decoration:none; box-shadow:0 4px 14px rgba(37,99,235,.28); transition:transform .12s ease, box-shadow .12s ease; }
+  .knopf:hover { box-shadow:0 6px 18px rgba(37,99,235,.36); }
+  .knopf:active { transform:scale(.985); }
+  .zweitlink { display:block; margin-top:15px; text-align:center; color:#64748b; font-size:13.5px; text-decoration:none; padding:6px; }
+  .fuss { text-align:center; font-size:12.5px; color:#94a3b8; margin-top:22px; line-height:1.6; }
   .fuss a { color:#3b82f6; text-decoration:none; }
+  @media (max-width: 360px) { .huelle { padding:32px 14px 28px; } .karte { padding:26px 18px 24px; } }
 </style></head>
 <body>
   <div class="huelle">
-    <div class="logo"><span class="wort">CONTRACT</span><span class="ai">AI</span></div>
+    <div class="logo">${LOGO_DATA_URI
+      ? `<img src="${LOGO_DATA_URI}" alt="Contract AI">`
+      : `<span class="wort">CONTRACT</span><span class="ai">AI</span>`}</div>
     <div class="karte">${inhaltHtml}</div>
-    <p class="fuss">Du kannst alle Erinnerungen jederzeit in deinem <a href="${FRONTEND_URL}/calendar">Kalender</a> verwalten.<br>Contract AI · Dein Vertrags-Assistent</p>
+    <p class="fuss">Alle Erinnerungen verwaltest du jederzeit in deinem <a href="${FRONTEND_URL}/calendar">Kalender</a>.</p>
   </div>
 </body></html>`);
 }
@@ -107,10 +132,13 @@ const ICONS = {
   kalender: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
 };
 
-function terminBox(event) {
+function terminBox(event, zusatzZeileHtml) {
   const titel = escapeHtml(event.title || "Termin");
   const datum = escapeHtml(fmt(event.date));
-  return `<div class="termin">${ICONS.kalender}<div><div class="t-titel">${titel}</div>${datum ? `<div class="t-datum">Termin am ${datum}</div>` : ""}</div></div>`;
+  const zeile = zusatzZeileHtml !== undefined
+    ? zusatzZeileHtml
+    : (datum ? `Termin am <strong>${datum}</strong>` : "");
+  return `<div class="termin">${ICONS.kalender}<div style="min-width:0;"><div class="t-titel">${titel}</div>${zeile ? `<div class="t-zeile">${zeile}</div>` : ""}</div></div>`;
 }
 
 function fehlerSeite(res, status, ueberschrift, text, ikon = "info") {
@@ -184,14 +212,15 @@ async function renderMailActionPage(req, res) {
       return fehlerSeite(res, 200, "Erinnerung ist ausgeschaltet", "Diese Erinnerung wurde ausgeschaltet und wird nicht verschoben. Wenn du sie wieder brauchst, aktiviere sie im Kalender.");
     }
 
+    const h1 = action === "snooze" ? `In ${days} Tagen erneut erinnern?` : "Erinnerung ausschalten?";
     const frage = action === "snooze"
-      ? `Möchtest du in <strong>${days} Tagen</strong> erneut an diesen Termin erinnert werden?`
-      : `Möchtest du diese Erinnerung ausschalten? Du bekommst dazu dann keine E-Mails mehr.`;
-    const knopf = action === "snooze" ? `Ja, in ${days} Tagen erinnern` : "Ja, Erinnerung ausschalten";
+      ? `Wir melden uns dann noch einmal per E-Mail, damit du nichts verpasst.`
+      : `Du bekommst zu diesem Termin dann keine E-Mails mehr.`;
+    const knopf = action === "snooze" ? `Ja, in ${days} Tagen erinnern` : "Ja, ausschalten";
 
     sende(res, 200, action === "snooze" ? "Später erinnern" : "Erinnerung ausschalten", `
       <div class="ikon ${action === "snooze" ? "blau" : "grau"}">${action === "snooze" ? ICONS.glocke : ICONS.glockeAus}</div>
-      <h1>${action === "snooze" ? "Später erinnern?" : "Erinnerung ausschalten?"}</h1>
+      <h1>${h1}</h1>
       <p class="text">${frage}</p>
       ${terminBox(event)}
       <form method="POST" action="${BACKEND_URL}/api/calendar/quick-action/confirm" style="margin:0;">
@@ -224,17 +253,28 @@ async function executeMailAction(req, res) {
       return fehlerSeite(res, 200, "Erinnerung ist ausgeschaltet", "Diese Erinnerung wurde ausgeschaltet und wird nicht verschoben. Wenn du sie wieder brauchst, aktiviere sie im Kalender.");
     }
 
-    let ergebnisText;
+    // Kurze Kernaussage in den Text, Details in die Termin-Karte — der alte
+    // durchgereichte Langsatz wirkte gequetscht (Noahs Feedback 03.09.).
+    let h1, textZeile, kartenZeile;
     if (action === "snooze") {
       const { applySnooze } = require("../services/calendarSnooze");
       const snoozeResult = await applySnooze(req.db, event, days);
-      ergebnisText = snoozeResult.message;
+      if (snoozeResult.limitReached) {
+        return fehlerSeite(res, 200, "Genug Zusatz-Erinnerungen", "Für diesen Termin sind schon fünf Zusatz-Erinnerungen aktiv. Verwalte sie im Kalender, bevor du neue anlegst.");
+      }
+      h1 = "Erledigt!";
+      textZeile = `Wir erinnern dich am <strong>${escapeHtml(fmt(snoozeResult.newDate))}</strong> erneut per E-Mail.`;
+      kartenZeile = snoozeResult.mode === "extraReminder"
+        ? `Der Termin selbst bleibt am <strong>${escapeHtml(fmt(event.date))}</strong>`
+        : `Neuer Erinnerungs-Tag: <strong>${escapeHtml(fmt(snoozeResult.newDate))}</strong>`;
     } else {
       await req.db.collection("contract_events").updateOne(
         { _id: event._id },
         { $set: { status: "dismissed", dismissedAt: new Date(), updatedAt: new Date() } }
       );
-      ergebnisText = `Die Erinnerung „${event.title || "Termin"}" ist ausgeschaltet. Du bekommst dazu keine E-Mails mehr.`;
+      h1 = "Erinnerung ausgeschaltet";
+      textZeile = `Du bekommst zu diesem Termin keine E-Mails mehr.`;
+      kartenZeile = `War geplant für den <strong>${escapeHtml(fmt(event.date))}</strong>`;
     }
 
     // Schon-erledigt-Merker PRO LINK setzen (Reload/Doppelklick führt nie doppelt aus).
@@ -245,9 +285,9 @@ async function executeMailAction(req, res) {
 
     sende(res, 200, "Erledigt", `
       <div class="ikon gruen">${ICONS.haken}</div>
-      <h1>Erledigt!</h1>
-      <p class="text">${escapeHtml(ergebnisText)}</p>
-      ${terminBox(event)}
+      <h1>${h1}</h1>
+      <p class="text">${textZeile}</p>
+      ${terminBox(event, kartenZeile)}
       <a class="knopf" href="${FRONTEND_URL}/calendar">Zum Kalender</a>`);
   } catch (err) {
     console.error("❌ Mail-Aktion (POST) fehlgeschlagen:", err.message);

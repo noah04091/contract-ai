@@ -89,6 +89,7 @@ describe('GET Bestätigungsseite — schreibt NIE', () => {
     expect(res.headers['Cache-Control']).toBe('no-store');
     expect(res.body).toContain('/api/calendar/quick-action/confirm');
     expect(res.body).toContain('method="POST"');
+    expect(res.body).toContain('erneut erinnern');
     expect(calls.updateOne.length + calls.insertOne.length).toBe(0);
   });
 
@@ -194,6 +195,24 @@ describe('POST /confirm — führt aus, genau einmal pro Link', () => {
     await executeMailAction(mkReq(db, { body: { token: tokenAlt(), action: 'snooze' } }), res);
     expect(calls.updateOne.length).toBe(0);
     expect(res.body).toContain('ausgeschaltet');
+  });
+
+  test('Zusatz-Erinnerungs-Deckel (5 aktiv): ehrliche Hinweis-Seite, kein Insert, kein Merker', async () => {
+    const ev = mkEvent({ type: 'LAST_CANCEL_DAY' }); // nicht shiftable → Zweig B mit Deckel
+    const { db, calls } = mkDb(ev);
+    // findOne Nr. 1 = Event-Load der Route; Nr. 2 = Dedupe-Check in applySnooze → null,
+    // damit der Deckel (countDocuments = 5) überhaupt erreicht wird.
+    let findOneNr = 0;
+    db.collection = ((orig) => (name) => ({
+      ...orig(name),
+      findOne: async () => (++findOneNr === 1 ? ev : null),
+      countDocuments: async () => 5
+    }))(db.collection);
+    const res = mkRes();
+    await executeMailAction(mkReq(db, { body: { token: tokenAlt(), action: 'snooze', days: '7' } }), res);
+    expect(res.body).toContain('Genug Zusatz-Erinnerungen');
+    expect(calls.insertOne.length).toBe(0);
+    expect(calls.updateOne.length).toBe(0); // auch kein Schon-erledigt-Merker: Nutzer darf es im Kalender lösen und der Link bleibt aussagekräftig
   });
 
   test('übergroßer Body: 413, keine Ausführung', async () => {

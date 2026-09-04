@@ -90,6 +90,9 @@ async function applySnooze(db, event, snoozeDaysRaw) {
   if (aktive >= 5) {
     return {
       mode: "extraReminder",
+      // limitReached: NICHTS wurde angelegt — Aufrufer (Mail-Seite) können das
+      // ehrlich anzeigen; message bleibt für App-Toasts abwärtskompatibel.
+      limitReached: true,
       newDate: remindDate,
       message: `Für diesen Termin bestehen bereits ${aktive} Zusatz-Erinnerungen. Verwalte sie im Kalender, bevor du neue anlegst.`
     };
