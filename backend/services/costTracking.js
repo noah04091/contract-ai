@@ -29,6 +29,23 @@ class CostTrackingService {
         input: 0.00015 / 1000, // $0.15 per 1M input tokens
         output: 0.0006 / 1000  // $0.60 per 1M output tokens
       },
+      // 💰 04.09.2026 (Kosten-Akte 8b): date-hunt läuft seit 01.09. auf gpt-4.1-mini.
+      // Ohne diese Einträge fand die Präfix-Suche 'gpt-4' ($30/$60) und verbuchte
+      // jeden Aufruf 65-fach zu teuer — das Dashboard zeigte ~$580/Monat statt ~$9,
+      // der Erfolg der Umstellung wäre unsichtbar geblieben. Die Längen-Sortierung
+      // der Präfix-Logik lässt 'gpt-4.1-mini' korrekt vor 'gpt-4.1' und 'gpt-4' gewinnen.
+      'gpt-4.1': {
+        input: 0.002 / 1000,   // $2.00 per 1M input tokens
+        output: 0.008 / 1000   // $8.00 per 1M output tokens
+      },
+      'gpt-4.1-mini': {
+        input: 0.0004 / 1000,  // $0.40 per 1M input tokens
+        output: 0.0016 / 1000  // $1.60 per 1M output tokens
+      },
+      'gpt-4.1-nano': {
+        input: 0.0001 / 1000,  // $0.10 per 1M input tokens
+        output: 0.0004 / 1000  // $0.40 per 1M output tokens
+      },
       'gpt-4': {
         input: 0.03 / 1000,   // $0.03 per 1K input tokens
         output: 0.06 / 1000   // $0.06 per 1K output tokens
