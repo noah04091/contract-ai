@@ -100,29 +100,47 @@ describe('costTracking — COST_REPORT_VALIDITY_V1', () => {
     }
   });
 
-  test('withPricingCoverage: unknown>0 ⇒ incomplete + sichtbarer Hinweis', () => {
-    const v = CostTrackingService.withPricingCoverage({ unknownPricingRecords: 3 });
-    expect(v.pricingCoverage).toBe('incomplete');
-    expect(v.pricingCoverageHint).toMatch(/3 API-Datensätze.*unvollständig/s);
+  test('withPricingCoverage: nur unknown ⇒ incomplete_unknown + Hinweis', () => {
+    const v = CostTrackingService.withPricingCoverage({ unknownPricingRecords: 3, legacyUnverifiedPricingRecords: 0 });
+    expect(v.pricingCoverage).toBe('incomplete_unknown');
+    expect(v.pricingCoverageHint).toMatch(/3 API-Datensätze/);
   });
 
-  test('withPricingCoverage: unknown=0 ⇒ complete, kein Hinweis', () => {
-    const v = CostTrackingService.withPricingCoverage({ unknownPricingRecords: 0 });
+  test('withPricingCoverage: nur Legacy ⇒ legacy_unverified (fehlender Status ist NICHT known)', () => {
+    const v = CostTrackingService.withPricingCoverage({ unknownPricingRecords: 0, legacyUnverifiedPricingRecords: 7 });
+    expect(v.pricingCoverage).toBe('legacy_unverified');
+    expect(v.pricingCoverageHint).toMatch(/7 Alt-Datensätze/);
+  });
+
+  test('withPricingCoverage: beides ⇒ incomplete_mixed', () => {
+    const v = CostTrackingService.withPricingCoverage({ unknownPricingRecords: 1, legacyUnverifiedPricingRecords: 2 });
+    expect(v.pricingCoverage).toBe('incomplete_mixed');
+  });
+
+  test('withPricingCoverage: complete NUR wenn unknown=0 UND legacy=0', () => {
+    const v = CostTrackingService.withPricingCoverage({ unknownPricingRecords: 0, legacyUnverifiedPricingRecords: 0 });
     expect(v.pricingCoverage).toBe('complete');
     expect(v.pricingCoverageHint).toBeUndefined();
+  });
+
+  test('pricingValidityGroupFields liefert auch die Legacy-Felder', () => {
+    const f = CostTrackingService.pricingValidityGroupFields();
+    for (const k of ['legacyUnverifiedPricingRecords', 'legacyUnverifiedInputTokens', 'legacyUnverifiedOutputTokens']) {
+      expect(f[k]).toBeDefined();
+    }
   });
 
   test('checkDailyBudget reicht Validity-Felder + Coverage durch (Aggregat gemockt)', async () => {
     const svc = new CostTrackingService();
     svc.isInitialized = true;
     svc.db = { collection: () => ({
-      aggregate: () => ({ toArray: async () => [{ totalCost: 1.23, totalCalls: 10, knownPricingRecords: 8, unknownPricingRecords: 2, unknownPricingInputTokens: 5000, unknownPricingOutputTokens: 700 }] })
+      aggregate: () => ({ toArray: async () => [{ totalCost: 1.23, totalCalls: 10, knownPricingRecords: 8, unknownPricingRecords: 2, legacyUnverifiedPricingRecords: 0, unknownPricingInputTokens: 5000, unknownPricingOutputTokens: 700 }] })
     }) };
     const b = await svc.checkDailyBudget();
     expect(b.unknownPricingRecords).toBe(2);
     expect(b.knownPricingRecords).toBe(8);
     expect(b.unknownPricingInputTokens).toBe(5000);
-    expect(b.pricingCoverage).toBe('incomplete');
+    expect(b.pricingCoverage).toBe('incomplete_unknown');
     expect(b.pricingCoverageHint).toBeDefined();
     expect(b.spent).toBe(1.23); // Summe bleibt, wird aber als unvollständig markiert
   });

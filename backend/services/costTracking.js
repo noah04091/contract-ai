@@ -3,6 +3,12 @@
 
 const database = require('../config/database');
 
+// 🕐 Cutover des pricingStatus-Feldes (Deploy 137ecdac, Render live ~11:35Z;
+// konservativ mit Puffer). VOR diesem Zeitpunkt ist fehlender pricingStatus
+// erwarteter Legacy-Zustand; DANACH ist er eine Tracker-Invarianzverletzung
+// (Watchdog Invariante B: COST_PRICING_STATUS_MISSING).
+const PRICING_STATUS_CUTOVER = new Date('2026-09-04T12:00:00Z');
+
 class CostTrackingService {
   constructor() {
     this.db = null;
@@ -73,28 +79,46 @@ class CostTrackingService {
   }
 
   /**
-   * COST_REPORT_VALIDITY_V1 (04.09.2026): Unknown-Pricing-Datensätze tragen
-   * totalCost=0 und dürfen in Summen NIE als "kostenlose Calls" untergehen.
-   * Diese Felder gehören in JEDE $group-Stufe über cost_tracking:
+   * COST_REPORT_VALIDITY_V1 (04.09.2026, gehärtet): DREI Zustände statt
+   * binär — fehlender pricingStatus ist NICHT "known":
+   *   pricingStatus === 'ok'      → KNOWN (verifiziert bepreist)
+   *   pricingStatus === 'unknown' → UNKNOWN (totalCost=0, kein Preis erfunden)
+   *   fehlt/null/unerwartet       → LEGACY_UNVERIFIED (vor dem Cutover normal;
+   *                                 NACH dem Cutover eine Tracker-
+   *                                 Invarianzverletzung → Watchdog Invariante B)
+   * Diese Felder gehören in JEDE $group-Stufe über cost_tracking.
    */
   static pricingValidityGroupFields() {
+    const isKnown = { $eq: ['$pricingStatus', 'ok'] };
     const isUnknown = { $eq: ['$pricingStatus', 'unknown'] };
+    const isLegacy = { $not: [{ $or: [isKnown, isUnknown] }] };
     return {
-      knownPricingRecords: { $sum: { $cond: [isUnknown, 0, 1] } },
+      knownPricingRecords: { $sum: { $cond: [isKnown, 1, 0] } },
       unknownPricingRecords: { $sum: { $cond: [isUnknown, 1, 0] } },
+      legacyUnverifiedPricingRecords: { $sum: { $cond: [isLegacy, 1, 0] } },
       unknownPricingInputTokens: { $sum: { $cond: [isUnknown, { $ifNull: ['$inputTokens', 0] }, 0] } },
-      unknownPricingOutputTokens: { $sum: { $cond: [isUnknown, { $ifNull: ['$outputTokens', 0] }, 0] } }
+      unknownPricingOutputTokens: { $sum: { $cond: [isUnknown, { $ifNull: ['$outputTokens', 0] }, 0] } },
+      legacyUnverifiedInputTokens: { $sum: { $cond: [isLegacy, { $ifNull: ['$inputTokens', 0] }, 0] } },
+      legacyUnverifiedOutputTokens: { $sum: { $cond: [isLegacy, { $ifNull: ['$outputTokens', 0] }, 0] } }
     };
   }
 
   /** Ergänzt ein Aggregat um pricingCoverage + Hinweis. Kein Ersatzpreis. */
   static withPricingCoverage(obj) {
     const unknown = (obj && obj.unknownPricingRecords) || 0;
+    const legacy = (obj && obj.legacyUnverifiedPricingRecords) || 0;
+    const coverage = unknown > 0 && legacy > 0 ? 'incomplete_mixed'
+      : unknown > 0 ? 'incomplete_unknown'
+      : legacy > 0 ? 'legacy_unverified'
+      : 'complete';
+    const hints = [];
+    if (unknown > 0) hints.push(`${unknown} API-Datensätze besitzen keinen hinterlegten Modellpreis.`);
+    if (legacy > 0) hints.push(`${legacy} Alt-Datensätze ohne verifizierten Preis-Status.`);
     return {
       ...obj,
-      pricingCoverage: unknown > 0 ? 'incomplete' : 'complete',
-      ...(unknown > 0 ? {
-        pricingCoverageHint: `${unknown} API-Datensätze besitzen keinen hinterlegten Modellpreis. Die ausgewiesene Kostensumme ist daher unvollständig.`
+      pricingCoverage: coverage,
+      ...(coverage !== 'complete' ? {
+        pricingCoverageHint: `${hints.join(' ')} Die ausgewiesene Kostensumme ist daher unvollständig bzw. nicht voll verifiziert.`
       } : {})
     };
   }
@@ -431,4 +455,4 @@ function getInstance() {
   return instance;
 }
 
-module.exports = { getInstance, CostTrackingService };
+module.exports = { getInstance, CostTrackingService, PRICING_STATUS_CUTOVER };

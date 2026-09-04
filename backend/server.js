@@ -1680,6 +1680,21 @@ const connectDB = async () => {
         }
       })), { timezone: "Europe/Berlin" });
 
+      // 💰 COST_REPORT_VALIDITY_V1 (04.09.2026): täglicher Cost-Pricing-Watchdog.
+      // Invariante A: pricingStatus='unknown' ⇒ COST_PRICING_UNKNOWN:<model>;
+      // Invariante B: fehlender pricingStatus NACH Cutover ⇒ COST_PRICING_STATUS_MISSING.
+      // Read-only; Alarm über errorMonitoring (Spam-Schutz: nur bei Neuzugang im
+      // Lookback-Fenster). Details/Tests: services/costPricingWatchdog.js.
+      cron.schedule("50 9 * * *", withDistributedLock('cost-pricing-watchdog', withCronLock('cost-pricing-watchdog', async () => {
+        try {
+          const { runCostPricingWatchdog } = require("./services/costPricingWatchdog");
+          await withCronLogging('cost-pricing-watchdog', () => runCostPricingWatchdog({ db }));
+        } catch (error) {
+          console.error("❌ Cost-Pricing-Wächter Error:", error);
+          await captureError(error, { route: 'CRON:cost-pricing-watchdog', method: 'SCHEDULED', severity: 'high' });
+        }
+      })), { timezone: "Europe/Berlin" });
+
       // 📧 NEU: E-Mail Queue Retry (alle 15 Minuten)
       cron.schedule("*/15 * * * *", async () => {
         try {
