@@ -543,7 +543,7 @@ const BetterContracts: React.FC = () => {
           Eingaben laufen in einer gefassten Spalte von 760 px. Eine
           Ablageflaeche ueber die volle Fensterbreite wirkt immer leer.
           ══════════════════════════════════════════════════════════════ */}
-      <div className={`bcw-seite ${!isPremium ? 'mit-banner' : ''}`}>
+      <div className={`bcw-seite ${!isPremium ? 'mit-banner' : ''} ${step === 3 && results ? 'ergebnisse' : ''}`}>
 
         <div className="bcw-schirm">
 

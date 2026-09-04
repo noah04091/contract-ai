@@ -65,11 +65,23 @@
 /* Der Rahmen. Eingaben laufen in einer gefassten Spalte, Ergebnisse
    duerfen breiter werden. Eine Ablageflaeche ueber die volle
    Fensterbreite wirkt immer leer, egal wie gut sie gestaltet ist. */
-/* Kein Kasten mehr: kein Rahmen, kein Schatten, keine eigene Flaeche und
-   keine Breitengrenze. Uebrig bleibt ein reines Struktur-Element, damit die
-   Bausteine im Markup unveraendert bleiben konnten. */
+/* Kein Kasten: kein Rahmen, kein Schatten, keine eigene Flaeche. Genau
+   diese vier Dinge machten die Fenster-Optik aus, nicht die Breite.
+   Eine reine Breitengrenze ist unsichtbar und verhindert nur, dass ein
+   Formular ueber die halbe Bildschirmbreite gezogen wird. */
 .bcw-schirm {
   width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* Schritt 3 darf breiter: das Kartenraster nutzt den Platz wirklich,
+   ein Formular nicht. Die Klasse sitzt an der Wurzel, damit die Merkliste
+   dieselbe Kante behaelt und beim Schrittwechsel nichts springt. */
+.bcw-seite.ergebnisse .bcw-schirm,
+.bcw-seite.ergebnisse .bcw-merkliste,
+.bcw-seite.ergebnisse .bcw-fehler {
+  max-width: 1360px;
 }
 
 /* ══════════ KOPFLEISTE ══════════
@@ -175,11 +187,13 @@
 }
 
 /* ══════════ ABLAGEFLAECHE ══════════ */
+/* Hoeher als zuvor: bei 1040 px Breite wirkt eine flache Flaeche wie ein
+   Briefschlitz. Mit mehr Hoehe stimmt das Verhaeltnis wieder. */
 .bcw-ablage {
   background: var(--bcw-grund);
   border: 1px dashed var(--bcw-linie-satt);
   border-radius: var(--bcw-r-gross);
-  padding: 32px 30px;
+  padding: 52px 30px;
   text-align: center;
   transition: border-color 0.18s, background 0.18s;
 }
@@ -236,9 +250,12 @@
   word-break: break-word;
 }
 
+/* Der Trennstrich lief ueber die gesamte Flaechenbreite und zog den Blick
+   in die Breite. Jetzt nur so breit wie noetig, mittig. */
 .bcw-ablage-fuss {
-  margin-top: 17px;
-  padding-top: 15px;
+  max-width: 420px;
+  margin: 20px auto 0;
+  padding-top: 16px;
   border-top: 1px solid var(--bcw-linie);
   font-size: 12.5px;
   color: var(--bcw-tinte-3);
@@ -716,7 +733,8 @@
    Jetzt ein eigener Bereich mit eigener Ueberschrift. */
 .bcw-merkliste {
   width: 100%;
-  margin: 40px 0 0;
+  max-width: 1040px;
+  margin: 40px auto 0;
 }
 
 .bcw-merk-kopf {
@@ -755,7 +773,8 @@
 /* ══════════ FEHLERMELDUNG ══════════ */
 .bcw-fehler {
   width: 100%;
-  margin: 14px 0 0;
+  max-width: 1040px;
+  margin: 14px auto 0;
   padding: 12px 16px;
   background: #fef4f4;
   border: 1px solid #f6d5d5;
