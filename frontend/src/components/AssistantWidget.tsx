@@ -5,7 +5,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import { useAssistantContext } from "../hooks/useAssistantContext";
-import LawyerMascot, { MascotMini } from "./LawyerMascot";
 import styles from "../styles/AssistantWidget.module.css";
 
 interface Message {
@@ -37,6 +36,7 @@ export default function AssistantWidget() {
 
   // Smart visibility states
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [teaserReady, setTeaserReady] = useState(false); // Tipp-Indikator → Text
   const [showTooltip, setShowTooltip] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -45,12 +45,10 @@ export default function AssistantWidget() {
 
   const assistantContext = useAssistantContext();
 
-  // Dismiss onboarding
+  // Dismiss onboarding (Merker sind bereits beim Anzeigen gesetzt)
   const dismissOnboarding = useCallback(() => {
     setShowOnboarding(false);
     setIsMinimized(true);
-    localStorage.setItem('assistantOnboardingSeen', 'true');
-    sessionStorage.setItem('assistantShownThisSession', 'true');
   }, []);
 
   // Dismiss tooltip
@@ -60,20 +58,41 @@ export default function AssistantWidget() {
     sessionStorage.setItem('assistantShownThisSession', 'true');
   }, []);
 
-  // Smart onboarding/tooltip logic - waits for cookie consent to be dismissed first
+  // Smart onboarding/tooltip logic - waits for cookie consent to be dismissed first.
+  // Erstbesuch: Nachrichten-Teaser nach erstem Scroll ODER 6 s, genau einmal pro Besucher.
   useEffect(() => {
+    const timers: number[] = [];
+    let removeScrollListener: (() => void) | null = null;
+
+    const showTeaser = () => {
+      // Merker sofort beim Anzeigen setzen → Teaser erscheint nie ein zweites Mal
+      localStorage.setItem('assistantOnboardingSeen', 'true');
+      sessionStorage.setItem('assistantShownThisSession', 'true');
+      setShowOnboarding(true);
+      // Kurzer Tipp-Indikator, dann Begrüßung + Einstiegsfragen
+      timers.push(window.setTimeout(() => setTeaserReady(true), 1400));
+    };
+
     const triggerOnboarding = () => {
       const onboardingSeen = localStorage.getItem('assistantOnboardingSeen');
       const shownThisSession = sessionStorage.getItem('assistantShownThisSession');
 
       if (!onboardingSeen) {
-        setShowOnboarding(true);
-        const timer = setTimeout(dismissOnboarding, 7000);
-        return () => clearTimeout(timer);
+        const onFirstScroll = () => {
+          removeScrollListener?.();
+          removeScrollListener = null;
+          showTeaser();
+        };
+        window.addEventListener('scroll', onFirstScroll, { once: true, passive: true });
+        removeScrollListener = () => window.removeEventListener('scroll', onFirstScroll);
+        timers.push(window.setTimeout(() => {
+          removeScrollListener?.();
+          removeScrollListener = null;
+          showTeaser();
+        }, 6000));
       } else if (!shownThisSession) {
         setShowTooltip(true);
-        const timer = setTimeout(dismissTooltip, 3000);
-        return () => clearTimeout(timer);
+        timers.push(window.setTimeout(dismissTooltip, 3000));
       } else {
         setIsMinimized(true);
       }
@@ -81,22 +100,27 @@ export default function AssistantWidget() {
 
     // Check if cookie consent already given
     const cookieConsent = localStorage.getItem('cookieConsent');
+    let interval: number | undefined;
     if (cookieConsent) {
       // Cookie consent already accepted → trigger immediately
-      return triggerOnboarding();
+      triggerOnboarding();
+    } else {
+      // Cookie consent not yet given → poll until it appears
+      interval = window.setInterval(() => {
+        if (localStorage.getItem('cookieConsent')) {
+          window.clearInterval(interval);
+          // Small delay so cookie banner animation finishes first
+          timers.push(window.setTimeout(triggerOnboarding, 600));
+        }
+      }, 300);
     }
 
-    // Cookie consent not yet given → poll until it appears
-    const interval = setInterval(() => {
-      if (localStorage.getItem('cookieConsent')) {
-        clearInterval(interval);
-        // Small delay so cookie banner animation finishes first
-        setTimeout(triggerOnboarding, 600);
-      }
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, [dismissOnboarding, dismissTooltip]);
+    return () => {
+      if (interval !== undefined) window.clearInterval(interval);
+      timers.forEach((t) => window.clearTimeout(t));
+      removeScrollListener?.();
+    };
+  }, [dismissTooltip]);
 
   // Listen for changes to bot enabled/disabled setting
   useEffect(() => {
@@ -146,17 +170,16 @@ export default function AssistantWidget() {
   }, [assistantContext.currentContractId]);
 
   // Send message to backend
-  const handleSendMessage = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isLoading) return;
 
     const userMessage: Message = {
       role: "user",
-      content: inputValue.trim(),
+      content: text.trim(),
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInputValue("");
     setIsLoading(true);
 
     console.log('📤 [AssistantWidget] Sende an Backend:', {
@@ -215,6 +238,22 @@ export default function AssistantWidget() {
     }
   };
 
+  // Send from input field
+  const handleSendMessage = () => {
+    const text = inputValue.trim();
+    if (!text) return;
+    setInputValue("");
+    sendMessage(text);
+  };
+
+  // Einstiegsfrage aus dem Teaser: Chat öffnen und Frage direkt abschicken
+  const handleQuickQuestion = (question: string) => {
+    setShowOnboarding(false);
+    setIsMinimized(false);
+    setIsOpen(true);
+    sendMessage(question);
+  };
+
   // Handle Enter key
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -270,69 +309,76 @@ export default function AssistantWidget() {
 
   return (
     <>
-      {/* Mascot Onboarding - pops up from bottom-right */}
+      {/* Message Teaser - Erstbesuch, wie eine echte Nachricht vom Assistenten */}
       <AnimatePresence>
         {showOnboarding && !isOpen && (
           <motion.div
-            className={styles.mascotOverlay}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            className={styles.teaser}
+            role="dialog"
+            aria-label="Nachricht vom Contract AI Assistenten"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           >
-            <motion.div
-              className={styles.mascotContainer}
-              initial={{ y: 80, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 60, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.15 }}
+            <button
+              className={styles.teaserClose}
+              onClick={dismissOnboarding}
+              aria-label="Nachricht schließen"
             >
-              {/* Speech bubble appears from the left */}
+              ✕
+            </button>
+            <div className={styles.teaserHead}>
+              <span className={styles.teaserAvatar}>
+                <svg width="17" height="17" viewBox="0 0 17 17" fill="none">
+                  <path d="M2.5 3.5h12v8h-6.8L4.5 14v-2.5h-2z" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+                  <circle cx="6" cy="7.5" r="0.9" fill="#fff" />
+                  <circle cx="8.5" cy="7.5" r="0.9" fill="#fff" />
+                  <circle cx="11" cy="7.5" r="0.9" fill="#fff" />
+                </svg>
+              </span>
+              <span className={styles.teaserWho}>
+                <span className={styles.teaserName}>Contract AI Assistent</span>
+                <span className={styles.teaserStatus}>
+                  <span className={styles.onlineDot} />
+                  KI-Assistent · Antwortet sofort
+                </span>
+              </span>
+            </div>
+            <div className={styles.teaserMsg}>
+              {teaserReady ? (
+                "Hi! Fragen zu Contract AI? Ich helfe dir sofort weiter."
+              ) : (
+                <span className={styles.teaserTyping}>
+                  <i /><i /><i />
+                </span>
+              )}
+            </div>
+            {teaserReady && (
               <motion.div
-                className={styles.mascotSpeechBubble}
-                initial={{ opacity: 0, x: 20, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ delay: 0.7, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                className={styles.teaserChips}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.35, delay: 0.1 }}
               >
-                <p className={styles.mascotGreeting}>Contract AI</p>
-                <p className={styles.mascotTitle}>Hi! Ich bin dein KI-Assistent.</p>
-                <p className={styles.mascotText}>
-                  Ich helfe dir, Verträge zu analysieren, optimieren und erstellen. Frag mich einfach!
-                </p>
-                <button
-                  className={styles.mascotButton}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    dismissOnboarding();
-                  }}
-                >
-                  Los geht's
-                </button>
-                <div className={styles.speechArrow} />
+                {["Was kann Contract AI?", "Was kostet es?", "Ist das rechtssicher?"].map((q) => (
+                  <button
+                    key={q}
+                    className={styles.teaserChip}
+                    onClick={() => handleQuickQuestion(q)}
+                  >
+                    {q}
+                  </button>
+                ))}
               </motion.div>
-
-              {/* Mascot figure */}
-              <motion.div
-                className={styles.mascotFigure}
-                animate={{
-                  y: [0, -6, 0],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              >
-                <LawyerMascot size={220} />
-              </motion.div>
-            </motion.div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Chat Bubble Button with Tooltip */}
       <AnimatePresence>
-        {!isOpen && !showOnboarding && (
+        {!isOpen && (
           <motion.div
             className={styles.chatBubbleContainer}
             initial={{ scale: 0, opacity: 0 }}
@@ -381,7 +427,19 @@ export default function AssistantWidget() {
               aria-label="Chat öffnen"
             >
               <span className={styles.chatBubbleIcon}>
-                <MascotMini size={isMinimized ? 28 : 36} />
+                <svg
+                  width={isMinimized ? 20 : 24}
+                  height={isMinimized ? 20 : 24}
+                  viewBox="0 0 22 22"
+                  fill="none"
+                >
+                  <path
+                    d="M3 4.5h16v10.5h-9L5.5 18.5v-3.5H3z"
+                    stroke="#fff"
+                    strokeWidth="1.7"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </span>
             </motion.button>
           </motion.div>

@@ -45,120 +45,162 @@
 }
 
 /* ============================================ */
-/* MASCOT ONBOARDING (first login ever) */
+/* MESSAGE TEASER (Erstbesuch, einmalig) */
+/* Wie eine echte Nachricht vom Assistenten */
 /* ============================================ */
 
-.mascotOverlay {
+.teaser {
   position: fixed;
-  inset: 0;
+  bottom: 168px; /* über dem Chat-Knopf (bottom: 96px + 60px + Abstand) */
+  right: 24px;
+  width: 320px;
+  background: #ffffff;
+  border: 1px solid #e3e9f1;
+  border-radius: 14px;
+  box-shadow: 0 16px 44px rgba(15, 23, 42, 0.12),
+              0 3px 10px rgba(15, 23, 42, 0.05);
+  padding: 14px 16px;
   z-index: 10001;
-  background: transparent;
-  pointer-events: none;  /* Klicks gehen durch zum Hintergrund */
 }
 
-.mascotContainer {
-  position: fixed;
-  bottom: 32px;
-  right: 32px;
-  z-index: 10002;
-  display: flex;
-  align-items: flex-end;
-  gap: 0;
-  pointer-events: auto;  /* Maskottchen bleibt klickbar */
-}
-
-.mascotFigure {
-  position: relative;
-  flex-shrink: 0;
-  margin-bottom: -10px;
-  filter: drop-shadow(0 8px 24px rgba(59, 130, 246, 0.15));
-}
-
-.mascotSpeechBubble {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-radius: 20px;
-  padding: 28px 28px;
-  width: 300px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12),
-              0 8px 24px rgba(0, 0, 0, 0.08),
-              0 0 0 1px rgba(59, 130, 246, 0.06);
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  position: relative;
-  margin-bottom: 40px;
-  margin-right: 8px;
-  animation: bubbleGlow 3s ease-in-out infinite;
-}
-
-@keyframes bubbleGlow {
-  0%, 100% { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(59, 130, 246, 0.06); }
-  50% { box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.08), 0 0 20px rgba(59, 130, 246, 0.08); }
-}
-
-.speechArrow {
+.teaserClose {
   position: absolute;
-  right: -8px;
-  bottom: 50px;
-  width: 16px;
-  height: 16px;
-  background: #f8fafc;
-  border-right: 1px solid rgba(226, 232, 240, 0.8);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  transform: rotate(-45deg);
-}
-
-.mascotGreeting {
-  margin: 0 0 8px 0;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.mascotTitle {
-  margin: 0 0 12px 0;
-  font-size: 19px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.3;
-  letter-spacing: -0.02em;
-}
-
-.mascotText {
-  margin: 0 0 22px 0;
-  font-size: 13.5px;
-  line-height: 1.7;
-  color: #64748b;
-}
-
-.mascotButton {
-  display: block;
-  width: 100%;
-  padding: 13px 0;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  color: #ffffff;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   border: none;
-  border-radius: 12px;
+  background: transparent;
+  color: #9aa8b8;
   font-size: 13px;
-  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
 }
 
-.mascotButton:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-  transform: translateY(-1px);
+.teaser:hover .teaserClose,
+.teaserClose:focus-visible {
+  opacity: 1;
 }
 
-.mascotButton:active {
-  transform: scale(0.98) translateY(0);
+.teaserClose:hover {
+  background: #eef2f7;
+  color: #0f172a;
+}
+
+.teaserHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.teaserAvatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.teaserWho {
+  display: flex;
+  flex-direction: column;
+}
+
+.teaserName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.teaserStatus {
+  font-size: 11.5px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.onlineDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: inline-block;
+}
+
+.teaserMsg {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #26313f;
+  background: #f3f6fa;
+  border-radius: 4px 12px 12px 12px;
+  padding: 10px 12px;
+  min-height: 41px;
+}
+
+.teaserTyping {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  height: 17px;
+}
+
+.teaserTyping i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #9db4d4;
+  animation: teaserTypingBounce 1.1s infinite ease-in-out;
+}
+
+.teaserTyping i:nth-child(2) { animation-delay: 0.15s; }
+.teaserTyping i:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes teaserTypingBounce {
+  0%, 70%, 100% { transform: translateY(0); opacity: 0.5; }
+  35% { transform: translateY(-3px); opacity: 1; }
+}
+
+.teaserChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 11px;
+}
+
+.teaserChip {
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #2563eb;
+  background: #ffffff;
+  border: 1px solid #c9dbf8;
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.teaserChip:hover {
+  background: #eff5fe;
+  border-color: #2563eb;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teaserTyping i {
+    animation: none;
+  }
 }
 
 /* ============================================ */
@@ -249,10 +291,10 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #ffffff 0%, #e8eef5 100%);
-  border: 2px solid rgba(59, 130, 246, 0.2);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2),
-              0 8px 40px rgba(30, 64, 175, 0.1);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  border: none;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.32),
+              0 2px 6px rgba(37, 99, 235, 0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -263,24 +305,22 @@
 }
 
 .chatBubble:hover {
-  box-shadow: 0 6px 30px rgba(59, 130, 246, 0.35),
-              0 12px 60px rgba(30, 64, 175, 0.2);
-  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.42),
+              0 3px 8px rgba(37, 99, 235, 0.25);
 }
 
 /* Minimized state: smaller, semi-transparent */
 .chatBubble.minimized {
   width: 48px;
   height: 48px;
-  opacity: 0.7;
-  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.15);
+  opacity: 0.75;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
 }
 
 .chatBubble.minimized:hover {
   opacity: 1;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3),
-              0 8px 40px rgba(30, 64, 175, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.32),
+              0 2px 6px rgba(37, 99, 235, 0.2);
 }
 
 .chatBubbleIcon {
@@ -640,8 +680,7 @@
   .chatBubbleContainer,
   .chatBubble,
   .chatWindow,
-  .mascotOverlay,
-  .mascotContainer {
+  .teaser {
     display: none !important;
   }
 }
