@@ -44,3 +44,48 @@ describe('costTracking — gpt-4.1-Familie (Kosten-Akte 8b)', () => {
     expect(inserts[0].totalCost).toBeCloseTo(0.03, 5);
   });
 });
+
+// ── 04.09.2026 (Noahs Auflage): Resolver-Fehlerklasse — kein stiller Fallback ──
+describe('costTracking — robuster Preis-Resolver (kein gpt-4-Fallback)', () => {
+  test('exakte Matches für die gesamte genutzte Modellpalette', () => {
+    const { svc } = mkService();
+    for (const m of ['gpt-4.1-mini', 'gpt-4', 'gpt-4-turbo', 'gpt-5.4', 'gpt-5.4-mini']) {
+      const r = svc.resolveModelPricing(m);
+      expect(r).not.toBeNull();
+      expect(r.key).toBe(m);
+    }
+  });
+
+  test('Snapshot-Name löst auf den LÄNGSTEN Präfix auf', () => {
+    const { svc } = mkService();
+    expect(svc.resolveModelPricing('gpt-4.1-mini-2025-04-14').key).toBe('gpt-4.1-mini');
+    expect(svc.resolveModelPricing('gpt-5.4-2026-03-05').key).toBe('gpt-5.4');
+  });
+
+  test('Reihenfolge der Preis-Map verändert das Ergebnis NICHT', () => {
+    const { svc } = mkService();
+    const reversed = {};
+    for (const k of Object.keys(svc.pricing).reverse()) reversed[k] = svc.pricing[k];
+    const svc2 = { pricing: reversed, resolveModelPricing: svc.resolveModelPricing };
+    for (const m of ['gpt-4.1-mini', 'gpt-4.1-mini-2025-04-14', 'gpt-4-turbo-2024-04-09', 'gpt-5.4-mini']) {
+      expect(svc2.resolveModelPricing(m).key).toBe(svc.resolveModelPricing(m).key);
+    }
+  });
+
+  test('unbekanntes Modell: KEIN gpt-4-Fallback — Kosten 0 + pricingStatus=unknown', async () => {
+    const { svc, inserts } = mkService();
+    await svc.trackAPICall({ userId: 'u1', model: 'claude-sonnet-5', inputTokens: 1000000, outputTokens: 100000, feature: 'x' });
+    expect(inserts.length).toBe(1);
+    expect(inserts[0].totalCost).toBe(0);           // nie $30/1M erfinden
+    expect(inserts[0].pricingStatus).toBe('unknown');
+    expect(inserts[0].pricingModelKey).toBeNull();
+    expect(inserts[0].inputTokens).toBe(1000000);    // Rohdaten bleiben für Nachbewertung
+  });
+
+  test('bekanntes Modell trägt pricingStatus=ok + aufgelösten Key', async () => {
+    const { svc, inserts } = mkService();
+    await svc.trackAPICall({ userId: 'u1', model: 'gpt-4.1-mini-2025-04-14', inputTokens: 100, outputTokens: 10, feature: 'x' });
+    expect(inserts[0].pricingStatus).toBe('ok');
+    expect(inserts[0].pricingModelKey).toBe('gpt-4.1-mini');
+  });
+});

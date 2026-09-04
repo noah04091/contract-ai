@@ -73,6 +73,23 @@ class CostTrackingService {
   }
 
   /**
+   * 04.09.2026: Preis-Resolver als eigene, testbare Stufe (Reihenfolge der
+   * Preis-Map darf das Ergebnis NIE beeinflussen):
+   *   1. exakter Modell-Match
+   *   2. sonst LÄNGSTER gültiger Präfix (Snapshot-Namen wie "gpt-4.1-mini-2026-04-14")
+   *   3. sonst null (UNKNOWN) — bewusst KEIN Fallback auf einen anderen Tarif.
+   * @returns {{key: string, pricing: {input:number, output:number}}|null}
+   */
+  resolveModelPricing(model) {
+    if (typeof model !== 'string' || !model) return null;
+    if (this.pricing[model]) return { key: model, pricing: this.pricing[model] };
+    const prefixKey = Object.keys(this.pricing)
+      .filter(k => model.startsWith(k))
+      .sort((a, b) => b.length - a.length)[0];
+    return prefixKey ? { key: prefixKey, pricing: this.pricing[prefixKey] } : null;
+  }
+
+  /**
    * Initialize MongoDB connection
    */
   async init() {
@@ -114,19 +131,23 @@ class CostTrackingService {
         await this.init();
       }
 
-      // Calculate cost
-      // 🧪 21.07.2026: Snapshot-tolerante Zuordnung — "gpt-5.4-2026-03-05" findet
-      // den "gpt-5.4"-Preis (längster Präfix zuerst, damit "-mini" vor Basis matcht).
-      let modelPricing = this.pricing[model];
-      if (!modelPricing && typeof model === 'string') {
-        const prefixKey = Object.keys(this.pricing)
-          .filter(k => model.startsWith(k))
-          .sort((a, b) => b.length - a.length)[0];
-        if (prefixKey) modelPricing = this.pricing[prefixKey];
+      // Calculate cost — 04.09.2026: robuster Preis-Resolver OHNE stillen
+      // gpt-4-Fallback (die eigentliche Fehlerklasse hinter der 65x-Falle:
+      // ein unbekanntes Modell wurde kommentarlos zum teuersten Urtarif
+      // verbucht). Unbekannt ⇒ Kosten 0 + pricingStatus 'unknown' — der
+      // Datensatz ist ausdrücklich KEINE belastbare Kostenschätzung, die
+      // Token-Rohdaten bleiben für eine spätere Nachbewertung erhalten.
+      // Hinweis cached_tokens: die Aufrufer übergeben keine
+      // prompt_tokens_details.cached_tokens; die Schätzung bewertet Input
+      // daher konservativ vollständig zum normalen Inputpreis (gpt-4.1-mini
+      // cached wäre $0.10/1M statt $0.40/1M — Überschätzung, nie Unter-).
+      const resolved = this.resolveModelPricing(model);
+      const modelPricing = resolved ? resolved.pricing : null;
+      if (!resolved) {
+        console.warn(`⚠️ costTracking: kein Preis für Modell "${model}" — Datensatz als pricingStatus=unknown markiert (kein gpt-4-Fallback mehr)`);
       }
-      if (!modelPricing) modelPricing = this.pricing['gpt-4']; // Fallback to gpt-4
-      const inputCost = (inputTokens || 0) * modelPricing.input;
-      const outputCost = (outputTokens || 0) * modelPricing.output;
+      const inputCost = modelPricing ? (inputTokens || 0) * modelPricing.input : 0;
+      const outputCost = modelPricing ? (outputTokens || 0) * modelPricing.output : 0;
       const totalCost = inputCost + outputCost;
 
       // Create tracking entry
@@ -139,6 +160,8 @@ class CostTrackingService {
         inputCost,
         outputCost,
         totalCost,
+        pricingStatus: resolved ? 'ok' : 'unknown', // 04.09.2026: unknown = Kosten NICHT belastbar
+        pricingModelKey: resolved ? resolved.key : null,
         feature,
         contractId,
         requestId,
