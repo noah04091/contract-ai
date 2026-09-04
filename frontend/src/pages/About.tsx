@@ -372,16 +372,31 @@ const About: React.FC = () => {
             Die Menschen <span className={styles.titelAkzent}>dahinter</span>
           </h2>
           <p className={styles.unterzeile}>Lerne uns kennen.</p>
-          <div className={styles.koepfe}>
-            {team.map((m) => (
-              <div key={m.name} className={styles.kopf}>
-                <div className={styles.kopfBild}>
-                  <img src={m.img} alt={`${m.name} - ${m.role}`} />
+          <div className={styles.teamRaster}>
+            <div className={styles.koepfe}>
+              {team.map((m) => (
+                <div key={m.name} className={styles.kopf}>
+                  <div className={styles.kopfBild}>
+                    <img src={m.img} alt={`${m.name} - ${m.role}`} />
+                  </div>
+                  <h3 className={styles.kopfName}>{m.name}</h3>
+                  <p className={styles.kopfRolle}>{m.role}</p>
                 </div>
-                <h3 className={styles.kopfName}>{m.name}</h3>
-                <p className={styles.kopfRolle}>{m.role}</p>
-              </div>
-            ))}
+              ))}
+            </div>
+            {/* Rechte Spalte: NUR Aussagen, die weiter oben auf derselben Seite
+                schon stehen (Werte, Meilensteine). Keine neue Behauptung. */}
+            <div className={styles.teamText}>
+              <p className={styles.teamSatz}>
+                Contract AI entsteht seit 2024 in <strong>Frankfurt am Main</strong>.
+                DSGVO-konform, mit Servern in Deutschland.
+              </p>
+              <ul className={styles.teamListe}>
+                <li>Seed-Finanzierung durch deutsche Business Angels</li>
+                <li>Partnerschaften mit mittelständischen Unternehmen und Kanzleien</li>
+                <li>Über 1.500 analysierte Verträge auf der Plattform</li>
+              </ul>
+            </div>
           </div>
         </section>
 

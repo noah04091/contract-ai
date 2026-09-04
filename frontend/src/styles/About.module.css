@@ -455,14 +455,60 @@
 /* ================================
    TEAM
    ================================ */
-/* Portraets bewusst klein und als Gruppe zusammengefasst, nicht ueber die
-   volle Seitenbreite gezogen — sonst dominieren sie den Abschnitt. */
+/* Portraets links als kompakte Gruppe, rechts daneben der Textblock — sonst
+   steht rechts eine leere Flaeche. */
+.teamRaster {
+  display: grid;
+  grid-template-columns: minmax(0, 620px) minmax(0, 1fr);
+  gap: clamp(30px, 5vw, 76px);
+  align-items: center;
+  margin-top: 42px;
+}
+
 .koepfe {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(18px, 2.2vw, 30px);
-  max-width: 620px;
-  margin-top: 42px;
+}
+
+.teamSatz {
+  margin: 0;
+  font-size: clamp(17px, 1.5vw, 19.5px);
+  color: var(--tinte-weich);
+  max-width: 34ch;
+}
+
+.teamSatz strong {
+  color: var(--tinte);
+  font-weight: 600;
+}
+
+.teamListe {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  max-width: 38ch;
+}
+
+.teamListe li {
+  position: relative;
+  padding-left: 26px;
+  font-size: 15px;
+  color: var(--tinte-weich);
+}
+
+.teamListe li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blau);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
 }
 
 .kopfBild {
@@ -568,8 +614,14 @@
   .auftaktRaster,
   .manifest,
   .prinzip,
-  .jahr {
+  .jahr,
+  .teamRaster {
     grid-template-columns: 1fr;
+  }
+
+  .teamSatz,
+  .teamListe {
+    max-width: none;
   }
 
   .zahlen {
