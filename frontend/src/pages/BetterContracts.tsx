@@ -160,13 +160,21 @@ const BetterContracts: React.FC = () => {
   }, [loading]);
 
   // ✅ LOADING STATE
+  // 04.09.2026: Hier lief .spinner aus ContractPages.css, der fuer den blauen
+  // Knopf gemacht ist: weisser Rand auf weissem Grund, also unsichtbar. Dazu
+  // hing er per padding oben statt in der Mitte zu stehen.
   if (isLoading) {
     return (
-      <div className="contract-page">
-        <div className="contract-container">
-          <div style={{ textAlign: 'center', padding: '2rem' }}>
-            <div className="spinner"></div>
-            <p>Lade Nutzerdaten...</p>
+      <div className="bcw-seite">
+        <div className="bcw-schirm">
+          <div className="bcw-buehne">
+            <div className="bcw-spalte">
+              <div className="bcw-laden">
+                <div className="bcw-kreis"></div>
+                <h3>Einen Moment</h3>
+                <p>Deine Daten werden geladen.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
