@@ -969,3 +969,419 @@
     opacity: 0.7;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ZWEI STRAENGE (04.09.2026)
+
+   Die Seite wirkte kahl, weil sie den Nutzer bei null anfangen liess,
+   obwohl das System seine Vertraege kennt und seine Merkliste fuehrt.
+   Eine Ablageflaeche auf sonst leerer Seite ist eine Aufforderung ohne
+   Kontext. Links steht jetzt die Aufgabe, rechts der Kontext, und beide
+   Eingabeschritte behalten dieselbe Form, damit die Seite beim
+   Weiterklicken nicht springt.
+   ══════════════════════════════════════════════════════════════════ */
+.bcw-zwei {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 18px;
+  align-items: start;
+}
+
+.bcw-haupt {
+  min-width: 0;
+}
+
+.bcw-neben {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ══════════ KARTE ══════════ */
+.bcw-karte {
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-gross);
+  overflow: hidden;
+}
+
+.bcw-karte + .bcw-karte,
+.bcw-karte + .bcw-textweg {
+  margin-top: 14px;
+}
+
+.bcw-karte-kopf {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bcw-linie);
+}
+
+.bcw-karte-kopf h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--bcw-tinte);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bcw-karte-zahl {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--bcw-senke-2);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--bcw-tinte-2);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.bcw-karte-rechts {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--bcw-tinte-3);
+  flex-shrink: 0;
+}
+
+.bcw-ansehen {
+  background: none;
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+  color: var(--bcw-akzent);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+}
+
+.bcw-ansehen:hover {
+  color: var(--bcw-akzent-dunkel);
+  text-decoration: underline;
+}
+
+.bcw-karte-fuss {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: var(--bcw-senke);
+  border: 0;
+  border-top: 1px solid var(--bcw-linie);
+  color: var(--bcw-akzent);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+}
+
+.bcw-karte-fuss:hover {
+  background: var(--bcw-senke-2);
+}
+
+.bcw-karte-knoepfe {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 16px 16px;
+  flex-wrap: wrap;
+}
+
+/* ══════════ ABLAGE IN DER KARTE ══════════
+   Sie sitzt jetzt in einer Karte und braucht deshalb keinen eigenen
+   Rahmen mehr. Die gestrichelte Linie bleibt, weil sie sagt: hier darf
+   etwas hineingezogen werden. */
+.bcw-karte > .bcw-ablage {
+  border: 0;
+  border-bottom: 1px dashed var(--bcw-linie-satt);
+  border-radius: 0;
+  padding: 40px 24px;
+}
+
+.bcw-karte > .bcw-ablage:hover:not(.gesperrt) {
+  background: #fbfcfe;
+}
+
+.bcw-karte > .bcw-ablage.zieht {
+  background: var(--bcw-akzent-sanft);
+  border-bottom-color: var(--bcw-akzent);
+}
+
+/* Die Formatangaben standen mittig unter der Flaeche und zogen den Blick
+   in die Breite. Als Fussleiste tragen sie zugleich den Fotoweg. */
+.bcw-ablage-leiste {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 16px;
+  background: var(--bcw-senke);
+  font-size: 12px;
+  color: var(--bcw-tinte-3);
+  flex-wrap: wrap;
+}
+
+.bcw-foto {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--bcw-tinte-2);
+  cursor: pointer;
+  padding: 0;
+}
+
+.bcw-foto:hover {
+  color: var(--bcw-akzent);
+}
+
+/* ══════════ VERTRAGSZEILEN ══════════ */
+.bcw-zeile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--bcw-linie);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.14s;
+}
+
+.bcw-zeile:last-of-type {
+  border-bottom: 0;
+}
+
+.bcw-zeile:hover:not(:disabled) {
+  background: var(--bcw-senke);
+}
+
+.bcw-zeile:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.bcw-z-symbol {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--bcw-r-klein);
+  background: var(--bcw-senke-2);
+  color: var(--bcw-tinte-3);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.bcw-z-symbol-akzent {
+  background: var(--bcw-akzent-sanft);
+  border: 1px solid var(--bcw-akzent-linie);
+  color: var(--bcw-akzent);
+}
+
+.bcw-z-text {
+  min-width: 0;
+  flex: 1;
+  display: block;
+}
+
+.bcw-z-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bcw-tinte);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bcw-z-meta {
+  display: block;
+  font-size: 12.5px;
+  color: var(--bcw-tinte-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bcw-z-meta:empty {
+  display: none;
+}
+
+.bcw-z-preis {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--bcw-tinte);
+  flex-shrink: 0;
+}
+
+.bcw-z-pfeil {
+  color: var(--bcw-linie-satt);
+  flex-shrink: 0;
+}
+
+.bcw-zeile:hover:not(:disabled) .bcw-z-pfeil {
+  color: var(--bcw-akzent);
+}
+
+.bcw-z-laedt {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid var(--bcw-linie-satt);
+  border-top-color: var(--bcw-akzent);
+  animation: bcw-dreh 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ══════════ KONTEXTSPALTE ══════════ */
+.bcw-box {
+  background: var(--bcw-grund);
+  border: 1px solid var(--bcw-linie);
+  border-radius: var(--bcw-r-gross);
+  padding: 15px 16px;
+}
+
+.bcw-box h4 {
+  margin: 0 0 11px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bcw-tinte-3);
+}
+
+.bcw-kennzahlen {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.bcw-kz-wert {
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--bcw-tinte);
+}
+
+.bcw-kz-name {
+  font-size: 11.5px;
+  color: var(--bcw-tinte-3);
+}
+
+.bcw-punkte {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.bcw-punkt-zeile {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--bcw-tinte-2);
+  line-height: 1.5;
+}
+
+.bcw-punkt-zeile b {
+  color: var(--bcw-tinte);
+  font-weight: 600;
+}
+
+.bcw-punkt-nr {
+  width: 19px;
+  height: 19px;
+  border-radius: 999px;
+  background: var(--bcw-akzent-sanft);
+  border: 1px solid var(--bcw-akzent-linie);
+  color: var(--bcw-akzent);
+  display: grid;
+  place-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.bcw-merk-zeile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--bcw-linie);
+  font-size: 13px;
+}
+
+.bcw-merk-zeile:last-of-type {
+  border-bottom: 0;
+}
+
+.bcw-merk-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--bcw-tinte-2);
+}
+
+.bcw-merk-preis {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--bcw-gut);
+  flex-shrink: 0;
+}
+
+.bcw-box-link {
+  display: block;
+  margin-top: 10px;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--bcw-akzent);
+  cursor: pointer;
+}
+
+.bcw-box-link:hover {
+  text-decoration: underline;
+}
+
+/* Eingabeblock sitzt jetzt in einer Karte und braucht keinen eigenen
+   Rahmen und keinen eigenen Abstand mehr. */
+.bcw-karte > .bcw-eingabe-block {
+  margin-top: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 16px;
+}
+
+/* ══════════ SCHMALE SCHIRME ══════════ */
+@media (max-width: 980px) {
+  .bcw-zwei {
+    grid-template-columns: 1fr;
+  }
+
+  /* Der Kontext rutscht unter die Aufgabe, statt sie zu quetschen. */
+  .bcw-neben {
+    order: 2;
+  }
+}
