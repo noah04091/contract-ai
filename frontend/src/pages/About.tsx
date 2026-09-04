@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import { Shield, Sparkles, Zap, Users, ArrowRight } from "lucide-react";
+import { Shield, Sparkles, Zap, Users, ArrowRight, ShieldCheck } from "lucide-react";
 import styles from "../styles/About.module.css";
 import LandingFooter from "../components/LandingFooter";
 
@@ -12,7 +12,7 @@ import lauraImg from "../assets/team/laura-mueller.webp";
 
 // Kennzahlen — belegt durch die Meilensteine weiter unten, nichts Erfundenes
 const keyFacts = [
-  { wert: "500+", text: "Nutzer vertrauen uns in Deutschland" },
+  { wert: "500+", text: "aktive Nutzer" },
   { wert: "1.500+", text: "Verträge auf der Plattform analysiert" },
   { wert: "2024", text: "in Frankfurt gegründet" }
 ];
@@ -278,6 +278,10 @@ const About: React.FC = () => {
                   <div className={styles.zahlText}>{f.text}</div>
                 </div>
               ))}
+              <p className={styles.vertrauen}>
+                <span className={styles.vertrauenIcon}><ShieldCheck size={15} /></span>
+                Vertraut von <strong>über 500 Nutzern</strong> in Deutschland
+              </p>
             </div>
           </div>
         </header>
@@ -372,7 +376,7 @@ const About: React.FC = () => {
             {team.map((m) => (
               <div key={m.name} className={styles.kopf}>
                 <div className={styles.kopfBild}>
-                  <img src={m.img} alt={`${m.name} - ${m.role}`} loading="lazy" />
+                  <img src={m.img} alt={`${m.name} - ${m.role}`} />
                 </div>
                 <h3 className={styles.kopfName}>{m.name}</h3>
                 <p className={styles.kopfRolle}>{m.role}</p>

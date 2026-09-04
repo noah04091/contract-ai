@@ -173,6 +173,32 @@
   font-size: 14.5px;
 }
 
+.vertrauen {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 4px 0 0;
+  color: var(--tinte-weich);
+  font-size: 14px;
+}
+
+.vertrauen strong {
+  color: var(--tinte);
+  font-weight: 600;
+}
+
+.vertrauenIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--flaeche);
+  color: var(--blau);
+}
+
 /* ================================
    ABSCHNITTSKOEPFE
    ================================ */
