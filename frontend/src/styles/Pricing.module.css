@@ -269,6 +269,8 @@
 .thBusiness { text-align: center; padding: 20px 18px; font-weight: 700; background: rgba(37,99,235,.05); border-bottom: 1px solid #DDE5F3; min-width: 130px; }
 .thEnterprise { text-align: center; padding: 20px 18px; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-bottom: 2px solid var(--accent); min-width: 130px; }
 .tdFeature { padding: 15px 24px; color: #2A2D35; font-weight: 500; border-bottom: 1px solid #F0F0F4; }
+.featureLink { color: inherit; font-weight: inherit; text-decoration: underline; text-decoration-color: #C9CEDA; text-decoration-thickness: 1px; text-underline-offset: 3px; transition: color .15s ease, text-decoration-color .15s ease; }
+.featureLink:hover { color: var(--accent); text-decoration-color: var(--accent); }
 .tdStarter { padding: 15px 18px; text-align: center; color: #41454F; border-bottom: 1px solid #F0F0F4; }
 .tdBusiness { padding: 15px 18px; text-align: center; background: rgba(37,99,235,.022); border-bottom: 1px solid #EDF1F9; }
 .tdEnterprise { padding: 15px 18px; text-align: center; background: rgba(37,99,235,.06); border-bottom: 1px solid #E4ECF8; }

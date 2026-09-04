@@ -320,30 +320,30 @@ export default function Pricing() {
     }
   ];
 
-  // Feature Matrix für Vergleichstabelle
-  const featureMatrix = [
+  // Feature Matrix für Vergleichstabelle — `link` nur, wo eine öffentliche Feature-Seite existiert (App.tsx-Routen)
+  const featureMatrix: { feature: string; free: string; business: string; premium: string; link?: string }[] = [
     // KI-Analyse Features
-    { feature: "KI-Vertragsanalysen", free: "3 (einmalig)", business: "25/Monat", premium: "Unbegrenzt" },
-    { feature: "KI-Optimierung", free: "–", business: "15/Monat", premium: "Unbegrenzt" },
-    { feature: "Vertragsvergleich", free: "–", business: "20/Monat", premium: "Unbegrenzt" },
+    { feature: "KI-Vertragsanalysen", free: "3 (einmalig)", business: "25/Monat", premium: "Unbegrenzt", link: "/features/vertragsanalyse" },
+    { feature: "KI-Optimierung", free: "–", business: "15/Monat", premium: "Unbegrenzt", link: "/features/optimierung" },
+    { feature: "Vertragsvergleich", free: "–", business: "20/Monat", premium: "Unbegrenzt", link: "/features/vergleich" },
     { feature: "KI-Chat mit Vertrag", free: "5 Fragen/Monat", business: "50 Fragen/Monat", premium: "Unbegrenzt" },
-    { feature: "Legal Lens", free: "–", business: "✓", premium: "✓" },
+    { feature: "Legal Lens", free: "–", business: "✓", premium: "✓", link: "/features/legal-lens" },
     { feature: "Better Contracts (Anbieterwechsel)", free: "–", business: "✓", premium: "✓" },
     // Erstellung & Vorlagen
-    { feature: "KI-Vertragserstellung", free: "–", business: "10/Monat", premium: "Unbegrenzt" },
-    { feature: "Contract Builder", free: "✓ Basis", business: "✓ + Vorlagen speichern", premium: "✓ + Vorlagen speichern" },
+    { feature: "KI-Vertragserstellung", free: "–", business: "10/Monat", premium: "Unbegrenzt", link: "/features/generator" },
+    { feature: "Contract Builder", free: "✓ Basis", business: "✓ + Vorlagen speichern", premium: "✓ + Vorlagen speichern", link: "/features/contract-builder" },
     { feature: "Playbook Review", free: "–", business: "✓", premium: "✓" },
     { feature: "Klausel-Bibliothek", free: "✓", business: "✓", premium: "✓" },
-    { feature: "Digitale Signaturen", free: "–", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    { feature: "Digitale Signaturen", free: "–", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt", link: "/features/digitalesignatur" },
     // Verwaltung & Organisation
-    { feature: "Vertragsverwaltung", free: "✓ Basis", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    { feature: "Vertragsverwaltung", free: "✓ Basis", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt", link: "/features/vertragsverwaltung" },
     { feature: "Verträge hochladen", free: "✓ Nur ansehen", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
     { feature: "Mehrfach-Upload (Batch)", free: "–", business: "–", premium: "✓ Bis zu 10 Verträge" },
     { feature: "Ordner-Organisation", free: "–", business: "✓ + KI-Vorschläge", premium: "✓ + KI-Vorschläge" },
-    { feature: "Kalender & Fristen", free: "✓ Nur ansehen", business: "✓ Vollzugriff", premium: "✓ Vollzugriff" },
+    { feature: "Kalender & Fristen", free: "✓ Nur ansehen", business: "✓ Vollzugriff", premium: "✓ Vollzugriff", link: "/features/fristen" },
     { feature: "Email-Erinnerungen", free: "✓", business: "✓", premium: "✓" }, // 🔓 Stufe 1a (11.08.2026): Fristen-Wächter mailt auch Free — "–" wäre falsch
     { feature: "Kalender-Sync", free: "–", business: "–", premium: "✓ Google/Outlook" },
-    { feature: "Legal Pulse Feed", free: "✓ Nur ansehen", business: "✓ Aktiv", premium: "✓ Aktiv" },
+    { feature: "Legal Pulse Feed", free: "✓ Nur ansehen", business: "✓ Aktiv", premium: "✓ Aktiv", link: "/features/legalpulse" },
     { feature: "Legal Radar", free: "–", business: "✓", premium: "✓" },
     // Export & Extras
     { feature: "PDF-Download", free: "✓ Nur ansehen", business: "✓ + Analyse-Reports", premium: "✓ White-Label" },
@@ -843,7 +843,11 @@ export default function Pricing() {
               <tbody>
                 {featureMatrix.map((item, index) => (
                   <tr key={index}>
-                    <td className={styles.tdFeature}>{item.feature}</td>
+                    <td className={styles.tdFeature}>
+                      {item.link
+                        ? <Link to={item.link} className={styles.featureLink}>{item.feature}</Link>
+                        : item.feature}
+                    </td>
                     <td className={styles.tdStarter}>{renderCell(item.free, 'starter')}</td>
                     <td className={styles.tdBusiness}>{renderCell(item.business, 'business')}</td>
                     <td className={styles.tdEnterprise}>{renderCell(item.premium, 'premium')}</td>
