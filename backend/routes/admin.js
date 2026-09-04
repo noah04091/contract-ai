@@ -49,7 +49,8 @@ router.get("/stats", verifyToken, verifyAdmin, async (req, res) => {
           _id: '$userId',
           totalCost: { $sum: '$totalCost' },
           totalCalls: { $sum: 1 },
-          totalTokens: { $sum: '$totalTokens' }
+          totalTokens: { $sum: '$totalTokens' },
+          unknownPricingRecords: { $sum: { $cond: [{ $eq: ["$pricingStatus", "unknown"] }, 1, 0] } }
         }
       },
       { $sort: { totalCost: -1 } },
@@ -1680,7 +1681,8 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
         $group: {
           _id: { $substr: ["$date", 0, 7] },
           cost: { $sum: "$totalCost" },
-          calls: { $sum: 1 }
+          calls: { $sum: 1 },
+          unknownPricingRecords: { $sum: { $cond: [{ $eq: ["$pricingStatus", "unknown"] }, 1, 0] } }
         }
       },
       { $sort: { _id: 1 } }
@@ -1689,7 +1691,9 @@ router.get("/finance-stats", verifyToken, verifyAdmin, async (req, res) => {
     const monthlyCosts = costsAgg.map(c => ({
       month: c._id,
       cost: parseFloat((c.cost || 0).toFixed(2)),
-      calls: c.calls
+      calls: c.calls,
+      // COST_REPORT_VALIDITY_V1: >0 => Summe unvollstaendig (Datensaetze ohne Modellpreis)
+      unknownPricingRecords: c.unknownPricingRecords || 0
     }));
 
     // ===== C) REFUND DATA from Stripe (source of truth) =====

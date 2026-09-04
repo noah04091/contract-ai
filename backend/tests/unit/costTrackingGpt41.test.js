@@ -89,3 +89,41 @@ describe('costTracking — robuster Preis-Resolver (kein gpt-4-Fallback)', () =>
     expect(inserts[0].pricingModelKey).toBe('gpt-4.1-mini');
   });
 });
+
+// ── COST_REPORT_VALIDITY_V1 (04.09.2026): unknown darf nie als "kostenlos" untergehen ──
+describe('costTracking — COST_REPORT_VALIDITY_V1', () => {
+  test('pricingValidityGroupFields liefert die 4 Pflichtfelder als $cond-Summen', () => {
+    const f = CostTrackingService.pricingValidityGroupFields();
+    for (const k of ['knownPricingRecords', 'unknownPricingRecords', 'unknownPricingInputTokens', 'unknownPricingOutputTokens']) {
+      expect(f[k]).toBeDefined();
+      expect(f[k].$sum).toBeDefined();
+    }
+  });
+
+  test('withPricingCoverage: unknown>0 ⇒ incomplete + sichtbarer Hinweis', () => {
+    const v = CostTrackingService.withPricingCoverage({ unknownPricingRecords: 3 });
+    expect(v.pricingCoverage).toBe('incomplete');
+    expect(v.pricingCoverageHint).toMatch(/3 API-Datensätze.*unvollständig/s);
+  });
+
+  test('withPricingCoverage: unknown=0 ⇒ complete, kein Hinweis', () => {
+    const v = CostTrackingService.withPricingCoverage({ unknownPricingRecords: 0 });
+    expect(v.pricingCoverage).toBe('complete');
+    expect(v.pricingCoverageHint).toBeUndefined();
+  });
+
+  test('checkDailyBudget reicht Validity-Felder + Coverage durch (Aggregat gemockt)', async () => {
+    const svc = new CostTrackingService();
+    svc.isInitialized = true;
+    svc.db = { collection: () => ({
+      aggregate: () => ({ toArray: async () => [{ totalCost: 1.23, totalCalls: 10, knownPricingRecords: 8, unknownPricingRecords: 2, unknownPricingInputTokens: 5000, unknownPricingOutputTokens: 700 }] })
+    }) };
+    const b = await svc.checkDailyBudget();
+    expect(b.unknownPricingRecords).toBe(2);
+    expect(b.knownPricingRecords).toBe(8);
+    expect(b.unknownPricingInputTokens).toBe(5000);
+    expect(b.pricingCoverage).toBe('incomplete');
+    expect(b.pricingCoverageHint).toBeDefined();
+    expect(b.spent).toBe(1.23); // Summe bleibt, wird aber als unvollständig markiert
+  });
+});

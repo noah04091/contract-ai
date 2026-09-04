@@ -73,6 +73,33 @@ class CostTrackingService {
   }
 
   /**
+   * COST_REPORT_VALIDITY_V1 (04.09.2026): Unknown-Pricing-Datensätze tragen
+   * totalCost=0 und dürfen in Summen NIE als "kostenlose Calls" untergehen.
+   * Diese Felder gehören in JEDE $group-Stufe über cost_tracking:
+   */
+  static pricingValidityGroupFields() {
+    const isUnknown = { $eq: ['$pricingStatus', 'unknown'] };
+    return {
+      knownPricingRecords: { $sum: { $cond: [isUnknown, 0, 1] } },
+      unknownPricingRecords: { $sum: { $cond: [isUnknown, 1, 0] } },
+      unknownPricingInputTokens: { $sum: { $cond: [isUnknown, { $ifNull: ['$inputTokens', 0] }, 0] } },
+      unknownPricingOutputTokens: { $sum: { $cond: [isUnknown, { $ifNull: ['$outputTokens', 0] }, 0] } }
+    };
+  }
+
+  /** Ergänzt ein Aggregat um pricingCoverage + Hinweis. Kein Ersatzpreis. */
+  static withPricingCoverage(obj) {
+    const unknown = (obj && obj.unknownPricingRecords) || 0;
+    return {
+      ...obj,
+      pricingCoverage: unknown > 0 ? 'incomplete' : 'complete',
+      ...(unknown > 0 ? {
+        pricingCoverageHint: `${unknown} API-Datensätze besitzen keinen hinterlegten Modellpreis. Die ausgewiesene Kostensumme ist daher unvollständig.`
+      } : {})
+    };
+  }
+
+  /**
    * 04.09.2026: Preis-Resolver als eigene, testbare Stufe (Reihenfolge der
    * Preis-Map darf das Ergebnis NIE beeinflussen):
    *   1. exakter Modell-Match
@@ -204,12 +231,14 @@ class CostTrackingService {
           $group: {
             _id: null,
             totalCost: { $sum: '$totalCost' },
-            totalCalls: { $sum: 1 }
+            totalCalls: { $sum: 1 },
+            ...CostTrackingService.pricingValidityGroupFields()
           }
         }
       ]).toArray();
 
       const spent = todayStats[0]?.totalCost || 0;
+      const validity = CostTrackingService.withPricingCoverage(todayStats[0] || {});
       const remaining = this.dailyBudgetLimit - spent;
       const isLimitReached = spent >= this.dailyBudgetLimit;
 
@@ -219,7 +248,14 @@ class CostTrackingService {
         limit: this.dailyBudgetLimit,
         remaining: Math.max(0, remaining),
         isLimitReached,
-        percentUsed: (spent / this.dailyBudgetLimit) * 100
+        percentUsed: (spent / this.dailyBudgetLimit) * 100,
+        // COST_REPORT_VALIDITY_V1: unknown-Pricing darf nie als "kostenlos" untergehen
+        knownPricingRecords: validity.knownPricingRecords || 0,
+        unknownPricingRecords: validity.unknownPricingRecords || 0,
+        unknownPricingInputTokens: validity.unknownPricingInputTokens || 0,
+        unknownPricingOutputTokens: validity.unknownPricingOutputTokens || 0,
+        pricingCoverage: validity.pricingCoverage,
+        ...(validity.pricingCoverageHint ? { pricingCoverageHint: validity.pricingCoverageHint } : {})
       };
     } catch (error) {
       console.error('❌ [COST-TRACKING] Error checking budget:', error);
@@ -258,6 +294,7 @@ class CostTrackingService {
             totalCalls: { $sum: 1 },
             totalInputTokens: { $sum: '$inputTokens' },
             totalOutputTokens: { $sum: '$outputTokens' },
+            ...CostTrackingService.pricingValidityGroupFields(),
             byModel: {
               $push: { model: '$model', cost: '$totalCost' }
             },
@@ -309,7 +346,12 @@ class CostTrackingService {
         totalCalls: result.totalCalls,
         totalTokens: result.totalInputTokens + result.totalOutputTokens,
         byModel: modelStats,
-        byFeature: featureStats
+        byFeature: featureStats,
+        knownPricingRecords: result.knownPricingRecords || 0,
+        unknownPricingRecords: result.unknownPricingRecords || 0,
+        unknownPricingInputTokens: result.unknownPricingInputTokens || 0,
+        unknownPricingOutputTokens: result.unknownPricingOutputTokens || 0,
+        ...(() => { const v = CostTrackingService.withPricingCoverage(result); return { pricingCoverage: v.pricingCoverage, ...(v.pricingCoverageHint ? { pricingCoverageHint: v.pricingCoverageHint } : {}) }; })()
       };
     } catch (error) {
       console.error('❌ [COST-TRACKING] Error getting stats:', error);
@@ -350,6 +392,7 @@ class CostTrackingService {
           $group: {
             _id: '$date',
             cost: { $sum: '$totalCost' },
+            unknownPricingRecords: { $sum: { $cond: [{ $eq: ['$pricingStatus', 'unknown'] }, 1, 0] } },
             calls: { $sum: 1 }
           }
         },

@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
 const verifyAdmin = require('../middleware/verifyAdmin'); // 🔐 Admin-only access
-const { getInstance: getCostTrackingService } = require('../services/costTracking');
+const { getInstance: getCostTrackingService, CostTrackingService } = require('../services/costTracking');
 
 // ===== GET DAILY BUDGET STATUS =====
 // GET /api/cost-tracking/budget
@@ -129,6 +129,7 @@ router.get('/user-stats', verifyToken, verifyAdmin, async (req, res) => {
           totalCalls: { $sum: 1 },
           totalInputTokens: { $sum: '$inputTokens' },
           totalOutputTokens: { $sum: '$outputTokens' },
+          ...CostTrackingService.pricingValidityGroupFields(),
           byFeature: {
             $push: { feature: '$feature', cost: '$totalCost' }
           }
