@@ -19,6 +19,9 @@ interface AssistantResponse {
   planUpgradeHint?: boolean;
 }
 
+// Einstiegsfragen für Teaser und leeren Chat
+const QUICK_QUESTIONS = ["Was kann Contract AI?", "Was kostet es?", "Ist das rechtssicher?"];
+
 export default function AssistantWidget() {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
@@ -42,13 +45,28 @@ export default function AssistantWidget() {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const teaserHideTimer = useRef<number | null>(null);
 
   const assistantContext = useAssistantContext();
 
   // Dismiss onboarding (Merker sind bereits beim Anzeigen gesetzt)
   const dismissOnboarding = useCallback(() => {
+    if (teaserHideTimer.current) {
+      window.clearTimeout(teaserHideTimer.current);
+      teaserHideTimer.current = null;
+    }
     setShowOnboarding(false);
     setIsMinimized(true);
+  }, []);
+
+  // Auto-Ausblenden des Teasers armieren (pausiert bei Hover)
+  const armTeaserHide = useCallback((delay: number) => {
+    if (teaserHideTimer.current) window.clearTimeout(teaserHideTimer.current);
+    teaserHideTimer.current = window.setTimeout(() => {
+      teaserHideTimer.current = null;
+      setShowOnboarding(false);
+      setIsMinimized(true);
+    }, delay);
   }, []);
 
   // Dismiss tooltip
@@ -71,6 +89,8 @@ export default function AssistantWidget() {
       setShowOnboarding(true);
       // Kurzer Tipp-Indikator, dann Begrüßung + Einstiegsfragen
       timers.push(window.setTimeout(() => setTeaserReady(true), 1400));
+      // Nach 8 s Lesezeit von selbst ausblenden (Hover pausiert)
+      timers.push(window.setTimeout(() => armTeaserHide(8000), 1400));
     };
 
     const triggerOnboarding = () => {
@@ -118,9 +138,13 @@ export default function AssistantWidget() {
     return () => {
       if (interval !== undefined) window.clearInterval(interval);
       timers.forEach((t) => window.clearTimeout(t));
+      if (teaserHideTimer.current) {
+        window.clearTimeout(teaserHideTimer.current);
+        teaserHideTimer.current = null;
+      }
       removeScrollListener?.();
     };
-  }, [dismissTooltip]);
+  }, [dismissTooltip, armTeaserHide]);
 
   // Listen for changes to bot enabled/disabled setting
   useEffect(() => {
@@ -262,20 +286,6 @@ export default function AssistantWidget() {
     }
   };
 
-  // Get mode indicator
-  const getModeLabel = () => {
-    switch (assistantContext.mode) {
-      case "sales":
-        return "💼 Sales Assistant";
-      case "product":
-        return "🛠️ Product Support";
-      case "legal":
-        return "⚖️ Legal Copilot";
-      default:
-        return "🤖 Assistant";
-    }
-  };
-
   // Handle bubble click - un-minimize and open chat
   const handleBubbleClick = () => {
     // Dismiss any active tooltips
@@ -320,6 +330,13 @@ export default function AssistantWidget() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            onMouseEnter={() => {
+              if (teaserHideTimer.current) {
+                window.clearTimeout(teaserHideTimer.current);
+                teaserHideTimer.current = null;
+              }
+            }}
+            onMouseLeave={() => armTeaserHide(4000)}
           >
             <button
               className={styles.teaserClose}
@@ -361,7 +378,7 @@ export default function AssistantWidget() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.35, delay: 0.1 }}
               >
-                {["Was kann Contract AI?", "Was kostet es?", "Ist das rechtssicher?"].map((q) => (
+                {QUICK_QUESTIONS.map((q) => (
                   <button
                     key={q}
                     className={styles.teaserChip}
@@ -459,8 +476,21 @@ export default function AssistantWidget() {
             {/* Header */}
             <div className={styles.chatHeader}>
               <div className={styles.headerContent}>
-                <span className={styles.headerTitle}>Contract AI Assistant</span>
-                <span className={styles.modeIndicator}>{getModeLabel()}</span>
+                <span className={styles.headerAvatar}>
+                  <svg width="16" height="16" viewBox="0 0 17 17" fill="none">
+                    <path d="M2.5 3.5h12v8h-6.8L4.5 14v-2.5h-2z" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+                    <circle cx="6" cy="7.5" r="0.9" fill="#fff" />
+                    <circle cx="8.5" cy="7.5" r="0.9" fill="#fff" />
+                    <circle cx="11" cy="7.5" r="0.9" fill="#fff" />
+                  </svg>
+                </span>
+                <span className={styles.headerWho}>
+                  <span className={styles.headerTitle}>Contract AI Assistent</span>
+                  <span className={styles.headerStatus}>
+                    <span className={styles.onlineDot} />
+                    KI-Assistent · Antwortet sofort
+                  </span>
+                </span>
               </div>
               <motion.button
                 className={styles.closeButton}
@@ -468,8 +498,7 @@ export default function AssistantWidget() {
                   setIsOpen(false);
                   setIsMinimized(true);
                 }}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.92 }}
                 aria-label="Chat schließen"
               >
                 ✕
@@ -479,17 +508,29 @@ export default function AssistantWidget() {
             {/* Messages */}
             <div className={styles.messagesContainer}>
               {messages.length === 0 && (
-                <div className={styles.welcomeMessage}>
-                  <p className={styles.welcomeTitle}>👋 Willkommen!</p>
-                  <p className={styles.welcomeText}>
-                    Ich bin dein persönlicher Contract AI Assistent.
+                <div className={styles.welcomeIntro}>
+                  <div className={styles.welcomeBubble}>
+                    Hi! Ich bin der KI-Assistent von Contract AI.
                     {assistantContext.mode === "sales" &&
                       " Wie kann ich dir helfen, mehr über Contract AI zu erfahren?"}
                     {assistantContext.mode === "product" &&
                       " Brauchst du Hilfe mit einer Funktion?"}
                     {assistantContext.mode === "legal" &&
                       " Ich kann dir bei der Analyse deiner Verträge helfen!"}
-                  </p>
+                  </div>
+                  {assistantContext.mode === "sales" && (
+                    <div className={styles.welcomeChips}>
+                      {QUICK_QUESTIONS.map((q) => (
+                        <button
+                          key={q}
+                          className={styles.teaserChip}
+                          onClick={() => sendMessage(q)}
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -548,7 +589,15 @@ export default function AssistantWidget() {
                 whileTap={{ scale: 0.95 }}
                 aria-label="Nachricht senden"
               >
-                ➤
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M10 16V4M10 4L5 9M10 4l5 5"
+                    stroke="#fff"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </motion.button>
             </div>
           </motion.div>
