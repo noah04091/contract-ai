@@ -571,6 +571,19 @@ const BetterContracts: React.FC = () => {
   const alsText = (wert: unknown): string => {
     if (typeof wert === 'string') return wert.trim();
     if (typeof wert === 'number' && Number.isFinite(wert)) return String(wert);
+    /* 05.09.2026: provider ist im Datensatz absichtlich gemischt
+       (models/Contract.js: "provider: Mixed // Provider info object"). Es kommt
+       als Text, als Objekt mit displayName aus der Anbietererkennung
+       (routes/contracts.js:2640) oder als Objekt mit name aus der
+       SAP-Anbindung. Nur abzusichern wuerde den Anbieternamen wegwerfen,
+       deshalb wird er hier herausgeholt. */
+    if (wert && typeof wert === 'object' && !Array.isArray(wert)) {
+      const o = wert as Record<string, unknown>;
+      for (const feld of ['displayName', 'name', 'title']) {
+        const v = o[feld];
+        if (typeof v === 'string' && v.trim()) return v.trim();
+      }
+    }
     return '';
   };
 
