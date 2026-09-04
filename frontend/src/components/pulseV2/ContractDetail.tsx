@@ -40,7 +40,10 @@ function safeContractType(ct: unknown): string {
 
 interface ContractDetailProps {
   result: PulseV2Result;
-  monitorInfo?: { nextRadarScan: string | null; alertCount: number } | null;
+  monitorInfo?: { nextRadarScan: string | null; alertCount: number; pulseAccess?: boolean } | null;
+  /** 04.09.2026: Nach dem angezeigten Ergebnis gab es einen GESCHEITERTEN Analyse-Versuch —
+      die Daten sind veraltet, die Box darf nicht uneingeschränkt „Aktiv überwacht" sagen. */
+  staleAfterFailure?: { at: string } | null;
   contractAlerts?: PulseV2LegalAlert[];
   /** Deep-Link von einer Legal-Radar-Meldung (?alert=…): zu diesem Alert scrollen + aufklappen */
   highlightAlertId?: string | null;
@@ -50,7 +53,7 @@ interface ContractDetailProps {
   onBulkResolveAlerts?: () => Promise<boolean>;
 }
 
-export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, contractAlerts, highlightAlertId, onAlertStatusChange, onBulkResolveAlerts }) => {
+export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorInfo, staleAfterFailure, contractAlerts, highlightAlertId, onAlertStatusChange, onBulkResolveAlerts }) => {
   const layoutV3 = usePulseLayoutV3(); // Klartext-Ansicht nur per Schalter
   const toast = useToast();
   const [actions, setActions] = useState<PulseV2Action[]>(result.actions || []);
@@ -708,8 +711,51 @@ export const ContractDetail: React.FC<ContractDetailProps> = ({ result, monitorI
           </div>
 
           {/* Monitoring Status — zwei Zeilen: Label+Pille oben, Beschreibung darunter.
-              So bleibt es in schmaler wie breiter Spalte luftig und nie eingequetscht. */}
-          {monitorInfo && (
+              So bleibt es in schmaler wie breiter Spalte luftig und nie eingequetscht.
+              04.09.2026 (Masterplan Phase 4): Die grüne Box war ein reines Layout-Element —
+              sie erschien, sobald monitorInfo existierte, ohne Plan- oder Zustandsprüfung.
+              Jetzt drei ehrliche Zustände: pausiert (Plan) / veraltet (Fehlversuch) / aktiv.
+              pulseAccess-Vergleich MUSS `=== false` sein (altes Backend liefert das Feld
+              nicht — undefined darf sich wie „hat Zugang" verhalten, sonst sähe beim
+              Deploy-Versatz JEDER „pausiert"). */}
+          {monitorInfo && monitorInfo.pulseAccess === false && (
+            <div style={{
+              fontSize: 12,
+              color: '#92400e',
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: 8,
+              padding: '9px 12px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
+                <span style={{ fontWeight: 600 }}>Überwachung pausiert</span>
+              </div>
+              <div style={{ color: '#b45309', fontSize: 11, lineHeight: 1.5, marginTop: 4 }}>
+                Die laufende Überwachung gehört zum Business-Abo. {layoutV3 ? 'Deine' : 'Ihre'} bisherigen Ergebnisse bleiben erhalten.
+              </div>
+            </div>
+          )}
+          {monitorInfo && monitorInfo.pulseAccess !== false && staleAfterFailure && (
+            <div style={{
+              fontSize: 12,
+              color: '#92400e',
+              background: '#fffbeb',
+              border: '1px solid #fde68a',
+              borderRadius: 8,
+              padding: '9px 12px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
+                <span style={{ fontWeight: 600 }}>Letzte automatische Prüfung fehlgeschlagen</span>
+              </div>
+              <div style={{ color: '#b45309', fontSize: 11, lineHeight: 1.5, marginTop: 4 }}>
+                Angezeigt wird der letzte erfolgreiche Stand vom {new Date(result.createdAt).toLocaleDateString('de-DE')}.
+                Der Versuch vom {new Date(staleAfterFailure.at).toLocaleDateString('de-DE')} schlug fehl — {layoutV3 ? 'starte' : 'starten Sie'} oben „Erneut analysieren", wir sind über den Fehler bereits informiert.
+              </div>
+            </div>
+          )}
+          {monitorInfo && monitorInfo.pulseAccess !== false && !staleAfterFailure && (
             <div style={{
               fontSize: 12,
               color: '#15803d',

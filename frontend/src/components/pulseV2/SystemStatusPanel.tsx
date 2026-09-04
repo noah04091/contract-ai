@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 
 interface MonitoringStatus {
   lastRadarScan: string | null;
+  // 04.09.2026: lastRadarScan ist im Backend das Datum des JÜNGSTEN ALERTS, nicht
+  // des letzten Laufs — ohne neue Treffer stand hier „vor 12 Tagen", obwohl der
+  // Radar heute lief. lastRadarRun (aus cron_logs) ist der echte letzte Lauf.
+  lastRadarRun?: string | null;
   nextMonitorScan: string;
   nextRadarScan: string;
   contractsMonitored: number;
@@ -155,7 +159,7 @@ export const SystemStatusPanel: React.FC<SystemStatusPanelProps> = ({ monitoring
               <>
                 <StatBox
                   label="Letzter Radar-Run"
-                  value={formatRelative(monitoring.lastRadarScan)}
+                  value={formatRelative(monitoring.lastRadarRun ?? monitoring.lastRadarScan)}
                   color="#64748b"
                 />
                 <StatBox

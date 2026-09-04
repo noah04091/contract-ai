@@ -66,7 +66,7 @@ const PulseV2: React.FC = () => {
 const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
   const {
     status, progress, progressMessage, stages,
-    result, error, rejected,
+    result, error, rejected, staleAfterFailure,
     partialFindings, partialClauses, contractMeta,
     startAnalysis, cancelAnalysis, loadLatest,
   } = usePulseV2();
@@ -75,7 +75,9 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
   const [searchParams] = useSearchParams();
   const highlightAlertId = searchParams.get('alert');
   const [loading, setLoading] = useState(true);
-  const [monitorInfo, setMonitorInfo] = useState<{ nextRadarScan: string | null; alertCount: number } | null>(null);
+  // pulseAccess: 04.09.2026 — Plan-Wahrheit vom Backend; false = Überwachung pausiert.
+  // Bedingung im Verbraucher MUSS `=== false` sein (altes Backend liefert das Feld nicht).
+  const [monitorInfo, setMonitorInfo] = useState<{ nextRadarScan: string | null; alertCount: number; pulseAccess?: boolean } | null>(null);
   const [contractAlerts, setContractAlerts] = useState<PulseV2LegalAlert[]>([]);
 
   useEffect(() => {
@@ -113,10 +115,18 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
           (a: PulseV2LegalAlert) => a.contractId === contractId
         );
         setContractAlerts(filteredAlerts);
-        setMonitorInfo({
-          nextRadarScan: monData?.nextRadarScan || null,
-          alertCount: filteredAlerts.filter((a: PulseV2LegalAlert) => a.status !== 'dismissed' && a.status !== 'resolved').length,
-        });
+        // 04.09.2026: Vorher wurde die grüne „Aktiv überwacht"-Box auch dann gerendert,
+        // wenn /monitoring-status FEHLSCHLUG (monData null → trotzdem setMonitorInfo).
+        // Ohne Statusantwort gibt es keine Überwachungs-Behauptung mehr.
+        if (monData) {
+          setMonitorInfo({
+            nextRadarScan: monData.nextRadarScan || null,
+            alertCount: filteredAlerts.filter((a: PulseV2LegalAlert) => a.status !== 'dismissed' && a.status !== 'resolved').length,
+            pulseAccess: monData.pulseAccess,
+          });
+        } else {
+          setMonitorInfo(null);
+        }
       } catch {
         // Non-critical — silently ignore
       }
@@ -483,6 +493,7 @@ const ContractView: React.FC<{ contractId: string }> = ({ contractId }) => {
         <ContractDetail
           result={result}
           monitorInfo={monitorInfo}
+          staleAfterFailure={staleAfterFailure}
           contractAlerts={contractAlerts}
           highlightAlertId={highlightAlertId}
           onAlertStatusChange={handleAlertStatusChange}

@@ -58,6 +58,10 @@ interface PulseV2State {
   partialFindings: PartialFinding[];
   partialClauses: PartialClause[];
   contractMeta: { name?: string; type?: string } | null;
+  // 04.09.2026 (Masterplan Phase 4): Gibt es NACH dem angezeigten (letzten
+  // erfolgreichen) Ergebnis einen gescheiterten Analyse-Versuch? Dann sind die
+  // Daten veraltet und die Detailseite sagt das ehrlich, statt "Aktiv überwacht".
+  staleAfterFailure: { at: string } | null;
 }
 
 type PulseV2Action =
@@ -68,7 +72,7 @@ type PulseV2Action =
   | { type: 'ANALYSIS_COMPLETE'; result: PulseV2Result; resultId: string }
   | { type: 'ANALYSIS_ERROR'; error: string }
   | { type: 'ANALYSIS_REJECTED'; rejection: PulseV2Rejection }
-  | { type: 'SET_RESULT'; result: PulseV2Result }
+  | { type: 'SET_RESULT'; result: PulseV2Result; staleAfterFailure?: { at: string } | null }
   | { type: 'RESET' };
 
 const INITIAL_STAGES: StageInfo[] = [
@@ -96,6 +100,7 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         partialFindings: [],
         partialClauses: [],
         contractMeta: null,
+        staleAfterFailure: null,
       };
 
     case 'PROGRESS': {
@@ -134,6 +139,9 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         stages: state.stages.map(s => ({ ...s, status: 'completed' as const })),
         resultId: action.resultId,
         result: action.result,
+        // Frischer erfolgreicher Lauf: der „veraltet nach Fehlversuch"-Hinweis
+        // bezieht sich auf das ALTE Ergebnis und darf hier nicht überleben.
+        staleAfterFailure: null,
       };
 
     case 'ANALYSIS_ERROR':
@@ -162,6 +170,7 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         progress: 100,
         result: action.result,
         resultId: action.result._id,
+        staleAfterFailure: action.staleAfterFailure ?? null,
       };
 
     case 'ADD_FINDINGS_BATCH':
@@ -194,6 +203,7 @@ function reducer(state: PulseV2State, action: PulseV2Action): PulseV2State {
         partialFindings: [],
         partialClauses: [],
         contractMeta: null,
+        staleAfterFailure: null,
       };
 
     default:
@@ -214,6 +224,7 @@ export function usePulseV2() {
     partialFindings: [],
     partialClauses: [],
     contractMeta: null,
+    staleAfterFailure: null,
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -365,7 +376,9 @@ export function usePulseV2() {
       }
       const data = await res.json();
       if (data.result) {
-        dispatch({ type: 'SET_RESULT', result: data.result });
+        // staleAfterFailure: altes Backend liefert das Feld nicht → undefined → null
+        // (Versionsversatz-sicher: dann verhält sich alles wie vorher).
+        dispatch({ type: 'SET_RESULT', result: data.result, staleAfterFailure: data.staleAfterFailure ?? null });
         return data.result;
       }
       // Previous attempt was rejected as non-contract — surface it to the UI

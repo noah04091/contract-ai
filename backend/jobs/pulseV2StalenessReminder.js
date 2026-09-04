@@ -220,23 +220,50 @@ async function findStaleContracts(userId, staleThreshold, db) {
     };
   });
 
-  // Sort: critical risk first, then low score, then oldest
+  // 04.09.2026 (Masterplan Phase 4): Letzten Versuch je Vertrag UNABHÄNGIG vom Status
+  // holen. Ein Vertrag, dessen jüngster Lauf fehlschlug, sah hier bisher nur „alt" aus,
+  // nie „kaputt" — die Mail forderte dann zu einer Prüfung auf, die gar nicht
+  // funktionieren konnte (belegt: Mail vom 31.08. listete zwei Verträge, deren
+  // Re-Analyse seit Monaten am selben Fehler scheiterte).
+  const letzteVersuche = await LegalPulseV2Result.aggregate([
+    { $match: { userId, contractId: { $in: contractIds } } },
+    { $sort: { createdAt: -1 } },
+    { $group: { _id: "$contractId", lastStatus: { $first: "$status" } } },
+  ]);
+  const versuchMap = new Map(letzteVersuche.map(v => [String(v._id), v.lastStatus]));
+  for (const c of staleContracts) {
+    c.lastAttemptFailed = versuchMap.get(String(c.contractId)) === "failed";
+  }
+
+  sortStaleContracts(staleContracts);
+  return staleContracts;
+}
+
+/**
+ * Sort: critical risk first, then low score, then OLDEST first.
+ * 04.09.2026: Der dritte Schlüssel stand andersherum (a.daysStale - b.daysStale =
+ * jüngste zuerst) — bei mehr als MAX_CONTRACTS_IN_EMAIL Verträgen fiel ausgerechnet
+ * der am längsten ungeprüfte aus der Liste. Exportiert für den Regressionstest.
+ */
+function sortStaleContracts(staleContracts) {
   const riskOrder = { critical: 0, high: 1, medium: 2, low: 3 };
   staleContracts.sort((a, b) => {
     const riskDiff = (riskOrder[a.riskLevel] ?? 3) - (riskOrder[b.riskLevel] ?? 3);
     if (riskDiff !== 0) return riskDiff;
     if (a.lastScore !== b.lastScore) return a.lastScore - b.lastScore;
-    return a.daysStale - b.daysStale;
+    return b.daysStale - a.daysStale;
   });
-
   return staleContracts;
 }
 
 /**
- * Build and queue the staleness reminder email
+ * Build the staleness reminder email (pure — exportiert für Tests).
+ * 04.09.2026: aus sendStalenessEmail herausgelöst, damit Betreff/Body ohne DB
+ * und Queue testbar sind (Muster: buildWeeklyReportEmail).
  */
-async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
+function buildStalenessEmail(email, userName, staleContracts) {
   const criticalContracts = staleContracts.filter(c => c.riskLevel === "critical" || c.riskLevel === "high");
+  const failedContracts = staleContracts.filter(c => c.lastAttemptFailed);
   const topContracts = staleContracts.slice(0, MAX_CONTRACTS_IN_EMAIL);
 
   // Intro
@@ -260,7 +287,13 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
     const statusText = c.riskLevel === "critical" ? "Kritisch"
       : c.riskLevel === "high" ? "Hoch"
       : `Score ${c.lastScore}`;
-    const metaParts = [c.contractType, `zuletzt geprüft vor ${c.daysStale} Tagen`].filter(Boolean);
+    // 04.09.2026: „zuletzt geprüft" heißt genauer „zuletzt ERFOLGREICH geprüft" —
+    // und ein zwischenzeitlich gescheiterter Versuch wird jetzt ehrlich benannt.
+    const metaParts = [
+      c.contractType,
+      `zuletzt erfolgreich geprüft vor ${c.daysStale} Tagen`,
+      c.lastAttemptFailed ? "letzter automatischer Versuch fehlgeschlagen" : null,
+    ].filter(Boolean);
     body += pulseSection({
       name: cleanContractName(c.name),
       dotColor: dot,
@@ -276,9 +309,17 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
     body += pulseLead(`<span style="color:#8792a2; font-size:13px;">+ ${rest} ${plural(rest, "weiterer Vertrag", "weitere Verträge")}</span>`);
   }
 
+  // 04.09.2026: „Ein Klick genügt" war nicht einlösbar — der Knopf führt zur
+  // Übersicht, die Prüfung startet man dort je Vertrag. Jetzt ehrlich formuliert;
+  // bei fehlgeschlagenen Versuchen wird das zusätzlich klar benannt.
+  if (failedContracts.length > 0) {
+    body += pulseLead(
+      `<strong style="color:#1a1f36;">Hinweis:</strong> ${failedContracts.length === staleContracts.length ? (failedContracts.length === 1 ? "Bei diesem Vertrag" : "Bei diesen Verträgen") : `Bei ${failedContracts.length} von ${staleContracts.length} Verträgen`} ist die letzte automatische Prüfung fehlgeschlagen. Starte die Prüfung in Legal Pulse neu &mdash; schlägt sie erneut fehl, sind wir bereits informiert und kümmern uns.`
+    );
+  }
   body += pulseReassurance({
-    text: `Ein Klick genügt &mdash; wir prüfen deine Verträge erneut gegen die aktuelle Rechtslage und sagen dir, ob etwas zu tun ist.`,
-    buttonText: "Jetzt prüfen",
+    text: `Öffne Legal Pulse und starte dort die erneute Prüfung &mdash; wir gleichen deine Verträge gegen die aktuelle Rechtslage ab und sagen dir, ob etwas zu tun ist.`,
+    buttonText: "Zu Legal Pulse",
     buttonUrl: "https://contract-ai.de/pulse",
   });
   // 02.09.2026: Beide Abmelde-Wege existieren und stoppen dasselbe (nur Legal Pulse,
@@ -288,9 +329,17 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
     "Du bekommst diese E-Mail, weil Contract&nbsp;AI diese Verträge automatisch für dich überwacht. Die Legal-Pulse-Mails kannst du jederzeit abschalten &mdash; über &bdquo;Benachrichtigungen abmelden&ldquo; unten in dieser E-Mail oder auf deiner Pulse-Seite unter &bdquo;E-Mail-Benachrichtigungen&ldquo;. Deine Fristen-Erinnerungen bleiben davon unberührt."
   );
 
-  const subject = criticalContracts.length > 0
-    ? `${criticalContracts.length} ${plural(criticalContracts.length, "Vertrag", "Verträge")} mit Risiko nicht geprüft`
-    : `${staleContracts.length} ${plural(staleContracts.length, "Vertrag", "Verträge")} seit über 14 Tagen nicht geprüft`;
+  // 04.09.2026: Betreff und Fließtext nannten verschiedene Zahlen (Betreff zählte
+  // nur die Risiko-Verträge, der Text alle — Mail vom 31.08.: Betreff „2", Text „3").
+  // Jetzt führt der Betreff mit derselben Gesamtzahl wie der Text; das Risiko bleibt
+  // als Zusatz erhalten.
+  const n = staleContracts.length;
+  const k = criticalContracts.length;
+  const subject = k > 0
+    ? (k === n
+        ? `${n} ${plural(n, "Vertrag", "Verträge")} mit Risiko seit über 14 Tagen nicht geprüft`
+        : `${n} ${plural(n, "Vertrag", "Verträge")} seit über 14 Tagen nicht geprüft — ${k} mit Risiko`)
+    : `${n} ${plural(n, "Vertrag", "Verträge")} seit über 14 Tagen nicht geprüft`;
 
   const preheader = criticalContracts.length > 0
     ? `${criticalContracts.length} ${plural(criticalContracts.length, "Vertrag", "Verträge")} mit erhöhtem Risiko ${plural(criticalContracts.length, "wartet", "warten")} auf Prüfung`
@@ -303,6 +352,14 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
     unsubscribeUrl: generateUnsubscribeUrl(email, EMAIL_CATEGORIES.LEGAL_PULSE),
   });
 
+  return { subject, preheader, html };
+}
+
+/**
+ * Queue the staleness reminder email (Versand-Hülle um den reinen Builder).
+ */
+async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
+  const { subject, html } = buildStalenessEmail(email, userName, staleContracts);
   await queueEmail(db, {
     to: email,
     subject,
@@ -312,4 +369,4 @@ async function sendStalenessEmail(db, email, userName, userId, staleContracts) {
   });
 }
 
-module.exports = { runStalenessReminder };
+module.exports = { runStalenessReminder, buildStalenessEmail, sortStaleContracts };

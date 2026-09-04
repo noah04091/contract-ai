@@ -316,7 +316,7 @@ router.get("/settings", verifyToken, async (req, res) => {
 
     const user = await db.collection("users").findOne(
       { _id: new ObjectId(userId) },
-      { projection: { notificationSettings: 1, emailPreferences: 1, emailOptOut: 1 } }
+      { projection: { notificationSettings: 1, emailPreferences: 1, emailOptOut: 1, legalPulseSettings: 1 } }
     );
 
     // Default-Einstellungen wenn keine vorhanden
@@ -383,6 +383,16 @@ router.get("/settings", verifyToken, async (req, res) => {
     settings.email = settings.email || {};
     settings.email.contractDeadlines =
       user?.emailPreferences?.calendar !== false && settings.email.contractDeadlines !== false;
+
+    // 04.09.2026 (Pulse-Masterplan Phase 4) — EINE WAHRHEIT auch für Legal Pulse.
+    // Die Profil-Zeile „Legal Pulse Alerts" las bisher nur notificationSettings.email.legalPulse,
+    // das KEIN Pulse-Versender liest — wer sich per Pulse-Mail abmeldete, sah hier weiter „AN"
+    // (exakt der Zwei-Wahrheiten-Zustand, der für die Fristen am 24.08. behoben wurde).
+    // Maßgeblich ist legalPulseSettings (liest pulseEmailsDisabled in allen 4 Jobs + Queue).
+    settings.email.legalPulse =
+      user?.legalPulseSettings?.emailNotifications !== false &&
+      user?.legalPulseSettings?.enabled !== false &&
+      settings.email.legalPulse !== false;
 
     res.json({
       success: true,
@@ -471,6 +481,24 @@ router.put("/settings", verifyToken, async (req, res) => {
     // stattdessen ehrlich, dass ein breiterer Schalter noch blockiert.
     updateFields['emailPreferences.calendar'] = Boolean(settings.email?.contractDeadlines);
     updateFields['emailPreferencesUpdatedAt'] = new Date();
+
+    // 04.09.2026 (Pulse-Masterplan Phase 4): Zeile „Legal Pulse Alerts" auf die EINE
+    // Pulse-Wahrheit spiegeln — gleiches Muster wie die Fristen-Zeile direkt darüber.
+    // Einschalten setzt enabled:true mit (wie PulseEmailSettings auf /pulse und der
+    // Resubscribe-Weg in auth.js — sonst bliebe ein V1-Altbestand mit enabled:false
+    // trotz „AN" stumm). Ausschalten fasst enabled bewusst NICHT an.
+    // ⚠️ NUR spiegeln, wenn der Client das Feld MITSENDET: Boolean(undefined) wäre
+    // false und ein alter/fremder Client ohne das Feld würde die Pulse-Mails beim
+    // Speichern STILL abschalten — exakt die weeklyReport-Falle (Boolean(undefined)
+    // schrieb dort bei jedem Speichern false, ohne dass je ein Schalter existierte).
+    // Gemessen vor Deploy: 1 von 628 Nutzern hat die Profil-Zeile aus und nutzt
+    // Legal Pulse nicht — niemand ändert sein Verhalten.
+    if (settings.email && typeof settings.email.legalPulse !== 'undefined') {
+      updateFields['legalPulseSettings.emailNotifications'] = Boolean(settings.email.legalPulse);
+      if (settings.email.legalPulse) {
+        updateFields['legalPulseSettings.enabled'] = true;
+      }
+    }
 
     // Marketing-Präferenz separat aktualisieren (sync mit Abmelde-Link)
     if (req.body.marketing !== undefined) {

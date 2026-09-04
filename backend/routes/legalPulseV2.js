@@ -259,7 +259,26 @@ router.get("/contract/:contractId/latest", async (req, res) => {
     }).sort({ createdAt: -1 }).lean();
 
     if (result) {
-      return res.json({ result });
+      // 04.09.2026 (Masterplan Phase 4): Gibt es NACH diesem Erfolg einen gescheiterten
+      // Versuch? Dann sind die angezeigten Daten veraltet und die Detailseite darf
+      // nicht mehr uneingeschränkt "Aktiv überwacht" behaupten (24 von 30 failed-Fällen
+      // hatten ein älteres completed — die Seite zeigte Daten vom 19.04. als aktuell).
+      let staleAfterFailure = null;
+      try {
+        const neuererFehlschlag = await LegalPulseV2Result.findOne({
+          contractId: req.params.contractId,
+          userId: req.user.userId,
+          status: "failed",
+          createdAt: { $gt: result.createdAt },
+        }).sort({ createdAt: -1 }).select({ createdAt: 1 }).lean();
+        if (neuererFehlschlag) {
+          staleAfterFailure = { at: neuererFehlschlag.createdAt };
+        }
+      } catch (e) {
+        // fail-open: Anzeige-Zusatz, nie ein Grund, das Ergebnis nicht zu liefern
+        console.error("[PulseV2] staleAfterFailure check failed:", e.message);
+      }
+      return res.json({ result, staleAfterFailure });
     }
 
     // No completed result — check if the last attempt was rejected as non-contract
