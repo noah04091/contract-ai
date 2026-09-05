@@ -528,15 +528,22 @@ const BetterContracts: React.FC = () => {
       
       const errorMessage = getErrorMessage(err);
       
-      // User-friendly error messages
+      /* 05.09.2026: Der Auffangzweig zeigte die rohe technische Meldung
+         ("Fehler bei der Analyse: HTTP 500 ..."). Das sagt dem Nutzer nichts
+         ueber seine Lage und klingt nach kaputtem Produkt. 503 fehlte ganz
+         und fiel deshalb ebenfalls in diesen Zweig.
+         Jede Meldung sagt jetzt: was los ist, was zu tun ist, und dass der
+         Vertrag nicht verloren ist. */
       if (errorMessage.includes('429')) {
-        setError("Zu viele Anfragen. Bitte warte eine Minute und versuche es erneut.");
+        setError("Gerade laufen sehr viele Suchen gleichzeitig. Warte etwa eine Minute und starte sie erneut, dein Vertrag bleibt geladen.");
       } else if (errorMessage.includes('timeout') || errorMessage.includes('408')) {
-        setError("Die Suche dauert zu lange. Versuche es mit einem kürzeren Vertragstext.");
+        setError("Die Suche hat zu lange gedauert und wurde abgebrochen. Ein eigenes Stichwort im Suchfeld grenzt sie ein und führt meist schneller zum Ziel.");
+      } else if (errorMessage.includes('503')) {
+        setError("Der Dienst, über den wir den Markt durchsuchen, antwortet gerade nicht. Das liegt nicht an deinem Vertrag. Versuch es in ein paar Minuten noch einmal.");
       } else if (errorMessage.includes('404')) {
         setError("Wir haben keine passenden Alternativen gefunden. Ein eigenes Stichwort im Suchfeld hilft oft weiter.");
       } else {
-        setError(`Fehler bei der Analyse: ${errorMessage}`);
+        setError("Bei der Suche ist etwas schiefgelaufen. Dein Vertrag ist nicht verloren, du kannst sie direkt noch einmal starten. Bleibt es dabei, hilft ein eigenes Stichwort im Suchfeld.");
       }
     } finally {
       setLoading(false);

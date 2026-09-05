@@ -401,7 +401,18 @@ function captureHttpErrorResponse(req, res) {
     // Synthetischer Fehler: Das echte Fehlerobjekt existiert an dieser Stelle nicht
     // mehr, die Route hat es selbst gefangen. Der HTTP-Status trägt die Severity —
     // determineSeverity() stuft >= 500 als 'high' ein, also mailwürdig.
-    const fehler = new Error(`HTTP ${res.statusCode} auf ${req?.method || '?'} ${route}`);
+    /* 05.09.2026: Die Meldung bestand nur aus Status und Route, der Stack
+       zeigte ausschliesslich die Alarmierung selbst. Wer die Mail bekam,
+       wusste DASS etwas kaputt war, aber nicht WAS, und musste jedes Mal in
+       die Server-Logs. Routen koennen jetzt res.__caFehlerGrund setzen und
+       damit einen kurzen, selbst gewaehlten Grund mitgeben.
+       Bewusst NUR was die Route ausdruecklich hinterlegt: sie weiss, welche
+       Fehler bei ihr auftreten, und kann Vertragsinhalte heraushalten.
+       Zusaetzlich hart auf 200 Zeichen gedeckelt. */
+    const grund = typeof res.__caFehlerGrund === 'string' && res.__caFehlerGrund.trim()
+      ? ` — ${res.__caFehlerGrund.trim().slice(0, 200)}`
+      : '';
+    const fehler = new Error(`HTTP ${res.statusCode} auf ${req?.method || '?'} ${route}${grund}`);
     fehler.name = 'HttpErrorResponse';
     fehler.status = res.statusCode;
 

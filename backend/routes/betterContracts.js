@@ -2758,6 +2758,8 @@ router.post("/", async (req, res) => {
     // GPT-Analyse (ERWEITERT UM PARTNER-HINWEISE + B2B-STRUCTURED-ENRICHMENT)
     const isConsumerContract = isKnownConsumerType(detectedType);
     let analysis;
+    // 05.09.2026: Merker für das Frontend, damit es den Ausfall benennen kann
+    let analyseAusgefallen = false;
     let aiSuggestedAlternatives = [];
 
     if (!isConsumerContract) {
@@ -2823,8 +2825,16 @@ Die Ersparnisse sind nur Marketingangaben darüber, was man maximal sparen könn
 
 Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksichtige besonders die Partner-Angebote, da diese oft die besten Vergleichsmöglichkeiten bieten.`;
 
-      // PARALLEL: KI-Vorschläge + Analyse (spart ~3 Sek vs. sequenziell)
-      const [consumerAiProviders, completion] = await Promise.all([
+      /* PARALLEL: KI-Vorschläge + Analyse (spart ~3 Sek vs. sequenziell)
+         05.09.2026: war Promise.all und damit die EINZIGE ungeschützte Stelle
+         im Hauptpfad. Ein Promise.all bricht ab, sobald ein Teil scheitert.
+         Der Nutzer hatte dann ~40 Sekunden gewartet, die Suche hatte Anbieter
+         gefunden, die Preise waren gelesen — und ein Fehler in der
+         abschliessenden Zusammenfassung warf alles weg (HTTP 500).
+         Die Suche ist der teure Teil, die Zusammenfassung ist Beiwerk.
+         Mit allSettled bleibt das Ergebnis erhalten, wenn nur das Beiwerk
+         ausfällt. */
+      const [vorschlaegeErgebnis, analyseErgebnis] = await Promise.allSettled([
         generateConsumerAiSuggestions(cleanContractText, detectedType, openai, userId),
         openai.chat.completions.create({
           model: "gpt-4o",
@@ -2837,11 +2847,37 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
         })
       ]);
 
+      const consumerAiProviders = vorschlaegeErgebnis.status === "fulfilled"
+        ? vorschlaegeErgebnis.value
+        : [];
+      if (vorschlaegeErgebnis.status === "rejected") {
+        console.error("⚠️ KI-Vorschläge fehlgeschlagen, Ergebnis bleibt erhalten:", vorschlaegeErgebnis.reason?.message);
+      }
+
       aiSuggestedAlternatives = createAiSuggestedAlternatives(consumerAiProviders);
       console.log(`✅ Consumer parallel abgeschlossen — KI-Vorschläge: ${aiSuggestedAlternatives.length}`);
 
-      spurKosten(completion, "gpt-4o", "consumer-analyse", userId);
-      analysis = completion.choices[0].message.content;
+      if (analyseErgebnis.status === "fulfilled") {
+        const completion = analyseErgebnis.value;
+        spurKosten(completion, "gpt-4o", "consumer-analyse", userId);
+        // choices kann in seltenen Fällen leer sein; dann greift derselbe Ersatztext.
+        analysis = completion?.choices?.[0]?.message?.content || null;
+      }
+
+      if (!analysis) {
+        const grund = analyseErgebnis.status === "rejected"
+          ? analyseErgebnis.reason?.message
+          : "leere Antwort";
+        console.error("⚠️ Zusammenfassung fehlgeschlagen, Ergebnis bleibt erhalten:", grund);
+        analyseAusgefallen = true;
+        /* Ehrlicher Ersatz statt einer erfundenen Empfehlung: Die Anbieter
+           stehen darüber, nur die Einordnung fehlt. Der Nutzer soll wissen,
+           dass hier etwas fehlt, und nicht rätseln. */
+        analysis = "## Zusammenfassung nicht verfügbar\n\n" +
+          "Die gefundenen Anbieter siehst du oben, die automatische Einordnung " +
+          "konnte diesmal aber nicht erstellt werden. Ein erneuter Versuch über " +
+          "\"Erneut suchen\" liefert sie in der Regel nach.";
+      }
     }
 
     // 🆕 GPT-Validation-Layer: klassifiziert alle Treffer in 4 Kategorien (direct/comparison/info/current_provider)
@@ -2898,6 +2934,7 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
         partnerOffersCount: partnerOffers.length,
         detailedExtractions: successfulExtractions.length,
         aiSuggestedCount: aiSuggestedAlternatives.length,
+        analyseAusgefallen,
         timestamp: new Date().toISOString(),
         processingTimeMs: Date.now() - startTime
       }
@@ -2933,8 +2970,8 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
     if (err.response?.status === 429) {
       console.log("📡 Returning 429 Rate Limit Error");
       return res.status(429).json({
-        error: "API Rate Limit erreicht",
-        message: "Zu viele Anfragen an externe Services. Bitte versuchen Sie es später erneut.",
+        error: "Zu viele Anfragen",
+        message: "Gerade laufen sehr viele Suchen gleichzeitig. Warte etwa eine Minute und starte die Suche erneut. Dein Vertrag bleibt so lange geladen.",
         retryAfter: "60 Sekunden"
       });
     }
@@ -2943,23 +2980,28 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksi
       console.log("📡 Returning 408 Timeout Error");
       return res.status(408).json({
         error: "Zeitüberschreitung",
-        message: "Die Analyse dauert zu lange. Versuchen Sie es mit einer einfacheren Suchanfrage."
+        message: "Die Suche hat zu lange gedauert und wurde abgebrochen. Ein eigenes Stichwort im Suchfeld grenzt sie ein und führt meist schneller zum Ziel."
       });
     }
 
     if (err.response?.status === 403) {
       console.log("📡 Returning 503 Service Unavailable");
       return res.status(503).json({
-        error: "Service temporär nicht verfügbar",
-        message: "Problem mit externen APIs. Bitte versuchen Sie es später erneut."
+        error: "Suche gerade nicht erreichbar",
+        message: "Der Dienst, über den wir den Markt durchsuchen, antwortet gerade nicht. Das liegt nicht an deinem Vertrag. Versuch es in ein paar Minuten noch einmal."
       });
     }
 
     console.log("📡 Returning 500 Internal Server Error");
+    /* 05.09.2026: "Interner Serverfehler" sagt dem Nutzer nichts ueber seine
+       Lage und klingt nach kaputtem Produkt. details: err.message reichte
+       ausserdem interne Fehlertexte an den Browser durch, ohne jeden Nutzen
+       fuer den Leser. Die Ursache steht weiterhin vollstaendig in den
+       Server-Logs, wo sie hingehoert. */
+    res.__caFehlerGrund = `${err.name || 'Error'}: ${String(err.message || '').slice(0, 200)}`;
     return res.status(500).json({
-      error: "Interner Serverfehler",
-      message: "Unerwarteter Fehler beim Vertragsvergleich",
-      details: err.message,
+      error: "Suche fehlgeschlagen",
+      message: "Bei der Suche ist etwas schiefgelaufen. Dein Vertrag ist nicht verloren, du kannst die Suche direkt noch einmal starten. Bleibt es dabei, hilft ein eigenes Stichwort im Suchfeld.",
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
