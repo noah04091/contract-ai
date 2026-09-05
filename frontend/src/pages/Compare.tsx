@@ -268,6 +268,8 @@ export default function EnhancedCompare() {
   const resultRef = useRef<HTMLDivElement>(null);
   const file1InputRef = useRef<HTMLInputElement>(null);
   const file2InputRef = useRef<HTMLInputElement>(null);
+  // 05.09.2026: welche der beiden Karten gerade eine gezogene Datei erwartet
+  const [ziehtAuf, setZiehtAuf] = useState<1 | 2 | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // 📏 File size validation (10MB limit, matching backend multer config)
@@ -285,6 +287,31 @@ export default function EnhancedCompare() {
   };
 
   // 📸 Document Scanners for both file inputs
+  /* 05.09.2026: Ziehen und Ablegen. Geprueft wird ueber dasselbe
+     validateAndSetFile wie beim Klickweg, es gibt also keine zweite Regel
+     fuer Dateityp und Groesse. */
+  const behandleZiehen = (e: React.DragEvent, schacht: 1 | 2) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isPremium) return;
+    setZiehtAuf(schacht);
+  };
+
+  const behandleVerlassen = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setZiehtAuf(null);
+  };
+
+  const behandleAblegen = (e: React.DragEvent, schacht: 1 | 2) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setZiehtAuf(null);
+    if (!isPremium) return;
+    const datei = e.dataTransfer?.files?.[0];
+    if (datei) validateAndSetFile(datei, schacht === 1 ? setFile1 : setFile2);
+  };
+
   const { openScanner: openScanner1, ScannerModal: ScannerModal1 } = useDocumentScanner((file) => {
     validateAndSetFile(file, setFile1);
   });
@@ -579,7 +606,7 @@ export default function EnhancedCompare() {
 
   // 📜 Clear all history via backend API
   const clearHistory = async () => {
-    if (!window.confirm('Möchten Sie wirklich den gesamten Vergleichsverlauf löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+    if (!window.confirm('Wirklich den gesamten Vergleichsverlauf löschen? Das lässt sich nicht rückgängig machen.')) {
       return;
     }
 
@@ -705,7 +732,7 @@ export default function EnhancedCompare() {
                 setTimeout(() => setNotification(null), 5000);
               } else if (eventData.type === 'error') {
                 setNotification({
-                  message: eventData.message || "Ein Fehler ist bei der Analyse aufgetreten. Bitte versuchen Sie es erneut.",
+                  message: eventData.message || "Beim Vergleich ist etwas schiefgelaufen. Deine Dateien sind noch geladen, du kannst ihn direkt noch einmal starten.",
                   type: "error"
                 });
                 setProgress(null);
@@ -755,7 +782,7 @@ export default function EnhancedCompare() {
       if (streamTimeout !== null) clearTimeout(streamTimeout);
       const isAbort = err instanceof DOMException && err.name === 'AbortError';
       const message = isAbort
-        ? "Die Analyse hat zu lange gedauert (> 5 Minuten). Bitte versuchen Sie es erneut oder verwenden Sie kürzere Verträge."
+        ? "Der Vergleich hat länger als fünf Minuten gedauert und wurde abgebrochen. Mit kürzeren Verträgen klappt es meist auf Anhieb."
         : err instanceof Error ? err.message : "Unbekannter Fehler beim Vergleich.";
       setNotification({
         message: isAbort ? message : "Fehler: " + message,
@@ -936,7 +963,7 @@ export default function EnhancedCompare() {
         featureId="compare"
         icon={<Scale size={32} />}
         title="Verträge vergleichen"
-        description="Laden Sie zwei Verträge hoch, um sie nebeneinander zu vergleichen. Die KI erkennt Unterschiede und bewertet, welcher Vertrag für Sie vorteilhafter ist."
+        description="Lade zwei Verträge hoch und sieh sie nebeneinander. Die KI zeigt die Unterschiede und sagt dir, welcher für dich günstiger ist."
         tip="Ideal für: Alter vs. neuer Vertrag, oder zwei Angebote von verschiedenen Anbietern."
       />
       <Helmet>
@@ -1235,7 +1262,7 @@ export default function EnhancedCompare() {
                 </div>
                 <div className="upload-header-text">
                   <h3>Verträge hochladen</h3>
-                  <p>Wählen Sie zwei Dokumente (PDF oder Word) für den Vergleich aus</p>
+                  <p>Wähle zwei Dokumente als PDF oder Word für den Vergleich aus</p>
                 </div>
               </div>
               {historyItems.length > 0 && (
@@ -1271,13 +1298,27 @@ export default function EnhancedCompare() {
 
                 {/* Contract 1 Card */}
                 <motion.div
-                  className={`premium-upload-card ${file1 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
+                  className={`premium-upload-card ${file1 ? 'has-file' : ''} ${ziehtAuf === 1 ? 'zieht' : ''} ${!isPremium ? 'disabled' : ''}`}
                   whileHover={isPremium && !file1 ? {
                     y: -4,
                     boxShadow: '0 20px 40px rgba(0, 113, 227, 0.15), 0 0 0 1px rgba(0, 113, 227, 0.2)'
                   } : {}}
                   whileTap={isPremium ? { scale: 0.99 } : {}}
                   onClick={() => isPremium && file1InputRef.current?.click()}
+                  onDragOver={(e) => behandleZiehen(e, 1)}
+                  onDragEnter={(e) => behandleZiehen(e, 1)}
+                  onDragLeave={behandleVerlassen}
+                  onDrop={(e) => behandleAblegen(e, 1)}
+                  onKeyDown={(e) => {
+                    if (!isPremium) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      file1InputRef.current?.click();
+                    }
+                  }}
+                  role="button"
+                  tabIndex={isPremium ? 0 : -1}
+                  aria-label={file1 ? `Erster Vertrag: ${file1.name}, zum Ersetzen auswählen` : 'Ersten Vertrag auswählen'}
                 >
                   <input
                     ref={file1InputRef}
@@ -1377,13 +1418,27 @@ export default function EnhancedCompare() {
 
                 {/* Contract 2 Card */}
                 <motion.div
-                  className={`premium-upload-card ${file2 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
+                  className={`premium-upload-card ${file2 ? 'has-file' : ''} ${ziehtAuf === 2 ? 'zieht' : ''} ${!isPremium ? 'disabled' : ''}`}
                   whileHover={isPremium && !file2 ? {
                     y: -4,
                     boxShadow: '0 20px 40px rgba(88, 86, 214, 0.15), 0 0 0 1px rgba(88, 86, 214, 0.2)'
                   } : {}}
                   whileTap={isPremium ? { scale: 0.99 } : {}}
                   onClick={() => isPremium && file2InputRef.current?.click()}
+                  onDragOver={(e) => behandleZiehen(e, 2)}
+                  onDragEnter={(e) => behandleZiehen(e, 2)}
+                  onDragLeave={behandleVerlassen}
+                  onDrop={(e) => behandleAblegen(e, 2)}
+                  onKeyDown={(e) => {
+                    if (!isPremium) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      file2InputRef.current?.click();
+                    }
+                  }}
+                  role="button"
+                  tabIndex={isPremium ? 0 : -1}
+                  aria-label={file2 ? `Zweiter Vertrag: ${file2.name}, zum Ersetzen auswählen` : 'Zweiten Vertrag auswählen'}
                 >
                   <input
                     ref={file2InputRef}
@@ -1944,6 +1999,21 @@ export default function EnhancedCompare() {
           .premium-upload-card:hover {
             border-style: solid;
             border-color: rgba(0, 113, 227, 0.4);
+          }
+
+          /* 05.09.2026: Rueckmeldung beim Ziehen. Bewusst dieselbe Farbe wie
+             beim Zeigen mit der Maus, damit sich optisch nichts Neues
+             einfuehrt. */
+          .premium-upload-card.zieht {
+            border-style: solid;
+            border-color: rgba(0, 113, 227, 0.6);
+            background: rgba(0, 113, 227, 0.04);
+          }
+
+          /* Ohne sichtbaren Rahmen waere die Tastaturbedienung wertlos. */
+          .premium-upload-card:focus-visible {
+            outline: 2px solid rgba(0, 113, 227, 0.8);
+            outline-offset: 2px;
           }
 
           .premium-upload-card.has-file {
