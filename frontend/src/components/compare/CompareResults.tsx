@@ -15,6 +15,7 @@ import RisksTab from './tabs/RisksTab';
 import RecommendationsTab from './tabs/RecommendationsTab';
 import ContractMapTab from './tabs/ContractMapTab';
 import styles from '../../styles/Compare.module.css';
+import '../../styles/CompareGegen.css';
 
 interface CompareResultsProps {
   result: ComparisonResult;
@@ -129,6 +130,63 @@ export default function CompareResults({
       )}
 
       {/* Tab Navigation */}
+      {/* ══════════════════════════════════════════════════════════
+          05.09.2026: Das Urteil stand im Reiter "Überblick", also hinter
+          einem Klick, obwohl es die Antwort auf die Frage ist, mit der
+          jemand hergekommen ist. Das Band trägt die Farbe des
+          gewinnenden Vertrags, damit man das Ergebnis sieht, bevor man
+          liest. Funktioniert auch im V1-Fallback, denn
+          overallRecommendation gibt es in beiden Fassungen.
+          ══════════════════════════════════════════════════════════ */}
+      {result.overallRecommendation && (
+        <div className="cg-urteil">
+          <div className={`cg-urteil-band ${result.overallRecommendation.recommended === 1 ? 'fuer-a' : 'fuer-b'}`}>
+            <span className="cg-urteil-kennung">
+              {result.overallRecommendation.recommended === 1 ? 'A' : 'B'}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <div className="cg-urteil-t">
+                Vertrag {result.overallRecommendation.recommended === 1 ? 'A' : 'B'} ist für dich der bessere
+              </div>
+              <div className="cg-urteil-s">
+                {v2Result?.documentType?.labels?.documentName
+                  ? `Bewertet als ${v2Result.documentType.labels.documentName}`
+                  : 'Auf Grundlage beider Dokumente'}
+              </div>
+            </div>
+            {typeof result.overallRecommendation.confidence === 'number' && (
+              <div className="cg-zuversicht">
+                <div className="cg-zuversicht-w">{result.overallRecommendation.confidence}&thinsp;%</div>
+                <div className="cg-zuversicht-k">Zuversicht</div>
+              </div>
+            )}
+          </div>
+
+          <div className="cg-urteil-text">
+            <p>
+              {v2Result
+                ? (v2Result.summary?.verdict || v2Result.overallRecommendation.reasoning)
+                : result.overallRecommendation.reasoning}
+            </p>
+          </div>
+
+          {v2Result?.overallRecommendation.conditions && v2Result.overallRecommendation.conditions.length > 0 && (
+            <div className="cg-bedingungen">
+              <h4>Das gilt nur, wenn</h4>
+              {v2Result.overallRecommendation.conditions.map((c, i) => (
+                <div className="cg-bedingung" key={i}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M12 9v4M12 17h.01" />
+                    <path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                  </svg>
+                  <span>{c}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className={styles.tabNavigation}>
         {TAB_CONFIG.map((tab) => {
           const Icon = tab.icon;

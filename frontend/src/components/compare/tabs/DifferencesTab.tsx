@@ -31,7 +31,12 @@ export default function DifferencesTab({ result, file1, file2, docName = 'Vertra
   const [showSideBySide, setShowSideBySide] = useState(true);
   const [activeDiffIndex, setActiveDiffIndex] = useState(0);
   const [expandedQuoteIndex, setExpandedQuoteIndex] = useState<number | null>(null);
-  const [allQuotesExpanded, setAllQuotesExpanded] = useState(false);
+  /* 05.09.2026: stand auf false. Die beiden Vertragstexte, also der Kern
+     jedes Unterschieds, lagen dadurch hinter einem Aufklapper. In einer
+     Gegenüberstellung sind sie das Wichtigste und gehören sofort sichtbar.
+     Die SideBySideQuotes-Komponente dafür gab es bereits. Wer es kompakter
+     mag, klappt über "Alle zuklappen" wieder zu. */
+  const [allQuotesExpanded, setAllQuotesExpanded] = useState(true);
   const [expandedPdfIndex, setExpandedPdfIndex] = useState<number | null>(null);
   const [activePdfTab, setActivePdfTab] = useState<1 | 2>(1);
   const diffRefs = useRef<(HTMLDivElement | null)[]>([]);

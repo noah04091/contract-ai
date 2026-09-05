@@ -5,7 +5,7 @@ import { Helmet } from "react-helmet-async";
 import {
   FileText, Download, ArrowRight, CheckCircle, AlertCircle,
   RefreshCw, Upload, Info,
-  Users, Briefcase, Building, Zap, Scale,
+  Users, Briefcase, Building, Scale,
   Star,
   GitCompare, FileCheck, Trophy,
   ChevronDown, History, Trash2, X,
@@ -20,6 +20,7 @@ import {
   Perspective,
 } from "../types/compare";
 import "../styles/ContractPages.css";
+import "../styles/CompareGegen.css";
 
 // PremiumNotice Wrapper entfernt - verwende UnifiedPremiumNotice direkt mit variant="fullWidth"
 
@@ -984,7 +985,7 @@ export default function EnhancedCompare() {
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
-      <div className={`contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
+      <div className={`cg-seite ${!isPremium ? 'with-premium-banner' : ''}`}>
         {/* Full-Width Premium Banner - außerhalb des Containers */}
         {!isPremium && (
           <UnifiedPremiumNotice
@@ -994,28 +995,62 @@ export default function EnhancedCompare() {
         )}
 
         <motion.div
-          className="contract-container"
-          style={{ maxWidth: '1200px', ...(result ? { paddingTop: '8px' } : {}) }}
+          className="cg-rahmen"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Hero Section - Hidden when results are shown */}
-          {!result && (
-          <div className="contract-header">
-            <div className="contract-hero-icon">
-              <Scale size={36} />
+          {/* ══════════════════════════════════════════════════════════
+              05.09.2026: Der Kopf war eine Landingpage-Wand (Hero-Symbol,
+              Abzeichen "Premium Feature", Verlaufsueberschrift,
+              Beschreibungssatz) und verschwand ausserdem, sobald
+              Ergebnisse da waren. Er bleibt jetzt stehen und wechselt
+              nur seinen Inhalt.
+              ══════════════════════════════════════════════════════════ */}
+          <div className="cg-kopf">
+            <div>
+              <div className="cg-kopf-titel">
+                {result ? 'Vergleichsergebnis' : 'Vertragsvergleich'}
+              </div>
+              <div className="cg-kopf-sub">
+                {result ? (
+                  <>
+                    Aus Sicht {perspective === 'auftraggeber' ? <strong>des Auftraggebers</strong>
+                      : perspective === 'auftragnehmer' ? <strong>des Auftragnehmers</strong>
+                      : <strong>beider Seiten</strong>}
+                    {file1 && file2 ? ` · ${file1.name} gegen ${file2.name}` : ''}
+                  </>
+                ) : (
+                  'Zwei Verträge gegenübergestellt, mit Einordnung durch die KI'
+                )}
+              </div>
             </div>
-            {!isPremium && <div className="contract-hero-badge">Premium Feature</div>}
-            <h1>Vertrags<span className="gradient-text">vergleich</span></h1>
-            <p className="contract-description">
-              Vergleiche zwei Verträge und erhalte eine KI-Empfehlung
-            </p>
+
+            <div className="cg-kopf-rechts">
+              {result ? (
+                <button className="cg-knopf still klein" onClick={handleReset}>
+                  <RefreshCw size={14} />
+                  Neuer Vergleich
+                </button>
+              ) : historyItems.length > 0 ? (
+                <button className="cg-knopf still klein" onClick={() => setShowHistory(!showHistory)}>
+                  <History size={14} />
+                  Frühere Vergleiche ({historyItems.length})
+                  <ChevronDown
+                    size={13}
+                    style={{
+                      transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.25s ease'
+                    }}
+                  />
+                </button>
+              ) : null}
+            </div>
           </div>
-          )}
 
-          {/* History Button moved to upload section header */}
-
+          {/* 05.09.2026 zurueckgeholt: Historie-Anzeige, Profilwahl, Moduswahl
+              und der Hinweis auf einen vorgeladenen Vertrag. Sie lagen im
+              ersetzten Bereich und waren beim Umbau mit verschwunden. */}
           {/* History Panel */}
           <AnimatePresence>
             {!result && showHistory && (
@@ -1246,356 +1281,223 @@ export default function EnhancedCompare() {
             </motion.div>
           )}
 
-          {/* Premium Upload Section - Hidden when results are shown */}
-          {!result && (
-          <motion.div
-            className="premium-upload-section"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            {/* Section Header */}
-            <div className="upload-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div className="upload-header-icon">
-                  <Scale size={20} />
-                </div>
-                <div className="upload-header-text">
-                  <h3>Verträge hochladen</h3>
-                  <p>Wähle zwei Dokumente als PDF oder Word für den Vergleich aus</p>
-                </div>
+          {/* ══════════ PERSPEKTIVE ══════════
+              ⭐ Steht bewusst VOR dem Vergleich. Sie wurde bisher immer als
+              'neutral' mitgeschickt und war erst im Ergebnis waehlbar; wer
+              Auftraggeber ist, merkte das erst hinterher und musste den
+              ganzen Vergleich neu rechnen lassen. */}
+          {!result && !loading && (
+            <div className="cg-perspektive">
+              <h3>Auf welcher Seite stehst du?</h3>
+              <p>Bestimmt die gesamte Bewertung. Dieselbe Haftungsklausel ist für die eine Seite ein Schutz und für die andere ein Risiko.</p>
+              <div className="cg-rollen">
+                {([
+                  ['auftraggeber', 'Auftraggeber', 'Du beauftragst und bezahlst die Leistung'],
+                  ['auftragnehmer', 'Auftragnehmer', 'Du erbringst die Leistung'],
+                  ['neutral', 'Neutral', 'Beide Seiten gleich gewichtet']
+                ] as [Perspective, string, string][]).map(([wert, titel, text]) => (
+                  <button
+                    key={wert}
+                    className={`cg-rolle ${perspective === wert ? 'aktiv' : ''}`}
+                    onClick={() => setPerspective(wert)}
+                    disabled={!isPremium}
+                    aria-pressed={perspective === wert}
+                  >
+                    <div className="cg-rolle-t">{titel}</div>
+                    <div className="cg-rolle-s">{text}</div>
+                  </button>
+                ))}
               </div>
-              {historyItems.length > 0 && (
-                <motion.button
-                  onClick={() => setShowHistory(!showHistory)}
-                  className={`history-toggle-btn ${showHistory ? 'active' : ''}`}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{ flexShrink: 0 }}
-                >
-                  <History size={16} />
-                  <span>Historie ({historyItems.length})</span>
-                  <ChevronDown
-                    size={14}
-                    style={{
-                      transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.3s ease'
+            </div>
+          )}
+
+          {/* ══════════ LADEZUSTAND ══════════
+              Nutzt progress.progress und progress.message aus dem Streaming,
+              statt nur zu drehen. */}
+          {loading && !result && (
+            <div className="cg-laden">
+              <div className="cg-laden-kreis"></div>
+              <h3>{progress?.message || 'Verträge werden verglichen'}</h3>
+              <p>Das dauert einen Moment. Du kannst die Seite offen lassen.</p>
+              <div className="cg-balken">
+                <i style={{ width: `${Math.max(5, Math.min(100, progress?.progress ?? 5))}%` }} />
+              </div>
+            </div>
+          )}
+
+          {/* ══════════ DIE ZWEI SÄULEN ══════════ */}
+          {!result && !loading && (
+          <>
+          <div className="cg-gegen">
+            {/* ── Vertrag A ── */}
+            <div className="cg-saeule cg-a">
+              <div className="cg-saeule-kopf">
+                <span className="cg-kennung">A</span>
+                <span className="cg-saeule-name">{file1 ? file1.name : 'Erster Vertrag'}</span>
+                <span className="cg-saeule-meta">
+                  {file1 ? `${(file1.size / 1024 / 1024).toFixed(1)} MB` : 'noch leer'}
+                </span>
+              </div>
+
+              <input
+                ref={file1InputRef}
+                type="file"
+                accept=".pdf,.docx"
+                disabled={!isPremium}
+                style={{ display: 'none' }}
+                onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile1)}
+              />
+
+              {file1 ? (
+                <div className="cg-geladen">
+                  <div className="cg-geladen-symbol">
+                    <CheckCircle size={17} />
+                  </div>
+                  <div className="cg-geladen-t">
+                    <div className="cg-geladen-n">{file1.name}</div>
+                    <div className="cg-geladen-m">
+                      {(file1.size / 1024 / 1024).toFixed(2)} MB · {file1.name.split('.').pop()?.toUpperCase()}
+                    </div>
+                  </div>
+                  <button className="cg-weg" onClick={() => setFile1(null)}>Entfernen</button>
+                </div>
+              ) : (
+                <>
+                  <div
+                    className={`cg-ablage ${ziehtAuf === 1 ? 'zieht' : ''} ${!isPremium ? 'gesperrt' : ''}`}
+                    onClick={() => isPremium && file1InputRef.current?.click()}
+                    onDragOver={(e) => behandleZiehen(e, 1)}
+                    onDragEnter={(e) => behandleZiehen(e, 1)}
+                    onDragLeave={behandleVerlassen}
+                    onDrop={(e) => behandleAblegen(e, 1)}
+                    onKeyDown={(e) => {
+                      if (!isPremium) return;
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        file1InputRef.current?.click();
+                      }
                     }}
-                  />
-                </motion.button>
+                    role="button"
+                    tabIndex={isPremium ? 0 : -1}
+                    aria-label="Ersten Vertrag auswählen"
+                  >
+                    <div className="cg-ablage-symbol">
+                      <Upload size={18} strokeWidth={1.8} />
+                    </div>
+                    <div className="cg-ablage-t">
+                      {isPremium ? 'Hierher ziehen' : 'Business-Abo erforderlich'}
+                    </div>
+                    <div className="cg-ablage-s">
+                      {isPremium ? <>oder <span>Datei auswählen</span></> : 'Vergleichen ist Teil des Business-Abos'}
+                    </div>
+                  </div>
+                  {isPremium && (
+                    <button className="cg-foto" onClick={() => openScanner1()}>
+                      <Camera size={13} />
+                      Abfotografieren
+                    </button>
+                  )}
+                </>
               )}
             </div>
 
-            {/* Upload Cards Container */}
-            <div className="upload-cards-container">
-              {/* Contract 1 Card Wrapper */}
-              <div className="card-wrapper">
-                {/* Card Label - outside the card */}
-                <div className="card-label">
-                  <span className="label-number">1</span>
-                  <span className="label-text">Erster Vertrag</span>
-                </div>
-
-                {/* Contract 1 Card */}
-                <motion.div
-                  className={`premium-upload-card ${file1 ? 'has-file' : ''} ${ziehtAuf === 1 ? 'zieht' : ''} ${!isPremium ? 'disabled' : ''}`}
-                  whileHover={isPremium && !file1 ? {
-                    y: -4,
-                    boxShadow: '0 20px 40px rgba(0, 113, 227, 0.15), 0 0 0 1px rgba(0, 113, 227, 0.2)'
-                  } : {}}
-                  whileTap={isPremium ? { scale: 0.99 } : {}}
-                  onClick={() => isPremium && file1InputRef.current?.click()}
-                  onDragOver={(e) => behandleZiehen(e, 1)}
-                  onDragEnter={(e) => behandleZiehen(e, 1)}
-                  onDragLeave={behandleVerlassen}
-                  onDrop={(e) => behandleAblegen(e, 1)}
-                  onKeyDown={(e) => {
-                    if (!isPremium) return;
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      file1InputRef.current?.click();
-                    }
-                  }}
-                  role="button"
-                  tabIndex={isPremium ? 0 : -1}
-                  aria-label={file1 ? `Erster Vertrag: ${file1.name}, zum Ersetzen auswählen` : 'Ersten Vertrag auswählen'}
-                >
-                  <input
-                    ref={file1InputRef}
-                    type="file"
-                    accept=".pdf,.docx"
-                    disabled={!isPremium}
-                    style={{ display: 'none' }}
-                    onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile1)}
-                  />
-
-                  {/* Decorative Background */}
-                  <div className="card-bg-decoration" />
-
-                {file1 ? (
-                  <motion.div
-                    className="file-preview"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                  >
-                    <div className="file-icon-wrapper success">
-                      <FileText size={28} />
-                      <motion.div
-                        className="success-check"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: 'spring' }}
-                      >
-                        <CheckCircle size={16} />
-                      </motion.div>
-                    </div>
-                    <div className="file-info">
-                      <span className="file-name">{file1.name}</span>
-                      <span className="file-size">{(file1.size / 1024 / 1024).toFixed(2)} MB</span>
-                    </div>
-                    <motion.button
-                      className="remove-file"
-                      onClick={(e) => { e.stopPropagation(); setFile1(null); }}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <X size={14} />
-                    </motion.button>
-                  </motion.div>
-                ) : (
-                  <div className="upload-placeholder">
-                    <div className="upload-icon-wrapper">
-                      <Upload size={24} />
-                      <div className="upload-icon-ring" />
-                    </div>
-                    <span className="upload-text">Dokument auswählen</span>
-                    <span className="upload-hint">oder hierher ziehen</span>
-                    {/* 📸 Scan Button inside card */}
-                    {isPremium && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openScanner1(); }}
-                        className="scan-button-inline"
-                      >
-                        <Camera size={14} />
-                        Dokument scannen
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {!isPremium && (
-                  <div className="premium-overlay">
-                    <span className="premium-badge-card">
-                      <Star size={12} />
-                      Premium
-                    </span>
-                  </div>
-                )}
-              </motion.div>
+            {/* ── Vertrag B ── */}
+            <div className="cg-saeule cg-b">
+              <div className="cg-saeule-kopf">
+                <span className="cg-kennung">B</span>
+                <span className="cg-saeule-name">{file2 ? file2.name : 'Zweiter Vertrag'}</span>
+                <span className="cg-saeule-meta">
+                  {file2 ? `${(file2.size / 1024 / 1024).toFixed(1)} MB` : 'noch leer'}
+                </span>
               </div>
 
-              {/* VS Connector */}
-              <div className="vs-connector">
-                <div className="connector-line" />
-                <motion.div
-                  className="vs-badge"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.4, type: 'spring', stiffness: 300 }}
-                >
-                  <span>VS</span>
-                </motion.div>
-                <div className="connector-line" />
-              </div>
+              <input
+                ref={file2InputRef}
+                type="file"
+                accept=".pdf,.docx"
+                disabled={!isPremium}
+                style={{ display: 'none' }}
+                onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile2)}
+              />
 
-              {/* Contract 2 Card Wrapper */}
-              <div className="card-wrapper">
-                {/* Card Label - outside the card */}
-                <div className="card-label alt">
-                  <span className="label-number">2</span>
-                  <span className="label-text">Zweiter Vertrag</span>
-                </div>
-
-                {/* Contract 2 Card */}
-                <motion.div
-                  className={`premium-upload-card ${file2 ? 'has-file' : ''} ${ziehtAuf === 2 ? 'zieht' : ''} ${!isPremium ? 'disabled' : ''}`}
-                  whileHover={isPremium && !file2 ? {
-                    y: -4,
-                    boxShadow: '0 20px 40px rgba(88, 86, 214, 0.15), 0 0 0 1px rgba(88, 86, 214, 0.2)'
-                  } : {}}
-                  whileTap={isPremium ? { scale: 0.99 } : {}}
-                  onClick={() => isPremium && file2InputRef.current?.click()}
-                  onDragOver={(e) => behandleZiehen(e, 2)}
-                  onDragEnter={(e) => behandleZiehen(e, 2)}
-                  onDragLeave={behandleVerlassen}
-                  onDrop={(e) => behandleAblegen(e, 2)}
-                  onKeyDown={(e) => {
-                    if (!isPremium) return;
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      file2InputRef.current?.click();
-                    }
-                  }}
-                  role="button"
-                  tabIndex={isPremium ? 0 : -1}
-                  aria-label={file2 ? `Zweiter Vertrag: ${file2.name}, zum Ersetzen auswählen` : 'Zweiten Vertrag auswählen'}
-                >
-                  <input
-                    ref={file2InputRef}
-                    type="file"
-                    accept=".pdf,.docx"
-                    disabled={!isPremium}
-                    style={{ display: 'none' }}
-                    onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile2)}
-                  />
-
-                  {/* Decorative Background */}
-                  <div className="card-bg-decoration alt" />
-
-                {file2 ? (
-                  <motion.div
-                    className="file-preview"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                  >
-                    <div className="file-icon-wrapper success alt">
-                      <FileText size={28} />
-                      <motion.div
-                        className="success-check"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: 'spring' }}
-                      >
-                        <CheckCircle size={16} />
-                      </motion.div>
-                    </div>
-                    <div className="file-info">
-                      <span className="file-name">{file2.name}</span>
-                      <span className="file-size">{(file2.size / 1024 / 1024).toFixed(2)} MB</span>
-                    </div>
-                    <motion.button
-                      className="remove-file"
-                      onClick={(e) => { e.stopPropagation(); setFile2(null); }}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <X size={14} />
-                    </motion.button>
-                  </motion.div>
-                ) : (
-                  <div className="upload-placeholder">
-                    <div className="upload-icon-wrapper alt">
-                      <Upload size={24} />
-                      <div className="upload-icon-ring" />
-                    </div>
-                    <span className="upload-text">Dokument auswählen</span>
-                    <span className="upload-hint">oder hierher ziehen</span>
-                    {/* 📸 Scan Button inside card */}
-                    {isPremium && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openScanner2(); }}
-                        className="scan-button-inline"
-                      >
-                        <Camera size={14} />
-                        Dokument scannen
-                      </button>
-                    )}
+              {file2 ? (
+                <div className="cg-geladen">
+                  <div className="cg-geladen-symbol">
+                    <CheckCircle size={17} />
                   </div>
-                )}
-
-                {!isPremium && (
-                  <div className="premium-overlay">
-                    <span className="premium-badge-card">
-                      <Star size={12} />
-                      Premium
-                    </span>
+                  <div className="cg-geladen-t">
+                    <div className="cg-geladen-n">{file2.name}</div>
+                    <div className="cg-geladen-m">
+                      {(file2.size / 1024 / 1024).toFixed(2)} MB · {file2.name.split('.').pop()?.toUpperCase()}
+                    </div>
                   </div>
-                )}
-              </motion.div>
-              </div>
-            </div>
-
-            {/* 📊 SSE Progress Bar */}
-            {loading && progress && (
-              <motion.div
-                style={{
-                  marginBottom: '1.5rem',
-                  padding: '1rem 1.5rem',
-                  background: 'rgba(0, 113, 227, 0.05)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(0, 113, 227, 0.1)'
-                }}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#0071e3' }}>
-                    {progress.message}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
-                    {progress.progress}%
-                  </span>
+                  <button className="cg-weg" onClick={() => setFile2(null)}>Entfernen</button>
                 </div>
-                <div style={{
-                  height: '6px',
-                  backgroundColor: 'rgba(0, 113, 227, 0.1)',
-                  borderRadius: '3px',
-                  overflow: 'hidden'
-                }}>
-                  <motion.div
-                    style={{
-                      height: '100%',
-                      background: 'linear-gradient(90deg, #0071e3, #00c7be)',
-                      borderRadius: '3px'
+              ) : (
+                <>
+                  <div
+                    className={`cg-ablage ${ziehtAuf === 2 ? 'zieht' : ''} ${!isPremium ? 'gesperrt' : ''}`}
+                    onClick={() => isPremium && file2InputRef.current?.click()}
+                    onDragOver={(e) => behandleZiehen(e, 2)}
+                    onDragEnter={(e) => behandleZiehen(e, 2)}
+                    onDragLeave={behandleVerlassen}
+                    onDrop={(e) => behandleAblegen(e, 2)}
+                    onKeyDown={(e) => {
+                      if (!isPremium) return;
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        file2InputRef.current?.click();
+                      }
                     }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress.progress}%` }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                  />
-                </div>
-              </motion.div>
+                    role="button"
+                    tabIndex={isPremium ? 0 : -1}
+                    aria-label="Zweiten Vertrag auswählen"
+                  >
+                    <div className="cg-ablage-symbol">
+                      <Upload size={18} strokeWidth={1.8} />
+                    </div>
+                    <div className="cg-ablage-t">
+                      {isPremium ? 'Hierher ziehen' : 'Business-Abo erforderlich'}
+                    </div>
+                    <div className="cg-ablage-s">
+                      {isPremium ? <>oder <span>Datei auswählen</span></> : 'Vergleichen ist Teil des Business-Abos'}
+                    </div>
+                  </div>
+                  {isPremium && (
+                    <button className="cg-foto" onClick={() => openScanner2()}>
+                      <Camera size={13} />
+                      Abfotografieren
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="cg-leiste">
+            <span className="cg-typ">PDF</span>
+            <span className="cg-typ">DOCX</span>
+            <span>je bis 10 MB</span>
+            <span style={{ marginLeft: 'auto' }}>Die Dateien verlassen deinen Browser nur zur Analyse</span>
+          </div>
+
+          <div className="cg-knopfreihe">
+            {(file1 || file2) && (
+              <button className="cg-knopf still" onClick={handleReset}>
+                <RefreshCw size={15} />
+                Zurücksetzen
+              </button>
             )}
-
-            {/* Premium Action Buttons */}
-            <div className="action-buttons">
-              <motion.button
-                className={`premium-submit-btn ${(!file1 || !file2 || loading || !isPremium) ? 'disabled' : ''}`}
-                onClick={handleSubmit}
-                disabled={!file1 || !file2 || loading || !isPremium}
-                whileHover={file1 && file2 && !loading && isPremium ? {
-                  y: -2,
-                  boxShadow: '0 12px 35px rgba(0, 113, 227, 0.35)'
-                } : {}}
-                whileTap={file1 && file2 && !loading && isPremium ? { scale: 0.98 } : {}}
-              >
-                <span className="btn-bg" />
-                {loading ? (
-                  <>
-                    <div className="loading-spinner" />
-                    <span className="btn-text">{progress?.message || 'Analysiere...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap size={18} className="btn-icon" />
-                    <span className="btn-text">Vergleich starten</span>
-                    <ArrowRight size={16} className="btn-arrow" />
-                  </>
-                )}
-              </motion.button>
-
-              {(file1 || file2) && (
-                <motion.button
-                  className="reset-btn"
-                  onClick={handleReset}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <RefreshCw size={16} />
-                  <span>Zurücksetzen</span>
-                </motion.button>
-              )}
-            </div>
-          </motion.div>
+            <button
+              className="cg-knopf cg-schieb"
+              onClick={handleSubmit}
+              disabled={!file1 || !file2 || loading || !isPremium}
+            >
+              Vergleich starten
+              <ArrowRight size={15} />
+            </button>
+          </div>
+          </>
           )}
 
           {/* 🆕 V2 Results Container */}

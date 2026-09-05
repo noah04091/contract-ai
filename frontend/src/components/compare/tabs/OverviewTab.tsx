@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
-import {
-  Star, AlertTriangle, AlertCircle, CheckCircle,
+import { AlertTriangle, AlertCircle, CheckCircle,
   ThumbsUp, ThumbsDown, Award, TrendingUp, BarChart3,
   FileText, Info
 } from 'lucide-react';
@@ -154,37 +153,11 @@ export default function OverviewTab({ result, file1, file2, file1Name, file2Name
         </motion.div>
       )}
 
-      {/* Verdict / Recommendation Box */}
-      <motion.div
-        className={styles.verdictBox}
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        <div className={styles.verdictHeader}>
-          <Star size={20} />
-          <h4>Empfehlung: {v2Result?.documentType?.labels?.documentName || 'Vertrag'} {result.overallRecommendation.recommended}</h4>
-        </div>
-        <p className={styles.verdictText}>
-          {v2Result
-            ? v2Result.summary.verdict || v2Result.overallRecommendation.reasoning
-            : result.overallRecommendation.reasoning
-          }
-        </p>
-        {v2Result?.overallRecommendation.conditions && v2Result.overallRecommendation.conditions.length > 0 && (
-          <div className={styles.verdictConditions}>
-            <strong>Bedingungen:</strong>
-            <ul>
-              {v2Result.overallRecommendation.conditions.map((c, i) => (
-                <li key={i}>{c}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        <div className={styles.verdictConfidence}>
-          Konfidenz: {result.overallRecommendation.confidence}%
-        </div>
-      </motion.div>
+      {/* 05.09.2026: Der Urteilsblock (Empfehlung, Begründung, Bedingungen,
+          Zuversicht) steht jetzt ÜBER der Reiterleiste, siehe CompareResults.
+          Er ist die Antwort auf die Frage, mit der jemand hergekommen ist, und
+          lag hier hinter einem Klick. Der Überblick behält Kurzfassung,
+          Bewertungen, Marktvergleich und ausführliche Zusammenfassung. */}
 
       {/* Detailed Summary (V2) */}
       {v2Result?.summary.detailedSummary && (

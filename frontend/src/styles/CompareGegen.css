@@ -1,0 +1,1018 @@
+/* ══════════════════════════════════════════════════════════════════
+   VERGLEICH — GEGENÜBERSTELLUNG (05.09.2026)
+
+   Ein Vergleich hat zwei Seiten und ein Urteil. Better Contracts ist
+   eine Liste, dies hier ist etwas anderes; übernommen wird deshalb nur
+   die Haltung (arbeiten statt werben, echte Zahlen statt Fläche füllen),
+   nicht der Aufbau.
+
+   LEITGEDANKE: Zwei Spalten sind das Rückgrat der ganzen Seite, vom
+   Hochladen bis zum letzten Unterschied. Vertrag A ist durchgehend blau,
+   Vertrag B durchgehend petrol. Man muss nie nachschlagen, welcher
+   welcher ist.
+
+   EIGENES PRÄFIX cg-, damit nichts mit bcw- (Better Contracts), mit
+   ContractPages.css (auch Optimierer) oder mit den 120 globalen Klassen
+   aus dem eingebetteten Style-Block der Seite kollidiert.
+   ══════════════════════════════════════════════════════════════════ */
+
+.cg-seite {
+  --cg-grund: #ffffff;
+  --cg-tiefe: #eef0f5;
+  --cg-senke: #f5f7fa;
+  --cg-senke-2: #e9edf3;
+  --cg-linie: #e4e8ef;
+  --cg-linie-satt: #d3d9e3;
+  --cg-tinte: #0f1826;
+  --cg-tinte-2: #55606f;
+  --cg-tinte-3: #8590a0;
+
+  /* Die beiden Verträge tragen durchgehend dieselben zwei Farben.
+     Kein Lila; das alte #5856d6 für Vertrag 2 ist hier Petrol. */
+  --cg-a: #2563eb;
+  --cg-a-sanft: #eef4fe;
+  --cg-a-linie: #cadcfb;
+  --cg-b: #0e7490;
+  --cg-b-sanft: #e8f4f7;
+  --cg-b-linie: #b8dde6;
+
+  --cg-gut: #0f7b55;
+  --cg-gut-sanft: #e9f5f0;
+  --cg-warn: #8a5a12;
+  --cg-warn-sanft: #fdf6ec;
+  --cg-krit: #a72929;
+  --cg-krit-sanft: #fdf1f1;
+
+  --cg-r1: 6px;
+  --cg-r2: 10px;
+  --cg-r3: 14px;
+
+  background: var(--cg-tiefe);
+  padding: 2rem 2rem 4rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--cg-tinte);
+}
+
+.cg-rahmen {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+/* ══════════ SEITENKOPF ══════════ */
+.cg-kopf {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 0 2px 14px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--cg-linie-satt);
+  flex-wrap: wrap;
+}
+
+.cg-kopf-titel {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.cg-kopf-sub {
+  font-size: 13px;
+  color: var(--cg-tinte-3);
+  line-height: 1.45;
+}
+
+.cg-kopf-sub strong {
+  color: var(--cg-tinte);
+  font-weight: 600;
+}
+
+.cg-kopf-rechts {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ══════════ PERSPEKTIVE ══════════
+   Steht bewusst VOR dem Vergleich. Sie wurde bisher immer als "neutral"
+   mitgeschickt und war erst im Ergebnis wählbar — wer Auftraggeber ist,
+   merkte das erst hinterher und musste komplett neu rechnen lassen. */
+.cg-perspektive {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+
+.cg-perspektive h3 {
+  margin: 0 0 3px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cg-tinte);
+}
+
+.cg-perspektive > p {
+  margin: 0 0 14px;
+  font-size: 13.5px;
+  color: var(--cg-tinte-2);
+}
+
+.cg-rollen {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.cg-rolle {
+  padding: 12px 14px;
+  border: 1px solid var(--cg-linie-satt);
+  border-radius: var(--cg-r2);
+  cursor: pointer;
+  background: var(--cg-grund);
+  text-align: left;
+  font-family: inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.cg-rolle:hover:not(:disabled) {
+  border-color: var(--cg-a-linie);
+}
+
+.cg-rolle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cg-rolle.aktiv {
+  border-color: var(--cg-a);
+  background: var(--cg-a-sanft);
+  box-shadow: inset 0 0 0 1px var(--cg-a);
+}
+
+.cg-rolle-t {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  color: var(--cg-tinte);
+}
+
+.cg-rolle.aktiv .cg-rolle-t {
+  color: var(--cg-a);
+}
+
+.cg-rolle-s {
+  font-size: 12.5px;
+  color: var(--cg-tinte-3);
+  line-height: 1.45;
+}
+
+/* ══════════ DAS RÜCKGRAT: ZWEI SÄULEN ══════════ */
+.cg-gegen {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.cg-saeule {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  overflow: hidden;
+}
+
+.cg-saeule-kopf {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 15px;
+  border-bottom: 1px solid var(--cg-linie);
+}
+
+.cg-kennung {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--cg-r1);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cg-a .cg-kennung {
+  background: var(--cg-a-sanft);
+  color: var(--cg-a);
+  border: 1px solid var(--cg-a-linie);
+}
+
+.cg-b .cg-kennung {
+  background: var(--cg-b-sanft);
+  color: var(--cg-b);
+  border: 1px solid var(--cg-b-linie);
+}
+
+.cg-saeule-name {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cg-saeule-meta {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--cg-tinte-3);
+  flex-shrink: 0;
+}
+
+/* ══════════ ABLAGEFLÄCHE ══════════ */
+.cg-ablage {
+  padding: 40px 20px;
+  text-align: center;
+  border: 1px dashed var(--cg-linie-satt);
+  border-radius: var(--cg-r2);
+  margin: 14px;
+  cursor: pointer;
+  transition: border-color 0.16s, background 0.16s;
+}
+
+.cg-ablage:hover:not(.gesperrt) {
+  border-color: var(--cg-a-linie);
+  background: #fcfdff;
+}
+
+.cg-ablage:focus-visible {
+  outline: 2px solid var(--cg-a);
+  outline-offset: -2px;
+  background: var(--cg-a-sanft);
+}
+
+.cg-ablage.zieht {
+  border-style: solid;
+  border-color: var(--cg-a);
+  background: var(--cg-a-sanft);
+}
+
+.cg-b .cg-ablage.zieht {
+  border-color: var(--cg-b);
+  background: var(--cg-b-sanft);
+}
+
+.cg-ablage.gesperrt {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cg-ablage-symbol {
+  width: 38px;
+  height: 38px;
+  margin: 0 auto 12px;
+  border-radius: var(--cg-r2);
+  display: grid;
+  place-items: center;
+}
+
+.cg-a .cg-ablage-symbol {
+  background: var(--cg-a-sanft);
+  border: 1px solid var(--cg-a-linie);
+  color: var(--cg-a);
+}
+
+.cg-b .cg-ablage-symbol {
+  background: var(--cg-b-sanft);
+  border: 1px solid var(--cg-b-linie);
+  color: var(--cg-b);
+}
+
+.cg-ablage-t {
+  font-size: 14.5px;
+  font-weight: 500;
+  margin-bottom: 3px;
+  color: var(--cg-tinte);
+}
+
+.cg-ablage-s {
+  font-size: 12.5px;
+  color: var(--cg-tinte-3);
+}
+
+.cg-ablage-s span {
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cg-a .cg-ablage-s span { color: var(--cg-a); }
+.cg-b .cg-ablage-s span { color: var(--cg-b); }
+
+/* ══════════ GELADENE DATEI ══════════ */
+.cg-geladen {
+  padding: 14px 15px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.cg-geladen-symbol {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--cg-r1);
+  background: var(--cg-gut-sanft);
+  color: var(--cg-gut);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.cg-geladen-t {
+  flex: 1;
+  min-width: 0;
+}
+
+.cg-geladen-n {
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cg-geladen-m {
+  font-size: 12.5px;
+  color: var(--cg-tinte-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.cg-weg {
+  background: none;
+  border: 0;
+  color: var(--cg-tinte-3);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12.5px;
+  padding: 4px 9px;
+  border-radius: var(--cg-r1);
+  flex-shrink: 0;
+}
+
+.cg-weg:hover {
+  background: var(--cg-krit-sanft);
+  color: var(--cg-krit);
+}
+
+.cg-foto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 14px 14px;
+  padding: 6px 11px;
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie-satt);
+  border-radius: var(--cg-r1);
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--cg-tinte-2);
+  cursor: pointer;
+}
+
+.cg-foto:hover {
+  border-color: var(--cg-a-linie);
+  color: var(--cg-a);
+}
+
+/* ══════════ LEISTE UND KNÖPFE ══════════ */
+.cg-leiste {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 11px 15px;
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r2);
+  font-size: 12.5px;
+  color: var(--cg-tinte-3);
+  flex-wrap: wrap;
+}
+
+.cg-typ {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--cg-senke-2);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cg-tinte-2);
+}
+
+.cg-knopfreihe {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.cg-knopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 18px;
+  border-radius: var(--cg-r2);
+  background: var(--cg-a);
+  color: #fff;
+  border: 1px solid var(--cg-a);
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cg-knopf:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.cg-knopf:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cg-knopf.still {
+  background: var(--cg-grund);
+  color: var(--cg-tinte-2);
+  border-color: var(--cg-linie-satt);
+}
+
+.cg-knopf.still:hover:not(:disabled) {
+  background: var(--cg-senke);
+  color: var(--cg-tinte);
+}
+
+.cg-knopf.klein {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.cg-knopf:focus-visible,
+.cg-rolle:focus-visible,
+.cg-weg:focus-visible,
+.cg-foto:focus-visible {
+  outline: 2px solid var(--cg-a);
+  outline-offset: 2px;
+}
+
+.cg-schieb {
+  margin-left: auto;
+}
+
+.cg-kreisel {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: cg-dreh 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes cg-dreh {
+  to { transform: rotate(360deg); }
+}
+
+/* ══════════ LADEZUSTAND ══════════
+   Nutzt progress.progress und progress.message aus dem Streaming, statt
+   nur zu drehen: der Nutzer sieht, wo der Vergleich gerade steht. */
+.cg-laden {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  padding: 40px 24px;
+  text-align: center;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cg-laden-kreis {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 2.5px solid var(--cg-linie-satt);
+  border-top-color: var(--cg-a);
+  animation: cg-dreh 0.9s linear infinite;
+  margin-bottom: 18px;
+}
+
+.cg-laden h3 {
+  margin: 0 0 5px;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--cg-tinte);
+}
+
+.cg-laden p {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  color: var(--cg-tinte-3);
+}
+
+.cg-balken {
+  width: 100%;
+  max-width: 300px;
+  height: 4px;
+  background: var(--cg-senke-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.cg-balken i {
+  display: block;
+  height: 100%;
+  background: var(--cg-a);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cg-kreisel,
+  .cg-laden-kreis {
+    animation: none;
+  }
+}
+
+/* ══════════ URTEIL ══════════
+   Das Backend liefert overallRecommendation mit Empfehlung, Begründung,
+   Zuversicht und Bedingungen. Das lag bisher hinter einem Reiter, ist
+   aber die Antwort auf die Frage, mit der jemand hergekommen ist. */
+.cg-urteil {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.cg-urteil-band {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid;
+  flex-wrap: wrap;
+}
+
+/* Das Band trägt die Farbe des gewinnenden Vertrags: man sieht das
+   Ergebnis, bevor man liest. */
+.cg-urteil-band.fuer-a {
+  background: var(--cg-a-sanft);
+  border-bottom-color: var(--cg-a-linie);
+}
+
+.cg-urteil-band.fuer-b {
+  background: var(--cg-b-sanft);
+  border-bottom-color: var(--cg-b-linie);
+}
+
+.cg-urteil-kennung {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--cg-r2);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fuer-a .cg-urteil-kennung { background: var(--cg-a); }
+.fuer-b .cg-urteil-kennung { background: var(--cg-b); }
+
+.cg-urteil-t {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--cg-tinte);
+}
+
+.cg-urteil-s {
+  font-size: 13px;
+  color: var(--cg-tinte-2);
+}
+
+.cg-zuversicht {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.cg-zuversicht-w {
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.fuer-a .cg-zuversicht-w { color: var(--cg-a); }
+.fuer-b .cg-zuversicht-w { color: var(--cg-b); }
+
+.cg-zuversicht-k {
+  font-size: 11.5px;
+  color: var(--cg-tinte-2);
+}
+
+.cg-urteil-text {
+  padding: 16px 20px;
+}
+
+.cg-urteil-text p {
+  margin: 0 0 10px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--cg-tinte-2);
+}
+
+.cg-urteil-text p:last-child {
+  margin: 0;
+}
+
+.cg-bedingungen {
+  border-top: 1px solid var(--cg-linie);
+  padding: 13px 20px;
+  background: var(--cg-senke);
+}
+
+.cg-bedingungen h4 {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cg-tinte-3);
+}
+
+.cg-bedingung {
+  display: flex;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--cg-tinte-2);
+  padding: 3px 0;
+  line-height: 1.55;
+}
+
+.cg-bedingung svg {
+  color: var(--cg-warn);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* ══════════ BEWERTUNGSVERGLEICH ══════════ */
+.cg-werte {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+
+.cg-werte-kopf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.cg-werte-kopf h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cg-tinte);
+}
+
+.cg-legende {
+  margin-left: auto;
+  display: flex;
+  gap: 14px;
+  font-size: 12.5px;
+  color: var(--cg-tinte-2);
+  flex-wrap: wrap;
+}
+
+.cg-leg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cg-leg i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.cg-leg span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.cg-wertzeile {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 7px 0;
+}
+
+.cg-wertzeile + .cg-wertzeile {
+  border-top: 1px solid var(--cg-linie);
+}
+
+.cg-wertzeile-k {
+  font-size: 13.5px;
+  color: var(--cg-tinte-2);
+}
+
+.cg-balkenpaar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.cg-bahn {
+  flex: 1;
+  height: 7px;
+  background: var(--cg-senke-2);
+  border-radius: 999px;
+  overflow: hidden;
+  min-width: 40px;
+}
+
+.cg-fuell {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.cg-wert {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  width: 26px;
+  text-align: right;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.cg-balkenpaar.a .cg-fuell { background: var(--cg-a); }
+.cg-balkenpaar.a .cg-wert { color: var(--cg-a); }
+.cg-balkenpaar.b .cg-fuell { background: var(--cg-b); }
+.cg-balkenpaar.b .cg-wert { color: var(--cg-b); }
+
+/* Kleiner Zeiger am besseren Wert. Er markiert die Zeile, nicht die
+   Farbe, damit man beim Überfliegen sieht, wo wer vorn liegt. */
+.cg-wert.vorn::after {
+  content: '▲';
+  position: absolute;
+  right: -1px;
+  top: -9px;
+  font-size: 8px;
+  color: var(--cg-gut);
+}
+
+/* ══════════ UNTERSCHIEDE ══════════
+   Ein Unterschied hat zwei Seiten, also gehören sie nebeneinander.
+   Genau hier zahlt sich die volle Breite aus. */
+.cg-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.cg-chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--cg-linie-satt);
+  background: var(--cg-grund);
+  font-size: 12.5px;
+  color: var(--cg-tinte-2);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.cg-chip:hover {
+  border-color: var(--cg-a-linie);
+}
+
+.cg-chip.aktiv {
+  background: var(--cg-tinte);
+  border-color: var(--cg-tinte);
+  color: #fff;
+}
+
+.cg-chip .n {
+  opacity: 0.6;
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cg-chip:focus-visible {
+  outline: 2px solid var(--cg-a);
+  outline-offset: 2px;
+}
+
+.cg-diff {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  overflow: hidden;
+}
+
+.cg-diff + .cg-diff {
+  margin-top: 10px;
+}
+
+.cg-diff-kopf {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--cg-linie);
+  flex-wrap: wrap;
+}
+
+.cg-schwere {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.cg-schwere.krit { background: var(--cg-krit-sanft); color: var(--cg-krit); }
+.cg-schwere.hoch { background: var(--cg-warn-sanft); color: var(--cg-warn); }
+.cg-schwere.mittel { background: var(--cg-senke-2); color: var(--cg-tinte-2); }
+.cg-schwere.niedrig { background: var(--cg-senke); color: var(--cg-tinte-3); }
+
+.cg-art {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--cg-senke);
+  border: 1px solid var(--cg-linie);
+  color: var(--cg-tinte-2);
+  flex-shrink: 0;
+}
+
+.cg-diff-t {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+  color: var(--cg-tinte);
+}
+
+.cg-diff-abschnitt {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--cg-tinte-3);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.cg-diff-paar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.cg-diff-seite {
+  padding: 13px 16px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--cg-tinte-2);
+  min-width: 0;
+  word-break: break-word;
+}
+
+.cg-diff-seite + .cg-diff-seite {
+  border-left: 1px solid var(--cg-linie);
+}
+
+.cg-diff-marke {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.cg-diff-seite.cg-a .cg-diff-marke { color: var(--cg-a); }
+.cg-diff-seite.cg-b .cg-diff-marke { color: var(--cg-b); }
+
+.cg-diff-marke .cg-kennung {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.cg-diff-fuss {
+  padding: 12px 16px;
+  background: var(--cg-senke);
+  border-top: 1px solid var(--cg-linie);
+  font-size: 13.5px;
+  color: var(--cg-tinte-2);
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.cg-diff-fuss > div {
+  flex: 1;
+  min-width: 220px;
+}
+
+.cg-diff-fuss b {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--cg-tinte-3);
+  margin-bottom: 3px;
+}
+
+.cg-geld {
+  color: var(--cg-krit);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cg-leer {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--cg-tinte-3);
+  font-size: 14px;
+}
+
+/* ══════════ SCHMALE SCHIRME ══════════ */
+@media (max-width: 1000px) {
+  .cg-seite {
+    padding: 1rem 1rem 3rem;
+  }
+
+  /* Die Gegenüberstellung wird zur Reihenfolge: erst A, dann B. Die
+     Farben tragen die Zuordnung weiter, deshalb bleibt sie lesbar. */
+  .cg-gegen,
+  .cg-diff-paar {
+    grid-template-columns: 1fr;
+  }
+
+  .cg-diff-seite + .cg-diff-seite {
+    border-left: 0;
+    border-top: 1px solid var(--cg-linie);
+  }
+
+  .cg-rollen {
+    grid-template-columns: 1fr;
+  }
+
+  .cg-wertzeile {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+
+  .cg-kopf-rechts {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .cg-knopfreihe .cg-knopf {
+    flex: 1;
+  }
+
+  .cg-schieb {
+    margin-left: 0;
+  }
+}
