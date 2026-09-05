@@ -884,8 +884,8 @@ const FuerAgenturen: React.FC = () => {
             AUCH INTERESSANT
             ========================================== */}
         <section className={`${styles.abschnitt} ${styles.band}`}>
-          <span className={styles.augenbraue}>Auch interessant</span>
-          <h2 className={styles.titel}>Weiterlesen</h2>
+          <span className={styles.augenbraue}>Weiterlesen</span>
+          <h2 className={styles.titel}>Auch interessant</h2>
           <div className={styles.verweise}>
             <Link to="/features/vertragsanalyse" className={styles.verweis}>
               <span className={styles.verweisName}><FileText size={17} />KI-Vertragsanalyse</span>

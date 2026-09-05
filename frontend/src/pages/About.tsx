@@ -257,7 +257,7 @@ const About: React.FC = () => {
           <div className={styles.auftaktRaster}>
             <div>
               <h1 className={`${styles.heroTitel} fadeInUp`} style={{ animationDelay: '0.06s' }}>
-                <span className={styles.leise}>Unsere Mission</span>
+                <span className={styles.leise}>Unsere Mission:</span>
                 Klarheit in jedem Vertrag.
               </h1>
               <p className={`${styles.anriss} fadeInUp`} style={{ animationDelay: '0.16s' }}>
