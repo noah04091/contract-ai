@@ -85,12 +85,10 @@ export default function CompareResults({
   return (
     <div className={styles.resultsContainer}>
       {/* Header with Perspective Selector */}
-      {/* 05.09.2026: Die Ueberschrift steht jetzt im Seitenkopf, sonst
-          stuenden zwei uebereinander. Der Kopf hier traegt nur noch die
-          Perspektivwahl und entfaellt, wenn es sie nicht gibt. */}
-      {v2 && onPerspectiveChange && (
       <div className={styles.resultsHeader}>
-        {(
+        <h2 className={styles.resultsTitle}>Vergleichsergebnis</h2>
+
+        {v2 && onPerspectiveChange && (
           <div className={styles.perspectiveSelector}>
             {(['auftraggeber', 'auftragnehmer', 'neutral'] as Perspective[]).map((p) => {
               const isActive = v2Result?.perspective === p;
@@ -110,7 +108,6 @@ export default function CompareResults({
           </div>
         )}
       </div>
-      )}
 
       {/* Re-analyzing overlay */}
       {reAnalyzing && (
