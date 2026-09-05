@@ -718,10 +718,9 @@
   }
 }
 
-/* Touch-Geräte: Ausblenden-X braucht keinen Hover */
+/* Touch-Geräte: kein Ausblenden-X am Launcher (Intercom-Stil, nur der Kreis) */
 @media (hover: none) {
   .hideBubbleButton {
-    opacity: 1;
-    transform: scale(1);
+    display: none;
   }
 }
