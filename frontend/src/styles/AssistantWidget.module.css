@@ -431,6 +431,7 @@
 .messagesContainer {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain; /* Vollbild mobil: Seite dahinter scrollt nicht mit */
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -670,37 +671,57 @@
 /* RESPONSIVE */
 /* ============================================ */
 
-/* Tablet */
+/* Mobil (nur öffentliche Seiten, via JS): kleiner Launcher, Chat als Vollbild-Sheet */
 @media (max-width: 768px) {
-  /* Bot wird auf Handy via JS ausgeblendet - diese Styles sind nur Fallback */
   .chatBubbleContainer {
     bottom: 16px;
     right: 16px;
   }
 
-  .chatBubble {
-    width: 48px;
-    height: 48px;
+  .chatBubble,
+  .chatBubble.minimized {
+    width: 44px;
+    height: 44px;
   }
 
   .chatWindow {
-    bottom: 16px;
-    right: 16px;
-    width: calc(100vw - 32px);
-    height: calc(100vh - 120px);
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+  }
+
+  .chatHeader {
+    padding-top: calc(13px + env(safe-area-inset-top, 0px));
+  }
+
+  .inputContainer {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* 16px verhindert den iOS-Auto-Zoom beim Fokussieren */
+  .input {
+    font-size: 16px;
   }
 
   .message {
     max-width: 85%;
   }
+
+  /* Teaser + Session-Tooltip gibt es mobil nicht (JS-seitig gegated, hier Gürtel+Hosenträger) */
+  .teaser,
+  .sessionTooltip {
+    display: none !important;
+  }
 }
 
-/* Mobile - sollte via JS ausgeblendet sein, aber sicherheitshalber */
-@media (max-width: 480px) {
-  .chatBubbleContainer,
-  .chatBubble,
-  .chatWindow,
-  .teaser {
-    display: none !important;
+/* Touch-Geräte: Ausblenden-X braucht keinen Hover */
+@media (hover: none) {
+  .hideBubbleButton {
+    opacity: 1;
+    transform: scale(1);
   }
 }

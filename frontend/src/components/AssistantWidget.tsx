@@ -97,7 +97,7 @@ export default function AssistantWidget() {
       const onboardingSeen = localStorage.getItem('assistantOnboardingSeen');
       const shownThisSession = sessionStorage.getItem('assistantShownThisSession');
 
-      if (!onboardingSeen && assistantContext.mode === "sales") {
+      if (!isMobile && !onboardingSeen && assistantContext.mode === "sales") {
         const onFirstScroll = () => {
           removeScrollListener?.();
           removeScrollListener = null;
@@ -110,7 +110,7 @@ export default function AssistantWidget() {
           removeScrollListener = null;
           showTeaser();
         }, 6000));
-      } else if (!shownThisSession) {
+      } else if (!isMobile && !shownThisSession) {
         setShowTooltip(true);
         timers.push(window.setTimeout(dismissTooltip, 3000));
       } else {
@@ -144,7 +144,7 @@ export default function AssistantWidget() {
       }
       removeScrollListener?.();
     };
-  }, [dismissTooltip, armTeaserHide, assistantContext.mode]);
+  }, [dismissTooltip, armTeaserHide, assistantContext.mode, isMobile]);
 
   // Listen for changes to bot enabled/disabled setting
   useEffect(() => {
@@ -313,7 +313,8 @@ export default function AssistantWidget() {
     location.pathname.toLowerCase().startsWith(route.toLowerCase())
   );
 
-  if (!shouldShowWidget || !isBotEnabled || isMobile || isHiddenByUser) {
+  // Mobil nur auf öffentlichen Seiten (Sales-Modus); eingeloggt in der App bleibt mobil clean
+  if (!shouldShowWidget || !isBotEnabled || (isMobile && assistantContext.mode !== "sales") || isHiddenByUser) {
     return null;
   }
 

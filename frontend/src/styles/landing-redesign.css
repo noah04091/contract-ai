@@ -84,8 +84,11 @@
 .ca-lp-page .ca-lp-floatcta{transition:opacity .3s ease,transform .3s ease,background .2s}
 .ca-lp-page .ca-lp-floatcta.ca-in{opacity:1 !important;transform:translateY(0) !important;pointer-events:auto !important}
 .ca-lp-page .ca-lp-floatcta:hover{background:#1d4ed8}
-/* Assistent-Dock weicht dem sichtbaren CTA aus; ohne CTA sitzt es im Eck (bottom: 24px) */
-body:has(.ca-lp-floatcta.ca-in) .ca-assistant-dock{bottom:88px}
+/* Assistent-Dock weicht dem sichtbaren CTA aus; ohne CTA sitzt es im Eck (bottom: 24px).
+   Nur >640px: darunter ist der CTA display:none, bekommt aber trotzdem .ca-in beim Scrollen */
+@media (min-width: 641px){
+  body:has(.ca-lp-floatcta.ca-in) .ca-assistant-dock{bottom:88px}
+}
 
 /* Showcase-Video-Rahmen: Video/Poster füllt den 16:9-Rahmen sauber (kein Kollaps vor dem Laden) */
 .ca-lp-page .ca-lp-video-frame video,
