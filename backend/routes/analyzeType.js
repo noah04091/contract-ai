@@ -55,7 +55,11 @@ router.post("/", verifyToken, async (req, res) => {
 
     // 🧠 GPT-Analyse
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      // 05.09.2026: war gpt-4. Die Aufgabe ist eine Klassifikation mit
+      // vorgegebener Wortliste ("gib NUR den Vertragstyp als ein Wort"),
+      // kein Textverstaendnis. gpt-4 kostet dafuer das 200-fache bei der
+      // Eingabe ($30 statt $0.15 pro 1M Token) und lief bei jedem Upload.
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
@@ -125,7 +129,11 @@ router.post("/public", verifyToken, async (req, res) => {
 
     // 🧠 GPT-Analyse (gleiche Logik wie authentifizierte Route)
     const completion = await openai.chat.completions.create({
-      model: "gpt-4",
+      // 05.09.2026: war gpt-4. Die Aufgabe ist eine Klassifikation mit
+      // vorgegebener Wortliste ("gib NUR den Vertragstyp als ein Wort"),
+      // kein Textverstaendnis. gpt-4 kostet dafuer das 200-fache bei der
+      // Eingabe ($30 statt $0.15 pro 1M Token) und lief bei jedem Upload.
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",

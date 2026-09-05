@@ -250,21 +250,6 @@
   word-break: break-word;
 }
 
-/* Der Trennstrich lief ueber die gesamte Flaechenbreite und zog den Blick
-   in die Breite. Jetzt nur so breit wie noetig, mittig. */
-.bcw-ablage-fuss {
-  max-width: 420px;
-  margin: 20px auto 0;
-  padding-top: 16px;
-  border-top: 1px solid var(--bcw-linie);
-  font-size: 12.5px;
-  color: var(--bcw-tinte-3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
 
 .bcw-typ {
   padding: 2px 7px;
@@ -299,38 +284,8 @@
   transition: width 0.25s ease;
 }
 
-/* ══════════ NEBENWEGE ══════════ */
-.bcw-nebenwege {
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
-  flex-wrap: wrap;
-}
 
-/* Nicht dehnen: bei voller Seitenbreite wuerde ein einzelner Knopf sonst
-   ueber den halben Bildschirm gezogen. */
-.bcw-nebenweg {
-  flex: 0 0 auto;
-  min-width: 220px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
-  background: var(--bcw-grund);
-  border: 1px solid var(--bcw-linie);
-  border-radius: var(--bcw-r-mittel);
-  font-family: inherit;
-  font-size: 13.5px;
-  color: var(--bcw-tinte-2);
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, color 0.15s;
-}
 
-.bcw-nebenweg:hover {
-  border-color: var(--bcw-akzent-linie);
-  color: var(--bcw-akzent);
-}
 
 .bcw-nebenweg svg {
   color: var(--bcw-tinte-3);
@@ -415,53 +370,11 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
-/* ══════════ FAKTENKARTE ══════════
-   Ersetzt den Block mit 150 rohen Zeichen Vertragstext, der wie ein
-   Fehler aussah. */
-.bcw-fakten {
-  background: var(--bcw-grund);
-  border: 1px solid var(--bcw-linie);
-  border-radius: var(--bcw-r-gross);
-  overflow: hidden;
-}
 
-.bcw-fakten-kopf {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 15px 18px;
-  border-bottom: 1px solid var(--bcw-linie);
-}
 
-.bcw-fakten-symbol {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--bcw-r-klein);
-  background: var(--bcw-akzent-sanft);
-  border: 1px solid var(--bcw-akzent-linie);
-  color: var(--bcw-akzent);
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
 
-.bcw-fakten-text {
-  min-width: 0;
-}
 
-.bcw-fakten-titel {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--bcw-tinte);
-}
 
-.bcw-fakten-datei {
-  font-size: 12.5px;
-  color: var(--bcw-tinte-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .bcw-ansehen {
   margin-left: auto;
@@ -1384,4 +1297,25 @@
   .bcw-neben {
     order: 2;
   }
+}
+
+/* ══════════ SICHTBARER FOKUS (05.09.2026) ══════════
+   Die Ablageflaeche ist seit heute per Tabulator erreichbar. Ohne sichtbaren
+   Rahmen waere das wertlos: der Nutzer saehe nicht, wo er steht.
+   :focus-visible statt :focus, damit beim Mausklick kein Rahmen aufblitzt. */
+.bcw-ablage:focus-visible {
+  outline: 2px solid var(--bcw-akzent);
+  outline-offset: -2px;
+  background: var(--bcw-akzent-sanft);
+}
+
+.bcw-zeile:focus-visible,
+.bcw-karte-fuss:focus-visible,
+.bcw-foto:focus-visible,
+.bcw-box-link:focus-visible,
+.bcw-knopf:focus-visible,
+.bcw-textweg > summary:focus-visible {
+  outline: 2px solid var(--bcw-akzent);
+  outline-offset: 2px;
+  border-radius: var(--bcw-r-klein);
 }

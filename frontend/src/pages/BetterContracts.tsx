@@ -292,7 +292,7 @@ const BetterContracts: React.FC = () => {
     
     // ✅ Premium Check
     if (!isPremium) {
-      setError("Diese Funktion ist nur für Business- oder Enterprise-Nutzer verfügbar.");
+      setError("Dafür brauchst du ein Business-Abo. Deine Verträge und Analysen bleiben dir erhalten.");
       return;
     }
     
@@ -318,7 +318,7 @@ const BetterContracts: React.FC = () => {
 
   const handleFileSelect = () => {
     if (!isPremium) {
-      setError("Diese Funktion ist nur für Business- oder Enterprise-Nutzer verfügbar.");
+      setError("Dafür brauchst du ein Business-Abo. Deine Verträge und Analysen bleiben dir erhalten.");
       return;
     }
 
@@ -436,7 +436,7 @@ const BetterContracts: React.FC = () => {
   const handleAnalyze = async () => {
     // ✅ Premium Check
     if (!isPremium) {
-      setError("Diese Funktion ist nur für Business- oder Enterprise-Nutzer verfügbar.");
+      setError("Dafür brauchst du ein Business-Abo. Deine Verträge und Analysen bleiben dir erhalten.");
       return;
     }
     
@@ -757,12 +757,29 @@ const BetterContracts: React.FC = () => {
                       />
 
                       <div className="bcw-karte">
+                        {/* 05.09.2026: War ein div mit onClick, also per Tastatur
+                            nicht erreichbar, und der Datei-Auswaehler dahinter steht
+                            auf display:none. Wer nur mit der Tastatur arbeitet, kam
+                            nur ueber den Textweg hinein. Jetzt fokussierbar, mit
+                            Rolle und Beschriftung, und Enter oder Leertaste oeffnen
+                            die Dateiauswahl wie ein Klick. */}
                         <div
                           className={`bcw-ablage ${dragActive ? 'zieht' : ''} ${!isPremium ? 'gesperrt' : ''}`}
                           onDrop={handleDrop}
                           onDragOver={handleDragOver}
                           onDragLeave={handleDragLeave}
                           onClick={handleFileSelect}
+                          onKeyDown={(e) => {
+                            if (!isPremium) return;
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleFileSelect();
+                            }
+                          }}
+                          role="button"
+                          tabIndex={isPremium ? 0 : -1}
+                          aria-disabled={!isPremium}
+                          aria-label={isPremium ? 'Vertrag hochladen, Datei auswählen' : 'Vertrag hochladen, Business-Abo erforderlich'}
                           style={{
                             opacity: isPremium ? 1 : 0.6,
                             cursor: isPremium ? 'pointer' : 'not-allowed'
@@ -776,11 +793,11 @@ const BetterContracts: React.FC = () => {
                             <p className="bcw-dateiname">{fileName}</p>
                           ) : (
                             <>
-                              <h2>{isPremium ? 'Vertrag hierher ziehen' : 'Premium erforderlich'}</h2>
+                              <h2>{isPremium ? 'Vertrag hierher ziehen' : 'Business-Abo erforderlich'}</h2>
                               <p>
                                 {isPremium
                                   ? <>oder <span className="bcw-ablage-link">Datei auswählen</span></>
-                                  : 'Diese Funktion ist Teil der Premium-Mitgliedschaft'}
+                                  : 'Alternativen suchen ist Teil des Business-Abos'}
                               </p>
                             </>
                           )}
@@ -875,7 +892,7 @@ const BetterContracts: React.FC = () => {
                             id="contract-text"
                             value={contractText}
                             onChange={(e) => setContractText(e.target.value)}
-                            placeholder={isPremium ? "Füge deinen Vertragstext hier ein..." : "Premium erforderlich für diese Funktion"}
+                            placeholder={isPremium ? "Füge deinen Vertragstext hier ein..." : "Dafür brauchst du ein Business-Abo"}
                             rows={8}
                             disabled={!isPremium}
                             style={{
@@ -887,7 +904,7 @@ const BetterContracts: React.FC = () => {
                           <div className="bcw-knopfreihe">
                             <button
                               className="bcw-knopf bcw-schieb"
-                              onClick={() => isPremium && contractText.trim().length >= 20 ? setStep(2) : setError(isPremium ? "Vertragstext muss mindestens 20 Zeichen lang sein." : "Premium erforderlich für diese Funktion.")}
+                              onClick={() => isPremium && contractText.trim().length >= 20 ? setStep(2) : setError(isPremium ? "Vertragstext muss mindestens 20 Zeichen lang sein." : "Dafür brauchst du ein Business-Abo.")}
                               disabled={!isPremium || contractText.trim().length < 20}
                             >
                               Weiter
@@ -996,14 +1013,14 @@ const BetterContracts: React.FC = () => {
                                   <input
                                     id="search-query"
                                     type="text"
-                                    placeholder={isPremium ? "wird automatisch aus dem Vertrag erzeugt" : "Premium erforderlich"}
+                                    placeholder={isPremium ? "wird automatisch aus dem Vertrag erzeugt" : "Business-Abo erforderlich"}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     disabled={!isPremium}
                                   />
                                 </div>
                                 <div className="bcw-hilfe">
-                                  {isPremium ? "Anpassen, wenn du etwas Bestimmtes suchst. Sonst einfach lassen." : "Premium erforderlich für diese Funktion"}
+                                  {isPremium ? "Anpassen, wenn du etwas Bestimmtes suchst. Sonst einfach lassen." : "Dafür brauchst du ein Business-Abo"}
                                 </div>
                               </div>
                             </div>
@@ -1020,7 +1037,7 @@ const BetterContracts: React.FC = () => {
                               onClick={handleAnalyze}
                               disabled={!isPremium || loading}
                             >
-                              {isPremium ? "Alternativen finden" : "Premium erforderlich"}
+                              {isPremium ? "Alternativen finden" : "Business-Abo erforderlich"}
                               <ArrowRight size={15} strokeWidth={1.8} />
                             </button>
                           </div>
