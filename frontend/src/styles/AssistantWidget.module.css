@@ -334,6 +334,15 @@
 /* CHAT WINDOW */
 /* ============================================ */
 
+/* Abdunkelung hinter dem Bottom Sheet — nur mobil sichtbar */
+.chatBackdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  z-index: 9998;
+}
+
 .chatWindow {
   position: fixed;
   bottom: 24px;
@@ -684,18 +693,37 @@
     height: 44px;
   }
 
+  /* Bottom Sheet: schiebt sich von unten hoch, Seite bleibt dahinter sichtbar */
   .chatWindow {
-    inset: 0;
+    inset: auto 0 0 0;
     width: 100%;
     max-width: none;
-    height: 100dvh;
+    height: 88dvh;
     max-height: none;
-    border-radius: 0;
+    border-radius: 16px 16px 0 0;
     border: none;
   }
 
+  .chatBackdrop {
+    display: block;
+  }
+
+  /* Griff-Leiste oben im Sheet */
   .chatHeader {
-    padding-top: calc(13px + env(safe-area-inset-top, 0px));
+    position: relative;
+    padding-top: 18px;
+  }
+
+  .chatHeader::before {
+    content: "";
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: #dde5ee;
   }
 
   .inputContainer {
