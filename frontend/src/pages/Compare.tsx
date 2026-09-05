@@ -1006,13 +1006,29 @@ export default function EnhancedCompare() {
               Beschreibungssatz, also eine Landingpage-Wand vor der ersten
               Handlung, auf einer Seite für eingeloggte zahlende Nutzer.
               Jetzt eine Seitenüberschrift wie im übrigen Produkt. */}
-          {!result && (
+          {/* 05.09.2026: Der Kopf war an {!result} gebunden und verschwand,
+              sobald Ergebnisse da waren. Der Nutzer sah dann nur noch einen
+              schwebenden Kasten ohne jeden Seitenzusammenhang. Er bleibt jetzt
+              stehen und wechselt nur seinen Inhalt. */}
           <div className="cw-kopf">
             <div>
-              <div className="cw-kopf-titel">Vertragsvergleich</div>
-              <div className="cw-kopf-sub">Zwei Verträge nebeneinander, mit Einordnung durch die KI</div>
+              <div className="cw-kopf-titel">{result ? "Vergleichsergebnis" : "Vertragsvergleich"}</div>
+              <div className="cw-kopf-sub">
+                {result
+                  ? "Zwei Verträge gegenübergestellt, mit Einordnung durch die KI"
+                  : "Zwei Verträge nebeneinander, mit Einordnung durch die KI"}
+              </div>
             </div>
-            {historyItems.length > 0 && (
+
+            {result && (
+              <div className="cw-kopf-rechts">
+                <button className="cw-knopf still" onClick={handleReset} style={{ padding: "7px 13px", fontSize: "13px" }}>
+                  <RefreshCw size={14} />
+                  Neuer Vergleich
+                </button>
+              </div>
+            )}
+            {!result && historyItems.length > 0 && (
               <div className="cw-kopf-rechts">
                 <button
                   className="cw-knopf still"
@@ -1032,7 +1048,6 @@ export default function EnhancedCompare() {
               </div>
             )}
           </div>
-          )}
 
           {/* History Button moved to upload section header */}
 

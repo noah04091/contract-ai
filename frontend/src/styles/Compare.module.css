@@ -842,10 +842,14 @@
    ============================================ */
 
 .resultsContainer {
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e8e8ed;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  /* 05.09.2026: War ein weisser, gerahmter Kasten mit kraeftigem Schatten.
+     Das laesst das Ergebnis wie ein eingebettetes Fenster wirken statt wie
+     die Seite, auf der man gerade steht. Ueberschrift und Reiterleiste
+     sitzen jetzt auf dem Seitengrund, die Flaeche traegt der Inhalt. */
+  background: transparent;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
   margin-top: 2rem;
   margin-bottom: 3rem;
   overflow: hidden;
@@ -855,8 +859,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.25rem 1.75rem;
-  border-bottom: 1px solid #e8e8ed;
+  padding: 0 2px 14px;
+  border-bottom: 1px solid #d2dae5;
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -952,8 +956,8 @@
 .tabNavigation {
   display: flex;
   gap: 0;
-  border-bottom: 1px solid #e8e8ed;
-  padding: 0 1.75rem;
+  border-bottom: 1px solid #d2dae5;
+  padding: 0 2px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -1929,4 +1933,41 @@
   .followUpChips { gap: 6px; }
   .followUpChip { font-size: 0.82rem; padding: 6px 12px; }
   .followUpInput { font-size: 0.84rem; padding: 8px 12px; }
+}
+
+/* ══════════ SEITE STATT FENSTER (05.09.2026) ══════════
+   Der aeussere Kasten ist aufgeloest. Damit die Reiter-Inhalte nicht nackt
+   auf dem Grund liegen, traegt jetzt der Inhaltsbereich die weisse Flaeche.
+   Ergebnis: Ueberschrift, Reiterleiste, EINE Inhaltsflaeche — der Aufbau
+   einer Seite statt eines eingebetteten Fensters. */
+.tabContent {
+  background: #ffffff;
+  border: 1px solid #e4e9f0;
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-top: 16px;
+}
+
+/* Der zweite Vertrag war lila markiert (#5856d6). Lila ist in diesem
+   Produkt nicht vorgesehen; die Unterscheidung der beiden Vertraege ist
+   aber funktional und muss bleiben. Deshalb ersetzt statt gestrichen. */
+.contractBadge[data-contract="2"] {
+  background: rgba(14, 116, 144, 0.08);
+  color: #0e7490;
+}
+
+/* Flaechenverlaeufe durch ruhige Toene ersetzt. Ein Verlauf als Flaeche
+   zieht den Blick auf den Rahmen statt auf den Inhalt. */
+.tldrBox {
+  background: #eef4fe;
+  border-color: #cadcfb;
+}
+
+.verdictBox {
+  background: #1d4ed8;
+}
+
+.followUpSection {
+  background: #f4f7fb;
+  border-color: #e4e9f0;
 }
