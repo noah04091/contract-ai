@@ -1076,6 +1076,28 @@
   }
 }
 
+/* Sehr schmale Geraete: Name, Status und Score passen nicht nebeneinander,
+   sobald die echten Schriften geladen sind. Name bekommt eine eigene Zeile. */
+@media (max-width: 560px) {
+  .zeileVertrag {
+    grid-template-columns: 1fr auto;
+    gap: 9px 10px;
+    padding: 12px 14px;
+  }
+
+  .zeileVertrag > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .seitenspalte {
+    padding: 14px;
+  }
+
+  .fensterKopf {
+    padding: 13px 14px;
+  }
+}
+
 @media (max-width: 900px) {
   .auftakt {
     padding-top: 88px;
