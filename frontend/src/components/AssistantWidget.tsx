@@ -97,7 +97,7 @@ export default function AssistantWidget() {
       const onboardingSeen = localStorage.getItem('assistantOnboardingSeen');
       const shownThisSession = sessionStorage.getItem('assistantShownThisSession');
 
-      if (!onboardingSeen) {
+      if (!onboardingSeen && assistantContext.mode === "sales") {
         const onFirstScroll = () => {
           removeScrollListener?.();
           removeScrollListener = null;
@@ -144,7 +144,7 @@ export default function AssistantWidget() {
       }
       removeScrollListener?.();
     };
-  }, [dismissTooltip, armTeaserHide]);
+  }, [dismissTooltip, armTeaserHide, assistantContext.mode]);
 
   // Listen for changes to bot enabled/disabled setting
   useEffect(() => {
@@ -319,9 +319,19 @@ export default function AssistantWidget() {
 
   return (
     <>
-      {/* Message Teaser - Erstbesuch, wie eine echte Nachricht vom Assistenten */}
+      {/* Chat Bubble Button with Teaser + Tooltip (ein Dock, rutscht gemeinsam) */}
       <AnimatePresence>
-        {showOnboarding && !isOpen && (
+        {!isOpen && (
+          <motion.div
+            className={`${styles.chatBubbleContainer} ca-assistant-dock`}
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          >
+            {/* Message Teaser - Erstbesuch, wie eine echte Nachricht vom Assistenten */}
+            <AnimatePresence>
+              {showOnboarding && (
           <motion.div
             className={styles.teaser}
             role="dialog"
@@ -390,19 +400,9 @@ export default function AssistantWidget() {
               </motion.div>
             )}
           </motion.div>
-        )}
-      </AnimatePresence>
+              )}
+            </AnimatePresence>
 
-      {/* Chat Bubble Button with Tooltip */}
-      <AnimatePresence>
-        {!isOpen && (
-          <motion.div
-            className={styles.chatBubbleContainer}
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          >
             {/* Session Tooltip (returning user, new session) */}
             <AnimatePresence>
               {showTooltip && (
@@ -445,8 +445,8 @@ export default function AssistantWidget() {
             >
               <span className={styles.chatBubbleIcon}>
                 <svg
-                  width={isMinimized ? 20 : 24}
-                  height={isMinimized ? 20 : 24}
+                  width={isMinimized ? 18 : 20}
+                  height={isMinimized ? 18 : 20}
                   viewBox="0 0 22 22"
                   fill="none"
                 >

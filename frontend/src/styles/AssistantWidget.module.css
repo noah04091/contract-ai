@@ -7,13 +7,14 @@
 
 .chatBubbleContainer {
   position: fixed;
-  bottom: 96px;
+  bottom: 24px; /* Eck-Position; Landing-CTA schiebt das Dock via .ca-assistant-dock hoch */
   right: 24px;
   z-index: 9998;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
+  transition: bottom 0.3s ease;
 }
 
 /* Hide/Close Button (X) */
@@ -50,17 +51,15 @@
 /* ============================================ */
 
 .teaser {
-  position: fixed;
-  bottom: 168px; /* über dem Chat-Knopf (bottom: 96px + 60px + Abstand) */
-  right: 24px;
-  width: 284px;
+  position: relative; /* lebt im Dock-Container, rutscht mit dem Knopf mit */
+  width: 264px;
   background: #ffffff;
   border: 1px solid #e3e9f1;
   border-radius: 14px;
   box-shadow: 0 16px 44px rgba(15, 23, 42, 0.12),
               0 3px 10px rgba(15, 23, 42, 0.05);
   padding: 12px 14px;
-  z-index: 10001;
+  margin-bottom: 4px;
 }
 
 .teaserClose {
@@ -288,8 +287,8 @@
 /* ============================================ */
 
 .chatBubble {
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   border: none;
@@ -311,8 +310,8 @@
 
 /* Minimized state: smaller, semi-transparent */
 .chatBubble.minimized {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   opacity: 0.75;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
 }
@@ -339,10 +338,10 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  width: 392px;
+  width: 360px;
   max-width: calc(100vw - 48px);
-  height: 600px;
-  max-height: calc(100vh - 100px);
+  height: 540px;
+  max-height: calc(100vh - 120px);
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 24px 64px rgba(15, 23, 42, 0.16),
@@ -680,8 +679,8 @@
   }
 
   .chatBubble {
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
   }
 
   .chatWindow {
