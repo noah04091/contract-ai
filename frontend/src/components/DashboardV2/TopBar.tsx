@@ -5,7 +5,6 @@ import {
   Menu,
   Search,
   Bell,
-  ChevronDown,
   AlertTriangle,
   AlertCircle,
   Info,
@@ -332,8 +331,17 @@ export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
   };
 
   // Benutzername: Bevorzuge name, dann email-Präfix, dann 'User'
-  const userName = user?.name || user?.email?.split('@')[0] || 'User';
-  const userInitial = userName.charAt(0).toUpperCase();
+  const userName = user?.name?.trim() || user?.email?.split('@')[0] || 'User';
+
+  // Initialen wie in der Site-Navbar: Vor- + Nachname → zwei Buchstaben, sonst einer.
+  // Array.from statt charAt: zerteilt keine Mehrbyte-Zeichen (Emoji etc.)
+  const nameParts = user?.name?.trim().split(/\s+/).filter(Boolean) || [];
+  const userInitials = nameParts.length > 0
+    ? (
+        (Array.from(nameParts[0])[0] || '') +
+        (nameParts.length > 1 ? Array.from(nameParts[nameParts.length - 1])[0] || '' : '')
+      ).toUpperCase() || 'U'
+    : (Array.from(user?.email?.trim() || 'U')[0] || 'U').toUpperCase();
 
   // 🎯 19.08.2026: identisch zur Navbar (Noahs Fund: Dashboard-Dropdown zeigte
   // noch die alten Namen) — /me = "Einstellungen" mit Zahnrad, /company-profile
@@ -351,6 +359,7 @@ export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
     return plan.charAt(0).toUpperCase() + plan.slice(1);
   };
   const userPlan = formatPlan(user?.subscriptionPlan);
+  const isFreePlan = !user?.subscriptionPlan || user.subscriptionPlan === 'free';
 
   return (
     <>
@@ -489,19 +498,17 @@ export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
             <button
               className={styles.userButton}
               onClick={() => setShowUserMenu(!showUserMenu)}
+              aria-label="Konto-Menü"
+              aria-haspopup="menu"
+              aria-expanded={showUserMenu}
             >
               <div className={styles.userAvatar}>
                 {user?.profilePicture ? (
                   <img src={user.profilePicture} alt={userName} className={styles.userAvatarImage} />
                 ) : (
-                  userInitial
+                  userInitials
                 )}
               </div>
-              <div className={styles.userInfo}>
-                <span className={styles.userName}>{userName}</span>
-                <span className={styles.userPlan}>{userPlan}</span>
-              </div>
-              <ChevronDown size={16} strokeWidth={2} />
             </button>
 
             {/* User Dropdown */}
@@ -512,14 +519,25 @@ export default function TopBar({ onMenuClick, user, minimal }: TopBarProps) {
                     {user?.profilePicture ? (
                       <img src={user.profilePicture} alt={userName} className={styles.userAvatarImage} />
                     ) : (
-                      userInitial
+                      userInitials
                     )}
                   </div>
-                  <div>
-                    <div className={styles.dropdownUserName}>{userName}</div>
+                  <div className={styles.dropdownUserInfo}>
+                    <div className={styles.dropdownUserNameRow}>
+                      <span className={styles.dropdownUserName}>{userName}</span>
+                      <span className={`${styles.planBadge} ${isFreePlan ? styles.planBadgeFree : ''}`}>
+                        {userPlan}
+                      </span>
+                    </div>
                     <div className={styles.dropdownUserEmail}>{user?.email}</div>
                   </div>
                 </div>
+                {isFreePlan && (
+                  <Link to="/pricing" className={styles.upgradeRow} onClick={() => setShowUserMenu(false)}>
+                    <span>3 Analysen/Monat inklusive</span>
+                    <span className={styles.upgradeRowCta}>Upgrade →</span>
+                  </Link>
+                )}
                 <div className={styles.dropdownDivider} />
                 <div className={styles.dropdownList}>
                   <Link to="/me" className={styles.dropdownItem} onClick={() => setShowUserMenu(false)}>

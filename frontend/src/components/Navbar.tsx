@@ -8,7 +8,6 @@ import {
   CreditCard,
   HelpCircle,
   LogOut,
-  ChevronDown,
   LayoutDashboard,
   FileText,
   Calendar,
@@ -131,15 +130,32 @@ export default function Navbar() {
     return user.email?.split('@')[0] || 'User';
   }, [user]);
 
-  const userInitial = useMemo(() => {
-    return userName.charAt(0).toUpperCase();
-  }, [userName]);
+  // Voller Anzeigename fürs Dropdown (Name > Vorname > E-Mail-Präfix)
+  const displayName = useMemo(() => {
+    if (!user) return 'User';
+    return user.name?.trim() || user.firstName || user.email?.split('@')[0] || 'User';
+  }, [user]);
+
+  // Initialen: Vor- + Nachname → zwei Buchstaben, sonst einer.
+  // Array.from statt charAt: zerteilt keine Mehrbyte-Zeichen (Emoji etc.)
+  const userInitials = useMemo(() => {
+    const name = user?.name?.trim();
+    if (name) {
+      const parts = name.split(/\s+/).filter(Boolean);
+      const first = Array.from(parts[0])[0] || '';
+      const last = parts.length > 1 ? Array.from(parts[parts.length - 1])[0] || '' : '';
+      const initials = (first + last).toUpperCase();
+      if (initials) return initials;
+    }
+    const fallback = user?.firstName || user?.email || 'U';
+    return (Array.from(fallback)[0] || 'U').toUpperCase();
+  }, [user]);
 
   // 🆕 Avatar-Komponente: Zeigt Profilbild oder Initialen
   const [avatarError, setAvatarError] = useState(false);
 
-  const UserAvatar = ({ size = 'small', className }: { size?: 'small' | 'mobile' | 'dropdown', className?: string }) => {
-    const sizeClass = size === 'mobile' ? styles.userAvatarMobile : size === 'dropdown' ? styles.dropdownUserAvatar : styles.userAvatarSmall;
+  const UserAvatar = ({ size = 'small', className }: { size?: 'small' | 'dropdown', className?: string }) => {
+    const sizeClass = size === 'dropdown' ? styles.dropdownUserAvatar : styles.userAvatarSmall;
 
     // Zeige Profilbild nur wenn vorhanden UND kein Ladefehler
     if (user?.profilePicture && !avatarError) {
@@ -156,8 +172,8 @@ export default function Navbar() {
       );
     }
 
-    // Fallback: Initialen-Buchstabe
-    return <div className={`${sizeClass} ${className || ''}`}>{userInitial}</div>;
+    // Fallback: Initialen
+    return <div className={`${sizeClass} ${className || ''}`}>{userInitials}</div>;
   };
 
   const formatPlan = (plan?: string): string => {
@@ -328,6 +344,82 @@ export default function Navbar() {
     setTimeout(() => navigate("/login"), 1000);
   };
 
+  // EIN gemeinsamer Profil-Baustein für alle Navbar-Varianten (Desktop + Mobile):
+  // Avatar-only-Trigger (GitHub/Stripe-Muster), Name/E-Mail/Plan-Badge leben im Dropdown.
+  const isFreePlan = !user?.subscriptionPlan || user.subscriptionPlan === 'free';
+  const userMenu = user ? (
+    <div className={styles.dropdownWrapper} ref={dropdownRef}>
+      <motion.button
+        onClick={() => setDropdownOpen((prev) => !prev)}
+        className={styles.userMenuTrigger}
+        whileTap={{ scale: 0.94 }}
+        aria-label="Konto-Menü"
+        aria-haspopup="menu"
+        aria-expanded={dropdownOpen}
+      >
+        <UserAvatar size="small" />
+      </motion.button>
+
+      <AnimatePresence>
+        {dropdownOpen && (
+          <motion.div
+            className={styles.dropdownMenuNew}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className={styles.dropdownUserHeader}>
+              <UserAvatar size="dropdown" />
+              <div className={styles.dropdownUserInfo}>
+                <div className={styles.dropdownUserNameRow}>
+                  <span className={styles.dropdownUserName}>{displayName}</span>
+                  <span className={`${styles.planBadge} ${isFreePlan ? styles.planBadgeFree : ''}`}>
+                    {formatPlan(user.subscriptionPlan)}
+                  </span>
+                </div>
+                <div className={styles.dropdownUserEmail}>{user.email}</div>
+              </div>
+            </div>
+            {isFreePlan && (
+              <Link to="/pricing" className={styles.upgradeRow} onClick={() => setDropdownOpen(false)}>
+                <span>3 Analysen/Monat inklusive</span>
+                <span className={styles.upgradeRowCta}>Upgrade →</span>
+              </Link>
+            )}
+            <div className={styles.dropdownDivider} />
+            <div className={styles.dropdownList}>
+              <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                <Settings size={16} strokeWidth={1.75} />
+                <span>Einstellungen</span>
+              </Link>
+              <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                <CompanyProfileIcon size={16} strokeWidth={1.75} />
+                <span>{companyProfileLabel}</span>
+              </Link>
+              <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                <CreditCard size={16} strokeWidth={1.75} />
+                <span>Abo verwalten</span>
+              </Link>
+            </div>
+            <div className={styles.dropdownDivider} />
+            <div className={styles.dropdownList}>
+              <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
+                <HelpCircle size={16} strokeWidth={1.75} />
+                <span>Hilfe & Support</span>
+              </Link>
+            </div>
+            <div className={styles.dropdownDivider} />
+            <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
+              <LogOut size={16} strokeWidth={1.75} />
+              <span>Abmelden</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  ) : null;
+
   // Toggle Sidebar
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -408,129 +500,7 @@ export default function Navbar() {
 
           {/* Right Section - User Menu */}
           <div className={styles.rightSection}>
-            {isMobile ? (
-              <div className={styles.dropdownWrapper} ref={dropdownRef}>
-                <motion.button
-                  onClick={() => setDropdownOpen((prev) => !prev)}
-                  className={styles.userButtonMobile}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <UserAvatar size="mobile" />
-                  <ChevronDown size={14} strokeWidth={2.5} className={styles.userChevronMobile} />
-                </motion.button>
-
-                <AnimatePresence>
-                  {dropdownOpen && (
-                    <motion.div
-                      className={styles.dropdownMenuNew}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className={styles.dropdownUserHeader}>
-                        <UserAvatar size="dropdown" />
-                        <div>
-                          <div className={styles.dropdownUserName}>{userName}</div>
-                          <div className={styles.dropdownUserEmail}>{user.email}</div>
-                        </div>
-                      </div>
-                      <div className={styles.dropdownDivider} />
-                      <div className={styles.dropdownList}>
-                        <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <Settings size={16} strokeWidth={1.75} />
-                          <span>Einstellungen</span>
-                        </Link>
-                        <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <CompanyProfileIcon size={16} strokeWidth={1.75} />
-                          <span>{companyProfileLabel}</span>
-                        </Link>
-                        <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <CreditCard size={16} strokeWidth={1.75} />
-                          <span>Abo verwalten</span>
-                        </Link>
-                      </div>
-                      <div className={styles.dropdownDivider} />
-                      <div className={styles.dropdownList}>
-                        <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <HelpCircle size={16} strokeWidth={1.75} />
-                          <span>Hilfe & Support</span>
-                        </Link>
-                      </div>
-                      <div className={styles.dropdownDivider} />
-                      <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
-                        <LogOut size={16} strokeWidth={1.75} />
-                        <span>Abmelden</span>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <div className={styles.dropdownWrapper} ref={dropdownRef}>
-                <motion.button
-                  onClick={() => setDropdownOpen((prev) => !prev)}
-                  className={styles.userButtonNew}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <UserAvatar size="small" />
-                  <div className={styles.userInfoSmall}>
-                    <span className={styles.userNameSmall}>{userName}</span>
-                    <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
-                  </div>
-                  <ChevronDown size={16} strokeWidth={2} />
-                </motion.button>
-
-                <AnimatePresence>
-                  {dropdownOpen && (
-                    <motion.div
-                      className={styles.dropdownMenuNew}
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <div className={styles.dropdownUserHeader}>
-                        <UserAvatar size="dropdown" />
-                        <div>
-                          <div className={styles.dropdownUserName}>{userName}</div>
-                          <div className={styles.dropdownUserEmail}>{user.email}</div>
-                        </div>
-                      </div>
-                      <div className={styles.dropdownDivider} />
-                      <div className={styles.dropdownList}>
-                        <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <Settings size={16} strokeWidth={1.75} />
-                          <span>Einstellungen</span>
-                        </Link>
-                        <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <CompanyProfileIcon size={16} strokeWidth={1.75} />
-                          <span>{companyProfileLabel}</span>
-                        </Link>
-                        <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <CreditCard size={16} strokeWidth={1.75} />
-                          <span>Abo verwalten</span>
-                        </Link>
-                      </div>
-                      <div className={styles.dropdownDivider} />
-                      <div className={styles.dropdownList}>
-                        <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                          <HelpCircle size={16} strokeWidth={1.75} />
-                          <span>Hilfe & Support</span>
-                        </Link>
-                      </div>
-                      <div className={styles.dropdownDivider} />
-                      <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
-                        <LogOut size={16} strokeWidth={1.75} />
-                        <span>Abmelden</span>
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )}
+            {userMenu}
           </div>
         </>
       );
@@ -841,68 +811,7 @@ export default function Navbar() {
 
           {/* Desktop: User Dropdown wenn eingeloggt */}
           {!isMobile && user && (
-            <div className={styles.dropdownWrapper} ref={dropdownRef}>
-              <motion.button
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.userButtonNew}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <UserAvatar size="small" />
-                <div className={styles.userInfoSmall}>
-                  <span className={styles.userNameSmall}>{userName}</span>
-                  <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
-                </div>
-                <ChevronDown size={16} strokeWidth={2} />
-              </motion.button>
-
-              <AnimatePresence>
-                {dropdownOpen && (
-                  <motion.div
-                    className={styles.dropdownMenuNew}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className={styles.dropdownUserHeader}>
-                      <UserAvatar size="dropdown" />
-                      <div>
-                        <div className={styles.dropdownUserName}>{userName}</div>
-                        <div className={styles.dropdownUserEmail}>{user.email}</div>
-                      </div>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <div className={styles.dropdownList}>
-                      <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <Settings size={16} strokeWidth={1.75} />
-                        <span>Einstellungen</span>
-                      </Link>
-                      <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <CompanyProfileIcon size={16} strokeWidth={1.75} />
-                        <span>{companyProfileLabel}</span>
-                      </Link>
-                      <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <CreditCard size={16} strokeWidth={1.75} />
-                        <span>Abo verwalten</span>
-                      </Link>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <div className={styles.dropdownList}>
-                      <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <HelpCircle size={16} strokeWidth={1.75} />
-                        <span>Hilfe & Support</span>
-                      </Link>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
-                      <LogOut size={16} strokeWidth={1.75} />
-                      <span>Abmelden</span>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            userMenu
           )}
         </div>
       </>
@@ -947,130 +856,12 @@ export default function Navbar() {
         <div className={styles.rightSection}>
           {/* Desktop: User Dropdown wenn eingeloggt */}
           {!isMobile && user && (
-            <div className={styles.dropdownWrapper} ref={dropdownRef}>
-              <motion.button
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.userButtonNew}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <UserAvatar size="small" />
-                <div className={styles.userInfoSmall}>
-                  <span className={styles.userNameSmall}>{userName}</span>
-                  <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
-                </div>
-                <ChevronDown size={16} strokeWidth={2} />
-              </motion.button>
-
-              <AnimatePresence>
-                {dropdownOpen && (
-                  <motion.div
-                    className={styles.dropdownMenuNew}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className={styles.dropdownUserHeader}>
-                      <UserAvatar size="dropdown" />
-                      <div>
-                        <div className={styles.dropdownUserName}>{userName}</div>
-                        <div className={styles.dropdownUserEmail}>{user.email}</div>
-                      </div>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <div className={styles.dropdownList}>
-                      <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <Settings size={16} strokeWidth={1.75} />
-                        <span>Einstellungen</span>
-                      </Link>
-                      <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <CompanyProfileIcon size={16} strokeWidth={1.75} />
-                        <span>{companyProfileLabel}</span>
-                      </Link>
-                      <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <CreditCard size={16} strokeWidth={1.75} />
-                        <span>Abo verwalten</span>
-                      </Link>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <div className={styles.dropdownList}>
-                      <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <HelpCircle size={16} strokeWidth={1.75} />
-                        <span>Hilfe & Support</span>
-                      </Link>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
-                      <LogOut size={16} strokeWidth={1.75} />
-                      <span>Abmelden</span>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            userMenu
           )}
 
           {/* Mobile: User Dropdown wenn eingeloggt */}
           {isMobile && user && (
-            <div className={styles.dropdownWrapper} ref={dropdownRef}>
-              <motion.button
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.userButtonMobile}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <UserAvatar size="mobile" />
-                <ChevronDown size={14} strokeWidth={2.5} className={styles.userChevronMobile} />
-              </motion.button>
-
-              <AnimatePresence>
-                {dropdownOpen && (
-                  <motion.div
-                    className={styles.dropdownMenuNew}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className={styles.dropdownUserHeader}>
-                      <UserAvatar size="dropdown" />
-                      <div>
-                        <div className={styles.dropdownUserName}>{userName}</div>
-                        <div className={styles.dropdownUserEmail}>{user.email}</div>
-                      </div>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <div className={styles.dropdownList}>
-                      <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <Settings size={16} strokeWidth={1.75} />
-                        <span>Einstellungen</span>
-                      </Link>
-                      <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <CompanyProfileIcon size={16} strokeWidth={1.75} />
-                        <span>{companyProfileLabel}</span>
-                      </Link>
-                      <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <CreditCard size={16} strokeWidth={1.75} />
-                        <span>Abo verwalten</span>
-                      </Link>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <div className={styles.dropdownList}>
-                      <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <HelpCircle size={16} strokeWidth={1.75} />
-                        <span>Hilfe & Support</span>
-                      </Link>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
-                      <LogOut size={16} strokeWidth={1.75} />
-                      <span>Abmelden</span>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            userMenu
           )}
         </div>
       </>
@@ -1135,68 +926,7 @@ export default function Navbar() {
           )}
 
           {!isMobile && user && (
-            <div className={styles.dropdownWrapper} ref={dropdownRef}>
-              <motion.button
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className={styles.userButtonNew}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <UserAvatar size="small" />
-                <div className={styles.userInfoSmall}>
-                  <span className={styles.userNameSmall}>{userName}</span>
-                  <span className={styles.userPlanSmall}>{formatPlan(user.subscriptionPlan)}</span>
-                </div>
-                <ChevronDown size={16} strokeWidth={2} />
-              </motion.button>
-
-              <AnimatePresence>
-                {dropdownOpen && (
-                  <motion.div
-                    className={styles.dropdownMenuNew}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className={styles.dropdownUserHeader}>
-                      <UserAvatar size="dropdown" />
-                      <div>
-                        <div className={styles.dropdownUserName}>{userName}</div>
-                        <div className={styles.dropdownUserEmail}>{user.email}</div>
-                      </div>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <div className={styles.dropdownList}>
-                      <Link to="/me" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <Settings size={16} strokeWidth={1.75} />
-                        <span>Einstellungen</span>
-                      </Link>
-                      <Link to="/company-profile" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <CompanyProfileIcon size={16} strokeWidth={1.75} />
-                        <span>{companyProfileLabel}</span>
-                      </Link>
-                      <Link to="/pricing" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <CreditCard size={16} strokeWidth={1.75} />
-                        <span>Abo verwalten</span>
-                      </Link>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <div className={styles.dropdownList}>
-                      <Link to="/hilfe" className={styles.dropdownItemNew} onClick={() => setDropdownOpen(false)}>
-                        <HelpCircle size={16} strokeWidth={1.75} />
-                        <span>Hilfe & Support</span>
-                      </Link>
-                    </div>
-                    <div className={styles.dropdownDivider} />
-                    <button className={`${styles.dropdownItemNew} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
-                      <LogOut size={16} strokeWidth={1.75} />
-                      <span>Abmelden</span>
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            userMenu
           )}
         </div>
       </>
@@ -1269,8 +999,7 @@ export default function Navbar() {
                         {/* ✅ KORRIGIERT: Mobile Menu Badge */}
                         {user.subscriptionActive && (
                           <span className={styles.premiumBadge}>
-                            {user.subscriptionPlan === "enterprise" ? "🚀 Enterprise" :
-                             user.subscriptionPlan === "business" ? "🏢 Business" : ""}
+                            {formatPlan(user.subscriptionPlan)}
                           </span>
                         )}
                       </div>
