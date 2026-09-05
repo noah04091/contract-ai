@@ -178,12 +178,12 @@ export default function AssistantWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Focus input when chat opens
+  // Focus input when chat opens — nur Desktop, mobil würde sofort die Tastatur das Sheet verdecken
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && inputRef.current && !isMobile) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
 
   // Reset chat when contract ID changes
   useEffect(() => {
