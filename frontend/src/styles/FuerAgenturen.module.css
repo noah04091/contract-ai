@@ -1,0 +1,1122 @@
+/* FuerAgenturen.module.css — eigenes Stylesheet fuer /fuer-agenturen.
+   BEWUSST NICHT FeaturePage.module.css: das teilen sich zehn weitere
+   Feature-Seiten, jede Aenderung dort wuerde alle treffen.
+   Farben, Schriften und Hintergrund sind identisch zur Ueber-uns-Seite,
+   damit die oeffentlichen Seiten als Familie lesbar bleiben. */
+
+.seite {
+  --tinte: #14284f;
+  --tinte-weich: #5a719b;
+  --blau: #2563eb;
+  --blau-tief: #1d4ed8;
+  --flaeche: #e9f0fb;
+  --linie: rgba(37, 99, 235, 0.16);
+  --gruen: #0f766e;
+  --warn: #854d0e;
+
+  --display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --text: 'Inter', system-ui, -apple-system, sans-serif;
+  --mono: 'Source Code Pro', ui-monospace, monospace;
+
+  --rand: clamp(20px, 5vw, 96px);
+  --spalte: min(1180px, 100% - var(--rand) * 2);
+
+  color: var(--tinte);
+  font-family: var(--text);
+  font-size: 17px;
+  line-height: 1.6;
+  background:
+    radial-gradient(1300px 850px at 10% 2%, rgba(37, 99, 235, 0.13), transparent 60%),
+    radial-gradient(1050px 750px at 92% 28%, rgba(59, 130, 246, 0.09), transparent 58%),
+    radial-gradient(1200px 850px at 8% 62%, rgba(37, 99, 235, 0.10), transparent 60%),
+    radial-gradient(1300px 900px at 86% 94%, rgba(37, 99, 235, 0.12), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f4f8fe 12%, #ffffff 30%,
+                    #f6fafe 48%, #ffffff 64%, #f2f7fd 84%, #ffffff 100%);
+}
+
+.band {
+  width: var(--spalte);
+  margin-inline: auto;
+}
+
+.abschnitt {
+  padding: clamp(52px, 8vh, 100px) 0;
+}
+
+/* ================================
+   ABSCHNITTSKOEPFE
+   ================================ */
+.augenbraue {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinte-weich);
+}
+
+.titel {
+  margin: 14px 0 0;
+  max-width: 20ch;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(26px, 3.8vw, 48px);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.akzent {
+  color: var(--blau);
+}
+
+.unterzeile {
+  margin: 14px 0 0;
+  max-width: 62ch;
+  color: var(--tinte-weich);
+}
+
+/* ================================
+   KNOEPFE
+   ================================ */
+.knoepfe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.knopfVoll,
+.knopfLinie {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 24px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15.5px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.knopfVoll {
+  background: var(--blau);
+  color: #fff;
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.32);
+}
+
+.knopfVoll:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.4);
+}
+
+.knopfLinie {
+  border: 1px solid rgba(37, 99, 235, 0.34);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--blau-tief);
+}
+
+.knopfLinie:hover {
+  border-color: var(--blau);
+  background: var(--flaeche);
+}
+
+/* ================================
+   AUFTAKT
+   ================================ */
+.auftakt {
+  padding: 100px 0 clamp(48px, 7vh, 88px);
+}
+
+.marke {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blau);
+}
+
+.markePunkt {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blau);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
+}
+
+.auftaktRaster {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: center;
+  margin-top: 30px;
+}
+
+/* "Vertragsmanagement" ist ein sehr langes Wort: ohne Trennung ragt es auf
+   320px aus der Spalte und wird abgeschnitten. hyphens braucht lang="de",
+   das steht auf <html>. */
+.heroTitel {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(34px, 4.4vw, 58px);
+  line-height: 1.0;
+  letter-spacing: -0.035em;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.heroTitel .zweiteZeile {
+  display: block;
+  color: var(--blau);
+}
+
+.anriss {
+  max-width: 48ch;
+  margin: 26px 0 0;
+  color: var(--tinte-weich);
+  font-size: clamp(16.5px, 1.4vw, 19px);
+}
+
+.anriss strong {
+  color: var(--tinte);
+  font-weight: 600;
+}
+
+/* Die Rechnung: das staerkste Argument gehoert nach oben */
+.rechnung {
+  padding: 30px 28px;
+  border: 1px solid var(--linie);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 20px 50px rgba(37, 99, 235, 0.10);
+}
+
+.rechnungKopf {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinte-weich);
+}
+
+.preis {
+  margin: 10px 0 2px;
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-size: clamp(40px, 5vw, 62px);
+  line-height: 1;
+  background: linear-gradient(120deg, var(--blau-tief), var(--blau) 55%, #4f8bf7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.preisEinheit {
+  font-size: 0.34em;
+  -webkit-text-fill-color: var(--tinte-weich);
+  color: var(--tinte-weich);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.preisNote {
+  color: var(--tinte-weich);
+  font-size: 14.5px;
+}
+
+.teilung {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--linie);
+}
+
+.teilungZeile {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 14.5px;
+  color: var(--tinte-weich);
+}
+
+.teilungZeile + .teilungZeile {
+  margin-top: 9px;
+}
+
+.teilungZeile b {
+  color: var(--tinte);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.proKopf {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  background: var(--flaeche);
+}
+
+.proKopf span {
+  font-size: 14px;
+  color: var(--tinte-weich);
+}
+
+.proKopf b {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--blau-tief);
+  letter-spacing: -0.02em;
+}
+
+/* ================================
+   VERTRAUENSLEISTE
+   ================================ */
+.vertrauen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  margin-top: clamp(36px, 6vh, 64px);
+  padding: 20px 0;
+  border-top: 1px solid var(--linie);
+  border-bottom: 1px solid var(--linie);
+}
+
+.vertrauen span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--tinte-weich);
+}
+
+.vertrauen svg {
+  color: var(--blau);
+  flex-shrink: 0;
+}
+
+/* ================================
+   PRODUKTGRAFIKEN
+   Keine Stockfotos: gezeigt wird das Produkt selbst, gebaut aus denselben
+   Tokens wie die Seite. Bleibt scharf, skaliert mit, laedt ohne Zusatzdatei.
+   Alle Inhalte darin sind erfundene Beispiele.
+   ================================ */
+.buehne {
+  margin-top: clamp(34px, 5vh, 60px);
+  border: 1px solid var(--linie);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 30px 70px -30px rgba(20, 40, 79, 0.30), 0 2px 8px rgba(20, 40, 79, 0.05);
+  overflow: hidden;
+}
+
+.fensterKopf {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--linie);
+  background: rgba(233, 240, 251, 0.45);
+}
+
+.fensterTitel {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  color: var(--tinte-weich);
+}
+
+.fensterTitel b {
+  color: var(--tinte);
+  font-weight: 600;
+}
+
+.avatare {
+  display: flex;
+  margin-left: auto;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: -8px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
+
+.avatar:first-child {
+  margin-left: 0;
+}
+
+.avatarRest {
+  background: var(--flaeche);
+  color: var(--tinte-weich);
+  font-weight: 600;
+}
+
+.avatarBlau { background: #2563eb; }
+.avatarHell { background: #4f8bf7; }
+.avatarTief { background: #1d4ed8; }
+
+.buehneInhalt {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 232px;
+}
+
+.liste {
+  padding: 6px 0;
+}
+
+.zeileVertrag {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  padding: 13px 20px;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.08);
+}
+
+.zeileVertrag:last-child {
+  border-bottom: 0;
+}
+
+.vName {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--tinte);
+}
+
+.vMeta {
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--tinte-weich);
+}
+
+.chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--flaeche);
+  color: var(--blau-tief);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chipWarn {
+  background: rgba(234, 179, 8, 0.14);
+  color: var(--warn);
+}
+
+.ringWert {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  fill: var(--blau-tief);
+}
+
+.seitenspalte {
+  padding: 16px 18px;
+  border-left: 1px solid var(--linie);
+  background: rgba(233, 240, 251, 0.30);
+}
+
+.spaltenTitel {
+  margin-bottom: 12px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinte-weich);
+}
+
+.rolle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.rolle + .rolle {
+  border-top: 1px solid rgba(37, 99, 235, 0.09);
+}
+
+.rolle .avatar {
+  margin: 0;
+}
+
+.rolleName {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.rolleRecht {
+  margin-top: 1px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--tinte-weich);
+}
+
+/* ================================
+   ZEILENLISTEN statt Kartenraster
+   ================================ */
+.zeilen {
+  margin-top: 42px;
+  border-top: 1px solid var(--linie);
+}
+
+.zeile {
+  display: grid;
+  grid-template-columns: minmax(0, 0.42fr) minmax(0, 1fr);
+  gap: clamp(14px, 3.5vw, 48px);
+  align-items: baseline;
+  padding: clamp(20px, 3vh, 30px) 0;
+  border-bottom: 1px solid var(--linie);
+  transition: background 0.25s ease;
+}
+
+.zeile:hover {
+  background: rgba(233, 240, 251, 0.7);
+}
+
+.zeileKopf {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.zeileIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--flaeche);
+  color: var(--blau);
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.zeile:hover .zeileIcon {
+  background: rgba(37, 99, 235, 0.16);
+  transform: translateY(-2px);
+}
+
+.zeileTitel {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(18px, 2vw, 24px);
+  letter-spacing: -0.02em;
+  transition: color 0.25s ease;
+}
+
+.zeile:hover .zeileTitel {
+  color: var(--blau);
+}
+
+.zeileText {
+  margin: 0;
+  max-width: 58ch;
+  color: var(--tinte-weich);
+}
+
+.zeileText a {
+  color: var(--blau-tief);
+  font-weight: 600;
+}
+
+/* ================================
+   ABLAUF — Ziffer als Anker (echte Sequenz)
+   ================================ */
+.schritt {
+  display: grid;
+  grid-template-columns: minmax(0, 0.22fr) minmax(0, 1fr) 260px;
+  gap: clamp(14px, 3.5vw, 48px);
+  padding: clamp(22px, 3.4vh, 34px) 0;
+  border-top: 1px solid var(--linie);
+}
+
+.ziffer {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(46px, 6vw, 84px);
+  line-height: 0.85;
+  color: transparent;
+  -webkit-text-stroke: 1.6px rgba(37, 99, 235, 0.7);
+  font-variant-numeric: tabular-nums;
+}
+
+.schrittTitel {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(19px, 2vw, 25px);
+  letter-spacing: -0.02em;
+}
+
+.schrittText {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--tinte-weich);
+}
+
+.schrittBild {
+  align-self: start;
+  padding: 16px;
+  border: 1px solid var(--linie);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 14px 34px -20px rgba(20, 40, 79, 0.35);
+}
+
+.bildLabel {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinte-weich);
+}
+
+.bildPreis {
+  margin: 4px 0 12px;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--blau-tief);
+}
+
+.bildPreis span {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tinte-weich);
+}
+
+.feld {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  border: 1px solid var(--linie);
+  border-radius: 9px;
+  background: #fff;
+  font-size: 12.5px;
+  color: var(--tinte-weich);
+}
+
+.feld + .feld {
+  margin-top: 8px;
+}
+
+.feldKnopf {
+  margin-top: 10px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  background: var(--blau);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.balken {
+  height: 7px;
+  border-radius: 4px;
+  background: var(--flaeche);
+  overflow: hidden;
+  margin-bottom: 11px;
+}
+
+.balken i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--blau-tief), var(--blau));
+}
+
+.klausel {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+  font-size: 12px;
+}
+
+.klausel span:first-child {
+  color: var(--tinte-weich);
+}
+
+.klausel b {
+  font-weight: 600;
+}
+
+.gut { color: var(--gruen); }
+.pruefen { color: var(--warn); }
+
+.eingeladen {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.eingeladen .avatar {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  font-size: 9.5px;
+}
+
+.eingeladenZahl {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tinte-weich);
+}
+
+.bildKopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+/* ================================
+   GEGENUEBERSTELLUNG statt drei Karten
+   ================================ */
+.gegen {
+  margin-top: 42px;
+  overflow-x: auto;
+}
+
+.gegen table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+}
+
+.gegen th,
+.gegen td {
+  padding: 18px 20px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--linie);
+}
+
+.gegen thead th {
+  padding-bottom: 12px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tinte-weich);
+}
+
+.gegen thead th.uns {
+  color: var(--blau);
+}
+
+.gegen tbody th {
+  width: 21%;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--tinte);
+}
+
+.gegen td {
+  font-size: 15px;
+  color: var(--tinte-weich);
+}
+
+.unsSpalte {
+  background: rgba(37, 99, 235, 0.055);
+}
+
+.gegen td.uns {
+  color: var(--tinte);
+}
+
+.marker {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+}
+
+.nein { color: #b91c1c; }
+.ja { color: var(--gruen); }
+
+/* ================================
+   PREISBLOCK + SCHLUSS
+   Betonte Flaeche nach dem Rezept der Startseite: der Verlauf liegt INNERHALB
+   der Sektion und ist an deren Rand schon transparent — sichtbar, ohne Kante.
+   ================================ */
+.preisBand {
+  background: radial-gradient(125% 58% at 50% 50%,
+    rgba(37, 99, 235, 0.15) 0%, rgba(37, 99, 235, 0.075) 45%, transparent 72%);
+}
+
+.preisRaster {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: clamp(28px, 5vw, 68px);
+  align-items: center;
+  margin-top: 38px;
+}
+
+.haken {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 13px;
+}
+
+.haken li {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  font-size: 15.5px;
+}
+
+.haken svg {
+  color: var(--blau);
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* ================================
+   WHITE-LABEL: zwei Blaetter im Vergleich
+   ================================ */
+.blattFigur {
+  margin: clamp(34px, 5vh, 56px) auto 0;
+  max-width: 560px;
+}
+
+.blattPaar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.blatt {
+  padding: 14px;
+  border: 1px solid var(--linie);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 30px -20px rgba(20, 40, 79, 0.4);
+}
+
+.blattKopf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 11px;
+  border-bottom: 1px solid var(--linie);
+}
+
+.blattLogo {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--blau-tief);
+}
+
+.blattLogoDeins {
+  padding: 3px 8px;
+  border: 1px dashed rgba(37, 99, 235, 0.45);
+  border-radius: 5px;
+  color: var(--tinte-weich);
+  font-weight: 600;
+}
+
+.blattZeile {
+  height: 6px;
+  margin-bottom: 7px;
+  border-radius: 3px;
+  background: var(--flaeche);
+}
+
+.blattKurz {
+  width: 62%;
+}
+
+.blattNote {
+  margin-top: 11px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tinte-weich);
+  text-align: center;
+}
+
+/* ================================
+   FAQ
+   ================================ */
+.faq {
+  margin-top: 38px;
+  border-top: 1px solid var(--linie);
+}
+
+.faqItem {
+  border-bottom: 1px solid var(--linie);
+}
+
+.faqFrage {
+  position: relative;
+  padding: 20px 40px 20px 0;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(16.5px, 1.7vw, 19px);
+  letter-spacing: -0.01em;
+  transition: color 0.2s ease;
+}
+
+.faqFrage::-webkit-details-marker {
+  display: none;
+}
+
+.faqFrage:hover {
+  color: var(--blau);
+}
+
+.faqFrage::after {
+  content: '';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--blau);
+  border-bottom: 2px solid var(--blau);
+  transform: translateY(-70%) rotate(45deg);
+  transition: transform 0.25s ease;
+}
+
+.faqItem[open] .faqFrage::after {
+  transform: translateY(-30%) rotate(-135deg);
+}
+
+.faqAntwort {
+  margin: 0 0 22px;
+  max-width: 72ch;
+  font-size: 15.5px;
+  color: var(--tinte-weich);
+}
+
+.faqAntwort strong {
+  color: var(--tinte);
+  font-weight: 600;
+}
+
+.faqAntwort a {
+  color: var(--blau-tief);
+  font-weight: 600;
+}
+
+/* ================================
+   VERWEISE
+   ================================ */
+.verweise {
+  margin-top: 36px;
+  border-top: 1px solid var(--linie);
+}
+
+.verweis {
+  display: grid;
+  grid-template-columns: minmax(0, 0.34fr) minmax(0, 1fr) auto;
+  gap: clamp(12px, 3vw, 40px);
+  align-items: center;
+  padding: 19px 0;
+  border-bottom: 1px solid var(--linie);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.22s ease, padding-left 0.22s ease;
+}
+
+.verweis:hover {
+  background: rgba(233, 240, 251, 0.7);
+  padding-left: 10px;
+}
+
+.verweisName {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.015em;
+}
+
+.verweisName svg {
+  color: var(--blau);
+  flex-shrink: 0;
+}
+
+.verweisText {
+  color: var(--tinte-weich);
+  font-size: 15px;
+}
+
+.pfeil {
+  color: var(--blau);
+  transition: transform 0.22s ease;
+}
+
+.verweis:hover .pfeil {
+  transform: translateX(4px);
+}
+
+/* ================================
+   SCHLUSS
+   ================================ */
+.schluss {
+  padding: clamp(58px, 9vh, 110px) 0 clamp(66px, 11vh, 130px);
+  text-align: center;
+  background: radial-gradient(125% 58% at 50% 50%,
+    rgba(37, 99, 235, 0.155) 0%, rgba(37, 99, 235, 0.085) 45%, transparent 72%);
+}
+
+.schluss .titel {
+  max-width: 18ch;
+  margin-inline: auto;
+}
+
+.schluss .unterzeile {
+  max-width: 52ch;
+  margin-inline: auto;
+}
+
+.schluss .knoepfe {
+  justify-content: center;
+}
+
+.schlussFakten {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 26px;
+  justify-content: center;
+  margin-top: 26px;
+}
+
+.schlussFakten span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  color: var(--tinte-weich);
+}
+
+.schlussFakten svg {
+  color: var(--blau);
+}
+
+/* ================================
+   EINBLENDEN BEIM SCROLLEN
+   ================================ */
+.animiert {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ================================
+   RESPONSIVE
+   ================================ */
+@media (max-width: 1000px) {
+  .buehneInhalt {
+    grid-template-columns: 1fr;
+  }
+
+  .seitenspalte {
+    border-left: 0;
+    border-top: 1px solid var(--linie);
+  }
+
+  .schritt {
+    grid-template-columns: minmax(0, 0.22fr) minmax(0, 1fr);
+  }
+
+  .schrittBild {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .auftakt {
+    padding-top: 88px;
+  }
+
+  .auftaktRaster,
+  .zeile,
+  .schritt,
+  .preisRaster,
+  .verweis {
+    grid-template-columns: 1fr;
+  }
+
+  .verweis {
+    gap: 6px;
+  }
+
+  .pfeil {
+    display: none;
+  }
+
+  .titel {
+    max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animiert {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .zeile,
+  .zeileIcon,
+  .verweis,
+  .pfeil,
+  .knopfVoll,
+  .knopfLinie,
+  .faqFrage,
+  .faqFrage::after {
+    transition: none;
+  }
+}
