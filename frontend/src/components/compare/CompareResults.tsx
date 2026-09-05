@@ -123,7 +123,7 @@ export default function CompareResults({
           <AlertTriangle size={18} />
           <div>
             <strong>Eingeschränkter Vergleich</strong>
-            <p>Die erweiterte Analyse (Vertragskarte, Risiken, Empfehlungen) konnte nicht durchgeführt werden{(result as unknown as { _v2FallbackReason?: string })?._v2FallbackReason === 'timeout' ? ' (Zeitüberschreitung bei langen Verträgen)' : ''}. Es wird der Standardvergleich angezeigt. Bitte versuchen Sie es erneut.</p>
+            <p>Die erweiterte Analyse (Vertragskarte, Risiken, Empfehlungen) konnte nicht durchgeführt werden{(result as unknown as { _v2FallbackReason?: string })?._v2FallbackReason === 'timeout' ? ' (Zeitüberschreitung bei langen Verträgen)' : ''}. Du siehst deshalb den Standardvergleich. Ein erneuter Versuch liefert die erweiterte Analyse meist nach.</p>
           </div>
         </div>
       )}
