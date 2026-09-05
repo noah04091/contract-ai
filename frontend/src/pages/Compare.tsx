@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
   FileText, Download, ArrowRight, CheckCircle, AlertCircle,
-  RefreshCw, Upload, Info,
-  Users, Briefcase, Building, Zap, Scale,
+  RefreshCw, Info,
+  Users, Briefcase, Building, Scale,
   Star,
   GitCompare, FileCheck, Trophy,
   ChevronDown, History, Trash2, X,
@@ -20,6 +20,7 @@ import {
   Perspective,
 } from "../types/compare";
 import "../styles/ContractPages.css";
+import "../styles/CompareWerkbank.css";
 
 // PremiumNotice Wrapper entfernt - verwende UnifiedPremiumNotice direkt mit variant="fullWidth"
 
@@ -268,6 +269,10 @@ export default function EnhancedCompare() {
   const resultRef = useRef<HTMLDivElement>(null);
   const file1InputRef = useRef<HTMLInputElement>(null);
   const file2InputRef = useRef<HTMLInputElement>(null);
+  /* 05.09.2026: Die Seite konnte bisher keine Dateien per Ziehen annehmen.
+     Null Drag-Handler, während Optimierer und Better Contracts je vier
+     haben, und das auf einer Seite mit ZWEI Uploads. */
+  const [ziehtAuf, setZiehtAuf] = useState<1 | 2 | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // 📏 File size validation (10MB limit, matching backend multer config)
@@ -285,6 +290,30 @@ export default function EnhancedCompare() {
   };
 
   // 📸 Document Scanners for both file inputs
+  /* Ziehen und Ablegen. validateAndSetFile prüft Typ und Größe wie beim
+     Klickweg auch, hier gibt es also keine zweite Regel. */
+  const behandleZiehen = (e: React.DragEvent, schacht: 1 | 2) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isPremium) return;
+    setZiehtAuf(schacht);
+  };
+
+  const behandleVerlassen = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setZiehtAuf(null);
+  };
+
+  const behandleAblegen = (e: React.DragEvent, schacht: 1 | 2) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setZiehtAuf(null);
+    if (!isPremium) return;
+    const datei = e.dataTransfer?.files?.[0];
+    if (datei) validateAndSetFile(datei, schacht === 1 ? setFile1 : setFile2);
+  };
+
   const { openScanner: openScanner1, ScannerModal: ScannerModal1 } = useDocumentScanner((file) => {
     validateAndSetFile(file, setFile1);
   });
@@ -579,7 +608,7 @@ export default function EnhancedCompare() {
 
   // 📜 Clear all history via backend API
   const clearHistory = async () => {
-    if (!window.confirm('Möchten Sie wirklich den gesamten Vergleichsverlauf löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+    if (!window.confirm('Wirklich den gesamten Vergleichsverlauf löschen? Das lässt sich nicht rückgängig machen.')) {
       return;
     }
 
@@ -705,7 +734,7 @@ export default function EnhancedCompare() {
                 setTimeout(() => setNotification(null), 5000);
               } else if (eventData.type === 'error') {
                 setNotification({
-                  message: eventData.message || "Ein Fehler ist bei der Analyse aufgetreten. Bitte versuchen Sie es erneut.",
+                  message: eventData.message || "Beim Vergleich ist etwas schiefgelaufen. Deine Dateien sind noch geladen, du kannst ihn direkt noch einmal starten.",
                   type: "error"
                 });
                 setProgress(null);
@@ -755,7 +784,7 @@ export default function EnhancedCompare() {
       if (streamTimeout !== null) clearTimeout(streamTimeout);
       const isAbort = err instanceof DOMException && err.name === 'AbortError';
       const message = isAbort
-        ? "Die Analyse hat zu lange gedauert (> 5 Minuten). Bitte versuchen Sie es erneut oder verwenden Sie kürzere Verträge."
+        ? "Der Vergleich hat länger als fünf Minuten gedauert und wurde abgebrochen. Mit kürzeren Verträgen klappt es meist auf Anhieb."
         : err instanceof Error ? err.message : "Unbekannter Fehler beim Vergleich.";
       setNotification({
         message: isAbort ? message : "Fehler: " + message,
@@ -936,7 +965,7 @@ export default function EnhancedCompare() {
         featureId="compare"
         icon={<Scale size={32} />}
         title="Verträge vergleichen"
-        description="Laden Sie zwei Verträge hoch, um sie nebeneinander zu vergleichen. Die KI erkennt Unterschiede und bewertet, welcher Vertrag für Sie vorteilhafter ist."
+        description="Lade zwei Verträge hoch und sieh sie nebeneinander. Die KI zeigt die Unterschiede und sagt dir, welcher für dich günstiger ist."
         tip="Ideal für: Alter vs. neuer Vertrag, oder zwei Angebote von verschiedenen Anbietern."
       />
       <Helmet>
@@ -957,7 +986,7 @@ export default function EnhancedCompare() {
         <meta name="twitter:image" content="https://www.contract-ai.de/og-image.jpg" />
       </Helmet>
 
-      <div className={`contract-page ${!isPremium ? 'with-premium-banner' : ''}`}>
+      <div className={`cw-seite ${!isPremium ? 'with-premium-banner' : ''}`}>
         {/* Full-Width Premium Banner - außerhalb des Containers */}
         {!isPremium && (
           <UnifiedPremiumNotice
@@ -967,23 +996,41 @@ export default function EnhancedCompare() {
         )}
 
         <motion.div
-          className="contract-container"
-          style={{ maxWidth: '1200px', ...(result ? { paddingTop: '8px' } : {}) }}
+          className="cw-rahmen"
+          style={result ? { paddingTop: '8px' } : {}}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Hero Section - Hidden when results are shown */}
+          {/* 05.09.2026: War Hero-Symbol, Abzeichen, Verlaufsüberschrift und
+              Beschreibungssatz, also eine Landingpage-Wand vor der ersten
+              Handlung, auf einer Seite für eingeloggte zahlende Nutzer.
+              Jetzt eine Seitenüberschrift wie im übrigen Produkt. */}
           {!result && (
-          <div className="contract-header">
-            <div className="contract-hero-icon">
-              <Scale size={36} />
+          <div className="cw-kopf">
+            <div>
+              <div className="cw-kopf-titel">Vertragsvergleich</div>
+              <div className="cw-kopf-sub">Zwei Verträge nebeneinander, mit Einordnung durch die KI</div>
             </div>
-            {!isPremium && <div className="contract-hero-badge">Premium Feature</div>}
-            <h1>Vertrags<span className="gradient-text">vergleich</span></h1>
-            <p className="contract-description">
-              Vergleiche zwei Verträge und erhalte eine KI-Empfehlung
-            </p>
+            {historyItems.length > 0 && (
+              <div className="cw-kopf-rechts">
+                <button
+                  className="cw-knopf still"
+                  onClick={() => setShowHistory(!showHistory)}
+                  style={{ padding: '7px 13px', fontSize: '13px' }}
+                >
+                  <History size={15} />
+                  Frühere Vergleiche ({historyItems.length})
+                  <ChevronDown
+                    size={13}
+                    style={{
+                      transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)',
+                      transition: 'transform 0.25s ease'
+                    }}
+                  />
+                </button>
+              </div>
+            )}
           </div>
           )}
 
@@ -1219,328 +1266,215 @@ export default function EnhancedCompare() {
             </motion.div>
           )}
 
-          {/* Premium Upload Section - Hidden when results are shown */}
+          {/* ══════════════════════════════════════════════════════════
+              05.09.2026: Vorher zwei Karten mit Hintergrunddekoration,
+              Symbolringen, einem grossen VS-Abzeichen und Federanimationen.
+              Jetzt zwei gleichrangige Ablageflächen mit ruhigem Trenner.
+
+              NEU: Beide nehmen Dateien per Ziehen an. Die Seite hatte
+              vorher null Drag-Handler, und das bei ZWEI Uploads.
+              ══════════════════════════════════════════════════════════ */}
           {!result && (
-          <motion.div
-            className="premium-upload-section"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            {/* Section Header */}
-            <div className="upload-section-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <div className="upload-header-icon">
-                  <Scale size={20} />
-                </div>
-                <div className="upload-header-text">
-                  <h3>Verträge hochladen</h3>
-                  <p>Wählen Sie zwei Dokumente (PDF oder Word) für den Vergleich aus</p>
-                </div>
+          <div className="cw-karte">
+            <div className="cw-karte-kopf">
+              <div className="cw-karte-symbol">
+                <Scale size={16} />
               </div>
-              {historyItems.length > 0 && (
-                <motion.button
-                  onClick={() => setShowHistory(!showHistory)}
-                  className={`history-toggle-btn ${showHistory ? 'active' : ''}`}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  style={{ flexShrink: 0 }}
-                >
-                  <History size={16} />
-                  <span>Historie ({historyItems.length})</span>
-                  <ChevronDown
-                    size={14}
-                    style={{
-                      transform: showHistory ? 'rotate(180deg)' : 'rotate(0deg)',
-                      transition: 'transform 0.3s ease'
-                    }}
-                  />
-                </motion.button>
-              )}
-            </div>
-
-            {/* Upload Cards Container */}
-            <div className="upload-cards-container">
-              {/* Contract 1 Card Wrapper */}
-              <div className="card-wrapper">
-                {/* Card Label - outside the card */}
-                <div className="card-label">
-                  <span className="label-number">1</span>
-                  <span className="label-text">Erster Vertrag</span>
-                </div>
-
-                {/* Contract 1 Card */}
-                <motion.div
-                  className={`premium-upload-card ${file1 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
-                  whileHover={isPremium && !file1 ? {
-                    y: -4,
-                    boxShadow: '0 20px 40px rgba(0, 113, 227, 0.15), 0 0 0 1px rgba(0, 113, 227, 0.2)'
-                  } : {}}
-                  whileTap={isPremium ? { scale: 0.99 } : {}}
-                  onClick={() => isPremium && file1InputRef.current?.click()}
-                >
-                  <input
-                    ref={file1InputRef}
-                    type="file"
-                    accept=".pdf,.docx"
-                    disabled={!isPremium}
-                    style={{ display: 'none' }}
-                    onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile1)}
-                  />
-
-                  {/* Decorative Background */}
-                  <div className="card-bg-decoration" />
-
-                {file1 ? (
-                  <motion.div
-                    className="file-preview"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                  >
-                    <div className="file-icon-wrapper success">
-                      <FileText size={28} />
-                      <motion.div
-                        className="success-check"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: 'spring' }}
-                      >
-                        <CheckCircle size={16} />
-                      </motion.div>
-                    </div>
-                    <div className="file-info">
-                      <span className="file-name">{file1.name}</span>
-                      <span className="file-size">{(file1.size / 1024 / 1024).toFixed(2)} MB</span>
-                    </div>
-                    <motion.button
-                      className="remove-file"
-                      onClick={(e) => { e.stopPropagation(); setFile1(null); }}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <X size={14} />
-                    </motion.button>
-                  </motion.div>
-                ) : (
-                  <div className="upload-placeholder">
-                    <div className="upload-icon-wrapper">
-                      <Upload size={24} />
-                      <div className="upload-icon-ring" />
-                    </div>
-                    <span className="upload-text">Dokument auswählen</span>
-                    <span className="upload-hint">oder hierher ziehen</span>
-                    {/* 📸 Scan Button inside card */}
-                    {isPremium && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openScanner1(); }}
-                        className="scan-button-inline"
-                      >
-                        <Camera size={14} />
-                        Dokument scannen
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {!isPremium && (
-                  <div className="premium-overlay">
-                    <span className="premium-badge-card">
-                      <Star size={12} />
-                      Premium
-                    </span>
-                  </div>
-                )}
-              </motion.div>
-              </div>
-
-              {/* VS Connector */}
-              <div className="vs-connector">
-                <div className="connector-line" />
-                <motion.div
-                  className="vs-badge"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.4, type: 'spring', stiffness: 300 }}
-                >
-                  <span>VS</span>
-                </motion.div>
-                <div className="connector-line" />
-              </div>
-
-              {/* Contract 2 Card Wrapper */}
-              <div className="card-wrapper">
-                {/* Card Label - outside the card */}
-                <div className="card-label alt">
-                  <span className="label-number">2</span>
-                  <span className="label-text">Zweiter Vertrag</span>
-                </div>
-
-                {/* Contract 2 Card */}
-                <motion.div
-                  className={`premium-upload-card ${file2 ? 'has-file' : ''} ${!isPremium ? 'disabled' : ''}`}
-                  whileHover={isPremium && !file2 ? {
-                    y: -4,
-                    boxShadow: '0 20px 40px rgba(88, 86, 214, 0.15), 0 0 0 1px rgba(88, 86, 214, 0.2)'
-                  } : {}}
-                  whileTap={isPremium ? { scale: 0.99 } : {}}
-                  onClick={() => isPremium && file2InputRef.current?.click()}
-                >
-                  <input
-                    ref={file2InputRef}
-                    type="file"
-                    accept=".pdf,.docx"
-                    disabled={!isPremium}
-                    style={{ display: 'none' }}
-                    onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile2)}
-                  />
-
-                  {/* Decorative Background */}
-                  <div className="card-bg-decoration alt" />
-
-                {file2 ? (
-                  <motion.div
-                    className="file-preview"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                  >
-                    <div className="file-icon-wrapper success alt">
-                      <FileText size={28} />
-                      <motion.div
-                        className="success-check"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.2, type: 'spring' }}
-                      >
-                        <CheckCircle size={16} />
-                      </motion.div>
-                    </div>
-                    <div className="file-info">
-                      <span className="file-name">{file2.name}</span>
-                      <span className="file-size">{(file2.size / 1024 / 1024).toFixed(2)} MB</span>
-                    </div>
-                    <motion.button
-                      className="remove-file"
-                      onClick={(e) => { e.stopPropagation(); setFile2(null); }}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      <X size={14} />
-                    </motion.button>
-                  </motion.div>
-                ) : (
-                  <div className="upload-placeholder">
-                    <div className="upload-icon-wrapper alt">
-                      <Upload size={24} />
-                      <div className="upload-icon-ring" />
-                    </div>
-                    <span className="upload-text">Dokument auswählen</span>
-                    <span className="upload-hint">oder hierher ziehen</span>
-                    {/* 📸 Scan Button inside card */}
-                    {isPremium && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openScanner2(); }}
-                        className="scan-button-inline"
-                      >
-                        <Camera size={14} />
-                        Dokument scannen
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {!isPremium && (
-                  <div className="premium-overlay">
-                    <span className="premium-badge-card">
-                      <Star size={12} />
-                      Premium
-                    </span>
-                  </div>
-                )}
-              </motion.div>
+              <div>
+                <h3>Verträge hochladen</h3>
+                <p>Zwei Dokumente als PDF oder Word, wir stellen sie gegenüber</p>
               </div>
             </div>
 
-            {/* 📊 SSE Progress Bar */}
-            {loading && progress && (
-              <motion.div
-                style={{
-                  marginBottom: '1.5rem',
-                  padding: '1rem 1.5rem',
-                  background: 'rgba(0, 113, 227, 0.05)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(0, 113, 227, 0.1)'
-                }}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 500, color: '#0071e3' }}>
-                    {progress.message}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: '#6e6e73' }}>
-                    {progress.progress}%
-                  </span>
+            <div className="cw-paar">
+              {/* ── Erster Vertrag ── */}
+              <div className={`cw-schacht ${file1 ? 'gefuellt' : ''}`}>
+                <div className="cw-schacht-marke">
+                  <span className="cw-schacht-nr">1</span>
+                  Erster Vertrag
                 </div>
-                <div style={{
-                  height: '6px',
-                  backgroundColor: 'rgba(0, 113, 227, 0.1)',
-                  borderRadius: '3px',
-                  overflow: 'hidden'
-                }}>
-                  <motion.div
-                    style={{
-                      height: '100%',
-                      background: 'linear-gradient(90deg, #0071e3, #00c7be)',
-                      borderRadius: '3px'
-                    }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress.progress}%` }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                  />
+
+                <input
+                  ref={file1InputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  disabled={!isPremium}
+                  style={{ display: 'none' }}
+                  onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile1)}
+                />
+
+                <div
+                  className={`cw-ablage ${file1 ? 'gefuellt' : ''} ${ziehtAuf === 1 ? 'zieht' : ''} ${!isPremium ? 'gesperrt' : ''}`}
+                  onClick={() => isPremium && !file1 && file1InputRef.current?.click()}
+                  onDragOver={(e) => behandleZiehen(e, 1)}
+                  onDragEnter={(e) => behandleZiehen(e, 1)}
+                  onDragLeave={behandleVerlassen}
+                  onDrop={(e) => behandleAblegen(e, 1)}
+                  onKeyDown={(e) => {
+                    if (!isPremium || file1) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      file1InputRef.current?.click();
+                    }
+                  }}
+                  role="button"
+                  tabIndex={isPremium && !file1 ? 0 : -1}
+                  aria-label="Ersten Vertrag auswählen"
+                >
+                  <div className="cw-ablage-symbol">
+                    {file1 ? <CheckCircle size={18} /> : <FileText size={18} strokeWidth={1.8} />}
+                  </div>
+
+                  {file1 ? (
+                    <>
+                      <div className="cw-ablage-titel">{file1.name}</div>
+                      <div className="cw-ablage-text">{(file1.size / 1024 / 1024).toFixed(2)} MB</div>
+                      <button
+                        className="cw-datei-weg"
+                        onClick={(e) => { e.stopPropagation(); setFile1(null); }}
+                      >
+                        <X size={12} />
+                        Entfernen
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="cw-ablage-titel">
+                        {isPremium ? 'Hierher ziehen' : 'Business-Abo erforderlich'}
+                      </div>
+                      <div className="cw-ablage-text">
+                        {isPremium
+                          ? <>oder <span className="cw-ablage-link">Datei auswählen</span></>
+                          : 'Vergleichen ist Teil des Business-Abos'}
+                      </div>
+                      {isPremium && (
+                        <button
+                          className="cw-datei-weg"
+                          onClick={(e) => { e.stopPropagation(); openScanner1(); }}
+                        >
+                          <Camera size={12} />
+                          Abfotografieren
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
-              </motion.div>
+              </div>
+
+              {/* ── Trenner ── */}
+              <div className="cw-trenner">gegen</div>
+
+              {/* ── Zweiter Vertrag ── */}
+              <div className={`cw-schacht ${file2 ? 'gefuellt' : ''}`}>
+                <div className="cw-schacht-marke">
+                  <span className="cw-schacht-nr">2</span>
+                  Zweiter Vertrag
+                </div>
+
+                <input
+                  ref={file2InputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  disabled={!isPremium}
+                  style={{ display: 'none' }}
+                  onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile2)}
+                />
+
+                <div
+                  className={`cw-ablage ${file2 ? 'gefuellt' : ''} ${ziehtAuf === 2 ? 'zieht' : ''} ${!isPremium ? 'gesperrt' : ''}`}
+                  onClick={() => isPremium && !file2 && file2InputRef.current?.click()}
+                  onDragOver={(e) => behandleZiehen(e, 2)}
+                  onDragEnter={(e) => behandleZiehen(e, 2)}
+                  onDragLeave={behandleVerlassen}
+                  onDrop={(e) => behandleAblegen(e, 2)}
+                  onKeyDown={(e) => {
+                    if (!isPremium || file2) return;
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      file2InputRef.current?.click();
+                    }
+                  }}
+                  role="button"
+                  tabIndex={isPremium && !file2 ? 0 : -1}
+                  aria-label="Zweiten Vertrag auswählen"
+                >
+                  <div className="cw-ablage-symbol">
+                    {file2 ? <CheckCircle size={18} /> : <FileText size={18} strokeWidth={1.8} />}
+                  </div>
+
+                  {file2 ? (
+                    <>
+                      <div className="cw-ablage-titel">{file2.name}</div>
+                      <div className="cw-ablage-text">{(file2.size / 1024 / 1024).toFixed(2)} MB</div>
+                      <button
+                        className="cw-datei-weg"
+                        onClick={(e) => { e.stopPropagation(); setFile2(null); }}
+                      >
+                        <X size={12} />
+                        Entfernen
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="cw-ablage-titel">
+                        {isPremium ? 'Hierher ziehen' : 'Business-Abo erforderlich'}
+                      </div>
+                      <div className="cw-ablage-text">
+                        {isPremium
+                          ? <>oder <span className="cw-ablage-link">Datei auswählen</span></>
+                          : 'Vergleichen ist Teil des Business-Abos'}
+                      </div>
+                      {isPremium && (
+                        <button
+                          className="cw-datei-weg"
+                          onClick={(e) => { e.stopPropagation(); openScanner2(); }}
+                        >
+                          <Camera size={12} />
+                          Abfotografieren
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="cw-leiste">
+              <span className="cw-typ">PDF</span>
+              <span className="cw-typ">DOCX</span>
+              <span>je bis 10 MB</span>
+              <span style={{ marginLeft: 'auto' }}>Deine Dateien verlassen den Browser nur zur Analyse</span>
+            </div>
+          </div>
+          )}
+
+          {!result && (
+          <div className="cw-knopfreihe">
+            {(file1 || file2) && (
+              <button className="cw-knopf still" onClick={handleReset}>
+                <RefreshCw size={15} />
+                Zurücksetzen
+              </button>
             )}
 
-            {/* Premium Action Buttons */}
-            <div className="action-buttons">
-              <motion.button
-                className={`premium-submit-btn ${(!file1 || !file2 || loading || !isPremium) ? 'disabled' : ''}`}
-                onClick={handleSubmit}
-                disabled={!file1 || !file2 || loading || !isPremium}
-                whileHover={file1 && file2 && !loading && isPremium ? {
-                  y: -2,
-                  boxShadow: '0 12px 35px rgba(0, 113, 227, 0.35)'
-                } : {}}
-                whileTap={file1 && file2 && !loading && isPremium ? { scale: 0.98 } : {}}
-              >
-                <span className="btn-bg" />
-                {loading ? (
-                  <>
-                    <div className="loading-spinner" />
-                    <span className="btn-text">{progress?.message || 'Analysiere...'}</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap size={18} className="btn-icon" />
-                    <span className="btn-text">Vergleich starten</span>
-                    <ArrowRight size={16} className="btn-arrow" />
-                  </>
-                )}
-              </motion.button>
-
-              {(file1 || file2) && (
-                <motion.button
-                  className="reset-btn"
-                  onClick={handleReset}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <RefreshCw size={16} />
-                  <span>Zurücksetzen</span>
-                </motion.button>
+            <button
+              className="cw-knopf cw-schieb"
+              onClick={handleSubmit}
+              disabled={!file1 || !file2 || loading || !isPremium}
+            >
+              {loading ? (
+                <>
+                  <span className="cw-kreisel" />
+                  {progress?.message || 'Vergleich läuft'}
+                </>
+              ) : (
+                <>
+                  Vergleich starten
+                  <ArrowRight size={15} />
+                </>
               )}
-            </div>
-          </motion.div>
+            </button>
+          </div>
           )}
 
           {/* 🆕 V2 Results Container */}

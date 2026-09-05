@@ -1,0 +1,473 @@
+/* ══════════════════════════════════════════════════════════════════
+   VERGLEICH — WERKBANK (05.09.2026)
+
+   Übernimmt das bei Better Contracts erprobte Muster: getönter Seiten-
+   grund über die volle Breite, Karten liegen direkt darauf, kein
+   gerahmter Kasten mit Titelleiste. Der alte Kopf (Hero-Symbol,
+   Abzeichen, Verlaufsüberschrift, Beschreibungssatz) belegte auch hier
+   den ersten Bildschirm, bevor eine Handlung möglich war.
+
+   EIGENES PRÄFIX cw-, damit nichts mit bcw- (Better Contracts) oder mit
+   den 120 globalen Klassen aus dem eingebetteten Style-Block der Seite
+   kollidiert.
+
+   ContractPages.css wird NICHT angefasst: sie gehört auch dem
+   Optimierer und Better Contracts.
+   ══════════════════════════════════════════════════════════════════ */
+
+.cw-seite {
+  --cw-grund: #ffffff;
+  --cw-tiefe: #eef0f5;
+  --cw-senke: #f4f7fb;
+  --cw-senke-2: #e6e9f0;
+  --cw-linie: #e4e9f0;
+  --cw-linie-satt: #d2dae5;
+  --cw-tinte: #0f1826;
+  --cw-tinte-2: #55606f;
+  --cw-tinte-3: #8590a0;
+  --cw-akzent: #2563eb;
+  --cw-akzent-dunkel: #1d4ed8;
+  --cw-akzent-sanft: #eef4fe;
+  --cw-akzent-linie: #cadcfb;
+  --cw-gut: #0f7b55;
+  --cw-gut-sanft: #e9f5f0;
+
+  --cw-r-klein: 6px;
+  --cw-r-mittel: 10px;
+  --cw-r-gross: 14px;
+
+  background: var(--cw-tiefe);
+  padding: 2rem 2rem 4rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--cw-tinte);
+}
+
+.cw-rahmen {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+/* ══════════ KOPFLEISTE ══════════
+   Ersetzt Hero-Symbol, Abzeichen, Verlaufsüberschrift und Beschreibung.
+   Sitzt direkt auf dem Grund wie auf den übrigen Seiten der App. */
+.cw-kopf {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  padding: 0 2px 14px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--cw-linie-satt);
+  flex-wrap: wrap;
+}
+
+.cw-kopf-titel {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+}
+
+.cw-kopf-sub {
+  font-size: 13px;
+  color: var(--cw-tinte-3);
+  line-height: 1.4;
+}
+
+.cw-kopf-rechts {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ══════════ KARTE ══════════ */
+.cw-karte {
+  background: var(--cw-grund);
+  border: 1px solid var(--cw-linie);
+  border-radius: var(--cw-r-gross);
+  overflow: hidden;
+}
+
+.cw-karte + .cw-karte {
+  margin-top: 14px;
+}
+
+.cw-karte-kopf {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--cw-linie);
+}
+
+.cw-karte-kopf h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cw-tinte);
+}
+
+.cw-karte-kopf p {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--cw-tinte-3);
+}
+
+.cw-karte-symbol {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--cw-r-klein);
+  background: var(--cw-akzent-sanft);
+  border: 1px solid var(--cw-akzent-linie);
+  color: var(--cw-akzent);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* ══════════ ZWEI ABLAGEFLÄCHEN ══════════
+   Zwei gleichrangige Flächen nebeneinander, dazwischen ein ruhiger
+   Trenner. Vorher lagen hier zwei Karten mit Hintergrunddekoration,
+   Symbolringen und einem grossen VS-Abzeichen. */
+.cw-paar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 14px;
+  align-items: stretch;
+  padding: 16px;
+}
+
+.cw-trenner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--cw-tinte-3);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.cw-trenner::before,
+.cw-trenner::after {
+  content: '';
+  width: 1px;
+  flex: 1;
+  background: var(--cw-linie);
+}
+
+.cw-schacht {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cw-schacht-marke {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  color: var(--cw-tinte-2);
+}
+
+.cw-schacht-nr {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--cw-senke-2);
+  color: var(--cw-tinte-2);
+  display: grid;
+  place-items: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.cw-schacht.gefuellt .cw-schacht-nr {
+  background: var(--cw-gut-sanft);
+  border: 1px solid #b9ded0;
+  color: var(--cw-gut);
+}
+
+.cw-ablage {
+  flex: 1;
+  background: var(--cw-grund);
+  border: 1px dashed var(--cw-linie-satt);
+  border-radius: var(--cw-r-mittel);
+  padding: 28px 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.16s, background 0.16s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 168px;
+}
+
+.cw-ablage:hover:not(.gesperrt) {
+  border-color: var(--cw-akzent-linie);
+  background: #fbfcfe;
+}
+
+.cw-ablage:focus-visible {
+  outline: 2px solid var(--cw-akzent);
+  outline-offset: -2px;
+  background: var(--cw-akzent-sanft);
+}
+
+/* Die Seite konnte bisher gar keine Dateien per Ziehen annehmen. */
+.cw-ablage.zieht {
+  border-color: var(--cw-akzent);
+  border-style: solid;
+  background: var(--cw-akzent-sanft);
+}
+
+.cw-ablage.gesperrt {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cw-ablage.gefuellt {
+  border-style: solid;
+  border-color: #b9ded0;
+  background: var(--cw-gut-sanft);
+  cursor: default;
+}
+
+.cw-ablage-symbol {
+  width: 38px;
+  height: 38px;
+  margin-bottom: 12px;
+  border-radius: var(--cw-r-mittel);
+  background: var(--cw-akzent-sanft);
+  border: 1px solid var(--cw-akzent-linie);
+  color: var(--cw-akzent);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.cw-ablage.gefuellt .cw-ablage-symbol {
+  background: #ffffff;
+  border-color: #b9ded0;
+  color: var(--cw-gut);
+}
+
+.cw-ablage-titel {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--cw-tinte);
+  margin-bottom: 3px;
+  word-break: break-word;
+}
+
+.cw-ablage-text {
+  font-size: 12.5px;
+  color: var(--cw-tinte-3);
+}
+
+.cw-ablage-link {
+  color: var(--cw-akzent);
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cw-datei-weg {
+  margin-top: 10px;
+  padding: 4px 10px;
+  background: #ffffff;
+  border: 1px solid var(--cw-linie-satt);
+  border-radius: var(--cw-r-klein);
+  color: var(--cw-tinte-2);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cw-datei-weg:hover {
+  border-color: #e8b4b4;
+  color: #a72929;
+}
+
+/* ══════════ FUSSLEISTE ══════════ */
+.cw-leiste {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--cw-senke);
+  border-top: 1px solid var(--cw-linie);
+  font-size: 12px;
+  color: var(--cw-tinte-3);
+  flex-wrap: wrap;
+}
+
+.cw-typ {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--cw-grund);
+  border: 1px solid var(--cw-linie);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--cw-tinte-2);
+}
+
+.cw-foto {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--cw-tinte-2);
+  cursor: pointer;
+  padding: 0;
+}
+
+.cw-foto:hover {
+  color: var(--cw-akzent);
+}
+
+/* ══════════ KNÖPFE ══════════ */
+.cw-knopfreihe {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.cw-knopf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: var(--cw-r-mittel);
+  background: var(--cw-akzent);
+  color: #fff;
+  border: 1px solid var(--cw-akzent);
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.cw-knopf:hover:not(:disabled) {
+  background: var(--cw-akzent-dunkel);
+  border-color: var(--cw-akzent-dunkel);
+}
+
+.cw-knopf:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cw-knopf.still {
+  background: var(--cw-grund);
+  color: var(--cw-tinte-2);
+  border-color: var(--cw-linie-satt);
+}
+
+.cw-knopf.still:hover:not(:disabled) {
+  background: var(--cw-senke);
+  color: var(--cw-tinte);
+}
+
+.cw-knopf:focus-visible,
+.cw-foto:focus-visible,
+.cw-datei-weg:focus-visible {
+  outline: 2px solid var(--cw-akzent);
+  outline-offset: 2px;
+}
+
+.cw-kreisel {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: cw-dreh 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes cw-dreh {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cw-kreisel { animation: none; }
+}
+
+.cw-schieb {
+  margin-left: auto;
+}
+
+/* ══════════ HINWEIS ══════════ */
+.cw-hinweis {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: var(--cw-grund);
+  border: 1px solid var(--cw-linie);
+  border-radius: var(--cw-r-mittel);
+  font-size: 13px;
+  color: var(--cw-tinte-2);
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+}
+
+.cw-hinweis svg {
+  flex-shrink: 0;
+  color: var(--cw-tinte-3);
+  margin-top: 2px;
+}
+
+/* ══════════ SCHMALE SCHIRME ══════════ */
+@media (max-width: 820px) {
+  .cw-seite {
+    padding: 1rem 1rem 3rem;
+  }
+
+  /* Die beiden Flächen untereinander, der Trenner wird waagerecht. */
+  .cw-paar {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .cw-trenner {
+    flex-direction: row;
+    padding: 2px 0;
+  }
+
+  .cw-trenner::before,
+  .cw-trenner::after {
+    width: auto;
+    height: 1px;
+    flex: 1;
+  }
+
+  .cw-ablage {
+    min-height: 140px;
+  }
+
+  .cw-knopfreihe .cw-knopf {
+    flex: 1;
+  }
+
+  .cw-schieb {
+    margin-left: 0;
+  }
+}
