@@ -11,6 +11,8 @@
 @font-face{font-family:'Geist';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/geist-600.woff2') format('woff2')}
 @font-face{font-family:'Geist';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/geist-700.woff2') format('woff2')}
 @font-face{font-family:'Geist';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/geist-800.woff2') format('woff2')}
+/* Geist Mono (variable, 400-700) — für Eyebrows/Pillen/Mockup-Labels; ohne diese Zeile fällt der Browser auf Courier zurück */
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url('/fonts/geist-mono.woff2') format('woff2')}
 
 /* --- Wrapper: Font + Basis nur hier --- */
 .ca-lp-page{font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;color:#111114;background:#ffffff;overflow-x:hidden}

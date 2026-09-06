@@ -9,6 +9,8 @@
 @font-face{font-family:'Geist';font-style:normal;font-weight:600;font-display:swap;src:url('/fonts/geist-600.woff2') format('woff2')}
 @font-face{font-family:'Geist';font-style:normal;font-weight:700;font-display:swap;src:url('/fonts/geist-700.woff2') format('woff2')}
 @font-face{font-family:'Geist';font-style:normal;font-weight:800;font-display:swap;src:url('/fonts/geist-800.woff2') format('woff2')}
+/* Geist Mono (variable, 400-700) — Spaltentitel; ohne diese Zeile fällt der Browser auf Courier zurück */
+@font-face{font-family:'Geist Mono';font-style:normal;font-weight:400 700;font-display:swap;src:url('/fonts/geist-mono.woff2') format('woff2')}
 
 .lp-footer{font-family:'Geist',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 

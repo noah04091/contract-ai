@@ -52,14 +52,14 @@ export default function LandingFooter() {
             { h: "Verträge prüfen", links: [["Arbeitsvertrag prüfen", "/arbeitsvertrag-pruefen"], ["Mietvertrag prüfen", "/mietvertrag-pruefen"], ["NDA prüfen", "/nda-pruefen"], ["Kaufvertrag prüfen", "/kaufvertrag-pruefen"], ["Agenturvertrag prüfen", "/agenturvertrag-pruefen"], ["Vertrag erstellen", "/vertrag-erstellen"], ["Rechtslexikon", "/rechtslexikon"]] },
           ].map((col, ci) => (
             <div key={ci} style={s("flex:1 1 150px")}>
-              <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>{col.h}</h4>
+              <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>{col.h}</h4>
               <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px")}>
                 {col.links.map(([t, to], i) => <li key={i}><Link to={to} className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>{t}</Link></li>)}
               </ul>
             </div>
           ))}
           <div style={s("flex:1 1 150px")}>
-            <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>Unternehmen</h4>
+            <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>Unternehmen</h4>
             <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px")}>
               <li><a href="mailto:info@contract-ai.de" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Kontakt</a></li>
               <li><Link to="/about" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Über uns</Link></li>
@@ -70,7 +70,7 @@ export default function LandingFooter() {
             </ul>
           </div>
           <div style={s("flex:1 1 150px")}>
-            <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>Rechtliches</h4>
+            <h4 style={s("font-size:12px;font-family:'Geist Mono',monospace;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#71717a;margin:0 0 16px")}>Rechtliches</h4>
             <ul style={s("list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px")}>
               <li><Link to="/datenschutz" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>Datenschutz</Link></li>
               <li><Link to="/agb" className="ca-lp-footer-link" style={s("font-size:14px;color:#52525b;text-decoration:none")}>AGB</Link></li>
