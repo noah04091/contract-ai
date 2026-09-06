@@ -64,11 +64,73 @@
 .orb,
 .orb1,
 .orb2,
-.orb3,
-.floatingElement,
+.orb3 {
+  display: none;
+}
+
+/* Die schwebenden Kaestchen bleiben: sie tragen echten Text (DSGVO-konform,
+   Analysezeit) und wurden beim ersten Anlauf faelschlich fuer Deko gehalten.
+   Statt frei schwebend sitzen sie jetzt ruhig unter der Produktansicht. */
+.floatingElement {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  position: static;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin: 14px 14px 0 0;
+  padding: 10px 15px 10px 11px;
+  border: 1px solid var(--linie);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 26px -18px rgba(20, 40, 79, 0.5);
+  animation: none;
+  transition: transform 0.28s var(--weich), box-shadow 0.28s var(--weich);
+}
+
+.floatingElement:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px -20px rgba(20, 40, 79, 0.55);
+}
+
 .floatingElement1,
 .floatingElement2 {
-  display: none;
+  position: static;
+  animation: none;
+}
+
+.floatingIcon,
+.floatingIconBlue,
+.floatingIconGreen,
+.floatingIconOrange {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--flaeche) !important;
+  color: var(--blau) !important;
+}
+
+.floatingIcon svg { width: 16px; height: 16px; }
+
+.floatingText {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+  color: var(--tinte);
+  line-height: 1.25;
+}
+
+.floatingSubtext {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--tinte-weich);
+  line-height: 1.3;
 }
 
 .container,
@@ -465,19 +527,6 @@
 .warning, .orange { color: var(--gelb); }
 .success, .improved { color: var(--gruen); }
 .info { color: var(--blau); }
-
-.floatingIcon,
-.floatingIconBlue,
-.floatingIconGreen,
-.floatingIconOrange {
-  color: var(--blau) !important;
-  background: var(--flaeche) !important;
-}
-
-.floatingText,
-.floatingSubtext {
-  color: var(--tinte-weich);
-}
 
 /* ================================
    VERTRAUENSLEISTE
