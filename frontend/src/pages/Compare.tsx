@@ -1010,6 +1010,9 @@ export default function EnhancedCompare() {
           <div className="cg-kopf">
             <div>
               <div className="cg-kopf-titel">
+                {/* Das Zeichen trägt die beiden Vertragsfarben und erklärt sie
+                    damit schon im Titel. aria-hidden, weil rein visuell. */}
+                <span className="cg-paar-zeichen" aria-hidden="true"><i /><i /></span>
                 {result ? 'Vergleichsergebnis' : 'Vertragsvergleich'}
               </div>
               <div className="cg-kopf-sub">
@@ -1021,7 +1024,7 @@ export default function EnhancedCompare() {
                     {file1 && file2 ? ` · ${file1.name} gegen ${file2.name}` : ''}
                   </>
                 ) : (
-                  'Zwei Verträge gegenübergestellt, mit Einordnung durch die KI'
+                  'Wir zeigen die Unterschiede und sagen dir, welcher für dich der bessere ist'
                 )}
               </div>
             </div>

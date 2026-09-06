@@ -70,17 +70,55 @@
   flex-wrap: wrap;
 }
 
+/* 06.09.2026: stand auf 20 px, die Kartenüberschrift darunter auf 15 px.
+   Zu wenig Unterschied, der Kopf las sich wie ein weiterer Abschnitt
+   statt wie der Anfang der Seite. */
 .cg-kopf-titel {
-  font-size: 20px;
+  display: flex;
+  align-items: center;
+  font-size: 22px;
   font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.3;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin-bottom: 4px;
 }
 
+/* War 13 px in hellem Grau, also faktisch Kleingedrucktes, obwohl dieser
+   Satz das Nutzenversprechen trägt. */
 .cg-kopf-sub {
-  font-size: 13px;
-  color: var(--cg-tinte-3);
+  font-size: 13.5px;
+  color: var(--cg-tinte-2);
   line-height: 1.45;
+}
+
+/* ══════════ PAARZEICHEN ══════════
+   Zwei versetzte Blätter in exakt den Farben, die auf der ganzen Seite
+   für Vertrag A und B stehen. Kein Schmuck: Der Titel erklärt damit die
+   Farbcodierung, bevor man ihr zum ersten Mal begegnet. */
+.cg-paar-zeichen {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 9px;
+  flex-shrink: 0;
+}
+
+.cg-paar-zeichen i {
+  display: block;
+  width: 15px;
+  height: 19px;
+  border-radius: 3px;
+  border: 1.5px solid;
+}
+
+.cg-paar-zeichen i:first-child {
+  border-color: var(--cg-a);
+  background: var(--cg-a-sanft);
+}
+
+.cg-paar-zeichen i:last-child {
+  border-color: var(--cg-b);
+  background: var(--cg-b-sanft);
+  margin-left: -6px;
 }
 
 .cg-kopf-sub strong {
