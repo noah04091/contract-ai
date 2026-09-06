@@ -1033,8 +1033,10 @@ const HomeRedesign = () => {
         {/* ===== FOOTER (gemeinsame Komponente, auch auf /pricing) ===== */}
         <LandingFooter />
 
-        {/* ===== Sticky Floating CTA ===== */}
-        <Link to={!user ? "/register" : "/dashboard"} className={"ca-lp-floatcta" + (showFloat ? " ca-in" : "")} style={s("position:fixed;right:24px;bottom:24px;z-index:90;display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;padding:14px 22px;border-radius:999px;text-decoration:none;box-shadow:0 14px 34px rgba(37,99,235,0.45);opacity:0;transform:translateY(20px);pointer-events:none")}>Kostenlos starten<Arrow /></Link>
+        {/* ===== Sticky Floating CTA — nur für Besucher ohne Konto ===== */}
+        {!user && (
+          <Link to="/register" className={"ca-lp-floatcta" + (showFloat ? " ca-in" : "")} style={s("position:fixed;right:24px;bottom:24px;z-index:90;display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-size:15px;font-weight:600;padding:14px 22px;border-radius:999px;text-decoration:none;box-shadow:0 14px 34px rgba(37,99,235,0.45);opacity:0;transform:translateY(20px);pointer-events:none")}>Kostenlos starten<Arrow /></Link>
+        )}
 
       </div>
     </>
