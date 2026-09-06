@@ -78,7 +78,7 @@ const LegalPulse: React.FC = () => {
         "name": "Wie aktuell sind die Informationen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Legal Pulse holt jede Nacht die neuesten Gesetze, Urteile und Verordnungen aus den amtlichen Quellen und prüft sie jeden Morgen gegen Ihre Verträge. Bei einem relevanten Treffer werden Sie noch am selben Morgen benachrichtigt."
+          "text": "Legal Pulse holt jede Nacht die neuesten Gesetze, Urteile und Verordnungen aus den amtlichen Quellen und prüft sie jeden Morgen gegen deine Verträge. Bei einem relevanten Treffer wirst du noch am selben Morgen benachrichtigt."
         }
       },
       {
@@ -86,7 +86,7 @@ const LegalPulse: React.FC = () => {
         "name": "Kann ich die Alerts anpassen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Legal Pulse priorisiert automatisch nach Ihren Vertragsarten – Sie müssen nichts konfigurieren. Die E-Mail-Benachrichtigungen können Sie jederzeit auf Ihrer Pulse-Seite abschalten; die Überwachung läuft dann weiter."
+          "text": "Legal Pulse priorisiert automatisch nach deinen Vertragsarten – du musst nichts konfigurieren. Die E-Mail-Benachrichtigungen kannst du jederzeit auf deiner Pulse-Seite abschalten; die Überwachung läuft dann weiter."
         }
       },
       {
@@ -94,7 +94,7 @@ const LegalPulse: React.FC = () => {
         "name": "Gibt es branchenspezifische Überwachung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Legal Pulse richtet sich nach Ihren Vertragsarten – etwa SaaS-, Arbeits-, Miet- oder Kaufverträge – und priorisiert die dafür relevanten Rechtsänderungen."
+          "text": "Legal Pulse richtet sich nach deinen Vertragsarten – etwa SaaS-, Arbeits-, Miet- oder Kaufverträge – und priorisiert die dafür relevanten Rechtsänderungen."
         }
       },
       {
@@ -164,12 +164,12 @@ const LegalPulse: React.FC = () => {
               </div>
 
               <h1 className={styles.heroTitle}>
-                Ihr Frühwarnsystem<br/>
+                Dein Frühwarnsystem<br/>
                 <span className={styles.heroTitleHighlight}>für Vertragsrisiken</span>
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Gesetze ändern sich. Märkte bewegen sich. Legal Pulse prüft Ihre Verträge
+                Gesetze ändern sich. Märkte bewegen sich. Legal Pulse prüft deine Verträge
                 regelmäßig, erkennt neue Risiken und empfiehlt konkrete Updates.
               </p>
 
@@ -288,7 +288,7 @@ const LegalPulse: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Legal Pulse</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie Legal Pulse Ihre Verträge überwacht und Sie bei relevanten
+                Sieh, wie Legal Pulse deine Verträge überwacht und dich bei relevanten
                 Änderungen proaktiv informiert.
               </p>
             </div>
@@ -312,7 +312,7 @@ const LegalPulse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Funktionen</span>
-              <h2 className={styles.sectionTitle}>Was <span className={styles.sectionTitleAccent}>Legal Pulse</span> für Sie leistet</h2>
+              <h2 className={styles.sectionTitle}>Was <span className={styles.sectionTitleAccent}>Legal Pulse</span> für dich leistet</h2>
               <p className={styles.sectionSubtitle}>
                 Proaktives Vertragsmanagement statt reaktiver Feuerwehr – mit intelligenter Überwachung.
               </p>
@@ -325,7 +325,7 @@ const LegalPulse: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Täglicher Prüflauf</h3>
                 <p className={styles.functionDesc}>
-                  Jeden Morgen ein automatischer Abgleich neuer Gesetze, Urteile und Verordnungen aus amtlichen Quellen – priorisiert nach Relevanz für Ihre Verträge.
+                  Jeden Morgen ein automatischer Abgleich neuer Gesetze, Urteile und Verordnungen aus amtlichen Quellen – priorisiert nach Relevanz für deine Verträge.
                 </p>
               </div>
 
@@ -355,7 +355,7 @@ const LegalPulse: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Proaktive Alerts</h3>
                 <p className={styles.functionDesc}>
-                  Benachrichtigung noch am Morgen des Fundes, wenn eine Änderung Ihre Verträge betrifft – mit konkreten Empfehlungen.
+                  Benachrichtigung noch am Morgen des Fundes, wenn eine Änderung deine Verträge betrifft – mit konkreten Empfehlungen.
                 </p>
               </div>
 
@@ -375,7 +375,7 @@ const LegalPulse: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Compliance-Sicherheit</h3>
                 <p className={styles.functionDesc}>
-                  Bleiben Sie compliant – Legal Pulse informiert Sie über regulatorische Änderungen.
+                  Bleib compliant – Legal Pulse informiert dich über regulatorische Änderungen.
                 </p>
               </div>
             </div>
@@ -504,8 +504,8 @@ const LegalPulse: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
                 <h2 className={styles.sectionTitleLeft}>Intelligentes Monitoring mit Legal Pulse</h2>
                 <p className={styles.solutionText}>
-                  Legal Pulse überwacht relevante Rechtsquellen und gleicht sie mit Ihren Verträgen ab.
-                  Sie erhalten nicht nur Warnungen, sondern konkrete Handlungsempfehlungen.
+                  Legal Pulse überwacht relevante Rechtsquellen und gleicht sie mit deinen Verträgen ab.
+                  Du erhältst nicht nur Warnungen, sondern konkrete Handlungsempfehlungen.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -535,7 +535,7 @@ const LegalPulse: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Konkrete Textvorschläge</h4>
-                      <p>Direkt umsetzbare Empfehlungen für Ihre Verträge</p>
+                      <p>Direkt umsetzbare Empfehlungen für deine Verträge</p>
                     </div>
                   </div>
                 </div>
@@ -566,7 +566,7 @@ const LegalPulse: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vertragsbestand einrichten</h3>
                     <p className={styles.processDesc}>
-                      Verknüpfen Sie Ihre wichtigsten Verträge mit Legal Pulse – automatische
+                      Verknüpfe deine wichtigsten Verträge mit Legal Pulse – automatische
                       Kategorisierung nach Branche und Vertragstyp.
                     </p>
                   </div>
@@ -578,7 +578,7 @@ const LegalPulse: React.FC = () => {
                     <h3 className={styles.processTitle}>Kontinuierliches Monitoring</h3>
                     <p className={styles.processDesc}>
                       Tägliche Überwachung offizieller Rechtsquellen, Klassifikation relevanter Änderungen
-                      und Abgleich mit Ihren Verträgen.
+                      und Abgleich mit deinen Verträgen.
                     </p>
                   </div>
                 </div>
@@ -655,8 +655,8 @@ const LegalPulse: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Jede Nacht werden die neuesten Gesetze, Urteile und Verordnungen aus den
-                  amtlichen Quellen geholt, jeden Morgen gegen Ihre Verträge geprüft. Bei einem
-                  relevanten Treffer werden Sie noch am selben Morgen benachrichtigt.
+                  amtlichen Quellen geholt, jeden Morgen gegen deine Verträge geprüft. Bei einem
+                  relevanten Treffer wirst du noch am selben Morgen benachrichtigt.
                 </p>
               </details>
 
@@ -666,9 +666,9 @@ const LegalPulse: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Legal Pulse priorisiert automatisch nach Ihren Vertragsarten – Sie müssen
-                  nichts konfigurieren. Die E-Mail-Benachrichtigungen können Sie jederzeit auf
-                  Ihrer Pulse-Seite abschalten; die Überwachung läuft dann weiter.
+                  Legal Pulse priorisiert automatisch nach deinen Vertragsarten – du musst
+                  nichts konfigurieren. Die E-Mail-Benachrichtigungen kannst du jederzeit auf
+                  deiner Pulse-Seite abschalten; die Überwachung läuft dann weiter.
                 </p>
               </details>
 
@@ -678,7 +678,7 @@ const LegalPulse: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Legal Pulse richtet sich nach Ihren Vertragsarten – etwa SaaS-, Arbeits-,
+                  Legal Pulse richtet sich nach deinen Vertragsarten – etwa SaaS-, Arbeits-,
                   Miet- oder Kaufverträge – und priorisiert die dafür relevanten Rechtsänderungen.
                 </p>
               </details>
@@ -713,7 +713,7 @@ const LegalPulse: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
-                    Komplette Analyse Ihrer Verträge mit Risiko-Score und Empfehlungen
+                    Komplette Analyse deiner Verträge mit Risiko-Score und Empfehlungen
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -757,8 +757,8 @@ const LegalPulse: React.FC = () => {
                   Proaktiv statt reaktiv – Verträge aktuell halten
                 </h2>
                 <p className={styles.ctaSubtitle}>
-                  Erkennen Sie Risiken bevor sie zum Problem werden. Legal Pulse überwacht,
-                  warnt und empfiehlt – Sie setzen um.
+                  Erkenne Risiken bevor sie zum Problem werden. Legal Pulse überwacht,
+                  warnt und empfiehlt – du setzt um.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

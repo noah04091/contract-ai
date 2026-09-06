@@ -79,7 +79,7 @@ const Vergleich: React.FC = () => {
         "name": "Wie objektiv ist die KI-Bewertung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Die KI nutzt bewährte Rechtsmuster und Marktstandards als Basis. Sie ist objektiver als das Bauchgefühl, aber Sie definieren die Gewichtung der Kriterien (Preis vs. Flexibilität)."
+          "text": "Die KI nutzt bewährte Rechtsmuster und Marktstandards als Basis. Sie ist objektiver als das Bauchgefühl, aber du definierst die Gewichtung der Kriterien (Preis vs. Flexibilität)."
         }
       },
       {
@@ -87,7 +87,7 @@ const Vergleich: React.FC = () => {
         "name": "Kann ich die Bewertungskriterien anpassen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, Sie können Prioritäten setzen: Ist Ihnen Kostenklarheit wichtiger als Flexibilität? Kurze Fristen wichtiger als niedrige Preise? Die Empfehlung passt sich entsprechend an."
+          "text": "Ja, du kannst Prioritäten setzen: Ist dir Kostenklarheit wichtiger als Flexibilität? Kurze Fristen wichtiger als niedrige Preise? Die Empfehlung passt sich entsprechend an."
         }
       }
     ]
@@ -150,7 +150,7 @@ const Vergleich: React.FC = () => {
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Lassen Sie zwei Verträge gegeneinander antreten. Die KI visualisiert Unterschiede,
+                Lass zwei Verträge gegeneinander antreten. Die KI visualisiert Unterschiede,
                 bewertet Fairness & Risiko und gibt eine klare Empfehlung.
               </p>
 
@@ -274,7 +274,7 @@ const Vergleich: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}>Der <span className={styles.sectionTitleAccent}>Vertragsvergleich</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie Contract AI zwei Verträge analysiert und die
+                Sieh, wie Contract AI zwei Verträge analysiert und die
                 Unterschiede verständlich aufbereitet.
               </p>
             </div>
@@ -302,8 +302,8 @@ const Vergleich: React.FC = () => {
                 <h2 className={styles.sectionTitleLeft}>Kleine Unterschiede, große Wirkung</h2>
                 <p className={styles.problemText}>
                   Zwei Dokumente wirken ähnlich – aber Abweichungen bei Kündigungsfristen, Haftung,
-                  Kosten oder Leistungsumfang haben spürbare Folgen. Als Mieter zahlen Sie womöglich
-                  200€ mehr pro Jahr, als Freelancer warten Sie 30 Tage länger auf Ihr Geld.
+                  Kosten oder Leistungsumfang haben spürbare Folgen. Als Mieter zahlst du womöglich
+                  200€ mehr pro Jahr, als Freelancer wartest du 30 Tage länger auf dein Geld.
                 </p>
 
                 <div className={styles.problemStats}>
@@ -438,7 +438,7 @@ const Vergleich: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Klare Empfehlung</h4>
-                      <p>Basierend auf Ihren Prioritäten mit nachvollziehbarer Begründung</p>
+                      <p>Basierend auf deinen Prioritäten mit nachvollziehbarer Begründung</p>
                     </div>
                   </div>
                 </div>
@@ -453,7 +453,7 @@ const Vergleich: React.FC = () => {
         <section className={styles.whySection} id="why">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
+              <span className={styles.sectionEyebrow}>Deine Vorteile</span>
               <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>Contract AI</span>?</h2>
               <p className={styles.sectionSubtitle}>
                 Objektive Analyse statt Bauchgefühl – mit klarer Entscheidungsgrundlage.
@@ -478,7 +478,7 @@ const Vergleich: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>Präferenz-basierte Bewertung</h3>
                 <p className={styles.whyDesc}>
-                  Empfehlungen passend zu Ihren individuellen Prioritäten –
+                  Empfehlungen passend zu deinen individuellen Prioritäten –
                   nicht eine Lösung für alle.
                 </p>
               </div>
@@ -547,7 +547,7 @@ const Vergleich: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Empfehlung erhalten</h3>
                     <p className={styles.processDesc}>
-                      Klare Visualisierung der Unterschiede plus konkrete Empfehlung basierend auf Ihren Präferenzen.
+                      Klare Visualisierung der Unterschiede plus konkrete Empfehlung basierend auf deinen Präferenzen.
                     </p>
                   </div>
                 </div>
@@ -612,7 +612,7 @@ const Vergleich: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Die KI nutzt bewährte Rechtsmuster und Marktstandards als Basis. Sie ist objektiver
-                  als das Bauchgefühl, aber Sie definieren die Gewichtung der Kriterien.
+                  als das Bauchgefühl, aber du definierst die Gewichtung der Kriterien.
                 </p>
               </details>
 
@@ -622,7 +622,7 @@ const Vergleich: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, Sie können Prioritäten setzen: Ist Ihnen Kostenklarheit wichtiger als Flexibilität?
+                  Ja, du kannst Prioritäten setzen: Ist dir Kostenklarheit wichtiger als Flexibilität?
                   Kurze Fristen wichtiger als niedrige Preise? Die Empfehlung passt sich an.
                 </p>
               </details>
@@ -679,7 +679,7 @@ const Vergleich: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Optimierung</div>
                   <div className={styles.relatedDescription}>
-                    KI-Vorschläge zur Verbesserung Ihrer Vertragsklauseln
+                    KI-Vorschläge zur Verbesserung deiner Vertragsklauseln
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -709,11 +709,11 @@ const Vergleich: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Entscheiden Sie mit Klarheit statt Bauchgefühl
+                  Entscheide mit Klarheit statt Bauchgefühl
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Objektive Analyse, visualisierte Unterschiede und eine klare Empfehlung –
-                  damit Sie die richtige Wahl treffen.
+                  damit du die richtige Wahl triffst.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

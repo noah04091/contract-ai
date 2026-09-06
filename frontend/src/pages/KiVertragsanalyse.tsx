@@ -59,7 +59,7 @@ const KiVertragsanalyse: React.FC = () => {
     "@context": "https://schema.org",
     "@type": "Article",
     "headline": "KI-Vertragsanalyse: Der komplette Guide 2026",
-    "description": "Alles was Sie über KI-gestützte Vertragsanalyse wissen müssen: Wie sie funktioniert, was sie kostet, KI vs. Anwalt im Vergleich und für wen sie sich lohnt.",
+    "description": "Alles was du über KI-gestützte Vertragsanalyse wissen musst: Wie sie funktioniert, was sie kostet, KI vs. Anwalt im Vergleich und für wen sie sich lohnt.",
     "author": {
       "@type": "Organization",
       "name": "Contract AI",
@@ -84,14 +84,14 @@ const KiVertragsanalyse: React.FC = () => {
     "@context": "https://schema.org",
     "@type": "HowTo",
     "name": "Vertrag mit KI analysieren lassen",
-    "description": "So analysieren Sie Ihren Vertrag in 60 Sekunden mit KI-Vertragsanalyse",
+    "description": "So analysierst du deinen Vertrag in 60 Sekunden mit KI-Vertragsanalyse",
     "totalTime": "PT1M",
     "step": [
       {
         "@type": "HowToStep",
         "position": 1,
         "name": "Vertrag hochladen",
-        "text": "Laden Sie Ihren Vertrag als PDF oder Word-Dokument bei Contract AI hoch. Die Daten werden verschlüsselt auf deutschen Servern verarbeitet."
+        "text": "Lade deinen Vertrag als PDF oder Word-Dokument bei Contract AI hoch. Die Daten werden verschlüsselt auf deutschen Servern verarbeitet."
       },
       {
         "@type": "HowToStep",
@@ -103,7 +103,7 @@ const KiVertragsanalyse: React.FC = () => {
         "@type": "HowToStep",
         "position": 3,
         "name": "Ergebnis lesen und handeln",
-        "text": "Erhalten Sie einen detaillierten Report mit Chancen-Risiken-Score, markierten Problemstellen und konkreten Handlungsempfehlungen."
+        "text": "Erhalte einen detaillierten Report mit Chancen-Risiken-Score, markierten Problemstellen und konkreten Handlungsempfehlungen."
       }
     ]
   };
@@ -127,11 +127,11 @@ const KiVertragsanalyse: React.FC = () => {
     },
     {
       question: "Was kostet KI-Vertragsanalyse?",
-      answer: "Bei Contract AI können Sie mit dem kostenlosen Starter-Tarif bis zu 3 Verträge analysieren. Der Business-Tarif (19 EUR/Monat) enthält 25 Analysen monatlich, der Enterprise-Tarif (29 EUR/Monat) bietet unbegrenzte Analysen. Zum Vergleich: Eine anwaltliche Vertragsprüfung kostet je nach Kanzlei und Vertragsumfang oft einen dreistelligen Betrag pro Vertrag."
+      answer: "Bei Contract AI kannst du mit dem kostenlosen Starter-Tarif bis zu 3 Verträge analysieren. Der Business-Tarif (19 EUR/Monat) enthält 25 Analysen monatlich, der Enterprise-Tarif (29 EUR/Monat) bietet unbegrenzte Analysen. Zum Vergleich: Eine anwaltliche Vertragsprüfung kostet je nach Kanzlei und Vertragsumfang oft einen dreistelligen Betrag pro Vertrag."
     },
     {
       question: "Sind meine Vertragsdaten bei der KI-Analyse sicher?",
-      answer: "Ja. Bei Contract AI werden alle Daten mit 256-Bit verschlüsselt übertragen und gespeichert und DSGVO-konform behandelt. Ihre Vertragsdaten werden nicht für KI-Training verwendet und können jederzeit vollständig gelöscht werden. Wir geben keine Daten an Dritte weiter."
+      answer: "Ja. Bei Contract AI werden alle Daten mit 256-Bit verschlüsselt übertragen und gespeichert und DSGVO-konform behandelt. Deine Vertragsdaten werden nicht für KI-Training verwendet und können jederzeit vollständig gelöscht werden. Wir geben keine Daten an Dritte weiter."
     },
     {
       question: "Wie schnell ist KI-Vertragsanalyse?",
@@ -139,7 +139,7 @@ const KiVertragsanalyse: React.FC = () => {
     },
     {
       question: "Kann ich KI-Vertragsanalyse auch auf Englisch nutzen?",
-      answer: "Ja, Contract AI unterstützt Verträge in deutscher und englischer Sprache. Die Ergebnisse werden in der Sprache Ihrer Wahl ausgegeben. Bei internationalen Verträgen erkennt die KI sprachübergreifende Risiken und kulturelle Unterschiede in der Vertragsgestaltung."
+      answer: "Ja, Contract AI unterstützt Verträge in deutscher und englischer Sprache. Die Ergebnisse werden in der Sprache deiner Wahl ausgegeben. Bei internationalen Verträgen erkennt die KI sprachübergreifende Risiken und kulturelle Unterschiede in der Vertragsgestaltung."
     },
     {
       question: "Was passiert, wenn die KI etwas übersieht?",
@@ -155,11 +155,11 @@ const KiVertragsanalyse: React.FC = () => {
     },
     {
       question: "Wie starte ich mit KI-Vertragsanalyse?",
-      answer: "Registrieren Sie sich kostenlos bei Contract AI, laden Sie Ihren ersten Vertrag als PDF oder Word hoch, und erhalten Sie innerhalb von 60 Sekunden eine vollständige Analyse mit Risikobewertung und Handlungsempfehlungen. Keine Kreditkarte erforderlich."
+      answer: "Registriere dich kostenlos bei Contract AI, lade deinen ersten Vertrag als PDF oder Word hoch, und erhalte innerhalb von 60 Sekunden eine vollständige Analyse mit Risikobewertung und Handlungsempfehlungen. Keine Kreditkarte erforderlich."
     },
     {
       question: "Wie funktioniert automatisierte Vertragsprüfung mit KI?",
-      answer: "Bei der automatisierten Vertragsprüfung mit KI laden Sie Ihren Vertrag als PDF oder DOCX hoch. Die KI extrahiert den Text, erkennt den Vertragstyp automatisch und gleicht jede Klausel mit aktueller Rechtsprechung (BGH, BAG) sowie geltendem Recht (BGB, HGB) ab. Innerhalb von 60 Sekunden erhalten Sie einen strukturierten Report mit Risiko-Score, markierten Problemstellen und Handlungsempfehlungen — vollständig automatisiert, ohne menschliches Zutun während der Analyse."
+      answer: "Bei der automatisierten Vertragsprüfung mit KI lädst du deinen Vertrag als PDF oder DOCX hoch. Die KI extrahiert den Text, erkennt den Vertragstyp automatisch und gleicht jede Klausel mit aktueller Rechtsprechung (BGH, BAG) sowie geltendem Recht (BGB, HGB) ab. Innerhalb von 60 Sekunden erhältst du einen strukturierten Report mit Risiko-Score, markierten Problemstellen und Handlungsempfehlungen — vollständig automatisiert, ohne menschliches Zutun während der Analyse."
     },
     {
       question: "Was ist KI-gestützte Vertragsanalyse und wer braucht sie?",
@@ -167,15 +167,15 @@ const KiVertragsanalyse: React.FC = () => {
     },
     {
       question: "Ist KI-Vertragsprüfung wirklich kostenlos?",
-      answer: "Ja — Ihre erste vollständige Vertragsanalyse ist kostenlos und ohne Kreditkarte. Bei weiteren Verträgen sehen Sie gratis den Risiko-Score und einen Überblick der gefundenen Punkte; die vollständigen Details schalten Sie im Business-Tarif (19 EUR/Monat, 25 Analysen) oder Enterprise-Tarif (29 EUR/Monat, unbegrenzt) frei. Zum Vergleich: Eine vergleichbare Vertragsprüfung beim Anwalt kostet typischerweise 100–400 EUR pro Vertrag. Sie können Contract AI also risikofrei testen und sehen, ob die KI für Ihre Bedürfnisse passt."
+      answer: "Ja — deine erste vollständige Vertragsanalyse ist kostenlos und ohne Kreditkarte. Bei weiteren Verträgen siehst du gratis den Risiko-Score und einen Überblick der gefundenen Punkte; die vollständigen Details schaltest du im Business-Tarif (19 EUR/Monat, 25 Analysen) oder Enterprise-Tarif (29 EUR/Monat, unbegrenzt) frei. Zum Vergleich: Eine vergleichbare Vertragsprüfung beim Anwalt kostet typischerweise 100–400 EUR pro Vertrag. Du kannst Contract AI also risikofrei testen und sehen, ob die KI für deine Bedürfnisse passt."
     },
     {
       question: "Kann ich meinen Vertrag einfach online checken lassen?",
-      answer: "Ja. Für den Vertrags-Check laden Sie Ihren Vertrag als PDF oder Word hoch — oder fotografieren ihn einfach mit dem Handy ab. Die KI checkt das Dokument in rund 60 Sekunden auf Risiken, Fristen und problematische Klauseln und liefert eine verständliche Einschätzung mit wörtlichen Belegen aus Ihrem Vertrag. Der erste Check ist kostenlos."
+      answer: "Ja. Für den Vertrags-Check lädst du deinen Vertrag als PDF oder Word hoch — oder fotografierst ihn einfach mit dem Handy ab. Die KI checkt das Dokument in rund 60 Sekunden auf Risiken, Fristen und problematische Klauseln und liefert eine verständliche Einschätzung mit wörtlichen Belegen aus Ihrem Vertrag. Der erste Check ist kostenlos."
     },
     {
       question: "Kann ich auch AGB prüfen lassen?",
-      answer: "Ja. AGB sind Vertragsdokumente und lassen sich genauso hochladen und prüfen wie jeder andere Vertrag. Gerade beim AGB-Check lohnt der genaue Blick: Vorformulierte Klauseln unterliegen der AGB-Kontrolle der §§ 305 ff. BGB, und überraschende oder unangemessen benachteiligende Klauseln (§ 305c, § 307 BGB) sind unwirksam. Die KI markiert solche Problemstellen und erklärt verständlich, was sie für Sie bedeuten."
+      answer: "Ja. AGB sind Vertragsdokumente und lassen sich genauso hochladen und prüfen wie jeder andere Vertrag. Gerade beim AGB-Check lohnt der genaue Blick: Vorformulierte Klauseln unterliegen der AGB-Kontrolle der §§ 305 ff. BGB, und überraschende oder unangemessen benachteiligende Klauseln (§ 305c, § 307 BGB) sind unwirksam. Die KI markiert solche Problemstellen und erklärt verständlich, was sie für dich bedeuten."
     }
   ];
 
@@ -351,7 +351,7 @@ const KiVertragsanalyse: React.FC = () => {
             <div className={`${styles.pillarQuickAnswerBox} ${styles.animateOnScroll}`} ref={addToRefs}>
               <h2 className={styles.pillarQuickAnswerTitle}>Das Wichtigste in Kürze</h2>
               <ul className={styles.pillarQuickAnswerList}>
-                <li><strong>Was:</strong> KI liest Ihren Vertrag und erkennt automatisch Risiken, unfaire Klauseln und fehlende Regelungen.</li>
+                <li><strong>Was:</strong> KI liest deinen Vertrag und erkennt automatisch Risiken, unfaire Klauseln und fehlende Regelungen.</li>
                 <li><strong>Wie schnell:</strong> Vollständige Analyse in unter 60 Sekunden statt Stunden oder Tagen.</li>
                 <li><strong>Für wen:</strong> Privatpersonen, Freelancer, KMU, Startups und Rechtsabteilungen.</li>
                 <li><strong>Kosten:</strong> Kostenloser Einstieg möglich. Deutlich günstiger als eine anwaltliche Einzelprüfung.</li>
@@ -476,7 +476,7 @@ const KiVertragsanalyse: React.FC = () => {
                 <h3 className={styles.functionTitle}>Handlungsempfehlungen</h3>
                 <p className={styles.functionDesc}>
                   Konkrete Vorschläge, welche Klauseln nachverhandelt werden sollten
-                  und wie Sie Ihre Position verbessern.
+                  und wie du deine Position verbesserst.
                 </p>
               </div>
 
@@ -523,8 +523,8 @@ const KiVertragsanalyse: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vertrag hochladen</h3>
                     <p className={styles.processDesc}>
-                      Laden Sie Ihren Vertrag als PDF oder Word-Dokument hoch. Die KI akzeptiert
-                      alle gängigen Formate. Ihre Daten werden mit 256-bit Verschlüsselung
+                      Lade deinen Vertrag als PDF oder Word-Dokument hoch. Die KI akzeptiert
+                      alle gängigen Formate. Deine Daten werden mit 256-bit Verschlüsselung
                       übertragen und auf DSGVO-konformen deutschen Servern verarbeitet.
                     </p>
                   </div>
@@ -547,7 +547,7 @@ const KiVertragsanalyse: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Ergebnis verstehen und handeln</h3>
                     <p className={styles.processDesc}>
-                      Sie erhalten einen übersichtlichen Report mit Chancen-Risiken-Score,
+                      Du erhältst einen übersichtlichen Report mit Chancen-Risiken-Score,
                       farbmarkierten Problemstellen, verständlichen Erklärungen und konkreten
                       Handlungsempfehlungen. Optional als PDF-Export für Verhandlungen.
                     </p>
@@ -655,7 +655,7 @@ const KiVertragsanalyse: React.FC = () => {
               <span className={styles.sectionEyebrow}>Ehrlicher Vergleich</span>
               <h2 className={styles.sectionTitle}><span style={{ color: '#3b82f6' }}>KI vs. Anwalt</span>: Wann lohnt sich was?</h2>
               <p className={styles.sectionSubtitle}>
-                Die Wahrheit ist: Beides hat seine Berechtigung. Hier sehen Sie, wann welche Option die bessere Wahl ist.
+                Die Wahrheit ist: Beides hat seine Berechtigung. Hier siehst du, wann welche Option die bessere Wahl ist.
               </p>
             </div>
 
@@ -724,12 +724,12 @@ const KiVertragsanalyse: React.FC = () => {
             <div className={`${styles.pillarProse} ${styles.animateOnScroll}`} ref={addToRefs}>
               <h3>Die smarte Kombination</h3>
               <p>
-                Die effektivste Strategie ist die Kombination beider Ansätze: Nutzen Sie
+                Die effektivste Strategie ist die Kombination beider Ansätze: Nutze
                 <strong> KI-Vertragsanalyse als Erstcheck</strong> für jeden Vertrag. Die KI identifiziert
                 in Sekunden die kritischen Stellen. Bei Standardverträgen (Mietvertrag, einfacher
                 Arbeitsvertrag, NDA) reicht dies oft aus. Bei komplexen oder hochwertigen Verträgen
-                nehmen Sie die KI-Ergebnisse als Grundlage für ein gezieltes Anwaltsgespräch. So
-                sparen Sie 60-80% der Anwaltskosten, weil der Anwalt sich auf die wirklich
+                nimm die KI-Ergebnisse als Grundlage für ein gezieltes Anwaltsgespräch. So
+                sparst du 60-80% der Anwaltskosten, weil der Anwalt sich auf die wirklich
                 kritischen Punkte konzentrieren kann.
               </p>
 
@@ -758,7 +758,7 @@ const KiVertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Beispiel-Ergebnisse</span>
-              <h2 className={styles.sectionTitle}>Das findet KI-Vertragsanalyse in <span style={{ color: '#3b82f6' }}>Ihrem Vertrag</span></h2>
+              <h2 className={styles.sectionTitle}>Das findet KI-Vertragsanalyse in <span style={{ color: '#3b82f6' }}>deinem Vertrag</span></h2>
               <p className={styles.sectionSubtitle}>
                 Typische Risiken, die unsere KI in Verträgen erkennt — oft übersehen bei manueller Prüfung.
               </p>
@@ -774,7 +774,7 @@ const KiVertragsanalyse: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Extrem einseitig — fordern Sie eine Begrenzung auf Vorsatz und grobe Fahrlässigkeit.</span>
+                  <span>Extrem einseitig — fordere eine Begrenzung auf Vorsatz und grobe Fahrlässigkeit.</span>
                 </div>
               </div>
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
@@ -787,7 +787,7 @@ const KiVertragsanalyse: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Deutlich über dem gesetzlichen Standard von 3 Monaten — schränkt Ihre Flexibilität ein.</span>
+                  <span>Deutlich über dem gesetzlichen Standard von 3 Monaten — schränkt deine Flexibilität ein.</span>
                 </div>
               </div>
               <div className={`${styles.riskCard} ${styles.critical} ${styles.animateOnScroll}`} ref={addToRefs}>
@@ -800,7 +800,7 @@ const KiVertragsanalyse: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Gefahr unbegrenzter Zusatzkosten — fordern Sie eine klare Auflistung aller Nebenkosten.</span>
+                  <span>Gefahr unbegrenzter Zusatzkosten — fordere eine klare Auflistung aller Nebenkosten.</span>
                 </div>
               </div>
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
@@ -813,7 +813,7 @@ const KiVertragsanalyse: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>DSGVO-Verstoß möglich — bestehen Sie auf eine Datenschutzvereinbarung als Anlage.</span>
+                  <span>DSGVO-Verstoß möglich — besteh auf eine Datenschutzvereinbarung als Anlage.</span>
                 </div>
               </div>
             </div>
@@ -821,7 +821,7 @@ const KiVertragsanalyse: React.FC = () => {
             {/* Mid-page CTA 2 */}
             <div style={{ textAlign: 'center', padding: '48px 0 0' }}>
               <p style={{ fontSize: '1.1rem', color: '#334155', marginBottom: '16px', fontWeight: 500 }}>
-                Solche Risiken stecken auch in Ihrem Vertrag?
+                Solche Risiken stecken auch in deinem Vertrag?
               </p>
               <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
                 Vertrag jetzt kostenlos prüfen
@@ -928,7 +928,7 @@ const KiVertragsanalyse: React.FC = () => {
         <section className={styles.statsSection} id="vorteile">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
+              <span className={styles.sectionEyebrow}>Deine Vorteile</span>
               <h2 className={styles.sectionTitle}>Warum immer mehr Menschen<br/><span style={{ color: '#3b82f6' }}>KI-Vertragsanalyse</span> nutzen</h2>
             </div>
 
@@ -977,7 +977,7 @@ const KiVertragsanalyse: React.FC = () => {
             {/* Mid-page CTA 3 */}
             <div style={{ textAlign: 'center', padding: '48px 0 0' }}>
               <p style={{ fontSize: '1.1rem', color: '#334155', marginBottom: '16px', fontWeight: 500 }}>
-                Überzeugt? Testen Sie es selbst.
+                Überzeugt? Teste es selbst.
               </p>
               <Link to={target} className={styles.btnPrimary} style={{ fontSize: '1.05rem', padding: '14px 32px' }}>
                 Kostenlos starten — in 60 Sekunden
@@ -1023,7 +1023,7 @@ const KiVertragsanalyse: React.FC = () => {
                 <h3 className={styles.functionTitle}>Server in der EU</h3>
                 <p className={styles.functionDesc}>
                   Alle Vertragsdaten werden ausschließlich auf Servern innerhalb der EU
-                  verarbeitet und gespeichert. Kein Training mit Ihren Daten.
+                  verarbeitet und gespeichert. Kein Training mit deinen Daten.
                 </p>
               </div>
 
@@ -1032,7 +1032,7 @@ const KiVertragsanalyse: React.FC = () => {
                 <h3 className={styles.functionTitle}>256-bit Verschlüsselung</h3>
                 <p className={styles.functionDesc}>
                   256-Bit-Verschlüsselung bei Übertragung und Speicherung.
-                  Bankingstandard-Sicherheit für Ihre Verträge.
+                  Bankingstandard-Sicherheit für deine Verträge.
                 </p>
               </div>
 
@@ -1049,7 +1049,7 @@ const KiVertragsanalyse: React.FC = () => {
                 <div className={styles.functionIcon}><FileText size={24} /></div>
                 <h3 className={styles.functionTitle}>Kein KI-Training</h3>
                 <p className={styles.functionDesc}>
-                  Ihre Vertragsdaten werden nicht zum Training von KI-Modellen verwendet.
+                  Deine Vertragsdaten werden nicht zum Training von KI-Modellen verwendet.
                   Jederzeit vollständige Löschung möglich.
                 </p>
               </div>
@@ -1264,7 +1264,7 @@ const KiVertragsanalyse: React.FC = () => {
               <span className={styles.sectionEyebrow}>Tarife</span>
               <h2 className={styles.sectionTitle}>Was kostet <span style={{ color: '#3b82f6' }}>KI-Vertragsanalyse</span>?</h2>
               <p className={styles.sectionSubtitle}>
-                Starten Sie kostenlos — upgraden Sie, wenn Sie mehr brauchen.
+                Starte kostenlos — upgrade, wenn du mehr brauchst.
               </p>
             </div>
 
@@ -1424,10 +1424,10 @@ const KiVertragsanalyse: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Testen Sie KI-Vertragsanalyse — kostenlos
+                  Teste KI-Vertragsanalyse — kostenlos
                 </h2>
                 <p className={styles.ctaSubtitle}>
-                  Laden Sie Ihren ersten Vertrag hoch und sehen Sie in 60 Sekunden,
+                  Lade deinen ersten Vertrag hoch und sieh in 60 Sekunden,
                   welche Risiken darin stecken. 3 kostenlose Analysen, ohne Kreditkarte, DSGVO-konform.
                 </p>
                 <div className={styles.ctaButtons}>

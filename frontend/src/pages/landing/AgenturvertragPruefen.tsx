@@ -969,7 +969,7 @@ const AgenturvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Vertrauen Sie den Ergebnissen</h2>
+              <h2 className={styles.sectionTitle}>Vertrau den Ergebnissen</h2>
             </div>
 
             <div className={styles.statsGrid}>

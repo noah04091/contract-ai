@@ -106,7 +106,7 @@ export default function HomePricingCards() {
       icon: <Zap size={22} />,
       pricing: {
         monthly: { price: "19", currency: "€", original: "29", discount: "33%", note: "/Monat" },
-        yearly: { price: "15", currency: "€", original: "29", discount: "45%", note: "/Monat", yearlyTotal: "190€/Jahr", saving: "Sie sparen 158€" }
+        yearly: { price: "15", currency: "€", original: "29", discount: "45%", note: "/Monat", yearlyTotal: "190€/Jahr", saving: "Du sparst 158€" }
       },
       features: [
         "25 KI-Analysen pro Monat",
@@ -128,7 +128,7 @@ export default function HomePricingCards() {
       icon: <Crown size={22} />,
       pricing: {
         monthly: { price: "29", currency: "€", original: "39", discount: "25%", note: "/Monat" },
-        yearly: { price: "24", currency: "€", original: "39", discount: "38%", note: "/Monat", yearlyTotal: "290€/Jahr", saving: "Sie sparen 178€" }
+        yearly: { price: "24", currency: "€", original: "39", discount: "38%", note: "/Monat", yearlyTotal: "290€/Jahr", saving: "Du sparst 178€" }
       },
       features: [
         "Alles aus Business, plus:",

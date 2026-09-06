@@ -86,7 +86,7 @@ const Vertragsanalyse: React.FC = () => {
         "name": "Wie funktioniert die KI-Vertragsanalyse?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Die KI liest und interpretiert Ihren Vertrag vollständig, erkennt Risiken, bewertet Fairness und erstellt eine verständliche Zusammenfassung. In unter 60 Sekunden erhalten Sie Chancen-Risiken-Score, kritische Klauseln und Handlungsempfehlungen."
+          "text": "Die KI liest und interpretiert deinen Vertrag vollständig, erkennt Risiken, bewertet Fairness und erstellt eine verständliche Zusammenfassung. In unter 60 Sekunden erhältst du Chancen-Risiken-Score, kritische Klauseln und Handlungsempfehlungen."
         }
       },
       {
@@ -165,7 +165,7 @@ const Vertragsanalyse: React.FC = () => {
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Unsere KI analysiert Ihre Verträge und deckt kritische Klauseln auf,
+                Unsere KI analysiert deine Verträge und deckt kritische Klauseln auf,
                 bevor sie zum Problem werden. Klar, schnell, zuverlässig.
               </p>
 
@@ -274,7 +274,7 @@ const Vertragsanalyse: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}>Die <span className={styles.sectionTitleAccent}>Vertragsanalyse</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie in 2 Minuten, wie Contract AI Ihren Vertrag analysiert und
+                Sieh in 2 Minuten, wie Contract AI deinen Vertrag analysiert und
                 versteckte Risiken aufdeckt.
               </p>
             </div>
@@ -298,9 +298,9 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Funktionen</span>
-              <h2 className={styles.sectionTitle}>Alles was Sie für <span className={styles.sectionTitleAccent}>sichere Verträge</span> brauchen</h2>
+              <h2 className={styles.sectionTitle}>Alles was du für <span className={styles.sectionTitleAccent}>sichere Verträge</span> brauchst</h2>
               <p className={styles.sectionSubtitle}>
-                Modernste KI-Technologie analysiert jeden Aspekt Ihrer Verträge und liefert klare, verständliche Ergebnisse.
+                Modernste KI-Technologie analysiert jeden Aspekt deiner Verträge und liefert klare, verständliche Ergebnisse.
               </p>
             </div>
 
@@ -362,7 +362,7 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Wörtlich belegt</h3>
                 <p className={styles.functionDesc}>
-                  Risiken kommen mit Original-Zitat aus Ihrem Vertrag — automatisch gegen den
+                  Risiken kommen mit Original-Zitat aus deinem Vertrag — automatisch gegen den
                   Vertragstext verifiziert, statt bloßer KI-Behauptung.
                 </p>
               </div>
@@ -539,7 +539,7 @@ const Vertragsanalyse: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Handlungsempfehlungen</h4>
-                      <p>Konkrete Tipps, wie Sie Ihre Position verbessern können</p>
+                      <p>Konkrete Tipps, wie du deine Position verbessern kannst</p>
                     </div>
                   </div>
                 </div>
@@ -554,10 +554,10 @@ const Vertragsanalyse: React.FC = () => {
         <section className={styles.whySection} id="why">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
+              <span className={styles.sectionEyebrow}>Deine Vorteile</span>
               <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>Contract AI</span>?</h2>
               <p className={styles.sectionSubtitle}>
-                Mehr als nur ein Analyse-Tool - Ihr zuverlässiger Partner für sichere Vertragsentscheidungen.
+                Mehr als nur ein Analyse-Tool - dein zuverlässiger Partner für sichere Vertragsentscheidungen.
               </p>
             </div>
 
@@ -568,7 +568,7 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>Objektive Bewertung</h3>
                 <p className={styles.whyDesc}>
-                  Keine kommerziellen Interessen - unsere KI bewertet Ihren Vertrag neutral
+                  Keine kommerziellen Interessen - unsere KI bewertet deinen Vertrag neutral
                   und zeigt sowohl Risiken als auch Chancen auf.
                 </p>
               </div>
@@ -579,7 +579,7 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>DSGVO-konform</h3>
                 <p className={styles.whyDesc}>
-                  Ihre Daten bleiben in Deutschland. Verschlüsselte Übertragung,
+                  Deine Daten bleiben in Deutschland. Verschlüsselte Übertragung,
                   sichere Verarbeitung auf EU-Servern.
                 </p>
               </div>
@@ -601,8 +601,8 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>Sofort verfügbar</h3>
                 <p className={styles.whyDesc}>
-                  Keine Termine, keine Wartezeiten. Laden Sie Ihren Vertrag hoch und
-                  erhalten Sie sofort Ergebnisse.
+                  Keine Termine, keine Wartezeiten. Lade deinen Vertrag hoch und
+                  erhalte sofort Ergebnisse.
                 </p>
               </div>
             </div>
@@ -631,7 +631,7 @@ const Vertragsanalyse: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vertrag hochladen</h3>
                     <p className={styles.processDesc}>
-                      Laden Sie Ihren Vertrag als PDF oder DOCX hoch. Ihre Daten werden verschlüsselt übertragen und auf deutschen Servern verarbeitet.
+                      Lade deinen Vertrag als PDF oder DOCX hoch. Deine Daten werden verschlüsselt übertragen und auf deutschen Servern verarbeitet.
                     </p>
                   </div>
                 </div>
@@ -651,7 +651,7 @@ const Vertragsanalyse: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Ergebnis erhalten</h3>
                     <p className={styles.processDesc}>
-                      Erhalten Sie einen detaillierten Report mit Chancen-Risiken-Score, markierten Problemstellen und konkreten Handlungsempfehlungen.
+                      Erhalte einen detaillierten Report mit Chancen-Risiken-Score, markierten Problemstellen und konkreten Handlungsempfehlungen.
                     </p>
                   </div>
                 </div>
@@ -684,7 +684,7 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Ungewöhnlich lang - schränkt Ihre Flexibilität stark ein. Standard sind 3 Monate.</span>
+                  <span>Ungewöhnlich lang - schränkt deine Flexibilität stark ein. Standard sind 3 Monate.</span>
                 </div>
               </div>
 
@@ -698,7 +698,7 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Gefahr unbegrenzter Zusatzkosten - fordern Sie eine klare Obergrenze.</span>
+                  <span>Gefahr unbegrenzter Zusatzkosten - fordere eine klare Obergrenze.</span>
                 </div>
               </div>
 
@@ -712,7 +712,7 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Extrem einseitig - fordern Sie eine angemessene Haftungsbegrenzung.</span>
+                  <span>Extrem einseitig - fordere eine angemessene Haftungsbegrenzung.</span>
                 </div>
               </div>
 
@@ -726,7 +726,7 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Hohes Streitpotential - bestehen Sie auf konkrete Definitionen.</span>
+                  <span>Hohes Streitpotential - besteh auf konkrete Definitionen.</span>
                 </div>
               </div>
             </div>
@@ -740,7 +740,7 @@ const Vertragsanalyse: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Unsere Zahlen</span>
-              <h2 className={styles.sectionTitle}>Vertrauen Sie den <span className={styles.sectionTitleAccent}>Ergebnissen</span></h2>
+              <h2 className={styles.sectionTitle}>Vertrau den <span className={styles.sectionTitleAccent}>Ergebnissen</span></h2>
             </div>
 
             <div className={styles.statsGrid}>
@@ -778,7 +778,7 @@ const Vertragsanalyse: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Nein, Contract AI liefert strukturierte Risikoanalysen und Bewertungen.
-                  Für komplexe rechtliche Fragen sollten Sie weiterhin einen Anwalt konsultieren.
+                  Für komplexe rechtliche Fragen solltest du weiterhin einen Anwalt konsultieren.
                 </p>
               </details>
 
@@ -811,7 +811,7 @@ const Vertragsanalyse: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Optional zur Verlaufsanzeige. Sie können Dokumente jederzeit löschen lassen.
+                  Optional zur Verlaufsanzeige. Du kannst Dokumente jederzeit löschen lassen.
                   Verarbeitung erfolgt ausschließlich zur Analyse, keine Weitergabe an Dritte.
                 </p>
               </details>
@@ -912,7 +912,7 @@ const Vertragsanalyse: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Pulse</div>
                   <div className={styles.relatedDescription}>
-                    Automatische Überwachung auf Gesetzesänderungen die Ihre Verträge betreffen
+                    Automatische Überwachung auf Gesetzesänderungen die deine Verträge betreffen
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -944,7 +944,7 @@ const Vertragsanalyse: React.FC = () => {
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Über 87% unserer Nutzer finden kritische Klauseln, die sie übersehen hätten.
-                  Analysieren Sie Ihren Vertrag – in 60 Sekunden.
+                  Analysiere deinen Vertrag – in 60 Sekunden.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

@@ -125,7 +125,7 @@ const Blog: React.FC = () => {
         <meta property="og:title" content="Blog & News zu Vertragsanalyse | Contract AI" />
         <meta
           property="og:description"
-          content="Lesen Sie spannende Beiträge über Vertragsanalyse, Optimierung und KI-basierte Lösungen. Immer up to date mit dem Contract AI Blog."
+          content="Lies spannende Beiträge über Vertragsanalyse, Optimierung und KI-basierte Lösungen. Immer up to date mit dem Contract AI Blog."
         />
         <meta property="og:url" content="https://www.contract-ai.de/blog" />
         <meta property="og:type" content="website" />
@@ -163,7 +163,7 @@ const Blog: React.FC = () => {
               </div>
               <h1 className={styles.heroTitle}>Contract AI Blog</h1>
               <p className={styles.heroSubtitle}>
-                Expertenwissen zu Verträgen, Rechtsfragen und smarten Lösungen für Ihren Alltag
+                Expertenwissen zu Verträgen, Rechtsfragen und smarten Lösungen für deinen Alltag
               </p>
               <div className={styles.heroStats}>
                 <div className={styles.heroStat}>
@@ -270,7 +270,7 @@ const Blog: React.FC = () => {
             
             {remainingArticles.length === 0 ? (
               <div className={styles.noResults}>
-                <p>Keine Artikel gefunden. Versuchen Sie andere Suchbegriffe oder wählen Sie eine andere Kategorie.</p>
+                <p>Keine Artikel gefunden. Versuch andere Suchbegriffe oder wähle eine andere Kategorie.</p>
               </div>
             ) : (
               <>
@@ -335,13 +335,13 @@ const Blog: React.FC = () => {
                       </div>
                       <h3 className={styles.newsletterTitle}>Keine Neuigkeiten verpassen</h3>
                       <p className={styles.newsletterText}>
-                        Erhalten Sie die neuesten Artikel und Tipps direkt in Ihr Postfach.
+                        Erhalte die neuesten Artikel und Tipps direkt in dein Postfach.
                       </p>
                     </div>
                     <form className={styles.newsletterForm} onSubmit={(e) => e.preventDefault()}>
                       <input
                         type="email"
-                        placeholder="Ihre E-Mail-Adresse"
+                        placeholder="Deine E-Mail-Adresse"
                         className={styles.newsletterInput}
                       />
                       <button type="submit" className={styles.newsletterButton}>
@@ -413,9 +413,9 @@ const Blog: React.FC = () => {
         {/* CTA Section */}
         <section className={styles.ctaSection}>
           <div className={styles.container}>
-            <h2 className={styles.ctaTitle}>Lassen Sie Ihre Verträge von KI prüfen</h2>
+            <h2 className={styles.ctaTitle}>Lass deine Verträge von KI prüfen</h2>
             <p className={styles.ctaSubtitle}>
-              Contract AI analysiert Ihre Verträge in Sekunden und warnt vor problematischen Klauseln
+              Contract AI analysiert deine Verträge in Sekunden und warnt vor problematischen Klauseln
             </p>
             <button className={styles.ctaButton} onClick={handleCTAClick}>
               Jetzt kostenlos Vertrag prüfen

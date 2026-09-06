@@ -304,11 +304,11 @@ export default function Pricing() {
     },
     {
       question: "Gibt es eine Geld-zurück-Garantie?",
-      answer: "Ja! Wir bieten eine 14-Tage-Geld-zurück-Garantie ohne Fragen. Wenn Sie nicht zufrieden sind, erstatten wir den vollen Betrag."
+      answer: "Ja! Wir bieten eine 14-Tage-Geld-zurück-Garantie ohne Fragen. Wenn du nicht zufrieden bist, erstatten wir den vollen Betrag."
     },
     {
       question: "Was passiert mit meinen Daten?",
-      answer: "Ihre Daten sind sicher. Wir sind DSGVO-konform, alle Server stehen in Frankfurt/Deutschland. Ihre Verträge werden verschlüsselt gespeichert und niemals an Dritte weitergegeben."
+      answer: "Deine Daten sind sicher. Wir sind DSGVO-konform, alle Server stehen in Frankfurt/Deutschland. Deine Verträge werden verschlüsselt gespeichert und niemals an Dritte weitergegeben."
     },
     {
       question: "Kann ich zwischen Plänen wechseln?",
@@ -316,7 +316,7 @@ export default function Pricing() {
     },
     {
       question: "Gibt es einen kostenlosen Plan?",
-      answer: "Ja! Unser Starter-Plan ist für immer kostenlos und enthält 3 KI-Analysen. Perfekt zum Testen, bevor Sie sich für Business oder Enterprise entscheiden."
+      answer: "Ja! Unser Starter-Plan ist für immer kostenlos und enthält 3 KI-Analysen. Perfekt zum Testen, bevor du dich für Business oder Enterprise entscheiden."
     }
   ];
 

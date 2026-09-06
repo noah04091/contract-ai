@@ -65,7 +65,7 @@ const LegalLens: React.FC = () => {
         "name": "Was ist Legal Lens?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Legal Lens ist eine interaktive Vertragsansicht, bei der Sie auf jede Klausel klicken können, um sofort eine verständliche Erklärung, Risikobewertung und Verhandlungstipps zu erhalten."
+          "text": "Legal Lens ist eine interaktive Vertragsansicht, bei der du auf jede Klausel klicken kannst, um sofort eine verständliche Erklärung, Risikobewertung und Verhandlungstipps zu erhalten."
         }
       },
       {
@@ -73,7 +73,7 @@ const LegalLens: React.FC = () => {
         "name": "Wie funktioniert die Klausel-Erklärung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Klicken Sie einfach auf eine Klausel im Vertrag. Die KI analysiert den Text sofort und zeigt: Was bedeutet das? Ist es fair? Welche Risiken gibt es?"
+          "text": "Klick einfach auf eine Klausel im Vertrag. Die KI analysiert den Text sofort und zeigt: Was bedeutet das? Ist es fair? Welche Risiken gibt es?"
         }
       },
       {
@@ -143,8 +143,8 @@ const LegalLens: React.FC = () => {
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Legal Lens macht Verträge interaktiv. Klicken Sie auf eine Klausel und
-                erhalten Sie sofort: Erklärung, Risikobewertung, Verhandlungstipp.
+                Legal Lens macht Verträge interaktiv. Klick auf eine Klausel und
+                erhalte sofort: Erklärung, Risikobewertung, Verhandlungstipp.
               </p>
 
               <div className={styles.heroCta}>
@@ -265,7 +265,7 @@ const LegalLens: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Legal Lens</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie einfach Sie jede Klausel verstehen können.
+                Sieh, wie einfach du jede Klausel verstehst.
               </p>
             </div>
 
@@ -289,9 +289,9 @@ const LegalLens: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Bei jedem Klick</span>
-              <h2 className={styles.sectionTitle}>Das erfahren Sie <span className={styles.sectionTitleAccent}>sofort</span></h2>
+              <h2 className={styles.sectionTitle}>Das erfährst du <span className={styles.sectionTitleAccent}>sofort</span></h2>
               <p className={styles.sectionSubtitle}>
-                Klicken Sie auf eine Klausel und erhalten Sie alle wichtigen Informationen.
+                Klick auf eine Klausel und erhalte alle wichtigen Informationen.
               </p>
             </div>
 
@@ -302,7 +302,7 @@ const LegalLens: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Verständliche Erklärung</h3>
                 <p className={styles.functionDesc}>
-                  Was bedeutet diese Klausel konkret für Sie? In einfacher Sprache erklärt.
+                  Was bedeutet diese Klausel konkret für dich? In einfacher Sprache erklärt.
                 </p>
               </div>
 
@@ -312,7 +312,7 @@ const LegalLens: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Risiko-Einschätzung</h3>
                 <p className={styles.functionDesc}>
-                  Grün, Gelb oder Rot – wie kritisch ist diese Klausel für Sie?
+                  Grün, Gelb oder Rot – wie kritisch ist diese Klausel für dich?
                 </p>
               </div>
 
@@ -332,7 +332,7 @@ const LegalLens: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Verhandlungstipp</h3>
                 <p className={styles.functionDesc}>
-                  Konkrete Formulierung, wie Sie bessere Konditionen aushandeln können.
+                  Konkrete Formulierung, wie du bessere Konditionen aushandeln kannst.
                 </p>
               </div>
             </div>
@@ -454,8 +454,8 @@ const LegalLens: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
                 <h2 className={styles.sectionTitleLeft}>Klicken statt googeln</h2>
                 <p className={styles.solutionText}>
-                  Legal Lens zeigt Ihren Vertrag mit farbigen Markierungen. Klicken Sie auf eine
-                  Stelle und verstehen Sie sofort, was sie bedeutet.
+                  Legal Lens zeigt deinen Vertrag mit farbigen Markierungen. Klick auf eine
+                  Stelle und versteh sofort, was sie bedeutet.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -485,7 +485,7 @@ const LegalLens: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Konkrete Tipps</h4>
-                      <p>Wie Sie bessere Konditionen verhandeln können</p>
+                      <p>Wie du bessere Konditionen verhandeln kannst</p>
                     </div>
                   </div>
                 </div>
@@ -503,7 +503,7 @@ const LegalLens: React.FC = () => {
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
               <h2 className={styles.sectionTitle}>In 3 Schritten zum <span className={styles.sectionTitleAccent}>Verständnis</span></h2>
               <p className={styles.sectionSubtitle}>
-                Nie wieder Verträge unterschreiben, die Sie nicht verstehen.
+                Nie wieder Verträge unterschreiben, die du nicht verstehst.
               </p>
             </div>
 
@@ -516,7 +516,7 @@ const LegalLens: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vertrag öffnen</h3>
                     <p className={styles.processDesc}>
-                      Laden Sie einen Vertrag hoch oder wählen Sie einen aus Ihrer Bibliothek.
+                      Lade einen Vertrag hoch oder wähle einen aus deiner Bibliothek.
                     </p>
                   </div>
                 </div>
@@ -536,7 +536,7 @@ const LegalLens: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Klauseln erkunden</h3>
                     <p className={styles.processDesc}>
-                      Klicken Sie auf jede farbige Markierung für Erklärung und Tipps.
+                      Klick auf jede farbige Markierung für Erklärung und Tipps.
                     </p>
                   </div>
                 </div>
@@ -622,8 +622,8 @@ const LegalLens: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Legal Lens ist in allen Premium-Plänen enthalten. Im Free-Tier können
-                  Sie es mit eingeschränkten Funktionen testen.
+                  Legal Lens ist in allen Premium-Plänen enthalten. Im Free-Tier kannst
+                  du es mit eingeschränkten Funktionen testen.
                 </p>
               </details>
             </div>
@@ -687,10 +687,10 @@ const LegalLens: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Verstehen Sie jeden Vertrag – Klick für Klick
+                  Versteh jeden Vertrag – Klick für Klick
                 </h2>
                 <p className={styles.ctaSubtitle}>
-                  Nie wieder Verträge unterschreiben, die Sie nicht verstehen.
+                  Nie wieder Verträge unterschreiben, die du nicht verstehst.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

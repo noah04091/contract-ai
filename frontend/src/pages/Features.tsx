@@ -105,8 +105,8 @@ const Features: React.FC = () => {
       accent: 'analyze',
       marker: '01 · Analysieren',
       label: 'Analysieren',
-      title: 'Verstehen Sie jeden Vertrag in Sekunden',
-      description: 'Unsere KI liest, analysiert und bewertet Ihre Verträge. Erkennen Sie Risiken, bevor Sie unterschreiben.',
+      title: 'Versteh jeden Vertrag in Sekunden',
+      description: 'Unsere KI liest, analysiert und bewertet deine Verträge. Erkenne Risiken, bevor du unterschreibst.',
       features: [
         { icon: <Search size={22} />, name: 'KI-Vertragsanalyse', desc: 'Chancen-Risiken-Score, kritische Klauseln, Handlungsempfehlungen', link: '/features/vertragsanalyse', badge: 'Beliebt' },
         { icon: <Zap size={22} />, name: 'Vertragsoptimierung', desc: 'Konkrete Verbesserungsvorschläge für jeden Paragraphen', link: '/features/optimierung' },
@@ -120,7 +120,7 @@ const Features: React.FC = () => {
       marker: '02 · Erstellen',
       label: 'Erstellen',
       title: 'Professionelle Verträge in Minuten',
-      description: 'Erstellen Sie rechtssichere Verträge – einfach im Chat beschreiben, aus intelligenten Vorlagen oder visuell zusammengebaut.',
+      description: 'Erstelle rechtssichere Verträge – einfach im Chat beschreiben, aus intelligenten Vorlagen oder visuell zusammengebaut.',
       features: [
         { icon: <FileText size={22} />, name: 'Vertragsgenerator', desc: 'Im Chat beschreiben oder aus 50+ Vorlagen – KI schreibt & prüft', link: '/features/generator' },
         { icon: <LayoutGrid size={22} />, name: 'Contract Builder', desc: 'Drag & Drop Editor für individuelle Verträge', link: '/features/contract-builder', badge: 'Neu' },
@@ -132,7 +132,7 @@ const Features: React.FC = () => {
       accent: 'manage',
       marker: '03 · Verwalten',
       label: 'Verwalten',
-      title: 'Behalten Sie den Überblick',
+      title: 'Behalte den Überblick',
       description: 'Zentrale Verwaltung, automatische Fristen-Erinnerungen und tägliche Prüfung auf Gesetzesänderungen.',
       features: [
         { icon: <Calendar size={22} />, name: 'Fristenverwaltung', desc: 'Nie wieder Kündigungsfristen verpassen', link: '/features/fristen' },
@@ -159,22 +159,22 @@ const Features: React.FC = () => {
 
   const faqs = [
     { q: 'Welche Vertragstypen kann Contract AI analysieren?', a: 'Contract AI analysiert alle gängigen deutschen Vertragstypen: Arbeitsverträge, Mietverträge, NDAs, Kaufverträge, Freelancer-Verträge, SaaS-Verträge, Werkverträge, Kooperationsverträge, Gesellschaftsverträge und mehr. Die KI erkennt den Vertragstyp automatisch und passt die Analyse entsprechend an.' },
-    { q: 'Wie funktioniert die KI-Vertragsanalyse?', a: 'Sie laden Ihren Vertrag als PDF oder DOCX hoch. Die KI extrahiert den Text, erkennt den Vertragstyp, prüft jede Klausel gegen geltendes Recht und aktuelle BGH/BAG-Rechtsprechung und liefert in unter 60 Sekunden einen detaillierten Report mit Risiko-Score, markierten Problemstellen und Handlungsempfehlungen.' },
-    { q: 'Ist Contract AI DSGVO-konform?', a: 'Ja. Alle Daten werden ausschließlich auf Servern in Deutschland verarbeitet, mit 256-bit-Verschlüsselung übertragen und nicht für KI-Training verwendet. Sie können Ihre Daten jederzeit löschen lassen.' },
-    { q: 'Was kostet Contract AI?', a: 'Im Free-Tier sind 3 Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhalten Sie 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 100-400 € pro Vertrag.' },
-    { q: 'Brauche ich technische Vorkenntnisse?', a: 'Nein. Contract AI ist für Nicht-Juristen und Nicht-Techniker entwickelt. Sie laden den Vertrag hoch, die KI macht den Rest. Die Ergebnisse werden in Klartext erklärt, mit konkreten Handlungsempfehlungen — kein Juristendeutsch.' },
+    { q: 'Wie funktioniert die KI-Vertragsanalyse?', a: 'Du lädst deinen Vertrag als PDF oder DOCX hoch. Die KI extrahiert den Text, erkennt den Vertragstyp, prüft jede Klausel gegen geltendes Recht und aktuelle BGH/BAG-Rechtsprechung und liefert in unter 60 Sekunden einen detaillierten Report mit Risiko-Score, markierten Problemstellen und Handlungsempfehlungen.' },
+    { q: 'Ist Contract AI DSGVO-konform?', a: 'Ja. Alle Daten werden ausschließlich auf Servern in Deutschland verarbeitet, mit 256-bit-Verschlüsselung übertragen und nicht für KI-Training verwendet. Du kannst deine Daten jederzeit löschen lassen.' },
+    { q: 'Was kostet Contract AI?', a: 'Im Free-Tier sind 3 Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 100-400 € pro Vertrag.' },
+    { q: 'Brauche ich technische Vorkenntnisse?', a: 'Nein. Contract AI ist für Nicht-Juristen und Nicht-Techniker entwickelt. Du lädst den Vertrag hoch, die KI macht den Rest. Die Ergebnisse werden in Klartext erklärt, mit konkreten Handlungsempfehlungen — kein Juristendeutsch.' },
   ];
 
   return (
     <>
       <Helmet>
         <title>Alle Funktionen | Contract AI — KI-Vertragsmanagement</title>
-        <meta name="description" content="Entdecken Sie 11 KI-gestützte Funktionen für Ihr Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
+        <meta name="description" content="Entdecke 11 KI-gestützte Funktionen für dein Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
         <link rel="canonical" href="https://www.contract-ai.de/features" />
         <meta property="og:locale" content="de_DE" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Alle Funktionen | Contract AI — KI-Vertragsmanagement" />
-        <meta property="og:description" content="Entdecken Sie 11 KI-gestützte Funktionen für Ihr Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
+        <meta property="og:description" content="Entdecke 11 KI-gestützte Funktionen für dein Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
         <meta property="og:url" content="https://www.contract-ai.de/features" />
         <meta property="og:site_name" content="Contract AI" />
         <meta property="og:image" content="https://www.contract-ai.de/og-image.jpg" />
@@ -182,7 +182,7 @@ const Features: React.FC = () => {
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Alle Funktionen | Contract AI — KI-Vertragsmanagement" />
-        <meta name="twitter:description" content="Entdecken Sie 11 KI-gestützte Funktionen für Ihr Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
+        <meta name="twitter:description" content="Entdecke 11 KI-gestützte Funktionen für dein Vertragsmanagement. Von der Analyse über Optimierung und Vergleich bis zur digitalen Signatur — alles in einer Plattform." />
 
         <script type="application/ld+json">
           {JSON.stringify({
@@ -229,7 +229,7 @@ const Features: React.FC = () => {
 
               <p className="fp-hero-sub">
                 11 KI-gestützte Tools für die komplette Vertragsverwaltung.
-                Analysieren, erstellen und verwalten Sie Verträge in einer Plattform.
+                Analysiere, erstelle und verwalte Verträge in einer Plattform.
               </p>
 
               <div className="fp-hero-cta">
@@ -397,8 +397,8 @@ const Features: React.FC = () => {
           <div className="fp-quick-inner">
             <div className="fp-section-head" data-reveal>
               <span className="fp-eyebrow">Schnellzugang</span>
-              <h2 className="fp-h3">Sie haben einen bestimmten Vertrag?</h2>
-              <p className="fp-lede">Springen Sie direkt zur spezialisierten Prüfung, abgestimmt auf aktuelle BGH- &amp; BAG-Rechtsprechung.</p>
+              <h2 className="fp-h3">Du hast einen bestimmten Vertrag?</h2>
+              <p className="fp-lede">Spring direkt zur spezialisierten Prüfung, abgestimmt auf aktuelle BGH- &amp; BAG-Rechtsprechung.</p>
             </div>
             <div className="fp-quick-grid">
               {quickLinks.map((q, i) => (
@@ -425,7 +425,7 @@ const Features: React.FC = () => {
           <div className="fp-faq-inner">
             <div className="fp-section-head" data-reveal>
               <h2 className="fp-h2">Häufige Fragen</h2>
-              <p className="fp-lede">Alles, was Sie über Contract AI wissen müssen.</p>
+              <p className="fp-lede">Alles, was du über Contract AI wissen musst.</p>
             </div>
             <div className="fp-faq-list" data-reveal>
               {faqs.map((f, i) => (
@@ -443,8 +443,8 @@ const Features: React.FC = () => {
           <div className="fp-cta-card" data-reveal>
             <div className="fp-cta-grid-bg" />
             <div className="fp-cta-content">
-              <h2 className="fp-cta-title">Bereit, Ihre Verträge<br />smarter zu verwalten?</h2>
-              <p className="fp-cta-sub">Starten Sie kostenlos mit 3 Analysen pro Monat.<br />Keine Kreditkarte erforderlich.</p>
+              <h2 className="fp-cta-title">Bereit, deine Verträge<br />smarter zu verwalten?</h2>
+              <p className="fp-cta-sub">Starte kostenlos mit 3 Analysen pro Monat.<br />Keine Kreditkarte erforderlich.</p>
               <div className="fp-cta-buttons">
                 <Link to={isAuthenticated ? "/contracts" : "/register"} className="fp-btn-primary">
                   Jetzt kostenlos starten <ArrowRight size={18} />

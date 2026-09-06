@@ -65,7 +65,7 @@ const ContractBuilder: React.FC = () => {
         "name": "Wie funktioniert der Contract Builder?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Der Contract Builder ist ein visueller Editor, mit dem Sie Verträge per Drag & Drop erstellen können."
+          "text": "Der Contract Builder ist ein visueller Editor, mit dem du Verträge per Drag & Drop erstellst."
         }
       },
       {
@@ -73,7 +73,7 @@ const ContractBuilder: React.FC = () => {
         "name": "Kann ich eigene Vorlagen erstellen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, Sie können Ihre Verträge als Vorlagen speichern und wiederverwenden."
+          "text": "Ja, du kannst deine Verträge als Vorlagen speichern und wiederverwenden."
         }
       },
       {
@@ -212,7 +212,7 @@ const ContractBuilder: React.FC = () => {
                   </div>
                   {/* Vertragsvorschau (rechts) */}
                   <div style={{ flex: 1, background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px' }}>
-                    <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ihr Vertrag</div>
+                    <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dein Vertrag</div>
                     {[
                       { label: '§ 1 Vertragsparteien', color: '#22c55e', done: true },
                       { label: '§ 2 Leistungen', color: '#22c55e', done: true },
@@ -277,7 +277,7 @@ const ContractBuilder: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}><span className={styles.sectionTitleAccent}>Contract Builder</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie einfach Sie Verträge per Drag & Drop erstellen können.
+                Sieh, wie einfach du Verträge per Drag & Drop erstellst.
               </p>
             </div>
 
@@ -334,7 +334,7 @@ const ContractBuilder: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>KI-Klauselgenerator</h3>
                 <p className={styles.functionDesc}>
-                  Beschreiben Sie, was Sie brauchen – die KI generiert rechtssichere Klauseln.
+                  Beschreib, was du brauchst – die KI generiert rechtssichere Klauseln.
                 </p>
               </div>
 
@@ -344,7 +344,7 @@ const ContractBuilder: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>PDF-Export</h3>
                 <p className={styles.functionDesc}>
-                  Exportieren Sie Verträge als professionelles PDF inkl. hochgeladener Anlagen.
+                  Exportiere Verträge als professionelles PDF inkl. hochgeladener Anlagen.
                 </p>
               </div>
 
@@ -364,7 +364,7 @@ const ContractBuilder: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Vorlagen speichern</h3>
                 <p className={styles.functionDesc}>
-                  Speichern Sie Ihre Verträge als wiederverwendbare Vorlagen für die Zukunft.
+                  Speichere deine Verträge als wiederverwendbare Vorlagen für die Zukunft.
                 </p>
               </div>
             </div>
@@ -488,7 +488,7 @@ const ContractBuilder: React.FC = () => {
                 <h2 className={styles.sectionTitleLeft}>Verträge bauen statt schreiben</h2>
                 <p className={styles.solutionText}>
                   Der Contract Builder verwandelt Vertragsgestaltung in einen intuitiven Prozess.
-                  Wählen Sie aus einer Bibliothek von Bausteinen und exportieren Sie professionelle Dokumente.
+                  Wähle aus einer Bibliothek von Bausteinen und exportiere professionelle Dokumente.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -518,7 +518,7 @@ const ContractBuilder: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>KI-Klauselgenerator</h4>
-                      <p>Beschreiben Sie, was Sie brauchen – KI liefert die Klausel</p>
+                      <p>Beschreib, was du brauchst – KI liefert die Klausel</p>
                     </div>
                   </div>
                 </div>
@@ -549,7 +549,7 @@ const ContractBuilder: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vorlage wählen</h3>
                     <p className={styles.processDesc}>
-                      Starten Sie mit einer leeren Vorlage oder wählen Sie aus professionellen
+                      Starte mit einer leeren Vorlage oder wähle aus professionellen
                       Templates für verschiedene Vertragstypen.
                     </p>
                   </div>
@@ -560,8 +560,8 @@ const ContractBuilder: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Bausteine hinzufügen</h3>
                     <p className={styles.processDesc}>
-                      Ziehen Sie Parteien, Klauseln, Tabellen und Unterschriftsfelder
-                      per Drag & Drop auf Ihre Vorlage.
+                      Zieh Parteien, Klauseln, Tabellen und Unterschriftsfelder
+                      per Drag & Drop auf deine Vorlage.
                     </p>
                   </div>
                 </div>
@@ -571,7 +571,7 @@ const ContractBuilder: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Variablen ausfüllen</h3>
                     <p className={styles.processDesc}>
-                      Definieren Sie Smart Variables für Namen, Adressen, Beträge – sie werden
+                      Definiere Smart Variables für Namen, Adressen, Beträge – sie werden
                       überall automatisch eingesetzt.
                     </p>
                   </div>
@@ -582,8 +582,8 @@ const ContractBuilder: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>PDF exportieren</h3>
                     <p className={styles.processDesc}>
-                      Laden Sie Ihren fertigen Vertrag als professionelles PDF herunter
-                      oder drucken Sie ihn direkt aus.
+                      Lade deinen fertigen Vertrag als professionelles PDF herunter
+                      oder druck ihn direkt aus.
                     </p>
                   </div>
                 </div>
@@ -647,7 +647,7 @@ const ContractBuilder: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, Sie können jederzeit eigene Texte eingeben oder von der KI generieren
+                  Ja, du kannst jederzeit eigene Texte eingeben oder von der KI generieren
                   lassen. Alle Bausteine sind vollständig anpassbar.
                 </p>
               </details>
@@ -669,7 +669,7 @@ const ContractBuilder: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Definieren Sie Variablen wie {'{{name}}'} oder {'{{adresse}}'} einmal und
+                  Definiere Variablen wie {'{{name}}'} oder {'{{adresse}}'} einmal und
                   sie werden automatisch überall im Dokument eingesetzt.
                 </p>
               </details>
@@ -693,7 +693,7 @@ const ContractBuilder: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsgenerator</div>
                   <div className={styles.relatedDescription}>
-                    Lassen Sie komplette Verträge von der KI erstellen
+                    Lass komplette Verträge von der KI erstellen
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -704,7 +704,7 @@ const ContractBuilder: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Digitale Signatur</div>
                   <div className={styles.relatedDescription}>
-                    Unterschreiben Sie Ihre Verträge rechtsgültig digital
+                    Unterschreibe deine Verträge rechtsgültig digital
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -715,7 +715,7 @@ const ContractBuilder: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>
-                    Verstehen Sie jede Klausel – Erklärungen per Klick
+                    Versteh jede Klausel – Erklärungen per Klick
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -734,7 +734,7 @@ const ContractBuilder: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Erstellen Sie Ihren ersten Vertrag in Minuten
+                  Erstelle deinen ersten Vertrag in Minuten
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Kein Jurastudium nötig. Keine komplizierten Tools. Einfach Bausteine

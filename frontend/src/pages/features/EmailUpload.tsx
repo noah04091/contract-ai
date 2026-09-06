@@ -73,7 +73,7 @@ const EmailUpload: React.FC = () => {
         "name": "Wie funktioniert der E-Mail-Upload?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nach der Registrierung erhalten Sie eine persönliche E-Mail-Adresse. Leiten Sie einfach E-Mails mit PDF-Anhängen dorthin weiter."
+          "text": "Nach der Registrierung erhältst du eine persönliche E-Mail-Adresse. Leite einfach E-Mails mit PDF-Anhängen dorthin weiter."
         }
       },
       {
@@ -135,8 +135,8 @@ const EmailUpload: React.FC = () => {
                 <span className={styles.heroTitleHighlight}>ein Klick</span>
               </h1>
               <p className={styles.heroSubtitle}>
-                Sie erhalten einen Vertrag per E-Mail? Einfach weiterleiten – fertig.
-                Das System erkennt PDFs automatisch und legt sie in Ihrem Dashboard ab.
+                Du erhältst einen Vertrag per E-Mail? Einfach weiterleiten – fertig.
+                Das System erkennt PDFs automatisch und legt sie in deinem Dashboard ab.
               </p>
               <div className={styles.heroCta}>
                 <Link to={target} className={styles.btnPrimary}>
@@ -250,9 +250,9 @@ const EmailUpload: React.FC = () => {
                 <div className={`${styles.processStep} ${styles.animateOnScroll}`} ref={addToRefs}>
                   <div className={styles.processNumber}>1</div>
                   <div className={styles.processContent}>
-                    <h3 className={styles.processTitle}>Ihre persönliche E-Mail-Adresse</h3>
+                    <h3 className={styles.processTitle}>Deine persönliche E-Mail-Adresse</h3>
                     <p className={styles.processDesc}>
-                      Nach der Registrierung finden Sie Ihre E-Mail-Adresse im Dashboard
+                      Nach der Registrierung findest du deine E-Mail-Adresse im Dashboard
                       (z.B. <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontSize: '13px' }}>max123@inbox.contract-ai.de</code>).
                     </p>
                   </div>
@@ -262,8 +262,8 @@ const EmailUpload: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>E-Mail weiterleiten</h3>
                     <p className={styles.processDesc}>
-                      Vertrag per E-Mail erhalten? Klicken Sie auf "Weiterleiten" und
-                      senden Sie die E-Mail an Ihre Contract AI Adresse.
+                      Vertrag per E-Mail erhalten? Klick auf "Weiterleiten" und
+                      sende die E-Mail an deine Contract AI Adresse.
                     </p>
                   </div>
                 </div>
@@ -272,7 +272,7 @@ const EmailUpload: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Fertig!</h3>
                     <p className={styles.processDesc}>
-                      Der Vertrag erscheint automatisch in Ihrem Dashboard.
+                      Der Vertrag erscheint automatisch in deinem Dashboard.
                       Optional: KI-Analyse wird direkt gestartet.
                     </p>
                   </div>
@@ -400,7 +400,7 @@ const EmailUpload: React.FC = () => {
           <div className={styles.container}>
             <div className={styles.sectionHeader}>
               <span className={styles.sectionEyebrow}>Prozess</span>
-              <h2 className={styles.sectionTitle}>Das passiert mit Ihren <span className={styles.sectionTitleAccent}>Verträgen</span></h2>
+              <h2 className={styles.sectionTitle}>Das passiert mit deinen <span className={styles.sectionTitleAccent}>Verträgen</span></h2>
             </div>
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
@@ -446,7 +446,7 @@ const EmailUpload: React.FC = () => {
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>Verträge einfach per E-Mail hochladen</h2>
                 <p className={styles.ctaSubtitle}>
-                  Registrieren Sie sich und erhalten Sie Ihre persönliche Upload-Adresse.
+                  Registriere dich und erhalte deine persönliche Upload-Adresse.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

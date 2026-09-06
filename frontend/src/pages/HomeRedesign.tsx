@@ -163,19 +163,19 @@ const HomeRedesign = () => {
   // Preise (echte Werte aus HomePricingCards)
   const biz = billing === 'monthly'
     ? { price: "19", old: "29", note: "monatlich kündbar", save: "" }
-    : { price: "15", old: "29", note: "190€/Jahr · jährlich abgerechnet", save: "Sie sparen 158€" };
+    : { price: "15", old: "29", note: "190€/Jahr · jährlich abgerechnet", save: "Du sparst 158€" };
   const ent = billing === 'monthly'
     ? { price: "29", old: "39", note: "monatlich kündbar", save: "" }
-    : { price: "24", old: "39", note: "290€/Jahr · jährlich abgerechnet", save: "Sie sparen 178€" };
+    : { price: "24", old: "39", note: "290€/Jahr · jährlich abgerechnet", save: "Du sparst 178€" };
 
   // FAQ-Daten (für Anzeige + JSON-LD)
   const faqs = [
-    { q: "Ist Contract AI DSGVO-konform?", a: "Ja. Alle Daten werden DSGVO-konform auf deutschen Servern in Frankfurt gespeichert und verschlüsselt übertragen. Ihre Verträge bleiben jederzeit Ihr Eigentum." },
-    { q: "Brauche ich juristische Vorkenntnisse?", a: "Nein. Contract AI erklärt jede Klausel in verständlicher Sprache – mit Risiko-Score und konkreten Empfehlungen. Sie brauchen weder Jura-Studium noch Anwalt für den ersten Überblick." },
+    { q: "Ist Contract AI DSGVO-konform?", a: "Ja. Alle Daten werden DSGVO-konform auf deutschen Servern in Frankfurt gespeichert und verschlüsselt übertragen. Deine Verträge bleiben jederzeit dein Eigentum." },
+    { q: "Brauche ich juristische Vorkenntnisse?", a: "Nein. Contract AI erklärt jede Klausel in verständlicher Sprache – mit Risiko-Score und konkreten Empfehlungen. Du brauchst weder Jura-Studium noch Anwalt für den ersten Überblick." },
     { q: "Wie genau ist die KI-Analyse?", a: "Die Analyse basiert auf aktueller BGH- und BAG-Rechtsprechung und wird laufend aktualisiert. Sie liefert eine fundierte Einschätzung, ersetzt im Einzelfall aber keine individuelle Rechtsberatung." },
     { q: "Kann ich jederzeit kündigen?", a: "Ja. Alle Pläne sind monatlich kündbar, ohne Mindestlaufzeit. Zusätzlich gilt eine 14-tägige Geld-zurück-Garantie – ohne Wenn und Aber." },
-    { q: "Welche Verträge & Formate kann ich hochladen?", a: "Von Miet- über Arbeits- bis zu Kauf- und NDA-Verträgen – als PDF direkt im Dashboard oder bequem per E-Mail-Weiterleitung an Ihre persönliche Upload-Adresse." },
-    { q: "Ersetzt Contract AI einen Anwalt?", a: "Für Standardverträge gibt Contract AI Ihnen in Minuten Klarheit und spart oft den ersten Anwaltstermin. Bei komplexen oder strittigen Fällen ist sie die ideale Vorbereitung für das Gespräch mit Ihrem Anwalt." },
+    { q: "Welche Verträge & Formate kann ich hochladen?", a: "Von Miet- über Arbeits- bis zu Kauf- und NDA-Verträgen – als PDF direkt im Dashboard oder bequem per E-Mail-Weiterleitung an deine persönliche Upload-Adresse." },
+    { q: "Ersetzt Contract AI einen Anwalt?", a: "Für Standardverträge gibt Contract AI dir in Minuten Klarheit und spart oft den ersten Anwaltstermin. Bei komplexen oder strittigen Fällen ist sie die ideale Vorbereitung für das Gespräch mit deinem Anwalt." },
   ];
 
   // Showcase-Zeilen (mit unseren Videos)
@@ -184,7 +184,7 @@ const HomeRedesign = () => {
       reverse: false, eyebrowColor: "#2563eb", eyebrowBg: "rgba(37,99,235,0.07)", eyebrowBorder: "rgba(37,99,235,0.16)",
       eyebrow: "KI-Powered", eyIcon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
       titlePre: "Vertragsanalyse mit ", titleAccent: "Score",
-      text: "Risiken, Chancen und Verständlichkeit auf einen Blick. Unsere KI bewertet Ihre Verträge und deckt versteckte Fallstricke auf.",
+      text: "Risiken, Chancen und Verständlichkeit auf einen Blick. Unsere KI bewertet deine Verträge und deckt versteckte Fallstricke auf.",
       bullets: ["Automatische Risikoanalyse", "Verständlichkeitsindex für Laien und Profis", "Detaillierte Klausel-Insights"],
       linkColor: "#2563eb", linkLabel: "Zur Vertragsanalyse", to: "/features/vertragsanalyse",
       video: analyseVideo, poster: analyseImg, label: "Vertragsanalyse · score",
@@ -202,8 +202,8 @@ const HomeRedesign = () => {
       reverse: false, eyebrowColor: "#059669", eyebrowBg: "rgba(5,150,105,0.07)", eyebrowBorder: "rgba(5,150,105,0.16)",
       eyebrow: "Automatisch", eyIcon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>,
       titlePre: "Fristen ", titleAccent: "automatisch erkennen",
-      text: "Verpassen Sie nie wieder eine Kündigungsfrist. Contract AI erkennt wichtige Fristen und erinnert Sie rechtzeitig.",
-      bullets: ["Automatische Fristenerkennung", "Erinnerungsfunktion per E-Mail", "Integration in Ihren Kalender"],
+      text: "Verpasse nie wieder eine Kündigungsfrist. Contract AI erkennt wichtige Fristen und erinnert dich rechtzeitig.",
+      bullets: ["Automatische Fristenerkennung", "Erinnerungsfunktion per E-Mail", "Integration in deinen Kalender"],
       linkColor: "#059669", linkLabel: "Zum Fristenkalender", to: "/features/fristen",
       video: fristenVideo, poster: fristenImg, label: "Anstehende Fristen",
     },
@@ -211,7 +211,7 @@ const HomeRedesign = () => {
       reverse: true, eyebrowColor: "#db2777", eyebrowBg: "rgba(219,39,119,0.07)", eyebrowBorder: "rgba(219,39,119,0.16)",
       eyebrow: "Präzise", eyIcon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 3H3v18h18V3z"></path><path d="M9 3v18"></path><path d="M3 9h18"></path></svg>,
       titlePre: "Verträge intelligent ", titleAccent: "vergleichen",
-      text: "Lassen Sie zwei Verträge gegeneinander antreten. Contract AI zeigt Unterschiede, Fairness und empfiehlt den besseren Weg.",
+      text: "Lass zwei Verträge gegeneinander antreten. Contract AI zeigt Unterschiede, Fairness und empfiehlt den besseren Weg.",
       bullets: ["Visualisierte Unterschiede", "Fairness-Score & Verbesserungstipps", "Entscheidungshilfe in Sekunden"],
       linkColor: "#db2777", linkLabel: "Zum Vergleich", to: "/features/vergleich",
       video: vergleichVideo, poster: vergleichImg, label: "Vergleich",
@@ -498,14 +498,14 @@ const HomeRedesign = () => {
                   <path pathLength={1} d="M6,50 Q60,57 120,48 Q150,44 182,51" stroke="#06b6d4" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={s("stroke-dasharray:1;stroke-dashoffset:1;animation:caSigDraw .7s ease forwards 2.15s")}></path>
                 </svg>
               </div>
-              <p style={s("font-size:19px;line-height:1.6;color:#52525b;margin:20px 0 0;max-width:524px")}>Contract&nbsp;AI erkennt versteckte Risiken, erinnert an Fristen und behält alle Verträge im Blick – damit Sie es nicht müssen.</p>
+              <p style={s("font-size:19px;line-height:1.6;color:#52525b;margin:20px 0 0;max-width:524px")}>Contract&nbsp;AI erkennt versteckte Risiken, erinnert an Fristen und behält alle Verträge im Blick – damit du es nicht musst.</p>
               <div className="ca-lp-hero-cta" style={s("display:flex;flex-wrap:wrap;gap:13px;margin-top:34px")}>
                 <Link to={heroPrimaryTo} className="ca-lp-btn-primary" style={s("display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:#fff;font-size:16px;font-weight:500;padding:15px 26px;border-radius:11px;text-decoration:none;box-shadow:0 1px 2px rgba(17,17,20,0.12)")}>{heroPrimaryLabel}<Arrow w={17} /></Link>
                 <Link to="/pricing" className="ca-lp-btn-secondary" style={s("display:inline-flex;align-items:center;gap:8px;background:#fff;color:#111114;font-size:16px;font-weight:500;padding:15px 24px;border-radius:11px;text-decoration:none;border:1px solid #e3e4e9")}>Kostenlos testen</Link>
               </div>
               <div style={s("display:inline-flex;align-items:center;gap:9px;margin-top:30px;padding:9px 15px;background:rgba(17,17,20,0.035);border:1px solid rgba(17,17,20,0.06);border-radius:10px")}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                <span style={s("font-size:13.5px;color:#3f3f46;font-weight:500")}>Deutsche Server. Maximaler Schutz. Ihre Daten bleiben Ihre Daten.</span>
+                <span style={s("font-size:13.5px;color:#3f3f46;font-weight:500")}>Deutsche Server. Maximaler Schutz. Deine Daten bleiben deine Daten.</span>
               </div>
               <div className="ca-lp-hero-social" style={s("display:flex;align-items:center;gap:14px;margin-top:26px;flex-wrap:wrap")}>
                 <div style={{ display: 'flex' }}>
@@ -612,8 +612,8 @@ const HomeRedesign = () => {
           <div style={s("max-width:1200px;margin:0 auto")}>
             <div style={s("max-width:680px;margin:0 auto;text-align:center")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>So funktioniert's</span>
-              <h2 style={s("font-size:clamp(32px,4vw,50px);font-weight:600;letter-spacing:-0.03em;line-height:1.04;margin:14px 0 0;color:#0c0c10")}>Unsere KI-Tools für<br /><span style={s(GRAD)}>Ihre Verträge</span></h2>
-              <p style={s("font-size:18px;line-height:1.6;color:#52525b;margin:16px 0 0")}>Erleben Sie die Zukunft des Vertragsmanagements.</p>
+              <h2 style={s("font-size:clamp(32px,4vw,50px);font-weight:600;letter-spacing:-0.03em;line-height:1.04;margin:14px 0 0;color:#0c0c10")}>Unsere KI-Tools für<br /><span style={s(GRAD)}>deine Verträge</span></h2>
+              <p style={s("font-size:18px;line-height:1.6;color:#52525b;margin:16px 0 0")}>Erlebe die Zukunft des Vertragsmanagements.</p>
             </div>
             <div style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(258px,100%),1fr));gap:18px;margin-top:48px")} className="ca-lp-stagger">
               {featureCards.map((f, i) => (
@@ -637,8 +637,8 @@ const HomeRedesign = () => {
           <div style={s("max-width:1200px;margin:0 auto;padding:0 24px")}>
             <div style={s("max-width:640px;margin:0 auto;text-align:center")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Integrationen</span>
-              <h2 style={s("font-size:clamp(28px,3.4vw,44px);font-weight:600;letter-spacing:-0.025em;line-height:1.06;margin:14px 0 0;color:#0c0c10")}>Passt in <span style={s(GRAD)}>Ihren Workflow</span></h2>
-              <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Verbinden Sie Contract&nbsp;AI mit Ihren bestehenden Tools.</p>
+              <h2 style={s("font-size:clamp(28px,3.4vw,44px);font-weight:600;letter-spacing:-0.025em;line-height:1.06;margin:14px 0 0;color:#0c0c10")}>Passt in <span style={s(GRAD)}>deinen Workflow</span></h2>
+              <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Verbinde Contract&nbsp;AI mit deinen bestehenden Tools.</p>
             </div>
           </div>
           <div style={s("position:relative;margin-top:44px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)")}>
@@ -659,12 +659,12 @@ const HomeRedesign = () => {
             <div className="ca-lp-2col" style={s("display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:clamp(36px,5vw,72px);align-items:center")}>
               <div className="ca-lp-rowtext">
                 <span style={s("display:inline-flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#eef3ff;border:1px solid rgba(37,99,235,0.2);padding:6px 13px;border-radius:999px")}><span style={s("font-weight:700;color:#2563eb")}>01</span><span style={s("width:1px;height:11px;background:rgba(37,99,235,0.3)")}></span>Vertragsverwaltung</span>
-                <h2 style={s("font-size:clamp(26px,3vw,38px);font-weight:600;letter-spacing:-0.025em;line-height:1.08;margin:16px 0 0;color:#0c0c10")}>Ihre Verträge.<br /><span style={s(GRAD)}>Perfekt organisiert.</span></h2>
-                <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Speichern, organisieren und verwalten Sie all Ihre Verträge sicher in der Contract&nbsp;AI Cloud – mit automatischen Erinnerungen, schneller Suche und DSGVO-konformer Speicherung.</p>
+                <h2 style={s("font-size:clamp(26px,3vw,38px);font-weight:600;letter-spacing:-0.025em;line-height:1.08;margin:16px 0 0;color:#0c0c10")}>Deine Verträge.<br /><span style={s(GRAD)}>Perfekt organisiert.</span></h2>
+                <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Speichere, organisiere und verwalte all deine Verträge sicher in der Contract&nbsp;AI Cloud – mit automatischen Erinnerungen, schneller Suche und DSGVO-konformer Speicherung.</p>
                 <ul style={s("list-style:none;padding:0;margin:22px 0 0;display:flex;flex-direction:column;gap:13px")}>
                   {[
                     { b: "Zentrale Ablage:", t: " Alle Verträge sicher an einem Ort", icon: <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path> },
-                    { b: "Sofortiger Zugriff:", t: " Finden Sie Dokumente in Sekunden", icon: <><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></> },
+                    { b: "Sofortiger Zugriff:", t: " Finde Dokumente in Sekunden", icon: <><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></> },
                     { b: "Automatische Erinnerungen:", t: " Fristen nie wieder verpassen", icon: <><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></> },
                     { b: "100% DSGVO-konform:", t: " Deutsche Server, Standort Frankfurt", icon: <><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></> },
                   ].map((li, i) => (
@@ -715,7 +715,7 @@ const HomeRedesign = () => {
               <div className="ca-lp-rowtext" style={s("order:2")}>
                 <span style={s("display:inline-flex;align-items:center;gap:8px;font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#2563eb;background:#eef3ff;border:1px solid rgba(37,99,235,0.2);padding:6px 13px;border-radius:999px")}><span style={s("font-weight:700;color:#2563eb")}>02</span><span style={s("width:1px;height:11px;background:rgba(37,99,235,0.3)")}></span>E-Mail Upload</span>
                 <h2 style={s("font-size:clamp(26px,3vw,38px);font-weight:600;letter-spacing:-0.025em;line-height:1.08;margin:16px 0 0;color:#0c0c10")}>Verträge per E-Mail.<br /><span style={s(GRAD)}>Automatisch erfasst.</span></h2>
-                <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract&nbsp;AI Adresse weiter. PDFs werden automatisch erkannt, hochgeladen und analysiert.</p>
+                <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Leite E-Mails mit Vertragsanhängen einfach an deine persönliche Contract&nbsp;AI Adresse weiter. PDFs werden automatisch erkannt, hochgeladen und analysiert.</p>
                 <ul style={s("list-style:none;padding:0;margin:22px 0 0;display:flex;flex-direction:column;gap:13px")}>
                   {[
                     { b: "Zero Aufwand:", t: " Einfach E-Mail weiterleiten", icon: <><path d="M22 2 11 13"></path><path d="M22 2 15 22l-4-9-9-4 20-7z"></path></> },
@@ -737,8 +737,8 @@ const HomeRedesign = () => {
           <div style={s("max-width:1200px;margin:0 auto")}>
             <div style={s("max-width:720px;margin:0 auto;text-align:center")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Funktionen</span>
-              <h2 style={s("font-size:clamp(32px,4vw,50px);font-weight:600;letter-spacing:-0.03em;line-height:1.04;margin:14px 0 0;color:#0c0c10")}>Alles, was Sie für Ihre<br /><span style={s(GRAD)}>Verträge brauchen</span></h2>
-              <p style={s("font-size:18px;line-height:1.6;color:#52525b;margin:16px 0 0")}>Von der Analyse bis zur Unterschrift – unsere KI-Tools automatisieren Ihren kompletten Vertragsworkflow.</p>
+              <h2 style={s("font-size:clamp(32px,4vw,50px);font-weight:600;letter-spacing:-0.03em;line-height:1.04;margin:14px 0 0;color:#0c0c10")}>Alles, was du für deine<br /><span style={s(GRAD)}>Verträge brauchst</span></h2>
+              <p style={s("font-size:18px;line-height:1.6;color:#52525b;margin:16px 0 0")}>Von der Analyse bis zur Unterschrift – unsere KI-Tools automatisieren deinen kompletten Vertragsworkflow.</p>
             </div>
 
             {showcase.map((row, i) => (
@@ -805,7 +805,7 @@ const HomeRedesign = () => {
                 </Link>
               ))}
             </div>
-            <p style={s("text-align:center;font-size:15px;line-height:1.6;color:#52525b;margin:34px auto 0;max-width:660px")} className="ca-lp-reveal">Ihr Vertrags- oder Dokumententyp ist nicht dabei? <strong style={s("color:#0c0c10;font-weight:600")}>Kein Problem</strong> – Contract&nbsp;AI analysiert jeden Vertrag tiefgründig, ganz gleich welcher Typ.</p>
+            <p style={s("text-align:center;font-size:15px;line-height:1.6;color:#52525b;margin:34px auto 0;max-width:660px")} className="ca-lp-reveal">Dein Vertrags- oder Dokumententyp ist nicht dabei? <strong style={s("color:#0c0c10;font-weight:600")}>Kein Problem</strong> – Contract&nbsp;AI analysiert jeden Vertrag tiefgründig, ganz gleich welcher Typ.</p>
           </div>
         </section>
 
@@ -897,7 +897,7 @@ const HomeRedesign = () => {
             <div style={s("text-align:center;max-width:640px;margin:0 auto")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>Preise</span>
               <h2 style={s("font-size:clamp(28px,3.4vw,44px);font-weight:600;letter-spacing:-0.025em;line-height:1.06;margin:14px 0 0;color:#0c0c10")}>Einfach &amp; <span style={s(GRAD)}>transparent</span></h2>
-              <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Wählen Sie den Plan, der zu Ihnen passt. Jederzeit kündbar.</p>
+              <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Wähle den Plan, der zu dir passt. Jederzeit kündbar.</p>
               <div style={s("display:inline-flex;align-items:center;gap:4px;margin-top:28px;padding:5px;background:#f1f1f5;border-radius:13px;position:relative")}>
                 <button type="button" className={"ca-lp-toggle-btn" + (billing === 'monthly' ? " ca-active" : "")} onClick={() => setBilling('monthly')}>Monatlich</button>
                 <button type="button" className={"ca-lp-toggle-btn" + (billing === 'yearly' ? " ca-active" : "")} onClick={() => setBilling('yearly')}>Jährlich</button>
@@ -981,7 +981,7 @@ const HomeRedesign = () => {
             <div style={s("text-align:center;max-width:600px;margin:0 auto")} className="ca-lp-reveal">
               <span style={s("font-family:'Geist Mono',monospace;font-size:12px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:#2563eb")}>FAQ</span>
               <h2 style={s("font-size:clamp(28px,3.4vw,44px);font-weight:600;letter-spacing:-0.025em;line-height:1.06;margin:14px 0 0;color:#0c0c10")}>Häufige <span style={s(GRAD)}>Fragen</span></h2>
-              <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Alles, was Sie vor dem Start wissen müssen.</p>
+              <p style={s("font-size:17px;line-height:1.6;color:#52525b;margin:14px 0 0")}>Alles, was du vor dem Start wissen musst.</p>
             </div>
             <div style={s("display:flex;flex-direction:column;gap:12px;margin-top:40px")} className="ca-lp-reveal">
               {faqs.map((f, i) => (
@@ -1008,7 +1008,7 @@ const HomeRedesign = () => {
                 </div>
                 <span style={s("font-size:13px;color:#fff;font-weight:500")}><span style={s("letter-spacing:1px")}>★★★★★</span> &nbsp;500+ zufriedene Nutzer</span>
               </div>
-              <h2 style={s("font-size:clamp(32px,4.6vw,56px);font-weight:600;letter-spacing:-0.035em;line-height:1.04;color:#fff;margin:0")}>Ihr nächster Vertrag<br />verdient einen Profi-Check.</h2>
+              <h2 style={s("font-size:clamp(32px,4.6vw,56px);font-weight:600;letter-spacing:-0.035em;line-height:1.04;color:#fff;margin:0")}>Dein nächster Vertrag<br />verdient einen Profi-Check.</h2>
               <p style={s("font-size:19px;line-height:1.55;color:rgba(255,255,255,0.92);margin:20px auto 0;max-width:540px")}>Lade deinen ersten Vertrag hoch und erhalte in 60&nbsp;Sekunden eine vollständige Risiko-Analyse – <strong style={s("color:#fff;font-weight:600")}>kostenlos und unverbindlich.</strong></p>
               <div style={s("display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:36px")}>
                 <Link to={!user ? "/register" : "/dashboard"} style={s("display:inline-flex;align-items:center;gap:9px;background:#fff;color:#1e40af;font-size:18px;font-weight:600;padding:18px 36px;border-radius:13px;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,0.22)")}>Jetzt kostenlos starten<Arrow w={19} /></Link>

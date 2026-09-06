@@ -148,7 +148,7 @@ export default function Press() {
     <>
       <Helmet>
         <title>Presse & Medien | Contract AI</title>
-        <meta name="description" content="Pressemitteilungen, Medienressourcen und Kontaktinformationen für Journalisten. Erfahren Sie mehr über Contract AI." />
+        <meta name="description" content="Pressemitteilungen, Medienressourcen und Kontaktinformationen für Journalisten. Erfahre mehr über Contract AI." />
         <meta name="keywords" content="Contract AI Presse, LegalTech Startup, Pressemitteilungen, Medien, Journalisten" />
         <link rel="canonical" href="https://www.contract-ai.de/press" />
         <meta property="og:title" content="Presse & Medien | Contract AI" />
@@ -364,7 +364,7 @@ export default function Press() {
           <div className={`${styles.footerCta} ${styles.animateOnScroll}`} ref={addToRefs}>
             <h3 className={styles.footerCtaTitle}>Presseanfrage?</h3>
             <p className={styles.footerCtaText}>
-              Kontaktieren Sie uns für Interviews, Produktinformationen oder Bildmaterial.
+              Kontaktiere uns für Interviews, Produktinformationen oder Bildmaterial.
             </p>
             <a href="mailto:info@contract-ai.de" className={styles.footerCtaButton}>
               Kontakt aufnehmen

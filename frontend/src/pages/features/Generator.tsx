@@ -79,7 +79,7 @@ const Generator: React.FC = () => {
         "name": "Was ist der neue Premium-Modus „Im Gespräch erstellen\"?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Sie beschreiben Ihren Vertrag in eigenen Worten. Die KI stellt gezielte Rückfragen, schreibt einen vollständigen Vertrag, prüft ihn auf fehlende Schutzklauseln (Rechts-Check), trägt erkannte Fristen in Ihren Kalender ein und kann ihn direkt zur Unterschrift an die andere Partei senden."
+          "text": "Du beschreibst deinen Vertrag in eigenen Worten. Die KI stellt gezielte Rückfragen, schreibt einen vollständigen Vertrag, prüft ihn auf fehlende Schutzklauseln (Rechts-Check), trägt erkannte Fristen in deinen Kalender ein und kann ihn direkt zur Unterschrift an die andere Partei senden."
         }
       },
       {
@@ -95,7 +95,7 @@ const Generator: React.FC = () => {
         "name": "Kann ich die Verträge nachträglich ändern?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, Sie erhalten sowohl PDF als auch DOCX-Format. Im Dashboard können Sie Verträge erneut öffnen und anpassen."
+          "text": "Ja, du erhältst sowohl PDF als auch DOCX-Format. Im Dashboard kannst du Verträge erneut öffnen und anpassen."
         }
       }
     ]
@@ -158,9 +158,9 @@ const Generator: React.FC = () => {
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Beschreiben Sie Ihren Vertrag einfach im Chat – die KI schreibt ihn,
-                prüft ihn auf Rechtssicherheit, trägt Fristen in Ihren Kalender ein und
-                holt die Unterschrift ein. Oder bauen Sie ihn klassisch aus erprobten Klauseln.
+                Beschreib deinen Vertrag einfach im Chat – die KI schreibt ihn,
+                prüft ihn auf Rechtssicherheit, trägt Fristen in deinen Kalender ein und
+                holt die Unterschrift ein. Oder bau ihn klassisch aus erprobten Klauseln.
               </p>
 
               <div className={styles.heroCta}>
@@ -270,7 +270,7 @@ const Generator: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}>Der <span className={styles.sectionTitleAccent}>Vertragsgenerator</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie Sie in wenigen Minuten einen vollständigen, rechtssicheren
+                Sieh, wie du in wenigen Minuten einen vollständigen, rechtssicheren
                 Vertrag erstellen können.
               </p>
             </div>
@@ -295,9 +295,9 @@ const Generator: React.FC = () => {
             <div className={styles.problemGrid}>
               <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Das Problem</span>
-                <h2 className={styles.sectionTitleLeft}>Neue Verträge brauchen Sie öfter als gedacht</h2>
+                <h2 className={styles.sectionTitleLeft}>Neue Verträge brauchst du öfter als gedacht</h2>
                 <p className={styles.problemText}>
-                  Freelancer-Auftrag, NDA, Mietvertrag, Kooperationen: Oft stehen Sie vor einem
+                  Freelancer-Auftrag, NDA, Mietvertrag, Kooperationen: Oft stehst du vor einem
                   leeren Blatt – oder kopieren alte Verträge, die nicht ganz passen. Dann doch
                   zum Anwalt? Das dauert Wochen und kostet Hunderte von Euro für Standard-Klauseln.
                 </p>
@@ -401,10 +401,10 @@ const Generator: React.FC = () => {
 
               <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
-                <h2 className={styles.sectionTitleLeft}>Modularer Vertragsaufbau nach Ihren Anforderungen</h2>
+                <h2 className={styles.sectionTitleLeft}>Modularer Vertragsaufbau nach deinen Anforderungen</h2>
                 <p className={styles.solutionText}>
-                  Der Generator führt Sie Schritt für Schritt durch die Vertragsgestaltung.
-                  Basierend auf bewährten Klausel-Bibliotheken wählen Sie die Module, die Sie brauchen.
+                  Der Generator führt dich Schritt für Schritt durch die Vertragsgestaltung.
+                  Basierend auf bewährten Klausel-Bibliotheken wählst du die Module, die du brauchst.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -449,7 +449,7 @@ const Generator: React.FC = () => {
         <section className={styles.whySection} id="why">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
+              <span className={styles.sectionEyebrow}>Deine Vorteile</span>
               <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>Contract AI</span>?</h2>
               <p className={styles.sectionSubtitle}>
                 Schneller, günstiger und flexibler als traditionelle Wege.
@@ -474,7 +474,7 @@ const Generator: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>Modularer Aufbau</h3>
                 <p className={styles.whyDesc}>
-                  Nur die Klauseln, die Sie wirklich brauchen – kein unnötiger
+                  Nur die Klauseln, die du wirklich brauchst – kein unnötiger
                   Ballast, perfekt angepasst.
                 </p>
               </div>
@@ -533,7 +533,7 @@ const Generator: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Module konfigurieren</h3>
                     <p className={styles.processDesc}>
-                      Geführte Fragen zu Ihren Anforderungen – Laufzeit, Haftung, IP-Rechte, Besonderheiten.
+                      Geführte Fragen zu deinen Anforderungen – Laufzeit, Haftung, IP-Rechte, Besonderheiten.
                     </p>
                   </div>
                 </div>
@@ -617,9 +617,9 @@ const Generator: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Sie beschreiben Ihren Vertrag einfach in eigenen Worten. Die KI stellt gezielte
+                  Du beschreibst deinen Vertrag einfach in eigenen Worten. Die KI stellt gezielte
                   Rückfragen, schreibt anschließend einen vollständigen Vertrag, prüft ihn auf fehlende
-                  Schutzklauseln (Rechts-Check), trägt erkannte Fristen in Ihren Kalender ein und kann
+                  Schutzklauseln (Rechts-Check), trägt erkannte Fristen in deinen Kalender ein und kann
                   ihn direkt zur Unterschrift an die andere Partei senden.
                 </p>
               </details>
@@ -641,7 +641,7 @@ const Generator: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, Sie erhalten sowohl PDF als auch DOCX-Format. Im Dashboard können Sie
+                  Ja, du erhältst sowohl PDF als auch DOCX-Format. Im Dashboard kannst du
                   Verträge erneut öffnen und anpassen.
                 </p>
               </details>
@@ -698,7 +698,7 @@ const Generator: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Digitale Signatur</div>
                   <div className={styles.relatedDescription}>
-                    Unterschreiben Sie generierte Verträge rechtsgültig digital
+                    Unterschreibe generierte Verträge rechtsgültig digital
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -709,7 +709,7 @@ const Generator: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Optimierung</div>
                   <div className={styles.relatedDescription}>
-                    KI-Vorschläge zur Verbesserung Ihrer Vertragsklauseln
+                    KI-Vorschläge zur Verbesserung deiner Vertragsklauseln
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -732,7 +732,7 @@ const Generator: React.FC = () => {
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Keine Wartezeiten, keine Anwaltskosten für Standard-Verträge. Der Generator
-                  baut aus bewährten Bausteinen genau das, was Sie brauchen.
+                  baut aus bewährten Bausteinen genau das, was du brauchst.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

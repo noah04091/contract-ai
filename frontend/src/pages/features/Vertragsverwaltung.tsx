@@ -68,7 +68,7 @@ const Vertragsverwaltung: React.FC = () => {
         "name": "Wie viele Verträge kann ich speichern?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Mit dem Free-Plan können Sie bis zu 5 Verträge speichern. Business bietet 50 Verträge, Enterprise ist unbegrenzt."
+          "text": "Mit dem Free-Plan kannst du bis zu 5 Verträge speichern. Business bietet 50 Verträge, Enterprise ist unbegrenzt."
         }
       },
       {
@@ -84,7 +84,7 @@ const Vertragsverwaltung: React.FC = () => {
         "name": "Kann ich Verträge kategorisieren?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, Sie können eigene Tags erstellen und Verträge nach beliebigen Kriterien organisieren."
+          "text": "Ja, du kannst eigene Tags erstellen und Verträge nach beliebigen Kriterien organisieren."
         }
       }
     ]
@@ -144,7 +144,7 @@ const Vertragsverwaltung: React.FC = () => {
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Schluss mit Ordner-Chaos. Contract AI organisiert Ihre Verträge zentral,
+                Schluss mit Ordner-Chaos. Contract AI organisiert deine Verträge zentral,
                 durchsuchbar und sicher – mit Smart-Search, Tagging und automatischen
                 Erinnerungen.
               </p>
@@ -282,7 +282,7 @@ const Vertragsverwaltung: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Smart-Search</h3>
                 <p className={styles.functionDesc}>
-                  Volltextsuche durch alle Verträge. Finden Sie jeden Vertrag in Sekunden.
+                  Volltextsuche durch alle Verträge. Finde jeden Vertrag in Sekunden.
                 </p>
               </div>
 
@@ -292,7 +292,7 @@ const Vertragsverwaltung: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Eigene Tags</h3>
                 <p className={styles.functionDesc}>
-                  Erstellen Sie Tags und kategorisieren Sie Verträge nach Ihren Bedürfnissen.
+                  Erstelle Tags und kategorisiere Verträge nach deinen Bedürfnissen.
                 </p>
               </div>
 
@@ -322,7 +322,7 @@ const Vertragsverwaltung: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Notizen & Anhänge</h3>
                 <p className={styles.functionDesc}>
-                  Fügen Sie Notizen hinzu und verknüpfen Sie zusammengehörige Dokumente.
+                  Füge Notizen hinzu und verknüpfe zusammengehörige Dokumente.
                 </p>
               </div>
 
@@ -445,7 +445,7 @@ const Vertragsverwaltung: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Die KI erkennt Fristen automatisch. Sie erhalten E-Mail-Erinnerungen
+                  Die KI erkennt Fristen automatisch. Du erhältst E-Mail-Erinnerungen
                   30, 14 und 3 Tage vorher.
                 </p>
               </details>
@@ -456,7 +456,7 @@ const Vertragsverwaltung: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, jederzeit als ZIP-Archiv. Ihre Daten gehören Ihnen.
+                  Ja, jederzeit als ZIP-Archiv. Deine Daten gehören dir.
                 </p>
               </details>
             </div>
@@ -515,7 +515,7 @@ const Vertragsverwaltung: React.FC = () => {
           <div className={styles.container}>
             <div className={styles.ctaCard}>
               <div className={styles.ctaContent}>
-                <h2 className={styles.ctaTitle}>Bringen Sie Ordnung in Ihre Verträge</h2>
+                <h2 className={styles.ctaTitle}>Bring Ordnung in deine Verträge</h2>
                 <p className={styles.ctaSubtitle}>
                   Schluss mit Chaos. Alle Verträge zentral, durchsuchbar, mit automatischen Erinnerungen.
                 </p>

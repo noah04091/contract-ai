@@ -691,7 +691,7 @@ export default function Navbar() {
                           ))}
                         </div>
                         <div className={`${styles.megaMenuFooter} ${styles.megaMenuFooterSplit}`}>
-                          <span className={styles.megaMenuNote}>Ihr Vertragstyp ist nicht dabei? <strong>Contract&nbsp;AI prüft jeden Vertrag.</strong></span>
+                          <span className={styles.megaMenuNote}>Dein Vertragstyp ist nicht dabei? <strong>Contract&nbsp;AI prüft jeden Vertrag.</strong></span>
                           <Link to="/rechtslexikon" className={styles.megaMenuFooterLink} onClick={() => setTypesMenuOpen(false)}>
                             <span>Rechtslexikon durchsuchen</span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1203,7 +1203,7 @@ export default function Navbar() {
                             ))}
                           </div>
                         ))}
-                        <span className={styles.mobileNavNote}>Ihr Vertragstyp ist nicht dabei? Contract&nbsp;AI prüft jeden Vertrag.</span>
+                        <span className={styles.mobileNavNote}>Dein Vertragstyp ist nicht dabei? Contract&nbsp;AI prüft jeden Vertrag.</span>
                         <Link
                           to="/rechtslexikon"
                           className={styles.mobileNavAllFeatures}

@@ -76,7 +76,7 @@ const DigitaleSignatur: React.FC = () => {
         "name": "Wie funktioniert der Signaturprozess?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Sie laden Ihren Vertrag hoch, definieren Signaturfelder, und senden eine E-Mail an die Unterzeichner. Diese signieren per Mausklick."
+          "text": "Du lädst deinen Vertrag hoch, definierst Signaturfelder und sendest eine E-Mail an die Unterzeichner. Diese signieren per Mausklick."
         }
       },
       {
@@ -84,7 +84,7 @@ const DigitaleSignatur: React.FC = () => {
         "name": "Kann ich mit KI erstellte Verträge direkt zur Unterschrift senden?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. Mit dem Vertragsgenerator erstellte Verträge können Sie mit einem Klick zur Unterschrift an die andere Partei senden. Die Gegenseite signiert per Link ohne eigenes Konto, Sie erhalten das signierte PDF mit Audit Trail zurück."
+          "text": "Ja. Mit dem Vertragsgenerator erstellte Verträge kannst du mit einem Klick zur Unterschrift an die andere Partei senden. Die Gegenseite signiert per Link ohne eigenes Konto, du erhältst das signierte PDF mit Audit Trail zurück."
         }
       },
       {
@@ -155,7 +155,7 @@ const DigitaleSignatur: React.FC = () => {
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Schluss mit Ausdrucken, Scannen und Versenden. Lassen Sie Verträge einfach
+                Schluss mit Ausdrucken, Scannen und Versenden. Lass Verträge einfach
                 digital signieren – mit E-Mail-Benachrichtigung, Echtzeit-Tracking und
                 vollständigem Audit Trail.
               </p>
@@ -265,7 +265,7 @@ const DigitaleSignatur: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}>Digitale <span className={styles.sectionTitleAccent}>Signatur</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie einfach Sie Verträge digital signieren lassen können.
+                Sieh, wie einfach du Verträge digital signieren lassen kannst.
               </p>
             </div>
 
@@ -301,7 +301,7 @@ const DigitaleSignatur: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>E-Mail-Versand</h3>
                 <p className={styles.functionDesc}>
-                  Senden Sie Signier-Links automatisch per E-Mail. Unterzeichner brauchen weder Login noch Software.
+                  Sende Signier-Links automatisch per E-Mail. Unterzeichner brauchen weder Login noch Software.
                 </p>
               </div>
 
@@ -311,7 +311,7 @@ const DigitaleSignatur: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Echtzeit-Status</h3>
                 <p className={styles.functionDesc}>
-                  Verfolgen Sie in Echtzeit, wer bereits signiert hat und wer noch aussteht.
+                  Verfolge in Echtzeit, wer bereits signiert hat und wer noch aussteht.
                 </p>
               </div>
 
@@ -331,7 +331,7 @@ const DigitaleSignatur: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Mehrere Unterzeichner</h3>
                 <p className={styles.functionDesc}>
-                  Definieren Sie Signierreihenfolge oder lassen Sie alle gleichzeitig signieren.
+                  Definiere die Signierreihenfolge oder lass alle gleichzeitig signieren.
                 </p>
               </div>
 
@@ -341,7 +341,7 @@ const DigitaleSignatur: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Versiegeltes PDF</h3>
                 <p className={styles.functionDesc}>
-                  Nach der Signatur erhalten Sie ein manipulationssicheres PDF mit digitalem Siegel.
+                  Nach der Signatur erhältst du ein manipulationssicheres PDF mit digitalem Siegel.
                 </p>
               </div>
 
@@ -474,8 +474,8 @@ const DigitaleSignatur: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
                 <h2 className={styles.sectionTitleLeft}>Digitale Signatur – rechtssicher in Minuten</h2>
                 <p className={styles.solutionText}>
-                  Laden Sie Ihren Vertrag hoch, definieren Sie Signaturfelder, und versenden Sie
-                  eine E-Mail an die Unterzeichner. Sie erhalten ein versiegeltes PDF mit vollständigem Audit Trail.
+                  Lade deinen Vertrag hoch, definiere Signaturfelder und versende
+                  eine E-Mail an die Unterzeichner. Du erhältst ein versiegeltes PDF mit vollständigem Audit Trail.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -536,7 +536,7 @@ const DigitaleSignatur: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vertrag vorbereiten</h3>
                     <p className={styles.processDesc}>
-                      Laden Sie Ihren Vertrag hoch und definieren Sie Signaturfelder
+                      Lade deinen Vertrag hoch und definiere Signaturfelder
                       für jeden Unterzeichner.
                     </p>
                   </div>
@@ -547,7 +547,7 @@ const DigitaleSignatur: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>E-Mail versenden</h3>
                     <p className={styles.processDesc}>
-                      Geben Sie E-Mail-Adressen der Unterzeichner ein – sie erhalten
+                      Gib E-Mail-Adressen der Unterzeichner ein – sie erhalten
                       automatisch einen Link zum Signieren.
                     </p>
                   </div>
@@ -558,7 +558,7 @@ const DigitaleSignatur: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Versiegeltes PDF erhalten</h3>
                     <p className={styles.processDesc}>
-                      Nach der letzten Signatur erhalten Sie ein rechtssicheres PDF
+                      Nach der letzten Signatur erhältst du ein rechtssicheres PDF
                       mit vollständigem Audit Trail.
                     </p>
                   </div>
@@ -624,9 +624,9 @@ const DigitaleSignatur: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja. Verträge, die Sie mit dem Vertragsgenerator erstellen, können Sie mit einem
+                  Ja. Verträge, die du mit dem Vertragsgenerator erstellst, kannst du mit einem
                   Klick zur Unterschrift an die andere Partei senden – ganz ohne Medienbruch.
-                  Die Gegenseite signiert per Link (ohne eigenes Konto), Sie erhalten das fertig
+                  Die Gegenseite signiert per Link (ohne eigenes Konto), du erhältst das fertig
                   signierte PDF mit Audit Trail zurück.
                 </p>
               </details>
@@ -637,7 +637,7 @@ const DigitaleSignatur: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Sie laden Ihren Vertrag hoch, definieren Signaturfelder, und senden eine
+                  Du lädst deinen Vertrag hoch, definierst Signaturfelder und sendest eine
                   E-Mail an die Unterzeichner. Diese erhalten einen Link, öffnen das Dokument
                   im Browser und signieren per Mausklick – ohne Login oder Software.
                 </p>
@@ -672,8 +672,8 @@ const DigitaleSignatur: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, Sie können entweder eine Signierreihenfolge definieren oder alle
-                  Unterzeichner gleichzeitig einladen. Sie sehen in Echtzeit, wer bereits
+                  Ja, du kannst entweder eine Signierreihenfolge definieren oder alle
+                  Unterzeichner gleichzeitig einladen. Du siehst in Echtzeit, wer bereits
                   signiert hat.
                 </p>
               </details>
@@ -697,7 +697,7 @@ const DigitaleSignatur: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsgenerator</div>
                   <div className={styles.relatedDescription}>
-                    Erstellen Sie Verträge mit KI – unterschriftsreif in Minuten
+                    Erstelle Verträge mit KI – unterschriftsreif in Minuten
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -742,7 +742,7 @@ const DigitaleSignatur: React.FC = () => {
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Über 95% unserer Nutzer schließen den Signaturprozess in unter 15 Minuten ab.
-                  Starten Sie jetzt kostenlos!
+                  Starte jetzt kostenlos!
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

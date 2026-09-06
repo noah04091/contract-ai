@@ -41,7 +41,7 @@ export default function LandingFooter() {
         <div style={s("display:flex;flex-wrap:wrap;gap:48px 40px;align-items:flex-start")}>
           <div style={s("flex:1 1 280px;max-width:360px")}>
             <div style={s("display:flex;align-items:center;gap:10px;margin-bottom:16px")}><img src={logoHeader} alt="Contract AI" style={{ height: 28, width: 'auto' }} /></div>
-            <p style={s("font-size:14px;line-height:1.65;color:#52525b;margin:0 0 18px")}>Contract&nbsp;AI revolutioniert Ihr Vertragsmanagement mit neuester KI-Technologie. Wir helfen Ihnen, Verträge zu analysieren, optimieren und verwalten.</p>
+            <p style={s("font-size:14px;line-height:1.65;color:#52525b;margin:0 0 18px")}>Contract&nbsp;AI revolutioniert dein Vertragsmanagement mit neuester KI-Technologie. Wir helfen dir, Verträge zu analysieren, optimieren und verwalten.</p>
             <div className="lp-trust-badges">
               <img src={dsgvoBadge} alt="DSGVO-konform" className="lp-trust-badge" loading="lazy" />
               <img src={trustpilotBadge} alt="Trustpilot Bewertungen" className="lp-trust-badge" loading="lazy" />

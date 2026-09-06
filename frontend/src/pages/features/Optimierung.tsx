@@ -71,7 +71,7 @@ const Optimierung: React.FC = () => {
         "name": "Wie funktioniert die Vertragsoptimierung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Die KI analysiert Ihren Vertrag, erkennt einseitige oder problematische Klauseln und schlägt ausgewogenere, fairere Formulierungen vor. Sie erhalten konkrete Textvorschläge und Begründungen für jede Änderung."
+          "text": "Die KI analysiert deinen Vertrag, erkennt einseitige oder problematische Klauseln und schlägt ausgewogenere, fairere Formulierungen vor. Du erhältst konkrete Textvorschläge und Begründungen für jede Änderung."
         }
       },
       {
@@ -79,7 +79,7 @@ const Optimierung: React.FC = () => {
         "name": "Werden meine ursprünglichen Interessen berücksichtigt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, die KI optimiert in beide Richtungen - sowohl zugunsten Ihrer Position als auch für ausgewogenere, verhandlungsfähige Kompromisse. Sie wählen aus verschiedenen Varianten die passende aus."
+          "text": "Ja, die KI optimiert in beide Richtungen - sowohl zugunsten deiner Position als auch für ausgewogenere, verhandlungsfähige Kompromisse. Du wählst aus verschiedenen Varianten die passende aus."
         }
       },
       {
@@ -87,7 +87,7 @@ const Optimierung: React.FC = () => {
         "name": "Kann ich die Vorschläge direkt verwenden?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Alle Vorschläge sind sofort verhandlungsfertig formuliert. Sie können sie 1:1 übernehmen, als Basis für weitere Anpassungen nutzen oder verschiedene Varianten kombinieren."
+          "text": "Alle Vorschläge sind sofort verhandlungsfertig formuliert. Du kannst sie 1:1 übernehmen, als Basis für weitere Anpassungen nutzen oder verschiedene Varianten kombinieren."
         }
       }
     ]
@@ -279,7 +279,7 @@ const Optimierung: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}>Der <span className={styles.sectionTitleAccent}>Optimierer</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie Contract AI problematische Klauseln erkennt und
+                Sieh, wie Contract AI problematische Klauseln erkennt und
                 bessere Formulierungen vorschlägt.
               </p>
             </div>
@@ -304,12 +304,12 @@ const Optimierung: React.FC = () => {
             <div className={styles.problemGrid}>
               <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Das Problem</span>
-                <h2 className={styles.sectionTitleLeft}>Einseitige Verträge kosten Sie bares Geld</h2>
+                <h2 className={styles.sectionTitleLeft}>Einseitige Verträge kosten dich bares Geld</h2>
                 <p className={styles.problemText}>
                   Viele Verträge sind zugunsten einer Seite formuliert: Haftung wird verschoben,
                   Pflichten sind ungleich verteilt, Fristen überlang. Das fällt meist erst auf,
-                  wenn es teuer wird. Als Freelancer zahlen Sie monatelang drauf, als Mieter
-                  bleiben Sie in unflexiblen Bindungen gefangen.
+                  wenn es teuer wird. Als Freelancer zahlst du monatelang drauf, als Mieter
+                  bleibst du in unflexiblen Bindungen gefangen.
                 </p>
 
                 <div className={styles.problemStats}>
@@ -380,7 +380,7 @@ const Optimierung: React.FC = () => {
                     </div>
                     <div className={styles.comparisonTitle}>Einseitige Klauseln</div>
                     <div className={styles.comparisonDesc}>
-                      Haftung bei Ihnen, lange Zahlungsfristen, unklare Leistungen – Sie tragen das Risiko.
+                      Haftung bei dir, lange Zahlungsfristen, unklare Leistungen – du trägst das Risiko.
                     </div>
                     <div className={styles.comparisonTime}>
                       <AlertTriangle size={16} />
@@ -413,7 +413,7 @@ const Optimierung: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
                 <h2 className={styles.sectionTitleLeft}>KI-gestützte Optimierung mit konkreten Vorschlägen</h2>
                 <p className={styles.solutionText}>
-                  Contract AI analysiert Ihren Vertrag systematisch auf Schwachstellen und generiert
+                  Contract AI analysiert deinen Vertrag systematisch auf Schwachstellen und generiert
                   sofort bessere Formulierungen – mit Begründung und verhandlungsfertig.
                 </p>
 
@@ -444,7 +444,7 @@ const Optimierung: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Verständliche Begründungen</h4>
-                      <p>Jede Änderung wird erklärt – für Ihre Verhandlungen</p>
+                      <p>Jede Änderung wird erklärt – für deine Verhandlungen</p>
                     </div>
                   </div>
                 </div>
@@ -459,10 +459,10 @@ const Optimierung: React.FC = () => {
         <section className={styles.whySection} id="why">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
+              <span className={styles.sectionEyebrow}>Deine Vorteile</span>
               <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>Contract AI</span>?</h2>
               <p className={styles.sectionSubtitle}>
-                Mehr als nur Analyse – konkrete Verbesserungen für Ihre Verträge.
+                Mehr als nur Analyse – konkrete Verbesserungen für deine Verträge.
               </p>
             </div>
 
@@ -474,7 +474,7 @@ const Optimierung: React.FC = () => {
                 <h3 className={styles.whyTitle}>Echte Individualoptimierung</h3>
                 <p className={styles.whyDesc}>
                   Keine starren Textbausteine – jeder Vertrag wird kontextspezifisch
-                  verbessert und an Ihre Situation angepasst.
+                  verbessert und an deine Situation angepasst.
                 </p>
               </div>
 
@@ -485,7 +485,7 @@ const Optimierung: React.FC = () => {
                 <h3 className={styles.whyTitle}>DSGVO-konform</h3>
                 <p className={styles.whyDesc}>
                   Server in Deutschland (Frankfurt), volle DSGVO-Konformität
-                  und EU-Datenschutz. Ihre Daten bleiben sicher.
+                  und EU-Datenschutz. Deine Daten bleiben sicher.
                 </p>
               </div>
 
@@ -496,7 +496,7 @@ const Optimierung: React.FC = () => {
                 <h3 className={styles.whyTitle}>Transparente Änderungen</h3>
                 <p className={styles.whyDesc}>
                   Jede Optimierung wird begründet und ist nachvollziehbar
-                  dokumentiert – für Ihre Verhandlungen.
+                  dokumentiert – für deine Verhandlungen.
                 </p>
               </div>
 
@@ -506,7 +506,7 @@ const Optimierung: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>Sofort einsatzbereit</h3>
                 <p className={styles.whyDesc}>
-                  Alle Vorschläge sind so formuliert, dass Sie sie direkt
+                  Alle Vorschläge sind so formuliert, dass du sie direkt
                   in Verhandlungen oder Verträge übernehmen können.
                 </p>
               </div>
@@ -533,7 +533,7 @@ const Optimierung: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vertrag hochladen</h3>
                     <p className={styles.processDesc}>
-                      PDF oder DOCX Ihres bestehenden Vertrags hochladen – verschlüsselt und sicher auf EU-Servern.
+                      PDF oder DOCX deines bestehenden Vertrags hochladen – verschlüsselt und sicher auf EU-Servern.
                     </p>
                   </div>
                 </div>
@@ -607,7 +607,7 @@ const Optimierung: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Nein, Contract AI liefert strukturierte Optimierungsvorschläge und Formulierungsalternativen.
-                  Für komplexe rechtliche Fragen sollten Sie weiterhin einen Anwalt konsultieren.
+                  Für komplexe rechtliche Fragen solltest du weiterhin einen Anwalt konsultieren.
                 </p>
               </details>
 
@@ -639,7 +639,7 @@ const Optimierung: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Optional zur Verlaufsanzeige. Sie können Dokumente jederzeit löschen lassen.
+                  Optional zur Verlaufsanzeige. Du kannst Dokumente jederzeit löschen lassen.
                   Verarbeitung erfolgt ausschließlich zur Optimierung, keine Weitergabe an Dritte.
                 </p>
               </details>
@@ -718,8 +718,8 @@ const Optimierung: React.FC = () => {
                   Stärkere Position, weniger Risiko
                 </h2>
                 <p className={styles.ctaSubtitle}>
-                  Verwandeln Sie schwache Klauseln in starke Formulierungen – mit konkreten
-                  Vorschlägen und Begründungen für Ihre Verhandlungen.
+                  Verwandle schwache Klauseln in starke Formulierungen – mit konkreten
+                  Vorschlägen und Begründungen für deine Verhandlungen.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

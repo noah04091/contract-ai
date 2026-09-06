@@ -82,7 +82,7 @@ const Fristen: React.FC = () => {
         "name": "Wie genau ist die automatische Erkennung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Die KI liest Fristen, Laufzeiten und Verlängerungsklauseln direkt aus dem Vertragstext. Bei unklaren Formulierungen markiert sie potenzielle Fristen zur manuellen Überprüfung — Sie behalten immer die Kontrolle."
+          "text": "Die KI liest Fristen, Laufzeiten und Verlängerungsklauseln direkt aus dem Vertragstext. Bei unklaren Formulierungen markiert sie potenzielle Fristen zur manuellen Überprüfung — du behältst immer die Kontrolle."
         }
       },
       {
@@ -90,7 +90,7 @@ const Fristen: React.FC = () => {
         "name": "Kann ich eigene Erinnerungszeiten festlegen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, Sie können für jeden Vertragstyp individuelle Vorlaufzeiten definieren. Standard sind 90, 60, 30 und 14 Tage, aber Sie können beliebige Zeiträume wählen."
+          "text": "Ja, du kannst für jeden Vertragstyp individuelle Vorlaufzeiten definieren. Standard sind 90, 60, 30 und 14 Tage, aber du kannst beliebige Zeiträume wählen."
         }
       },
       {
@@ -98,7 +98,7 @@ const Fristen: React.FC = () => {
         "name": "Funktioniert die Kalenderintegration mit allen Anbietern?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle iCal-kompatiblen Apps. Ihre Fristen werden automatisch dorthin übertragen und bleiben bei Änderungen aktuell."
+          "text": "Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle iCal-kompatiblen Apps. Deine Fristen werden automatisch dorthin übertragen und bleiben bei Änderungen aktuell."
         }
       },
       {
@@ -118,7 +118,7 @@ const Fristen: React.FC = () => {
     "@context": "https://schema.org",
     "@type": "HowTo",
     "name": "Vertragsfristen automatisch überwachen",
-    "description": "So behalten Sie Kündigungsfristen und Vertragslaufzeiten automatisch im Blick.",
+    "description": "So behältst du Kündigungsfristen und Vertragslaufzeiten automatisch im Blick.",
     "step": [
       { "@type": "HowToStep", "position": 1, "name": "Vertrag hochladen", "text": "Vertrag als PDF hochladen oder per E-Mail einreichen — die KI liest den Text automatisch." },
       { "@type": "HowToStep", "position": 2, "name": "Fristen-Extraktion", "text": "Die KI erkennt Kündigungsfristen, Laufzeiten und automatische Verlängerungen direkt aus dem Vertragstext." },
@@ -189,8 +189,8 @@ const Fristen: React.FC = () => {
               </h1>
 
               <p className={styles.heroSubtitle}>
-                Contract AI erkennt Fristen automatisch in Ihren Verträgen und
-                erinnert Sie rechtzeitig – per E-Mail und Kalenderintegration.
+                Contract AI erkennt Fristen automatisch in deinen Verträgen und
+                erinnert dich rechtzeitig – per E-Mail und Kalenderintegration.
               </p>
 
               <div className={styles.heroCta}>
@@ -339,7 +339,7 @@ const Fristen: React.FC = () => {
               <span className={styles.sectionEyebrow}>So sieht's aus</span>
               <h2 className={styles.sectionTitle}>Der <span className={styles.sectionTitleAccent}>Fristenkalender</span> in Aktion</h2>
               <p className={styles.sectionSubtitle}>
-                Sehen Sie, wie Contract AI Fristen automatisch erkennt und Sie
+                Sieh, wie Contract AI Fristen automatisch erkennt und dich
                 rechtzeitig erinnert.
               </p>
             </div>
@@ -371,7 +371,7 @@ const Fristen: React.FC = () => {
                 <p className={styles.problemText}>
                   Mobilfunkverträge, Fitnessstudio-, Streaming- und SaaS-Abos verlängern sich oft automatisch –
                   und auch Versicherungen oder Mietverhältnisse haben ihre eigenen Kündigungsfristen.
-                  Wer einen Stichtag verpasst, zahlt weiter – teils über Jahre. Wie Sie ungewollte
+                  Wer einen Stichtag verpasst, zahlt weiter – teils über Jahre. Wie du ungewollte
                   Verlängerungen stoppen, zeigt unser Ratgeber <Link to="/blog/automatische-vertragsverlaengerung-stoppen">Automatische
                   Vertragsverlängerung stoppen</Link>.
                 </p>
@@ -480,7 +480,7 @@ const Fristen: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
                 <h2 className={styles.sectionTitleLeft}>Intelligente Fristenerkennung mit KI</h2>
                 <p className={styles.solutionText}>
-                  Contract AI scannt Ihre Verträge nach allen relevanten Fristen und Stichtagen.
+                  Contract AI scannt deine Verträge nach allen relevanten Fristen und Stichtagen.
                   Die KI erkennt auch versteckte Kündigungsfristen, Mindestlaufzeiten und Verlängerungsregeln.
                 </p>
 
@@ -526,7 +526,7 @@ const Fristen: React.FC = () => {
         <section className={styles.whySection} id="why">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>Ihre Vorteile</span>
+              <span className={styles.sectionEyebrow}>Deine Vorteile</span>
               <h2 className={styles.sectionTitle}>Was der <span className={styles.sectionTitleAccent}>Fristenkalender</span> bietet</h2>
               <p className={styles.sectionSubtitle}>
                 Nie wieder wichtige Termine verpassen – automatisch und zuverlässig.
@@ -551,7 +551,7 @@ const Fristen: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>Flexible Erinnerungen</h3>
                 <p className={styles.whyDesc}>
-                  Mehrere Benachrichtigungen nach Ihren Wünschen: 90, 60, 30, 14 Tage
+                  Mehrere Benachrichtigungen nach deinen Wünschen: 90, 60, 30, 14 Tage
                   vor dem Stichtag.
                 </p>
               </div>
@@ -603,7 +603,7 @@ const Fristen: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vertrag hochladen</h3>
                     <p className={styles.processDesc}>
-                      PDF oder DOCX Ihres Vertrags hochladen – die KI scannt automatisch nach Fristen und Stichtagen.
+                      PDF oder DOCX deines Vertrags hochladen – die KI scannt automatisch nach Fristen und Stichtagen.
                     </p>
                   </div>
                 </div>
@@ -692,7 +692,7 @@ const Fristen: React.FC = () => {
                 <p className={styles.faqAnswer}>
                   Die KI liest Fristen, Laufzeiten und Verlängerungsklauseln direkt aus dem
                   Vertragstext. Bei unklaren Formulierungen markiert sie potenzielle Fristen zur
-                  manuellen Überprüfung — Sie behalten immer die Kontrolle.
+                  manuellen Überprüfung — du behältst immer die Kontrolle.
                 </p>
               </details>
 
@@ -702,8 +702,8 @@ const Fristen: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, Sie können für jeden Vertragstyp individuelle Vorlaufzeiten definieren.
-                  Standard sind 90, 60, 30 und 14 Tage, aber Sie können beliebige Zeiträume wählen.
+                  Ja, du kannst für jeden Vertragstyp individuelle Vorlaufzeiten definieren.
+                  Standard sind 90, 60, 30 und 14 Tage, aber du kannst beliebige Zeiträume wählen.
                 </p>
               </details>
 
@@ -714,7 +714,7 @@ const Fristen: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Ja, wir unterstützen Google Kalender, Outlook, Apple Kalender und alle
-                  iCal-kompatiblen Apps. Ihre Fristen werden automatisch dorthin übertragen
+                  iCal-kompatiblen Apps. Deine Fristen werden automatisch dorthin übertragen
                   und bleiben bei Änderungen aktuell.
                 </p>
               </details>
@@ -806,7 +806,7 @@ const Fristen: React.FC = () => {
                   Fristen im Griff – automatisch
                 </h2>
                 <p className={styles.ctaSubtitle}>
-                  Nie wieder wichtige Termine verpassen. Lassen Sie die KI Ihre Verträge
+                  Nie wieder wichtige Termine verpassen. Lass die KI deine Verträge
                   überwachen und rechtzeitig erinnern.
                 </p>
                 <div className={styles.ctaButtons}>
