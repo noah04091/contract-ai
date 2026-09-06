@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
-import styles from "../../styles/FeaturePage.module.css";
+import styles from "../../styles/FeaturePages.module.css";
 import LandingFooter from "../../components/LandingFooter";
 import AutoPlayVideo from "../../components/AutoPlayVideo";
 import {
