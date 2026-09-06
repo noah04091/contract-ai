@@ -970,6 +970,8 @@
 
 .riskCard {
   padding: 22px;
+  min-width: 0;
+  overflow-wrap: break-word;
   border: 1px solid var(--linie);
   border-radius: var(--karte-radius);
   background: var(--karte-grund);
@@ -983,16 +985,21 @@
   border-color: rgba(37, 99, 235, 0.3);
 }
 
+/* Auf 320px passen Titel und Marker nicht nebeneinander, sobald die echten
+   Schriften geladen sind (lokal mit Ersatzschrift nicht sichtbar). */
 .riskHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   margin-bottom: 13px;
 }
 
 .riskTitle {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: break-word;
   font-family: var(--display);
   font-weight: 600;
   font-size: 17.5px;
@@ -1014,6 +1021,7 @@
    Produktansicht (demoFindingIcon risk) und bekäme dort einen blauen Balken. */
 .riskIssue {
   margin: 0 0 12px;
+  overflow-wrap: break-word;
   padding: 12px 14px;
   border-left: 3px solid var(--blau);
   border-radius: 0 10px 10px 0;
