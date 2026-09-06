@@ -3,13 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import {
-  FileText, Download, ArrowRight, CheckCircle, AlertCircle,
-  RefreshCw, Upload, Info,
-  Users, Briefcase, Building, Scale,
-  Star,
-  GitCompare, FileCheck, Trophy,
-  ChevronDown, History, Trash2, X,
-  Camera
+  FileText, Download, ArrowRight, CheckCircle, AlertCircle, RefreshCw, Upload, Info, Scale, Star, ChevronDown, History, Trash2, X, Camera
 } from "lucide-react";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import { WelcomePopup } from "../components/Tour";
@@ -25,194 +19,14 @@ import "../styles/CompareGegen.css";
 // PremiumNotice Wrapper entfernt - verwende UnifiedPremiumNotice direkt mit variant="fullWidth"
 
 // 🎯 Premium Comparison Mode Selector Component
-const ComparisonModeSelector: React.FC<{
-  selectedMode: string;
-  onModeChange: (mode: string) => void;
-}> = ({ selectedMode, onModeChange }) => {
-  const modes = [
-    {
-      id: 'standard',
-      name: 'Standard',
-      icon: Scale,
-      description: 'Allgemeiner Vergleich',
-      color: '#0071e3',
-      gradient: 'linear-gradient(135deg, #0071e3 0%, #00c7be 100%)'
-    },
-    {
-      id: 'version',
-      name: 'Versionen',
-      icon: GitCompare,
-      description: 'Alt vs. Neu',
-      color: '#5856d6',
-      gradient: 'linear-gradient(135deg, #5856d6 0%, #af52de 100%)'
-    },
-    {
-      id: 'bestPractice',
-      name: 'Best Practice',
-      icon: FileCheck,
-      description: 'Standards prüfen',
-      color: '#10B981',
-      gradient: 'linear-gradient(135deg, #10B981 0%, #10B981 100%)'
-    },
-    {
-      id: 'competition',
-      name: 'Anbieter',
-      icon: Trophy,
-      description: 'Angebote vergleichen',
-      color: '#F59E0B',
-      gradient: 'linear-gradient(135deg, #F59E0B 0%, #ff6b00 100%)'
-    }
-  ];
-
-  return (
-    <motion.div
-      className="premium-mode-selector"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15, duration: 0.5 }}
-    >
-      <div className="selector-header">
-        <span className="selector-label">Vergleichs-Modus</span>
-      </div>
-      <div className="mode-chips">
-        {modes.map((mode, index) => {
-          const IconComponent = mode.icon;
-          const isActive = selectedMode === mode.id;
-          return (
-            <motion.button
-              key={mode.id}
-              className={`mode-chip ${isActive ? 'active' : ''}`}
-              onClick={() => onModeChange(mode.id)}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + index * 0.05 }}
-              whileHover={{ y: -2, boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)' }}
-              whileTap={{ scale: 0.98 }}
-              style={{
-                background: isActive ? mode.gradient : 'rgba(255, 255, 255, 0.9)',
-                boxShadow: isActive
-                  ? `0 4px 20px ${mode.color}40, 0 0 0 1px ${mode.color}30`
-                  : '0 2px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04)'
-              }}
-            >
-              <div
-                className="chip-icon-wrapper"
-                style={{
-                  background: isActive ? 'rgba(255, 255, 255, 0.25)' : `${mode.color}15`,
-                }}
-              >
-                <IconComponent
-                  size={18}
-                  style={{ color: isActive ? 'white' : mode.color }}
-                />
-              </div>
-              <div className="chip-content">
-                <span className="chip-name" style={{ color: isActive ? 'white' : '#1d1d1f' }}>
-                  {mode.name}
-                </span>
-                <span className="chip-description" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#86868b' }}>
-                  {mode.description}
-                </span>
-              </div>
-              {isActive && (
-                <motion.div
-                  className="chip-check"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                >
-                  <CheckCircle size={16} style={{ color: 'white' }} />
-                </motion.div>
-              )}
-            </motion.button>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-};
-
+/* 06.09.2026: ComparisonModeSelector und UserProfileSelector entfernt.
+ Sie waren zwei eigenstaendige Bloecke in eigenen Designsprachen (tuerkise
+ Pillen, Karten mit Blau-Verlauf) und standen zusammen mit der Rollenwahl
+ als Wand aus drei Waehlern vor der eigentlichen Aufgabe. Ihre Funktion
+ steckt jetzt in der einen Einstellungszeile weiter unten, die erst
+ erscheint, wenn beide Vertraege liegen. Dieselben Zustaende, dieselben
+ Werte an das Backend (userProfile, comparisonMode). */
 // Premium User Profile Selector Component
-const UserProfileSelector: React.FC<{
-  selectedProfile: string;
-  onProfileChange: (profile: string) => void;
-}> = ({ selectedProfile, onProfileChange }) => {
-  const profiles = [
-    {
-      id: 'individual',
-      name: 'Privatperson',
-      icon: Users,
-      description: 'Verbraucherrechte',
-      color: '#00c7be'
-    },
-    {
-      id: 'freelancer',
-      name: 'Freelancer',
-      icon: Briefcase,
-      description: 'Haftung & IP',
-      color: '#5856d6'
-    },
-    {
-      id: 'business',
-      name: 'Unternehmen',
-      icon: Building,
-      description: 'Vollständige Analyse',
-      color: '#0071e3'
-    }
-  ];
-
-  return (
-    <motion.div
-      className="premium-profile-selector"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, duration: 0.5 }}
-    >
-      <div className="selector-header">
-        <span className="selector-label">Optimiert für</span>
-      </div>
-      <div className="profile-pills">
-        {profiles.map((profile, index) => {
-          const IconComponent = profile.icon;
-          const isActive = selectedProfile === profile.id;
-          return (
-            <motion.button
-              key={profile.id}
-              className={`profile-pill ${isActive ? 'active' : ''}`}
-              onClick={() => onProfileChange(profile.id)}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.05 + index * 0.05 }}
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              style={{
-                background: isActive
-                  ? `linear-gradient(135deg, ${profile.color} 0%, ${profile.color}dd 100%)`
-                  : 'rgba(255, 255, 255, 0.8)',
-                boxShadow: isActive
-                  ? `0 4px 15px ${profile.color}35`
-                  : '0 2px 8px rgba(0, 0, 0, 0.04)'
-              }}
-            >
-              <div
-                className="pill-icon"
-                style={{
-                  background: isActive ? 'rgba(255,255,255,0.2)' : `${profile.color}12`,
-                }}
-              >
-                <IconComponent size={16} style={{ color: isActive ? 'white' : profile.color }} />
-              </div>
-              <span className="pill-name" style={{ color: isActive ? 'white' : '#1d1d1f' }}>
-                {profile.name}
-              </span>
-            </motion.button>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-};
-
 
 
 // Progress Step Interface for SSE
@@ -1243,19 +1057,13 @@ export default function EnhancedCompare() {
             )}
           </AnimatePresence>
 
-          {!result && (
-            <UserProfileSelector
-              selectedProfile={userProfile}
-              onProfileChange={setUserProfile}
-            />
-          )}
+          {/* 06.09.2026: UserProfileSelector und ComparisonModeSelector
+              standen hier als zwei eigene Blöcke in eigenen Designsprachen
+              (türkise Pillen, Verlaufskarten). Sie sind unten in die eine
+              Einstellungszeile gewandert, die erst erscheint, wenn beide
+              Verträge liegen. Dieselben Zustände, dieselben Werte. */}
 
-          {!result && (
-            <ComparisonModeSelector
-              selectedMode={comparisonMode}
-              onModeChange={setComparisonMode}
-            />
-          )}
+
 
           {!result && preloadedContractName && (
             <motion.div
@@ -1279,36 +1087,6 @@ export default function EnhancedCompare() {
                 <span style={{ color: '#1d1d1f', marginLeft: '0.5rem' }}>{preloadedContractName}</span>
               </div>
             </motion.div>
-          )}
-
-          {/* ══════════ PERSPEKTIVE ══════════
-              ⭐ Steht bewusst VOR dem Vergleich. Sie wurde bisher immer als
-              'neutral' mitgeschickt und war erst im Ergebnis waehlbar; wer
-              Auftraggeber ist, merkte das erst hinterher und musste den
-              ganzen Vergleich neu rechnen lassen. */}
-          {!result && !loading && (
-            <div className="cg-perspektive">
-              <h3>Auf welcher Seite stehst du?</h3>
-              <p>Bestimmt die gesamte Bewertung. Dieselbe Haftungsklausel ist für die eine Seite ein Schutz und für die andere ein Risiko.</p>
-              <div className="cg-rollen">
-                {([
-                  ['auftraggeber', 'Auftraggeber', 'Du beauftragst und bezahlst die Leistung'],
-                  ['auftragnehmer', 'Auftragnehmer', 'Du erbringst die Leistung'],
-                  ['neutral', 'Neutral', 'Beide Seiten gleich gewichtet']
-                ] as [Perspective, string, string][]).map(([wert, titel, text]) => (
-                  <button
-                    key={wert}
-                    className={`cg-rolle ${perspective === wert ? 'aktiv' : ''}`}
-                    onClick={() => setPerspective(wert)}
-                    disabled={!isPremium}
-                    aria-pressed={perspective === wert}
-                  >
-                    <div className="cg-rolle-t">{titel}</div>
-                    <div className="cg-rolle-s">{text}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
           )}
 
           {/* ══════════ LADEZUSTAND ══════════
@@ -1473,6 +1251,96 @@ export default function EnhancedCompare() {
               )}
             </div>
           </div>
+
+          {/* ══════════ EINSTELLUNGEN ══════════
+              Erscheinen erst, wenn beide Verträge liegen. Vorher wären sie
+              eine Hürde vor der eigentlichen Aufgabe, nachher beantworten
+              sie eine Frage, die man sich gerade stellt. Alle drei in
+              derselben Formsprache, mit Vorgaben, die meistens passen. */}
+          {file1 && file2 && (
+            <div className="cg-einstellungen">
+              <div className="cg-einst-kopf">
+                <h3>Wie sollen wir vergleichen?</h3>
+                <span className="cg-einst-hinweis">Die Vorgaben passen meistens</span>
+              </div>
+
+              <div className="cg-einst-gitter">
+                <div className="cg-einst-gruppe">
+                  <div className="cg-einst-name">Ich bin</div>
+                  <div className="cg-segmente" role="group" aria-label="Ich bin">
+                    {([
+                      ['individual', 'Privatperson'],
+                      ['freelancer', 'Freelancer'],
+                      ['business', 'Unternehmen']
+                    ] as [string, string][]).map(([wert, titel]) => (
+                      <button
+                        key={wert}
+                        className={`cg-segment ${userProfile === wert ? 'aktiv' : ''}`}
+                        onClick={() => setUserProfile(wert)}
+                        disabled={!isPremium}
+                        aria-pressed={userProfile === wert}
+                      >
+                        {titel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="cg-einst-gruppe">
+                  <div className="cg-einst-name">Vergleichsart</div>
+                  <div className="cg-segmente" role="group" aria-label="Vergleichsart">
+                    {([
+                      ['standard', 'Allgemein'],
+                      ['version', 'Alt/Neu'],
+                      ['bestPractice', 'Standards'],
+                      ['competition', 'Angebote']
+                    ] as [string, string][]).map(([wert, titel]) => (
+                      <button
+                        key={wert}
+                        className={`cg-segment ${comparisonMode === wert ? 'aktiv' : ''}`}
+                        onClick={() => setComparisonMode(wert)}
+                        disabled={!isPremium}
+                        aria-pressed={comparisonMode === wert}
+                      >
+                        {titel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="cg-einst-gruppe">
+                  <div className="cg-einst-name">Meine Rolle</div>
+                  <div className="cg-segmente" role="group" aria-label="Meine Rolle">
+                    {([
+                      ['auftraggeber', 'Auftraggeber'],
+                      ['auftragnehmer', 'Auftragnehmer'],
+                      ['neutral', 'Neutral']
+                    ] as [Perspective, string][]).map(([wert, titel]) => (
+                      <button
+                        key={wert}
+                        className={`cg-segment ${perspective === wert ? 'aktiv' : ''}`}
+                        onClick={() => setPerspective(wert)}
+                        disabled={!isPremium}
+                        aria-pressed={perspective === wert}
+                      >
+                        {titel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Eine Zeile, die sagt was die Wahl bewirkt, statt drei
+                  Beschreibungstexte gleichzeitig. */}
+              <div className="cg-einst-erklaerung">
+                {perspective === 'neutral'
+                  ? <>Beide Seiten werden gleich gewichtet. <strong>Wähle deine Rolle</strong>, wenn du wissen willst, welcher Vertrag <strong>für dich</strong> der bessere ist — dieselbe Haftungsklausel ist für die eine Seite ein Schutz und für die andere ein Risiko.</>
+                  : perspective === 'auftraggeber'
+                    ? <>Bewertet aus Sicht des <strong>Auftraggebers</strong>: du beauftragst und bezahlst die Leistung.</>
+                    : <>Bewertet aus Sicht des <strong>Auftragnehmers</strong>: du erbringst die Leistung.</>}
+              </div>
+            </div>
+          )}
 
           <div className="cg-leiste">
             <span className="cg-typ">PDF</span>
