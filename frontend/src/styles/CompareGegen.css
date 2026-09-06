@@ -74,8 +74,6 @@
    Zu wenig Unterschied, der Kopf las sich wie ein weiterer Abschnitt
    statt wie der Anfang der Seite. */
 .cg-kopf-titel {
-  display: flex;
-  align-items: center;
   font-size: 22px;
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -89,36 +87,6 @@
   font-size: 13.5px;
   color: var(--cg-tinte-2);
   line-height: 1.45;
-}
-
-/* ══════════ PAARZEICHEN ══════════
-   Zwei versetzte Blätter in exakt den Farben, die auf der ganzen Seite
-   für Vertrag A und B stehen. Kein Schmuck: Der Titel erklärt damit die
-   Farbcodierung, bevor man ihr zum ersten Mal begegnet. */
-.cg-paar-zeichen {
-  display: inline-flex;
-  align-items: center;
-  margin-right: 9px;
-  flex-shrink: 0;
-}
-
-.cg-paar-zeichen i {
-  display: block;
-  width: 15px;
-  height: 19px;
-  border-radius: 3px;
-  border: 1.5px solid;
-}
-
-.cg-paar-zeichen i:first-child {
-  border-color: var(--cg-a);
-  background: var(--cg-a-sanft);
-}
-
-.cg-paar-zeichen i:last-child {
-  border-color: var(--cg-b);
-  background: var(--cg-b-sanft);
-  margin-left: -6px;
 }
 
 .cg-kopf-sub strong {
