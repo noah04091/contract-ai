@@ -136,6 +136,27 @@ export default function Navbar() {
   const [megaMenuOpen, setMegaMenuOpen] = useState(false);
   const [typesMenuOpen, setTypesMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  // Hintergrundseite einfrieren, solange das Vollbild-Menü offen ist — sonst
+  // reicht der Browser Wischgesten an die Seite dahinter weiter (Scroll-
+  // Durchbluten, Noahs Fund 07.09.). position:fixed statt overflow:hidden,
+  // weil iOS Safari Letzteres bei Touch ignoriert; Scrollposition bleibt erhalten.
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const y = window.scrollY;
+    const b = document.body.style;
+    b.position = 'fixed';
+    b.top = `-${y}px`;
+    b.left = '0';
+    b.right = '0';
+    return () => {
+      b.position = '';
+      b.top = '';
+      b.left = '';
+      b.right = '';
+      window.scrollTo(0, y);
+    };
+  }, [mobileNavOpen]);
   const [mobileFeaturesOpen, setMobileFeaturesOpen] = useState(false);
   const [mobileTypesOpen, setMobileTypesOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
