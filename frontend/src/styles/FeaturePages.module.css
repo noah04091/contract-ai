@@ -2256,3 +2256,109 @@
 .pageBackground a:not([class]) {
   color: var(--blau-tief) !important;
 }
+
+/* ================================================================
+   FEINSCHLIFF 07.09. — drei gemessene Befunde plus mehr Farbe
+   ================================================================ */
+
+/* 1) VERLAUFSTEXT DARF NICHT HERAUSRAGEN.
+   Die Kennzahlen werden mit einem Farbverlauf gefuellt. Was ueber die Box
+   hinausragt, bekommt keinen Verlauf mehr und ist damit UNSICHTBAR — es sieht
+   aus, als waere das Wort mitten drin abgehackt ("GeschGehG" auf /nda-pruefen,
+   gemessen 238 px Text in einer 225 px breiten Box).
+   Deshalb: etwas kleiner, und lange Woerter duerfen notfalls umbrechen. */
+.problemStatValue,
+.problemStatNumber,
+.statNumber {
+  font-size: clamp(26px, 3vw, 38px);
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+/* 2) RATGEBER-ABSCHNITT: Text stand mittig, Ueberschrift links.
+   Der Absatz ist dort per Inline-Style zentriert (max-width 860px,
+   margin: 0 auto) und begann dadurch 160 px weiter rechts als seine eigene
+   Ueberschrift. Steht problemContent allein im Container (nicht im
+   zweispaltigen Raster), gehoert es an dieselbe Kante wie alles andere. */
+.container > .problemContent,
+.containerLg > .problemContent {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  max-width: 74ch !important;
+}
+
+/* 3) PRODUKTANSICHT auf sehr schmalen Geraeten: der Inhalt war bis zu 51 px
+   breiter als das Fenster. Innenabstaende und Schrift dort kleiner, lange
+   Dateinamen duerfen umbrechen. */
+@media (max-width: 400px) {
+  .demoWindow {
+    overflow: hidden;
+  }
+
+  .demoHeader,
+  .demoScore,
+  .demoFinding {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .demoScoreTitle,
+  .demoFindingText,
+  .demoScoreLabel {
+    overflow-wrap: anywhere;
+  }
+
+  /* Die Bausteine-Chips des Contract Builders standen in einer Reihe ohne
+     Umbruch und waren 12 px breiter als das Fenster. flex-wrap wirkt nur auf
+     Flex-Container, alle anderen bleiben unberuehrt. */
+  .demoContent div {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  .demoScoreTitle {
+    font-size: 16px;
+  }
+
+  .demoFinding {
+    font-size: 13px;
+  }
+
+  .demoFindingBadge {
+    font-size: 10px;
+    padding: 3px 7px;
+  }
+}
+
+/* 4) MEHR FARBE: die Abschnitts-Label standen in Grau. In Blau geben sie der
+   Seite beim Ueberfliegen Rhythmus, ohne laut zu werden. Der kleine Punkt
+   davor greift das Zeichen aus dem Seitenkopf auf. */
+.sectionEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--blau);
+}
+
+.sectionEyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blau);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  flex-shrink: 0;
+}
+
+/* Unterstreichung auch fuer hervorgehobene Woerter im Fliesstext der
+   Guide-Seite und in den Zwischenueberschriften. */
+.pillarProse h3 em,
+.pillarProse h3 span {
+  color: var(--blau);
+  background-image: linear-gradient(rgba(37, 99, 235, 0.28), rgba(37, 99, 235, 0.28));
+  background-size: 100% 2px;
+  background-position: 0 calc(100% - 0.04em);
+  background-repeat: no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
