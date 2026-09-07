@@ -360,22 +360,22 @@ const LegalLensStart = () => {
           <div className={styles.llErwartung}>
             <p className={styles.llZonenTitel}>Was du dort sehen wirst</p>
             <div className={styles.llKarten}>
-              <div className={styles.llKarte}>
+              <div className={`${styles.llKarte} ${styles.llKarteOrange}`}>
                 <FileText size={16} className={styles.llKarteSymbol} />
                 <p className={styles.llKarteName}>Klausel für Klausel</p>
                 <p className={styles.llKarteText}>Jeder Abschnitt einzeln, direkt neben dem Originaldokument.</p>
               </div>
-              <div className={styles.llKarte}>
+              <div className={`${styles.llKarte} ${styles.llKarteBernstein}`}>
                 <Lightbulb size={16} className={styles.llKarteSymbol} />
                 <p className={styles.llKarteName}>In einfacher Sprache</p>
                 <p className={styles.llKarteText}>Was die Klausel bedeutet, ohne Juristendeutsch.</p>
               </div>
-              <div className={styles.llKarte}>
+              <div className={`${styles.llKarte} ${styles.llKarteBlau}`}>
                 <Eye size={16} className={styles.llKarteSymbol} />
                 <p className={styles.llKarteName}>Aus vier Blickwinkeln</p>
                 <p className={styles.llKarteText}>Wie dieselbe Klausel für beide Seiten wirkt.</p>
               </div>
-              <div className={styles.llKarte}>
+              <div className={`${styles.llKarte} ${styles.llKarteGruen}`}>
                 <Scale size={16} className={styles.llKarteSymbol} />
                 <p className={styles.llKarteName}>Mit Alternativen</p>
                 <p className={styles.llKarteText}>Eine andere Formulierung, wenn eine Klausel dich benachteiligt.</p>
