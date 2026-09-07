@@ -77,6 +77,21 @@ const MIN_RELEVANCE_SCORE = 30; // Laws below this score are skipped (no keyword
 const MAX_PER_AREA = 4; // Diversity: max laws from same primary area in top 25
 const MAX_ALERTS_PER_USER = 10; // Email cap: max alerts shown in email per run (all alerts stored in DB)
 
+// ── Stufe-3-Deckel (07.09.): Titel-Netz-Grenzen, fest im Code, env-übersteuerbar ──
+// Der A/B (07.09.) belegte: der alte Titel-Deckel 15 verbarg bei ~45 % der Verträge
+// Klauseln (größter Vertrag 42 Klauseln). Anheben auf 50 (deckt max + Puffer) steigert
+// Konfidenz + Klausel-Präzision beim Gesetzesabgleich, ohne Regression, ~$0.20/Monat mehr.
+// Fester Default (nicht loser Schalter) → frische Umgebung fällt nicht auf 15 zurück
+// (Prüfer-Bedingung, vgl. Stufe 1). findings/contracts BEWUSST unverändert (unbewiesen bzw.
+// erst bei Kundenwachstum bindend). assessImpact-opts erlaubt weiterhin A/B-Overrides.
+function resolveRadarCaps(env = process.env) {
+  return {
+    maxContracts: Number(env.PULSE_RADAR_MAX_CONTRACTS) || 10,
+    maxClauseTitles: Number(env.PULSE_RADAR_MAX_CLAUSE_TITLES) || 50,
+    maxFindings: Number(env.PULSE_RADAR_MAX_FINDINGS) || 10,
+  };
+}
+
 // OpenAI pricing per 1K tokens (2026-04)
 const PRICES = {
   "gpt-4o-mini": { input: 0.00015, output: 0.0006 },
@@ -931,6 +946,11 @@ async function assessImpact(lawChange, contracts, opts = {}) {
   // KANDIDATEN durch — die Tiefenprüfung am echten Klauseltext entscheidet dann.
   // Ohne Tiefenstufe bleibt die 60er-Schwelle exakt wie bisher.
   const minConfidence = opts.widenForDeepVerify ? DEEP_WIDENED_THRESHOLD : IMPACT_CONFIDENCE_THRESHOLD;
+  // Stufe-3-Deckel: fester Default (resolveRadarCaps), opts-Override nur für A/B-Prüfstände.
+  const caps = resolveRadarCaps();
+  const maxContracts = opts.maxContracts || caps.maxContracts;
+  const maxTitles = opts.maxClauseTitles || caps.maxClauseTitles;
+  const maxFindings = opts.maxFindings || caps.maxFindings;
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -942,11 +962,11 @@ async function assessImpact(lawChange, contracts, opts = {}) {
 
   // Batch contracts into a single prompt for efficiency
   const contractSummaries = contracts
-    .slice(0, 10)
+    .slice(0, maxContracts)
     .map(
       (c, i) => {
-        const clauseList = c.clauses.slice(0, 15).map((cl) => `  - [${cl.id}] ${cl.title} (${cl.category})`).join("\n");
-        const findingList = c.findings.slice(0, 10).map((f) => `  - ${f.title} (${f.severity}, Klausel: ${f.clauseId})`).join("\n");
+        const clauseList = c.clauses.slice(0, maxTitles).map((cl) => `  - [${cl.id}] ${cl.title} (${cl.category})`).join("\n");
+        const findingList = c.findings.slice(0, maxFindings).map((f) => `  - ${f.title} (${f.severity}, Klausel: ${f.clauseId})`).join("\n");
         return `[${i + 1}] "${c.contractName}" (${c.contractType}, Score: ${c.scores?.overall || "?"})\n` +
           `  Klauseln:\n${clauseList || "  - keine"}\n` +
           `  Befunde:\n${findingList || "  - keine"}`;
@@ -1823,4 +1843,4 @@ async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75
   return { swept: true, laws: candidates.length, relevant: scored.length, alerts: alerts.length };
 }
 
-module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract, selectClausesForDeepCheck, deepVerifyImpact, quoteAppearsIn, extractLegislationFingerprint };
+module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract, selectClausesForDeepCheck, deepVerifyImpact, quoteAppearsIn, extractLegislationFingerprint, assessImpact, matchLawToContracts, resolveRadarCaps };
