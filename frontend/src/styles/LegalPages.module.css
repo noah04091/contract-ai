@@ -305,12 +305,16 @@
    darin trennt weiterhin nur eine Haarlinie. */
 /* Deckend weiss, nicht durchscheinend: auf dem leicht blaeulichen Seitengrund
    hebt sich das Blatt sonst kaum ab und die Seite wirkt weiterhin kahl. */
+/* ⚠️ Das Blatt ist ein <main>, und styles/landing.css:7351 setzt global
+   `main, #root, .app-container, .landing-page { margin:0 !important;
+   padding:0 !important }`. Ohne !important bleibt der Innenabstand hier
+   wirkungslos und der Text klebt am Blattrand. */
 .content {
   min-width: 0;
   background: #ffffff;
   border: 1px solid var(--linie);
   border-radius: 20px;
-  padding: clamp(26px, 3.4vw, 48px) clamp(20px, 3vw, 44px) clamp(30px, 3vw, 44px);
+  padding: clamp(26px, 3.4vw, 48px) clamp(20px, 3vw, 44px) clamp(30px, 3vw, 44px) !important;
   box-shadow: 0 26px 60px -36px rgba(20, 40, 79, 0.34), 0 2px 5px rgba(20, 40, 79, 0.04);
 }
 
@@ -318,7 +322,9 @@
    die Breite und macht das Dokument ueberfliegbar. */
 .section {
   display: grid;
-  grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr);
+  /* Die Kopfspalte braucht Platz: bei 0.4fr brach „1. Geltungsbereich und
+     Vertragspartner" so um, dass „und" allein auf einer Zeile stand. */
+  grid-template-columns: minmax(0, 0.52fr) minmax(0, 1fr);
   column-gap: clamp(20px, 2.6vw, 40px);
   align-items: start;
   background: none;
@@ -370,18 +376,20 @@
 }
 .sectionTitle {
   margin: 0;
-  font-size: clamp(21px, 2.2vw, 27px);
+  font-size: clamp(20px, 2vw, 25px);
   font-weight: 600;
   letter-spacing: -.022em;
-  line-height: 1.22;
+  line-height: 1.24;
   color: var(--tinte);
+  /* verteilt die Zeilen gleichmaessig, statt ein kurzes Wort allein zu lassen */
+  text-wrap: balance;
 }
 
 /* Die Zeilenlaenge wird ueber die Schriftgroesse gesteuert, nicht ueber
    max-width: sonst deckelt sie die Spalte und rechts bleibt Weissraum. */
 .sectionBody {
   grid-column: 2;
-  font-size: clamp(15.5px, 1.12vw, 17px);
+  font-size: clamp(16px, 1.2vw, 17.5px);
   line-height: 1.72;
   color: var(--tinte-weich);
   min-width: 0;
@@ -727,7 +735,9 @@ a.infoCard:hover .infoValue { color: var(--blau-tief); }
 @media (max-width: 640px) {
   .hero { padding: 40px 20px 26px; }
   .heroTitle { font-size: clamp(28px, 8vw, 34px); }
-  .content { padding: 22px 18px; border-radius: 16px; }
+  /* !important, weil die Grundregel es ebenfalls braucht (globale
+     main-Regel in landing.css) und sonst gewinnen wuerde. */
+  .content { padding: 22px 18px !important; border-radius: 16px; }
   .section { padding: 28px 0 10px; }
   .sectionHeader { gap: 12px; margin-bottom: 18px; }
   .ctaInner {
