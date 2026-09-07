@@ -632,3 +632,391 @@
     height: 28px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LEGAL LENS, STARTSEITE NEU 07.09.2026
+   ---------------------------------------------------------------------
+   Loest heroSection / heroIcon / heroBadge / gradientText /
+   featurePills / mainCard ab. Dasselbe Muster, das bei Better
+   Contracts, Compare und Optimizer schon abgebaut ist.
+
+   Zwei gleichrangige Wege nebeneinander: neues Dokument links, eigene
+   Vertraege rechts. Bisher stand die Liste als "Bereits hochgeladene
+   Dokumente" wie ein Nachtrag daneben, obwohl sie fuer jeden mit
+   Vertraegen im Konto der schnellere Weg ist.
+
+   ⚠️ min-width:0 an jeder Ebene, siehe die Namensfalle vom selben Tag.
+   Durchgehend hell, kein Dunkelmodus.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.llSeite {
+  --ll-blau: #1568dd;
+  --ll-blau-dunkel: #0f53b8;
+  --ll-blau-weich: rgba(21, 104, 221, 0.06);
+  --ll-blau-rand: rgba(21, 104, 221, 0.22);
+  --ll-ink: #15171c;
+  --ll-ink-2: #4a4f5a;
+  --ll-ink-3: #7d8493;
+  --ll-linie: #e3e6ec;
+  --ll-linie-weich: #eef0f4;
+  --ll-karte: #ffffff;
+
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* ── Kopf ────────────────────────────────────────────────────────────── */
+.llKopf { margin-bottom: 26px; min-width: 0; }
+
+.llTitel {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  color: var(--ll-ink);
+  margin: 0 0 5px;
+  line-height: 1.15;
+}
+
+.llUnter {
+  font-size: 0.94rem;
+  color: var(--ll-ink-2);
+  margin: 0;
+  max-width: 64ch;
+  line-height: 1.55;
+}
+
+/* ── Die zwei Wege ───────────────────────────────────────────────────── */
+.llWege {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  /* stretch statt start: sonst ist die Liste bei wenigen Vertraegen
+     deutlich niedriger als die Ablageflaeche daneben. Gleiche Loesung
+     wie in der Ergebnisansicht des Optimizers. */
+  align-items: stretch;
+  min-width: 0;
+}
+
+.llWege > * {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.llSchrittKopf {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
+.llNummer {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ll-blau);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.llSchrittTitel {
+  font-size: 0.97rem;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  color: var(--ll-ink);
+  min-width: 0;
+}
+
+/* ── Ablageflaeche ───────────────────────────────────────────────────── */
+.llAblage {
+  border: 1.5px dashed var(--ll-blau-rand);
+  background: var(--ll-blau-weich);
+  border-radius: 13px;
+  padding: 34px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  min-height: 268px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.llAblage:hover { border-color: var(--ll-blau); }
+
+.llAblageAktiv {
+  border-color: var(--ll-blau);
+  border-style: solid;
+  background: rgba(21, 104, 221, 0.1);
+}
+
+.llAblageSymbol {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--ll-karte);
+  border: 1px solid var(--ll-linie);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 13px;
+  color: var(--ll-blau);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.llAblageTitel {
+  font-weight: 620;
+  font-size: 0.97rem;
+  color: var(--ll-ink);
+  margin: 0 0 3px;
+}
+
+.llAblageUnter {
+  font-size: 0.83rem;
+  color: var(--ll-ink-3);
+  margin: 0 0 15px;
+}
+
+.llFormate {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.llFormat {
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--ll-ink-3);
+  border: 1px solid var(--ll-linie);
+  border-radius: 5px;
+  padding: 2px 7px;
+  background: var(--ll-karte);
+}
+
+.llScannen {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 550;
+  color: var(--ll-ink-2);
+  background: transparent;
+  border: 1px solid var(--ll-linie);
+  border-radius: 8px;
+  padding: 7px 13px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.llScannen:hover { border-color: var(--ll-blau-rand); color: var(--ll-blau); }
+.llScannen:focus-visible { outline: 2px solid var(--ll-blau); outline-offset: 2px; }
+
+.llFehler {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin: 11px 0 0;
+  line-height: 1.45;
+}
+
+/* ── Suche und Liste ─────────────────────────────────────────────────── */
+.llSuche {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--ll-linie);
+  border-radius: 10px;
+  padding: 0 13px;
+  margin-bottom: 11px;
+  background: var(--ll-karte);
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+
+.llSuche:focus-within { border-color: var(--ll-blau-rand); }
+.llSucheSymbol { color: var(--ll-ink-3); flex-shrink: 0; }
+
+.llSucheFeld {
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.86rem;
+  color: var(--ll-ink);
+  padding: 10px 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.llSucheFeld::placeholder { color: var(--ll-ink-3); }
+
+.llListe {
+  flex: 1;
+  border: 1px solid var(--ll-linie);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ll-karte);
+  min-width: 0;
+  max-height: 268px;
+  overflow-y: auto;
+}
+
+.llZeile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--ll-linie-weich);
+  min-width: 0;
+  width: 100%;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.13s ease;
+}
+
+.llZeile:last-child { border-bottom: 0; }
+.llZeile:hover { background: var(--ll-blau-weich); }
+.llZeile:focus-visible { outline: 2px solid var(--ll-blau); outline-offset: -2px; }
+
+.llZeileSymbol {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--ll-linie-weich);
+  color: var(--ll-ink-3);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.llZeileText { min-width: 0; }
+
+.llZeileName {
+  display: block;
+  font-size: 0.87rem;
+  font-weight: 590;
+  color: var(--ll-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.llZeileMeta {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--ll-ink-3);
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.llZeilePfeil { color: var(--ll-ink-3); flex-shrink: 0; }
+
+.llLeer {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--ll-ink-3);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.llLeerTitel {
+  display: block;
+  font-weight: 620;
+  color: var(--ll-ink-2);
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+/* ── Was dich erwartet ───────────────────────────────────────────────── */
+.llErwartung {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ll-linie);
+  min-width: 0;
+}
+
+.llZonenTitel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ll-ink-3);
+  margin: 0 0 15px;
+}
+
+.llKarten {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 11px;
+  min-width: 0;
+}
+
+.llKarte {
+  border: 1px solid var(--ll-linie);
+  border-radius: 11px;
+  padding: 13px 15px;
+  background: var(--ll-karte);
+  min-width: 0;
+}
+
+.llKarteSymbol { color: var(--ll-blau); margin-bottom: 8px; display: block; }
+
+.llKarteName {
+  font-size: 0.85rem;
+  font-weight: 630;
+  color: var(--ll-ink);
+  margin: 0 0 3px;
+  letter-spacing: -0.01em;
+}
+
+.llKarteText {
+  font-size: 0.77rem;
+  color: var(--ll-ink-3);
+  margin: 0;
+  line-height: 1.42;
+}
+
+/* ── Schmale Bildschirme ─────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .llKarten { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 860px) {
+  .llWege { grid-template-columns: 1fr; gap: 26px; }
+  .llAblage { min-height: 0; }
+  .llListe { max-height: none; }
+}
+
+@media (max-width: 560px) {
+  .llSeite { padding: 22px 16px 48px; }
+  .llTitel { font-size: 1.42rem; }
+  .llAblage { padding: 30px 16px; }
+  .llKarten { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .llAblage, .llZeile, .llScannen, .llSuche { transition: none; }
+}

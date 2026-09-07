@@ -13,6 +13,7 @@ import styles from '../styles/LegalLensStart.module.css';
 import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
 import { useAuth } from '../context/AuthContext';
+import { apiCall } from '../utils/api';
 
 interface Contract {
   _id: string;
@@ -60,20 +61,11 @@ const LegalLensStart = () => {
   useEffect(() => {
     const fetchContracts = async () => {
       try {
-        const apiUrl = getApiUrl();
-        const response = await fetch(`${apiUrl}/api/contracts`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-
-        if (!response.ok) {
-          throw new Error('Fehler beim Laden der Verträge');
-        }
-
-        const data = await response.json();
+        /* 07.09.2026: war rohes fetch und meldete bei abgelaufener Sitzung
+           nur "Fehler beim Laden". apiCall erkennt 401 und sagt, dass man
+           sich neu anmelden muss. Der Upload bleibt bewusst bei fetch:
+           er laeuft ueber Cookies ohne Authorization-Header. */
+        const data = await apiCall('/contracts') as Contract[] | { contracts?: Contract[] };
         const contractsList = Array.isArray(data) ? data : (data.contracts || []);
         setContracts(contractsList);
         setFilteredContracts(contractsList);
@@ -103,7 +95,7 @@ const LegalLensStart = () => {
 
   const handleFileUpload = async (file: File) => {
     if (!file.type.includes('pdf') && file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-      setError('Bitte laden Sie eine PDF- oder DOCX-Datei hoch');
+      setError('Bitte lade eine PDF- oder DOCX-Datei hoch');
       return;
     }
 
@@ -187,7 +179,7 @@ const LegalLensStart = () => {
     <>
       <Helmet>
         <title>Legal Lens | Contract AI</title>
-        <meta name="description" content="Analysieren Sie Ihre Verträge interaktiv mit KI" />
+        <meta name="description" content="Jede Klausel deines Vertrags einzeln erklärt, mit Bewertung und Alternativen." />
       </Helmet>
 
       <div className={styles.page}>
@@ -199,210 +191,194 @@ const LegalLensStart = () => {
           />
         )}
 
-        <div className={styles.container}>
+        <div className={styles.llSeite}>
 
-          {/* Hero Section - Better Contracts Style */}
-          <div className={styles.heroSection}>
-            <div className={styles.heroIcon}>
-              <Search size={36} />
-            </div>
-            {!hasAccess && !planLoading && (
-              <div className={styles.heroBadge}>Premium Feature</div>
-            )}
-            <h1 className={styles.heroTitle}>
-              Legal <span className={styles.gradientText}>Lens</span>
-            </h1>
-            <p className={styles.heroDescription}>
-              Interaktive Vertragsanalyse mit KI - Klauseln verstehen, Risiken erkennen, Alternativen finden.
+          <div className={styles.llKopf}>
+            <h1 className={styles.llTitel}>Vertrag im Detail lesen</h1>
+            <p className={styles.llUnter}>
+              Legal Lens zeigt dir jede Klausel im Originaldokument, erklärt sie in
+              einfacher Sprache und schlägt Alternativen vor.
             </p>
-            <div className={styles.featurePills}>
-              <div className={styles.featurePill}>
-                <Eye size={16} />
-                4 Perspektiven
+          </div>
+
+          <div className={styles.llWege}>
+
+            {/* ── Weg 1: neues Dokument ──────────────────────────── */}
+            <div>
+              <div className={styles.llSchrittKopf}>
+                <span className={styles.llNummer}>1</span>
+                <span className={styles.llSchrittTitel}>Neues Dokument</span>
+                {!hasAccess && !planLoading && <Lock size={14} className={styles.llSucheSymbol} />}
               </div>
-              <div className={styles.featurePill}>
-                <Scale size={16} />
-                Risikobewertung
+
+              <div
+                className={`${styles.llAblage} ${dragActive ? styles.llAblageAktiv : ''}`}
+                onDragEnter={(e) => { if (hasAccess) handleDrag(e); }}
+                onDragLeave={(e) => { if (hasAccess) handleDrag(e); }}
+                onDragOver={(e) => { e.preventDefault(); if (hasAccess) handleDrag(e); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (handleBlockedAction()) return;
+                  handleDrop(e);
+                }}
+                onClick={() => {
+                  if (handleBlockedAction()) return;
+                  if (!isUploading) fileInputRef.current?.click();
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (handleBlockedAction()) return;
+                    if (!isUploading) fileInputRef.current?.click();
+                  }
+                }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  onChange={handleFileInput}
+                  hidden
+                  disabled={isUploading || !hasAccess}
+                />
+
+                {isUploading ? (
+                  <>
+                    <div className={styles.llAblageSymbol}>
+                      <Loader size={21} className={styles.spinning} />
+                    </div>
+                    <p className={styles.llAblageTitel}>Wird hochgeladen…</p>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.llAblageSymbol}>
+                      <Upload size={21} />
+                    </div>
+                    <p className={styles.llAblageTitel}>Datei hierher ziehen</p>
+                    <p className={styles.llAblageUnter}>oder klicken zum Auswählen</p>
+                    <div className={styles.llFormate}>
+                      <span className={styles.llFormat}>PDF</span>
+                      <span className={styles.llFormat}>DOCX</span>
+                      <span className={styles.llFormat}>max. 20 MB</span>
+                    </div>
+                    {hasAccess && (
+                      <button
+                        className={styles.llScannen}
+                        onClick={(e) => { e.stopPropagation(); openScanner(); }}
+                      >
+                        <Camera size={14} />
+                        Stattdessen abfotografieren
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
-              <div className={styles.featurePill}>
-                <Lightbulb size={16} />
-                Alternativen
+
+              {error && (
+                <p className={styles.llFehler} role="alert">
+                  <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+                  {error}
+                </p>
+              )}
+            </div>
+
+            {/* ── Weg 2: ein Vertrag, den du schon hast ──────────── */}
+            <div>
+              <div className={styles.llSchrittKopf}>
+                <span className={styles.llNummer}>2</span>
+                <span className={styles.llSchrittTitel}>Oder ein Vertrag, den du schon hast</span>
+                {!hasAccess && !planLoading && <Lock size={14} className={styles.llSucheSymbol} />}
+              </div>
+
+              <div className={styles.llSuche}>
+                <Search size={16} className={styles.llSucheSymbol} />
+                <input
+                  type="text"
+                  placeholder="Vertrag suchen…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={styles.llSucheFeld}
+                  aria-label="Vertrag suchen"
+                />
+              </div>
+
+              <div className={styles.llListe}>
+                {isLoading ? (
+                  <p className={styles.llLeer}>
+                    <Loader size={20} className={styles.spinning} />
+                    <br />Verträge werden geladen…
+                  </p>
+                ) : filteredContracts.length === 0 ? (
+                  <p className={styles.llLeer}>
+                    {contracts.length === 0 ? (
+                      <>
+                        <span className={styles.llLeerTitel}>Noch keine Verträge</span>
+                        Lade links dein erstes Dokument hoch.
+                      </>
+                    ) : (
+                      <>
+                        <span className={styles.llLeerTitel}>Keine Treffer</span>
+                        Für „{searchQuery}" haben wir nichts gefunden.
+                      </>
+                    )}
+                  </p>
+                ) : (
+                  filteredContracts.map((contract) => (
+                    <button
+                      key={contract._id}
+                      className={styles.llZeile}
+                      onClick={() => {
+                        if (handleBlockedAction()) return;
+                        navigate(`/legal-lens/${contract._id}`);
+                      }}
+                      title={contract.name || 'Unbenannter Vertrag'}
+                    >
+                      <span className={styles.llZeileSymbol}>
+                        <FileText size={16} />
+                      </span>
+                      <span className={styles.llZeileText}>
+                        <span className={styles.llZeileName}>
+                          {contract.name || 'Unbenannter Vertrag'}
+                        </span>
+                        <span className={styles.llZeileMeta}>
+                          {contract.analysis?.contractType || 'Vertrag'} · {formatDate(contract.uploadedAt || contract.createdAt)}
+                        </span>
+                      </span>
+                      {!hasAccess && !planLoading
+                        ? <Lock size={15} className={styles.llZeilePfeil} />
+                        : <ChevronRight size={16} className={styles.llZeilePfeil} />}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>
 
-          {/* Main Card with Two Sections */}
-          <div className={styles.mainCard}>
-            <div className={styles.mainCardInner}>
-              {/* Upload Section */}
-              <div className={`${styles.cardSection} ${styles.cardSectionUpload}`}>
-                <h2 className={styles.sectionTitle}>
-                  <Upload size={18} />
-                  Neuer Vertrag
-                  {!hasAccess && !planLoading && (
-                    <Lock size={14} style={{ marginLeft: '8px', color: '#9ca3af' }} />
-                  )}
-                </h2>
-                <p className={styles.sectionSubtitle}>PDF oder DOCX hochladen zur Analyse</p>
-
-                <div
-                  className={`${styles.uploadZone} ${dragActive ? styles.uploadZoneActive : ''} ${isUploading ? styles.uploadZoneDisabled : ''}`}
-                  style={!hasAccess && !planLoading ? { opacity: 0.6, cursor: 'pointer' } : {}}
-                  onDragEnter={(e) => { if (hasAccess) handleDrag(e); }}
-                  onDragLeave={(e) => { if (hasAccess) handleDrag(e); }}
-                  onDragOver={(e) => { e.preventDefault(); if (hasAccess) handleDrag(e); }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    if (handleBlockedAction()) return;
-                    handleDrop(e);
-                  }}
-                  onClick={() => {
-                    if (handleBlockedAction()) return;
-                    if (!isUploading) fileInputRef.current?.click();
-                  }}
-                >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.docx"
-                    onChange={handleFileInput}
-                    style={{ display: 'none' }}
-                    disabled={isUploading || !hasAccess}
-                  />
-
-                  {isUploading ? (
-                    <div className={styles.uploadLoading}>
-                      <Loader size={32} className={styles.spinning} />
-                      <span>Wird hochgeladen...</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className={styles.uploadIcon}>
-                        <Upload size={32} />
-                      </div>
-                      <p className={styles.uploadTitle}>
-                        PDF oder DOCX ablegen oder <span className={styles.uploadLink}>auswählen</span>
-                      </p>
-                      <p className={styles.uploadMeta}>Max. 20 MB</p>
-                    </>
-                  )}
-                </div>
-
-                {/* 📸 Dokument scannen Button */}
-                {hasAccess && !isUploading && (
-                  <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openScanner();
-                      }}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        padding: "8px 16px",
-                        borderRadius: "8px",
-                        border: "1px solid rgba(99, 102, 241, 0.3)",
-                        background: "rgba(99, 102, 241, 0.1)",
-                        color: "#818cf8",
-                        fontSize: "14px",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                    >
-                      <Camera size={16} />
-                      Dokument scannen
-                    </button>
-                  </div>
-                )}
-
-                {error && (
-                  <div className={styles.error}>
-                    <AlertCircle size={16} />
-                    {error}
-                  </div>
-                )}
+          {/* ── Was dich dort erwartet ────────────────────────────── */}
+          <div className={styles.llErwartung}>
+            <p className={styles.llZonenTitel}>Was du dort sehen wirst</p>
+            <div className={styles.llKarten}>
+              <div className={styles.llKarte}>
+                <FileText size={16} className={styles.llKarteSymbol} />
+                <p className={styles.llKarteName}>Klausel für Klausel</p>
+                <p className={styles.llKarteText}>Jeder Abschnitt einzeln, direkt neben dem Originaldokument.</p>
               </div>
-
-              <div className={styles.divider} />
-
-              {/* Contracts Section */}
-              <div className={styles.cardSection}>
-                <h2 className={styles.sectionTitle}>
-                  <FileText size={18} />
-                  Bestehende Verträge
-                  {!hasAccess && !planLoading && (
-                    <Lock size={14} style={{ marginLeft: '8px', color: '#9ca3af' }} />
-                  )}
-                </h2>
-                <p className={styles.sectionSubtitle}>Bereits hochgeladene Dokumente</p>
-
-                <div className={styles.searchBox}>
-                  <Search size={18} className={styles.searchIcon} />
-                  <input
-                    type="text"
-                    placeholder="Suchen..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className={styles.searchInput}
-                  />
-                </div>
-
-                <div className={styles.contractList}>
-                  {isLoading ? (
-                    <div className={styles.emptyState}>
-                      <Loader size={24} className={styles.spinning} />
-                      <p className={styles.emptyTitle}>Laden...</p>
-                    </div>
-                  ) : filteredContracts.length === 0 ? (
-                    <div className={styles.emptyState}>
-                      {contracts.length === 0 ? (
-                        <>
-                          <div className={styles.emptyIcon}>
-                            <FileText size={24} />
-                          </div>
-                          <p className={styles.emptyTitle}>Keine Verträge</p>
-                          <p className={styles.emptyText}>Laden Sie links einen Vertrag hoch</p>
-                        </>
-                      ) : (
-                        <>
-                          <div className={styles.emptyIcon}>
-                            <Search size={24} />
-                          </div>
-                          <p className={styles.emptyTitle}>Keine Treffer</p>
-                          <p className={styles.emptyText}>für "{searchQuery}"</p>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    filteredContracts.map((contract) => (
-                      <button
-                        key={contract._id}
-                        className={styles.contractRow}
-                        style={!hasAccess && !planLoading ? { opacity: 0.7 } : {}}
-                        onClick={() => {
-                          if (handleBlockedAction()) return;
-                          navigate(`/legal-lens/${contract._id}`);
-                        }}
-                      >
-                        <div className={styles.contractRowIcon}>
-                          <FileText size={20} />
-                        </div>
-                        <div className={styles.contractRowContent}>
-                          <span className={styles.contractRowName}>{contract.name || 'Unbenannter Vertrag'}</span>
-                          <span className={styles.contractRowMeta}>
-                            {contract.analysis?.contractType || 'Vertrag'} • {formatDate(contract.uploadedAt || contract.createdAt)}
-                          </span>
-                        </div>
-                        {!hasAccess && !planLoading ? (
-                          <Lock size={16} style={{ color: '#9ca3af' }} />
-                        ) : (
-                          <ChevronRight size={18} className={styles.contractRowArrow} />
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
+              <div className={styles.llKarte}>
+                <Lightbulb size={16} className={styles.llKarteSymbol} />
+                <p className={styles.llKarteName}>In einfacher Sprache</p>
+                <p className={styles.llKarteText}>Was die Klausel bedeutet, ohne Juristendeutsch.</p>
+              </div>
+              <div className={styles.llKarte}>
+                <Eye size={16} className={styles.llKarteSymbol} />
+                <p className={styles.llKarteName}>Aus vier Blickwinkeln</p>
+                <p className={styles.llKarteText}>Wie dieselbe Klausel für beide Seiten wirkt.</p>
+              </div>
+              <div className={styles.llKarte}>
+                <Scale size={16} className={styles.llKarteSymbol} />
+                <p className={styles.llKarteName}>Mit Alternativen</p>
+                <p className={styles.llKarteText}>Eine andere Formulierung, wenn eine Klausel dich benachteiligt.</p>
               </div>
             </div>
           </div>
