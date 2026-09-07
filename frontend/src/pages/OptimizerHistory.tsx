@@ -27,8 +27,8 @@ interface HistoryItem {
 function getScoreColor(score: number): string {
   if (score >= 80) return '#10B981';
   if (score >= 60) return '#F59E0B';
-  if (score >= 40) return '#EF4444';
-  return '#AF52DE';
+  if (score >= 40) return '#F97316';
+  return '#EF4444';
 }
 
 function getStatusConfig(status: HistoryItem['status']) {

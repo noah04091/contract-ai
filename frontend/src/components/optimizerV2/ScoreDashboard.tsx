@@ -21,11 +21,14 @@ const SCORE_CONFIGS = [
   { key: 'marketStandard', label: 'Marktstandard', icon: BarChart3, color: '#F59E0B' }
 ] as const;
 
+/* 07.09.2026: Die letzte Stufe war Lila und brach damit die Ampel:
+   je schlechter der Wert, desto roter, nicht ploetzlich violett.
+   Dieselben vier Stufen wie in HealthScoreGauge (Legal Pulse). */
 function getScoreColor(score: number): string {
   if (score >= 80) return '#10B981';
   if (score >= 60) return '#F59E0B';
-  if (score >= 40) return '#EF4444';
-  return '#AF52DE';
+  if (score >= 40) return '#F97316';
+  return '#EF4444';
 }
 
 function getScoreLabel(score: number): string {
@@ -866,11 +869,13 @@ function ScoreExplanation({ scores, result }: { scores: Scores; result: Analysis
 }
 
 // ── Risk Heatmap Panel ──
+/* 'critical' war Lila und wirkte dadurch harmloser als 'high' in Rot.
+   Jetzt ein dunkleres Rot: die Steigerung bleibt erkennbar. */
 const RISK_COLORS: Record<string, string> = {
   low: '#10B981',
   medium: '#F59E0B',
   high: '#EF4444',
-  critical: '#AF52DE'
+  critical: '#B91C1C'
 };
 
 function getRiskLevel(avgRisk: number): { label: string; color: string } {
