@@ -277,7 +277,16 @@ function calculateQualityScore(rawText, cleanedText) {
  */
 function runDocumentIntelligence(rawText) {
   const cleanedText = cleanText(rawText);
-  const truncatedText = smartTruncate(cleanedText, 50000);
+  // 07.09.2026 (Abdeckungs-Plan Stufe 1, A/B-geprüft): Die 50.000-Zeichen-Kappung war der
+  // erste von drei Deckeln, die lange Verträge unvollständig ließen (nur ~17 Seiten
+  // analysiert UND überwacht — bei EisQueen fielen 19 von 58 Klauseln weg). Aus dem
+  // Optimizer übernommen, ohne Begründung — genau das von der Regel „keine hardcoded
+  // Token-Limits" verbotene Muster. DEFAULT jetzt fest 200000 (deckt alle realen Verträge,
+  // längster im System 61k Zeichen; kein loser Schalter → frische Umgebung fällt nicht auf
+  // 50k zurück). A/B-Beweis 07.09.: Entfernen der Kappung ändert die Analyse der vorderen
+  // Klauseln NICHT (Batch bleibt 4), es kommen nur die hinteren Klauseln dazu.
+  const maxChars = Number(process.env.PULSE_MAX_CHARS) || 200000;
+  const truncatedText = smartTruncate(cleanedText, maxChars);
   const structure = detectStructure(cleanedText);
 
   // Detect language FIRST so contract-type classification uses the correct keyword list.

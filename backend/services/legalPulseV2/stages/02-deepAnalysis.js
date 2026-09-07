@@ -13,8 +13,18 @@ const openai = new OpenAI({
   maxRetries: 1,
 });
 
-const BATCH_SIZE = 4; // clauses per AI call
-const MAX_TOTAL_INPUT_TOKENS = 120000; // safety budget
+// 07.09.2026 (Abdeckungs-Plan Stufe 1, A/B-geprüft): Zwei der drei Deckel, die lange
+// Verträge unvollständig ließen (vgl. Regel „keine hardcoded Token-Limits").
+// BATCH_SIZE bleibt bei 4: Der A/B-Beweis (Adam Reuter/EisQueen, 07.09.) zeigte, dass
+//   größere Pakete (12) die Analyse verschlechtern (46→16 Befunde bei EisQueen), weil
+//   gpt-4o bei vielen Klauseln pro Call oberflächlicher wird. Batch 4 = bewährte Qualität.
+// MAX_TOTAL_INPUT_TOKENS: von 120000 auf 400000 als DEFAULT angehoben (fest eingebaut,
+//   kein loser Schalter — frische Umgebung fällt so NICHT auf den alten Wert zurück).
+//   Reine Notbremse gegen Extremfälle; reale Verträge (max ~58 Klauseln ≈ 150k Token bei
+//   Batch 4) kratzen nie dran. Sehr große Verträge (>~120 Klauseln) → Stufe 2 (Priorisierung).
+//   env-Override bleibt möglich, ist aber nicht mehr nötig.
+const BATCH_SIZE = Number(process.env.PULSE_BATCH_SIZE) || 4; // clauses per AI call
+const MAX_TOTAL_INPUT_TOKENS = Number(process.env.PULSE_MAX_TOTAL_INPUT_TOKENS) || 400000; // safety budget (breite Notbremse)
 
 const PRICES = {
   "gpt-4o": { input: 0.0025, output: 0.01 },
