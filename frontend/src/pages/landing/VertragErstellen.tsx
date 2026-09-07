@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
-import styles from "../../styles/FeaturePage.module.css";
+import styles from "../../styles/FeaturePages.module.css";
 import LandingFooter from "../../components/LandingFooter";
 import {
   Shield, Zap, FileText, AlertTriangle, CheckCircle,
@@ -354,7 +354,7 @@ const VertragErstellen: React.FC = () => {
 
             <div className={styles.functionsGrid4col}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <Briefcase size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Arbeitsvertrag</h3>
@@ -822,7 +822,7 @@ const VertragErstellen: React.FC = () => {
 
             <div className={`${styles.whyGrid} ${styles.whyGrid4col}`}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <MessageSquare size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Individuell statt Muster</h3>
@@ -1149,7 +1149,7 @@ const VertragErstellen: React.FC = () => {
 
             <div className={`${styles.relatedGrid} ${styles.relatedGrid2col}`}>
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Sparkles size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Sparkles size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Der KI-Generator im Detail</div>
                   <div className={styles.relatedDescription}>

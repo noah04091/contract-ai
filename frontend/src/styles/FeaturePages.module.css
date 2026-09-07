@@ -1656,3 +1656,603 @@
     transition: none;
   }
 }
+
+/* ================================================================
+   TEIL 2 — die neun Landing- und Guide-Seiten
+   Diese Seiten nutzten bisher FeaturePage.module.css (altes Design).
+   Sie teilen die Grundbausteine oben und brauchen zusaetzlich die
+   folgenden eigenen Elemente. Alles in derselben Kartenform, denselben
+   Farben und Schriften wie der Rest.
+   ================================================================ */
+
+.heroSection {
+  padding: 100px 0 clamp(44px, 6vh, 80px);
+  background: none;
+  position: relative;
+}
+
+.heroIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: var(--flaeche) !important;
+  color: var(--blau) !important;
+}
+
+.heroIcon svg { width: 22px; height: 22px; }
+
+.contentContainer,
+.featureContainer {
+  width: var(--spalte);
+  margin-inline: auto;
+}
+
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 24px;
+  border-radius: 999px;
+  background: var(--blau);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15.5px;
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.32);
+  transition: transform 0.22s var(--weich), box-shadow 0.22s var(--weich);
+}
+
+.ctaButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.42);
+}
+
+.ctaButton svg { transition: transform 0.22s var(--weich); }
+.ctaButton:hover svg { transform: translateX(3px); }
+
+/* ---- Inhaltsverzeichnis der Guide-Seite ---- */
+.pillarTocSection {
+  padding: clamp(40px, 6vh, 72px) 0;
+}
+
+.pillarToc {
+  max-width: 760px;
+  margin: 0;
+  padding: 26px 30px;
+  border: 1px solid var(--linie);
+  border-radius: var(--karte-radius);
+  background: var(--karte-grund);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--karte-schatten);
+}
+
+.pillarTocTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.015em;
+  color: var(--tinte);
+}
+
+.pillarTocTitle svg {
+  color: var(--blau);
+  flex-shrink: 0;
+}
+
+.pillarTocNav {
+  display: grid;
+  gap: 2px;
+}
+
+.pillarTocLink {
+  display: block;
+  padding: 9px 12px;
+  margin-left: -12px;
+  border-radius: 9px;
+  color: var(--tinte-weich);
+  text-decoration: none;
+  font-size: 15.5px;
+  transition: background 0.22s var(--weich), color 0.22s var(--weich);
+}
+
+.pillarTocLink:hover {
+  background: rgba(233, 240, 251, 0.75);
+  color: var(--blau-tief);
+}
+
+/* ---- Kurze Antwort oben ---- */
+.pillarQuickAnswer {
+  padding: clamp(40px, 6vh, 72px) 0;
+}
+
+.pillarQuickAnswerBox {
+  max-width: 820px;
+  margin: 0;
+  padding: 26px 30px;
+  border: 1px solid var(--linie);
+  border-left: 3px solid var(--blau);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.05), var(--karte-grund));
+  box-shadow: var(--karte-schatten);
+}
+
+.pillarQuickAnswerTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.015em;
+  color: var(--tinte);
+}
+
+.pillarQuickAnswerTitle svg {
+  color: var(--blau);
+  flex-shrink: 0;
+}
+
+.pillarQuickAnswerList {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 9px;
+  color: var(--tinte-weich);
+  font-size: 16px;
+}
+
+.pillarQuickAnswerList li::marker {
+  color: var(--blau);
+}
+
+/* ---- Vergleichstabelle KI gegen Anwalt ---- */
+.pillarComparisonTable {
+  max-width: 860px;
+  margin: 0 0 36px;
+  border: 1px solid var(--linie);
+  border-radius: var(--karte-radius);
+  overflow: hidden;
+  background: var(--karte-grund);
+  box-shadow: var(--karte-schatten);
+}
+
+.pillarComparisonHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
+  background: linear-gradient(120deg, var(--blau-tief), var(--blau));
+}
+
+.pillarComparisonHeaderCell {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 15px 18px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+
+.pillarComparisonHeaderCell svg {
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.pillarComparisonRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr) minmax(0, 1.1fr);
+  border-top: 1px solid rgba(37, 99, 235, 0.10);
+  transition: background 0.22s var(--weich);
+}
+
+.pillarComparisonRow:hover {
+  background: rgba(233, 240, 251, 0.55);
+}
+
+.pillarComparisonLabel {
+  padding: 14px 18px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  color: var(--tinte);
+}
+
+.pillarComparisonAi,
+.pillarComparisonLawyer,
+.pillarComparisonValue {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 14px 18px;
+  font-size: 15px;
+  color: var(--tinte-weich);
+}
+
+.pillarComparisonAi {
+  background: rgba(37, 99, 235, 0.045);
+}
+
+/* Der Haken markiert, wer bei diesem Kriterium vorn liegt — das ist
+   Information, deshalb behaelt er seine Farbe. */
+.pillarComparisonAi svg,
+.pillarComparisonLawyer svg,
+.pillarComparisonValue svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--gruen);
+}
+
+/* ---- Fliesstext der Guide-Seite ---- */
+.pillarContentSection {
+  padding: clamp(44px, 6.5vh, 82px) 0;
+}
+
+.pillarProse {
+  max-width: 72ch;
+  color: var(--tinte-weich);
+  font-size: 17px;
+  line-height: 1.72;
+}
+
+.pillarProse p {
+  margin: 0 0 18px;
+}
+
+.pillarProse strong {
+  color: var(--tinte);
+  font-weight: 600;
+}
+
+.pillarProse a {
+  color: var(--blau-tief);
+  font-weight: 600;
+}
+
+.pillarProse h3 {
+  margin: 32px 0 12px;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(19px, 2vw, 25px);
+  letter-spacing: -0.02em;
+  color: var(--tinte);
+}
+
+.pillarProse ul,
+.pillarProse ol {
+  margin: 0 0 18px;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+}
+
+.pillarProse li::marker {
+  color: var(--blau);
+}
+
+.pillarDefinition {
+  margin: 0 0 26px;
+  padding: 22px 26px;
+  border: 1px solid var(--linie);
+  border-left: 3px solid var(--blau);
+  border-radius: 14px;
+  background: var(--karte-grund);
+  box-shadow: var(--karte-schatten);
+}
+
+.pillarDefinition p {
+  margin: 0;
+  font-size: 17px;
+  color: var(--tinte);
+}
+
+.pillarDefinition strong {
+  font-weight: 600;
+}
+
+.pillarHighlight {
+  display: flex;
+  gap: 16px;
+  margin: 26px 0;
+  padding: 22px 26px;
+  border: 1px solid var(--linie);
+  border-left: 3px solid var(--blau);
+  border-radius: 0 14px 14px 0;
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.05), rgba(255, 255, 255, 0.7));
+}
+
+.pillarHighlightIcon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: var(--flaeche) !important;
+  color: var(--blau) !important;
+}
+
+.pillarHighlightIcon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.pillarMethodBox {
+  max-width: 820px;
+  margin: 0;
+  padding: 24px 28px;
+  border: 1px solid var(--linie);
+  border-radius: 14px;
+  background: rgba(233, 240, 251, 0.4);
+}
+
+.pillarMethodTitle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--tinte-weich);
+}
+
+.pillarMethodText {
+  margin: 0;
+  color: var(--tinte-weich);
+  font-size: 15.5px;
+}
+
+/* ---- Beispiel-Kasten der Landingpages ---- */
+.beispielSection {
+  padding: clamp(50px, 7.5vh, 94px) 0;
+}
+
+.beispielBox {
+  padding: 30px 34px;
+  border: 1px solid var(--linie);
+  border-left: 3px solid var(--blau);
+  border-radius: var(--karte-radius);
+  background: var(--karte-grund);
+  box-shadow: var(--karte-schatten);
+  text-align: left;
+  transition: transform 0.3s var(--weich), box-shadow 0.3s var(--weich);
+}
+
+.beispielBox:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--karte-schatten-hover);
+}
+
+.beispielIcon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: var(--flaeche) !important;
+  color: var(--blau) !important;
+}
+
+.beispielIcon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.beispielText {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--tinte-weich);
+  font-size: 17px;
+}
+
+.beispielText strong {
+  color: var(--tinte);
+  font-weight: 600;
+}
+
+.beispielHinweis {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--linie);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--tinte-weich);
+}
+
+.beispielHinweis svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--blau);
+}
+
+/* ---- Funktionsliste (deutsche Variante) ---- */
+.funktionSection {
+  padding: clamp(50px, 7.5vh, 94px) 0;
+}
+
+.funktionGrid {
+  display: block;
+  margin-top: 40px;
+  border-top: 1px solid var(--linie);
+}
+
+.funktionItem {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 0.3fr) minmax(0, 1fr);
+  gap: 13px clamp(14px, 3vw, 40px);
+  align-items: center;
+  padding: clamp(18px, 2.6vh, 27px) 0;
+  border-bottom: 1px solid var(--linie);
+  position: relative;
+  transition: background 0.28s var(--weich);
+}
+
+.funktionItem::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--blau);
+  transform: scaleY(0);
+  transform-origin: 50% 0;
+  transition: transform 0.32s var(--weich);
+}
+
+.funktionItem:hover {
+  background: rgba(233, 240, 251, 0.62);
+}
+
+.funktionItem:hover::before {
+  transform: scaleY(1);
+}
+
+.funktionIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--flaeche) !important;
+  color: var(--blau) !important;
+  transition: background 0.28s var(--weich), box-shadow 0.28s var(--weich);
+}
+
+.funktionIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.funktionItem:hover .funktionIcon {
+  background: rgba(37, 99, 235, 0.16) !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+}
+
+.funktionText {
+  margin: 0;
+  max-width: 58ch;
+  color: var(--tinte-weich);
+  font-size: 17px;
+}
+
+.funktionText strong {
+  color: var(--tinte);
+  font-weight: 600;
+}
+
+/* ---- Raster-Varianten und Kleinteile ---- */
+.functionsGrid4col,
+.relatedGrid2col,
+.securityGrid {
+  display: block;
+  margin-top: 40px;
+  border-top: 1px solid var(--linie);
+}
+
+.problemStatNumber {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(30px, 3.6vw, 44px);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(120deg, var(--blau-tief), var(--blau) 55%, #3b82f6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.textGreen {
+  color: var(--gruen);
+}
+
+@media (max-width: 860px) {
+  .funktionItem {
+    grid-template-columns: 34px 1fr;
+  }
+
+  .funktionText {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+
+  .pillarComparisonHeader,
+  .pillarComparisonRow {
+    grid-template-columns: 1fr;
+  }
+
+  .pillarComparisonLabel {
+    padding-bottom: 4px;
+    background: rgba(233, 240, 251, 0.5);
+  }
+
+  .pillarComparisonAi,
+  .pillarComparisonLawyer,
+  .pillarComparisonValue {
+    padding-top: 8px;
+  }
+}
+
+@media (forced-colors: active) {
+  .problemStatNumber {
+    -webkit-text-fill-color: currentColor;
+    color: CanvasText;
+    background: none;
+  }
+}
+
+/* ================================================================
+   LESBARKEIT: Reste aus dem alten dunklen Hero
+   Auf den Landing-Seiten stehen einzelne Absaetze mit einer hellen Farbe
+   direkt im HTML (rgba(255,255,255,0.6) usw.). Die waren fuer einen dunklen
+   Hintergrund gedacht; auf dem jetzt hellen Grund waren sie praktisch
+   unsichtbar (gemessener Kontrast 1,00 : 1). Dazu zwei sehr blasse Grautoene
+   (#94a3b8, 2,56 : 1).
+
+   Inline-Styles lassen sich nur mit !important ueberschreiben. Betroffen sind
+   ausschliesslich Absaetze OHNE eigene Klasse, damit keine gestaltete Stelle
+   mitgefangen wird.
+   ================================================================ */
+.pageBackground p:not([class]) {
+  color: var(--tinte-weich) !important;
+}
+
+.pageBackground p:not([class]) strong {
+  color: var(--tinte) !important;
+}
+
+/* Ausnahme: im dunkelblauen Tabellenkopf bleibt Weiss richtig. */
+.pillarComparisonHeader p:not([class]),
+.pillarComparisonHeaderCell p:not([class]) {
+  color: #fff !important;
+}
+
+/* Klassenlose Links tragen im HTML das helle Markenblau #3b82f6. Auf hellem
+   Grund ergibt das 3,68 : 1 und liegt damit unter der Norm (4,5 : 1 fuer Text
+   dieser Groesse). Das dunklere Blau der Marke erreicht 6,5 : 1 und sieht
+   praktisch gleich aus. Nur Links OHNE eigene Klasse, damit nichts Gestaltetes
+   mitgefangen wird. */
+.pageBackground a:not([class]) {
+  color: var(--blau-tief) !important;
+}

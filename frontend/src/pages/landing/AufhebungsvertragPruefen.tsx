@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
-import styles from "../../styles/FeaturePage.module.css";
+import styles from "../../styles/FeaturePages.module.css";
 import LandingFooter from "../../components/LandingFooter";
 import {
   Shield, FileText, AlertTriangle, CheckCircle,
@@ -305,7 +305,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
                 </p>
               </div>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}><Calendar size={24} /></div>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}><Calendar size={24} /></div>
                 <h3 className={styles.functionTitle}>Beendigungstermin</h3>
                 <p className={styles.functionDesc}>
                   Hält der Termin die Kündigungsfrist ein? Sonst droht zusätzliches Ruhen des ALG (§ 158 SGB III).
@@ -407,7 +407,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Die größten Fallen</span>
-              <h2 className={styles.sectionTitle}>Das findet die KI in <span style={{ color: '#3b82f6' }}>deinem Aufhebungsvertrag</span></h2>
+              <h2 className={styles.sectionTitle}>Das findet die KI in <span style={{ color: '#1d4ed8' }}>deinem Aufhebungsvertrag</span></h2>
               <p className={styles.sectionSubtitle}>
                 Typische Klauseln, die Arbeitnehmer Geld kosten — oft übersehen unter Zeitdruck.
               </p>
@@ -487,7 +487,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Schritt für Schritt</span>
-              <h2 className={styles.sectionTitle}>In 60 Sekunden zum <span style={{ color: '#3b82f6' }}>geprüften Aufhebungsvertrag</span></h2>
+              <h2 className={styles.sectionTitle}>In 60 Sekunden zum <span style={{ color: '#1d4ed8' }}>geprüften Aufhebungsvertrag</span></h2>
             </div>
             <div className={styles.processContainer}>
               <div className={styles.processLine}></div>
@@ -562,7 +562,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
               <Link to="/arbeitsvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><FileText size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Arbeitsvertrag prüfen</div>
                   <div className={styles.relatedDescription}>Probezeit, Wettbewerbsverbot, Überstunden — KI-Check auf Basis BAG-Rechtsprechung</div>
