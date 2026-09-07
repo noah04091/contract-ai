@@ -870,61 +870,61 @@ const AgenturvertragPruefen: React.FC = () => {
 
             <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs} style={{ maxWidth: '860px', margin: '0 auto' }}>
               <p className={styles.problemText}>
-                Ein Agenturvertrag ist kein Standardvertrag — er ist ein hochgradig
+                Ein Agenturvertrag ist kein Standardvertrag, er ist ein hochgradig
                 individualisiertes Konstrukt zwischen Auftraggeber und Dienstleister. Marketing-,
                 Digital-, PR- und Werbeagenturen haben in der Regel jahrelang an ihren
                 Vertragsvorlagen gefeilt, oft mit Hilfe spezialisierter Anwaltskanzleien.
                 Auftraggeber unterschreiben diese Verträge dagegen meist ohne juristische
-                Vorbereitung — und stehen im Nachhinein vor Problemen, die mit etwas
+                Vorbereitung, und stehen im Nachhinein vor Problemen, die mit etwas
                 Vorab-Prüfung leicht hätten vermieden werden können.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Werkvertrag oder Dienstvertrag — der entscheidende Unterschied
+                Werkvertrag oder Dienstvertrag: der entscheidende Unterschied
               </h3>
               <p className={styles.problemText}>
                 Eine der wichtigsten Fragen beim Agenturvertrag ist die Einordnung als
                 <strong> Werkvertrag (§ 631 BGB)</strong> oder <strong>Dienstvertrag (§ 611 BGB)</strong>.
                 Beim Werkvertrag schuldet die Agentur einen konkreten Erfolg (z.B. „fertiges Logo",
-                „funktionierende Website") — bei Nicht-Erreichen hast du Anspruch auf Nachbesserung,
+                „funktionierende Website"), bei Nicht-Erreichen hast du Anspruch auf Nachbesserung,
                 Minderung oder Rücktritt. Beim Dienstvertrag schuldet die Agentur nur die Tätigkeit
-                (z.B. „laufende SEO-Beratung") — ohne Erfolgsgarantie. Im Streitfall ist diese
+                (z.B. „laufende SEO-Beratung"), ohne Erfolgsgarantie. Im Streitfall ist diese
                 Einordnung entscheidend. Achte deshalb auf klare Sprache: „Erstellung" (Werk) vs.
                 „Beratung" (Dienst).
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Nutzungsrechte — wem gehört dein Logo wirklich?
+                Nutzungsrechte: wem gehört dein Logo wirklich?
               </h3>
               <p className={styles.problemText}>
                 Das deutsche Urheberrecht (UrhG) folgt einem klaren Prinzip: Das Urheberrecht
                 bleibt immer beim Schöpfer (also der Agentur), übertragen werden können nur
                 <strong> Nutzungsrechte (§ 31 UrhG)</strong>. Diese gibt es in zwei Varianten:
                 Das <em>einfache Nutzungsrecht</em> erlaubt dir die Nutzung, aber die Agentur
-                darf das Werk auch anderen Kunden anbieten. Das <em>ausschließliche Nutzungsrecht</em>
-                schließt diese Möglichkeit aus — nur du darfst das Werk nutzen. Für Logo, Corporate
+                darf das Werk auch anderen Kunden anbieten. Das <em>ausschließliche Nutzungsrecht</em>{' '}
+                schließt diese Möglichkeit aus, nur du darfst das Werk nutzen. Für Logo, Corporate
                 Design, Webseite und Marketingmaterial solltest du auf ein <strong>ausschließliches,
                 zeitlich und räumlich unbeschränktes Nutzungsrecht für alle bekannten und unbekannten
-                Nutzungsarten</strong> bestehen — auch „Total-Buy-out" genannt. Andernfalls kannst
+                Nutzungsarten</strong> bestehen, auch „Total-Buy-out" genannt. Andernfalls kannst
                 du dein Corporate Design nach Vertragsende möglicherweise nicht mehr verwenden.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                AGB-Kontrolle — die unsichtbare Schutzmauer
+                AGB-Kontrolle: die unsichtbare Schutzmauer
               </h3>
               <p className={styles.problemText}>
                 Die meisten Agenturverträge sind <strong>Allgemeine Geschäftsbedingungen (AGB)</strong> im
                 Sinne der §§ 305 ff. BGB. Das ist für Auftraggeber gut, denn AGB unterliegen einer
                 strengen Inhaltskontrolle. Klauseln, die den Auftraggeber unangemessen benachteiligen
-                (§ 307 BGB), sind unwirksam — auch wenn sie unterschrieben wurden. Typische unwirksame
+                (§ 307 BGB), sind unwirksam, auch wenn sie unterschrieben wurden. Typische unwirksame
                 Klauseln: Haftungsausschlüsse über die zulässigen Grenzen hinaus, automatische
                 Verlängerungen ohne klare Kündigungsfrist, Verzichtsklauseln auf gesetzliche Rechte.
                 Wichtig zu wissen: Ist eine AGB-Klausel unwirksam, bleibt der Vertrag im Übrigen
-                bestehen (§ 306 BGB) — die unwirksame Klausel wird durch das Gesetz ersetzt.
+                bestehen (§ 306 BGB), die unwirksame Klausel wird durch das Gesetz ersetzt.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Performance-Verträge — wenn KPIs zur Falle werden
+                Performance-Verträge: wenn KPIs zur Falle werden
               </h3>
               <p className={styles.problemText}>
                 Bei Performance-orientierten Agenturen (SEO, Performance-Marketing,
@@ -942,7 +942,7 @@ const AgenturvertragPruefen: React.FC = () => {
               </h3>
               <p className={styles.problemText}>
                 Eine unwirksame Klausel macht <strong>nicht den ganzen Vertrag unwirksam</strong>.
-                Nach § 306 Abs. 1 BGB bleibt der Vertrag im Übrigen bestehen — die problematische
+                Nach § 306 Abs. 1 BGB bleibt der Vertrag im Übrigen bestehen, die problematische
                 Klausel wird durch die gesetzliche Regelung ersetzt. Für dich als Auftraggeber
                 ist das fast immer ein Vorteil: Eine unwirksame Haftungsbegrenzung bedeutet volle
                 Haftung der Agentur. Eine unwirksame automatische Verlängerung bedeutet kurzfristige
@@ -963,7 +963,7 @@ const AgenturvertragPruefen: React.FC = () => {
         </section>
 
         {/* ==========================================
-            SECTION 10 — STATS
+            SECTION 10, STATS
             ========================================== */}
         <section className={styles.statsSection}>
           <div className={styles.container}>

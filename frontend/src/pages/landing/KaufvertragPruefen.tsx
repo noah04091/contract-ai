@@ -873,7 +873,7 @@ const KaufvertragPruefen: React.FC = () => {
               <p className={styles.problemText}>
                 Ein Kaufvertrag entscheidet im Streitfall über tausende Euro. Vom Gebrauchtwagen
                 über Möbel bis hin zur Wohnungseinrichtung: Wenn nach dem Kauf ein Mangel auftaucht,
-                hängt alles davon ab, was im Vertrag steht — und vor allem, was <em>nicht</em>
+                hängt alles davon ab, was im Vertrag steht, und vor allem, was <em>nicht</em>{' '}
                 drin steht. Das BGB-Kaufrecht (§§ 433–453 BGB) gibt dir starke Käuferrechte,
                 doch viele Verträge versuchen, diese Rechte einzuschränken oder ganz auszuschließen.
                 Wer einen Kaufvertrag prüft, kann unwirksame Klauseln sofort erkennen und
@@ -881,7 +881,7 @@ const KaufvertragPruefen: React.FC = () => {
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Verbrauchsgüterkauf vs Privatkauf — ein entscheidender Unterschied
+                Verbrauchsgüterkauf vs Privatkauf: ein entscheidender Unterschied
               </h3>
               <p className={styles.problemText}>
                 Das deutsche Kaufrecht unterscheidet streng zwischen zwei Konstellationen.
@@ -889,52 +889,52 @@ const KaufvertragPruefen: React.FC = () => {
                 §§ 474 ff. BGB) gelten erheblich strengere Regeln zugunsten des Käufers: Ein
                 Gewährleistungsausschluss bei neuen Sachen ist unwirksam (<strong>§ 476 BGB</strong>),
                 bei gebrauchten Sachen darf die Frist nur auf 1 Jahr verkürzt werden, der
-                Gefahrübergang ist erst bei Übergabe an den Käufer. Beim <strong>Privatkauf</strong>
+                Gefahrübergang ist erst bei Übergabe an den Käufer. Beim <strong>Privatkauf</strong>{' '}
                 (Privatperson verkauft an Privatperson) ist ein Gewährleistungsausschluss dagegen
-                weitgehend möglich — außer bei arglistig verschwiegenen Mängeln (§ 444 BGB).
+                weitgehend möglich, außer bei arglistig verschwiegenen Mängeln (§ 444 BGB).
                 Diese Unterscheidung ist die wichtigste beim Lesen jedes Kaufvertrags.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                „Gekauft wie gesehen" — was die Klausel wirklich bedeutet
+                „Gekauft wie gesehen": was die Klausel wirklich bedeutet
               </h3>
               <p className={styles.problemText}>
                 Diese Klausel ist die meistmissverstandene des deutschen Kaufrechts. Verkäufer
-                stellen sie oft als pauschalen Haftungsausschluss dar — sie ist es aber nicht.
+                stellen sie oft als pauschalen Haftungsausschluss dar, sie ist es aber nicht.
                 Sie schließt nur die Gewährleistung für Mängel aus, die <em>bei einer üblichen
                 Besichtigung erkennbar</em> waren. Versteckte Mängel (z.B. ein Motorschaden, der
                 erst nach 200 km auftritt) und arglistig verschwiegene Mängel (etwa ein
-                bekannter Unfallschaden, der nicht erwähnt wurde) sind nach <strong>§ 444 BGB</strong>
-                <em>nicht</em> vom Ausschluss erfasst — der Verkäufer haftet trotzdem. Auch
+                bekannter Unfallschaden, der nicht erwähnt wurde) sind nach <strong>§ 444 BGB</strong>{' '}
+                <em>nicht</em> vom Ausschluss erfasst, der Verkäufer haftet trotzdem. Auch
                 ausdrücklich vereinbarte Beschaffenheiten (Kilometerstand, Unfallfreiheit,
                 Service-Historie) bleiben verbindlich.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Beschaffenheitsangaben — was reinschreiben, was nicht
+                Beschaffenheitsangaben: was reinschreiben, was nicht
               </h3>
               <p className={styles.problemText}>
-                Nach <strong>§ 434 BGB</strong> ist die Sache nur dann mangelfrei, wenn sie die
+                Nach <strong>§ 434 BGB</strong> ist die Sache nur dann mangelfrei, wenn sie die{' '}
                 <em>vereinbarte</em> Beschaffenheit hat. Das ist deine wichtigste Verhandlungs-
                 Karte: Was im Vertrag schwarz auf weiß steht, ist verbindlich. Was nicht drinsteht,
                 ist Beweisproblem. Beim Autokauf gehören in den Vertrag: <strong>Kilometerstand,
                 Anzahl Vorbesitzer, Unfallfreiheit (zumindest „Verkäufer kennt keine Unfallschäden"),
                 Service-Historie, technische Defekte</strong>. Bei Möbeln: Material, Maße, Zustand
                 (neu/gebraucht/restauriert). Bei Elektronik: Funktionsfähigkeit, Garantie,
-                Zubehör. Mündliche Zusagen sind im Streit nichts wert — alles in den Vertrag.
+                Zubehör. Mündliche Zusagen sind im Streit nichts wert, alles in den Vertrag.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
                 Verjährung, Eigentumsvorbehalt und Stornogebühren
               </h3>
               <p className={styles.problemText}>
-                Drei weitere zentrale Punkte: Erstens die <strong>Verjährung</strong> — gesetzlich
+                Drei weitere zentrale Punkte: Erstens die <strong>Verjährung</strong>, gesetzlich
                 2 Jahre ab Übergabe (§ 438 BGB), beim Verbrauchsgüterkauf nur sehr eingeschränkt
-                verkürzbar. Zweitens der <strong>Eigentumsvorbehalt</strong> (§ 449 BGB) — er muss
+                verkürzbar. Zweitens der <strong>Eigentumsvorbehalt</strong> (§ 449 BGB), er muss
                 ausdrücklich vereinbart werden, sonst geht das Eigentum bereits bei Übergabe über.
                 Wer in Raten zahlt und keinen klaren Eigentumsvorbehalt hat, riskiert bei
-                Verkäufer-Insolvenz, dass die Sache der Insolvenzmasse zufällt. Drittens
-                <strong>Stornogebühren</strong> — pauschale Klauseln über 10–15 % sind in AGB
+                Verkäufer-Insolvenz, dass die Sache der Insolvenzmasse zufällt. Drittens{' '}
+                <strong>Stornogebühren</strong>, pauschale Klauseln über 10–15 % sind in AGB
                 regelmäßig unwirksam (§§ 307, 309 Nr. 5 BGB). Mehr zum Thema Autokauf im{' '}
                 <Link to="/blog/autokauf-vertrag-gewaehrleistung">Ratgeber Autokauf-Vertrag</Link>.
                 Worauf du bei AGB im Online-Handel achten musst, zeigt unser{' '}
@@ -946,13 +946,13 @@ const KaufvertragPruefen: React.FC = () => {
               </h3>
               <p className={styles.problemText}>
                 Nach <strong>§ 437 BGB</strong> hast du als Käufer mehrere Rechte:
-                <strong> Nacherfüllung</strong> (Reparatur oder Ersatzlieferung — dein Wahlrecht),
-                <strong> Rücktritt</strong> vom Vertrag (volle Rückzahlung), <strong>Minderung</strong>
+                <strong> Nacherfüllung</strong> (Reparatur oder Ersatzlieferung, dein Wahlrecht),
+                <strong> Rücktritt</strong> vom Vertrag (volle Rückzahlung), <strong>Minderung</strong>{' '}
                 des Kaufpreises (anteilige Rückzahlung) oder <strong>Schadensersatz</strong>.
                 Wichtig: Beim Verbrauchsgüterkauf wird in den ersten 12 Monaten nach Übergabe
-                vermutet, dass der Mangel bereits bei Übergabe vorhanden war (§ 477 BGB) — die
+                vermutet, dass der Mangel bereits bei Übergabe vorhanden war (§ 477 BGB), die
                 Beweislast liegt beim Verkäufer. Bei arglistig verschwiegenen Mängeln gilt sogar
-                die regelmäßige Verjährung von 3 Jahren ab Kenntnis (§§ 195, 199 BGB) — auch
+                die regelmäßige Verjährung von 3 Jahren ab Kenntnis (§§ 195, 199 BGB), auch
                 Jahre nach dem Kauf ist ein Vorgehen möglich.
               </p>
 
@@ -969,7 +969,7 @@ const KaufvertragPruefen: React.FC = () => {
         </section>
 
         {/* ==========================================
-            SECTION 10 — STATS
+            SECTION 10, STATS
             ========================================== */}
         <section className={styles.statsSection}>
           <div className={styles.container}>

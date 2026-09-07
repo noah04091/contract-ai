@@ -866,7 +866,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
 
             <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs} style={{ maxWidth: '860px', margin: '0 auto' }}>
               <p className={styles.problemText}>
-                Ein Arbeitsvertrag ist mehr als die Summe seiner Klauseln — er ist die rechtliche
+                Ein Arbeitsvertrag ist mehr als die Summe seiner Klauseln, er ist die rechtliche
                 Basis deines beruflichen Alltags und entscheidet im Streitfall darüber, wer
                 am Ende was bekommt. Das Bundesarbeitsgericht (BAG) hat in den letzten Jahren in
                 zahlreichen Urteilen klargestellt, dass viele in der Praxis gängige Vertragsklauseln
@@ -875,12 +875,12 @@ const ArbeitsvertragPruefen: React.FC = () => {
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Probezeit und Kündigungsfristen — die ersten Sechs Monate entscheiden
+                Probezeit und Kündigungsfristen: die ersten sechs Monate entscheiden
               </h3>
               <p className={styles.problemText}>
                 Die Probezeit darf nach <strong>§ 622 Abs. 3 BGB</strong> maximal sechs Monate
                 betragen. Während dieser Zeit gilt eine verkürzte Kündigungsfrist von zwei Wochen
-                zu jedem beliebigen Tag — ohne Angabe von Gründen. Verträge, die eine Probezeit
+                zu jedem beliebigen Tag, ohne Angabe von Gründen. Verträge, die eine Probezeit
                 von zwölf Monaten vorsehen, sind hinsichtlich der verkürzten Kündigungsfrist über
                 die ersten sechs Monate hinaus unwirksam. Nach Ablauf der Probezeit greifen die
                 gestaffelten Kündigungsfristen des § 622 Abs. 1 und 2 BGB, die mit zunehmender
@@ -888,14 +888,14 @@ const ArbeitsvertragPruefen: React.FC = () => {
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Überstunden — pauschale Abgeltung ist meist eine Falle
+                Überstunden: pauschale Abgeltung ist meist eine Falle
               </h3>
               <p className={styles.problemText}>
                 Eine in vielen Verträgen zu findende Klausel lautet sinngemäß: „Mit dem Gehalt sind
                 alle Überstunden abgegolten." Diese Formulierung ist nach ständiger BAG-Rechtsprechung
                 (grundlegend <strong>BAG, 22.02.2012 – 5 AZR 765/10</strong>) intransparent und damit
                 nach § 307 Abs. 1 S. 2 BGB unwirksam. Der Arbeitnehmer kann nicht erkennen, welche
-                Leistung er erbringen muss. Die Folge: Geleistete Überstunden sind <strong>zusätzlich</strong>
+                Leistung er erbringen muss. Die Folge: Geleistete Überstunden sind <strong>zusätzlich</strong>{' '}
                 zu vergüten oder durch Freizeit auszugleichen. Wirksam wäre nur eine Klausel mit
                 klarer Höchstgrenze, etwa „bis zu 10 Überstunden monatlich abgegolten". Mehr zur
                 Überstundenregelung findest du im{' '}
@@ -903,7 +903,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Wettbewerbsverbote — ohne Karenzentschädigung kein Verbot
+                Wettbewerbsverbote: ohne Karenzentschädigung kein Verbot
               </h3>
               <p className={styles.problemText}>
                 Während des laufenden Arbeitsverhältnisses gilt ein Wettbewerbsverbot bereits aus
@@ -913,7 +913,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 wenn der Arbeitgeber eine Karenzentschädigung von <strong>mindestens 50 % der
                 zuletzt bezogenen vertragsmäßigen Leistungen</strong> zusagt (§ 74 Abs. 2 HGB).
                 Fehlt diese Zusage, ist die Klausel unverbindlich (BAG, 22.03.2017 – 10 AZR 448/15)
-                — du wärst frei, sofort zur Konkurrenz zu wechseln. Auch eine fehlerhaft
+               , du wärst frei, sofort zur Konkurrenz zu wechseln. Auch eine fehlerhaft
                 berechnete Entschädigung kann das Verbot kippen.
               </p>
 
@@ -922,13 +922,13 @@ const ArbeitsvertragPruefen: React.FC = () => {
               </h3>
               <p className={styles.problemText}>
                 Drei weitere Klausel-Typen sind besonders fehleranfällig: Erstens
-                <strong> Rückzahlungsklauseln für Fortbildungskosten</strong> — hier gilt die
+                <strong> Rückzahlungsklauseln für Fortbildungskosten</strong>, hier gilt die
                 BAG-Staffelung: Die Bindungsdauer muss in einem angemessenen Verhältnis zur Dauer
                 der Fortbildung stehen (z.B. bis 1 Monat Fortbildung = max. 6 Monate Bindung).
-                Zweitens <strong>Vertragsstrafen</strong> — sie dürfen die Vergütung für den
+                Zweitens <strong>Vertragsstrafen</strong>, sie dürfen die Vergütung für den
                 Zeitraum der vorzeitigen Beendigung nicht überschreiten, in der Praxis also
                 typischerweise nicht mehr als ein Bruttomonatsgehalt (BAG, 04.03.2004 – 8 AZR 196/03).
-                Drittens <strong>Verfallklauseln</strong> — sie müssen mindestens drei Monate
+                Drittens <strong>Verfallklauseln</strong>, sie müssen mindestens drei Monate
                 Geltendmachungsfrist einräumen (BAG, 18.09.2018 – 9 AZR 162/18); kürzere Fristen
                 sind insgesamt unwirksam.
               </p>
@@ -938,18 +938,18 @@ const ArbeitsvertragPruefen: React.FC = () => {
               </h3>
               <p className={styles.problemText}>
                 Eine unwirksame Klausel macht <strong>nicht den ganzen Vertrag unwirksam</strong>.
-                Nach § 306 Abs. 1 BGB bleibt der Vertrag im Übrigen bestehen — die problematische
+                Nach § 306 Abs. 1 BGB bleibt der Vertrag im Übrigen bestehen, die problematische
                 Klausel wird einfach durch die gesetzliche Regelung ersetzt. Für dich als
                 Arbeitnehmer ist das oft ein Vorteil: Eine unwirksame Wettbewerbsklausel etwa
                 bedeutet vollständige Wechselfreiheit. Eine unwirksame Überstundenpauschale
                 bedeutet Anspruch auf zusätzliche Vergütung. Ob du den Arbeitgeber direkt mit
                 der Erkenntnis konfrontierst oder dir das Wissen für später aufhebst, ist eine
-                strategische Entscheidung — die KI-Analyse gibt dir die Faktengrundlage.
+                strategische Entscheidung, die KI-Analyse gibt dir die Faktengrundlage.
               </p>
 
               <p className={styles.problemText} style={{ marginTop: '1.5rem' }}>
-                Wenn du im konkreten Fall unsicher bist — etwa bei laufenden Streitigkeiten,
-                geplanter Kündigung oder Aufhebungsvertrag — empfehlen wir zusätzlich einen
+                Wenn du im konkreten Fall unsicher bist, etwa bei laufenden Streitigkeiten,
+                geplanter Kündigung oder Aufhebungsvertrag, empfehlen wir zusätzlich einen
                 Fachanwalt für Arbeitsrecht. Die KI-Analyse ist eine fundierte
                 Erst-Risikoanalyse, ersetzt aber keine individuelle Rechtsberatung im Sinne des
                 Rechtsdienstleistungsgesetzes (RDG). Lies dazu auch unseren{' '}
@@ -961,7 +961,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
         </section>
 
         {/* ==========================================
-            SECTION 10 — STATS
+            SECTION 10, STATS
             ========================================== */}
         <section className={styles.statsSection}>
           <div className={styles.container}>

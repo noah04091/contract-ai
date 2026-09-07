@@ -2280,12 +2280,7 @@
    margin: 0 auto) und begann dadurch 160 px weiter rechts als seine eigene
    Ueberschrift. Steht problemContent allein im Container (nicht im
    zweispaltigen Raster), gehoert es an dieselbe Kante wie alles andere. */
-.container > .problemContent,
-.containerLg > .problemContent {
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  max-width: 74ch !important;
-}
+/* (ersetzt durch den Magazin-Satz weiter unten) */
 
 /* 3) PRODUKTANSICHT auf sehr schmalen Geraeten: der Inhalt war bis zu 51 px
    breiter als das Fenster. Innenabstaende und Schrift dort kleiner, lange
@@ -2361,4 +2356,132 @@
   background-repeat: no-repeat;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
+}
+
+/* ================================================================
+   RATGEBER als Magazin-Satz
+   Der Ratgeber stand als schmale Textsaeule ganz links, rechts blieb die
+   halbe Seite leer. Er besteht aus einem Vorspann und danach aus Paaren von
+   Zwischenueberschrift und Absatz. Genau daraus laesst sich ein zweispaltiger
+   Satz bauen, ohne einen einzigen Satz zu erfinden:
+   Vorspann ueber die volle Breite, danach die Zwischenueberschrift links und
+   ihr Text rechts. Das fuellt die Seite und macht den Ratgeber ueberfliegbar.
+   ================================================================ */
+.container > .problemContent,
+.containerLg > .problemContent {
+  display: grid;
+  /* Die Spalten teilen den Container so, dass die Textspalte bis zur
+     rechten Kante laeuft. Die Zeilenlaenge wird nicht ueber max-width
+     begrenzt, sondern ueber die Schriftgroesse: bei 1180px Containerbreite
+     ergeben sich rund 70 Zeichen je Zeile. */
+  grid-template-columns: minmax(0, 0.52fr) minmax(0, 1fr);
+  column-gap: clamp(26px, 3.6vw, 52px);
+  row-gap: 0;
+  align-items: start;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Zwischenueberschriften nach links, in die eigene Spalte */
+.container > .problemContent > h3,
+.containerLg > .problemContent > h3 {
+  grid-column: 1;
+  margin: 34px 0 0 !important;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(18px, 2vw, 25px) !important;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  color: var(--tinte);
+  position: relative;
+  padding-top: 34px;
+  border-top: 1px solid var(--linie);
+}
+
+/* Der erste Absatz ist der Vorspann: volle Breite, etwas groesser */
+.container > .problemContent > p:first-of-type,
+.containerLg > .problemContent > p:first-of-type {
+  grid-column: 1 / -1;
+  max-width: 68ch;
+  font-size: clamp(18px, 1.6vw, 22px);
+  line-height: 1.62;
+  color: var(--tinte-weich);
+}
+
+/* Alle weiteren Absaetze in die rechte Spalte, auf Hoehe ihrer Ueberschrift */
+.container > .problemContent > p,
+.containerLg > .problemContent > p {
+  grid-column: 2;
+  font-size: clamp(17px, 1.44vw, 20.5px);
+  line-height: 1.68;
+  margin: 34px 0 0;
+  padding-top: 34px;
+  border-top: 1px solid transparent;
+}
+
+.container > .problemContent > p:first-of-type,
+.containerLg > .problemContent > p:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Folgt einem Absatz ein weiterer ohne neue Ueberschrift, schliesst er
+   direkt an, statt eine neue Reihe zu beginnen. */
+.container > .problemContent > p + p,
+.containerLg > .problemContent > p + p {
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Listen im Ratgeber gehoeren in die Textspalte */
+.container > .problemContent > ul,
+.container > .problemContent > ol,
+.containerLg > .problemContent > ul,
+.containerLg > .problemContent > ol {
+  grid-column: 2;
+  max-width: 68ch;
+  margin: 14px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 8px;
+  color: var(--tinte-weich);
+}
+
+.container > .problemContent li::marker,
+.containerLg > .problemContent li::marker {
+  color: var(--blau);
+}
+
+@media (max-width: 900px) {
+  .container > .problemContent,
+  .containerLg > .problemContent {
+    grid-template-columns: 1fr;
+  }
+
+  .container > .problemContent > h3,
+  .containerLg > .problemContent > h3,
+  .container > .problemContent > p,
+  .containerLg > .problemContent > p,
+  .container > .problemContent > ul,
+  .containerLg > .problemContent > ul,
+  .container > .problemContent > ol,
+  .containerLg > .problemContent > ol {
+    grid-column: 1;
+    max-width: none;
+  }
+
+  .container > .problemContent > p,
+  .containerLg > .problemContent > p {
+    margin-top: 14px;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .container > .problemContent > h3,
+  .containerLg > .problemContent > h3 {
+    margin-top: 30px !important;
+    padding-top: 26px;
+  }
 }

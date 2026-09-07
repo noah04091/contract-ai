@@ -869,47 +869,47 @@ const MietvertragPruefen: React.FC = () => {
 
             <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs} style={{ maxWidth: '860px', margin: '0 auto' }}>
               <p className={styles.problemText}>
-                Ein Mietvertrag begleitet dich oft jahrelang — und entscheidet darüber, ob du am
+                Ein Mietvertrag begleitet dich oft jahrelang, und entscheidet darüber, ob du am
                 Ende der Mietzeit drei Monatsmieten zurückbekommst oder vierstellige
                 Renovierungskosten draufzahlst. Der Bundesgerichtshof hat in den letzten
                 zwei Jahrzehnten in einer Serie von Grundsatzurteilen ganze Klauselgruppen für
                 unwirksam erklärt. Wer seinen Mietvertrag prüfen lässt, schützt sich vor genau
-                diesen Stolperfallen — und kennt seine echten Rechte.
+                diesen Stolperfallen, und kennt seine echten Rechte.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Schönheitsreparaturen — der Klassiker unter den unwirksamen Klauseln
+                Schönheitsreparaturen: der Klassiker unter den unwirksamen Klauseln
               </h3>
               <p className={styles.problemText}>
                 Nach <strong>§ 535 Abs. 1 S. 2 BGB</strong> trägt eigentlich der Vermieter die
-                Erhaltungspflicht — er kann sie aber wirksam auf den Mieter übertragen, wenn
+                Erhaltungspflicht, er kann sie aber wirksam auf den Mieter übertragen, wenn
                 bestimmte Voraussetzungen erfüllt sind. Die Schwelle hat der BGH in mehreren
                 Urteilen extrem hoch gelegt. Unwirksam sind unter anderem starre Fristenpläne
-                ohne Berücksichtigung des Zustands (BGH, 23.06.2004 – VIII ZR 361/03),
+                ohne Berücksichtigung des Zustands (BGH, 23.06.2004 — VIII ZR 361/03),
                 Renovierungspflichten bei unrenoviert übergebener Wohnung ohne angemessenen
-                Ausgleich (das Grundsatzurteil <strong>BGH, 18.03.2015 – VIII ZR 185/14</strong>)
-                und Quotenabgeltungsklauseln (BGH, 18.03.2015 – VIII ZR 242/13). Wenn auch nur
+                Ausgleich (das Grundsatzurteil <strong>BGH, 18.03.2015 — VIII ZR 185/14</strong>)
+                und Quotenabgeltungsklauseln (BGH, 18.03.2015 — VIII ZR 242/13). Wenn auch nur
                 eine dieser Klauseln in deinem Vertrag steht, fällt häufig die gesamte
                 Schönheitsreparatur-Regelung weg. Mehr dazu im{' '}
                 <Link to="/blog/mietvertrag-unwirksame-klauseln">Ratgeber zu unwirksamen Mietvertragsklauseln</Link>.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Kaution — drei Monatsmieten sind die Obergrenze
+                Kaution: drei Monatsmieten sind die Obergrenze
               </h3>
               <p className={styles.problemText}>
                 Nach <strong>§ 551 Abs. 1 BGB</strong> darf die Mietkaution höchstens das
                 Dreifache der monatlichen <em>Nettokaltmiete</em> (also ohne Betriebskosten) betragen.
-                Vereinbarungen über mehr sind insoweit nichtig — du kannst den Mehrbetrag jederzeit
+                Vereinbarungen über mehr sind insoweit nichtig, du kannst den Mehrbetrag jederzeit
                 zurückfordern. Außerdem: Die Kaution darf in drei gleichen Monatsraten gezahlt werden
                 (§ 551 Abs. 2 BGB), die erste fällig zu Mietbeginn. Der Vermieter muss die Kaution
                 getrennt von seinem Vermögen anlegen (Treuhandprinzip) und zum üblichen Zinssatz für
-                Spareinlagen mit dreimonatiger Kündigungsfrist verzinsen — die Zinsen stehen dem
+                Spareinlagen mit dreimonatiger Kündigungsfrist verzinsen, die Zinsen stehen dem
                 Mieter zu.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Indexmiete und Mieterhöhung — strenge Formvorschriften
+                Indexmiete und Mieterhöhung: strenge Formvorschriften
               </h3>
               <p className={styles.problemText}>
                 Eine Indexmiete (<strong>§ 557b BGB</strong>) koppelt die Miethöhe an den vom
@@ -927,11 +927,11 @@ const MietvertragPruefen: React.FC = () => {
               </h3>
               <p className={styles.problemText}>
                 Drei weitere Klausel-Typen sind besonders fehleranfällig: Erstens
-                <strong> generelle Tierhaltungsverbote</strong> — sie sind nach BGH, 20.03.2013 –
+                <strong> generelle Tierhaltungsverbote</strong>, sie sind nach BGH, 20.03.2013,
                 VIII ZR 168/12 unwirksam; Kleintiere sind ohnehin erlaubt, bei Hund und Katze ist
-                eine Einzelfallabwägung nötig. Zweitens <strong>überlange Kündigungsausschlüsse</strong> —
+                eine Einzelfallabwägung nötig. Zweitens <strong>überlange Kündigungsausschlüsse</strong>,
                 in Formularverträgen darf der beidseitige Kündigungsverzicht maximal vier Jahre
-                dauern (BGH, 06.04.2005 – VIII ZR 27/04). Drittens <strong>Kleinreparaturklauseln</strong> —
+                dauern (BGH, 06.04.2005 — VIII ZR 27/04). Drittens <strong>Kleinreparaturklauseln</strong>,
                 pro Reparatur sind etwa 100 € zumutbar, das Jahresvolumen darf 8 % der
                 Jahresnettokaltmiete nicht übersteigen; höhere Klauseln fallen komplett weg.
               </p>
@@ -941,19 +941,19 @@ const MietvertragPruefen: React.FC = () => {
               </h3>
               <p className={styles.problemText}>
                 Eine unwirksame Klausel macht <strong>nicht den ganzen Mietvertrag unwirksam</strong>.
-                Nach § 306 Abs. 1 BGB bleibt der Vertrag im Übrigen bestehen — die problematische
+                Nach § 306 Abs. 1 BGB bleibt der Vertrag im Übrigen bestehen, die problematische
                 Klausel wird einfach durch die gesetzliche Regelung ersetzt. Für dich als Mieter
                 ist das fast immer ein Vorteil: Die unwirksame Schönheitsreparaturklausel bedeutet
                 keine Renovierungspflicht. Der unwirksame Kündigungsausschluss bedeutet jederzeitige
                 Kündigungsmöglichkeit. Die überhöhte Kautionsforderung kann zurückgeholt werden.
                 Wann du den Vermieter direkt mit der Erkenntnis konfrontierst und wann du das
-                Wissen für später aufhebst (etwa beim Auszug), ist eine strategische Entscheidung —
+                Wissen für später aufhebst (etwa beim Auszug), ist eine strategische Entscheidung,
                 die KI-Analyse gibt dir die Faktengrundlage.
               </p>
 
               <p className={styles.problemText} style={{ marginTop: '1.5rem' }}>
-                Bei laufenden Streitigkeiten — drohende Räumungsklage, Eigenbedarfskündigung,
-                Mieterhöhungsstreit, Kautionsrückforderung — empfehlen wir zusätzlich einen
+                Bei laufenden Streitigkeiten, drohende Räumungsklage, Eigenbedarfskündigung,
+                Mieterhöhungsstreit, Kautionsrückforderung, empfehlen wir zusätzlich einen
                 Fachanwalt für Mietrecht oder die Mitgliedschaft in einem Mieterverein. Die
                 KI-Analyse ist eine fundierte Erst-Risikoanalyse, ersetzt aber keine
                 individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG).
@@ -965,7 +965,7 @@ const MietvertragPruefen: React.FC = () => {
         </section>
 
         {/* ==========================================
-            SECTION 10 — STATS
+            SECTION 10, STATS
             ========================================== */}
         <section className={styles.statsSection}>
           <div className={styles.container}>

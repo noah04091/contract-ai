@@ -872,22 +872,22 @@ const NdaPruefen: React.FC = () => {
 
             <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs} style={{ maxWidth: '860px', margin: '0 auto' }}>
               <p className={styles.problemText}>
-                Ein NDA — Non-Disclosure Agreement, auf Deutsch Geheimhaltungsvereinbarung — ist
+                Ein NDA, Non-Disclosure Agreement, auf Deutsch Geheimhaltungsvereinbarung, ist
                 der Standardvertrag, bevor in B2B-Verhandlungen sensible Informationen ausgetauscht
                 werden. Was als „Formalität" daherkommt, kann dich jahrelang binden, in
                 fünfstellige Vertragsstrafen treiben oder dir komplette Geschäftsfelder verschließen.
                 Seit Inkrafttreten des Geschäftsgeheimnisgesetzes (GeschGehG) im April 2019 sind
-                die rechtlichen Anforderungen gestiegen — und gleichzeitig sind viele am Markt
+                die rechtlichen Anforderungen gestiegen, und gleichzeitig sind viele am Markt
                 kursierende NDA-Vorlagen nicht mehr auf dem aktuellen Stand.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Was nach GeschGehG ein Geschäftsgeheimnis ist — und was nicht
+                Was nach GeschGehG ein Geschäftsgeheimnis ist, und was nicht
               </h3>
               <p className={styles.problemText}>
                 Nach <strong>§ 2 Nr. 1 GeschGehG</strong> ist ein Geschäftsgeheimnis eine Information,
                 die (a) weder allgemein bekannt noch ohne Weiteres zugänglich ist, (b) einen
-                wirtschaftlichen Wert besitzt und (c) durch <em>angemessene Geheimhaltungsmaßnahmen</em>
+                wirtschaftlichen Wert besitzt und (c) durch <em>angemessene Geheimhaltungsmaßnahmen</em>{' '}
                 geschützt wird. Genau dieser dritte Punkt ist neu und entscheidend: Wenn du selbst
                 deine Informationen nicht aktiv schützt (Zugriffskontrollen, Verschlüsselung,
                 Awareness der Mitarbeiter), genießt du auch über ein NDA hinaus keinen rechtlichen
@@ -897,7 +897,7 @@ const NdaPruefen: React.FC = () => {
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Geheimhaltungsdauer — kürzer ist meistens besser
+                Geheimhaltungsdauer: kürzer ist meistens besser
               </h3>
               <p className={styles.problemText}>
                 Marktüblich sind NDA-Geheimhaltungsdauern von <strong>2 bis 3 Jahren</strong> nach
@@ -905,13 +905,13 @@ const NdaPruefen: React.FC = () => {
                 strategische Forschung) sind 5 Jahre vertretbar. Unbefristete Klauseln sind in
                 Formularverträgen nach AGB-Kontrolle (§ 307 Abs. 1 BGB) regelmäßig unwirksam.
                 Wichtig zu wissen: Echte Geschäftsgeheimnisse sind nach GeschGehG ohnehin so lange
-                geschützt, wie sie geheim bleiben — du brauchst dafür keine ewige NDA-Klausel.
+                geschützt, wie sie geheim bleiben, du brauchst dafür keine ewige NDA-Klausel.
                 Eine kürzere Frist gibt dir und der Gegenseite Planungssicherheit, ohne den Schutz
                 wirklich zu schwächen.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Vertragsstrafe — angemessen und gestaffelt
+                Vertragsstrafe: angemessen und gestaffelt
               </h3>
               <p className={styles.problemText}>
                 Pauschale Vertragsstrafen wie „100.000 € pro Verstoß" sind häufig unverhältnismäßig
@@ -920,32 +920,32 @@ const NdaPruefen: React.FC = () => {
                 erkennbaren Verhältnis zum potenziellen Schaden stehen. Eine professionelle
                 Vertragsstrafenklausel staffelt nach Schwere des Verstoßes und enthält ein
                 ausdrückliches Recht auf Geltendmachung weitergehender Schadensersatzansprüche.
-                Bei Formularklauseln greift zusätzlich die AGB-Kontrolle nach §§ 305 ff. BGB —
+                Bei Formularklauseln greift zusätzlich die AGB-Kontrolle nach §§ 305 ff. BGB,
                 ein gestalterischer Spielraum für Mondbeträge besteht praktisch nicht.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Die fünf Standard-Carve-Outs — pflichtlektüre für jedes NDA
+                Die fünf Standard-Carve-Outs: Pflichtlektüre für jedes NDA
               </h3>
               <p className={styles.problemText}>
-                Jedes professionelle NDA enthält fünf Ausnahmen, in denen die Geheimhaltungspflicht
+                Jedes professionelle NDA enthält fünf Ausnahmen, in denen die Geheimhaltungspflicht{' '}
                 <em>nicht</em> greift: (1) Informationen, die ohne Verschulden des Empfangenden
                 öffentlich bekannt werden; (2) Informationen, die dem Empfangenden bereits vor
-                Erhalt nachweislich bekannt waren; (3) Informationen, die der Empfangende
+                Erhalt nachweislich bekannt waren; (3) Informationen, die der Empfangende{' '}
                 <em>unabhängig</em> entwickelt; (4) Informationen, die der Empfangende rechtmäßig
                 von Dritten ohne Geheimhaltungspflicht erhält; (5) Informationen, deren Offenlegung
                 gesetzlich, behördlich oder gerichtlich vorgeschrieben ist. Wenn diese Carve-Outs
                 fehlen, gerät der Empfangende in eine unmögliche Situation: Er weiß nie sicher,
-                ob eine bestimmte Information überhaupt vom NDA erfasst ist — und dann gilt im
+                ob eine bestimmte Information überhaupt vom NDA erfasst ist, und dann gilt im
                 Zweifel die strenge Klausel.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Mutual NDA vs einseitiges NDA — wann was?
+                Mutual NDA vs einseitiges NDA: wann was?
               </h3>
               <p className={styles.problemText}>
-                Wenn nur eine Partei vertrauliche Informationen weitergibt — etwa ein Startup an
-                einen potenziellen Investor — ist ein einseitiges (one-way) NDA passend. In den
+                Wenn nur eine Partei vertrauliche Informationen weitergibt, etwa ein Startup an
+                einen potenziellen Investor, ist ein einseitiges (one-way) NDA passend. In den
                 meisten B2B-Verhandlungen tauschen aber <em>beide</em> Parteien Informationen aus:
                 der Kunde nennt Anforderungen und Budget, der Anbieter zeigt Lösungsansätze und
                 Preise. In diesen Fällen ist ein gegenseitiges (mutual) NDA der Standard. Wenn dir
@@ -956,8 +956,8 @@ const NdaPruefen: React.FC = () => {
               </p>
 
               <p className={styles.problemText} style={{ marginTop: '1.5rem' }}>
-                Bei strategisch hochwertigen Geschäften — M&A-Verhandlungen, Investorenrunden,
-                internationalen Joint Ventures — empfehlen wir zusätzlich einen Fachanwalt für
+                Bei strategisch hochwertigen Geschäften, M&A-Verhandlungen, Investorenrunden,
+                internationalen Joint Ventures, empfehlen wir zusätzlich einen Fachanwalt für
                 Wirtschaftsrecht oder IT-Recht. Die KI-Analyse ist eine fundierte Erst-Risikoanalyse,
                 ersetzt aber keine individuelle Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes
                 (RDG). Lies dazu auch unseren{' '}
@@ -968,7 +968,7 @@ const NdaPruefen: React.FC = () => {
         </section>
 
         {/* ==========================================
-            SECTION 10 — STATS
+            SECTION 10, STATS
             ========================================== */}
         <section className={styles.statsSection}>
           <div className={styles.container}>

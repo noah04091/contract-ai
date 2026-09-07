@@ -965,7 +965,7 @@ const VertragErstellen: React.FC = () => {
         </section>
 
         {/* ==========================================
-            SECTION 10 — STATS (ehrliche Kennzahlen)
+            SECTION 10, STATS (ehrliche Kennzahlen)
             ========================================== */}
         <section className={styles.statsSection}>
           <div className={styles.container}>

@@ -866,32 +866,32 @@ const KuendigungPruefen: React.FC = () => {
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
               <span className={styles.sectionEyebrow}>Ratgeber</span>
-              <h2 className={styles.sectionTitle}>Kündigung erhalten — was du jetzt wissen musst</h2>
+              <h2 className={styles.sectionTitle}>Kündigung erhalten: was du jetzt wissen musst</h2>
             </div>
 
             <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs} style={{ maxWidth: '860px', margin: '0 auto' }}>
               <p className={styles.problemText}>
                 Der Moment, in dem eine Kündigung auf dem Tisch liegt, ist für die meisten
                 Menschen ein Ausnahmezustand. Genau deshalb ist es wichtig zu wissen: Das
-                Arbeitsrecht gibt dir Rechte und Fristen an die Hand — aber es verlangt, dass du
+                Arbeitsrecht gibt dir Rechte und Fristen an die Hand, aber es verlangt, dass du
                 schnell handelst. Die folgenden Punkte geben dir den Überblick; sie ersetzen keine
                 Rechtsberatung im Einzelfall.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Der Zugang entscheidet — nicht das Datum im Briefkopf
+                Der Zugang entscheidet: nicht das Datum im Briefkopf
               </h3>
               <p className={styles.problemText}>
-                Alle Fristen laufen ab dem <strong>Zugang</strong> der Kündigung — also ab dem
+                Alle Fristen laufen ab dem <strong>Zugang</strong> der Kündigung, also ab dem
                 Moment, in dem das Schreiben so in deinen Machtbereich gelangt, dass du unter
                 gewöhnlichen Umständen davon Kenntnis nehmen kannst (etwa der Einwurf in deinen
                 Briefkasten). Das Datum im Briefkopf ist dafür unerheblich. Notiere dir deshalb,
-                <strong> wann</strong> und <strong>wie</strong> dir die Kündigung zugegangen ist —
+                <strong> wann</strong> und <strong>wie</strong> dir die Kündigung zugegangen ist,
                 im Streitfall muss der Arbeitgeber den Zugang beweisen.
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Die 3-Wochen-Frist — dein wichtigster Hebel
+                Die 3-Wochen-Frist: dein wichtigster Hebel
               </h3>
               <p className={styles.problemText}>
                 Ob eine Kündigung sozial gerechtfertigt, formwirksam oder fristgerecht ist, wird
@@ -900,7 +900,7 @@ const KuendigungPruefen: React.FC = () => {
                 fast alle Mängel. Das bedeutet umgekehrt: Auch eine offensichtlich fehlerhafte
                 Kündigung wird bestandskräftig, wenn du nichts tust. Die Klage kann beim
                 Arbeitsgericht auch ohne Anwalt erhoben werden (in der ersten Instanz besteht kein
-                Anwaltszwang) — empfehlenswert ist anwaltliche Unterstützung trotzdem, vor allem
+                Anwaltszwang), empfehlenswert ist anwaltliche Unterstützung trotzdem, vor allem
                 wenn es um eine Abfindung geht.
               </p>
 
@@ -919,11 +919,11 @@ const KuendigungPruefen: React.FC = () => {
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Arbeitslosengeld sichern — die unterschätzten Pflichten
+                Arbeitslosengeld sichern: die unterschätzten Pflichten
               </h3>
               <p className={styles.problemText}>
                 Parallel zum Arbeitsrecht läuft das Sozialrecht: Melde dich <strong>unverzüglich
-                arbeitsuchend</strong> (§ 38 SGB III — bei weniger als drei Monaten Restlaufzeit
+                arbeitsuchend</strong> (§ 38 SGB III, bei weniger als drei Monaten Restlaufzeit
                 binnen drei Tagen nach Kenntnis) und rechtzeitig vor Vertragsende arbeitslos.
                 Eine verspätete Arbeitsuchend-Meldung kann eine einwöchige Sperrzeit auslösen.
                 Besondere Vorsicht gilt bei <strong>Aufhebungsverträgen</strong>: Wer an der
@@ -932,16 +932,16 @@ const KuendigungPruefen: React.FC = () => {
               </p>
 
               <h3 style={{ marginTop: '2rem', marginBottom: '0.75rem', fontSize: '1.35rem', fontWeight: 600 }}>
-                Was die KI-Analyse leistet — und was nicht
+                Was die KI-Analyse leistet, und was nicht
               </h3>
               <p className={styles.problemText}>
                 Contract AI verschafft dir in wenigen Minuten den strukturierten Überblick:
                 Welche Fristen laufen ab wann, welche Formfragen stellen sich, welche Schritte
-                stehen an — mit wörtlichen Belegen aus deinem Schreiben und automatischen
+                stehen an, mit wörtlichen Belegen aus deinem Schreiben und automatischen
                 Kalender-Erinnerungen. Das ist eine <strong>Ersteinschätzung</strong>, keine
                 Rechtsberatung im Sinne des RDG. Ob du tatsächlich Klage erhebst, ob ein
                 Formfehler im Einzelfall trägt und wie du verhandelst, gehört in die Hände eines
-                Fachanwalts für Arbeitsrecht — je früher, desto besser, denn die drei Wochen
+                Fachanwalts für Arbeitsrecht, je früher, desto besser, denn die drei Wochen
                 laufen ab Tag eins.
               </p>
             </div>
@@ -949,7 +949,7 @@ const KuendigungPruefen: React.FC = () => {
         </section>
 
         {/* ==========================================
-            SECTION 10 — STATS (ehrliche Kennzahlen)
+            SECTION 10, STATS (ehrliche Kennzahlen)
             ========================================== */}
         <section className={styles.statsSection}>
           <div className={styles.container}>
