@@ -339,8 +339,11 @@ export const IMPORTANCE_CONFIG: Record<ImportanceLevel, { label: string; color: 
 export const STRENGTH_CONFIG: Record<ClauseStrength, { label: string; color: string }> = {
   strong: { label: 'Stark', color: '#10B981' },
   adequate: { label: 'Ausreichend', color: '#F59E0B' },
-  weak: { label: 'Schwach', color: '#EF4444' },
-  critical: { label: 'Kritisch', color: '#AF52DE' }
+  /* 07.09.2026: 'Kritisch' war Lila und wirkte dadurch harmloser als
+     'Schwach' in Rot. Jetzt Orange fuer schwach und Rot fuer kritisch,
+     die Steigerung stimmt wieder. Gleiche Logik wie getScoreColor. */
+  weak: { label: 'Schwach', color: '#F97316' },
+  critical: { label: 'Kritisch', color: '#EF4444' }
 };
 
 export const INDUSTRY_LABELS: Record<IndustryType, string> = {
