@@ -1,8 +1,7 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info, BookmarkPlus, HelpCircle, ChevronsUpDown, ChevronsDownUp } from 'lucide-react';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info, BookmarkPlus, ChevronsUpDown, ChevronsDownUp } from 'lucide-react';
 import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause, ClauseCategory } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
-import ExecutiveSummary from './ExecutiveSummary';
 import { apiCall } from '../../utils/api';
 import { useToast } from '../../context/ToastContext';
 import styles from '../../styles/OptimizerV2.module.css';
@@ -88,257 +87,318 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
 
   const [showScoreInfo, setShowScoreInfo] = useState(false);
 
+  /* 07.09.2026: Ampelfarbe fuer die linke Kante des Kopfes. Ohne
+     summary richtet sie sich nach dem Gesamtwert. */
+  const ampelKlasse = result.summary
+    ? (result.summary.trafficLight === 'green' ? styles.oeKopfGruen
+      : result.summary.trafficLight === 'red' ? styles.oeKopfRot : styles.oeKopfGelb)
+    : (scores.overall >= 75 ? styles.oeKopfGruen
+      : scores.overall >= 50 ? styles.oeKopfGelb : styles.oeKopfRot);
+
+  const ampelTextKlasse = result.summary
+    ? (result.summary.trafficLight === 'green' ? styles.oeAmpelGruen
+      : result.summary.trafficLight === 'red' ? styles.oeAmpelRot : styles.oeAmpelGelb)
+    : (scores.overall >= 75 ? styles.oeAmpelGruen
+      : scores.overall >= 50 ? styles.oeAmpelGelb : styles.oeAmpelRot);
+
+  const hatSchwaechen = Boolean(
+    result.summary?.weaknesses &&
+    result.summary.weaknesses !== 'Keine wesentlichen Schwächen erkannt.'
+  );
+
   return (
-    <div className={styles.scoreDashboard}>
-      {/* Executive Summary */}
-      {result.summary && (
-        <ExecutiveSummary summary={result.summary} />
-      )}
+    <div className={`${styles.scoreDashboard} ${styles.oeErgebnis}`}>
 
-      {/* Contract Summary Panel */}
-      <div className={styles.summaryPanel}>
-        <div className={styles.summaryLeft}>
-          <div
-            className={styles.overallScore}
-            style={{ borderColor: getScoreColor(scores.overall) }}
-            onClick={() => setShowScoreInfo(s => !s)}
-            title="Klicken für Score-Erklärung"
-          >
-            <span className={styles.overallScoreNumber}>{scores.overall}</span>
-            <span className={styles.overallScoreMax}>/100</span>
-          </div>
-          <div className={styles.overallScoreInfo}>
-            <span className={styles.overallScoreLabel} style={{ color: getScoreColor(scores.overall) }}>
-              {getScoreLabel(scores.overall)}
-              <button
-                className={styles.scoreInfoBtn}
-                onClick={() => setShowScoreInfo(s => !s)}
-                title="Score-Erklärung"
-              >
-                <HelpCircle size={14} />
-              </button>
+      {/* ══ ZONE 1 · Wie steht es? ══════════════════════════════════
+          Ampel und Score-Panel zusammengezogen. Sie waren KEINE
+          Doppelung: die Ampel traegt Text, das Panel Messwerte. */}
+      <div className={`${styles.oeKopf} ${ampelKlasse}`}>
+        <div
+          className={styles.oeRing}
+          style={{ background: `conic-gradient(${getScoreColor(scores.overall)} 0% ${scores.overall}%, #eef0f4 ${scores.overall}% 100%)` }}
+          title={`Gesamtbewertung ${scores.overall} von 100`}
+        >
+          <span className={styles.oeRingInnen}>{scores.overall}</span>
+        </div>
+
+        <div className={styles.oeKopfMitte}>
+          <p className={`${styles.oeAmpel} ${ampelTextKlasse}`}>
+            {result.summary?.trafficLightLabel || getScoreLabel(scores.overall)}
+            {structure.recognizedAs || structure.contractTypeLabel
+              ? ` · ${structure.recognizedAs || structure.contractTypeLabel}`
+              : ''}
+          </p>
+
+          {result.summary?.verdict && (
+            <p className={styles.oeUrteil}>{result.summary.verdict}</p>
+          )}
+
+          {result.summary?.strengths && (
+            <p className={styles.oeStaerken}>
+              <strong>Stärken:</strong> {result.summary.strengths}
+            </p>
+          )}
+
+          <div className={styles.oeZahlen}>
+            <span className={styles.oeZahl}>
+              <span className={styles.oeZahlWert}>{result.clauses.length}</span>
+              <span className={styles.oeZahlLabel}>Klauseln</span>
             </span>
-            <span className={styles.contractType}>{structure.recognizedAs || structure.contractTypeLabel}</span>
+            <span className={styles.oeZahl}>
+              <span className={styles.oeZahlWert}>{optimizedCount}</span>
+              <span className={styles.oeZahlLabel}>Vorschläge</span>
+            </span>
+            {criticalCount > 0 && (
+              <span className={styles.oeZahl}>
+                <span className={`${styles.oeZahlWert} ${styles.oeZahlKritisch}`}>{criticalCount}</span>
+                <span className={styles.oeZahlLabel}>kritisch</span>
+              </span>
+            )}
+            {weakCount > 0 && (
+              <span className={styles.oeZahl}>
+                <span className={styles.oeZahlWert}>{weakCount}</span>
+                <span className={styles.oeZahlLabel}>schwach</span>
+              </span>
+            )}
           </div>
         </div>
 
-        <div className={styles.summaryStats}>
-          <div className={styles.statItem}>
-            <span className={styles.statValue}>{result.clauses.length}</span>
-            <span className={styles.statLabel}>Klauseln</span>
-          </div>
-          <div className={styles.statItem}>
-            <span className={styles.statValue} style={{ color: '#F59E0B' }}>{optimizedCount}</span>
-            <span className={styles.statLabel}>Optimierbar</span>
-          </div>
-          {criticalCount > 0 && (
-            <div className={styles.statItem}>
-              <span className={styles.statValue} style={{ color: '#EF4444' }}>{criticalCount}</span>
-              <span className={styles.statLabel}>Kritisch</span>
-            </div>
-          )}
-          {weakCount > 0 && (
-            <div className={styles.statItem}>
-              <span className={styles.statValue} style={{ color: '#F59E0B' }}>{weakCount}</span>
-              <span className={styles.statLabel}>Schwach</span>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.summaryActions}>
-          <button className={styles.summaryActionBtn} onClick={() => onNavigate('clauses')}>
+        <div className={styles.oeKopfTun}>
+          <button className={styles.oeKnopf} onClick={() => onNavigate('clauses')}>
             Zu den Klauseln
           </button>
-          <button className={styles.summaryActionBtn} onClick={() => onNavigate('redline')}>
-            Redline ansehen
+          <button className={`${styles.oeKnopf} ${styles.oeKnopfZweit}`} onClick={() => onNavigate('redline')}>
+            Änderungen ansehen
           </button>
         </div>
-
-        {/* Score Info Panel */}
-        {showScoreInfo && (
-          <div className={styles.scoreInfoPanel}>
-            <button className={styles.scoreInfoClose} onClick={() => setShowScoreInfo(false)}><X size={14} /></button>
-            <strong>Wie wird der Score berechnet?</strong>
-            <p>Der Gesamtscore (0–100) setzt sich aus 6 gewichteten Dimensionen zusammen:</p>
-            <div className={styles.scoreInfoGrid}>
-              <div><span style={{ color: '#5856D6' }}>Klauselqualität (25%)</span> — Gewichteter Durchschnitt aller Einzelklausel-Bewertungen (wichtige Klauseln zählen stärker)</div>
-              <div><span style={{ color: '#EF4444' }}>Risiko (20%)</span> — Wie gut schützt der Vertrag vor rechtlichen und finanziellen Risiken?</div>
-              <div><span style={{ color: '#AF52DE' }}>Fairness (20%)</span> — Sind die Rechte und Pflichten ausgewogen verteilt?</div>
-              <div><span style={{ color: '#3B82F6' }}>Klarheit (15%)</span> — Sind die Formulierungen verständlich und eindeutig?</div>
-              <div><span style={{ color: '#10B981' }}>Vollständigkeit (10%)</span> — Sind alle branchenüblichen Klauseln vorhanden?</div>
-              <div><span style={{ color: '#F59E0B' }}>Marktstandard (10%)</span> — Entspricht der Vertrag marktüblichen Regelungen?</div>
-            </div>
-            <div className={styles.scoreInfoScale}>
-              <span><strong>80–100</strong> Sehr gut</span>
-              <span><strong>60–79</strong> Gut</span>
-              <span><strong>40–59</strong> Verbesserbar</span>
-              <span><strong>0–39</strong> Kritisch</span>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Score Cards */}
-      <div className={styles.scoreCards}>
-        {SCORE_CONFIGS.map(({ key, label, icon: Icon, color }) => {
-          const value = scores[key] ?? 0;
-          return (
-            <div key={key} className={styles.scoreCard}>
-              <div className={styles.scoreCardHeader}>
-                <Icon size={16} style={{ color }} />
-                <span className={styles.scoreCardLabel}>{label}</span>
-              </div>
-              <div className={styles.scoreCardBar}>
-                <div
-                  className={styles.scoreCardBarFill}
-                  style={{ width: `${value}%`, backgroundColor: getScoreColor(value) }}
-                />
-              </div>
-              <span className={styles.scoreCardValue} style={{ color: getScoreColor(value) }}>
-                {value}/100
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Score Warnings */}
-      {scores.warnings && scores.warnings.length > 0 && (
-        <div className={styles.scoreWarnings}>
-          {scores.warnings.map((w: { type: string; message: string }, i: number) => (
-            <div key={i} className={styles.scoreWarning}>
-              <AlertTriangle size={16} style={{ color: '#EF4444', flexShrink: 0 }} />
-              <span>{w.message}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Score Explanation */}
-      <ScoreExplanation scores={scores} result={result} />
-
-      {/* Risk Heatmap */}
-      <RiskHeatmap result={result} onNavigate={onNavigate} />
-
-      {/* Marktvergleich */}
-      <MarktVergleich result={result} onNavigate={onNavigate} />
-
-      {/* AI Contract Strategy */}
-      {strategyPoints.length > 0 && (
-        <div className={styles.contractStrategy}>
-          <div className={styles.contractStrategyHeader}>
-            <Sparkles size={15} style={{ color: '#5856D6' }} />
-            <span className={styles.contractStrategyTitle}>Verhandlungsstrategie</span>
-            <span className={styles.contractStrategySubtitle}>Wichtigste Verhandlungspunkte</span>
-          </div>
-          <div className={styles.contractStrategyList}>
-            {strategyPoints.map((point, i) => (
-              <button
-                key={point.clauseId}
-                className={styles.strategyItem}
-                onClick={() => onNavigate('clauses', point.clauseId)}
-              >
-                <span className={styles.strategyRank}>#{i + 1}</span>
-                <div className={styles.strategyInfo}>
-                  <span className={styles.strategyClause}>{point.title}</span>
-                  <span className={styles.strategyInsight} title={point.fullInsight}>{point.insight}</span>
-                </div>
-                <div className={styles.strategyMeta}>
-                  {point.powerBalance !== 'balanced' && (
-                    <span className={styles.strategyTag} style={{
-                      color: point.powerBalance === 'extremely_one_sided' ? '#EF4444' : '#F59E0B',
-                      borderColor: point.powerBalance === 'extremely_one_sided' ? '#EF4444' : '#F59E0B'
-                    }}>
-                      {PB_LABELS[point.powerBalance] || point.powerBalance}
-                    </span>
-                  )}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Importance distribution */}
-      <div className={styles.importanceBar}>
-        <div className={styles.importanceBarHeader}>
-          <Flame size={14} style={{ color: '#EF4444' }} />
-          <span className={styles.importanceBarTitle}>Klausel-Priorität</span>
-        </div>
-        <div className={styles.importanceItems}>
-          {(Object.entries(importanceCounts) as [ImportanceLevel, number][])
-            .filter(([, count]) => count > 0)
-            .map(([level, count]) => {
-              const config = IMPORTANCE_CONFIG[level];
-              return (
-                <button
-                  key={level}
-                  className={styles.importanceItem}
-                  onClick={() => onNavigate('clauses')}
-                  title={`${count} ${config.label}e Klausel${count > 1 ? 'n' : ''} anzeigen`}
-                >
-                  <span className={styles.importanceDot} style={{ background: config.color }} />
-                  <span className={styles.importanceCount} style={{ color: config.color }}>{count}</span>
-                  <span className={styles.importanceLabel}>{config.label}</span>
-                </button>
-              );
-            })}
-        </div>
-      </div>
-
-      {/* Quick insights */}
-      {(criticalCount > 0 || weakCount > 0) && (
-        <div className={styles.quickInsights}>
-          <AlertTriangle size={16} style={{ color: '#F59E0B' }} />
-          <span>
-            {criticalCount > 0 && `${criticalCount} kritische Klausel${criticalCount > 1 ? 'n' : ''}`}
-            {criticalCount > 0 && weakCount > 0 && ' und '}
-            {weakCount > 0 && `${weakCount} schwache Klausel${weakCount > 1 ? 'n' : ''}`}
-            {' '}gefunden. Klicke auf "Zu den Klauseln" für Details.
+      {/* ══ ZONE 2 · Wo hakt es? ════════════════════════════════════
+          Vier Blicke auf dieselben Klauseln, nebeneinander statt
+          untereinander. */}
+      <div className={styles.oeZone}>
+        <div className={styles.oeZonenKopf}>
+          <span className={styles.oeFrage}>Wo genau hakt es?</span>
+          <span className={styles.oeHinweis}>
+            Mehrere Blickwinkel auf dieselben {result.clauses.length} Klauseln
           </span>
         </div>
-      )}
 
-      {/* Top Risk Clauses */}
-      <TopRiskClauses result={result} onNavigate={onNavigate} />
+        {scores.warnings && scores.warnings.length > 0 && (
+          <div className={styles.scoreWarnings}>
+            {scores.warnings.map((w: { type: string; message: string }, i: number) => (
+              <div key={i} className={styles.scoreWarning}>
+                <AlertTriangle size={16} style={{ color: '#EF4444', flexShrink: 0 }} />
+                <span>{w.message}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
-      {/* Missing Clauses Detection */}
-      <MissingClausesPanel missingClauses={scores.missingClauses} resultId={result.resultId} />
+        <div className={styles.oeZwei}>
+          {/* Bewertung als Zeilenliste statt Karten: in halber Breite
+              brechen fuenf Karten sonst zu 2+2+1 um. Alle Balken
+              beginnen jetzt an derselben Kante und sind vergleichbar. */}
+          <div className={styles.oeKachel}>
+            <p className={styles.oeKachelTitel}>Bewertung nach Bereich</p>
+            <p className={styles.oeKachelUnter}>
+              Wie der Vertrag in den fünf Prüffeldern abschneidet.
+            </p>
+            <div className={styles.oeBewertung}>
+              {SCORE_CONFIGS.map(({ key, label, icon: Icon, color }) => {
+                const value = scores[key] ?? 0;
+                return (
+                  <div key={key} className={styles.oeBewZeile}>
+                    <span className={styles.oeBewName}>
+                      <Icon size={13} style={{ color, flexShrink: 0 }} />
+                      {label}
+                    </span>
+                    <span className={styles.oeBewBalken}>
+                      <span
+                        className={styles.oeBewFuell}
+                        style={{ width: `${value}%`, background: getScoreColor(value) }}
+                      />
+                    </span>
+                    <span className={styles.oeBewWert} style={{ color: getScoreColor(value) }}>
+                      {value}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* Contract metadata */}
-      <div className={styles.metadataGrid}>
-        {structure.parties?.length > 0 && (
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>Parteien</span>
-            <span className={styles.metadataValue}>
-              {structure.parties.map(p => p.name || p.role).join(' / ')}
+          <RiskHeatmap result={result} onNavigate={onNavigate} />
+        </div>
+
+        {/* Volle Breite: die Tabelle hat sechs Spalten und wird in einer
+            halben Spalte unlesbar. */}
+        <MarktVergleich result={result} onNavigate={onNavigate} />
+        <TopRiskClauses result={result} onNavigate={onNavigate} />
+      </div>
+
+      {/* ══ ZONE 3 · Was tun? ═══════════════════════════════════════
+          Verhandlungspunkte und fehlende Klauseln beantworten dieselbe
+          Frage. Dazu die beiden Textzeilen der Ampel, die inhaltlich
+          hierher gehoeren. */}
+      <div className={styles.oeZone}>
+        <div className={styles.oeZonenKopf}>
+          <span className={styles.oeFrage}>Was solltest du tun?</span>
+          <span className={styles.oeHinweis}>Nach Wirkung sortiert</span>
+        </div>
+
+        {(hatSchwaechen || result.summary?.actionRequired) && (
+          <div className={styles.quickInsights}>
+            <AlertTriangle size={16} style={{ color: '#F59E0B', flexShrink: 0 }} />
+            <span>
+              {hatSchwaechen && result.summary?.weaknesses}
+              {hatSchwaechen && result.summary?.actionRequired ? ' ' : ''}
+              {result.summary?.actionRequired}
             </span>
           </div>
         )}
-        {structure.jurisdiction && (
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>Jurisdiktion</span>
-            <span className={styles.metadataValue}>{structure.jurisdiction}</span>
+
+        {strategyPoints.length > 0 && (
+          <div className={styles.contractStrategy}>
+            <div className={styles.contractStrategyHeader}>
+              <Sparkles size={15} style={{ color: '#5856D6' }} />
+              <span className={styles.contractStrategyTitle}>Verhandlungsstrategie</span>
+              <span className={styles.contractStrategySubtitle}>Wichtigste Verhandlungspunkte</span>
+            </div>
+            <div className={styles.contractStrategyList}>
+              {strategyPoints.map((point, i) => (
+                <button
+                  key={point.clauseId}
+                  className={styles.strategyItem}
+                  onClick={() => onNavigate('clauses', point.clauseId)}
+                >
+                  <span className={styles.strategyRank}>#{i + 1}</span>
+                  <div className={styles.strategyInfo}>
+                    <span className={styles.strategyClause}>{point.title}</span>
+                    <span className={styles.strategyInsight} title={point.fullInsight}>{point.insight}</span>
+                  </div>
+                  <div className={styles.strategyMeta}>
+                    {point.powerBalance !== 'balanced' && (
+                      <span className={styles.strategyTag} style={{
+                        color: point.powerBalance === 'extremely_one_sided' ? '#EF4444' : '#F59E0B',
+                        borderColor: point.powerBalance === 'extremely_one_sided' ? '#EF4444' : '#F59E0B'
+                      }}>
+                        {PB_LABELS[point.powerBalance] || point.powerBalance}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         )}
-        {structure.industry && structure.industry !== 'other' && (
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>Branche</span>
-            <span className={styles.metadataValue}>{INDUSTRY_LABELS[structure.industry] || structure.industry}</span>
-          </div>
-        )}
-        {structure.duration && (
-          <div className={styles.metadataItem}>
-            <span className={styles.metadataLabel}>Laufzeit</span>
-            <span className={styles.metadataValue}>{structure.duration}</span>
-          </div>
-        )}
-        <div className={styles.metadataItem}>
-          <span className={styles.metadataLabel}>Qualität</span>
-          <span className={styles.metadataValue}>
-            {structure.maturity === 'high' ? 'Professionell' : structure.maturity === 'medium' ? 'Solide' : 'Basis'}
+
+        <MissingClausesPanel missingClauses={scores.missingClauses} resultId={result.resultId} />
+      </div>
+
+      {/* ══ ZONE 4 · Beiwerk ════════════════════════════════════════
+          Drei Bloecke, die man beim Nachfragen sucht, nicht beim ersten
+          Blick. Nichts geloescht, nur mit einem Deckel versehen. */}
+      <div>
+        <button
+          className={styles.oeMehrKnopf}
+          onClick={() => setShowScoreInfo(v => !v)}
+          aria-expanded={showScoreInfo}
+        >
+          <span>Wie der Wert zustande kommt, Klausel-Priorität und Eckdaten zum Dokument</span>
+          <span className={styles.oeMehrStark}>
+            {showScoreInfo ? 'Ausblenden ▴' : 'Einblenden ▾'}
           </span>
-        </div>
+        </button>
+
+        {showScoreInfo && (
+          <div className={styles.oeMehrInhalt}>
+            <ScoreExplanation scores={scores} result={result} />
+
+            {/* 07.09.2026 zurueckgeholt: enthaelt als einziger Block die
+                Bewertungsskala UND die Dimension Klauselqualitaet (25%),
+                die in SCORE_WEIGHTS von ScoreExplanation fehlt. */}
+            <div className={styles.scoreInfoPanel}>
+              <strong>Wie wird der Wert berechnet?</strong>
+              <p>Der Gesamtwert (0–100) setzt sich aus 6 gewichteten Bereichen zusammen:</p>
+              <div className={styles.scoreInfoGrid}>
+                <div><span style={{ color: '#5856D6' }}>Klauselqualität (25%)</span> — Gewichteter Durchschnitt aller Einzelklausel-Bewertungen (wichtige Klauseln zählen stärker)</div>
+                <div><span style={{ color: '#EF4444' }}>Risiko (20%)</span> — Wie gut schützt der Vertrag vor rechtlichen und finanziellen Risiken?</div>
+                <div><span style={{ color: '#AF52DE' }}>Fairness (20%)</span> — Sind die Rechte und Pflichten ausgewogen verteilt?</div>
+                <div><span style={{ color: '#3B82F6' }}>Klarheit (15%)</span> — Sind die Formulierungen verständlich und eindeutig?</div>
+                <div><span style={{ color: '#10B981' }}>Vollständigkeit (10%)</span> — Sind alle branchenüblichen Klauseln vorhanden?</div>
+                <div><span style={{ color: '#F59E0B' }}>Marktstandard (10%)</span> — Entspricht der Vertrag marktüblichen Regelungen?</div>
+              </div>
+              <div className={styles.scoreInfoScale}>
+                <span><strong>80–100</strong> Sehr gut</span>
+                <span><strong>60–79</strong> Gut</span>
+                <span><strong>40–59</strong> Verbesserbar</span>
+                <span><strong>0–39</strong> Kritisch</span>
+              </div>
+            </div>
+
+            <div className={styles.importanceBar}>
+              <div className={styles.importanceBarHeader}>
+                <Flame size={14} style={{ color: '#EF4444' }} />
+                <span className={styles.importanceBarTitle}>Klausel-Priorität</span>
+              </div>
+              <div className={styles.importanceItems}>
+                {(Object.entries(importanceCounts) as [ImportanceLevel, number][])
+                  .filter(([, count]) => count > 0)
+                  .map(([level, count]) => {
+                    const config = IMPORTANCE_CONFIG[level];
+                    return (
+                      <button
+                        key={level}
+                        className={styles.importanceItem}
+                        onClick={() => onNavigate('clauses')}
+                        title={`${count} ${config.label}e Klausel${count > 1 ? 'n' : ''} anzeigen`}
+                      >
+                        <span className={styles.importanceDot} style={{ background: config.color }} />
+                        <span className={styles.importanceCount} style={{ color: config.color }}>{count}</span>
+                        <span className={styles.importanceLabel}>{config.label}</span>
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
+
+            <div className={styles.metadataGrid}>
+              {structure.parties?.length > 0 && (
+                <div className={styles.metadataItem}>
+                  <span className={styles.metadataLabel}>Parteien</span>
+                  <span className={styles.metadataValue}>
+                    {structure.parties.map(p => p.name || p.role).join(' / ')}
+                  </span>
+                </div>
+              )}
+              {structure.jurisdiction && (
+                <div className={styles.metadataItem}>
+                  <span className={styles.metadataLabel}>Jurisdiktion</span>
+                  <span className={styles.metadataValue}>{structure.jurisdiction}</span>
+                </div>
+              )}
+              {structure.industry && structure.industry !== 'other' && (
+                <div className={styles.metadataItem}>
+                  <span className={styles.metadataLabel}>Branche</span>
+                  <span className={styles.metadataValue}>{INDUSTRY_LABELS[structure.industry] || structure.industry}</span>
+                </div>
+              )}
+              {structure.duration && (
+                <div className={styles.metadataItem}>
+                  <span className={styles.metadataLabel}>Laufzeit</span>
+                  <span className={styles.metadataValue}>{structure.duration}</span>
+                </div>
+              )}
+              <div className={styles.metadataItem}>
+                <span className={styles.metadataLabel}>Qualität</span>
+                <span className={styles.metadataValue}>
+                  {structure.maturity === 'high' ? 'Professionell' : structure.maturity === 'medium' ? 'Solide' : 'Basis'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

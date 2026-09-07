@@ -22,7 +22,7 @@ import styles from '../styles/OptimizerV2.module.css';
 const TAB_CONFIG: { key: ActiveTab; label: string; icon: React.ElementType }[] = [
   { key: 'overview', label: 'Übersicht', icon: LayoutGrid },
   { key: 'clauses', label: 'Klauseln', icon: List },
-  { key: 'redline', label: 'Redline', icon: GitCompareArrows },
+  { key: 'redline', label: 'Änderungen', icon: GitCompareArrows },
   { key: 'compare', label: 'Vergleich', icon: BarChart3 },
   { key: 'export', label: 'Export', icon: Download }
 ];

@@ -4263,3 +4263,344 @@
 @media (prefers-reduced-motion: reduce) {
   .owAusVertraegen, .owWahlEintrag, .owHistKarte { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ERGEBNISANSICHT: vier Zonen statt elf Bloecke, 07.09.2026
+   ---------------------------------------------------------------------
+   Der Uebersicht-Reiter reihte elf gleichrangige Bloecke untereinander.
+   Kein Block wird geloescht, sie werden nach ihrer Rolle gruppiert:
+     Zone 1  Wie steht es?      Ampel + Score + Zahlen in EINEM Kopf
+     Zone 2  Wo hakt es?        Diagnose, zweispaltig
+     Zone 3  Was tun?           Verhandlungspunkte + fehlende Klauseln
+     Zone 4  Beiwerk            ausklappbar
+
+   ⚠️ min-width:0 an jeder Ebene: Grid- und Flex-Kinder schrumpfen sonst
+   nicht unter ihre Inhaltsbreite und sprengen den Behaelter. Genau das
+   ist am selben Tag bei den Historie-Karten passiert.
+
+   Durchgehend hell, kein Dunkelmodus.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.oeErgebnis {
+  --oe-blau: #1568dd;
+  --oe-blau-weich: rgba(21, 104, 221, 0.06);
+  --oe-blau-rand: rgba(21, 104, 221, 0.22);
+  --oe-ink: #15171c;
+  --oe-ink-2: #4a4f5a;
+  --oe-ink-3: #7d8493;
+  --oe-linie: #e3e6ec;
+  --oe-linie-weich: #eef0f4;
+  --oe-karte: #ffffff;
+  --oe-rot: #dc2626;
+  --oe-gruen: #15803d;
+  --oe-gelb: #b45309;
+
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  min-width: 0;
+}
+
+/* ── Zone 1: der Urteilskopf ─────────────────────────────────────────── */
+.oeKopf {
+  background: var(--oe-karte);
+  border: 1px solid var(--oe-linie);
+  border-left: 3px solid var(--oe-linie);
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  min-width: 0;
+}
+
+/* Ampelfarbe als linke Kante: eine Farbe, kein zweiter Farbblock */
+.oeKopfGruen { border-left-color: var(--oe-gruen); }
+.oeKopfGelb { border-left-color: var(--oe-gelb); }
+.oeKopfRot { border-left-color: var(--oe-rot); }
+
+.oeRing {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.oeRingInnen {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--oe-karte);
+  display: grid;
+  place-items: center;
+  font-size: 1.45rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--oe-ink);
+}
+
+.oeKopfMitte { min-width: 0; }
+
+.oeAmpel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.oeAmpelGruen { color: var(--oe-gruen); }
+.oeAmpelGelb { color: var(--oe-gelb); }
+.oeAmpelRot { color: var(--oe-rot); }
+
+.oeUrteil {
+  font-size: 1rem;
+  color: var(--oe-ink);
+  margin: 0 0 9px;
+  line-height: 1.5;
+  max-width: 62ch;
+  font-weight: 560;
+}
+
+.oeStaerken {
+  font-size: 0.82rem;
+  color: var(--oe-ink-3);
+  margin: 0 0 11px;
+  line-height: 1.5;
+  max-width: 70ch;
+}
+
+.oeStaerken strong { color: var(--oe-ink-2); font-weight: 620; }
+
+.oeZahlen {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.oeZahl {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.oeZahlWert {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--oe-ink);
+}
+
+.oeZahlKritisch { color: var(--oe-rot); }
+.oeZahlLabel { font-size: 0.76rem; color: var(--oe-ink-3); }
+
+.oeKopfTun {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.oeKnopf {
+  background: var(--oe-blau);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.oeKnopf:hover { background: #0f53b8; }
+
+.oeKnopfZweit {
+  background: transparent;
+  color: var(--oe-ink-2);
+  border: 1px solid var(--oe-linie);
+}
+
+.oeKnopfZweit:hover { background: var(--oe-linie-weich); color: var(--oe-ink); }
+
+.oeKnopf:focus-visible { outline: 2px solid var(--oe-blau); outline-offset: 2px; }
+
+/* ── Zonenkopf ───────────────────────────────────────────────────────── */
+.oeZone { min-width: 0; }
+
+.oeZonenKopf {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.oeFrage {
+  font-size: 0.94rem;
+  font-weight: 680;
+  letter-spacing: -0.015em;
+  color: var(--oe-ink);
+}
+
+.oeHinweis { font-size: 0.78rem; color: var(--oe-ink-3); }
+
+/* ── Zone 2: Diagnose zweispaltig ────────────────────────────────────── */
+.oeZwei {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+  min-width: 0;
+}
+
+.oeZwei > * { min-width: 0; }
+
+/* ── Zone 4: ausklappbares Beiwerk ───────────────────────────────────── */
+.oeMehrKnopf {
+  width: 100%;
+  background: var(--oe-karte);
+  border: 1px solid var(--oe-linie);
+  border-radius: 11px;
+  padding: 12px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.84rem;
+  color: var(--oe-ink-2);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+  transition: border-color 0.15s ease;
+}
+
+.oeMehrKnopf:hover { border-color: var(--oe-blau-rand); color: var(--oe-ink); }
+.oeMehrKnopf:focus-visible { outline: 2px solid var(--oe-blau); outline-offset: 2px; }
+
+.oeMehrStark { color: var(--oe-ink); font-weight: 600; white-space: nowrap; }
+
+.oeMehrInhalt {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+  min-width: 0;
+}
+
+/* ── Schmale Bildschirme ─────────────────────────────────────────────── */
+@media (max-width: 880px) {
+  .oeZwei { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 800px) {
+  .oeKopf {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    justify-items: start;
+  }
+  .oeKopfTun { flex-direction: row; flex-wrap: wrap; width: 100%; }
+  .oeKnopf { flex: 1; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .oeKopf { padding: 15px 16px; }
+  .oeRing { width: 70px; height: 70px; }
+  .oeRingInnen { width: 57px; height: 57px; font-size: 1.25rem; }
+  .oeUrteil { font-size: 0.94rem; }
+  .oeZahlen { gap: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oeKnopf, .oeMehrKnopf { transition: none; }
+}
+
+/* ── Bewertung nach Kategorie, kompakt ───────────────────────────────
+   Die bisherigen scoreCards sind ein auto-fit-Raster mit 200px
+   Mindestbreite. In einer halben Spalte brechen die fuenf Kategorien
+   dadurch zu 2+2+1 um, was unruhig wirkt. Als Zeilenliste passen sie in
+   jede Breite und lassen sich zudem besser vergleichen, weil alle
+   Balken an derselben Kante beginnen.
+   Dieselben Daten, dieselbe Farbgebung wie vorher. */
+
+.oeKachel {
+  background: var(--oe-karte);
+  border: 1px solid var(--oe-linie);
+  border-radius: 12px;
+  padding: 15px 17px;
+  min-width: 0;
+}
+
+.oeKachelTitel {
+  font-size: 0.85rem;
+  font-weight: 660;
+  letter-spacing: -0.01em;
+  color: var(--oe-ink);
+  margin: 0 0 3px;
+}
+
+.oeKachelUnter {
+  font-size: 0.76rem;
+  color: var(--oe-ink-3);
+  margin: 0 0 13px;
+  line-height: 1.4;
+}
+
+.oeBewertung {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.oeBewZeile {
+  display: grid;
+  grid-template-columns: 96px 1fr 42px;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.79rem;
+  min-width: 0;
+}
+
+.oeBewName {
+  color: var(--oe-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.oeBewBalken {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--oe-linie-weich);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.oeBewFuell {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.oeBewWert {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 640;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 520px) {
+  .oeBewZeile { grid-template-columns: 78px 1fr 36px; gap: 8px; font-size: 0.74rem; }
+}

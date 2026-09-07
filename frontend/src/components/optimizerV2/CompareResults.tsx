@@ -186,22 +186,9 @@ export default function CompareResults({ currentResult }: Props) {
                 </div>
               </div>
               <p className={styles.cmpIntroHint}>
-                Wähle oben eine frühere Analyse aus, um die Score-Entwicklung und Unterschiede zu sehen.
+                Wähle oben eine frühere Analyse aus. Du siehst dann, wie sich Bewertung, Klauselzahl
+                und Verbesserungsbedarf zwischen beiden Fassungen entwickelt haben.
               </p>
-            </div>
-          </div>
-          <div className={styles.cmpIntroFeatures}>
-            <div className={styles.cmpIntroFeature}>
-              <ArrowUpRight size={16} style={{ color: '#10B981' }} />
-              <span>Score-Veränderungen auf einen Blick</span>
-            </div>
-            <div className={styles.cmpIntroFeature}>
-              <BarChart3 size={16} style={{ color: '#3B82F6' }} />
-              <span>5 Sub-Scores im direkten Vergleich</span>
-            </div>
-            <div className={styles.cmpIntroFeature}>
-              <FileText size={16} style={{ color: '#F59E0B' }} />
-              <span>Klausel- und Optimierungsstatistik</span>
             </div>
           </div>
         </div>
