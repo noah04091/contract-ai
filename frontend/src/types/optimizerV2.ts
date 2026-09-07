@@ -367,7 +367,7 @@ export const INDUSTRY_LABELS: Record<IndustryType, string> = {
 };
 
 export const MODE_LABELS: Record<OptimizationMode, { label: string; description: string; color: string }> = {
-  neutral: { label: 'Neutral', description: 'Fair für beide Parteien', color: '#3B82F6' },
-  proCreator: { label: 'Pro Ersteller', description: 'Schützt den Vertragsersteller', color: '#10B981' },
-  proRecipient: { label: 'Pro Empfänger', description: 'Schützt den Vertragsempfänger', color: '#F59E0B' }
+  neutral: { label: 'Ausgewogen', description: 'Tragbar für beide Seiten', color: '#1568dd' },
+  proCreator: { label: 'Als Anbieter', description: 'Stärkt die Seite, die den Vertrag stellt', color: '#0e7490' },
+  proRecipient: { label: 'Als Kunde', description: 'Stärkt die Seite, die unterschreiben soll', color: '#b45309' }
 };

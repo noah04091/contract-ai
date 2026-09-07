@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info, BookmarkPlus, HelpCircle } from 'lucide-react';
+import { Shield, Eye, CheckSquare, BarChart3, AlertTriangle, Flame, Scale, Crosshair, FileWarning, Search, Sparkles, Copy, Check, Loader2, X, Activity, Info, BookmarkPlus, HelpCircle, ChevronsUpDown, ChevronsDownUp } from 'lucide-react';
 import type { Scores, AnalysisResult, ContractStructure, ImportanceLevel, PowerBalance, MissingClause, ClauseCategory } from '../../types/optimizerV2';
 import { IMPORTANCE_CONFIG, INDUSTRY_LABELS, CATEGORY_LABELS } from '../../types/optimizerV2';
 import ExecutiveSummary from './ExecutiveSummary';
@@ -219,6 +219,9 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
 
       {/* Risk Heatmap */}
       <RiskHeatmap result={result} onNavigate={onNavigate} />
+
+      {/* Marktvergleich */}
+      <MarktVergleich result={result} onNavigate={onNavigate} />
 
       {/* AI Contract Strategy */}
       {strategyPoints.length > 0 && (
@@ -700,6 +703,132 @@ function getRiskLevel(avgRisk: number): { label: string; color: string } {
   if (avgRisk >= 5) return { label: 'Hoch', color: RISK_COLORS.high };
   if (avgRisk >= 3) return { label: 'Mittel', color: RISK_COLORS.medium };
   return { label: 'Gering', color: RISK_COLORS.low };
+}
+
+/**
+ * MARKTVERGLEICH (07.09.2026)
+ *
+ * Zeigt fuer jede Klausel, wie sie im Vergleich zum Marktueblichen liegt.
+ * Das Feld marketComparison wird fuer jede Klausel ohnehin berechnet, war
+ * aber nur in der aufgeklappten Einzelklausel sichtbar. Um zu wissen, ob
+ * der Vertrag insgesamt marktueblich ist, musste man bisher jede Klausel
+ * einzeln oeffnen.
+ *
+ * Bewusst NICHT dasselbe wie die RiskHeatmap darueber: die buendelt
+ * riskLevel und powerBalance nach Kategorie und verwendet
+ * marketComparison ueberhaupt nicht.
+ *
+ * Standardmaessig sichtbar sind nur die Abweichungen. Die marktueblichen
+ * Klauseln sind zusammengeklappt, damit die Problemfaelle nicht in einer
+ * langen Liste untergehen.
+ */
+const MARKT_STUFEN = [
+  { wert: 'below_market', kurz: 'besser als üblich', punkt: 'owPunktBesser' },
+  { wert: 'market_standard', kurz: 'marktüblich', punkt: 'owPunktUeblich' },
+  { wert: 'slightly_strict', kurz: 'etwas streng', punkt: 'owPunktStreng' },
+  { wert: 'significantly_strict', kurz: 'deutlich streng', punkt: 'owPunktSehrStreng' },
+  { wert: 'unusually_disadvantageous', kurz: 'unüblich nachteilig', punkt: 'owPunktUnueblich' }
+] as const;
+
+function MarktVergleich({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string, clauseId?: string) => void }) {
+  const [zeigeUebliche, setZeigeUebliche] = useState(false);
+
+  const zeilen = useMemo(() => {
+    return result.clauses
+      .map(klausel => {
+        const analyse = result.clauseAnalyses.find(a => a.clauseId === klausel.id);
+        if (!analyse?.marketComparison) return null;
+        const stufe = MARKT_STUFEN.findIndex(st => st.wert === analyse.marketComparison);
+        if (stufe === -1) return null;
+        const para = klausel.sectionNumber && klausel.sectionNumber !== 'null' ? klausel.sectionNumber : null;
+        // Paragraph steht oft schon im Titel, dann nicht doppelt zeigen
+        const name = para && klausel.title?.startsWith(para)
+          ? klausel.title.slice(para.length).trimStart()
+          : klausel.title;
+        return { id: klausel.id, name: name || klausel.id, para, stufe };
+      })
+      .filter((z): z is { id: string; name: string; para: string | null; stufe: number } => z !== null)
+      .sort((a, b) => b.stufe - a.stufe);
+  }, [result]);
+
+  if (zeilen.length === 0) return null;
+
+  const abweichend = zeilen.filter(z => z.stufe !== 1);
+  const uebliche = zeilen.filter(z => z.stufe === 1);
+  const sichtbar = zeigeUebliche ? zeilen : abweichend;
+  const jenseits = zeilen.filter(z => z.stufe >= 3).length;
+
+  // Wenn alles marktueblich ist, waere die Tabelle leer: dann die
+  // ueblichen von vornherein zeigen.
+  const alleUeblich = abweichend.length === 0;
+
+  return (
+    <div className={styles.owMarkt}>
+      <div className={styles.owMarktKopf}>
+        <BarChart3 size={15} className={styles.owMarktSymbol} />
+        <span className={styles.owMarktTitel}>Marktvergleich</span>
+        <p className={styles.owMarktUnter}>
+          Wie üblich ist jede Klausel im Vergleich zu dem, was in dieser Vertragsart marktüblich ist?
+        </p>
+      </div>
+
+      <div className={styles.owMarktSkala}>
+        <span>Klausel</span>
+        {MARKT_STUFEN.map(st => <span key={st.wert}>{st.kurz}</span>)}
+      </div>
+
+      {(alleUeblich ? zeilen : sichtbar).map(zeile => (
+        <button
+          key={zeile.id}
+          className={styles.owMarktZeile}
+          onClick={() => onNavigate('clauses', zeile.id)}
+          title="Zur Klausel springen"
+        >
+          <span>
+            <span className={styles.owMarktName}>{zeile.name}</span>
+            {zeile.para && <span className={styles.owMarktPara}>{zeile.para}</span>}
+          </span>
+          {MARKT_STUFEN.map((st, i) => (
+            <span key={st.wert}>
+              {i === zeile.stufe && <span className={`${styles.owPunkt} ${styles[st.punkt]}`} />}
+            </span>
+          ))}
+        </button>
+      ))}
+
+      {!alleUeblich && uebliche.length > 0 && (
+        <button
+          className={styles.owMarktMehr}
+          onClick={() => setZeigeUebliche(v => !v)}
+          aria-expanded={zeigeUebliche}
+        >
+          {zeigeUebliche ? <ChevronsDownUp size={13} /> : <ChevronsUpDown size={13} />}
+          {zeigeUebliche
+            ? 'Marktübliche Klauseln ausblenden'
+            : `${uebliche.length} weitere ${uebliche.length === 1 ? 'Klausel ist' : 'Klauseln sind'} marktüblich`}
+        </button>
+      )}
+
+      <div className={styles.owMarktFuss}>
+        {jenseits > 0 ? (
+          <>
+            <strong>
+              {jenseits === 1
+                ? 'Eine Klausel liegt jenseits des Marktüblichen.'
+                : `${jenseits} Klauseln liegen jenseits des Marktüblichen.`}
+            </strong>{' '}
+            Das sind die Stellen, an denen Nachverhandeln erfahrungsgemäß Erfolg hat, weil die
+            Gegenseite selbst weiß, dass sie über das Übliche hinausgeht.
+          </>
+        ) : (
+          <>
+            <strong>Keine Klausel liegt jenseits des Marktüblichen.</strong>{' '}
+            Der Vertrag bewegt sich in dem Rahmen, der für diese Vertragsart gebräuchlich ist.
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function RiskHeatmap({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string, clauseId?: string) => void }) {

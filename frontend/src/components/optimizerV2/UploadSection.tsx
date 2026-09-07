@@ -1,6 +1,5 @@
 import React, { useCallback, useState, useRef } from 'react';
-import { Upload, Shield, Lightbulb, Download, Sparkles, CheckCircle, RefreshCw } from 'lucide-react';
-import NegotiationModeSelector from './NegotiationModeSelector';
+import { Upload, FileCheck, RefreshCw, ArrowRight, Scale, Shield, UserCheck } from 'lucide-react';
 import type { OptimizationMode } from '../../types/optimizerV2';
 import styles from '../../styles/OptimizerV2.module.css';
 
@@ -12,10 +11,39 @@ interface Props {
   disabled?: boolean;
 }
 
-const FEATURE_PILLS = [
-  { icon: Shield, label: 'Risiko-Erkennung' },
-  { icon: Lightbulb, label: 'Klausel-Vorschläge' },
-  { icon: Download, label: 'PDF-Export' },
+/**
+ * 07.09.2026: Die Perspektive stand bisher klein unter der Ablageflaeche
+ * und erschien erst NACH dem Hochladen. Sie ist aber die folgenreichste
+ * Entscheidung der Strecke, denn sie bestimmt, welche der drei erzeugten
+ * Fassungen jeder Klausel angezeigt wird. Deshalb steht sie jetzt
+ * gleichberechtigt neben der Ablageflaeche und ist von Anfang an sichtbar.
+ *
+ * Die Beschriftungen sind aus Sicht des Nutzers formuliert. Wer einen
+ * Vertrag zugeschickt bekommt, konnte bei "Pro Ersteller" / "Pro
+ * Empfaenger" nicht wissen, was er selbst ist.
+ *
+ * WICHTIG: Die Werte, die an den Server gehen, bleiben unveraendert
+ * (neutral / creator / recipient). Nur die Beschriftung aendert sich.
+ */
+const PERSPEKTIVEN: { wert: OptimizationMode; name: string; text: string; icon: React.ElementType }[] = [
+  {
+    wert: 'neutral',
+    name: 'Ausgewogen',
+    text: 'Formulierungen, die für beide Seiten tragbar sind.',
+    icon: Scale
+  },
+  {
+    wert: 'proCreator',
+    name: 'Für mich als Anbieter',
+    text: 'Ich stelle den Vertrag und will meine Position stärken.',
+    icon: Shield
+  },
+  {
+    wert: 'proRecipient',
+    name: 'Für mich als Kunde',
+    text: 'Ich habe den Vertrag bekommen und will ihn nicht so unterschreiben.',
+    icon: UserCheck
+  }
 ];
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
@@ -80,117 +108,138 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
     return `${(bytes / 1048576).toFixed(1)} MB`;
   };
 
+  /* Unveraendert gegenueber vorher: die drei internen Namen werden auf die
+     Werte abgebildet, die der Server erwartet. */
+  const serverWert = (m: OptimizationMode) =>
+    m === 'proCreator' ? 'creator' : m === 'proRecipient' ? 'recipient' : 'neutral';
+
   return (
-    <div className={styles.uploadPage}>
-      {/* Hero Header — floats on gradient background, NOT inside a card */}
-      <div className={styles.uploadHero}>
-        <div className={styles.uploadHeroIcon}>
-          <Sparkles size={36} />
-        </div>
-        <h1 className={styles.uploadHeroTitle}>
-          <span className={styles.uploadHeroGradient}>Contract Intelligence</span>
-        </h1>
-        <p className={styles.uploadHeroDesc}>
-          Lade deinen Vertrag hoch für eine KI-gestützte Tiefenanalyse mit Risikobewertung, Scoring und Optimierungsvorschlägen.
-        </p>
-        <div className={styles.uploadFeaturePills}>
-          {FEATURE_PILLS.map(({ icon: Icon, label }) => (
-            <div key={label} className={styles.uploadFeaturePill}>
-              <Icon size={16} />
-              <span>{label}</span>
-            </div>
-          ))}
+    <div className={styles.owSeite}>
+      <div className={styles.owKopf}>
+        <div className={styles.owKopfText}>
+          <h1 className={styles.owTitel}>Vertrag verbessern</h1>
+          <p className={styles.owUnter}>
+            Die KI prüft jede Klausel einzeln und schlägt eine bessere Formulierung vor.
+          </p>
         </div>
       </div>
 
-      {/* Upload Card — separate glassmorphism card */}
-      <div className={styles.uploadCard}>
-        {!file ? (
-          <>
+      <div className={styles.owSchritte}>
+        {/* ── Schritt 1: die Datei ─────────────────────────────────── */}
+        <div>
+          <div className={styles.owSchrittKopf}>
+            <span className={styles.owNummer}>1</span>
+            <span className={styles.owSchrittTitel}>Dein Vertrag</span>
+          </div>
+
+          {!file ? (
             <div
-              className={`${styles.dropZone} ${isDragging ? styles.dropZoneActive : ''}`}
+              className={`${styles.owAblage} ${isDragging ? styles.owAblageAktiv : ''} ${disabled ? styles.owAblageGesperrt : ''}`}
               onDragOver={(e) => { if (!disabled) { e.preventDefault(); setIsDragging(true); } }}
               onDragLeave={() => setIsDragging(false)}
               onDrop={disabled ? undefined : handleDrop}
               onClick={() => !disabled && fileInputRef.current?.click()}
-              style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+              role="button"
+              tabIndex={disabled ? -1 : 0}
+              onKeyDown={(e) => {
+                if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
             >
-              <div className={styles.dropZoneIconWrapper}>
-                <Upload size={32} />
+              <div className={styles.owAblageSymbol}>
+                <Upload size={21} />
               </div>
-              <p className={styles.dropZoneTitle}>Vertrag hochladen</p>
-              <p className={styles.dropZoneSubtitle}>Datei hierher ziehen oder klicken</p>
-              <div className={styles.uploadFormats}>
-                <span className={styles.formatTag}>PDF</span>
-                <span className={styles.formatTag}>DOCX</span>
-                <span className={styles.formatTag}>JPG</span>
-                <span className={styles.formatTag}>PNG</span>
+              <p className={styles.owAblageTitel}>Datei hierher ziehen</p>
+              <p className={styles.owAblageUnter}>oder klicken zum Auswählen</p>
+              <div className={styles.owFormate}>
+                <span className={styles.owFormat}>PDF</span>
+                <span className={styles.owFormat}>DOCX</span>
+                <span className={styles.owFormat}>JPG</span>
+                <span className={styles.owFormat}>PNG</span>
               </div>
               <input
                 ref={fileInputRef}
                 type="file"
                 accept=".pdf,.docx,.jpg,.jpeg,.png,.heic,.heif,.webp,.tiff"
                 onChange={handleFileInput}
-                style={{ display: 'none' }}
+                hidden
               />
             </div>
-
-            {fileError && (
-              <p style={{ color: '#ef4444', fontSize: '0.875rem', margin: '0.5rem 0 0' }}>{fileError}</p>
-            )}
-
-            <button
-              className={styles.analyzeButton}
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isAnalyzing || disabled}
-            >
-              Jetzt analysieren
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
-          </>
-        ) : (
-          <>
-            <div className={styles.dropZoneFile}>
-              <div className={styles.dropZoneIconWrapperSuccess}>
-                <CheckCircle size={32} />
+          ) : (
+            <div className={styles.owDatei}>
+              <div className={styles.owDateiSymbol}>
+                <FileCheck size={21} />
               </div>
-              <p className={styles.dropZoneTitle}>{file.name}</p>
-              <p className={styles.dropZoneSubtitle}>
-                {formatFileSize(file.size)} &bull; Bereit zur Analyse
+              <p className={styles.owDateiName}>{file.name}</p>
+              <p className={styles.owDateiInfo}>
+                {formatFileSize(file.size)} &bull; bereit zur Analyse
               </p>
               {!isAnalyzing && (
-                <button className={styles.changeFileBtn} onClick={() => onFileSelect(null)}>
-                  <RefreshCw size={14} />
+                <button className={styles.owDateiWechseln} onClick={() => onFileSelect(null)}>
+                  <RefreshCw size={13} />
                   Andere Datei wählen
                 </button>
               )}
             </div>
+          )}
 
-            <div className={styles.perspectiveSection}>
-              <p className={styles.perspectiveLabel}>Optimierungsperspektive:</p>
-              <NegotiationModeSelector
-                activeMode={perspective}
-                onModeChange={setPerspective}
-                compact
-              />
-            </div>
+          {fileError && <p className={styles.owFehler} role="alert">{fileError}</p>}
+        </div>
 
-            <button
-              className={styles.analyzeButton}
-              onClick={() => onStartAnalysis(file, perspective === 'proCreator' ? 'creator' : perspective === 'proRecipient' ? 'recipient' : 'neutral')}
-              disabled={isAnalyzing || disabled}
-            >
-              {isAnalyzing ? 'Analysiere...' : 'Jetzt analysieren'}
-              {!isAnalyzing && (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
-              )}
-            </button>
-          </>
-        )}
+        {/* ── Schritt 2: die Perspektive ───────────────────────────── */}
+        <div>
+          <div className={styles.owSchrittKopf}>
+            <span className={styles.owNummer}>2</span>
+            <span className={styles.owSchrittTitel}>Aus wessen Sicht?</span>
+          </div>
+
+          <div className={styles.owPerspektiven} role="radiogroup" aria-label="Aus wessen Sicht soll optimiert werden?">
+            {PERSPEKTIVEN.map(({ wert, name, text, icon: Icon }) => {
+              const aktiv = perspective === wert;
+              return (
+                <button
+                  key={wert}
+                  type="button"
+                  role="radio"
+                  aria-checked={aktiv}
+                  className={`${styles.owKarte} ${aktiv ? styles.owKarteAn : ''}`}
+                  onClick={() => setPerspective(wert)}
+                  disabled={disabled || isAnalyzing}
+                >
+                  <span className={styles.owRadio} />
+                  <span className={styles.owKarteInhalt}>
+                    <span className={styles.owKarteName}>
+                      <Icon size={13} className={styles.owKarteIcon} />
+                      {name}
+                    </span>
+                    <span className={styles.owKarteText}>{text}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Startzeile ─────────────────────────────────────────────── */}
+      <div className={styles.owStart}>
+        <span className={styles.owStartHinweis}>
+          {!file
+            ? 'Noch keine Datei ausgewählt'
+            : isAnalyzing
+              ? 'Die Analyse läuft'
+              : `${file.name} wird ${PERSPEKTIVEN.find(p => p.wert === perspective)?.name.toLowerCase()} geprüft`}
+        </span>
+        <button
+          className={styles.owStartKnopf}
+          onClick={() => file && onStartAnalysis(file, serverWert(perspective))}
+          disabled={!file || isAnalyzing || disabled}
+        >
+          {isAnalyzing ? 'Analysiere…' : 'Analyse starten'}
+          {!isAnalyzing && <ArrowRight size={16} />}
+        </button>
       </div>
     </div>
   );

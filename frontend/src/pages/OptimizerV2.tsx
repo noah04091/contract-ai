@@ -136,12 +136,12 @@ export default function OptimizerV2() {
   return (
     <>
       <Helmet>
-        <title>Contract Intelligence - Contract AI</title>
+        <title>Vertrag verbessern - Contract AI</title>
       </Helmet>
 
       {isPremium === false && (
         <UnifiedPremiumNotice
-          featureName="Contract Intelligence"
+          featureName="Vertrag verbessern"
           variant="fullWidth"
         />
       )}
@@ -194,7 +194,7 @@ export default function OptimizerV2() {
               <ArrowLeft size={16} /> Historie
             </button>
             <div className={styles.pageHeaderContent}>
-              <h1 className={styles.pageTitle}>Contract Intelligence</h1>
+              <h1 className={styles.pageTitle}>Vertrag verbessern</h1>
               {result?.fileName ? (
                 <p className={styles.pageSubtitle}>
                   <button
@@ -212,7 +212,7 @@ export default function OptimizerV2() {
                 </p>
               ) : (
                 <p className={styles.pageSubtitle}>
-                  KI-gestützte Vertragsanalyse und -optimierung
+                  Jede Klausel einzeln geprüft, mit Vorschlag für eine bessere Formulierung
                 </p>
               )}
             </div>

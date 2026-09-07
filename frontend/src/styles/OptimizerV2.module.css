@@ -3569,3 +3569,601 @@
   font-size: 13px;
   color: var(--ov2-gray-700);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EINGANGSSEITE, neu 07.09.2026
+   ---------------------------------------------------------------------
+   Loest uploadHero / uploadHeroIcon / uploadHeroGradient /
+   uploadFeaturePills / uploadCard ab. Die alten Regeln bleiben vorerst
+   stehen, damit nichts bricht, falls sie noch irgendwo greifen.
+
+   Bewusst KEINE neuen :root-Variablen: die weiter oben in dieser Datei
+   stehenden --ov2-* sind global (CSS-Modules benennt :root nicht um),
+   und das ist schon mehr Leck als noetig. Hier stehen die Werte lokal
+   auf .owSeite, damit sie die Datei nicht verlassen koennen.
+
+   Farben aus der Marken-Palette: Blau #1568dd, nicht das --ov2-blue
+   #3B82F6, das an der Palette vorbeilaeuft.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.owSeite {
+  --ow-blau: #1568dd;
+  --ow-blau-dunkel: #0f53b8;
+  --ow-blau-weich: rgba(21, 104, 221, 0.06);
+  --ow-blau-rand: rgba(21, 104, 221, 0.22);
+  --ow-ink: #15171c;
+  --ow-ink-2: #4a4f5a;
+  --ow-ink-3: #7d8493;
+  --ow-linie: #e3e6ec;
+  --ow-linie-weich: #eef0f4;
+  --ow-karte: #ffffff;
+
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  width: 100%;
+}
+
+/* ── Kopfzeile ───────────────────────────────────────────────────────── */
+.owKopf {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 26px;
+}
+
+.owKopfText { min-width: 0; }
+
+.owTitel {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  color: var(--ow-ink);
+  margin: 0 0 5px;
+  line-height: 1.15;
+}
+
+.owUnter {
+  font-size: 0.94rem;
+  color: var(--ow-ink-2);
+  margin: 0;
+  max-width: 62ch;
+  line-height: 1.55;
+}
+
+/* ── Die zwei Schritte nebeneinander ─────────────────────────────────── */
+.owSchritte {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.owSchrittKopf {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.owNummer {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--ow-blau);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.owSchrittTitel {
+  font-size: 0.97rem;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  color: var(--ow-ink);
+}
+
+/* ── Ablageflaeche ───────────────────────────────────────────────────── */
+.owAblage {
+  border: 1.5px dashed var(--ow-blau-rand);
+  background: var(--ow-blau-weich);
+  border-radius: 13px;
+  padding: 38px 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+  min-height: 236px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.owAblage:hover { border-color: var(--ow-blau); }
+
+.owAblageAktiv {
+  border-color: var(--ow-blau);
+  border-style: solid;
+  background: rgba(21, 104, 221, 0.1);
+}
+
+.owAblageGesperrt {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.owAblageSymbol {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--ow-karte);
+  border: 1px solid var(--ow-linie);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 13px;
+  color: var(--ow-blau);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.owAblageTitel {
+  font-weight: 620;
+  font-size: 0.97rem;
+  color: var(--ow-ink);
+  margin: 0 0 3px;
+}
+
+.owAblageUnter {
+  font-size: 0.83rem;
+  color: var(--ow-ink-3);
+  margin: 0 0 15px;
+}
+
+.owFormate {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.owFormat {
+  font-size: 0.67rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--ow-ink-3);
+  border: 1px solid var(--ow-linie);
+  border-radius: 5px;
+  padding: 2px 7px;
+  background: var(--ow-karte);
+}
+
+.owFehler {
+  color: #dc2626;
+  font-size: 0.85rem;
+  margin: 10px 0 0;
+  text-align: center;
+}
+
+/* ── Ablageflaeche mit gewaehlter Datei ──────────────────────────────── */
+.owDatei {
+  border: 1.5px solid rgba(21, 104, 221, 0.3);
+  background: var(--ow-karte);
+  border-radius: 13px;
+  padding: 30px 22px;
+  text-align: center;
+  min-height: 236px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 6px 20px -12px rgba(21, 104, 221, 0.3);
+}
+
+.owDateiSymbol {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(21, 104, 221, 0.08);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 13px;
+  color: var(--ow-blau);
+}
+
+.owDateiName {
+  font-weight: 640;
+  font-size: 0.97rem;
+  color: var(--ow-ink);
+  margin: 0 0 4px;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.owDateiInfo {
+  font-size: 0.83rem;
+  color: var(--ow-ink-3);
+  margin: 0 0 15px;
+}
+
+.owDateiWechseln {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 550;
+  color: var(--ow-ink-2);
+  background: transparent;
+  border: 1px solid var(--ow-linie);
+  border-radius: 8px;
+  padding: 7px 13px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.owDateiWechseln:hover {
+  border-color: var(--ow-blau-rand);
+  color: var(--ow-blau);
+}
+
+/* ── Perspektivkarten ────────────────────────────────────────────────── */
+.owPerspektiven {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.owKarte {
+  border: 1px solid var(--ow-linie);
+  border-radius: 12px;
+  padding: 13px 15px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  background: var(--ow-karte);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.owKarte:hover { border-color: var(--ow-blau-rand); }
+
+.owKarteAn {
+  border-color: var(--ow-blau);
+  background: var(--ow-blau-weich);
+  box-shadow: 0 0 0 3px rgba(21, 104, 221, 0.08);
+}
+
+.owKarte:focus-visible {
+  outline: 2px solid var(--ow-blau);
+  outline-offset: 2px;
+}
+
+.owRadio {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ow-linie);
+  margin-top: 3px;
+  flex-shrink: 0;
+  transition: border-color 0.15s ease, border-width 0.15s ease;
+  background: var(--ow-karte);
+}
+
+.owKarteAn .owRadio {
+  border-color: var(--ow-blau);
+  border-width: 5px;
+}
+
+/* Alles span mit display:block statt p: ein <p> darf nicht in einem
+   <span> stehen, und der Button-Inhalt muss Phrasing Content bleiben. */
+.owKarteInhalt {
+  display: block;
+  min-width: 0;
+}
+
+.owKarteName {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 620;
+  color: var(--ow-ink);
+  margin: 0 0 2px;
+}
+
+.owKarteIcon {
+  vertical-align: -1px;
+  margin-right: 6px;
+  opacity: 0.65;
+}
+
+.owKarteText {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ow-ink-3);
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* ── Startzeile ──────────────────────────────────────────────────────── */
+.owStart {
+  margin-top: 24px;
+  border-top: 1px solid var(--ow-linie);
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.owStartHinweis {
+  font-size: 0.86rem;
+  color: var(--ow-ink-3);
+}
+
+.owStartKnopf {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ow-blau);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 24px;
+  font-size: 0.92rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+  font-family: inherit;
+}
+
+.owStartKnopf:hover:not(:disabled) { background: var(--ow-blau-dunkel); }
+.owStartKnopf:active:not(:disabled) { transform: translateY(1px); }
+
+.owStartKnopf:disabled {
+  background: var(--ow-linie);
+  color: var(--ow-ink-3);
+  cursor: not-allowed;
+}
+
+.owStartKnopf:focus-visible {
+  outline: 2px solid var(--ow-blau);
+  outline-offset: 2px;
+}
+
+/* ── Schmale Bildschirme ─────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .owSchritte { grid-template-columns: 1fr; gap: 26px; }
+  .owAblage, .owDatei { min-height: 0; }
+}
+
+@media (max-width: 560px) {
+  .owSeite { padding: 22px 16px 48px; }
+  .owTitel { font-size: 1.42rem; }
+  .owAblage { padding: 30px 16px; }
+  .owStart { flex-direction: column; align-items: stretch; }
+  .owStartKnopf { justify-content: center; }
+  .owStartHinweis { text-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .owAblage, .owKarte, .owRadio, .owStartKnopf, .owDateiWechseln { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MARKTVERGLEICH, neu 07.09.2026
+   ---------------------------------------------------------------------
+   Das Feld marketComparison wird fuer JEDE Klausel berechnet, war aber
+   bisher nur sichtbar, wenn man eine einzelne Klausel aufklappt. Die
+   Frage "ist mein Vertrag marktueblich?" liess sich damit nur
+   beantworten, indem man alle Klauseln nacheinander oeffnet.
+
+   Keine neuen Daten, kein zusaetzlicher KI-Aufruf. Ergaenzt die
+   RiskHeatmap, die eine andere Frage beantwortet (wo sitzt das Risiko,
+   nach Kategorie) und marketComparison gar nicht verwendet.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.owMarkt {
+  --owm-linie: #e3e6ec;
+  --owm-ink: #15171c;
+  --owm-ink-2: #4a4f5a;
+  --owm-ink-3: #7d8493;
+
+  border: 1px solid var(--owm-linie);
+  border-radius: 13px;
+  overflow: hidden;
+  background: #fff;
+  margin-top: 18px;
+}
+
+.owMarktKopf {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--owm-linie);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.owMarktSymbol {
+  color: #1568dd;
+  flex-shrink: 0;
+}
+
+.owMarktTitel {
+  font-size: 0.95rem;
+  font-weight: 660;
+  letter-spacing: -0.015em;
+  color: var(--owm-ink);
+}
+
+.owMarktUnter {
+  font-size: 0.8rem;
+  color: var(--owm-ink-3);
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  line-height: 1.45;
+}
+
+/* ── Kopfzeile der Skala ─────────────────────────────────────────────── */
+.owMarktSkala {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(5, 1fr);
+  gap: 1px;
+  background: var(--owm-linie);
+  font-size: 0.66rem;
+}
+
+.owMarktSkala > span {
+  background: #fff;
+  padding: 8px 5px;
+  text-align: center;
+  color: var(--owm-ink-3);
+  font-weight: 620;
+  line-height: 1.25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.owMarktSkala > span:first-child {
+  justify-content: flex-start;
+  text-align: left;
+  padding-left: 20px;
+}
+
+/* ── Datenzeilen ─────────────────────────────────────────────────────── */
+.owMarktZeile {
+  display: grid;
+  grid-template-columns: 1.6fr repeat(5, 1fr);
+  gap: 1px;
+  background: #eef0f4;
+  font-size: 0.82rem;
+  border: 0;
+  width: 100%;
+  padding: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.owMarktZeile > span {
+  background: #fff;
+  padding: 9px 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.13s ease;
+}
+
+.owMarktZeile > span:first-child {
+  justify-content: flex-start;
+  padding-left: 20px;
+  color: var(--owm-ink-2);
+  font-size: 0.83rem;
+  gap: 7px;
+  min-width: 0;
+}
+
+.owMarktZeile:hover > span { background: #f7f9fc; }
+
+.owMarktZeile:focus-visible {
+  outline: 2px solid #1568dd;
+  outline-offset: -2px;
+}
+
+.owMarktName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.owMarktPara {
+  font-size: 0.72rem;
+  color: var(--owm-ink-3);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* ── Der Punkt ───────────────────────────────────────────────────────── */
+.owPunkt {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: block;
+}
+
+.owPunktBesser { background: #15803d; }
+.owPunktUeblich { background: #1568dd; }
+.owPunktStreng { background: #b45309; }
+.owPunktSehrStreng { background: #ea580c; }
+.owPunktUnueblich { background: #dc2626; }
+
+/* ── Zusammenklappbare marktuebliche Zeilen ──────────────────────────── */
+.owMarktMehr {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--owm-linie);
+  background: #fbfcfd;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--owm-ink-2);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: background 0.13s ease;
+}
+
+.owMarktMehr:hover { background: #f2f5f9; color: #1568dd; }
+
+.owMarktMehr:focus-visible {
+  outline: 2px solid #1568dd;
+  outline-offset: -2px;
+}
+
+/* ── Fuss ────────────────────────────────────────────────────────────── */
+.owMarktFuss {
+  padding: 13px 20px;
+  border-top: 1px solid var(--owm-linie);
+  background: #fbfaf6;
+  font-size: 0.82rem;
+  color: var(--owm-ink-2);
+  line-height: 1.55;
+}
+
+.owMarktFuss strong {
+  color: var(--owm-ink);
+  font-weight: 640;
+}
+
+/* ── Schmale Bildschirme ─────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .owMarktSkala,
+  .owMarktZeile {
+    grid-template-columns: 1.15fr repeat(5, 1fr);
+    font-size: 0.58rem;
+  }
+  .owMarktSkala > span:first-child,
+  .owMarktZeile > span:first-child {
+    padding-left: 11px;
+    font-size: 0.74rem;
+  }
+  .owMarktZeile > span:first-child { flex-direction: column; align-items: flex-start; gap: 1px; }
+  .owMarktPara { font-size: 0.65rem; }
+  .owPunkt { width: 9px; height: 9px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .owMarktZeile > span, .owMarktMehr { transition: none; }
+}
