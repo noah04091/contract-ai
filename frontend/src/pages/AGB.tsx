@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
-import styles from "../styles/LegalRedesign.module.css";
+import styles from "../styles/LegalPages.module.css";
 import LandingFooter from "../components/LandingFooter";
 import {
   FileText, UserCheck, Layers, CreditCard, Clock,

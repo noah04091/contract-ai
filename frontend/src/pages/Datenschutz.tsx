@@ -2,7 +2,7 @@
 // Rechtstext 1:1 aus der bisherigen Fassung übernommen (Satz-für-Satz-gleich).
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import styles from "../styles/LegalRedesign.module.css";
+import styles from "../styles/LegalPages.module.css";
 import LandingFooter from "../components/LandingFooter";
 import {
   User, FileText, Globe, Server, HardDrive, CreditCard,
@@ -535,7 +535,7 @@ export default function Datenschutz() {
                 <h3 className={styles.ctaTitle}>Fragen zum Datenschutz?</h3>
                 <p className={styles.ctaText}>
                   Kontaktieren Sie uns unter{" "}
-                  <a href="mailto:info@contract-ai.de" className={styles.link} style={{ color: "#fff", borderBottomColor: "rgba(255,255,255,.6)" }}>info@contract-ai.de</a>
+                  <a href="mailto:info@contract-ai.de" className={styles.link}>info@contract-ai.de</a>
                 </p>
                 <a href="mailto:info@contract-ai.de" className={styles.ctaButton}>
                   Kontakt aufnehmen

@@ -2,7 +2,7 @@
 // Rechtstext/Angaben 1:1 aus der bisherigen Fassung übernommen (wortgleich).
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import styles from "../styles/LegalRedesign.module.css";
+import styles from "../styles/LegalPages.module.css";
 import LandingFooter from "../components/LandingFooter";
 import {
   Building2, Mail, Briefcase, User, Scale, Shield,

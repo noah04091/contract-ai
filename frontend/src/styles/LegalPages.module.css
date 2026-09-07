@@ -1,0 +1,697 @@
+/* LegalPages.module.css — gemeinsames Stylesheet der drei Rechtsseiten
+   (Datenschutz, AGB, Impressum).
+
+   Ersetzt LegalRedesign.module.css. Es wird KEINE Inhaltsdatei angefasst:
+   Texte, Nummerierungen, Links und Reihenfolge bleiben byteweise identisch,
+   nur die Import-Zeile der drei Seiten zeigt hierher. Das ist bei Rechtstexten
+   Pflicht, weil auf Abschnittsnummern verwiesen wird.
+
+   Warum ueberhaupt neu:
+   Die alte Fassung behandelte einen Rechtstext wie eine Werbeseite. Sie hatte
+   eine eigene Schriftwelt (Schibsted Grotesk + JetBrains Mono statt Bricolage
+   + Inter + Source Code Pro), eigene Grautoene, einen zentrierten Hero mit
+   animiertem Farbklecks und Gitterraster, jeden Abschnitt als weisse Karte mit
+   Schatten (12 gestapelte Kaesten), Icon-Kacheln mit Verlauf und einen grossen
+   blauen Verlaufsblock am Ende. Genau diese Haeufung von Effekten laesst eine
+   Seite billig und maschinell wirken.
+
+   Neue Linie: ein sauber gesetztes Dokument in der Markenwelt. Gleiche Farben
+   und Schriften wie /about, /fuer-agenturen und die Feature-Seiten. Flaechen
+   und Schatten nur dort, wo sie etwas bedeuten; getrennt wird mit Haarlinien.
+
+   ⚠️ Alle 65 in den drei Seiten benutzten Klassen sind hier definiert. Wird
+   eine entfernt, verliert das Markup seine Gestalt.
+   ============================================================ */
+
+/* ===================== ROOT / TOKENS ===================== */
+.page {
+  --tinte: #14284f;
+  --tinte-weich: #5a719b;
+  --blau: #2563eb;
+  --blau-tief: #1d4ed8;
+  --flaeche: #e9f0fb;
+  --linie: rgba(37, 99, 235, 0.16);
+  --linie-zart: rgba(20, 40, 79, 0.09);
+
+  /* Bedeutungsfarben, alle auf hellem Grund ueber 4,5:1 */
+  --warn: #8a5a06;
+  --warn-fl: rgba(234, 179, 8, 0.13);
+  --ok: #0f766e;
+  --ok-fl: rgba(15, 118, 110, 0.10);
+
+  --display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --text: 'Inter', system-ui, -apple-system, sans-serif;
+  --mono: 'Source Code Pro', ui-monospace, monospace;
+
+  --weich: cubic-bezier(.22, .61, .36, 1);
+  --navhoehe: 65px;
+
+  font-family: var(--text);
+  color: var(--tinte);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+
+  /* Lange deutsche Komposita („Verbraucherstreitbeilegung") duerfen nie ueber
+     die Spalte hinausragen. Vererbte Properties, gelten fuer alle Nachfahren.
+     ⚠️ Bewusst KEIN overflow-wrap auf Ueberschriften (siehe unten): dort
+     zerreisst es Woerter mitten drin und ueberstimmt die Silbentrennung. */
+  overflow-wrap: break-word;
+  hyphens: auto;
+
+  /* Derselbe durchgehende Hintergrund wie auf den uebrigen oeffentlichen
+     Seiten, EINMAL auf der Seite statt Flaeche je Abschnitt. */
+  background:
+    radial-gradient(1300px 850px at 10% 2%, rgba(37, 99, 235, 0.13), transparent 60%),
+    radial-gradient(1050px 750px at 92% 26%, rgba(59, 130, 246, 0.09), transparent 58%),
+    radial-gradient(1200px 850px at 8% 60%, rgba(37, 99, 235, 0.10), transparent 60%),
+    radial-gradient(1300px 900px at 86% 94%, rgba(37, 99, 235, 0.12), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f4f8fe 12%, #ffffff 30%,
+                    #f6fafe 48%, #ffffff 64%, #f2f7fd 84%, #ffffff 100%);
+}
+.page * { box-sizing: border-box; }
+
+.page :focus-visible {
+  outline: 2px solid var(--blau);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Globale h1/h2/p-Regeln aus index.css wuerden die Schrift zurueckdrehen,
+   deshalb auf den Textklassen explizit gesetzt (Klasse schlaegt Element). */
+.heroTitle, .sectionTitle, .subTitle, .ctaTitle {
+  font-family: var(--display);
+  hyphens: auto;
+}
+.heroLead, .heroSubtitle, .ctaText, .sectionBody, .infoValue, .heroMeta, .tarifValue {
+  font-family: var(--text);
+}
+
+/* ===================== LESEFORTSCHRITT ===================== */
+/* ⚠️ Die Navbar ist sticky und 65px hoch mit z-index 1000. Ein Balken bei
+   top:0 verschwindet dahinter, deshalb sitzt er darunter und darueber. */
+.progress {
+  position: fixed;
+  top: var(--navhoehe);
+  left: 0;
+  height: 2px;
+  width: 0%;
+  background: var(--blau);
+  z-index: 1001;
+  transition: width .1s linear;
+}
+
+/* ===================== HERO ===================== */
+/* Ruhig und linksbuendig wie auf den uebrigen Seiten. Der Farbklecks, das
+   Gitterraster und der Lichtschein entfallen: leere Deko-Divs, kein Text. */
+.hero {
+  position: relative;
+  text-align: left;
+  padding: clamp(52px, 8vw, 92px) clamp(20px, 5vw, 96px) clamp(30px, 4vw, 46px);
+  background: none;
+}
+.heroGlows,
+.heroBlob,
+.heroGrid,
+.ctaGlow {
+  display: none;
+}
+.heroInner {
+  position: relative;
+  z-index: 1;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--blau-tief);
+}
+.heroBadgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--blau);
+  flex-shrink: 0;
+}
+.green { background: var(--ok); }
+
+.heroTitle {
+  margin: 14px 0 0;
+  font-size: clamp(34px, 5.4vw, 60px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.05;
+  color: var(--tinte);
+  text-wrap: balance;
+  max-width: 20ch;
+}
+.heroLead {
+  margin: 18px 0 0;
+  max-width: 62ch;
+  font-size: clamp(17px, 1.6vw, 20px);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.heroSubtitle {
+  margin: 10px 0 0;
+  max-width: 66ch;
+  font-size: clamp(15px, 1.4vw, 17px);
+  font-weight: 400;
+  line-height: 1.62;
+  color: var(--tinte-weich);
+}
+
+/* Merkmalspillen: als ruhige Reihe statt als Kaestchenparade */
+.heroPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+  margin-top: 22px;
+  padding: 0;
+}
+.heroPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--tinte);
+}
+.heroPill svg {
+  color: var(--blau);
+  flex-shrink: 0;
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--linie);
+  max-width: 1180px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  color: var(--tinte-weich);
+}
+.heroMetaItem { display: inline-flex; align-items: center; gap: 7px; }
+.heroMetaItem svg { color: var(--blau); flex-shrink: 0; }
+.heroMetaDot { width: 3px; height: 3px; border-radius: 50%; background: var(--tinte-weich); opacity: .55; }
+
+/* ===================== DOKUMENT-RASTER ===================== */
+.shell {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 96px) 72px;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: start;
+}
+/* Die dritte Spalte der alten Fassung entfaellt: der Text darf breiter
+   laufen, die Zeilenlaenge steuert die Schriftgroesse. */
+.spacer { display: none; }
+
+/* ===================== INHALTSVERZEICHNIS ===================== */
+.toc {
+  position: sticky;
+  top: calc(var(--navhoehe) + 26px);
+  width: 100%;
+  min-width: 0;
+  justify-self: start;
+}
+.tocLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--blau-tief);
+  padding: 0 0 14px;
+}
+.tocNav {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--linie);
+}
+.tocItem {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  padding: 8px 12px;
+  margin-left: -1px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--tinte-weich);
+  font-family: var(--text);
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  width: 100%;
+  min-width: 0;
+  transition: color .18s var(--weich), border-color .18s var(--weich);
+}
+.tocNum {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  min-width: 17px;
+  color: var(--tinte-weich);
+  opacity: .7;
+  flex-shrink: 0;
+}
+.tocText { flex: 1; min-width: 0; }
+.tocItem:hover { color: var(--tinte); border-left-color: var(--linie); }
+.tocItem.active {
+  color: var(--tinte);
+  font-weight: 600;
+  border-left-color: var(--blau);
+  background: none;
+}
+.tocItem.active .tocNum { color: var(--blau); opacity: 1; }
+
+/* ===================== INHALT ===================== */
+.content { min-width: 0; }
+
+/* Kein Kartenstapel mehr: die Abschnitte trennt eine Haarlinie. */
+.section {
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--linie);
+  border-radius: 0;
+  box-shadow: none;
+  padding: clamp(34px, 4vw, 52px) 0 clamp(12px, 2vw, 20px);
+  margin: 0;
+  scroll-margin-top: calc(var(--navhoehe) + 24px);
+}
+.section:first-child { border-top: 0; padding-top: clamp(10px, 2vw, 22px); }
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 22px;
+}
+/* Aus der Verlaufskachel wird ein ruhiges Zeichen in der Markenfarbe. */
+.sectionIcon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--flaeche);
+  border: 0;
+  color: var(--blau);
+}
+.sectionIcon svg { width: 17px; height: 17px; }
+.sectionHeaderText { min-width: 0; }
+.sectionKicker {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--blau-tief);
+  margin-bottom: 5px;
+}
+.sectionTitle {
+  margin: 0;
+  font-size: clamp(21px, 2.2vw, 27px);
+  font-weight: 600;
+  letter-spacing: -.022em;
+  line-height: 1.22;
+  color: var(--tinte);
+}
+
+.sectionBody {
+  font-size: clamp(16px, 1.15vw, 17.5px);
+  line-height: 1.75;
+  color: var(--tinte-weich);
+  max-width: 74ch;
+}
+.sectionBody p { margin: 0 0 17px; }
+.sectionBody p:last-child { margin-bottom: 0; }
+.sectionBody strong { color: var(--tinte); font-weight: 600; }
+
+.subTitle {
+  font-size: clamp(16.5px, 1.3vw, 18.5px);
+  font-weight: 600;
+  color: var(--tinte);
+  margin: 30px 0 10px;
+  letter-spacing: -.012em;
+}
+.subTitle:first-child { margin-top: 0; }
+.subTitleDot { display: inline-flex; align-items: baseline; gap: 10px; }
+.subTitleDot::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blau);
+  flex-shrink: 0;
+  transform: translateY(-2px);
+}
+
+.link {
+  color: var(--blau-tief);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(29, 78, 216, 0.32);
+  transition: border-color .15s var(--weich), color .15s var(--weich);
+}
+.link:hover { color: var(--blau); border-bottom-color: currentColor; }
+
+/* Listen */
+.list {
+  list-style: none;
+  margin: 10px 0 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 74ch;
+}
+.list li {
+  position: relative;
+  padding-left: 21px;
+  font-size: clamp(16px, 1.15vw, 17.5px);
+  line-height: 1.66;
+  color: var(--tinte-weich);
+}
+.list li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: .66em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--blau);
+}
+
+/* ===================== HINWEISKAESTEN ===================== */
+/* Statt gerundeter Farbflaeche nur eine tragende Linie links. Der Hinweis
+   bleibt erkennbar, unterbricht den Lesefluss aber nicht mehr. */
+.callout {
+  border: 0;
+  border-left: 2px solid;
+  border-radius: 0;
+  padding: 4px 0 4px 20px;
+  margin: 20px 0;
+  font-size: clamp(15.5px, 1.1vw, 16.5px);
+  line-height: 1.68;
+  background: none;
+  max-width: 74ch;
+}
+.callout strong { font-weight: 600; }
+.calloutInfo { border-left-color: var(--blau); color: var(--tinte-weich); }
+.calloutInfo strong { color: var(--tinte); }
+.calloutWarn { border-left-color: #b8860b; color: var(--warn); }
+.calloutWarn strong { color: var(--warn); }
+.calloutOk { border-left-color: var(--ok); color: var(--ok); }
+.calloutOk strong { color: var(--ok); }
+.calloutIcon { display: flex; align-items: flex-start; gap: 12px; }
+.calloutIcon svg { flex-shrink: 0; margin-top: 3px; }
+
+.highlightBox {
+  background: var(--flaeche);
+  border: 0;
+  border-left: 2px solid var(--blau);
+  border-radius: 0;
+  padding: 18px 22px;
+  margin: 20px 0;
+  font-size: clamp(15.5px, 1.1vw, 16.5px);
+  line-height: 1.7;
+  /* Auf der getoenten Flaeche reicht --tinte-weich nicht (4,29:1), deshalb
+     ein dunklerer Ton nur hier. */
+  color: #465c82;
+  max-width: 74ch;
+}
+.highlightBox strong { color: var(--tinte); font-weight: 600; }
+
+/* ===================== ANGABEN (Verantwortlicher, Kontakt, Tarife) ===================== */
+/* Vorher Kaesten in einem Kasten. Jetzt eine Aufstellung: Bezeichnung klein
+   darueber, Wert darunter, getrennt durch Haarlinien. */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: 0 clamp(20px, 3vw, 44px);
+  margin: 22px 0;
+  border-top: 1px solid var(--linie);
+  max-width: 74ch;
+}
+.infoCard {
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--linie);
+  border-radius: 0;
+  padding: 15px 0;
+  min-width: 0;
+  transition: none;
+}
+.infoCard:hover { transform: none; box-shadow: none; border-color: var(--linie); }
+/* ⚠️ KEIN text-transform: uppercase. Diese Bezeichnungen sind im Impressum
+   Pflichtangaben: aus „USt-IdNr." wuerde „UST-IDNR.", aus „Gemäß" durch die
+   ss-Ersetzung „GEMÄSS". Die Schreibweise des Rechtstextes bleibt unangetastet. */
+.infoLabel {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--blau-tief);
+  margin-bottom: 6px;
+}
+.infoValue {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--tinte);
+}
+/* Das Symbol je Angabe traegt keine Information und entfaellt. */
+.infoCardIcon { display: none; }
+
+a.infoCard { display: block; text-decoration: none; color: inherit; }
+a.infoCard:hover .infoValue { color: var(--blau-tief); }
+
+/* Namenszeichen (Impressum) */
+.avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--flaeche);
+  color: var(--blau-tief);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Tarife (AGB) — dieselbe Aufstellung, ein Tarif hervorgehoben */
+.tarifGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 0;
+  margin: 24px 0;
+  border-top: 1px solid var(--linie);
+  max-width: 74ch;
+}
+.tarifCard {
+  position: relative;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--linie);
+  border-radius: 0;
+  padding: 17px 0;
+  min-width: 0;
+}
+.tarifCard.featured { background: none; box-shadow: none; }
+.tarifCard.featured .tarifName { color: var(--tinte); }
+.tarifCard.featured::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 17px;
+  bottom: 17px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--blau);
+}
+/* Das Abzeichen steht im Markup VOR dem Tarifnamen. Beide inline zu setzen
+   klebte „Beliebt" und „Business-Tarif" zu einem Wort zusammen, deshalb
+   behaelt jedes seine eigene Zeile. */
+.tarifBadge {
+  position: static;
+  display: block;
+  transform: none;
+  margin: 0 0 7px;
+  background: none;
+  color: var(--blau);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 0;
+  border-radius: 0;
+}
+.tarifName {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--blau-tief);
+  margin-bottom: 7px;
+}
+.tarifValue {
+  display: block;
+  margin-top: 7px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+
+/* ===================== ABSCHLUSS ===================== */
+/* Kein blauer Verlaufsblock mehr. Ein Rechtstext endet nicht mit Werbung,
+   sondern mit einem ruhigen Hinweis, wo es weitergeht. */
+.cta {
+  position: relative;
+  overflow: hidden;
+  max-width: 1180px;
+  margin: 8px auto 0;
+  border: 1px solid var(--linie);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: clamp(32px, 4vw, 46px) clamp(24px, 4vw, 46px);
+  text-align: left;
+  color: var(--tinte);
+  box-shadow: none;
+}
+.ctaInner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 30px);
+}
+.ctaIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--flaeche);
+  color: var(--blau);
+  margin: 0;
+  flex-shrink: 0;
+}
+.ctaTitle {
+  margin: 0;
+  font-size: clamp(20px, 2vw, 25px);
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.25;
+  color: var(--tinte);
+}
+.ctaText {
+  margin: 7px 0 0;
+  max-width: 62ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  background: var(--blau-tief);
+  color: #fff;
+  font-size: 15.5px;
+  font-weight: 600;
+  padding: 13px 24px;
+  border-radius: 11px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: none;
+  transition: background .18s var(--weich);
+}
+.ctaButton:hover { background: var(--blau); transform: none; box-shadow: none; }
+
+/* ===================== EINBLENDEN BEIM SCROLLEN ===================== */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .6s var(--weich), transform .6s var(--weich);
+}
+.reveal.visible { opacity: 1; transform: none; }
+/* Sicherheitsnetz: bleibt der Beobachter aus (Ladefehler, alter Browser),
+   wird der Abschnitt nach 4s trotzdem sichtbar statt dauerhaft unsichtbar. */
+.reveal { animation: legalNotfallSichtbar .01s linear 4s forwards; }
+@keyframes legalNotfallSichtbar { to { opacity: 1; transform: none; } }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 1120px) {
+  .shell { grid-template-columns: minmax(0, 1fr); }
+  .toc { display: none; }
+}
+@media (max-width: 640px) {
+  .hero { padding: 40px 20px 26px; }
+  .heroTitle { font-size: clamp(28px, 8vw, 34px); }
+  .section { padding: 28px 0 10px; }
+  .sectionHeader { gap: 12px; margin-bottom: 18px; }
+  .sectionIcon { width: 30px; height: 30px; border-radius: 9px; }
+  .sectionIcon svg { width: 15px; height: 15px; }
+  .cta { border-radius: 14px; padding: 26px 20px; }
+  .ctaInner { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .ctaButton { justify-content: center; }
+  .infoGrid, .tarifGrid { gap: 0; }
+}
+@media (max-width: 400px) {
+  .heroTitle { font-size: 26px; }
+  .sectionTitle { font-size: 19px; }
+}
+
+/* Windows-Kontrastmodus: Flaechen verschwinden dort, die tragenden Linien
+   muessen deshalb aus der Systemfarbe kommen. */
+@media (forced-colors: active) {
+  .section, .infoGrid, .infoCard, .tarifGrid, .tarifCard, .cta { border-color: CanvasText; }
+  .callout, .highlightBox { border-left-color: CanvasText; }
+  .sectionIcon, .ctaIcon, .avatar { border: 1px solid CanvasText; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; animation: none; }
+  .tocItem, .link, .ctaButton, .progress { transition: none; }
+}
