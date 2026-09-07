@@ -497,10 +497,14 @@ const LegalLensStart = () => {
                   margin: 0,
                   paddingLeft: '20px'
                 }}>
-                  <li>Interaktive Vertragsanalyse mit 4 Perspektiven</li>
-                  <li>Detaillierte Risikobewertung jeder Klausel</li>
-                  <li>Alternative Formulierungsvorschläge</li>
-                  <li>PDF-Sync mit Klausel-Highlighting</li>
+                  {/* 07.09.2026: Dieses Fenster sieht ausgerechnet der
+                      Nicht-Zahler, den es überzeugen soll. "PDF-Sync mit
+                      Klausel-Highlighting" sagt dem nichts. Jetzt dieselben
+                      vier Punkte wie auf der Startseite, gleiche Sprache. */}
+                  <li>Jede Klausel einzeln, direkt neben dem Originaldokument</li>
+                  <li>Erklärt in einfacher Sprache, ohne Juristendeutsch</li>
+                  <li>Aus vier Blickwinkeln: wie die Klausel für beide Seiten wirkt</li>
+                  <li>Eine bessere Formulierung, wenn eine Klausel dich benachteiligt</li>
                 </ul>
               </div>
 
