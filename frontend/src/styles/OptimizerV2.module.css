@@ -4479,11 +4479,19 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 14px;
-  align-items: start;
+  /* 07.09.2026: stretch statt start. Mit start war die eine Karte
+     deutlich niedriger als die andere, und beim Aufklappen einer
+     Bewertungszeile kippte das Verhaeltnis in die Gegenrichtung.
+     Gleich hohe Karten wirken ruhig, unabhaengig vom Inhalt. */
+  align-items: stretch;
   min-width: 0;
 }
 
-.oeZwei > * { min-width: 0; }
+.oeZwei > * {
+  min-width: 0;
+  /* Inhalt oben halten, wenn die Karte gedehnt wird. */
+  align-content: start;
+}
 
 /* ── Zone 4: ausklappbares Beiwerk ───────────────────────────────────── */
 .oeMehrKnopf {
@@ -4625,4 +4633,218 @@
 
 @media (max-width: 520px) {
   .oeBewZeile { grid-template-columns: 78px 1fr 36px; gap: 8px; font-size: 0.74rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ERKLAEREN STATT NUR SPRINGEN, 07.09.2026
+   ---------------------------------------------------------------------
+   Zwei Eingriffe gegen dieselbe Schwaeche: Zahlen ohne Begruendung und
+   Kacheln, die beim Klick ungefragt wegspringen.
+
+     oeBewZeile aufklappbar   was der Wert misst, was ihn gesenkt hat
+     oeFenster                Erklaerung an Ort und Stelle, Sprung als Knopf
+
+   Alle Angaben stammen aus vorhandenen Feldern. Fuer den Bereich
+   Klarheit gibt es KEINE Zuordnung auf Klauselebene, dort steht nur,
+   was gemessen wird. Lieber keine Begruendung als eine erfundene.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Bewertungszeile wird zum Schalter ───────────────────────────────── */
+.oeBewSchalter {
+  display: grid;
+  grid-template-columns: 96px 1fr 34px 14px;
+  gap: 10px;
+  align-items: center;
+  font-size: 0.79rem;
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.13s ease;
+}
+
+.oeBewSchalter:hover { background: var(--oe-blau-weich); }
+.oeBewSchalterAuf { background: var(--oe-blau-weich); }
+
+.oeBewSchalter:focus-visible {
+  outline: 2px solid var(--oe-blau);
+  outline-offset: -2px;
+}
+
+.oeBewPfeil {
+  font-size: 0.6rem;
+  color: var(--oe-ink-3);
+  text-align: right;
+  line-height: 1;
+}
+
+/* ── Die aufgeklappte Begruendung ────────────────────────────────────── */
+.oeBewErklaerung {
+  background: #fbfaf6;
+  border: 1px solid #e8e4d8;
+  border-radius: 8px;
+  padding: 11px 13px;
+  margin: 2px 8px 7px;
+  font-size: 0.77rem;
+  color: var(--oe-ink-2);
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.oeBewErklaerung strong { color: var(--oe-ink); font-weight: 620; }
+
+.oeBewFuss {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e8e4d8;
+  flex-wrap: wrap;
+}
+
+.oeBewGewicht { font-size: 0.73rem; color: var(--oe-ink-3); }
+
+.oeBewSprung {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.74rem;
+  color: var(--oe-blau);
+  font-weight: 560;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+
+.oeBewSprung:hover { text-decoration: underline; }
+.oeBewSprung:focus-visible { outline: 2px solid var(--oe-blau); outline-offset: 2px; }
+
+/* ── Erklaerfenster an der Risiko-Kachel ─────────────────────────────── */
+.oeFensterHuelle {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 30, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.oeFenster {
+  background: var(--oe-karte);
+  border-radius: 13px;
+  width: 100%;
+  max-width: 430px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 18px 20px;
+  box-shadow: 0 14px 48px -12px rgba(0, 0, 0, 0.32);
+  min-width: 0;
+}
+
+.oeFensterKopf {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 9px;
+}
+
+.oeFensterTitel {
+  font-size: 0.95rem;
+  font-weight: 670;
+  letter-spacing: -0.015em;
+  color: var(--oe-ink);
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.oeFensterMarke {
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.oeFensterText {
+  font-size: 0.82rem;
+  color: var(--oe-ink-2);
+  margin: 0 0 12px;
+  line-height: 1.55;
+}
+
+.oeFensterText strong { color: var(--oe-ink); font-weight: 620; }
+
+.oeFensterListe {
+  display: grid;
+  gap: 1px;
+  background: var(--oe-linie-weich);
+  border: 1px solid var(--oe-linie);
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: 13px;
+  min-width: 0;
+}
+
+.oeFensterEintrag {
+  background: var(--oe-karte);
+  border: 0;
+  font-family: inherit;
+  text-align: left;
+  padding: 9px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.79rem;
+  cursor: pointer;
+  min-width: 0;
+  transition: background 0.13s ease;
+}
+
+.oeFensterEintrag:hover { background: var(--oe-blau-weich); }
+.oeFensterEintrag:focus-visible { outline: 2px solid var(--oe-blau); outline-offset: -2px; }
+
+.oeFensterName {
+  color: var(--oe-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.oeFensterStufe {
+  font-size: 0.71rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.oeFensterTun {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Schmale Bildschirme ─────────────────────────────────────────────── */
+@media (max-width: 520px) {
+  .oeBewSchalter { grid-template-columns: 78px 1fr 30px 12px; gap: 8px; font-size: 0.74rem; }
+  .oeFenster { padding: 15px 16px; }
+  .oeFensterTun { flex-direction: column; }
+  .oeFensterTun > * { width: 100%; text-align: center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oeBewSchalter, .oeFensterEintrag { transition: none; }
 }

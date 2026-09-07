@@ -35,6 +35,41 @@ function getScoreLabel(score: number): string {
   return 'Kritisch';
 }
 
+/**
+ * 07.09.2026: Was jeder Bereich misst und wie schwer er wiegt.
+ * Die Prozentwerte sind dieselben wie im Erklaerblock am Seitenende,
+ * damit beide Darstellungen nie auseinanderlaufen.
+ */
+const BEREICH_INFO: Record<string, { misst: string; gewicht: number }> = {
+  risk: {
+    misst: 'Wie gut der Vertrag dich vor rechtlichen und finanziellen Folgen schützt.',
+    gewicht: 20
+  },
+  fairness: {
+    misst: 'Ob Rechte und Pflichten zwischen beiden Seiten ausgewogen verteilt sind.',
+    gewicht: 20
+  },
+  clarity: {
+    misst: 'Ob die Formulierungen verständlich und eindeutig sind.',
+    gewicht: 15
+  },
+  completeness: {
+    misst: 'Ob alle Klauseln enthalten sind, die in dieser Vertragsart üblich sind.',
+    gewicht: 10
+  },
+  marketStandard: {
+    misst: 'Ob die Regelungen dem entsprechen, was in dieser Vertragsart marktüblich ist.',
+    gewicht: 10
+  }
+};
+
+function wertEinordnung(wert: number): string {
+  if (wert >= 80) return 'sehr gut';
+  if (wert >= 60) return 'gut';
+  if (wert >= 40) return 'verbesserungswürdig';
+  return 'kritisch';
+}
+
 // ── Power Balance Labels ──
 const PB_LABELS: Record<string, string> = {
   balanced: 'Ausgewogen',
@@ -86,6 +121,54 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
   }, [result]);
 
   const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const [offenerBereich, setOffenerBereich] = useState<string | null>(null);
+
+  /**
+   * Begruendung je Bereich, ausschliesslich aus vorhandenen Feldern.
+   * Gibt null zurueck, wenn sich nichts belegen laesst: fuer 'clarity'
+   * gibt es keine Zuordnung auf Klauselebene, und auch sonst kann ein
+   * Bereich ohne Auffaelligkeit sein.
+   */
+  const begruendung = useCallback((bereich: string): { text: string; anzahl: number } | null => {
+    if (bereich === 'risk') {
+      const treffer = result.clauseAnalyses.filter(a => a.riskLevel >= 7);
+      if (!treffer.length) return null;
+      return {
+        anzahl: treffer.length,
+        text: `${treffer.length} ${treffer.length === 1 ? 'Klausel trägt' : 'Klauseln tragen'} ein hohes Risiko.`
+      };
+    }
+    if (bereich === 'fairness') {
+      const treffer = result.clauseAnalyses.filter(a =>
+        a.powerBalance === 'strongly_one_sided' || a.powerBalance === 'extremely_one_sided'
+      );
+      if (!treffer.length) return null;
+      return {
+        anzahl: treffer.length,
+        text: `${treffer.length} ${treffer.length === 1 ? 'Klausel ist' : 'Klauseln sind'} deutlich einseitig formuliert.`
+      };
+    }
+    if (bereich === 'completeness') {
+      const fehlend = (scores.missingClauses || []).filter(mc => !mc.foundInContent);
+      if (!fehlend.length) return null;
+      return {
+        anzahl: fehlend.length,
+        text: `${fehlend.length} übliche ${fehlend.length === 1 ? 'Klausel fehlt' : 'Klauseln fehlen'} ganz.`
+      };
+    }
+    if (bereich === 'marketStandard') {
+      const treffer = result.clauseAnalyses.filter(a =>
+        a.marketComparison === 'significantly_strict' || a.marketComparison === 'unusually_disadvantageous'
+      );
+      if (!treffer.length) return null;
+      return {
+        anzahl: treffer.length,
+        text: `${treffer.length} ${treffer.length === 1 ? 'Klausel liegt' : 'Klauseln liegen'} jenseits des Marktüblichen.`
+      };
+    }
+    // clarity: kein Feld auf Klauselebene, also keine Begruendung
+    return null;
+  }, [result, scores]);
 
   /* 07.09.2026: Ampelfarbe fuer die linke Kante des Kopfes. Ohne
      summary richtet sie sich nach dem Gesamtwert. */
@@ -207,21 +290,53 @@ export default function ScoreDashboard({ scores, result, structure, onNavigate }
             <div className={styles.oeBewertung}>
               {SCORE_CONFIGS.map(({ key, label, icon: Icon, color }) => {
                 const value = scores[key] ?? 0;
+                const offen = offenerBereich === key;
+                const info = BEREICH_INFO[key];
+                const grund = begruendung(key);
                 return (
-                  <div key={key} className={styles.oeBewZeile}>
-                    <span className={styles.oeBewName}>
-                      <Icon size={13} style={{ color, flexShrink: 0 }} />
-                      {label}
-                    </span>
-                    <span className={styles.oeBewBalken}>
-                      <span
-                        className={styles.oeBewFuell}
-                        style={{ width: `${value}%`, background: getScoreColor(value) }}
-                      />
-                    </span>
-                    <span className={styles.oeBewWert} style={{ color: getScoreColor(value) }}>
-                      {value}
-                    </span>
+                  <div key={key}>
+                    <button
+                      className={`${styles.oeBewSchalter} ${offen ? styles.oeBewSchalterAuf : ''}`}
+                      onClick={() => setOffenerBereich(offen ? null : key)}
+                      aria-expanded={offen}
+                      title={offen ? 'Erklärung schließen' : 'Was bedeutet dieser Wert?'}
+                    >
+                      <span className={styles.oeBewName}>
+                        <Icon size={13} style={{ color, flexShrink: 0 }} />
+                        {label}
+                      </span>
+                      <span className={styles.oeBewBalken}>
+                        <span
+                          className={styles.oeBewFuell}
+                          style={{ width: `${value}%`, background: getScoreColor(value) }}
+                        />
+                      </span>
+                      <span className={styles.oeBewWert} style={{ color: getScoreColor(value) }}>
+                        {value}
+                      </span>
+                      <span className={styles.oeBewPfeil}>{offen ? '▲' : '▼'}</span>
+                    </button>
+
+                    {offen && (
+                      <div className={styles.oeBewErklaerung}>
+                        <strong>{value} von 100 heißt: {wertEinordnung(value)}.</strong>{' '}
+                        {info?.misst}
+                        {grund && <> Gesenkt hat den Wert vor allem, dass {grund.text.charAt(0).toLowerCase() + grund.text.slice(1)}</>}
+                        <span className={styles.oeBewFuss}>
+                          <span className={styles.oeBewGewicht}>
+                            Zählt {info?.gewicht} % zum Gesamtwert
+                          </span>
+                          {grund && (
+                            <button
+                              className={styles.oeBewSprung}
+                              onClick={(e) => { e.stopPropagation(); onNavigate('clauses'); }}
+                            >
+                              {grund.anzahl === 1 ? 'Die Klausel ansehen' : `Die ${grund.anzahl} Klauseln ansehen`} →
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -790,6 +905,115 @@ const MARKT_STUFEN = [
   { wert: 'unusually_disadvantageous', kurz: 'unüblich nachteilig', punkt: 'owPunktUnueblich' }
 ] as const;
 
+/**
+ * Erklaerfenster zu einer Risiko-Kategorie. Zeigt die Klauseln dieser
+ * Kategorie mit ihrer Risikostufe und laesst gezielt zu einer einzelnen
+ * springen. Alle Angaben aus vorhandenen Feldern.
+ */
+function RisikoFenster({
+  kategorie, result, onNavigate, onClose
+}: {
+  kategorie: string;
+  result: AnalysisResult;
+  onNavigate: (tab: string, clauseId?: string) => void;
+  onClose: () => void;
+}) {
+  const klauseln = useMemo(() => {
+    return result.clauses
+      .filter(k => k.category === kategorie)
+      .map(k => {
+        const analyse = result.clauseAnalyses.find(a => a.clauseId === k.id);
+        const para = k.sectionNumber && k.sectionNumber !== 'null' ? k.sectionNumber : null;
+        const name = para && k.title?.startsWith(para) ? k.title.slice(para.length).trimStart() : k.title;
+        return {
+          id: k.id,
+          name: (name || k.id) + (para ? ' · ' + para : ''),
+          risiko: analyse?.riskLevel ?? 0,
+          einseitig: analyse?.powerBalance === 'strongly_one_sided' || analyse?.powerBalance === 'extremely_one_sided'
+        };
+      })
+      .sort((a, b) => b.risiko - a.risiko);
+  }, [kategorie, result]);
+
+  const kritisch = klauseln.filter(k => k.risiko >= 7).length;
+  const einseitige = klauseln.filter(k => k.einseitig).length;
+  const stufe = (r: number) => r >= 7 ? { text: 'hohes Risiko', farbe: '#EF4444' }
+    : r >= 4 ? { text: 'mittleres Risiko', farbe: '#F59E0B' }
+    : { text: 'geringes Risiko', farbe: '#10B981' };
+
+  const spitze = klauseln[0] ? stufe(klauseln[0].risiko) : null;
+
+  return (
+    <div className={styles.oeFensterHuelle} onClick={onClose} role="presentation">
+      <div
+        className={styles.oeFenster}
+        onClick={e => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Risiko im Bereich ${CATEGORY_LABELS[kategorie as ClauseCategory] || kategorie}`}
+      >
+        <div className={styles.oeFensterKopf}>
+          <p className={styles.oeFensterTitel}>
+            {CATEGORY_LABELS[kategorie as ClauseCategory] || kategorie}
+          </p>
+          {spitze && (
+            <span
+              className={styles.oeFensterMarke}
+              style={{ background: spitze.farbe + '18', color: spitze.farbe }}
+            >
+              {spitze.text}
+            </span>
+          )}
+        </div>
+
+        <p className={styles.oeFensterText}>
+          {klauseln.length === 1
+            ? 'Eine Klausel regelt diesen Bereich.'
+            : `${klauseln.length} Klauseln regeln diesen Bereich.`}
+          {kritisch > 0 && (
+            <> Davon <strong>{kritisch} mit hohem Risiko</strong>.</>
+          )}
+          {einseitige > 0 && (
+            <> {einseitige === 1 ? 'Eine ist' : `${einseitige} sind`} deutlich einseitig zu deinen Lasten formuliert.</>
+          )}
+          {kritisch === 0 && einseitige === 0 && (
+            <> Keine davon ist auffällig.</>
+          )}
+        </p>
+
+        <div className={styles.oeFensterListe}>
+          {klauseln.slice(0, 6).map(k => {
+            const st = stufe(k.risiko);
+            return (
+              <button
+                key={k.id}
+                className={styles.oeFensterEintrag}
+                onClick={() => { onClose(); onNavigate('clauses', k.id); }}
+                title="Zu dieser Klausel springen"
+              >
+                <span className={styles.oeFensterName}>{k.name}</span>
+                <span className={styles.oeFensterStufe} style={{ color: st.farbe }}>{st.text}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className={styles.oeFensterTun}>
+          <button
+            className={styles.oeKnopf}
+            onClick={() => { onClose(); onNavigate('clauses', klauseln[0]?.id); }}
+          >
+            {klauseln.length === 1 ? 'Zur Klausel' : 'Zu diesen Klauseln'}
+          </button>
+          <button className={`${styles.oeKnopf} ${styles.oeKnopfZweit}`} onClick={onClose}>
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MarktVergleich({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string, clauseId?: string) => void }) {
   const [zeigeUebliche, setZeigeUebliche] = useState(false);
 
@@ -892,6 +1116,11 @@ function MarktVergleich({ result, onNavigate }: { result: AnalysisResult; onNavi
 }
 
 function RiskHeatmap({ result, onNavigate }: { result: AnalysisResult; onNavigate: (tab: string, clauseId?: string) => void }) {
+  /* 07.09.2026: Ein Klick springt nicht mehr sofort weg, sondern
+     erklaert erst. Der Sprung steht als Knopf im Fenster und fuehrt
+     direkt zur einzelnen Klausel. */
+  const [offeneKategorie, setOffeneKategorie] = useState<string | null>(null);
+
   const categoryRisks = useMemo(() => {
     const map = new Map<string, { risks: number[]; powerBalances: PowerBalance[]; count: number }>();
 
@@ -930,11 +1159,12 @@ function RiskHeatmap({ result, onNavigate }: { result: AnalysisResult; onNavigat
       </div>
       <div className={styles.riskHeatmapGrid}>
         {categoryRisks.map(cat => (
-          <div
+          <button
             key={cat.category}
             className={styles.riskHeatmapCell}
             style={{ borderColor: cat.color + '30', background: cat.color + '08' }}
-            onClick={() => onNavigate('clauses')}
+            onClick={() => setOffeneKategorie(cat.category)}
+            title="Was steckt dahinter?"
           >
             <span className={styles.riskHeatmapCellName}>
               {CATEGORY_LABELS[cat.category as ClauseCategory] || cat.category}
@@ -958,9 +1188,18 @@ function RiskHeatmap({ result, onNavigate }: { result: AnalysisResult; onNavigat
                 {PB_LABELS[cat.worstBalance] || cat.worstBalance}
               </span>
             )}
-          </div>
+          </button>
         ))}
       </div>
+
+      {offeneKategorie && (
+        <RisikoFenster
+          kategorie={offeneKategorie}
+          result={result}
+          onNavigate={onNavigate}
+          onClose={() => setOffeneKategorie(null)}
+        />
+      )}
     </div>
   );
 }
