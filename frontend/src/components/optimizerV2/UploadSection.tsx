@@ -389,7 +389,7 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
                 >
                   <span className={styles.owHistOben}>
                     <span className={styles.owHistText}>
-                      <span className={styles.owHistName}>{eintrag.fileName}</span>
+                      <span className={styles.owHistName} title={eintrag.fileName}>{eintrag.fileName}</span>
                       {(eintrag.structure?.contractTypeLabel || eintrag.structure?.recognizedAs) && (
                         <span className={styles.owHistTyp}>
                           {eintrag.structure.recognizedAs || eintrag.structure.contractTypeLabel}
@@ -405,11 +405,11 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
                     />
                   </span>
                   <span className={styles.owHistUnten}>
-                    <span>
+                    <span className={styles.owHistUntenLinks}>
                       {typeof klauseln === 'number' ? `${klauseln} Klauseln` : 'Analyse'}
                       {typeof vorschlaege === 'number' ? ` · ${vorschlaege} Vorschläge` : ''}
                     </span>
-                    <span>{alterText(eintrag.createdAt)}</span>
+                    <span className={styles.owHistUntenRechts}>{alterText(eintrag.createdAt)}</span>
                   </span>
                 </button>
               );
@@ -467,7 +467,10 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
                     <FileText size={15} />
                   </span>
                   <span className={styles.owWahlText}>
-                    <span className={styles.owWahlName}>
+                    <span
+                      className={styles.owWahlName}
+                      title={vertrag.name || vertrag.fileName || 'Unbenannter Vertrag'}
+                    >
                       {vertrag.name || vertrag.fileName || 'Unbenannter Vertrag'}
                     </span>
                     {vertrag.createdAt && (
