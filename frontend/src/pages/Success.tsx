@@ -91,7 +91,9 @@ const Success: React.FC = () => {
 
         return false; // Continue polling
       } catch (error) {
-        console.error('❌ Error checking subscription status:', error);
+        if (!(error instanceof Error && error.name === 'NotAuthenticated')) {
+          console.error('❌ Error checking subscription status:', error);
+        }
         pollCount++;
         return pollCount >= maxPolls;
       }

@@ -56,8 +56,15 @@ export const fetchUserData = async (): Promise<UserData> => {
     });
 
     if (!response.ok) {
-      console.error(`❌ /api/auth/me failed: ${response.status} ${response.statusText}`);
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      // 401 = niemand eingeloggt — bei Gästen der Normalfall, kein Fehler.
+      // Message NICHT umformulieren: errorHandling.ts wertet sie textbasiert aus.
+      const notAuthenticated = response.status === 401;
+      if (!notAuthenticated) {
+        console.error(`❌ /api/auth/me failed: ${response.status} ${response.statusText}`);
+      }
+      const err = new Error(`HTTP ${response.status}: ${response.statusText}`);
+      if (notAuthenticated) err.name = 'NotAuthenticated';
+      throw err;
     }
 
     const data = await response.json();
@@ -71,7 +78,9 @@ export const fetchUserData = async (): Promise<UserData> => {
     console.log("✅ User-Daten erfolgreich geladen:", data.user.email);
     return data.user;
   } catch (error) {
-    console.error("❌ Fehler beim Laden der User-Daten:", error);
+    if (!(error instanceof Error && error.name === 'NotAuthenticated')) {
+      console.error("❌ Fehler beim Laden der User-Daten:", error);
+    }
     throw error;
   }
 };

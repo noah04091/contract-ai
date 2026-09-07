@@ -56,7 +56,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(userData);
         lastFetchTime.current = Date.now();
       } catch (error) {
-        console.error("❌ refetchUser Fehler:", error);
+        if (!(error instanceof Error && error.name === 'NotAuthenticated')) {
+          console.error("❌ refetchUser Fehler:", error);
+        }
         setUser(null);
       } finally {
         setIsLoading(false);

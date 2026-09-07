@@ -117,7 +117,7 @@ const CookieConsentBanner: React.FC = () => {
         <div className={styles.content}>
           <h2 className={styles.title}>Cookie-Einstellungen</h2>
           <p className={styles.description}>
-            Wir verwenden Cookies, um Ihnen die bestmögliche Nutzererfahrung zu bieten. 
+            Wir verwenden Cookies, um dir die bestmögliche Nutzererfahrung zu bieten.
             Essenzielle Cookies sind für die Grundfunktionen unserer Website erforderlich. 
             Marketing-Cookies helfen uns dabei, unser Angebot zu verbessern und zu personalisieren.
           </p>
