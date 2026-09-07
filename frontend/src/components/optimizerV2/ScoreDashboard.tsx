@@ -845,7 +845,7 @@ function MarktVergleich({ result, onNavigate }: { result: AnalysisResult; onNavi
           title="Zur Klausel springen"
         >
           <span>
-            <span className={styles.owMarktName}>{zeile.name}</span>
+            <span className={styles.owMarktName} title={zeile.name}>{zeile.name}</span>
             {zeile.para && <span className={styles.owMarktPara}>{zeile.para}</span>}
           </span>
           {MARKT_STUFEN.map((st, i) => (

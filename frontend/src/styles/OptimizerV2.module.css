@@ -3752,7 +3752,10 @@
 
 .owMarktZeile > span:first-child {
   justify-content: flex-start;
+  align-items: baseline;
   padding-left: 20px;
+  padding-top: 8px;
+  padding-bottom: 8px;
   color: var(--owm-ink-2);
   font-size: 0.83rem;
   gap: 7px;
@@ -3767,9 +3770,16 @@
 }
 
 .owMarktName {
+  /* 07.09.2026: brach nicht um, lange Klauseltitel wurden abgeschnitten.
+     Zwei Zeilen statt Ellipse, overflow-wrap wegen Namen ohne
+     Leerzeichen. Voller Titel im title-Attribut. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  line-height: 1.32;
 }
 
 .owMarktPara {
@@ -4297,7 +4307,7 @@
 
   display: flex;
   flex-direction: column;
-  gap: 26px;
+  gap: 30px;
   min-width: 0;
 }
 
@@ -4433,14 +4443,26 @@
 .oeKnopf:focus-visible { outline: 2px solid var(--oe-blau); outline-offset: 2px; }
 
 /* ── Zonenkopf ───────────────────────────────────────────────────────── */
-.oeZone { min-width: 0; }
+.oeZone {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* 07.09.2026: fehlte. Ohne diesen Abstand kleben die Bloecke einer
+     Zone unmittelbar aneinander. */
+  gap: 14px;
+}
 
 .oeZonenKopf {
   display: flex;
   align-items: baseline;
   gap: 11px;
-  margin-bottom: 12px;
   flex-wrap: wrap;
+  /* Rangstufe sichtbar machen: der Zonentitel benennt eine FRAGE und
+     steht ueber der Gruppe, Blocktitel benennen ein Werkzeug und stehen
+     in ihrer Karte. Ohne diesen Trenner wirkten beide gleichrangig. */
+  padding-top: 4px;
+  border-top: 1px solid var(--oe-linie);
+  padding-bottom: 2px;
 }
 
 .oeFrage {
