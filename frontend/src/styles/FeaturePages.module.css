@@ -611,27 +611,28 @@
   background: none;
   box-shadow: none;
   position: relative;
-  transition: background 0.28s var(--weich), padding-left 0.28s var(--weich);
+  transition: background 0.28s var(--weich);
 }
 
 .functionCard::before,
 .whyCard::before {
   content: "";
   position: absolute;
-  left: 0;
+  left: -14px;
   top: 0;
   bottom: 0;
-  width: 2px;
+  width: 3px;
+  border-radius: 3px;
   background: var(--blau);
   transform: scaleY(0);
   transform-origin: 50% 0;
   transition: transform 0.32s var(--weich);
 }
 
+/* Nur Flaeche, Marker, Icon und Titel reagieren — die Zeile bleibt stehen. */
 .functionCard:hover,
 .whyCard:hover {
   background: rgba(233, 240, 251, 0.62);
-  padding-left: 14px;
   transform: none;
   box-shadow: none;
 }
@@ -656,7 +657,7 @@
   border-radius: 10px;
   background: var(--flaeche) !important;
   color: var(--blau) !important;
-  transition: background 0.28s var(--weich), transform 0.28s var(--weich), box-shadow 0.28s var(--weich);
+  transition: background 0.28s var(--weich), box-shadow 0.28s var(--weich);
 }
 
 .functionIcon svg,
@@ -667,9 +668,8 @@
 
 .functionCard:hover .functionIcon,
 .whyCard:hover .whyIcon {
-  background: rgba(37, 99, 235, 0.15) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px -6px rgba(37, 99, 235, 0.5);
+  background: rgba(37, 99, 235, 0.16) !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
 }
 
 .functionTitle,
@@ -1407,16 +1407,17 @@
   text-decoration: none;
   color: inherit;
   position: relative;
-  transition: background 0.24s var(--weich), padding-left 0.24s var(--weich);
+  transition: background 0.24s var(--weich);
 }
 
 .relatedCard::before {
   content: "";
   position: absolute;
-  left: 0;
+  left: -14px;
   top: 0;
   bottom: 0;
-  width: 2px;
+  width: 3px;
+  border-radius: 3px;
   background: var(--blau);
   transform: scaleY(0);
   transform-origin: 50% 0;
@@ -1425,7 +1426,6 @@
 
 .relatedCard:hover {
   background: rgba(233, 240, 251, 0.62);
-  padding-left: 12px;
   transform: none;
   box-shadow: none;
 }
