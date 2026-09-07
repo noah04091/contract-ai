@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
-import {
+import { Check,
   FileText, Download, ArrowRight, CheckCircle, AlertCircle, RefreshCw, Upload, Info, Scale, Star, ChevronDown, History, Trash2, X, Camera
 } from "lucide-react";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";

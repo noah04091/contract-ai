@@ -233,45 +233,50 @@ export default function CompareResults({
           vergleichen und steht deshalb in keiner Unterschiedsliste.
           ══════════════════════════════════════════════════════════ */}
       {v2Result?.contractMap && (() => {
-        const gebiete1 = new Map<string, string>();
-        const gebiete2 = new Map<string, string>();
+        /* 07.09.2026: Bewusst einfache Objekte statt Map. Diese Datei
+           importiert 'Map' als ICON von lucide-react (siehe oben, Reiter
+           "Vertragskarte"), und der Import überschattet den eingebauten
+           Map-Konstruktor. Für "Sachgebiet -> Paragraph" sind Objekte
+           ohnehin die lesbarere Form. */
+        const gebiete1: Record<string, string> = {};
+        const gebiete2: Record<string, string> = {};
         (v2Result.contractMap.contract1?.clauses || []).forEach(k => {
-          if (k?.area && !gebiete1.has(k.area)) gebiete1.set(k.area, k.section || '✓');
+          if (k?.area && !gebiete1[k.area]) gebiete1[k.area] = k.section || '✓';
         });
         (v2Result.contractMap.contract2?.clauses || []).forEach(k => {
-          if (k?.area && !gebiete2.has(k.area)) gebiete2.set(k.area, k.section || '✓');
+          if (k?.area && !gebiete2[k.area]) gebiete2[k.area] = k.section || '✓';
         });
 
         // Schwerste Abweichung je Sachgebiet
-        const schwere = new Map<string, string>();
+        const schwere: Record<string, string> = {};
         (v2Result.differences || []).forEach(d => {
           const g = d?.clauseArea;
           if (!g) return;
-          const bisher = schwere.get(g);
+          const bisher = schwere[g];
           if (d.severity === 'critical' || (d.severity === 'high' && bisher !== 'critical')) {
-            schwere.set(g, d.severity === 'critical' ? 'critical' : 'high');
+            schwere[g] = d.severity === 'critical' ? 'critical' : 'high';
           } else if (!bisher) {
-            schwere.set(g, d.severity || 'low');
+            schwere[g] = d.severity || 'low';
           }
         });
 
         // Nur Gebiete zeigen, zu denen es überhaupt etwas gibt
         const gebiete = (Object.keys(CLAUSE_AREA_LABELS) as ClauseArea[])
-          .filter(g => gebiete1.has(g) || gebiete2.has(g) || schwere.has(g));
+          .filter(g => Boolean(gebiete1[g]) || Boolean(gebiete2[g]) || Boolean(schwere[g]));
 
         if (gebiete.length === 0) return null;
 
         const stufe = (g: string, hat: boolean, andererHat: boolean) => {
           if (!hat) return andererHat ? 'cg-m-kri' : 'cg-m-nix';
-          const sv = schwere.get(g);
+          const sv = schwere[g];
           if (sv === 'critical') return 'cg-m-kri';
           if (sv === 'high' || sv === 'medium') return 'cg-m-mit';
           return 'cg-m-ok';
         };
 
-        const nurEiner = gebiete.filter(g => gebiete1.has(g) !== gebiete2.has(g));
+        const nurEiner = gebiete.filter(g => Boolean(gebiete1[g]) !== Boolean(gebiete2[g]));
         const inKeinem = (Object.keys(CLAUSE_AREA_LABELS) as ClauseArea[])
-          .filter(g => g !== 'other' && !gebiete1.has(g) && !gebiete2.has(g));
+          .filter(g => g !== 'other' && !gebiete1[g] && !gebiete2[g]);
 
         return (
           <div className="cg-landkarte">
@@ -302,8 +307,8 @@ export default function CompareResults({
                 </div>
                 {gebiete.map(g => (
                   <div className="cg-lk-zelle" key={`a-${g}`}>
-                    <span className={`cg-marke ${stufe(g, gebiete1.has(g), gebiete2.has(g))}`}>
-                      {gebiete1.get(g) || 'fehlt'}
+                    <span className={`cg-marke ${stufe(g, Boolean(gebiete1[g]), Boolean(gebiete2[g]))}`}>
+                      {gebiete1[g] || 'fehlt'}
                     </span>
                   </div>
                 ))}
@@ -314,8 +319,8 @@ export default function CompareResults({
                 </div>
                 {gebiete.map(g => (
                   <div className="cg-lk-zelle letzte" key={`b-${g}`}>
-                    <span className={`cg-marke ${stufe(g, gebiete2.has(g), gebiete1.has(g))}`}>
-                      {gebiete2.get(g) || 'fehlt'}
+                    <span className={`cg-marke ${stufe(g, Boolean(gebiete2[g]), Boolean(gebiete1[g]))}`}>
+                      {gebiete2[g] || 'fehlt'}
                     </span>
                   </div>
                 ))}
