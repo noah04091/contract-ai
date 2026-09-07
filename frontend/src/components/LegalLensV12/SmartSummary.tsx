@@ -230,7 +230,11 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
 
   return (
     <div className={styles.container}>
-      {/* Header mit Close */}
+      {/* 08.09.2026: Das Karten-Element. .container ist nur die
+          Overlay-Hülle (position:fixed, dunkler Grund). Ohne diesen
+          Rahmen lief der Inhalt ungerahmt über die ganze Seite, und die
+          --ss-Variablen (auf .ssFenster definiert) griffen nirgends. */}
+      <div className={styles.ssFenster}>
       <div className={`${styles.ssKopf} ${ampelRahmen}`}>
         <div className={styles.ssKopfText}>
           {/* 07.09.2026: overallVerdict wird vom Backend geliefert (die KI
@@ -496,6 +500,7 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
           Zur ausführlichen Analyse
           <ChevronRight size={16} />
         </button>
+      </div>
       </div>
     </div>
   );

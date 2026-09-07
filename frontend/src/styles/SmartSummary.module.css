@@ -809,7 +809,16 @@
   --ss-gruen: #15803d;
   --ss-gruen-weich: #f0fdf4;
 
+  /* 08.09.2026: Das ist die KARTE, nicht das Overlay. .container ist
+     nur die Huelle (fixed, dunkler Grund). Ohne diese Eigenschaften lief
+     der Inhalt ungerahmt ueber die ganze Seite. */
   background: var(--ss-karte);
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px -16px rgba(0, 0, 0, 0.35);
   min-width: 0;
 }
 
