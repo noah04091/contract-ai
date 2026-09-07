@@ -1,6 +1,9 @@
-import React, { useCallback, useState, useRef } from 'react';
-import { Upload, FileCheck, RefreshCw, ArrowRight, Scale, Shield, UserCheck } from 'lucide-react';
+import React, { useCallback, useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, FileCheck, RefreshCw, ArrowRight, Scale, Shield, UserCheck, FolderOpen, X, FileText, Loader2 } from 'lucide-react';
 import type { OptimizationMode } from '../../types/optimizerV2';
+import { PIPELINE_STAGES } from '../../hooks/useOptimizerV2';
+import { apiCall } from '../../utils/api';
 import styles from '../../styles/OptimizerV2.module.css';
 
 interface Props {
@@ -58,11 +61,102 @@ const ALLOWED_TYPES = [
   'image/tiff'
 ];
 
+/* ── Frueher geprueft ────────────────────────────────────────────────
+   Der Endpunkt /optimizer-v2/history existiert bereits und versorgt
+   heute nur die eigene Historie-Seite. Wer zurueckkommt, will meist an
+   eine frueher gepruefte Datei anknuepfen, statt bei null anzufangen. */
+interface FruehereAnalyse {
+  _id: string;
+  fileName: string;
+  status: string;
+  scores?: { overall: number };
+  structure?: { contractTypeLabel?: string; recognizedAs?: string };
+  performance?: { clauseCount?: number; optimizedCount?: number };
+  createdAt: string;
+}
+
+/* ── Eigene Vertraege ────────────────────────────────────────────────
+   ⚠️ NUR Vertraege MIT hinterlegter Datei anbieten. Der Vorlade-Weg in
+   OptimizerV2.tsx bricht bei fehlendem s3Key STILL ab (return ohne
+   Meldung), die Ablageflaeche bliebe einfach leer. Wer hier nichts
+   auswaehlen kann, versteht wenigstens warum. */
+interface EigenerVertrag {
+  _id: string;
+  name?: string;
+  fileName?: string;
+  s3Key?: string;
+  createdAt?: string;
+}
+
+function alterText(iso: string): string {
+  const tage = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (tage <= 0) return 'heute';
+  if (tage === 1) return 'gestern';
+  if (tage < 7) return `vor ${tage} Tagen`;
+  if (tage < 14) return 'vor 1 Woche';
+  if (tage < 31) return `vor ${Math.floor(tage / 7)} Wochen`;
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function wertStufe(score: number): 'Gut' | 'Mittel' | 'Schlecht' {
+  if (score >= 75) return 'Gut';
+  if (score >= 50) return 'Mittel';
+  return 'Schlecht';
+}
+
 export default function UploadSection({ file, onFileSelect, onStartAnalysis, isAnalyzing, disabled }: Props) {
+  const navigate = useNavigate();
   const [isDragging, setIsDragging] = useState(false);
   const [perspective, setPerspective] = useState<OptimizationMode>('neutral');
   const [fileError, setFileError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [frueher, setFrueher] = useState<FruehereAnalyse[]>([]);
+  const [wahlOffen, setWahlOffen] = useState(false);
+  const [vertraege, setVertraege] = useState<EigenerVertrag[] | null>(null);
+  const [vertraegeLaden, setVertraegeLaden] = useState(false);
+
+  /* Frueher geprueft laden. Faellt der Aufruf aus, bleibt der Abschnitt
+     einfach weg; er ist eine Zugabe, kein Teil des Ablaufs. */
+  useEffect(() => {
+    // Ohne Premium antwortet /optimizer-v2/history mit einer Absage
+    // (checkSubscription am Mount). Dann gar nicht erst fragen.
+    if (disabled) return;
+    let abgebrochen = false;
+    (async () => {
+      try {
+        const daten = await apiCall('/optimizer-v2/history') as { success?: boolean; results?: FruehereAnalyse[] };
+        if (abgebrochen) return;
+        const fertige = (daten?.results || []).filter(r => r.status === 'completed' && r.scores?.overall);
+        setFrueher(fertige.slice(0, 3));
+      } catch {
+        /* stumm: der Abschnitt entfaellt dann */
+      }
+    })();
+    return () => { abgebrochen = true; };
+  }, [disabled]);
+
+  const oeffneWahl = useCallback(async () => {
+    setWahlOffen(true);
+    if (vertraege !== null) return;
+    setVertraegeLaden(true);
+    try {
+      const daten = await apiCall('/contracts?limit=60') as { contracts?: EigenerVertrag[] };
+      // Nur mit Datei: sonst laeuft der Vorlade-Weg ins Leere.
+      setVertraege((daten?.contracts || []).filter(v => Boolean(v.s3Key)));
+    } catch {
+      setVertraege([]);
+    } finally {
+      setVertraegeLaden(false);
+    }
+  }, [vertraege]);
+
+  /* Bewusst ueber die Adresszeile statt eigener Ladelogik: den Weg
+     /optimizer?contractId=… gibt es schon und er ist erprobt. */
+  const waehleVertrag = useCallback((id: string) => {
+    setWahlOffen(false);
+    navigate(`/optimizer?contractId=${id}`, { replace: true });
+  }, [navigate]);
 
   const validateFile = useCallback((f: File): string | null => {
     const isImage = f.type.startsWith('image/');
@@ -117,9 +211,9 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
     <div className={styles.owSeite}>
       <div className={styles.owKopf}>
         <div className={styles.owKopfText}>
-          <h1 className={styles.owTitel}>Vertrag verbessern</h1>
+          <h1 className={styles.owTitel}>Vertrag optimieren</h1>
           <p className={styles.owUnter}>
-            Die KI prüft jede Klausel einzeln und schlägt eine bessere Formulierung vor.
+            Die KI prüft jede Klausel einzeln, erklärt sie und schlägt eine bessere Formulierung vor.
           </p>
         </div>
       </div>
@@ -133,40 +227,56 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
           </div>
 
           {!file ? (
-            <div
-              className={`${styles.owAblage} ${isDragging ? styles.owAblageAktiv : ''} ${disabled ? styles.owAblageGesperrt : ''}`}
-              onDragOver={(e) => { if (!disabled) { e.preventDefault(); setIsDragging(true); } }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={disabled ? undefined : handleDrop}
-              onClick={() => !disabled && fileInputRef.current?.click()}
-              role="button"
-              tabIndex={disabled ? -1 : 0}
-              onKeyDown={(e) => {
-                if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
-                  e.preventDefault();
-                  fileInputRef.current?.click();
-                }
-              }}
-            >
-              <div className={styles.owAblageSymbol}>
-                <Upload size={21} />
+            <>
+              <div
+                className={`${styles.owAblage} ${isDragging ? styles.owAblageAktiv : ''} ${disabled ? styles.owAblageGesperrt : ''}`}
+                onDragOver={(e) => { if (!disabled) { e.preventDefault(); setIsDragging(true); } }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={disabled ? undefined : handleDrop}
+                onClick={() => !disabled && fileInputRef.current?.click()}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                onKeyDown={(e) => {
+                  if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+              >
+                <div className={styles.owAblageSymbol}>
+                  <Upload size={21} />
+                </div>
+                <p className={styles.owAblageTitel}>Datei hierher ziehen</p>
+                <p className={styles.owAblageUnter}>oder klicken zum Auswählen</p>
+                <div className={styles.owFormate}>
+                  <span className={styles.owFormat}>PDF</span>
+                  <span className={styles.owFormat}>DOCX</span>
+                  <span className={styles.owFormat}>JPG</span>
+                  <span className={styles.owFormat}>PNG</span>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.docx,.jpg,.jpeg,.png,.heic,.heif,.webp,.tiff"
+                  onChange={handleFileInput}
+                  hidden
+                />
               </div>
-              <p className={styles.owAblageTitel}>Datei hierher ziehen</p>
-              <p className={styles.owAblageUnter}>oder klicken zum Auswählen</p>
-              <div className={styles.owFormate}>
-                <span className={styles.owFormat}>PDF</span>
-                <span className={styles.owFormat}>DOCX</span>
-                <span className={styles.owFormat}>JPG</span>
-                <span className={styles.owFormat}>PNG</span>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.docx,.jpg,.jpeg,.png,.heic,.heif,.webp,.tiff"
-                onChange={handleFileInput}
-                hidden
-              />
-            </div>
+
+              <div className={styles.owOder}>oder</div>
+
+              <button
+                className={styles.owAusVertraegen}
+                onClick={oeffneWahl}
+                disabled={disabled || isAnalyzing}
+              >
+                <span className={styles.owAusVertraegenLinks}>
+                  <FolderOpen size={16} />
+                  <span>Aus <span className={styles.owAusVertraegenStark}>meinen Verträgen</span> wählen</span>
+                </span>
+                <ArrowRight size={15} />
+              </button>
+            </>
           ) : (
             <div className={styles.owDatei}>
               <div className={styles.owDateiSymbol}>
@@ -241,6 +351,135 @@ export default function UploadSection({ file, onFileSelect, onStartAnalysis, isA
           {!isAnalyzing && <ArrowRight size={16} />}
         </button>
       </div>
+
+      {/* ── Was dann passiert ──────────────────────────────────────── */}
+      <div className={styles.owAblauf}>
+        <p className={styles.owZonenTitel}>Was dann passiert</p>
+        <div className={styles.owStufen}>
+          {PIPELINE_STAGES.map(stufe => (
+            <div key={stufe.number} className={styles.owStufe}>
+              <span className={styles.owStufeNr}>{stufe.number}</span>
+              <p className={styles.owStufeName}>{stufe.name}</p>
+              <p className={styles.owStufeText}>{stufe.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Zuletzt geprüft ────────────────────────────────────────── */}
+      {frueher.length > 0 && (
+        <div className={styles.owHist}>
+          <div className={styles.owHistKopf}>
+            <p className={styles.owZonenTitel}>Zuletzt geprüft</p>
+            <button className={styles.owHistAlle} onClick={() => navigate('/optimizer-history')}>
+              Alle ansehen →
+            </button>
+          </div>
+          <div className={styles.owHistKarten}>
+            {frueher.map(eintrag => {
+              const wert = eintrag.scores?.overall ?? 0;
+              const stufe = wertStufe(wert);
+              const klauseln = eintrag.performance?.clauseCount;
+              const vorschlaege = eintrag.performance?.optimizedCount;
+              return (
+                <button
+                  key={eintrag._id}
+                  className={styles.owHistKarte}
+                  onClick={() => navigate(`/optimizer?result=${eintrag._id}`)}
+                >
+                  <span className={styles.owHistOben}>
+                    <span className={styles.owHistText}>
+                      <span className={styles.owHistName}>{eintrag.fileName}</span>
+                      {(eintrag.structure?.contractTypeLabel || eintrag.structure?.recognizedAs) && (
+                        <span className={styles.owHistTyp}>
+                          {eintrag.structure.recognizedAs || eintrag.structure.contractTypeLabel}
+                        </span>
+                      )}
+                    </span>
+                    <span className={`${styles.owHistWert} ${styles['owWert' + stufe]}`}>{wert}</span>
+                  </span>
+                  <span className={styles.owHistBalken}>
+                    <span
+                      className={`${styles.owHistBalkenFuell} ${styles['owFuell' + stufe]}`}
+                      style={{ width: `${Math.max(0, Math.min(100, wert))}%` }}
+                    />
+                  </span>
+                  <span className={styles.owHistUnten}>
+                    <span>
+                      {typeof klauseln === 'number' ? `${klauseln} Klauseln` : 'Analyse'}
+                      {typeof vorschlaege === 'number' ? ` · ${vorschlaege} Vorschläge` : ''}
+                    </span>
+                    <span>{alterText(eintrag.createdAt)}</span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Auswahl aus den eigenen Verträgen ──────────────────────── */}
+      {wahlOffen && (
+        <div
+          className={styles.owWahlHuelle}
+          onClick={() => setWahlOffen(false)}
+          role="presentation"
+        >
+          <div
+            className={styles.owWahl}
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Vertrag auswählen"
+          >
+            <div className={styles.owWahlKopf}>
+              <div>
+                <p className={styles.owWahlTitel}>Aus meinen Verträgen</p>
+                <p className={styles.owWahlUnter}>
+                  Nur Verträge mit hinterlegter Datei lassen sich prüfen.
+                </p>
+              </div>
+              <button className={styles.owWahlZu} onClick={() => setWahlOffen(false)} aria-label="Schließen">
+                <X size={17} />
+              </button>
+            </div>
+
+            <div className={styles.owWahlListe}>
+              {vertraegeLaden && (
+                <p className={styles.owWahlLeer}>
+                  <Loader2 size={18} className={styles.spinIcon} />
+                  <br />Verträge werden geladen…
+                </p>
+              )}
+              {!vertraegeLaden && vertraege !== null && vertraege.length === 0 && (
+                <p className={styles.owWahlLeer}>
+                  Keiner deiner Verträge hat eine hinterlegte Datei.
+                  <br />Lade den Vertrag oben direkt hoch.
+                </p>
+              )}
+              {!vertraegeLaden && (vertraege || []).map(vertrag => (
+                <button
+                  key={vertrag._id}
+                  className={styles.owWahlEintrag}
+                  onClick={() => waehleVertrag(vertrag._id)}
+                >
+                  <span className={styles.owWahlSymbol}>
+                    <FileText size={15} />
+                  </span>
+                  <span className={styles.owWahlText}>
+                    <span className={styles.owWahlName}>
+                      {vertrag.name || vertrag.fileName || 'Unbenannter Vertrag'}
+                    </span>
+                    {vertrag.createdAt && (
+                      <span className={styles.owWahlMeta}>hinzugefügt {alterText(vertrag.createdAt)}</span>
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

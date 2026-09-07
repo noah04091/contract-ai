@@ -14,7 +14,9 @@ import type {
 } from '../types/optimizerV2';
 
 // ── Pipeline Stage Definitions ──
-const PIPELINE_STAGES: StageInfo[] = [
+/* 07.09.2026 exportiert: die Eingangsseite zeigt dieselben Stufen vorab,
+   damit klar ist, was nach dem Start passiert. Eine Quelle, keine Kopie. */
+export const PIPELINE_STAGES: StageInfo[] = [
   { number: 1, name: 'Vertragsstruktur', description: 'Vertragstyp, Parteien und Jurisdiktion erkennen', status: 'pending' },
   { number: 2, name: 'Klauselextraktion', description: 'Vertrag in einzelne Klauseln zerlegen', status: 'pending' },
   { number: 3, name: 'Tiefenanalyse', description: 'Jede Klausel juristisch analysieren', status: 'pending' },

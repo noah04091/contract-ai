@@ -3848,3 +3848,362 @@
 @media (prefers-reduced-motion: reduce) {
   .owMarktZeile > span, .owMarktMehr { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EINGANGSSEITE, Ergaenzungen 07.09.2026
+   ---------------------------------------------------------------------
+   Drei Zonen unter der Startzeile, alle aus vorhandenen Daten:
+     owAblauf   die fuenf PIPELINE_STAGES vorab (aus dem Hook importiert)
+     owHist     frueher gepruefte Vertraege (/optimizer-v2/history)
+     owWahl     Auswahl aus den eigenen Vertraegen (/contracts)
+
+   Durchgehend hell. Contract AI hat KEINEN Dunkelmodus, deshalb hier
+   bewusst keine prefers-color-scheme-Regel.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Zweiter Weg: aus den eigenen Vertraegen ─────────────────────────── */
+.owOder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 13px 0;
+  color: var(--ow-ink-3);
+  font-size: 0.76rem;
+}
+
+.owOder::before,
+.owOder::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--ow-linie);
+}
+
+.owAusVertraegen {
+  width: 100%;
+  border: 1px solid var(--ow-linie);
+  background: var(--ow-karte);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-family: inherit;
+  font-size: 0.86rem;
+  color: var(--ow-ink-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.owAusVertraegen:hover:not(:disabled) {
+  border-color: var(--ow-blau-rand);
+  color: var(--ow-blau);
+}
+
+.owAusVertraegen:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.owAusVertraegen:focus-visible {
+  outline: 2px solid var(--ow-blau);
+  outline-offset: 2px;
+}
+
+.owAusVertraegenLinks { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.owAusVertraegenStark { color: var(--ow-ink); font-weight: 600; }
+
+/* ── Auswahlfenster ──────────────────────────────────────────────────── */
+.owWahlHuelle {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 30, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.owWahl {
+  background: var(--ow-karte);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 48px -12px rgba(0, 0, 0, 0.3);
+}
+
+.owWahlKopf {
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--ow-linie);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.owWahlTitel { font-size: 1rem; font-weight: 670; color: var(--ow-ink); margin: 0 0 2px; letter-spacing: -0.015em; }
+.owWahlUnter { font-size: 0.8rem; color: var(--ow-ink-3); margin: 0; line-height: 1.45; }
+
+.owWahlZu {
+  border: 0;
+  background: transparent;
+  color: var(--ow-ink-3);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.owWahlZu:hover { background: var(--ow-linie-weich); color: var(--ow-ink); }
+
+.owWahlListe { overflow-y: auto; padding: 8px; }
+
+.owWahlEintrag {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  border-radius: 9px;
+  padding: 11px 12px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  transition: background 0.13s ease;
+}
+
+.owWahlEintrag:hover { background: var(--ow-blau-weich); }
+
+.owWahlEintrag:focus-visible {
+  outline: 2px solid var(--ow-blau);
+  outline-offset: -2px;
+}
+
+.owWahlSymbol {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--ow-linie-weich);
+  color: var(--ow-ink-3);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.owWahlText { min-width: 0; flex: 1; }
+
+.owWahlName {
+  display: block;
+  font-size: 0.87rem;
+  font-weight: 590;
+  color: var(--ow-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.owWahlMeta { display: block; font-size: 0.75rem; color: var(--ow-ink-3); margin-top: 1px; }
+
+.owWahlLeer {
+  padding: 34px 20px;
+  text-align: center;
+  color: var(--ow-ink-3);
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+/* ── Was dann passiert ───────────────────────────────────────────────── */
+.owAblauf {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ow-linie);
+}
+
+.owZonenTitel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ow-ink-3);
+  margin: 0 0 16px;
+}
+
+.owStufen {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+}
+
+.owStufe { position: relative; padding-right: 16px; }
+
+.owStufe:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 9px;
+  right: 8px;
+  width: 8px;
+  height: 1px;
+  background: var(--ow-linie);
+}
+
+.owStufeNr {
+  display: inline-grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  border: 1px solid var(--ow-blau-rand);
+  background: var(--ow-blau-weich);
+  color: var(--ow-blau);
+  font-size: 0.63rem;
+  font-weight: 700;
+  margin-bottom: 7px;
+}
+
+.owStufeName {
+  font-size: 0.82rem;
+  font-weight: 620;
+  color: var(--ow-ink);
+  margin: 0 0 2px;
+  letter-spacing: -0.01em;
+}
+
+.owStufeText { font-size: 0.74rem; color: var(--ow-ink-3); margin: 0; line-height: 1.4; }
+
+/* ── Zuletzt geprueft ────────────────────────────────────────────────── */
+.owHist {
+  margin-top: 30px;
+  padding-top: 24px;
+  border-top: 1px solid var(--ow-linie);
+}
+
+.owHistKopf {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.owHistAlle {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--ow-blau);
+  font-weight: 560;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+
+.owHistAlle:hover { text-decoration: underline; }
+.owHistAlle:focus-visible { outline: 2px solid var(--ow-blau); outline-offset: 2px; }
+
+.owHistKarten {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 11px;
+}
+
+.owHistKarte {
+  border: 1px solid var(--ow-linie);
+  border-radius: 11px;
+  padding: 13px 14px;
+  background: var(--ow-karte);
+  display: grid;
+  gap: 9px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.owHistKarte:hover {
+  border-color: var(--ow-blau-rand);
+  box-shadow: 0 2px 10px -4px rgba(21, 104, 221, 0.25);
+}
+
+.owHistKarte:focus-visible { outline: 2px solid var(--ow-blau); outline-offset: 2px; }
+
+.owHistOben {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 9px;
+}
+
+.owHistText {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.owHistName {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 620;
+  color: var(--ow-ink);
+  line-height: 1.32;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.owHistTyp { display: block; font-size: 0.72rem; color: var(--ow-ink-3); margin-top: 2px; }
+
+.owHistWert {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+
+.owWertGut { color: #15803d; }
+.owWertMittel { color: #b45309; }
+.owWertSchlecht { color: #dc2626; }
+
+.owHistBalken {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ow-linie-weich);
+  overflow: hidden;
+}
+
+.owHistBalkenFuell { display: block; height: 100%; border-radius: 2px; }
+.owFuellGut { background: #15803d; }
+.owFuellMittel { background: #b45309; }
+.owFuellSchlecht { background: #dc2626; }
+
+.owHistUnten {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.72rem;
+  color: var(--ow-ink-3);
+  border-top: 1px solid var(--ow-linie-weich);
+  padding-top: 8px;
+}
+
+/* ── Schmale Bildschirme ─────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .owStufen { grid-template-columns: repeat(2, 1fr); gap: 18px 14px; }
+  .owStufe::after { display: none; }
+  .owStufe { padding-right: 0; }
+}
+
+@media (max-width: 460px) {
+  .owStufen { grid-template-columns: 1fr; }
+  .owHistKarten { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .owAusVertraegen, .owWahlEintrag, .owHistKarte { transition: none; }
+}

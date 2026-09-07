@@ -77,7 +77,7 @@ const navigation: NavSection[] = [
       },
       {
         id: 'optimizer',
-        label: 'Contract Intelligence',
+        label: 'Vertrag optimieren',
         icon: Rocket,
         href: '/optimizer',
       },

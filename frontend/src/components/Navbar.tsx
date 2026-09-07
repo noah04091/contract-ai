@@ -37,35 +37,62 @@ import { useAuth } from "../hooks/useAuth";
 // ✅ API Base URL für Production
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
 
+// Zentrale Linien-Icons für Mega-Menü (Desktop) und Mobil-Menü — ersetzen den
+// früheren Emoji-Satz (renderte je Gerät anders und brach die Marken-Linie).
+const navIcon = (paths: React.ReactNode) => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    {paths}
+  </svg>
+);
+const navIcons = {
+  analyse: navIcon(<><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></>),
+  optimieren: navIcon(<path d="M12 3l1.9 5.4L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.6z" />),
+  vergleich: navIcon(<><rect x="3" y="4" width="7.5" height="16" rx="1.5" /><rect x="13.5" y="4" width="7.5" height="16" rx="1.5" /></>),
+  lens: navIcon(<><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" /><circle cx="12" cy="12" r="3" /></>),
+  generator: navIcon(<path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />),
+  builder: navIcon(<><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" /></>),
+  signatur: navIcon(<path d="M3 17c3-1 5-4 6-7l3 3c3-1 6-3 7-6M4 21h16" />),
+  verwaltung: navIcon(<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />),
+  fristen: navIcon(<><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 11h18" /></>),
+  email: navIcon(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>),
+  pulse: navIcon(<path d="M3 12h4l2-6 4 12 2-6h6" />),
+  arbeit: navIcon(<><rect x="3" y="8" width="18" height="12" rx="2" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></>),
+  miete: navIcon(<><path d="M3 11l9-7 9 7" /><path d="M5 10v10h14V10" /></>),
+  nda: navIcon(<><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></>),
+  kauf: navIcon(<><path d="M6 7h12l1 13H5z" /><path d="M9 7a3 3 0 0 1 6 0" /></>),
+  aufhebung: navIcon(<><path d="M6 2h8l4 4v16H6z" /><path d="M14 2v4h4M10 13l4 4M14 13l-4 4" /></>),
+  agentur: navIcon(<><circle cx="9" cy="8" r="3" /><path d="M4 20c0-3 2.2-5 5-5s5 2 5 5" /><path d="M15 5.5a3 3 0 1 1 1 5.8M15.5 15.2c2.6.3 4.5 2.2 4.5 4.8" /></>),
+};
+
 // Feature-Daten für das Mega-Menü
 const featureCategories = [
   {
     title: "Analysieren",
     description: "Verträge verstehen & bewerten",
     features: [
-      { name: "KI-Vertragsanalyse", description: "Risiken & Chancen erkennen", icon: "🔍", path: "/features/vertragsanalyse" },
-      { name: "Contract Intelligence", description: "Tiefenanalyse & Optimierung", icon: "✨", path: "/features/optimierung" },
-      { name: "Vertragsvergleich", description: "Zwei Versionen vergleichen", icon: "📊", path: "/features/vergleich" },
-      { name: "Legal Lens", description: "Klauseln sofort verstehen", icon: "👁️", path: "/features/legal-lens" },
+      { name: "KI-Vertragsanalyse", description: "Risiken & Chancen erkennen", icon: navIcons.analyse, path: "/features/vertragsanalyse" },
+      { name: "Vertrag optimieren", description: "Tiefenanalyse & Optimierung", icon: navIcons.optimieren, path: "/features/optimierung" },
+      { name: "Vertragsvergleich", description: "Zwei Versionen vergleichen", icon: navIcons.vergleich, path: "/features/vergleich" },
+      { name: "Legal Lens", description: "Klauseln sofort verstehen", icon: navIcons.lens, path: "/features/legal-lens" },
     ]
   },
   {
     title: "Erstellen",
     description: "Verträge professionell erstellen",
     features: [
-      { name: "Vertragsgenerator", description: "50+ Vorlagen nutzen", icon: "📝", path: "/features/generator" },
-      { name: "Contract Builder", description: "Drag & Drop Editor", icon: "🔧", path: "/features/contract-builder" },
-      { name: "Digitale Signatur", description: "Rechtsgültig unterschreiben", icon: "✍️", path: "/features/digitalesignatur" },
+      { name: "Vertragsgenerator", description: "50+ Vorlagen nutzen", icon: navIcons.generator, path: "/features/generator" },
+      { name: "Contract Builder", description: "Drag & Drop Editor", icon: navIcons.builder, path: "/features/contract-builder" },
+      { name: "Digitale Signatur", description: "Rechtsgültig unterschreiben", icon: navIcons.signatur, path: "/features/digitalesignatur" },
     ]
   },
   {
     title: "Verwalten",
     description: "Verträge organisieren & überwachen",
     features: [
-      { name: "Vertragsverwaltung", description: "Zentrale Organisation", icon: "📁", path: "/features/vertragsverwaltung" },
-      { name: "Fristenkalender", description: "Keine Frist verpassen", icon: "📅", path: "/features/fristen" },
-      { name: "E-Mail Upload", description: "Per E-Mail hochladen", icon: "📧", path: "/features/email-upload" },
-      { name: "Legal Pulse", description: "Gesetzesänderungen tracken", icon: "⚖️", path: "/features/legalpulse" },
+      { name: "Vertragsverwaltung", description: "Zentrale Organisation", icon: navIcons.verwaltung, path: "/features/vertragsverwaltung" },
+      { name: "Fristenkalender", description: "Keine Frist verpassen", icon: navIcons.fristen, path: "/features/fristen" },
+      { name: "E-Mail Upload", description: "Per E-Mail hochladen", icon: navIcons.email, path: "/features/email-upload" },
+      { name: "Legal Pulse", description: "Gesetzesänderungen tracken", icon: navIcons.pulse, path: "/features/legalpulse" },
     ]
   }
 ];
@@ -75,12 +102,12 @@ const contractTypeCategories = [
     title: "Verträge prüfen",
     description: "Spezialisierte KI-Analyse je Vertragstyp",
     features: [
-      { name: "Arbeitsvertrag prüfen", description: "Probezeit, Überstunden, Kündigung", icon: "💼", path: "/arbeitsvertrag-pruefen" },
-      { name: "Mietvertrag prüfen", description: "Kaution, Schönheitsreparaturen", icon: "🏠", path: "/mietvertrag-pruefen" },
-      { name: "NDA prüfen", description: "Geheimhaltung & Vertragsstrafe", icon: "🔒", path: "/nda-pruefen" },
-      { name: "Kaufvertrag prüfen", description: "Gewährleistung & Stornogebühren", icon: "🛒", path: "/kaufvertrag-pruefen" },
-      { name: "Aufhebungsvertrag prüfen", description: "Abfindung & Sperrzeit", icon: "📄", path: "/aufhebungsvertrag-pruefen" },
-      { name: "Agenturvertrag prüfen", description: "Laufzeit & Leistungsumfang", icon: "🤝", path: "/agenturvertrag-pruefen" },
+      { name: "Arbeitsvertrag prüfen", description: "Probezeit, Überstunden, Kündigung", icon: navIcons.arbeit, path: "/arbeitsvertrag-pruefen" },
+      { name: "Mietvertrag prüfen", description: "Kaution, Schönheitsreparaturen", icon: navIcons.miete, path: "/mietvertrag-pruefen" },
+      { name: "NDA prüfen", description: "Geheimhaltung & Vertragsstrafe", icon: navIcons.nda, path: "/nda-pruefen" },
+      { name: "Kaufvertrag prüfen", description: "Gewährleistung & Stornogebühren", icon: navIcons.kauf, path: "/kaufvertrag-pruefen" },
+      { name: "Aufhebungsvertrag prüfen", description: "Abfindung & Sperrzeit", icon: navIcons.aufhebung, path: "/aufhebungsvertrag-pruefen" },
+      { name: "Agenturvertrag prüfen", description: "Laufzeit & Leistungsumfang", icon: navIcons.agentur, path: "/agenturvertrag-pruefen" },
     ]
   }
 ];
@@ -1069,9 +1096,9 @@ export default function Navbar() {
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
-              {/* Panel Header */}
+              {/* Panel Header — Marke statt "Menü" */}
               <div className={styles.mobileNavHeader}>
-                <span className={styles.mobileNavTitle}>Menü</span>
+                <img src={logo} alt="Contract AI" className={styles.mobileNavLogo} />
                 <motion.button
                   className={styles.mobileNavClose}
                   onClick={() => {
@@ -1095,7 +1122,6 @@ export default function Navbar() {
                     onClick={() => setMobileFeaturesOpen(!mobileFeaturesOpen)}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <span className={styles.mobileNavLinkIcon}>✨</span>
                     <span className={styles.mobileNavLinkText}>Funktionen</span>
                     <motion.span
                       className={styles.mobileNavArrow}
@@ -1162,7 +1188,6 @@ export default function Navbar() {
                     onClick={() => setMobileTypesOpen(!mobileTypesOpen)}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <span className={styles.mobileNavLinkIcon}>📑</span>
                     <span className={styles.mobileNavLinkText}>Vertragstypen</span>
                     <motion.span
                       className={styles.mobileNavArrow}
@@ -1357,7 +1382,7 @@ export default function Navbar() {
                     <li className={styles.navItemNew}>
                       <Link to="/optimizer" className={`${styles.navLinkNew} ${location.pathname === '/optimizer' ? styles.navLinkActiveNew : ''}`} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.navIconNew}><Rocket size={20} strokeWidth={1.75} /></span>
-                        <span className={styles.navLabelNew}>Contract Intelligence</span>
+                        <span className={styles.navLabelNew}>Vertrag optimieren</span>
                       </Link>
                     </li>
                     <li className={styles.navItemNew}>
