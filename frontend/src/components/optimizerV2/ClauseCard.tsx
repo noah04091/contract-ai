@@ -203,14 +203,14 @@ export default function ClauseCard({
                     <div className={`${styles.perspectiveCard} ${styles.perspectiveCreator}`}>
                       <div className={styles.perspectiveHeader}>
                         <Shield size={13} />
-                        <span>Pro Anbieter</span>
+                        <span>Aus Anbietersicht</span>
                       </div>
                       <p>{analysis.creatorView}</p>
                     </div>
                     <div className={`${styles.perspectiveCard} ${styles.perspectiveRecipient}`}>
                       <div className={styles.perspectiveHeader}>
                         <ShieldAlert size={13} />
-                        <span>Pro Empfänger</span>
+                        <span>Aus Kundensicht</span>
                       </div>
                       <p>{analysis.recipientView}</p>
                     </div>

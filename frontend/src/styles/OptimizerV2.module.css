@@ -193,42 +193,6 @@
 }
 .newAnalysisBtn:hover { opacity: 0.9; }
 
-/* ── Upload Page (content area within the gradient container) ── */
-.uploadPage {
-  padding: 20px 24px 60px;
-  max-width: 1200px;
-  margin: 0 auto;
-  position: relative;
-}
-
-/* Animated background blobs like V1 */
-.uploadPage::before {
-  content: '';
-  position: fixed;
-  width: 600px;
-  height: 600px;
-  top: -200px;
-  right: -100px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
-  filter: blur(100px);
-  animation: floatBlob1 25s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.uploadPage::after {
-  content: '';
-  position: fixed;
-  width: 500px;
-  height: 500px;
-  bottom: -100px;
-  left: -100px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
-  filter: blur(100px);
-  animation: floatBlob2 30s ease-in-out infinite;
-  pointer-events: none;
-  z-index: 0;
-}
 
 @keyframes floatBlob1 {
   0%, 100% { transform: translate(0, 0) scale(1); }
@@ -241,284 +205,12 @@
   50% { transform: translate(50px, -40px) scale(1.1); }
 }
 
-/* ── Upload Hero (floats on gradient, NOT inside a card) ── */
-.uploadHero {
-  text-align: center;
-  margin-bottom: 32px;
-  position: relative;
-  z-index: 1;
-}
-
-.uploadHeroIcon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 24px;
-  background: linear-gradient(135deg, #3B82F6 0%, #5856D6 100%);
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.25);
-  color: white;
-}
-
-.uploadHeroIcon svg {
-  width: 36px;
-  height: 36px;
-}
-
-.uploadHeroTitle {
-  font-size: clamp(28px, 5vw, 42px);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin: 0 0 12px;
-  color: var(--ov2-gray-900);
-}
-
-.uploadHeroGradient {
-  background: linear-gradient(135deg, #3B82F6 0%, #AF52DE 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.uploadHeroDesc {
-  font-size: 16px;
-  color: var(--ov2-gray-500);
-  max-width: 500px;
-  margin: 0 auto 24px;
-  line-height: 1.6;
-}
-
-.uploadFeaturePills {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.uploadFeaturePill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 100px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ov2-gray-900);
-  transition: all 0.2s ease;
-}
-
-.uploadFeaturePill:hover {
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.uploadFeaturePill svg {
-  width: 16px;
-  height: 16px;
-  color: var(--ov2-blue);
-}
-
-/* ── Upload Card (glassmorphism card like V1) ── */
-.uploadCard {
-  max-width: 800px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow:
-    0 4px 6px rgba(0, 0, 0, 0.02),
-    0 12px 40px rgba(0, 0, 0, 0.06);
-  position: relative;
-  z-index: 1;
-}
-
-/* ── Drop Zone ── */
-.dropZone {
-  border: 2px dashed #d1d5db;
-  border-radius: 20px;
-  padding: 48px 32px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(180deg, #fafbfc 0%, #f8fafc 100%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.dropZone::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.06), transparent);
-  animation: shimmerUpload 3s infinite;
-  pointer-events: none;
-}
 
 @keyframes shimmerUpload {
   0% { left: -100%; }
   50%, 100% { left: 100%; }
 }
 
-.dropZone:hover {
-  border-color: var(--ov2-blue);
-  background: linear-gradient(180deg, #f0f7ff 0%, #e8f4ff 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.12);
-}
-
-.dropZoneActive {
-  border-color: var(--ov2-blue);
-  border-style: solid;
-  background: linear-gradient(180deg, #e0f0ff 0%, #d0e8ff 100%);
-  transform: scale(1.01);
-  box-shadow: 0 16px 48px rgba(59, 130, 246, 0.2);
-}
-
-.dropZoneIconWrapper {
-  width: 72px;
-  height: 72px;
-  margin-bottom: 12px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(59, 130, 246, 0.15);
-}
-
-.dropZoneIconWrapper svg {
-  width: 32px;
-  height: 32px;
-  color: var(--ov2-blue);
-}
-
-.dropZoneTitle { font-size: 18px; font-weight: 700; margin: 0; color: var(--ov2-gray-900); }
-.dropZoneSubtitle { font-size: 14px; color: var(--ov2-gray-500); margin: 0; }
-
-.uploadFormats {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.formatTag {
-  padding: 6px 12px;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 8px;
-  font-size: 12px;
-  color: var(--ov2-gray-500);
-  font-weight: 600;
-}
-
-/* ── File Selected State ── */
-.dropZoneFile {
-  border: 2px solid var(--ov2-green);
-  border-radius: 20px;
-  padding: 48px 32px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(180deg, #f0fdf4 0%, #f8fafc 100%);
-  margin-bottom: 20px;
-}
-
-.dropZoneIconWrapperSuccess {
-  width: 72px;
-  height: 72px;
-  margin-bottom: 12px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #10B981 0%, #10B981 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.dropZoneIconWrapperSuccess svg {
-  width: 32px;
-  height: 32px;
-}
-
-.changeFileBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: white;
-  border: 1px solid var(--ov2-gray-200);
-  border-radius: 10px;
-  color: var(--ov2-gray-500);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 8px;
-}
-
-.changeFileBtn:hover {
-  border-color: var(--ov2-blue);
-  color: var(--ov2-blue);
-  background: rgba(59, 130, 246, 0.04);
-}
-
-.perspectiveSection {
-  margin-top: 20px;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-}
-.perspectiveLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ov2-gray-400);
-  margin: 0 0 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-/* ── Analyze Button (gradient with glow like V1) ── */
-.analyzeButton {
-  width: 100%;
-  padding: 16px 28px;
-  background: linear-gradient(135deg, #3B82F6 0%, #5856D6 100%);
-  color: white;
-  border: none;
-  border-radius: 14px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-  letter-spacing: -0.2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.analyzeButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
-}
-.analyzeButton:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ── Mode Selector ── */
 .modeSelector {
@@ -3106,10 +2798,6 @@
   .reasoningStructured { gap: 8px; }
   .benchmarkCard, .adviceCard { flex-direction: column; }
   /* Upload page */
-  .uploadPage { padding: 32px 16px; }
-  .uploadCard { padding: 24px; }
-  .dropZone { padding: 32px 16px; }
-  .dropZoneFile { padding: 32px 16px; }
   /* Clauses toolbar */
   .clausesModeRow { gap: 6px; }
   .clauseSearch { width: 140px; }
@@ -3148,13 +2836,6 @@
   .customEditorActions { flex-wrap: wrap; }
   .acceptButton { width: 100%; justify-content: center; }
   /* Upload page */
-  .uploadPage { padding: 24px 12px; }
-  .uploadCard { padding: 16px; }
-  .dropZone { padding: 24px 12px; }
-  .dropZoneFile { padding: 24px 12px; }
-  .uploadHeroIcon { width: 56px; height: 56px; }
-  .uploadHeroIcon svg { width: 28px; height: 28px; }
-  .uploadFeaturePill { padding: 6px 12px; font-size: 12px; }
   /* Tabs compact */
   .tabButton { padding: 8px 10px; font-size: 11px; gap: 4px; }
   /* Clauses toolbar stacked */
@@ -3574,8 +3255,8 @@
    EINGANGSSEITE, neu 07.09.2026
    ---------------------------------------------------------------------
    Loest uploadHero / uploadHeroIcon / uploadHeroGradient /
-   uploadFeaturePills / uploadCard ab. Die alten Regeln bleiben vorerst
-   stehen, damit nichts bricht, falls sie noch irgendwo greifen.
+   uploadFeaturePills / uploadCard ab. Deren Regeln sind entfernt: keine
+   der zwoelf Dateien, die dieses Modul importieren, nutzt sie noch.
 
    Bewusst KEINE neuen :root-Variablen: die weiter oben in dieser Datei
    stehenden --ov2-* sind global (CSS-Modules benennt :root nicht um),

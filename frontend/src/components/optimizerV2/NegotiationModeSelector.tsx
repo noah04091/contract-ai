@@ -16,9 +16,9 @@ const MODE_ICONS = {
 };
 
 const MODE_TOOLTIPS: Record<OptimizationMode, string> = {
-  neutral: 'Neutral: Ausgewogene Optimierung, die beide Vertragsparteien fair berücksichtigt. Ideal für partnerschaftliche Verträge.',
-  proCreator: 'Pro Ersteller: Optimiert Klauseln zugunsten des Vertragserstellers — stärkere Haftungsbegrenzung, bessere Kündigungsrechte, mehr Schutz.',
-  proRecipient: 'Pro Empfänger: Optimiert Klauseln zugunsten des Vertragsempfängers — bessere Gewährleistung, fairere Zahlungsbedingungen, mehr Rechte.'
+  neutral: 'Ausgewogen: Formulierungen, die für beide Seiten tragbar sind. Passend für partnerschaftliche Verträge.',
+  proCreator: 'Als Anbieter: Stärkt die Seite, die den Vertrag stellt. Engere Haftung, bessere Kündigungsrechte, mehr Schutz.',
+  proRecipient: 'Als Kunde: Stärkt die Seite, die unterschreiben soll. Bessere Gewährleistung, fairere Zahlungsbedingungen, mehr Rechte.'
 };
 
 export default function NegotiationModeSelector({ activeMode, onModeChange, compact }: Props) {
