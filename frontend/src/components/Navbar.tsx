@@ -142,7 +142,7 @@ export default function Navbar() {
   // Durchbluten, Noahs Fund 07.09.). position:fixed statt overflow:hidden,
   // weil iOS Safari Letzteres bei Touch ignoriert; Scrollposition bleibt erhalten.
   useEffect(() => {
-    if (!mobileNavOpen) return;
+    if (!mobileNavOpen && !sidebarOpen) return;
     const y = window.scrollY;
     const b = document.body.style;
     b.position = 'fixed';
@@ -156,7 +156,7 @@ export default function Navbar() {
       b.right = '';
       window.scrollTo(0, y);
     };
-  }, [mobileNavOpen]);
+  }, [mobileNavOpen, sidebarOpen]);
   const [mobileFeaturesOpen, setMobileFeaturesOpen] = useState(false);
   const [mobileTypesOpen, setMobileTypesOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
@@ -1112,14 +1112,27 @@ export default function Navbar() {
             {/* Slide-In Panel */}
             <motion.div
               className={styles.mobileNavPanel}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Hauptmenü"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
-              {/* Panel Header — Marke statt "Menü" */}
+              {/* Panel Header — Marke statt "Menü"; Logo führt heim (Noahs Fund 07.09.) */}
               <div className={styles.mobileNavHeader}>
-                <img src={logo} alt="Contract AI" className={styles.mobileNavLogo} />
+                <Link
+                  to={logoTarget}
+                  onClick={() => {
+                    setMobileNavOpen(false);
+                    setMobileFeaturesOpen(false);
+                    setMobileTypesOpen(false);
+                  }}
+                  aria-label="Zur Startseite"
+                >
+                  <img src={logo} alt="Contract AI" className={styles.mobileNavLogo} />
+                </Link>
                 <motion.button
                   className={styles.mobileNavClose}
                   onClick={() => {
