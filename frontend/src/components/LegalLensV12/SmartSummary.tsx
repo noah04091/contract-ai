@@ -6,13 +6,9 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  TrendingUp,
   ChevronRight,
   RefreshCw,
-  X,
-  ArrowRight,
-  AlertCircle,
-  Info
+  X
 } from 'lucide-react';
 import styles from '../../styles/SmartSummary.module.css';
 
@@ -158,21 +154,7 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
     loadSummary();
   }, [loadSummary]);
 
-  const getSeverityIcon = (severity: string) => {
-    switch (severity) {
-      case 'critical': return <AlertTriangle size={18} />;
-      case 'warning': return <AlertCircle size={18} />;
-      default: return <Info size={18} />;
-    }
-  };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return '#ef4444';
-      case 'warning': return '#f59e0b';
-      default: return '#3b82f6';
-    }
-  };
 
   // Loading State
   if (isLoading) {
@@ -221,298 +203,298 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
     );
   }
 
+  /**
+   * 07.09.2026: overallVerdict.action bestimmt die Ampel.
+   * accept = tragbar, negotiate = mit Auflagen, reject = nicht so,
+   * review = unklar. Ohne das Feld bleibt der Rahmen neutral grau.
+   */
+  const aktion = summary?.overallVerdict?.action;
+  const ampelRahmen =
+    aktion === 'accept' ? styles.ssKopfGruen :
+    aktion === 'reject' ? styles.ssKopfRot :
+    aktion === 'negotiate' ? styles.ssKopfGelb : styles.ssKopfGrau;
+  const ampelText =
+    aktion === 'accept' ? styles.ssAmpelGruen :
+    aktion === 'reject' ? styles.ssAmpelRot :
+    aktion === 'negotiate' ? styles.ssAmpelGelb : styles.ssAmpelGrau;
+  const ampelWort =
+    aktion === 'accept' ? 'Tragbar' :
+    aktion === 'reject' ? 'So nicht unterschreiben' :
+    aktion === 'negotiate' ? 'Mit Auflagen tragbar' : 'Prüfung empfohlen';
+
+  /** Je hoeher das Risiko, desto roter. Dieselben Schwellen wie bisher. */
+  const risikoFarbe = (wert: number) =>
+    wert > 70 ? '#dc2626' : wert > 40 ? '#b45309' : '#15803d';
+
   if (!summary) return null;
 
   return (
     <div className={styles.container}>
       {/* Header mit Close */}
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <span className={styles.headerIcon}>📊</span>
-          <div>
-            <h2 className={styles.headerTitle}>Sofort-Übersicht</h2>
-            <p className={styles.headerSubtitle}>{contractName}</p>
-          </div>
+      <div className={`${styles.ssKopf} ${ampelRahmen}`}>
+        <div className={styles.ssKopfText}>
+          {/* 07.09.2026: overallVerdict wird vom Backend geliefert (die KI
+              wird ausdruecklich danach gefragt) und war hier nirgends
+              angezeigt. Der Satz sagt, ob man unterschreiben kann. */}
+          {summary.overallVerdict?.headline ? (
+            <>
+              <p className={`${styles.ssAmpel} ${ampelText}`}>{ampelWort}</p>
+              <p className={styles.ssUrteil}>{summary.overallVerdict.headline}</p>
+            </>
+          ) : (
+            <p className={styles.ssUrteil}>Das Wichtigste aus deinem Vertrag</p>
+          )}
+          <p className={styles.ssTyp}>
+            {/* contractName sagt, WELCHEN Vertrag man vor sich hat.
+                Stand vorher als Untertitel im Kopf. */}
+            {contractName}
+            {summary.contractType ? ` · ${summary.contractType}` : ''}
+            {summary.contractTypeDetail ? ` · ${summary.contractTypeDetail}` : ''}
+          </p>
         </div>
-        <button onClick={onDismiss} className={styles.closeButton}>
-          <X size={20} />
+        <button onClick={onDismiss} className={styles.ssZu} aria-label="Übersicht schließen">
+          <X size={16} />
         </button>
       </div>
 
-      {/* Main Content */}
-      <div className={styles.content}>
-        {/* Contract Type Info */}
-        <div className={styles.contractTypeCard}>
-          <span className={styles.contractTypeLabel}>{summary.contractType}</span>
-          {summary.contractTypeDetail && (
-            <span className={styles.contractTypeDetail}>{summary.contractTypeDetail}</span>
-          )}
-        </div>
+      <div className={styles.ssInhalt}>
 
-        {/* Risk Score */}
-        <div className={styles.riskScoreSection}>
-          <h3 className={styles.sectionTitle}>
-            <TrendingUp size={18} /> Risiko-Score
-          </h3>
-          <div className={styles.riskScoreGrid}>
-            <div className={styles.overallScore}>
-              <div className={styles.scoreCircle}>
-                <svg viewBox="0 0 100 100" className={styles.scoreSvg}>
-                  <circle
-                    cx="50" cy="50" r="45"
-                    fill="none"
-                    stroke="#e2e8f0"
-                    strokeWidth="8"
-                  />
-                  <circle
-                    cx="50" cy="50" r="45"
-                    fill="none"
-                    stroke={(summary.riskScore?.overall ?? 0) > 70 ? '#ef4444' : (summary.riskScore?.overall ?? 0) > 40 ? '#f59e0b' : '#22c55e'}
-                    strokeWidth="8"
-                    strokeDasharray={`${(summary.riskScore?.overall ?? 0) * 2.83} 283`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 50 50)"
-                  />
-                </svg>
-                <span className={styles.scoreValue}>{summary.riskScore?.overall ?? '–'}</span>
-              </div>
-              <span className={styles.scoreLabel}>Gesamt</span>
-            </div>
-            <div className={styles.breakdownScores}>
-              <div className={styles.breakdownItem}>
-                <span className={styles.breakdownLabel}>💰 Finanziell</span>
-                <div className={styles.breakdownBar}>
-                  <div
-                    className={styles.breakdownFill}
-                    style={{
-                      width: `${summary.riskScore?.breakdown?.financial ?? 0}%`,
-                      background: (summary.riskScore?.breakdown?.financial ?? 0) > 70 ? '#ef4444' : (summary.riskScore?.breakdown?.financial ?? 0) > 40 ? '#f59e0b' : '#22c55e'
-                    }}
-                  />
-                </div>
-                <span className={styles.breakdownValue}>{summary.riskScore?.breakdown?.financial ?? 0}</span>
-              </div>
-              <div className={styles.breakdownItem}>
-                <span className={styles.breakdownLabel}>⚖️ Rechtlich</span>
-                <div className={styles.breakdownBar}>
-                  <div
-                    className={styles.breakdownFill}
-                    style={{
-                      width: `${summary.riskScore?.breakdown?.legal ?? 0}%`,
-                      background: (summary.riskScore?.breakdown?.legal ?? 0) > 70 ? '#ef4444' : (summary.riskScore?.breakdown?.legal ?? 0) > 40 ? '#f59e0b' : '#22c55e'
-                    }}
-                  />
-                </div>
-                <span className={styles.breakdownValue}>{summary.riskScore?.breakdown?.legal ?? 0}</span>
-              </div>
-              <div className={styles.breakdownItem}>
-                <span className={styles.breakdownLabel}>🔧 Operativ</span>
-                <div className={styles.breakdownBar}>
-                  <div
-                    className={styles.breakdownFill}
-                    style={{
-                      width: `${summary.riskScore?.breakdown?.operational ?? 0}%`,
-                      background: (summary.riskScore?.breakdown?.operational ?? 0) > 70 ? '#ef4444' : (summary.riskScore?.breakdown?.operational ?? 0) > 40 ? '#f59e0b' : '#22c55e'
-                    }}
-                  />
-                </div>
-                <span className={styles.breakdownValue}>{summary.riskScore?.breakdown?.operational ?? 0}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ── Die Essenz. Stand vorher als LETZTER Abschnitt unten. ── */}
+        {summary.tldr && (
+          <p className={styles.ssEssenz}>{summary.tldr}</p>
+        )}
 
-        {/* Quick Stats */}
-        <div className={styles.quickStats}>
-          <div className={styles.statItem} style={{ borderColor: '#ef4444' }}>
-            <span className={styles.statValue} style={{ color: '#ef4444' }}>
-              {summary.quickStats.criticalCount}
-            </span>
-            <span className={styles.statLabel}>Kritisch</span>
-          </div>
-          <div className={styles.statItem} style={{ borderColor: '#f59e0b' }}>
-            <span className={styles.statValue} style={{ color: '#f59e0b' }}>
-              {summary.quickStats.warningCount}
-            </span>
-            <span className={styles.statLabel}>Prüfenswert</span>
-          </div>
-          <div className={styles.statItem} style={{ borderColor: '#22c55e' }}>
-            <span className={styles.statValue} style={{ color: '#22c55e' }}>
-              {summary.quickStats.okayCount}
-            </span>
-            <span className={styles.statLabel}>Standard</span>
-          </div>
-        </div>
-
-        {/* Top Risks */}
+        {/* ── Was konkret zu beachten ist ── */}
         {summary.topRisks && summary.topRisks.length > 0 && (
-          <div className={styles.topRisksSection}>
-            <h3 className={styles.sectionTitle}>
-              <AlertTriangle size={18} /> Top Risiken
-            </h3>
-            <div className={styles.riskList}>
-              {summary.topRisks.map((risk, index) => (
-                <div
-                  key={index}
-                  className={`${styles.riskCard} ${expandedRisk === index ? styles.expanded : ''}`}
-                  onClick={() => setExpandedRisk(expandedRisk === index ? null : index)}
-                >
-                  <div className={styles.riskHeader}>
-                    <div
-                      className={styles.riskIcon}
-                      style={{ color: getSeverityColor(risk.severity) }}
+          <div>
+            <p className={styles.ssZonenTitel}>Was du beachten solltest</p>
+            <div className={styles.ssRisiken}>
+              {summary.topRisks.map((risk, index) => {
+                const offen = expandedRisk === index;
+                const marke = risk.severity === 'critical' ? styles.ssMarkeRot
+                  : risk.severity === 'warning' ? styles.ssMarkeGelb : styles.ssMarkeBlau;
+                const markeWort = risk.severity === 'critical' ? 'Kritisch'
+                  : risk.severity === 'warning' ? 'Prüfen' : 'Hinweis';
+                return (
+                  <div key={index} className={styles.ssRisiko}>
+                    <button
+                      className={styles.ssRisikoKopf}
+                      onClick={() => setExpandedRisk(offen ? null : index)}
+                      aria-expanded={offen}
                     >
-                      {getSeverityIcon(risk.severity)}
-                    </div>
-                    <div className={styles.riskTitleArea}>
-                      <span className={styles.riskTitle}>{risk.title}</span>
-                      {risk.section && (
-                        <span className={styles.riskSection}>{risk.section}</span>
-                      )}
-                    </div>
-                    <ChevronRight
-                      size={18}
-                      className={`${styles.riskChevron} ${expandedRisk === index ? styles.rotated : ''}`}
-                    />
+                      <span className={`${styles.ssRisikoMarke} ${marke}`}>{markeWort}</span>
+                      <span className={styles.ssRisikoText}>
+                        <span className={styles.ssRisikoTitel}>{risk.title}</span>
+                        {risk.section && <span className={styles.ssRisikoStelle}>{risk.section}</span>}
+                      </span>
+                      <ChevronRight
+                        size={16}
+                        className={`${styles.ssRisikoPfeil} ${offen ? styles.ssRisikoPfeilAuf : ''}`}
+                      />
+                    </button>
+
+                    {offen && (
+                      <div className={styles.ssRisikoInhalt}>
+                        {risk.whatItMeans && (
+                          <div className={styles.ssBlock}>
+                            <span className={styles.ssBlockTitel}>Was das für dich bedeutet</span>
+                            <p className={styles.ssBlockText}>{risk.whatItMeans}</p>
+                          </div>
+                        )}
+
+                        {(risk.worstCase?.financialRisk || risk.worstCase?.timeRisk) && (
+                          <div className={styles.ssBlock}>
+                            <span className={styles.ssBlockTitel}>Schlimmstenfalls</span>
+                            <div className={styles.ssFolgen}>
+                              {risk.worstCase?.financialRisk && (
+                                <span className={styles.ssFolge}>
+                                  <span className={styles.ssFolgeLabel}>Finanziell</span>
+                                  <span className={styles.ssFolgeWert}>{risk.worstCase.financialRisk}</span>
+                                </span>
+                              )}
+                              {risk.worstCase?.timeRisk && (
+                                <span className={styles.ssFolge}>
+                                  <span className={styles.ssFolgeLabel}>Zeitlich</span>
+                                  <span className={styles.ssFolgeWert}>{risk.worstCase.timeRisk}</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {risk.recommendation && (
+                          <div className={styles.ssBlock}>
+                            <span className={styles.ssBlockTitel}>Empfehlung</span>
+                            <p className={styles.ssBlockText}>{risk.recommendation}</p>
+                          </div>
+                        )}
+
+                        {risk.negotiationHint && (
+                          <div className={styles.ssBlock}>
+                            <span className={styles.ssBlockTitel}>So sprichst du es an</span>
+                            <p className={styles.ssZitat}>„{risk.negotiationHint}"</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                  {expandedRisk === index && (
-                    <div className={styles.riskContent}>
-                      <div className={styles.riskMeaning}>
-                        <strong>Was bedeutet das für dich?</strong>
-                        <p>{risk.whatItMeans}</p>
-                      </div>
-
-                      <div className={styles.worstCase}>
-                        <strong>Worst Case:</strong>
-                        <div className={styles.worstCaseGrid}>
-                          <div className={styles.worstCaseItem}>
-                            <span className={styles.wcIcon}>💰</span>
-                            <span className={styles.wcLabel}>Finanziell</span>
-                            <span className={styles.wcValue}>{risk.worstCase.financialRisk}</span>
-                          </div>
-                          <div className={styles.worstCaseItem}>
-                            <span className={styles.wcIcon}>⏰</span>
-                            <span className={styles.wcLabel}>Zeitlich</span>
-                            <span className={styles.wcValue}>{risk.worstCase.timeRisk}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={styles.riskRecommendation}>
-                        <strong>Empfehlung:</strong>
-                        <p>{risk.recommendation}</p>
-                      </div>
-
-                      {risk.negotiationHint && (
-                        <div className={styles.negotiationHint}>
-                          <strong>So sprichst du es an:</strong>
-                          <p>"{risk.negotiationHint}"</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+        {/* ── Was zu tun ist ── */}
+        {summary.nextSteps && summary.nextSteps.length > 0 && (
+          <div>
+            <p className={styles.ssZonenTitel}>Nächste Schritte</p>
+            <div className={styles.ssSchritte}>
+              {summary.nextSteps.map((step, index) => (
+                <div key={index} className={styles.ssSchritt}>
+                  <span className={styles.ssSchrittNr}>{step.priority}</span>
+                  <span className={styles.ssSchrittText}>
+                    <span className={styles.ssSchrittTun}>{step.action}</span>
+                    {step.reason && <span className={styles.ssSchrittGrund}>{step.reason}</span>}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Key Terms */}
-        <div className={styles.keyTermsSection}>
-          <h3 className={styles.sectionTitle}>
-            <Clock size={18} /> Wichtige Konditionen
-          </h3>
-          <div className={styles.keyTermsGrid}>
-            <div className={styles.keyTerm}>
-              <span className={styles.ktLabel}>Laufzeit</span>
-              <span className={styles.ktValue}>{summary.keyTerms?.duration ?? 'Nicht angegeben'}</span>
-            </div>
-            <div className={styles.keyTerm}>
-              <span className={styles.ktLabel}>Kündigungsfrist</span>
-              <span className={styles.ktValue}>{summary.keyTerms?.terminationNotice ?? 'Nicht angegeben'}</span>
-            </div>
-            {summary.keyTerms?.value && summary.keyTerms.value !== 'Nicht angegeben' && (
-              <div className={styles.keyTerm}>
-                <span className={styles.ktLabel}>Vertragswert</span>
-                <span className={styles.ktValue}>{summary.keyTerms.value}</span>
+        {/* ── Wo das Risiko liegt: Ring, Balken und Zahlen zusammen ── */}
+        <div>
+          <p className={styles.ssZonenTitel}>Wo das Risiko liegt</p>
+          <div className={styles.ssRisikoLage}>
+            <div>
+              <div className={styles.ssRing}>
+                <svg viewBox="0 0 100 100" className={styles.ssRingSvg}>
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="#eef0f4" strokeWidth="8" />
+                  <circle
+                    cx="50" cy="50" r="45" fill="none"
+                    stroke={risikoFarbe(summary.riskScore?.overall ?? 0)}
+                    strokeWidth="8"
+                    strokeDasharray={`${(summary.riskScore?.overall ?? 0) * 2.83} 283`}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <span className={styles.ssRingWert}>{summary.riskScore?.overall ?? '–'}</span>
               </div>
+              <span className={styles.ssRingLabel}>Gesamtrisiko</span>
+            </div>
+
+            <div className={styles.ssBalken}>
+              {([
+                ['Finanziell', summary.riskScore?.breakdown?.financial ?? 0],
+                ['Rechtlich', summary.riskScore?.breakdown?.legal ?? 0],
+                ['Operativ', summary.riskScore?.breakdown?.operational ?? 0]
+              ] as [string, number][]).map(([name, wert]) => (
+                <div key={name} className={styles.ssBalkenZeile}>
+                  <span className={styles.ssBalkenName}>{name}</span>
+                  <span className={styles.ssBalkenSpur}>
+                    <span
+                      className={styles.ssBalkenFuell}
+                      style={{ width: `${wert}%`, background: risikoFarbe(wert) }}
+                    />
+                  </span>
+                  <span className={styles.ssBalkenWert} style={{ color: risikoFarbe(wert) }}>{wert}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.ssZahlen}>
+            <span className={styles.ssZahl}>
+              <span className={styles.ssZahlWert} style={{ color: '#dc2626' }}>
+                {summary.quickStats?.criticalCount ?? 0}
+              </span>
+              <span className={styles.ssZahlLabel}>kritisch</span>
+            </span>
+            <span className={styles.ssZahl}>
+              <span className={styles.ssZahlWert} style={{ color: '#b45309' }}>
+                {summary.quickStats?.warningCount ?? 0}
+              </span>
+              <span className={styles.ssZahlLabel}>prüfenswert</span>
+            </span>
+            <span className={styles.ssZahl}>
+              <span className={styles.ssZahlWert} style={{ color: '#15803d' }}>
+                {summary.quickStats?.okayCount ?? 0}
+              </span>
+              <span className={styles.ssZahlLabel}>unauffällig</span>
+            </span>
+          </div>
+        </div>
+
+        {/* ── Eckdaten ── */}
+        <div>
+          <p className={styles.ssZonenTitel}>Die Eckdaten</p>
+          <div className={styles.ssEckdaten}>
+            <span className={styles.ssEck}>
+              <span className={styles.ssEckLabel}>Laufzeit</span>
+              <span className={styles.ssEckWert}>{summary.keyTerms?.duration ?? 'Nicht angegeben'}</span>
+            </span>
+            <span className={styles.ssEck}>
+              <span className={styles.ssEckLabel}>Kündigungsfrist</span>
+              <span className={styles.ssEckWert}>{summary.keyTerms?.terminationNotice ?? 'Nicht angegeben'}</span>
+            </span>
+            {summary.keyTerms?.value && summary.keyTerms.value !== 'Nicht angegeben' && (
+              <span className={styles.ssEck}>
+                <span className={styles.ssEckLabel}>Vertragswert</span>
+                <span className={styles.ssEckWert}>{summary.keyTerms.value}</span>
+              </span>
             )}
           </div>
         </div>
 
-        {/* Highlights */}
-        <div className={styles.highlightsSection}>
-          {summary.highlights.positive.length > 0 && (
-            <div className={styles.highlightGroup}>
-              <h4 className={styles.highlightTitle} style={{ color: '#22c55e' }}>
-                ✅ Positiv
-              </h4>
-              <ul className={styles.highlightList}>
-                {summary.highlights.positive.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {summary.highlights.negative.length > 0 && (
-            <div className={styles.highlightGroup}>
-              <h4 className={styles.highlightTitle} style={{ color: '#ef4444' }}>
-                ❌ Negativ
-              </h4>
-              <ul className={styles.highlightList}>
-                {summary.highlights.negative.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {summary.highlights.unusual.length > 0 && (
-            <div className={styles.highlightGroup}>
-              <h4 className={styles.highlightTitle} style={{ color: '#f59e0b' }}>
-                ❓ Ungewöhnlich
-              </h4>
-              <ul className={styles.highlightList}>
-                {summary.highlights.unusual.map((item, i) => (
-                  <li key={i}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {/* Next Steps */}
-        {summary.nextSteps && summary.nextSteps.length > 0 && (
-          <div className={styles.nextStepsSection}>
-            <h3 className={styles.sectionTitle}>
-              <ArrowRight size={18} /> Nächste Schritte
-            </h3>
-            <div className={styles.stepsList}>
-              {summary.nextSteps.map((step, index) => (
-                <div key={index} className={styles.stepItem}>
-                  <span className={styles.stepNumber}>{step.priority}</span>
-                  <div className={styles.stepContent}>
-                    <span className={styles.stepAction}>{step.action}</span>
-                    <span className={styles.stepReason}>{step.reason}</span>
-                  </div>
+        {/* ── Weitere Beobachtungen ── */}
+        {((summary.highlights?.positive?.length ?? 0) > 0 ||
+          (summary.highlights?.negative?.length ?? 0) > 0 ||
+          (summary.highlights?.unusual?.length ?? 0) > 0) && (
+          <div>
+            <p className={styles.ssZonenTitel}>Weitere Beobachtungen</p>
+            <div className={styles.ssBeobachtungen}>
+              {(summary.highlights?.negative?.length ?? 0) > 0 && (
+                <div className={styles.ssGruppe}>
+                  <p className={styles.ssGruppeTitel}>
+                    <span className={`${styles.ssPunkt} ${styles.ssPunktRot}`} />
+                    Spricht dagegen
+                  </p>
+                  <ul className={styles.ssListe}>
+                    {summary.highlights.negative.map((item, i) => <li key={i}>{item}</li>)}
+                  </ul>
                 </div>
-              ))}
+              )}
+              {(summary.highlights?.unusual?.length ?? 0) > 0 && (
+                <div className={styles.ssGruppe}>
+                  <p className={styles.ssGruppeTitel}>
+                    <span className={`${styles.ssPunkt} ${styles.ssPunktGelb}`} />
+                    Ungewöhnlich
+                  </p>
+                  <ul className={styles.ssListe}>
+                    {summary.highlights.unusual.map((item, i) => <li key={i}>{item}</li>)}
+                  </ul>
+                </div>
+              )}
+              {(summary.highlights?.positive?.length ?? 0) > 0 && (
+                <div className={styles.ssGruppe}>
+                  <p className={styles.ssGruppeTitel}>
+                    <span className={`${styles.ssPunkt} ${styles.ssPunktGruen}`} />
+                    Spricht dafür
+                  </p>
+                  <ul className={styles.ssListe}>
+                    {summary.highlights.positive.map((item, i) => <li key={i}>{item}</li>)}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}
-
-        {/* TL;DR */}
-        <div className={styles.tldrSection}>
-          <h3 className={styles.tldrTitle}>📝 Kurz & knapp</h3>
-          <p className={styles.tldrText}>{summary.tldr}</p>
-        </div>
       </div>
 
-      {/* Footer Actions */}
-      <div className={styles.footer}>
-        <button onClick={onDismiss} className={styles.primaryButton}>
-          Zur Detail-Analyse
-          <ChevronRight size={18} />
+      <div className={styles.ssFuss}>
+        <button onClick={onDismiss} className={styles.ssKnopf}>
+          Zur ausführlichen Analyse
+          <ChevronRight size={16} />
         </button>
       </div>
     </div>
