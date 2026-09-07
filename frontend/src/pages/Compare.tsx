@@ -823,9 +823,9 @@ export default function EnhancedCompare() {
               ══════════════════════════════════════════════════════════ */}
           <div className="cg-kopf">
             <div>
-              <div className="cg-kopf-titel">
+              <h1 className="cg-kopf-titel">
                 {result ? 'Vergleichsergebnis' : 'Vertragsvergleich'}
-              </div>
+              </h1>
               <div className="cg-kopf-sub">
                 {result ? (
                   <>

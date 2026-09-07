@@ -74,19 +74,23 @@
    Zu wenig Unterschied, der Kopf las sich wie ein weiterer Abschnitt
    statt wie der Anfang der Seite. */
 .cg-kopf-titel {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  margin-bottom: 4px;
+  /* 07.09.2026: auf das Mass des Optimizers gebracht (28px/700).
+     22px in Gewicht 600 war fuer den Seitenanfang zu zurueckhaltend. */
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+  line-height: 1.15;
+  margin: 0 0 5px;
+  color: var(--cg-tinte);
 }
 
 /* War 13 px in hellem Grau, also faktisch Kleingedrucktes, obwohl dieser
    Satz das Nutzenversprechen trägt. */
 .cg-kopf-sub {
-  font-size: 13.5px;
+  /* Ebenfalls angeglichen: der Optimizer hat hier 15px. */
+  font-size: 15px;
   color: var(--cg-tinte-2);
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .cg-kopf-sub strong {
