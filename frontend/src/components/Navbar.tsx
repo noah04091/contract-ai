@@ -1247,13 +1247,14 @@ export default function Navbar() {
                   </AnimatePresence>
                 </div>
 
+                <div className={styles.mobileNavSep} />
+
                 {/* Preise */}
                 <Link
                   to="/pricing"
                   className={styles.mobileNavLinkItem}
                   onClick={() => setMobileNavOpen(false)}
                 >
-                  <span className={styles.mobileNavLinkIcon}>💰</span>
                   <span className={styles.mobileNavLinkText}>Preise</span>
                 </Link>
 
@@ -1263,7 +1264,6 @@ export default function Navbar() {
                   className={styles.mobileNavLinkItem}
                   onClick={() => setMobileNavOpen(false)}
                 >
-                  <span className={styles.mobileNavLinkIcon}>👥</span>
                   <span className={styles.mobileNavLinkText}>Über uns</span>
                 </Link>
 
@@ -1273,8 +1273,16 @@ export default function Navbar() {
                   className={styles.mobileNavLinkItem}
                   onClick={() => setMobileNavOpen(false)}
                 >
-                  <span className={styles.mobileNavLinkIcon}>📝</span>
                   <span className={styles.mobileNavLinkText}>Blog</span>
+                </Link>
+
+                {/* Hilfe-Center — dezenter Zusatzpunkt */}
+                <Link
+                  to="/hilfe"
+                  className={`${styles.mobileNavLinkItem} ${styles.mobileNavLinkMuted}`}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  <span className={styles.mobileNavLinkText}>Hilfe-Center</span>
                 </Link>
               </div>
 

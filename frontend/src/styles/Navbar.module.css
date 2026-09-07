@@ -463,6 +463,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(59, 130, 246, 0.08);
+  color: #2563eb; /* Linien-Icons (SVG) erben die Markenfarbe */
   border-radius: 10px;
   flex-shrink: 0;
 }
@@ -1099,6 +1100,7 @@
   z-index: 1003; /* Erhöht von 999 - muss über Navbar (1000) liegen */
   border-bottom: 1px solid var(--apple-border-light);
   max-height: calc(100vh - 64px);
+  max-height: calc(100dvh - 64px); /* iOS: sichtbare Hoehe */
   overflow-y: auto;
   /* Safe-Area für iPhone X+ */
   padding-left: env(safe-area-inset-left, 0);
@@ -1639,6 +1641,7 @@
   .mobileMenu {
     top: 52px;
     max-height: calc(100vh - 52px);
+    max-height: calc(100dvh - 52px);
   }
 
   .authPageButtons .loginButton,
@@ -1882,279 +1885,256 @@
   transition: height 0.3s ease;
 }
 
-/* Mobile Nav Backdrop */
+/* ══════════════════════════════════════════════
+   MOBIL-MENÜ (Vollbild, Marken-Stil — Redesign 07.09.)
+   Typografie statt Emojis, Logo im Kopf, CTAs fest unten
+   ══════════════════════════════════════════════ */
+
 .mobileNavBackdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1100;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  z-index: 10040; /* über Assistent-Launcher (9998) und Teaser (10001) */
 }
 
-/* Mobile Nav Panel */
 .mobileNavPanel {
   position: fixed;
   top: 0;
   left: 0;
-  width: 85%;
-  max-width: 320px;
+  width: 100%;
   height: 100vh;
   height: 100dvh;
   background: #ffffff;
-  z-index: 1101;
+  z-index: 10050;
   display: flex;
   flex-direction: column;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden; /* nur die Linkliste scrollt, Kopf + CTAs stehen fest */
 }
 
-/* Panel Header */
+/* Panel Header — Logo + Schließen */
 .mobileNavHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  min-height: 60px;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 10px 20px;
+  border-bottom: 1px solid #e9eef5;
+  flex-shrink: 0;
 }
 
-.mobileNavTitle {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--apple-gray-1);
-  letter-spacing: -0.02em;
+.mobileNavLogo {
+  height: 26px;
+  width: auto;
+  display: block;
 }
 
 .mobileNavClose {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: rgba(0, 0, 0, 0.05);
+  width: 44px;
+  height: 44px;
+  background: none;
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  color: var(--apple-gray-1);
-  transition: all 0.2s ease;
+  color: #5b6b7f;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.mobileNavClose:hover {
-  background: rgba(0, 0, 0, 0.1);
+.mobileNavClose:hover,
+.mobileNavClose:active {
+  background: #eef2f7;
+  color: #0f172a;
 }
 
-/* Navigation Links Container */
+/* Scrollende Linkliste */
 .mobileNavLinks {
   flex: 1;
-  padding: 16px 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 0 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
 }
 
-/* Section wrapper for features */
 .mobileNavSection {
   display: flex;
   flex-direction: column;
 }
 
-/* Nav Link with Arrow (Funktionen) */
-.mobileNavLinkWithArrow {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 14px 16px;
-  background: transparent;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-}
-
-.mobileNavLinkWithArrow:hover {
-  background: rgba(59, 130, 246, 0.08);
-}
-
-/* Regular Nav Link Item */
+/* Hauptpunkte: reine Typografie, große ruhige Zeilen */
+.mobileNavLinkWithArrow,
 .mobileNavLinkItem {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
+  justify-content: space-between;
+  width: 100%;
+  padding: 15px 22px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-align: left;
   text-decoration: none;
-  border-radius: 12px;
-  transition: all 0.2s ease;
 }
 
-.mobileNavLinkItem:hover {
-  background: rgba(59, 130, 246, 0.08);
-}
-
-.mobileNavLinkIcon {
-  font-size: 18px;
-  margin-right: 14px;
-  width: 24px;
-  text-align: center;
+.mobileNavLinkWithArrow:active,
+.mobileNavLinkItem:active {
+  background: #f6f9fe;
 }
 
 .mobileNavLinkText {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--apple-gray-1);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #0f172a;
   flex: 1;
 }
 
+.mobileNavLinkMuted .mobileNavLinkText {
+  font-size: 15px;
+  font-weight: 500;
+  color: #5b6b7f;
+}
+
 .mobileNavArrow {
-  color: var(--apple-gray-3);
+  color: #9aa8b8;
   display: flex;
   align-items: center;
 }
 
-/* Submenu Styles */
+.mobileNavSep {
+  height: 1px;
+  background: #e9eef5;
+  margin: 8px 22px;
+  flex-shrink: 0;
+}
+
+/* Aufklapp-Bereiche */
 .mobileNavSubmenu {
   overflow: hidden;
-  padding-left: 20px;
 }
 
 .mobileNavCategory {
-  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .mobileNavCategoryTitle {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--apple-gray-3);
-  padding: 8px 16px 8px;
+  letter-spacing: 0.1em;
+  color: #8a97a6;
+  padding: 14px 22px 4px;
   display: block;
 }
 
 .mobileNavFeature {
   display: flex;
   align-items: center;
-  padding: 10px 16px;
+  gap: 13px;
+  padding: 11px 22px;
   text-decoration: none;
-  border-radius: 10px;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease;
 }
 
-.mobileNavFeature:hover {
-  background: rgba(59, 130, 246, 0.06);
+.mobileNavFeature:active {
+  background: #f6f9fe;
 }
 
 .mobileNavFeatureIcon {
-  font-size: 16px;
-  margin-right: 12px;
-  width: 20px;
-  text-align: center;
-}
-
-.mobileNavFeatureName {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--apple-gray-1);
-}
-
-.mobileNavAllFeatures {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 20px;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.mobileNavFeatureName {
+  font-size: 15px;
+  font-weight: 500;
+  color: #26313f;
+}
+
+.mobileNavAllFeatures {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  padding: 14px 16px;
-  margin: 12px 16px;
-  background: rgba(59, 130, 246, 0.08);
-  color: #3B82F6;
+  padding: 10px 0;
+  margin: 4px 22px 8px;
+  color: #2563eb;
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.mobileNavAllFeatures:hover {
-  background: rgba(59, 130, 246, 0.12);
 }
 
 .mobileNavAllFeatures svg {
   transition: transform 0.2s ease;
 }
 
-.mobileNavAllFeatures:hover svg {
+.mobileNavAllFeatures:active svg {
   transform: translateX(3px);
 }
 
-/* Auth Buttons at Bottom */
+/* CTAs fest unten, mit iPhone-Polster */
 .mobileNavAuth {
-  padding: 20px;
+  flex-shrink: 0;
+  padding: 14px 18px calc(16px + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  margin-top: auto;
-  /* Safe area for iPhone */
-  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  gap: 10px;
+  border-top: 1px solid #e9eef5;
+  background: #ffffff;
 }
 
 .mobileNavLoginBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 20px;
-  background: transparent;
-  border: 1.5px solid rgba(0, 0, 0, 0.12);
-  border-radius: 12px;
-  color: var(--apple-gray-1);
+  padding: 13px 20px;
+  background: #ffffff;
+  border: 1px solid #dde5ee;
+  border-radius: 11px;
+  color: #0f172a;
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.mobileNavLoginBtn:hover {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.2);
+.mobileNavLoginBtn:active {
+  background: #f8fbff;
+  border-color: #2563eb;
 }
 
 .mobileNavRegisterBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px 20px;
-  background: var(--apple-blue);
+  padding: 13px 20px;
+  background: #2563eb;
   border: none;
-  border-radius: 12px;
+  border-radius: 11px;
   color: white;
   font-size: 15px;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  transition: background 0.2s ease;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
 }
 
-.mobileNavRegisterBtn:hover {
-  background: var(--apple-blue-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+.mobileNavRegisterBtn:active {
+  background: #1d4ed8;
 }
 
 /* Responsive adjustments for very small screens */
 @media (max-width: 375px) {
-  .mobileNavPanel {
-    width: 90%;
-  }
-
-  .mobileNavHeader {
-    padding: 14px 16px;
-  }
-
-  .mobileNavLinks {
-    padding: 12px 8px;
+  .mobileNavLinkWithArrow,
+  .mobileNavLinkItem {
+    padding: 14px 18px;
   }
 
   .mobileNavLinkWithArrow,
@@ -2192,6 +2172,7 @@
   left: 0;
   width: 280px;
   height: 100vh;
+  height: 100dvh; /* iOS: sichtbare Höhe statt Vollhöhe, sonst unten abgeschnitten */
   background: #FFFFFF;
   border-right: 1px solid #E5E7EB;
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
