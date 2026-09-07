@@ -89,13 +89,16 @@
 }
 
 /* ===================== LESEFORTSCHRITT ===================== */
-/* ⚠️ Die Navbar ist sticky und 65px hoch mit z-index 1000. Ein Balken bei
-   top:0 verschwindet dahinter, deshalb sitzt er darunter und darueber. */
+/* ⚠️ Der Balken darf NICHT an einer festen Navbar-Hoehe haengen: die Navbar
+   schrumpft beim Scrollen (Klasse navbarScrolled), dadurch klaffte eine
+   sichtbare Luecke zwischen Navbar und Balken. Er sitzt deshalb am oberen
+   Fensterrand ueber der Navbar (die hat z-index 1000) und ist damit von
+   jeder Navbar-Hoehe unabhaengig. */
 .progress {
   position: fixed;
-  top: var(--navhoehe);
+  top: 0;
   left: 0;
-  height: 2px;
+  height: 3px;
   width: 0%;
   background: var(--blau);
   z-index: 1001;
@@ -297,26 +300,47 @@
 .tocItem.active .tocNum { color: var(--blau); opacity: 1; }
 
 /* ===================== INHALT ===================== */
-.content { min-width: 0; }
+/* Der Text liegt auf EINEM Blatt statt auf zwoelf gestapelten Karten. Das
+   gibt der Seite Halt, ohne den Kartenstapel zurueckzuholen: die Abschnitte
+   darin trennt weiterhin nur eine Haarlinie. */
+/* Deckend weiss, nicht durchscheinend: auf dem leicht blaeulichen Seitengrund
+   hebt sich das Blatt sonst kaum ab und die Seite wirkt weiterhin kahl. */
+.content {
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid var(--linie);
+  border-radius: 20px;
+  padding: clamp(26px, 3.4vw, 48px) clamp(20px, 3vw, 44px) clamp(30px, 3vw, 44px);
+  box-shadow: 0 26px 60px -36px rgba(20, 40, 79, 0.34), 0 2px 5px rgba(20, 40, 79, 0.04);
+}
 
-/* Kein Kartenstapel mehr: die Abschnitte trennt eine Haarlinie. */
+/* Kopf links, Text rechts. Dasselbe Magazin-Prinzip wie im Ratgeber: fuellt
+   die Breite und macht das Dokument ueberfliegbar. */
 .section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.4fr) minmax(0, 1fr);
+  column-gap: clamp(20px, 2.6vw, 40px);
+  align-items: start;
   background: none;
   border: 0;
   border-top: 1px solid var(--linie);
   border-radius: 0;
   box-shadow: none;
-  padding: clamp(34px, 4vw, 52px) 0 clamp(12px, 2vw, 20px);
+  padding: clamp(30px, 3.4vw, 44px) 0 clamp(12px, 2vw, 20px);
   margin: 0;
   scroll-margin-top: calc(var(--navhoehe) + 24px);
 }
-.section:first-child { border-top: 0; padding-top: clamp(10px, 2vw, 22px); }
+.section:first-child { border-top: 0; padding-top: 0; }
 
 .sectionHeader {
+  grid-column: 1;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 15px;
-  margin-bottom: 22px;
+  gap: 13px;
+  margin-bottom: 0;
+  position: sticky;
+  top: calc(var(--navhoehe) + 26px);
 }
 /* Aus der Verlaufskachel wird ein ruhiges Zeichen in der Markenfarbe. */
 .sectionIcon {
@@ -333,14 +357,16 @@
 }
 .sectionIcon svg { width: 17px; height: 17px; }
 .sectionHeaderText { min-width: 0; }
+/* Traegt die Abschnittsnummer und ist in der linken Spalte das Ankerzeichen,
+   deshalb deutlich groesser als ein blosses Etikett. */
 .sectionKicker {
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: 15px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .13em;
-  color: var(--blau-tief);
-  margin-bottom: 5px;
+  letter-spacing: .1em;
+  color: var(--blau);
+  margin-bottom: 7px;
 }
 .sectionTitle {
   margin: 0;
@@ -351,11 +377,14 @@
   color: var(--tinte);
 }
 
+/* Die Zeilenlaenge wird ueber die Schriftgroesse gesteuert, nicht ueber
+   max-width: sonst deckelt sie die Spalte und rechts bleibt Weissraum. */
 .sectionBody {
-  font-size: clamp(16px, 1.15vw, 17.5px);
-  line-height: 1.75;
+  grid-column: 2;
+  font-size: clamp(15.5px, 1.12vw, 17px);
+  line-height: 1.72;
   color: var(--tinte-weich);
-  max-width: 74ch;
+  min-width: 0;
 }
 .sectionBody p { margin: 0 0 17px; }
 .sectionBody p:last-child { margin-bottom: 0; }
@@ -397,7 +426,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 74ch;
+  max-width: none;
 }
 .list li {
   position: relative;
@@ -429,7 +458,7 @@
   font-size: clamp(15.5px, 1.1vw, 16.5px);
   line-height: 1.68;
   background: none;
-  max-width: 74ch;
+  max-width: none;
 }
 .callout strong { font-weight: 600; }
 .calloutInfo { border-left-color: var(--blau); color: var(--tinte-weich); }
@@ -453,7 +482,7 @@
   /* Auf der getoenten Flaeche reicht --tinte-weich nicht (4,29:1), deshalb
      ein dunklerer Ton nur hier. */
   color: #465c82;
-  max-width: 74ch;
+  max-width: none;
 }
 .highlightBox strong { color: var(--tinte); font-weight: 600; }
 
@@ -466,7 +495,7 @@
   gap: 0 clamp(20px, 3vw, 44px);
   margin: 22px 0;
   border-top: 1px solid var(--linie);
-  max-width: 74ch;
+  max-width: none;
 }
 .infoCard {
   background: none;
@@ -523,7 +552,7 @@ a.infoCard:hover .infoValue { color: var(--blau-tief); }
   gap: 0;
   margin: 24px 0;
   border-top: 1px solid var(--linie);
-  max-width: 74ch;
+  max-width: none;
 }
 .tarifCard {
   position: relative;
@@ -597,27 +626,38 @@ a.infoCard:hover .infoValue { color: var(--blau-tief); }
   color: var(--tinte);
   box-shadow: none;
 }
+/* ⚠️ ctaInner hat VIER Kinder (Symbol, Ueberschrift, Text, Knopf). Ein Raster
+   mit drei Spalten schob das vierte in eine zweite Reihe, dadurch stand alles
+   durcheinander. Jedes Kind bekommt deshalb seinen benannten Platz. */
 .ctaInner {
   position: relative;
   z-index: 1;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "symbol ueberschrift knopf"
+    "symbol text         knopf";
   align-items: center;
-  gap: clamp(16px, 2.5vw, 30px);
+  column-gap: clamp(16px, 2.5vw, 28px);
+  row-gap: 6px;
 }
 .ctaIcon {
+  grid-area: symbol;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   background: var(--flaeche);
   color: var(--blau);
   margin: 0;
   flex-shrink: 0;
+  align-self: center;
 }
 .ctaTitle {
+  grid-area: ueberschrift;
+  align-self: end;
   margin: 0;
   font-size: clamp(20px, 2vw, 25px);
   font-weight: 600;
@@ -626,13 +666,17 @@ a.infoCard:hover .infoValue { color: var(--blau-tief); }
   color: var(--tinte);
 }
 .ctaText {
-  margin: 7px 0 0;
+  grid-area: text;
+  align-self: start;
+  margin: 0;
   max-width: 62ch;
   font-size: 16px;
   line-height: 1.6;
   color: var(--tinte-weich);
 }
 .ctaButton {
+  grid-area: knopf;
+  align-self: center;
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -666,16 +710,35 @@ a.infoCard:hover .infoValue { color: var(--blau-tief); }
   .shell { grid-template-columns: minmax(0, 1fr); }
   .toc { display: none; }
 }
+/* Unter 900px reicht die Breite nicht mehr fuer zwei Spalten: Kopf ueber
+   den Text, und der Kopf klebt nicht mehr mit. */
+@media (max-width: 900px) {
+  .section { grid-template-columns: minmax(0, 1fr); }
+  .sectionHeader,
+  .sectionBody { grid-column: 1; }
+  .sectionHeader {
+    position: static;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+}
 @media (max-width: 640px) {
   .hero { padding: 40px 20px 26px; }
   .heroTitle { font-size: clamp(28px, 8vw, 34px); }
+  .content { padding: 22px 18px; border-radius: 16px; }
   .section { padding: 28px 0 10px; }
   .sectionHeader { gap: 12px; margin-bottom: 18px; }
+  .ctaInner {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "symbol" "ueberschrift" "text" "knopf";
+    row-gap: 14px;
+  }
+  .ctaButton { justify-self: start; }
   .sectionIcon { width: 30px; height: 30px; border-radius: 9px; }
   .sectionIcon svg { width: 15px; height: 15px; }
   .cta { border-radius: 14px; padding: 26px 20px; }
-  .ctaInner { grid-template-columns: minmax(0, 1fr); gap: 16px; }
-  .ctaButton { justify-content: center; }
   .infoGrid, .tarifGrid { gap: 0; }
 }
 @media (max-width: 400px) {
