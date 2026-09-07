@@ -1103,44 +1103,146 @@ export default function EnhancedCompare() {
             </div>
           )}
 
-          {/* ══════════ DIE ZWEI SÄULEN ══════════ */}
+          {/* ══════════════════════════════════════════════════════════
+              07.09.2026: Zwei nummerierte Abschnitte statt einer losen
+              Folge von Blöcken. Sie geben der Seite eine Ordnung, die man
+              abarbeitet, und zeigen zugleich den Stand.
+              ══════════════════════════════════════════════════════════ */}
           {!result && !loading && (
           <>
-          <div className="cg-gegen">
-            {/* ── Vertrag A ── */}
-            <div className="cg-saeule cg-a">
-              <div className="cg-saeule-kopf">
-                <span className="cg-kennung">A</span>
-                <span className="cg-saeule-name">{file1 ? file1.name : 'Erster Vertrag'}</span>
-                <span className="cg-saeule-meta">
-                  {file1 ? `${(file1.size / 1024 / 1024).toFixed(1)} MB` : 'noch leer'}
-                </span>
+          {/* ── Schritt 1: worum es geht ── */}
+          <div className="cg-schritt">
+            <div className="cg-schritt-kopf">
+              <span className="cg-schritt-n fertig">
+                <Check size={11} strokeWidth={3.5} />
+              </span>
+              <span className="cg-schritt-t">Worum es geht</span>
+              <span className="cg-schritt-s">bestimmt, worauf wir achten</span>
+              <span className="cg-schritt-linie"></span>
+            </div>
+
+            <div className="cg-dreier">
+              <div className="cg-karte">
+                <div className="cg-karte-n">Ich bin</div>
+                <div className="cg-opt">
+                  {([
+                    ['individual', 'Privatperson', 'Verbraucherrechte im Blick'],
+                    ['freelancer', 'Freelancer', 'Haftung und Nutzungsrechte'],
+                    ['business', 'Unternehmen', 'Vollständige Prüfung']
+                  ] as [string, string, string][]).map(([wert, titel, text]) => (
+                    <button
+                      key={wert}
+                      className={`cg-o ${userProfile === wert ? 'an' : ''}`}
+                      onClick={() => setUserProfile(wert)}
+                      disabled={!isPremium}
+                      aria-pressed={userProfile === wert}
+                    >
+                      <span className="cg-o-p"></span>
+                      <span>
+                        <span className="cg-o-t">{titel}</span>
+                        <span className="cg-o-s">{text}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <input
-                ref={file1InputRef}
-                type="file"
-                accept=".pdf,.docx"
-                disabled={!isPremium}
-                style={{ display: 'none' }}
-                onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile1)}
-              />
-
-              {file1 ? (
-                <div className="cg-geladen">
-                  <div className="cg-geladen-symbol">
-                    <CheckCircle size={17} />
-                  </div>
-                  <div className="cg-geladen-t">
-                    <div className="cg-geladen-n">{file1.name}</div>
-                    <div className="cg-geladen-m">
-                      {(file1.size / 1024 / 1024).toFixed(2)} MB · {file1.name.split('.').pop()?.toUpperCase()}
-                    </div>
-                  </div>
-                  <button className="cg-weg" onClick={() => setFile1(null)}>Entfernen</button>
+              <div className="cg-karte">
+                <div className="cg-karte-n">Vergleichsart</div>
+                <div className="cg-opt">
+                  {([
+                    ['standard', 'Allgemein', 'Zwei Verträge gegenüberstellen'],
+                    ['version', 'Alt gegen Neu', 'Was hat sich geändert?'],
+                    ['bestPractice', 'Gegen Standards', 'Marktüblichkeit prüfen'],
+                    ['competition', 'Zwei Angebote', 'Welches ist besser?']
+                  ] as [string, string, string][]).map(([wert, titel, text]) => (
+                    <button
+                      key={wert}
+                      className={`cg-o ${comparisonMode === wert ? 'an' : ''}`}
+                      onClick={() => setComparisonMode(wert)}
+                      disabled={!isPremium}
+                      aria-pressed={comparisonMode === wert}
+                    >
+                      <span className="cg-o-p"></span>
+                      <span>
+                        <span className="cg-o-t">{titel}</span>
+                        <span className="cg-o-s">{text}</span>
+                      </span>
+                    </button>
+                  ))}
                 </div>
-              ) : (
-                <>
+              </div>
+
+              <div className="cg-karte">
+                <div className="cg-karte-n">Meine Rolle</div>
+                <div className="cg-opt">
+                  {([
+                    ['auftraggeber', 'Auftraggeber', 'Du beauftragst und bezahlst'],
+                    ['auftragnehmer', 'Auftragnehmer', 'Du erbringst die Leistung'],
+                    ['neutral', 'Neutral', 'Beide Seiten gleich gewichtet']
+                  ] as [Perspective, string, string][]).map(([wert, titel, text]) => (
+                    <button
+                      key={wert}
+                      className={`cg-o ${perspective === wert ? 'an' : ''}`}
+                      onClick={() => setPerspective(wert)}
+                      disabled={!isPremium}
+                      aria-pressed={perspective === wert}
+                    >
+                      <span className="cg-o-p"></span>
+                      <span>
+                        <span className="cg-o-t">{titel}</span>
+                        <span className="cg-o-s">{text}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Schritt 2: die beiden Verträge ── */}
+          <div className="cg-schritt">
+            <div className="cg-schritt-kopf">
+              <span className={`cg-schritt-n ${file1 && file2 ? 'fertig' : 'offen'}`}>
+                {file1 && file2 ? <Check size={11} strokeWidth={3.5} /> : '2'}
+              </span>
+              <span className="cg-schritt-t">Die beiden Verträge</span>
+              <span className="cg-schritt-s">PDF oder Word, je bis 10 MB</span>
+              <span className="cg-schritt-linie"></span>
+            </div>
+
+            <div className="cg-gegen">
+              {/* ── Vertrag A ── */}
+              <div className="cg-saeule cg-a">
+                <div className="cg-saeule-kopf">
+                  <span className="cg-kennung">A</span>
+                  <span className="cg-saeule-name">{file1 ? file1.name : 'Erster Vertrag'}</span>
+                  <span className="cg-saeule-meta">
+                    {file1 ? `${(file1.size / 1024 / 1024).toFixed(1)} MB` : 'noch leer'}
+                  </span>
+                </div>
+
+                <input
+                  ref={file1InputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  disabled={!isPremium}
+                  style={{ display: 'none' }}
+                  onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile1)}
+                />
+
+                {file1 ? (
+                  <div className="cg-geladen">
+                    <div className="cg-geladen-symbol"><CheckCircle size={17} /></div>
+                    <div className="cg-geladen-t">
+                      <div className="cg-geladen-n">{file1.name}</div>
+                      <div className="cg-geladen-m">
+                        {(file1.size / 1024 / 1024).toFixed(2)} MB · {file1.name.split('.').pop()?.toUpperCase()}
+                      </div>
+                    </div>
+                    <button className="cg-weg" onClick={() => setFile1(null)}>Entfernen</button>
+                  </div>
+                ) : (
                   <div
                     className={`cg-ablage ${ziehtAuf === 1 ? 'zieht' : ''} ${!isPremium ? 'gesperrt' : ''}`}
                     onClick={() => isPremium && file1InputRef.current?.click()}
@@ -1159,9 +1261,7 @@ export default function EnhancedCompare() {
                     tabIndex={isPremium ? 0 : -1}
                     aria-label="Ersten Vertrag auswählen"
                   >
-                    <div className="cg-ablage-symbol">
-                      <Upload size={18} strokeWidth={1.8} />
-                    </div>
+                    <div className="cg-ablage-symbol"><Upload size={25} strokeWidth={1.5} /></div>
                     <div className="cg-ablage-t">
                       {isPremium ? 'Hierher ziehen' : 'Business-Abo erforderlich'}
                     </div>
@@ -1169,50 +1269,52 @@ export default function EnhancedCompare() {
                       {isPremium ? <>oder <span>Datei auswählen</span></> : 'Vergleichen ist Teil des Business-Abos'}
                     </div>
                   </div>
+                )}
+
+                <div className="cg-leiste" style={{ margin: 0, borderRadius: 0, border: 0, borderTop: '1px solid var(--cg-linie)', background: 'var(--cg-senke)' }}>
+                  <span className="cg-typ">PDF</span>
+                  <span className="cg-typ">DOCX</span>
+                  <span>bis 10 MB</span>
                   {isPremium && (
-                    <button className="cg-foto" onClick={() => openScanner1()}>
+                    <button className="cg-foto" style={{ margin: 0, marginLeft: 'auto', padding: 0, border: 0, background: 'none' }} onClick={() => openScanner1()}>
                       <Camera size={13} />
                       Abfotografieren
                     </button>
                   )}
-                </>
-              )}
-            </div>
-
-            {/* ── Vertrag B ── */}
-            <div className="cg-saeule cg-b">
-              <div className="cg-saeule-kopf">
-                <span className="cg-kennung">B</span>
-                <span className="cg-saeule-name">{file2 ? file2.name : 'Zweiter Vertrag'}</span>
-                <span className="cg-saeule-meta">
-                  {file2 ? `${(file2.size / 1024 / 1024).toFixed(1)} MB` : 'noch leer'}
-                </span>
+                </div>
               </div>
 
-              <input
-                ref={file2InputRef}
-                type="file"
-                accept=".pdf,.docx"
-                disabled={!isPremium}
-                style={{ display: 'none' }}
-                onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile2)}
-              />
-
-              {file2 ? (
-                <div className="cg-geladen">
-                  <div className="cg-geladen-symbol">
-                    <CheckCircle size={17} />
-                  </div>
-                  <div className="cg-geladen-t">
-                    <div className="cg-geladen-n">{file2.name}</div>
-                    <div className="cg-geladen-m">
-                      {(file2.size / 1024 / 1024).toFixed(2)} MB · {file2.name.split('.').pop()?.toUpperCase()}
-                    </div>
-                  </div>
-                  <button className="cg-weg" onClick={() => setFile2(null)}>Entfernen</button>
+              {/* ── Vertrag B ── */}
+              <div className="cg-saeule cg-b">
+                <div className="cg-saeule-kopf">
+                  <span className="cg-kennung">B</span>
+                  <span className="cg-saeule-name">{file2 ? file2.name : 'Zweiter Vertrag'}</span>
+                  <span className="cg-saeule-meta">
+                    {file2 ? `${(file2.size / 1024 / 1024).toFixed(1)} MB` : 'noch leer'}
+                  </span>
                 </div>
-              ) : (
-                <>
+
+                <input
+                  ref={file2InputRef}
+                  type="file"
+                  accept=".pdf,.docx"
+                  disabled={!isPremium}
+                  style={{ display: 'none' }}
+                  onChange={(e) => e.target.files?.[0] && validateAndSetFile(e.target.files[0], setFile2)}
+                />
+
+                {file2 ? (
+                  <div className="cg-geladen">
+                    <div className="cg-geladen-symbol"><CheckCircle size={17} /></div>
+                    <div className="cg-geladen-t">
+                      <div className="cg-geladen-n">{file2.name}</div>
+                      <div className="cg-geladen-m">
+                        {(file2.size / 1024 / 1024).toFixed(2)} MB · {file2.name.split('.').pop()?.toUpperCase()}
+                      </div>
+                    </div>
+                    <button className="cg-weg" onClick={() => setFile2(null)}>Entfernen</button>
+                  </div>
+                ) : (
                   <div
                     className={`cg-ablage ${ziehtAuf === 2 ? 'zieht' : ''} ${!isPremium ? 'gesperrt' : ''}`}
                     onClick={() => isPremium && file2InputRef.current?.click()}
@@ -1231,9 +1333,7 @@ export default function EnhancedCompare() {
                     tabIndex={isPremium ? 0 : -1}
                     aria-label="Zweiten Vertrag auswählen"
                   >
-                    <div className="cg-ablage-symbol">
-                      <Upload size={18} strokeWidth={1.8} />
-                    </div>
+                    <div className="cg-ablage-symbol"><Upload size={25} strokeWidth={1.5} /></div>
                     <div className="cg-ablage-t">
                       {isPremium ? 'Hierher ziehen' : 'Business-Abo erforderlich'}
                     </div>
@@ -1241,130 +1341,79 @@ export default function EnhancedCompare() {
                       {isPremium ? <>oder <span>Datei auswählen</span></> : 'Vergleichen ist Teil des Business-Abos'}
                     </div>
                   </div>
+                )}
+
+                <div className="cg-leiste" style={{ margin: 0, borderRadius: 0, border: 0, borderTop: '1px solid var(--cg-linie)', background: 'var(--cg-senke)' }}>
+                  <span className="cg-typ">PDF</span>
+                  <span className="cg-typ">DOCX</span>
+                  <span>bis 10 MB</span>
                   {isPremium && (
-                    <button className="cg-foto" onClick={() => openScanner2()}>
+                    <button className="cg-foto" style={{ margin: 0, marginLeft: 'auto', padding: 0, border: 0, background: 'none' }} onClick={() => openScanner2()}>
                       <Camera size={13} />
                       Abfotografieren
                     </button>
                   )}
-                </>
+                </div>
+              </div>
+            </div>
+
+            {/* Der Knopf sitzt am Ende einer Zeile, die sagt was noch fehlt,
+                statt mittig zwischen den beiden Verträgen zu stehen. */}
+            <div className="cg-startzeile">
+              <div className="cg-startzeile-t">
+                {!file1 && !file2
+                  ? <>Lege <b>zwei Verträge</b> ab, dann kann es losgehen</>
+                  : !file1 || !file2
+                    ? <>Es fehlt noch <b>ein Vertrag</b></>
+                    : <>Beide Verträge liegen bereit</>}
+              </div>
+              {(file1 || file2) && (
+                <button className="cg-knopf still" onClick={handleReset}>
+                  <RefreshCw size={15} />
+                  Zurücksetzen
+                </button>
               )}
+              <button
+                className="cg-knopf"
+                style={{ marginLeft: file1 || file2 ? undefined : 'auto' }}
+                onClick={handleSubmit}
+                disabled={!file1 || !file2 || loading || !isPremium}
+              >
+                Vergleich starten
+                <ArrowRight size={16} />
+              </button>
             </div>
           </div>
 
-          {/* ══════════ EINSTELLUNGEN ══════════
-              Erscheinen erst, wenn beide Verträge liegen. Vorher wären sie
-              eine Hürde vor der eigentlichen Aufgabe, nachher beantworten
-              sie eine Frage, die man sich gerade stellt. Alle drei in
-              derselben Formsprache, mit Vorgaben, die meistens passen. */}
-          {file1 && file2 && (
-            <div className="cg-einstellungen">
-              <div className="cg-einst-kopf">
-                <h3>Wie sollen wir vergleichen?</h3>
-                <span className="cg-einst-hinweis">Die Vorgaben passen meistens</span>
+          {/* ── Frühere Vergleiche ── */}
+          {historyItems.length > 0 && (
+            <div className="cg-weiter">
+              <div className="cg-weiter-kopf">
+                <h3>Oder einen früheren Vergleich öffnen</h3>
+                <span className="zahl">{historyItems.length} gespeichert</span>
+                <button className="cg-weiter-alle" onClick={() => setShowHistory(!showHistory)}>
+                  {showHistory ? 'Liste schließen' : 'Alle ansehen'}
+                </button>
               </div>
-
-              <div className="cg-einst-gitter">
-                <div className="cg-einst-gruppe">
-                  <div className="cg-einst-name">Ich bin</div>
-                  <div className="cg-segmente" role="group" aria-label="Ich bin">
-                    {([
-                      ['individual', 'Privatperson'],
-                      ['freelancer', 'Freelancer'],
-                      ['business', 'Unternehmen']
-                    ] as [string, string][]).map(([wert, titel]) => (
-                      <button
-                        key={wert}
-                        className={`cg-segment ${userProfile === wert ? 'aktiv' : ''}`}
-                        onClick={() => setUserProfile(wert)}
-                        disabled={!isPremium}
-                        aria-pressed={userProfile === wert}
-                      >
-                        {titel}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="cg-einst-gruppe">
-                  <div className="cg-einst-name">Vergleichsart</div>
-                  <div className="cg-segmente" role="group" aria-label="Vergleichsart">
-                    {([
-                      ['standard', 'Allgemein'],
-                      ['version', 'Alt/Neu'],
-                      ['bestPractice', 'Standards'],
-                      ['competition', 'Angebote']
-                    ] as [string, string][]).map(([wert, titel]) => (
-                      <button
-                        key={wert}
-                        className={`cg-segment ${comparisonMode === wert ? 'aktiv' : ''}`}
-                        onClick={() => setComparisonMode(wert)}
-                        disabled={!isPremium}
-                        aria-pressed={comparisonMode === wert}
-                      >
-                        {titel}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="cg-einst-gruppe">
-                  <div className="cg-einst-name">Meine Rolle</div>
-                  <div className="cg-segmente" role="group" aria-label="Meine Rolle">
-                    {([
-                      ['auftraggeber', 'Auftraggeber'],
-                      ['auftragnehmer', 'Auftragnehmer'],
-                      ['neutral', 'Neutral']
-                    ] as [Perspective, string][]).map(([wert, titel]) => (
-                      <button
-                        key={wert}
-                        className={`cg-segment ${perspective === wert ? 'aktiv' : ''}`}
-                        onClick={() => setPerspective(wert)}
-                        disabled={!isPremium}
-                        aria-pressed={perspective === wert}
-                      >
-                        {titel}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Eine Zeile, die sagt was die Wahl bewirkt, statt drei
-                  Beschreibungstexte gleichzeitig. */}
-              <div className="cg-einst-erklaerung">
-                {perspective === 'neutral'
-                  ? <>Beide Seiten werden gleich gewichtet. <strong>Wähle deine Rolle</strong>, wenn du wissen willst, welcher Vertrag <strong>für dich</strong> der bessere ist — dieselbe Haftungsklausel ist für die eine Seite ein Schutz und für die andere ein Risiko.</>
-                  : perspective === 'auftraggeber'
-                    ? <>Bewertet aus Sicht des <strong>Auftraggebers</strong>: du beauftragst und bezahlst die Leistung.</>
-                    : <>Bewertet aus Sicht des <strong>Auftragnehmers</strong>: du erbringst die Leistung.</>}
+              <div className="cg-hist-gitter">
+                {historyItems.slice(0, 4).map((h) => (
+                  <button key={h.id} className="cg-hist" onClick={() => loadFromHistory(h)}>
+                    <div className="cg-hist-o">
+                      <span className={`cg-hist-s ${h.recommended === 1 ? 'a' : 'b'}`}>
+                        {h.recommended === 1 ? 'A' : 'B'} empfohlen
+                      </span>
+                      <span className="cg-hist-d">
+                        {new Date(h.timestamp).toLocaleDateString('de-DE', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
+                    <div className="cg-hist-n">
+                      <b>{h.file1Name}</b> gegen <b>{h.file2Name}</b>
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
           )}
-
-          <div className="cg-leiste">
-            <span className="cg-typ">PDF</span>
-            <span className="cg-typ">DOCX</span>
-            <span>je bis 10 MB</span>
-            <span style={{ marginLeft: 'auto' }}>Die Dateien verlassen deinen Browser nur zur Analyse</span>
-          </div>
-
-          <div className="cg-knopfreihe">
-            {(file1 || file2) && (
-              <button className="cg-knopf still" onClick={handleReset}>
-                <RefreshCw size={15} />
-                Zurücksetzen
-              </button>
-            )}
-            <button
-              className="cg-knopf cg-schieb"
-              onClick={handleSubmit}
-              disabled={!file1 || !file2 || loading || !isPremium}
-            >
-              Vergleich starten
-              <ArrowRight size={15} />
-            </button>
-          </div>
           </>
           )}
 

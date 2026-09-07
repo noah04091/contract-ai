@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import {
   ComparisonResult, ComparisonResultV2, isV2Result,
+  SCORE_LABELS, CLAUSE_AREA_LABELS, ClauseArea, CategoryScores,
   CompareTab, Perspective, PERSPECTIVE_LABELS,
 } from '../../types/compare';
 import OverviewTab from './tabs/OverviewTab';
@@ -186,6 +187,154 @@ export default function CompareResults({
           )}
         </div>
       )}
+
+      {/* ══════════════════════════════════════════════════════════
+          07.09.2026: Bewertung als Balkenpaare. Vorher standen die Werte
+          als zwei getrennte Kreis-Karten im Reiter "Überblick" — man
+          musste zwischen ihnen hin- und herschauen, statt den Vergleich
+          zu sehen. Hier liegt jede Kategorie in einer Zeile, A und B
+          nebeneinander, mit einem kleinen Zeiger am besseren Wert.
+          ══════════════════════════════════════════════════════════ */}
+      {v2Result?.scores && (
+        <div className="cg-werte-block">
+          <div className="cg-werte-kopf">
+            <h3>Bewertung nach Kategorien</h3>
+            <div className="cg-werte-leg">
+              <span><i style={{ background: '#2563eb' }} />A Vertrag A</span>
+              <span><i style={{ background: '#0e7490' }} />B Vertrag B</span>
+            </div>
+          </div>
+
+          {(Object.keys(SCORE_LABELS) as (keyof CategoryScores)[]).map((schluessel) => {
+            const wertA = v2Result.scores.contract1[schluessel] ?? 0;
+            const wertB = v2Result.scores.contract2[schluessel] ?? 0;
+            return (
+              <div className="cg-werte-zeile" key={schluessel}>
+                <div className="cg-werte-name">{SCORE_LABELS[schluessel]}</div>
+                <div className="cg-balkenpaar cg-a">
+                  <span className="cg-bahn"><span className="cg-fuell" style={{ width: `${Math.max(0, Math.min(100, wertA))}%` }} /></span>
+                  <span className={`cg-wert ${wertA > wertB ? 'vorn' : ''}`}>{wertA}</span>
+                </div>
+                <div className="cg-balkenpaar cg-b">
+                  <span className="cg-bahn"><span className="cg-fuell" style={{ width: `${Math.max(0, Math.min(100, wertB))}%` }} /></span>
+                  <span className={`cg-wert ${wertB > wertA ? 'vorn' : ''}`}>{wertB}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          VERTRAGSLANDKARTE. Alle belegten Sachgebiete gegen beide
+          Verträge. Sie beantwortet Fragen, die eine Unterschiedsliste
+          strukturell nicht beantworten kann: Was regelt nur einer von
+          beiden? Was fehlt in beiden? Denn was fehlt, kann man nicht
+          vergleichen und steht deshalb in keiner Unterschiedsliste.
+          ══════════════════════════════════════════════════════════ */}
+      {v2Result?.contractMap && (() => {
+        const gebiete1 = new Map<string, string>();
+        const gebiete2 = new Map<string, string>();
+        (v2Result.contractMap.contract1?.clauses || []).forEach(k => {
+          if (k?.area && !gebiete1.has(k.area)) gebiete1.set(k.area, k.section || '✓');
+        });
+        (v2Result.contractMap.contract2?.clauses || []).forEach(k => {
+          if (k?.area && !gebiete2.has(k.area)) gebiete2.set(k.area, k.section || '✓');
+        });
+
+        // Schwerste Abweichung je Sachgebiet
+        const schwere = new Map<string, string>();
+        (v2Result.differences || []).forEach(d => {
+          const g = d?.clauseArea;
+          if (!g) return;
+          const bisher = schwere.get(g);
+          if (d.severity === 'critical' || (d.severity === 'high' && bisher !== 'critical')) {
+            schwere.set(g, d.severity === 'critical' ? 'critical' : 'high');
+          } else if (!bisher) {
+            schwere.set(g, d.severity || 'low');
+          }
+        });
+
+        // Nur Gebiete zeigen, zu denen es überhaupt etwas gibt
+        const gebiete = (Object.keys(CLAUSE_AREA_LABELS) as ClauseArea[])
+          .filter(g => gebiete1.has(g) || gebiete2.has(g) || schwere.has(g));
+
+        if (gebiete.length === 0) return null;
+
+        const stufe = (g: string, hat: boolean, andererHat: boolean) => {
+          if (!hat) return andererHat ? 'cg-m-kri' : 'cg-m-nix';
+          const sv = schwere.get(g);
+          if (sv === 'critical') return 'cg-m-kri';
+          if (sv === 'high' || sv === 'medium') return 'cg-m-mit';
+          return 'cg-m-ok';
+        };
+
+        const nurEiner = gebiete.filter(g => gebiete1.has(g) !== gebiete2.has(g));
+        const inKeinem = (Object.keys(CLAUSE_AREA_LABELS) as ClauseArea[])
+          .filter(g => g !== 'other' && !gebiete1.has(g) && !gebiete2.has(g));
+
+        return (
+          <div className="cg-landkarte">
+            <div className="cg-lk-kopf">
+              <h3>Vertragslandkarte</h3>
+              <span className="sub">{gebiete.length} Sachgebiete, beide Verträge</span>
+              <div className="cg-lk-leg">
+                <span><i className="cg-i-ok" />gleichwertig</span>
+                <span><i className="cg-i-mit" />Unterschied</span>
+                <span><i className="cg-i-kri" />kritisch oder fehlt</span>
+                <span><i className="cg-i-nix" />nicht geregelt</span>
+              </div>
+            </div>
+
+            <div className="cg-lk-rollen">
+              <div
+                className="cg-lk-gitter"
+                style={{ gridTemplateColumns: `170px repeat(${gebiete.length}, minmax(72px, 1fr))` }}
+              >
+                <div className="cg-lk-zelle kopfz name">Sachgebiet</div>
+                {gebiete.map(g => (
+                  <div className="cg-lk-zelle kopfz" key={`k-${g}`}>{CLAUSE_AREA_LABELS[g]}</div>
+                ))}
+
+                <div className="cg-lk-zelle name">
+                  <span className="cg-kennung" style={{ width: 20, height: 20, fontSize: 10, background: '#eef4fe', color: '#2563eb', border: '1px solid #c7daf9' }}>A</span>
+                  Vertrag A
+                </div>
+                {gebiete.map(g => (
+                  <div className="cg-lk-zelle" key={`a-${g}`}>
+                    <span className={`cg-marke ${stufe(g, gebiete1.has(g), gebiete2.has(g))}`}>
+                      {gebiete1.get(g) || 'fehlt'}
+                    </span>
+                  </div>
+                ))}
+
+                <div className="cg-lk-zelle name letzte">
+                  <span className="cg-kennung" style={{ width: 20, height: 20, fontSize: 10, background: '#e8f4f7', color: '#0e7490', border: '1px solid #b0d9e4' }}>B</span>
+                  Vertrag B
+                </div>
+                {gebiete.map(g => (
+                  <div className="cg-lk-zelle letzte" key={`b-${g}`}>
+                    <span className={`cg-marke ${stufe(g, gebiete2.has(g), gebiete1.has(g))}`}>
+                      {gebiete2.get(g) || 'fehlt'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {(nurEiner.length > 0 || inKeinem.length > 0) && (
+              <div className="cg-lk-fuss">
+                {nurEiner.length > 0 && (
+                  <>Nur einer der beiden regelt: <b>{nurEiner.map(g => CLAUSE_AREA_LABELS[g]).join(', ')}</b>. </>
+                )}
+                {inKeinem.length > 0 && (
+                  <>In keinem von beiden geregelt: <b>{inKeinem.map(g => CLAUSE_AREA_LABELS[g]).join(', ')}</b>.</>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       <div className={styles.tabNavigation}>
         {TAB_CONFIG.map((tab) => {

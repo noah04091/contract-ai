@@ -1163,3 +1163,602 @@
     width: 100%;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   SCHRITTE (07.09.2026)
+
+   Nummerierte Abschnitte geben der Seite eine Ordnung, die man
+   abarbeitet, und zeigen zugleich den Stand: erledigt, offen, dran.
+   Kein Fortschrittsbalken oben, sondern die Gliederung selbst.
+   ══════════════════════════════════════════════════════════════════ */
+.cg-schritt {
+  margin-bottom: 18px;
+}
+
+.cg-schritt-kopf {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 11px;
+}
+
+.cg-schritt-n {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--cg-tinte);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.cg-schritt-n.offen {
+  background: var(--cg-grund);
+  color: var(--cg-tinte-3);
+  border: 1.5px solid var(--cg-linie-satt);
+}
+
+.cg-schritt-n.fertig {
+  background: var(--cg-gut-sanft);
+  color: var(--cg-gut);
+  border: 1.5px solid #b5dccb;
+}
+
+.cg-schritt-t {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cg-tinte);
+}
+
+.cg-schritt-s {
+  font-size: 13px;
+  color: var(--cg-tinte-3);
+}
+
+.cg-schritt-linie {
+  flex: 1;
+  height: 1px;
+  background: var(--cg-linie);
+  margin-left: 4px;
+}
+
+/* ══════════ DREI EINSTELLUNGSKARTEN ══════════ */
+.cg-dreier {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cg-karte {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  padding: 14px 16px;
+}
+
+.cg-karte-n {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--cg-tinte-3);
+  margin-bottom: 10px;
+}
+
+.cg-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cg-o {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 11px;
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r1);
+  background: var(--cg-grund);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.14s, background 0.14s;
+  width: 100%;
+}
+
+.cg-o:hover:not(:disabled):not(.an) {
+  border-color: var(--cg-a-linie);
+  background: var(--cg-senke);
+}
+
+.cg-o:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cg-o.an {
+  border-color: var(--cg-a);
+  background: var(--cg-a-sanft);
+}
+
+.cg-o:focus-visible {
+  outline: 2px solid var(--cg-a);
+  outline-offset: 1px;
+}
+
+.cg-o-p {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  border: 1.5px solid var(--cg-linie-satt);
+  flex-shrink: 0;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  background: var(--cg-grund);
+}
+
+.cg-o.an .cg-o-p {
+  border-color: var(--cg-a);
+}
+
+.cg-o.an .cg-o-p::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--cg-a);
+}
+
+.cg-o-t {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--cg-tinte);
+}
+
+.cg-o.an .cg-o-t {
+  color: var(--cg-a);
+}
+
+.cg-o-s {
+  display: block;
+  font-size: 11.5px;
+  color: var(--cg-tinte-3);
+  line-height: 1.35;
+  margin-top: 1px;
+}
+
+/* ══════════ STARTZEILE ══════════
+   Der Knopf sitzt am Ende einer Zeile, die sagt was noch fehlt,
+   statt mittig zwischen den beiden Verträgen zu stehen. */
+.cg-startzeile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 15px 18px;
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  flex-wrap: wrap;
+}
+
+.cg-startzeile-t {
+  font-size: 13.5px;
+  color: var(--cg-tinte-2);
+}
+
+.cg-startzeile-t b {
+  color: var(--cg-tinte);
+  font-weight: 600;
+}
+
+/* ══════════ FRÜHERE VERGLEICHE ══════════ */
+.cg-weiter {
+  margin-top: 26px;
+}
+
+.cg-weiter-kopf {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding-bottom: 11px;
+  margin-bottom: 13px;
+  border-bottom: 1px solid var(--cg-linie-satt);
+  flex-wrap: wrap;
+}
+
+.cg-weiter-kopf h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cg-tinte);
+}
+
+.cg-weiter-kopf .zahl {
+  font-size: 13px;
+  color: var(--cg-tinte-3);
+}
+
+.cg-weiter-alle {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--cg-a);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.cg-weiter-alle:hover {
+  text-decoration: underline;
+}
+
+.cg-hist-gitter {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.cg-hist {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r2);
+  padding: 12px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: border-color 0.15s;
+}
+
+.cg-hist:hover {
+  border-color: var(--cg-a-linie);
+}
+
+.cg-hist:focus-visible {
+  outline: 2px solid var(--cg-a);
+  outline-offset: 2px;
+}
+
+.cg-hist-o {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.cg-hist-s {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cg-hist-s.a { background: var(--cg-a-sanft); color: var(--cg-a); }
+.cg-hist-s.b { background: var(--cg-b-sanft); color: var(--cg-b); }
+
+.cg-hist-d {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--cg-tinte-3);
+}
+
+.cg-hist-n {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--cg-tinte-2);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.cg-hist-n b {
+  color: var(--cg-tinte);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   VERTRAGSLANDKARTE (07.09.2026)
+
+   Alle Sachgebiete gegen beide Verträge. Beantwortet Fragen, die eine
+   Unterschiedsliste STRUKTURELL nicht beantworten kann: Welches Thema
+   regelt nur einer von beiden? Was fehlt in beiden? Wo häufen sich die
+   Probleme? Was fehlt, kann man nicht vergleichen, also taucht es in
+   der Unterschiedsliste nie auf.
+
+   Daten: contractMap.clauses[].area für die Abdeckung,
+   differences[].clauseArea und severity für die Färbung.
+   ══════════════════════════════════════════════════════════════════ */
+.cg-landkarte {
+  background: var(--cg-grund);
+  border: 1px solid var(--cg-linie);
+  border-radius: var(--cg-r3);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.cg-lk-kopf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--cg-linie);
+  flex-wrap: wrap;
+}
+
+.cg-lk-kopf h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cg-tinte);
+}
+
+.cg-lk-kopf .sub {
+  font-size: 13px;
+  color: var(--cg-tinte-3);
+}
+
+.cg-lk-leg {
+  margin-left: auto;
+  display: flex;
+  gap: 13px;
+  font-size: 12px;
+  color: var(--cg-tinte-2);
+  flex-wrap: wrap;
+}
+
+.cg-lk-leg span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cg-lk-leg i {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  display: block;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+
+.cg-i-ok { background: var(--cg-gut-sanft); border-color: #b5dccb; }
+.cg-i-mit { background: #fdf7ed; border-color: #efdcb8; }
+.cg-i-kri { background: #fdf2f2; border-color: #f0cccc; }
+.cg-i-nix { background: var(--cg-senke-2); border-color: var(--cg-linie); }
+
+/* Das Gitter scrollt waagerecht, wenn viele Sachgebiete belegt sind. */
+.cg-lk-rollen {
+  overflow-x: auto;
+}
+
+.cg-lk-gitter {
+  display: grid;
+  min-width: 720px;
+}
+
+.cg-lk-zelle {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--cg-linie);
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.cg-lk-zelle.kopfz {
+  background: var(--cg-senke);
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--cg-tinte-3);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--cg-linie-satt);
+  min-height: 40px;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.cg-lk-zelle.name {
+  justify-content: flex-start;
+  font-weight: 500;
+  color: var(--cg-tinte);
+  border-right: 1px solid var(--cg-linie);
+  padding-left: 20px;
+  gap: 8px;
+}
+
+.cg-lk-zelle.letzte {
+  border-bottom: 0;
+}
+
+.cg-marke {
+  width: 100%;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cg-m-ok { background: var(--cg-gut-sanft); border-color: #b5dccb; color: var(--cg-gut); }
+.cg-m-mit { background: #fdf7ed; border-color: #efdcb8; color: #95651a; }
+.cg-m-kri { background: #fdf2f2; border-color: #f0cccc; color: var(--cg-krit); }
+.cg-m-nix { background: var(--cg-senke-2); border-color: var(--cg-linie); color: var(--cg-tinte-3); }
+
+.cg-lk-fuss {
+  padding: 11px 20px;
+  background: var(--cg-senke);
+  border-top: 1px solid var(--cg-linie);
+  font-size: 13px;
+  color: var(--cg-tinte-2);
+  line-height: 1.55;
+}
+
+.cg-lk-fuss b {
+  color: var(--cg-tinte);
+  font-weight: 600;
+}
+
+@media (max-width: 1200px) {
+  .cg-dreier {
+    grid-template-columns: 1fr;
+  }
+
+  .cg-hist-gitter {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .cg-hist-gitter {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   BEWERTUNG ALS BALKENPAARE (07.09.2026)
+
+   Vorher standen die sechs Werte als zwei getrennte Kreis-Karten im
+   Reiter "Überblick". Man musste zwischen ihnen hin- und herschauen,
+   statt den Vergleich zu sehen. Hier liegt jede Kategorie in einer
+   Zeile, A und B nebeneinander, mit einem kleinen Zeiger am besseren
+   Wert — der Vergleich ist die Zeile selbst.
+   ══════════════════════════════════════════════════════════════════ */
+.cg-werte-block {
+  background: var(--cg-grund, #fff);
+  border: 1px solid var(--cg-linie, #e3e8ef);
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 16px;
+}
+
+.cg-werte-kopf {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.cg-werte-kopf h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cg-tinte, #0f1826);
+}
+
+.cg-werte-leg {
+  margin-left: auto;
+  display: flex;
+  gap: 15px;
+  font-size: 12.5px;
+  color: var(--cg-tinte-2, #525d6d);
+  flex-wrap: wrap;
+}
+
+.cg-werte-leg span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cg-werte-leg i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.cg-werte-zeile {
+  display: grid;
+  grid-template-columns: 160px 1fr 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.cg-werte-zeile + .cg-werte-zeile {
+  border-top: 1px solid var(--cg-linie, #e3e8ef);
+}
+
+.cg-werte-name {
+  font-size: 13.5px;
+  color: var(--cg-tinte-2, #525d6d);
+}
+
+.cg-balkenpaar {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.cg-balkenpaar .cg-bahn {
+  flex: 1;
+  height: 7px;
+  background: var(--cg-senke-2, #e8ecf2);
+  border-radius: 999px;
+  overflow: hidden;
+  min-width: 40px;
+}
+
+.cg-balkenpaar .cg-fuell {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.cg-balkenpaar.cg-a .cg-fuell { background: var(--cg-a, #2563eb); }
+.cg-balkenpaar.cg-b .cg-fuell { background: var(--cg-b, #0e7490); }
+
+.cg-balkenpaar .cg-wert {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  width: 26px;
+  text-align: right;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.cg-balkenpaar.cg-a .cg-wert { color: var(--cg-a, #2563eb); }
+.cg-balkenpaar.cg-b .cg-wert { color: var(--cg-b, #0e7490); }
+
+/* Kleiner Zeiger am besseren Wert: beim Überfliegen sieht man sofort,
+   wer in welcher Zeile vorn liegt. */
+.cg-balkenpaar .cg-wert.vorn::after {
+  content: '\25B2';
+  position: absolute;
+  right: -1px;
+  top: -9px;
+  font-size: 8px;
+  color: var(--cg-gut, #0f7b55);
+}
+
+@media (max-width: 900px) {
+  .cg-werte-zeile {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .cg-werte-leg {
+    margin-left: 0;
+    width: 100%;
+  }
+}
