@@ -222,6 +222,21 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
     aktion === 'reject' ? 'So nicht unterschreiben' :
     aktion === 'negotiate' ? 'Mit Auflagen tragbar' : 'Prüfung empfohlen';
 
+  /**
+   * 08.09.2026: Die drei Kennzahlen als Anker. Der Vertragswert fehlt
+   * oft ("Nicht angegeben" / "Nicht erkannt" laut Backend-Prompt), dann
+   * tritt die Klauselzahl an seine Stelle. Fehlt auch die, bleiben zwei
+   * Kacheln, die sich die Breite teilen.
+   */
+  const wertRoh = summary?.keyTerms?.value;
+  const hatWert = Boolean(wertRoh) && wertRoh !== 'Nicht angegeben' && wertRoh !== 'Nicht erkannt';
+  const klauselZahl = summary?.quickStats?.totalClauses ?? 0;
+  const dritteKachel = hatWert
+    ? { wert: wertRoh as string, label: 'Vertragswert', lang: true }
+    : klauselZahl > 0
+      ? { wert: String(klauselZahl), label: 'Klauseln geprüft', lang: false }
+      : null;
+
   /** Je hoeher das Risiko, desto roter. Dieselben Schwellen wie bisher. */
   const risikoFarbe = (wert: number) =>
     wert > 70 ? '#dc2626' : wert > 40 ? '#b45309' : '#15803d';
@@ -250,15 +265,48 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
           )}
           <p className={styles.ssTyp}>
             {/* contractName sagt, WELCHEN Vertrag man vor sich hat.
-                Stand vorher als Untertitel im Kopf. */}
-            {contractName}
-            {summary.contractType ? ` · ${summary.contractType}` : ''}
-            {summary.contractTypeDetail ? ` · ${summary.contractTypeDetail}` : ''}
+                Die Vertragsart als Chip: hebt sie vom Dateinamen ab. */}
+            <span>{contractName}</span>
+            {summary.contractType && (
+              <span className={styles.ssTypChip}>{summary.contractType}</span>
+            )}
           </p>
         </div>
         <button onClick={onDismiss} className={styles.ssZu} aria-label="Übersicht schließen">
           <X size={16} />
         </button>
+      </div>
+
+      {/* ── Die drei Kennzahlen: der Anker, der dem Fenster fehlte ── */}
+      <div className={`${styles.ssKennzahlen} ${dritteKachel ? '' : styles.ssKennzahlenZwei}`}>
+        <div className={styles.ssKennzahl}>
+          <span
+            className={styles.ssKennzahlWert}
+            style={{ color: risikoFarbe(summary.riskScore?.overall ?? 0) }}
+          >
+            {summary.riskScore?.overall ?? '–'}
+          </span>
+          <span className={styles.ssKennzahlLabel}>Gesamtrisiko</span>
+        </div>
+        <div className={styles.ssKennzahl}>
+          <span
+            className={styles.ssKennzahlWert}
+            style={{ color: (summary.quickStats?.criticalCount ?? 0) > 0 ? '#c8281f' : '#146c43' }}
+          >
+            {summary.quickStats?.criticalCount ?? 0}
+          </span>
+          <span className={styles.ssKennzahlLabel}>
+            {(summary.quickStats?.criticalCount ?? 0) === 1 ? 'kritischer Punkt' : 'kritische Punkte'}
+          </span>
+        </div>
+        {dritteKachel && (
+          <div className={styles.ssKennzahl}>
+            <span className={`${styles.ssKennzahlWert} ${dritteKachel.lang ? styles.ssKennzahlWertLang : ''}`}>
+              {dritteKachel.wert}
+            </span>
+            <span className={styles.ssKennzahlLabel}>{dritteKachel.label}</span>
+          </div>
+        )}
       </div>
 
       <div className={styles.ssInhalt}>
@@ -498,6 +546,9 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
       </div>
 
       <div className={styles.ssFuss}>
+        <button onClick={onDismiss} className={`${styles.ssKnopf} ${styles.ssKnopfZweit}`}>
+          Später
+        </button>
         <button onClick={onDismiss} className={styles.ssKnopf}>
           Zur ausführlichen Analyse
           <ChevronRight size={16} />

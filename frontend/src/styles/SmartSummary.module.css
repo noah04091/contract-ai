@@ -1554,3 +1554,202 @@
   .ssFolge { grid-template-columns: 1fr; gap: 1px; }
   .ssRing, .ssRingSvg { width: 92px; height: 92px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SOFORT-ÜBERSICHT: Kopfzone getönt + Kennzahlen als Anker, 08.09.2026
+   ---------------------------------------------------------------------
+   Noahs Befund: sieht kahl aus. Gemessen war die Ursache nicht die
+   Anzahl der Rahmen, sondern:
+     1. KEIN GRÖSSENSPRUNG. Fast jede Schrift lag zwischen 0,7 und
+        1,1rem. Alles mittelgroß heißt: nichts ist groß.
+     2. KEIN FLÄCHENKONTRAST. Alles weiß auf weiß.
+     3. KEIN ANKER, der den Blick zuerst einfängt.
+
+   Gegenmittel, aus den Entwürfen A und B:
+     - Kopfzone in der AMPELFARBE getönt. Die Fläche ist Information,
+       nicht Zierde: man erfasst die Lage vor dem ersten Wort.
+     - Drei Kennzahlen in 2,1rem als Anker. Sie beantworten die drei
+       ersten Fragen: wie schlimm, wie viele, um wie viel Geld.
+     - Die Aussage im Kopf auf 1,42rem, damit ein echter Sprung entsteht.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Kopfzone: getönte Fläche statt weißer Fläche mit Kante ─────────── */
+.ssKopf {
+  padding: 24px 26px 22px;
+  border-bottom: 1px solid var(--ss-linie);
+  border-left: 0;
+  position: relative;
+  background: #f7f8fa;
+}
+
+/* Die Ampel färbt die ganze Zone, sehr dezent, plus eine satte Kante. */
+.ssKopfGruen { background: #f1faf4; }
+.ssKopfGelb { background: #fdf8ef; }
+.ssKopfRot { background: #fdf3f2; }
+.ssKopfGrau { background: #f7f8fa; }
+
+.ssKopf::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: #9aa1ae;
+}
+
+.ssKopfGruen::before { background: #146c43; }
+.ssKopfGelb::before { background: #c47f16; }
+.ssKopfRot::before { background: #c8281f; }
+
+/* ── Die Aussage: echter Größensprung ────────────────────────────────── */
+.ssUrteil {
+  font-size: 1.42rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.26;
+  margin: 0 0 9px;
+  color: #0f1115;
+}
+
+.ssAmpel {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.69rem;
+  letter-spacing: 0.1em;
+  margin: 0 0 13px;
+}
+
+/* Der Punkt vor dem Ampelwort: ein Signal, das ohne Farbe auskommt,
+   falls jemand Farben schlecht unterscheidet. */
+.ssAmpel::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.ssTyp {
+  font-size: 0.83rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Der Vertragstyp als Chip: hebt ihn vom Dateinamen ab. */
+.ssTypChip {
+  background: #fff;
+  border: 1px solid var(--ss-linie);
+  border-radius: 5px;
+  padding: 1px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ss-ink-2);
+  white-space: nowrap;
+}
+
+.ssZu {
+  background: rgba(0, 0, 0, 0.045);
+  border: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.ssZu:hover { background: rgba(0, 0, 0, 0.09); color: var(--ss-ink); }
+
+/* ── Die drei Kennzahlen: der Anker ──────────────────────────────────── */
+.ssKennzahlen {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-bottom: 1px solid var(--ss-linie);
+  background: #fafbfc;
+  min-width: 0;
+}
+
+/* Zwei Kacheln, wenn kein Vertragswert vorliegt. Lieber zwei volle als
+   drei mit einer Luecke. */
+.ssKennzahlenZwei { grid-template-columns: repeat(2, 1fr); }
+
+.ssKennzahl {
+  padding: 19px 16px;
+  text-align: center;
+  border-right: 1px solid var(--ss-linie);
+  min-width: 0;
+}
+
+.ssKennzahl:last-child { border-right: 0; }
+
+.ssKennzahlWert {
+  display: block;
+  font-size: 2.1rem;
+  font-weight: 730;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ss-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Ein Geldbetrag ist laenger als eine Zahl und darf kleiner sein. */
+.ssKennzahlWertLang { font-size: 1.55rem; letter-spacing: -0.03em; }
+
+.ssKennzahlLabel {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--ss-ink-3);
+  margin-top: 7px;
+  letter-spacing: 0.015em;
+}
+
+/* ── Inhalt: etwas mehr Luft, passend zum groesseren Kopf ────────────── */
+.ssInhalt { padding: 24px 26px 26px; gap: 26px; }
+
+.ssEssenz {
+  font-size: 1.01rem;
+  line-height: 1.6;
+  color: var(--ss-ink-2);
+  border-left-width: 0;
+  padding-left: 0;
+}
+
+.ssEssenz strong { color: var(--ss-ink); font-weight: 650; }
+
+/* ── Fuss: abgesetzt, damit die Knoepfe Halt haben ───────────────────── */
+.ssFuss {
+  background: #fbfcfd;
+  padding: 15px 26px;
+}
+
+.ssKnopf {
+  background: #0f1115;
+  border-radius: 9px;
+  padding: 11px 20px;
+  font-size: 0.87rem;
+  font-weight: 630;
+}
+
+.ssKnopf:hover { background: #272c36; }
+
+.ssKnopfZweit {
+  background: transparent;
+  color: var(--ss-ink-2);
+  border: 1px solid var(--ss-linie);
+}
+
+.ssKnopfZweit:hover { background: #fff; color: var(--ss-ink); }
+
+@media (max-width: 620px) {
+  .ssKopf { padding: 20px 18px 18px; }
+  .ssUrteil { font-size: 1.22rem; }
+  .ssKennzahl { padding: 15px 10px; }
+  .ssKennzahlWert { font-size: 1.7rem; }
+  .ssKennzahlWertLang { font-size: 1.2rem; }
+  .ssKennzahlLabel { font-size: 0.68rem; }
+  .ssInhalt { padding: 18px 18px 20px; }
+  .ssFuss { padding: 13px 18px; }
+}
