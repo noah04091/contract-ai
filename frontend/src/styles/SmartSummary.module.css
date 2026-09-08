@@ -1753,3 +1753,80 @@
   .ssInhalt { padding: 18px 18px 20px; }
   .ssFuss { padding: 13px 18px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ZWEI KORREKTUREN, 08.09.2026
+   ---------------------------------------------------------------------
+   1. Die dritte Kennzahl-Kachel war breiter als die anderen beiden.
+      Ursache: grid-template-columns: repeat(3, 1fr). 1fr bedeutet
+      minmax(AUTO, 1fr) — ein langer Inhalt wie "$23.80 USD" blaeht die
+      Spalte auf. Mit minmax(0, 1fr) teilen sich alle drei exakt gleich.
+      ⚠️ Derselbe Fehlertyp wie die min-width:0-Falle: Grid-Spuren
+      wachsen von sich aus mit dem Inhalt, wenn man es nicht verbietet.
+
+   2. "Weitere Beobachtungen" wirkte leer. Drei Ueberschriften mit je
+      ein bis zwei kurzen Zeilen, untereinander, ohne Flaeche. Bei einem
+      unauffaelligen Dokument stehen dort Saetze wie "Keine negativen
+      Punkte" — dann ist der Abschnitt fast leer und sieht nach Fehler
+      aus.
+
+      Jetzt drei Karten NEBENEINANDER mit getoenter Kopfzeile in ihrer
+      Farbe. Auch mit einer einzigen Zeile fuellt eine Karte ihren Platz,
+      und die drei Farben geben dem Abschnitt eine Gestalt.
+      UNIVERSALITAET: Passt fuer den Vertrag mit acht Beobachtungen
+      ebenso wie fuer die Rechnung mit dreien.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Gleich breite Kacheln ────────────────────────────────────────── */
+.ssKennzahlen { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.ssKennzahlenZwei { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Lange Werte umbrechen statt die Spalte zu sprengen. */
+.ssKennzahlWert { overflow-wrap: anywhere; hyphens: auto; }
+
+/* ── 2. Beobachtungen als Karten ─────────────────────────────────────── */
+.ssBeobachtungen {
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 10px;
+  align-items: stretch;
+}
+
+.ssGruppe {
+  border: 1px solid var(--ss-linie);
+  border-radius: 11px;
+  overflow: hidden;
+  background: var(--ss-karte);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Die Kopfzeile traegt die Farbe, der Rest bleibt ruhig. */
+.ssGruppeTitel {
+  margin: 0;
+  padding: 9px 13px;
+  font-size: 0.77rem;
+  font-weight: 660;
+  border-bottom: 1px solid var(--ss-linie);
+}
+
+.ssGruppeRot { background: var(--ss-rot-weich); color: #a8231b; }
+.ssGruppeGelb { background: var(--ss-gelb-weich); color: #8a5108; }
+.ssGruppeGruen { background: var(--ss-gruen-weich); color: #12603c; }
+
+.ssPunkt { width: 7px; height: 7px; }
+
+.ssListe {
+  margin: 0;
+  padding: 11px 13px 12px 27px;
+  font-size: 0.83rem;
+  line-height: 1.55;
+  flex: 1;
+}
+
+.ssListe li { margin-bottom: 5px; }
+.ssListe li:last-child { margin-bottom: 0; }
+
+/* ── Auf schmalen Bildschirmen untereinander ─────────────────────────── */
+@media (max-width: 520px) {
+  .ssBeobachtungen { grid-template-columns: 1fr; }
+}

@@ -509,7 +509,7 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
             <div className={styles.ssBeobachtungen}>
               {(summary.highlights?.negative?.length ?? 0) > 0 && (
                 <div className={styles.ssGruppe}>
-                  <p className={styles.ssGruppeTitel}>
+                  <p className={`${styles.ssGruppeTitel} ${styles.ssGruppeRot}`}>
                     <span className={`${styles.ssPunkt} ${styles.ssPunktRot}`} />
                     Spricht dagegen
                   </p>
@@ -520,7 +520,7 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
               )}
               {(summary.highlights?.unusual?.length ?? 0) > 0 && (
                 <div className={styles.ssGruppe}>
-                  <p className={styles.ssGruppeTitel}>
+                  <p className={`${styles.ssGruppeTitel} ${styles.ssGruppeGelb}`}>
                     <span className={`${styles.ssPunkt} ${styles.ssPunktGelb}`} />
                     Ungewöhnlich
                   </p>
@@ -531,7 +531,7 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
               )}
               {(summary.highlights?.positive?.length ?? 0) > 0 && (
                 <div className={styles.ssGruppe}>
-                  <p className={styles.ssGruppeTitel}>
+                  <p className={`${styles.ssGruppeTitel} ${styles.ssGruppeGruen}`}>
                     <span className={`${styles.ssPunkt} ${styles.ssPunktGruen}`} />
                     Spricht dafür
                   </p>
