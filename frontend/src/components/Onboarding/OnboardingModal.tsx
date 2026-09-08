@@ -454,9 +454,13 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               {/* Ehrlichkeits-Standard (28.06.2026): Nutzerzahl überall "über 500",
                   keine erfundenen Mengen ("50.000+ Verträge"/"98% Zufriedenheit"
                   waren frei erfunden — UWG-/Vertrauensrisiko). */}
+              {/* QA-Punkt 4 (BUG-031, 08.09.2026): "3 Gratis-Analysen" nur im Free-Plan —
+                  ein Enterprise-Konto mit unbegrenzten Analysen bekam denselben Werbetext. */}
               {[
                 { value: '500+', label: 'Nutzer' },
-                { value: '3', label: 'Gratis-Analysen' },
+                isFreePlan
+                  ? { value: '3', label: 'Gratis-Analysen' }
+                  : { value: (user?.subscriptionPlan || '').charAt(0).toUpperCase() + (user?.subscriptionPlan || '').slice(1), label: 'Plan aktiv' },
                 { value: 'DSGVO', label: 'konform' }
               ].map((stat, index) => (
                 <motion.div
@@ -585,7 +589,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
             >
-              {uploadState === 'success' ? 'Upload erfolgreich!' : 'Lade deinen ersten Vertrag'}
+              {/* QA-Punkt 4 (BUG-031): Bestandskonten (bezahlter Plan) sind praktisch nie beim
+                  "ersten" Vertrag — nach einem Tour-Reset wirkte der Text absurd (234 Verträge). */}
+              {uploadState === 'success' ? 'Upload erfolgreich!' : isFreePlan ? 'Lade deinen ersten Vertrag' : 'Lade einen Vertrag hoch'}
             </motion.h2>
 
             <motion.p

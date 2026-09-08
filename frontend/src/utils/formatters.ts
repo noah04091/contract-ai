@@ -6,15 +6,23 @@
 const PLACEHOLDER = "–"; // Gedankenstrich
 
 /** Euro-Betrag im bestehenden Format "12.34€" (Punkt, kein Leerzeichen). Kaputt → "–". */
+// QA-Punkt 4 (BUG-035, 08.09.2026): vorher englisches Format "489.00€" — im selben
+// Detaildialog stand daneben deutsches "5.868,00 EUR". Jetzt durchgängig de-DE
+// ("489,00 €" / "5.868,00"). EINE Funktion, 38 Verwendungen, ein Format.
 export function formatEuro(amount: number | null | undefined, decimals = 2): string {
   if (amount === null || amount === undefined || !Number.isFinite(amount)) return PLACEHOLDER;
-  return amount.toFixed(decimals) + "€";
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency", currency: "EUR",
+    minimumFractionDigits: decimals, maximumFractionDigits: decimals
+  }).format(amount);
 }
 
-/** Nur die Zahl im Format "12.34" (für Fälle, wo das € separat im JSX steht). Kaputt → "–". */
+/** Nur die Zahl im Format "5.868,00" (für Fälle, wo das € separat im JSX steht). Kaputt → "–". */
 export function formatAmount(amount: number | null | undefined, decimals = 2): string {
   if (amount === null || amount === undefined || !Number.isFinite(amount)) return PLACEHOLDER;
-  return amount.toFixed(decimals);
+  return new Intl.NumberFormat("de-DE", {
+    minimumFractionDigits: decimals, maximumFractionDigits: decimals
+  }).format(amount);
 }
 
 /** Datum im Format toLocaleDateString('de-DE'). Leer/ungültig → "–". */

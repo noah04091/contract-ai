@@ -200,7 +200,16 @@
   background: #f9fafb;
 }
 
+/* QA-Punkt 4 (BUG-036, 08.09.2026): Auswahl-Zustand ist NEUTRAL — vorher war der aktive
+   Knopf immer grün, auch bei "Nicht bezahlt" (Erfolgsfarbe für einen Warnzustand).
+   Grün gibt es nur noch, wenn wirklich "Bezahlt" gewählt ist (.activePaid). */
 .toggleBtn.active {
+  background: #475569;
+  border-color: #475569;
+  color: white;
+}
+
+.toggleBtn.activePaid {
   background: #10b981;
   border-color: #10b981;
   color: white;

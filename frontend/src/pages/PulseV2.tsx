@@ -761,8 +761,10 @@ const ActionCenter: React.FC<{
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706', flexShrink: 0 }} />
                       <span style={{ flex: 1, color: '#0f172a', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {action.title}
+                        {/* {' '} davor: ohne Textknoten klebte das Badge im kopierten/vorgelesenen
+                            Text am Titel ("…sicherstellen§ GESETZLICH", QA BUG-043) */}
                         {isLegallyMotivated(action) && (
-                          <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: '#3730a3', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 5, padding: '1px 6px', verticalAlign: '1px' }}>§ GESETZLICH</span>
+                          <>{' '}<span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: '#3730a3', background: '#eef2ff', border: '1px solid #c7d2fe', borderRadius: 5, padding: '1px 6px', verticalAlign: '1px' }}>§ GESETZLICH</span></>
                         )}
                       </span>
                       {firstContract && !isExpanded && <span style={{ color: '#94a3b8', fontSize: 12, flexShrink: 0, maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{firstContract}</span>}

@@ -280,7 +280,10 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
         </div>
       </div>
 
-      {contract.amount && contract.amount > 0 && (
+      {/* QA-Punkt 4 (BUG-037, 08.09.2026): an baseAmount binden, nicht an contract.amount —
+          die Kosten oben rechnen mit paymentAmount||amount, der Tipp prüfte nur amount.
+          Ergebnis war "489 € monatlich" MIT dem Hinweis "Füge einen Preis hinzu" darunter. */}
+      {baseAmount > 0 && (
         <button
           className={styles.compareBtn}
           onClick={handleCompare}
@@ -291,7 +294,7 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
         </button>
       )}
 
-      {(!contract.amount || contract.amount === 0) && (
+      {!(baseAmount > 0) && (
         <p className={styles.noCostHint}>
           💡 Tipp: Füge einen Preis hinzu, um Kosten zu tracken
         </p>

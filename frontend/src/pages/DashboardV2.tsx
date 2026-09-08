@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import styles from "../styles/DashboardV2.module.css";
 import { Helmet } from "react-helmet-async";
@@ -156,55 +156,11 @@ const getGreeting = (): string => {
 // ANIMATED NUMBER HOOK
 // ============================================
 
-const useCountUp = (end: number, duration: number = 1000, startOnMount: boolean = true) => {
-  const [count, setCount] = useState(0);
-  const countRef = useRef(0);
-  const startTimeRef = useRef<number | null>(null);
-  const rafRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    if (!startOnMount) return;
-
-    const animate = (timestamp: number) => {
-      if (!startTimeRef.current) startTimeRef.current = timestamp;
-      const progress = timestamp - startTimeRef.current;
-      const percentage = Math.min(progress / duration, 1);
-
-      // Easing function for smooth animation
-      const easeOutQuart = 1 - Math.pow(1 - percentage, 4);
-      const currentCount = Math.floor(easeOutQuart * end);
-
-      if (currentCount !== countRef.current) {
-        countRef.current = currentCount;
-        setCount(currentCount);
-      }
-
-      if (percentage < 1) {
-        rafRef.current = requestAnimationFrame(animate);
-      } else {
-        setCount(end);
-      }
-    };
-
-    // Small delay before starting animation
-    const timeout = setTimeout(() => {
-      rafRef.current = requestAnimationFrame(animate);
-    }, 100);
-
-    return () => {
-      clearTimeout(timeout);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [end, duration, startOnMount]);
-
-  return count;
-};
-
-// Animated Number Component
-const AnimatedNumber = ({ value, duration = 800 }: { value: number; duration?: number }) => {
-  const count = useCountUp(value, duration);
-  return <>{count}</>;
-};
+// QA-Punkt 4 (BUG-034, 08.09.2026): Zählanimation entfernt. Die Ease-Out-Animation lief
+// bei JEDER eintreffenden Datenwelle (Summary → Korrektur) neu von 0 hoch und zeigte so
+// 3-4 Sekunden sichtbar falsche KPIs, während die Überschrift schon die Endzahl nannte.
+// Auf einer Vertragsplattform sind sichtbar falsche Zahlen teurer als der Effekt wert ist.
+const AnimatedNumber = ({ value }: { value: number }) => <>{value}</>;
 
 // ============================================
 // MAIN DASHBOARD COMPONENT
@@ -663,7 +619,7 @@ export default function DashboardV2() {
             <p className={styles.subline}>
               {stats.total === 0
                 ? 'Willkommen! Lade deinen ersten Vertrag hoch.'
-                : `${stats.total} Vertrag${stats.total !== 1 ? 'e' : ''} in deinem Portfolio${stats.expiringSoon > 0 ? ` • ${stats.expiringSoon} läuft bald ab` : ''}`
+                : `${stats.total} ${stats.total === 1 ? 'Vertrag' : 'Verträge'} in deinem Portfolio${stats.expiringSoon > 0 ? ` • ${stats.expiringSoon} ${stats.expiringSoon === 1 ? 'läuft' : 'laufen'} bald ab` : ''}`
               }
             </p>
           </div>

@@ -71,7 +71,7 @@ export default function FristHinweiseSection({ fristHinweise }: FristHinweiseSec
         <h3 className={styles.title}>Wichtige Klauseln</h3>
         <span className={styles.badge}>{fristHinweise.length}</span>
       </div>
-      <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 14px' }}>Keine Termine — Klauseln, auf die du achten solltest.</p>
+      <p style={{ fontSize: '12px', color: '#94a3b8', margin: '0 0 14px' }}>Klauseln ohne konkreten Termin, auf die du achten solltest.</p>
 
       <div className={styles.list}>
         {visible.map((fh, idx) => (

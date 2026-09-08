@@ -286,7 +286,7 @@ export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTra
             Nicht bezahlt
           </button>
           <button
-            className={`${styles.toggleBtn} ${isPaid ? styles.active : ''}`}
+            className={`${styles.toggleBtn} ${isPaid ? `${styles.active} ${styles.activePaid}` : ''}`}
             onClick={() => handleToggle(true)}
             disabled={isSaving}
           >
