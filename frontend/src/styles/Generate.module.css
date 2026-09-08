@@ -27,9 +27,12 @@
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
   padding: 0.7rem 0;
   position: sticky;
-  /* Die Navbar klebt selbst bei top:0 mit z-index 1000. Mit top:0 lag
-     dieser Kopf dahinter und das sticky war wirkungslos. */
-  top: var(--gk-nav, 53px);
+  /* top:0 ist hier richtig. Auf /generate greift .appNavbar aus
+     Navbar.module.css mit position:static, die Navbar scrollt also weg.
+     Ein Versatz wuerde eine Luecke lassen, durch die der Inhalt laeuft.
+     (Auf oeffentlichen Seiten ist dieselbe Navbar sticky mit z-index
+     1000 — nicht von dort auf den eingeloggten Bereich schliessen.) */
+  top: 0;
   z-index: 10;
   transition: padding .22s ease, box-shadow .22s ease;
   margin-bottom: 1rem;
@@ -7541,17 +7544,20 @@
 /* ═══════════════════════════════════════════════════════════════════════
    KOPFBEREICH GENERATE, 08.09.2026
    ---------------------------------------------------------------------
-   🔴 EIN ECHTER FEHLER, live gemessen, nicht vermutet:
-   Die Navbar ist sticky mit top:0 und z-index:1000. Der Generate-Kopf
-   war ebenfalls sticky mit top:0, aber mit z-index:10. Beide klebten an
-   derselben Kante, der Kopf lag also HINTER der Navbar. Das sticky war
-   damit wirkungslos bis stoerend.
+   ⚠️ ZUR NAVBAR, damit der naechste nicht dieselbe Falle baut:
+   Auf oeffentlichen Seiten ist die Navbar sticky (top:0, z-index 1000)
+   und schrumpft beim Scrollen von 65 auf 53px. IM EINGELOGGTEN BEREICH
+   NICHT: /generate steht in appPagePrefixes (Navbar.tsx), dort greift
+   .appNavbar mit position:static und .navbarScrolled ist per
+   "isScrolled && !isAppPage" ausgeschlossen. Die Navbar scrollt hier
+   also weg und schrumpft nie.
+   Folge: top MUSS 0 sein. Ein Versatz auf die Navbarhoehe liesse eine
+   Luecke, durch die der Inhalt scrollt. Ich hatte zuerst auf der
+   oeffentlichen Startseite gemessen und daraus geschlossen — falsch.
 
-   Gemessene Navbarhoehen nach dem Scrollen (contract-ai.de, live):
-     1280px → 53px | 768px → 57px | 420px → 57px
-   Die Navbar schrumpft beim Scrollen also selbst schon. Genau dieses
-   Verhalten bekommt der Kopf jetzt auch, damit beide dieselbe Sprache
-   sprechen.
+   Weil die Navbar wegscrollt, ist dieser Kopf ab dem ersten Scrollen
+   der einzige feste Anker der Seite. Deshalb schrumpft er, statt zu
+   verschwinden: die Schrittanzeige bleibt die Orientierung.
 
    Der Ruhezustand ist ausserdem kompakter: der Kopf nahm mit Titel,
    Unterzeile und 48px-Kreisen sehr viel Hoehe weg.
@@ -7559,14 +7565,6 @@
    der hier geaenderten Klassen (geprueft), deshalb sind Aenderungen an
    den bestehenden Namen hier gefahrlos.
    ═══════════════════════════════════════════════════════════════════════ */
-
-.contractGenerator {
-  --gk-nav: 53px;
-}
-
-@media (max-width: 900px) {
-  .contractGenerator { --gk-nav: 57px; }
-}
 
 /* Der kompakte Zustand wird per IntersectionObserver gesetzt, sobald der
    Seitenanfang aus dem Bild gescrollt ist. */
