@@ -277,10 +277,12 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
                 const offen = expandedRisk === index;
                 const marke = risk.severity === 'critical' ? styles.ssMarkeRot
                   : risk.severity === 'warning' ? styles.ssMarkeGelb : styles.ssMarkeBlau;
+                const kante = risk.severity === 'critical' ? styles.ssRisikoRot
+                  : risk.severity === 'warning' ? styles.ssRisikoGelb : styles.ssRisikoBlau;
                 const markeWort = risk.severity === 'critical' ? 'Kritisch'
                   : risk.severity === 'warning' ? 'Prüfen' : 'Hinweis';
                 return (
-                  <div key={index} className={styles.ssRisiko}>
+                  <div key={index} className={`${styles.ssRisiko} ${kante}`}>
                     <button
                       className={styles.ssRisikoKopf}
                       onClick={() => setExpandedRisk(offen ? null : index)}
@@ -373,7 +375,7 @@ const SmartSummary: React.FC<SmartSummaryProps> = ({
             <div>
               <div className={styles.ssRing}>
                 <svg viewBox="0 0 100 100" className={styles.ssRingSvg}>
-                  <circle cx="50" cy="50" r="45" fill="none" stroke="#eef0f4" strokeWidth="8" />
+                  <circle cx="50" cy="50" r="45" fill="none" className={styles.ssRingSpur} strokeWidth="8" />
                   <circle
                     cx="50" cy="50" r="45" fill="none"
                     stroke={risikoFarbe(summary.riskScore?.overall ?? 0)}

@@ -1310,3 +1310,247 @@
 @media (prefers-reduced-motion: reduce) {
   .ssRisiko, .ssRisikoPfeil, .ssKnopf, .ssZu { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SOFORT-ÜBERSICHT: POLITUR, 08.09.2026
+   ---------------------------------------------------------------------
+   Noah: funktioniert, sieht aber nicht modern aus. Am Bild abgelesen:
+
+   1. SIEBEN Großbuchstaben-Zeilen auf engem Raum (WAS DU BEACHTEN
+      SOLLTEST, WAS DAS FÜR DICH BEDEUTET, SCHLIMMSTENFALLS, EMPFEHLUNG,
+      SO SPRICHST DU ES AN, NÄCHSTE SCHRITTE, WO DAS RISIKO LIEGT).
+      Versalien sind laut; sieben davon übertönen einander.
+   2. RAHMEN IN RAHMEN: die Risikokarte hat einen, die Folgen darin
+      wieder je einen. Drei Rahmenebenen ohne Bedeutungsunterschied.
+   3. ALLES IM SELBEN GRAU. Nichts führt das Auge.
+   4. Der Ring ist klein, und bei niedrigen Werten (5) sieht der Balken
+      wie ein abgebrochener Stummel aus.
+
+   Gegenmittel: Hierarchie über Größe und Gewicht statt über Rahmen,
+   Versalien nur noch für die drei Hauptzonen, Farbe sparsam an der
+   Kante statt flächig.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Mehr Luft zwischen den Zonen ────────────────────────────────────── */
+.ssInhalt {
+  padding: 20px 22px 22px;
+  gap: 26px;
+}
+
+/* ── Zonentitel: die einzigen Versalien, dafür klar gesetzt ─────────── */
+.ssZonenTitel {
+  font-size: 0.7rem;
+  letter-spacing: 0.13em;
+  color: #8a91a0;
+  margin: 0 0 11px;
+}
+
+/* ── Essenz: trägt jetzt Gewicht, nicht nur Farbe ───────────────────── */
+.ssEssenz {
+  background: transparent;
+  border: 0;
+  border-left: 3px solid var(--ss-blau);
+  border-radius: 0;
+  padding: 2px 0 2px 15px;
+  font-size: 1rem;
+  color: var(--ss-ink);
+  line-height: 1.55;
+  font-weight: 480;
+}
+
+/* ── Risiken: EIN Rahmen, farbige Kante nach Schwere ─────────────────── */
+.ssRisiko {
+  border: 1px solid var(--ss-linie);
+  border-left: 3px solid var(--ss-linie);
+  border-radius: 10px;
+}
+
+.ssRisikoRot { border-left-color: var(--ss-rot); }
+.ssRisikoGelb { border-left-color: var(--ss-gelb); }
+.ssRisikoBlau { border-left-color: var(--ss-blau); }
+
+.ssRisiko:hover { border-color: var(--ss-linie); }
+.ssRisikoRot:hover { border-left-color: var(--ss-rot); }
+.ssRisikoGelb:hover { border-left-color: var(--ss-gelb); }
+.ssRisikoBlau:hover { border-left-color: var(--ss-blau); }
+
+.ssRisikoKopf { padding: 13px 15px; gap: 12px; }
+
+/* Die Marke wird zur kleinen Schrift statt zur Pille: eine Farbfläche
+   weniger, die Kante links sagt dasselbe. */
+.ssRisikoMarke {
+  background: transparent !important;
+  padding: 0;
+  font-size: 0.64rem;
+  letter-spacing: 0.09em;
+}
+
+.ssRisikoTitel { font-size: 0.9rem; font-weight: 640; line-height: 1.35; }
+
+/* ── Innerhalb einer Risikokarte: keine Rahmen mehr ──────────────────── */
+.ssRisikoInhalt {
+  padding: 2px 15px 15px;
+  gap: 14px;
+}
+
+/* Kleinschreibung statt Versalien: innerhalb der Karte sind das
+   Zwischenüberschriften, keine Zonen. */
+.ssBlockTitel {
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ss-ink);
+  margin-bottom: 4px;
+}
+
+.ssBlockText { font-size: 0.85rem; line-height: 1.55; }
+
+/* Die beiden Folgen: keine Kästen, nur eine feine Trennlinie */
+.ssFolgen {
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--ss-linie-weich);
+}
+
+.ssFolge {
+  border: 0;
+  border-bottom: 1px solid var(--ss-linie-weich);
+  border-radius: 0;
+  padding: 8px 0;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.ssFolge:last-child { border-bottom: 0; }
+
+.ssFolgeLabel {
+  margin-bottom: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 550;
+  color: var(--ss-ink-3);
+}
+
+.ssFolgeWert { font-size: 0.85rem; font-weight: 500; }
+
+.ssZitat {
+  background: transparent;
+  border-left: 2px solid var(--ss-blau-rand);
+  border-radius: 0;
+  padding: 3px 0 3px 13px;
+  font-size: 0.85rem;
+}
+
+/* ── Nächste Schritte: ohne Rahmen, die Ziffer trägt ─────────────────── */
+.ssSchritt {
+  border: 0;
+  border-radius: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ss-linie-weich);
+  gap: 13px;
+}
+
+.ssSchritte { gap: 0; }
+.ssSchritt:last-child { border-bottom: 0; }
+
+.ssSchrittNr {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ss-blau);
+  color: #fff;
+  font-size: 0.72rem;
+  margin-top: 0;
+}
+
+.ssSchrittTun { font-size: 0.89rem; }
+
+/* ── Risikolage: der Ring bekommt Gewicht ────────────────────────────── */
+.ssRisikoLage { gap: 26px; }
+
+.ssRing { width: 104px; height: 104px; }
+.ssRingSvg { width: 104px; height: 104px; }
+
+.ssRingWert { font-size: 1.7rem; }
+
+/* Bei kleinen Werten war vom Ring fast nichts zu sehen. Die Spur traegt
+   den Kreis, der Bogen zeigt den Anteil. */
+.ssRingSpur { stroke: #e8ecf2; }
+
+.ssRingLabel { font-size: 0.7rem; margin-top: 7px; }
+
+.ssBalkenZeile { grid-template-columns: 84px 1fr 32px; font-size: 0.82rem; }
+
+/* Etwas dicker: bei kleinen Werten sah der Balken wie abgebrochen aus.
+   Die Spur bleibt sichtbar, der Wert liegt als Punkt darauf. */
+.ssBalkenSpur { height: 6px; border-radius: 4px; }
+.ssBalkenFuell { border-radius: 4px; min-width: 6px; }
+
+.ssBalkenWert { font-size: 0.82rem; }
+
+.ssZahlen { gap: 22px; margin-top: 16px; padding-top: 14px; }
+.ssZahlWert { font-size: 1.1rem; }
+
+/* ── Eckdaten: ohne Kästen, als Zeilen ───────────────────────────────── */
+.ssEckdaten {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.ssEck {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--ss-linie-weich);
+  padding: 9px 0;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.ssEck:last-child { border-bottom: 0; }
+
+.ssEckLabel {
+  margin-bottom: 0;
+  font-size: 0.79rem;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 500;
+  color: var(--ss-ink-3);
+}
+
+.ssEckWert { font-size: 0.89rem; font-weight: 600; }
+
+/* ── Beobachtungen ───────────────────────────────────────────────────── */
+.ssGruppeTitel { font-size: 0.82rem; font-weight: 640; margin-bottom: 6px; }
+.ssListe { font-size: 0.85rem; line-height: 1.6; }
+
+/* ── Kopf: etwas mehr Luft ───────────────────────────────────────────── */
+.ssKopf { padding: 19px 22px; }
+.ssUrteil { font-size: 1.08rem; font-weight: 680; line-height: 1.35; }
+.ssTyp { font-size: 0.81rem; }
+
+/* ── Fuß ─────────────────────────────────────────────────────────────── */
+.ssFuss { padding: 15px 22px; }
+
+/* ── Ein dezenter Bildlauf statt des Systembalkens ───────────────────── */
+.ssFenster { scrollbar-width: thin; scrollbar-color: #cfd5e0 transparent; }
+.ssFenster::-webkit-scrollbar { width: 9px; }
+.ssFenster::-webkit-scrollbar-track { background: transparent; }
+.ssFenster::-webkit-scrollbar-thumb {
+  background: #cfd5e0;
+  border-radius: 999px;
+  border: 3px solid #fff;
+}
+.ssFenster::-webkit-scrollbar-thumb:hover { background: #b6bdcb; }
+
+@media (max-width: 620px) {
+  .ssEck { grid-template-columns: 1fr; gap: 1px; }
+  .ssFolge { grid-template-columns: 1fr; gap: 1px; }
+  .ssRing, .ssRingSvg { width: 92px; height: 92px; }
+}
