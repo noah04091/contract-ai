@@ -25,10 +25,13 @@
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
-  padding: 1.25rem 0;
+  padding: 0.7rem 0;
   position: sticky;
-  top: 0;
+  /* Die Navbar klebt selbst bei top:0 mit z-index 1000. Mit top:0 lag
+     dieser Kopf dahinter und das sticky war wirkungslos. */
+  top: var(--gk-nav, 53px);
   z-index: 10;
+  transition: padding .22s ease, box-shadow .22s ease;
   margin-bottom: 1rem;
 }
 
@@ -72,7 +75,8 @@
   justify-content: center;
   align-items: center;
   gap: 0;
-  padding: 1.5rem 0;
+  padding: 0.85rem 0;
+  transition: padding .22s ease;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -86,14 +90,14 @@
 }
 
 .stepCircle {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 16px;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   position: relative;
   z-index: 2;
@@ -148,7 +152,8 @@
   background: #E5E7EB;
   position: relative;
   margin: 0 0.5rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.75rem;
+  transition: margin-bottom .22s ease;
 }
 
 .stepLineFill {
@@ -7531,4 +7536,67 @@
 @media (prefers-reduced-motion: reduce) {
   .gkKarte, .gkSymbol, .gkPfeil { transition: none; }
   .gkKarte:hover { transform: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   KOPFBEREICH GENERATE, 08.09.2026
+   ---------------------------------------------------------------------
+   🔴 EIN ECHTER FEHLER, live gemessen, nicht vermutet:
+   Die Navbar ist sticky mit top:0 und z-index:1000. Der Generate-Kopf
+   war ebenfalls sticky mit top:0, aber mit z-index:10. Beide klebten an
+   derselben Kante, der Kopf lag also HINTER der Navbar. Das sticky war
+   damit wirkungslos bis stoerend.
+
+   Gemessene Navbarhoehen nach dem Scrollen (contract-ai.de, live):
+     1280px → 53px | 768px → 57px | 420px → 57px
+   Die Navbar schrumpft beim Scrollen also selbst schon. Genau dieses
+   Verhalten bekommt der Kopf jetzt auch, damit beide dieselbe Sprache
+   sprechen.
+
+   Der Ruhezustand ist ausserdem kompakter: der Kopf nahm mit Titel,
+   Unterzeile und 48px-Kreisen sehr viel Hoehe weg.
+   ⚠️ Weder OptimizerFinalize noch EnhancedTemplateLibrary nutzen eine
+   der hier geaenderten Klassen (geprueft), deshalb sind Aenderungen an
+   den bestehenden Namen hier gefahrlos.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.contractGenerator {
+  --gk-nav: 53px;
+}
+
+@media (max-width: 900px) {
+  .contractGenerator { --gk-nav: 57px; }
+}
+
+/* Der kompakte Zustand wird per IntersectionObserver gesetzt, sobald der
+   Seitenanfang aus dem Bild gescrollt ist. */
+.kopfKompakt {
+  padding: 0.3rem 0 !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, .05), 0 4px 14px -8px rgba(16, 30, 60, .16);
+}
+
+.kopfKompakt .progressSteps { padding: 0.4rem 0; }
+
+.kopfKompakt .stepCircle {
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
+}
+
+.kopfKompakt .stepLabel { font-size: 11.5px; }
+
+.kopfKompakt .stepLine { margin-bottom: 1.35rem; }
+
+.kopfKompakt .stepCircle svg { width: 13px; height: 13px; }
+
+/* Die Marke sitzt vor dem Kopf und meldet, wann er kleben soll.
+   Unsichtbar und ohne eigene Hoehe. */
+.kopfMarke {
+  height: 1px;
+  margin-bottom: -1px;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kopfKompakt, .kopfKompakt .stepCircle, .kopfKompakt .stepLabel { transition: none; }
 }
