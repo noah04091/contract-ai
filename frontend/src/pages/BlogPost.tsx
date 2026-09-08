@@ -280,7 +280,11 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
         )}
       </Helmet>
 
-      <div className={styles.blogPost} ref={articleRef}>
+      <div
+        className={styles.blogPost}
+        ref={articleRef}
+        style={{ '--kat': getCategoryColor(currentArticle.category).color } as React.CSSProperties}
+      >
         {/* Reading Progress Bar */}
         <div className={styles.progressBar}>
           <div

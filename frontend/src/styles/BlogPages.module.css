@@ -559,3 +559,160 @@
   .articleImg, .featuredImg, .featuredCta svg, .filterButton, .ctaButton, .newsletterButton { transition: none; }
   .articleCard:hover .articleImg, .featuredArticle:hover .featuredImg { transform: none; }
 }
+
+/* ============================================================
+   MEHR LEBEN — Farbe, Tiefe, Bewegung
+
+   Leitgedanke: Die Farbe kommt aus dem INHALT, nicht aus der Deko. Jede
+   Karte kennt jetzt ihre Kategoriefarbe (CSS-Variable --kat aus Blog.tsx)
+   und traegt sie als feinen Akzent. Damit bekommt die Seite Farbe, die
+   etwas bedeutet, statt bunter Flaechen ohne Aussage.
+   ============================================================ */
+
+/* --- 1. Mitwandernder Lichtschein hinter allem ------------------------
+   Fixiert (also nur fenstergross, kein Repaint ueber 7000px Seitenhoehe),
+   bewegt allein per transform auf der Scroll-Zeitachse. */
+.blog::before {
+  content: "";
+  position: fixed;
+  inset: -25vh -15vw;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(50vw 56vh at 14% 16%, rgba(37, 99, 235, 0.18), transparent 66%),
+    radial-gradient(46vw 50vh at 86% 70%, rgba(59, 130, 246, 0.16), transparent 64%),
+    radial-gradient(34vw 38vh at 60% 6%, rgba(96, 165, 250, 0.10), transparent 60%);
+}
+@supports (animation-timeline: scroll()) {
+  .blog::before {
+    animation: blogLichtWandert linear both;
+    animation-timeline: scroll(root);
+    will-change: transform;
+  }
+}
+@keyframes blogLichtWandert {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-5vw, 13vh, 0) scale(1.13); }
+}
+
+/* --- 2. Die Kategoriefarbe traegt die Karte --------------------------- */
+.articleCard,
+.featuredArticle {
+  position: relative;
+  /* Rueckfall, falls eine Karte keine Kategorie mitbekommt */
+  --kat: var(--blau);
+}
+/* Ein feiner Faden oben in der Kategoriefarbe. Im Ruhezustand angedeutet,
+   beim Ueberfahren laeuft er ueber die volle Breite durch. */
+.articleCard::before,
+.featuredArticle::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0;
+  height: 3px;
+  width: 34%;
+  background: var(--kat);
+  border-radius: 3px 0 0 0;
+  opacity: .55;
+  transition: width .42s var(--weich), opacity .3s var(--weich);
+  z-index: 2;
+}
+.articleCard:hover::before,
+.featuredArticle:hover::before { width: 100%; opacity: 1; }
+
+.articleCard:hover,
+.featuredArticle:hover {
+  border-color: color-mix(in srgb, var(--kat) 34%, transparent);
+  box-shadow:
+    0 26px 54px -30px color-mix(in srgb, var(--kat) 45%, transparent),
+    0 2px 6px rgba(20, 40, 79, 0.05);
+}
+/* Ohne color-mix (aeltere Browser) bleibt der bisherige neutrale Schatten. */
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .articleCard:hover, .featuredArticle:hover {
+    border-color: rgba(37, 99, 235, 0.32);
+    box-shadow: 0 22px 48px -30px rgba(20, 40, 79, 0.32);
+  }
+}
+
+/* Karte hebt sich beim Ueberfahren leicht an. Nur 3px: genug, um zu
+   antworten, zu wenig, um beim Lesen zu stoeren. */
+.articleCard, .featuredArticle {
+  transition: transform .32s var(--weich), box-shadow .32s var(--weich), border-color .32s var(--weich);
+}
+.articleCard:hover, .featuredArticle:hover { transform: translateY(-3px); }
+
+/* --- 3. Bilder: ruhig im Stand, lebendig beim Ueberfahren -------------- */
+.articleImg, .featuredImg {
+  filter: saturate(.88) contrast(1.02);
+  transition: transform .6s var(--weich), filter .45s var(--weich);
+}
+.articleCard:hover .articleImg,
+.featuredArticle:hover .featuredImg { filter: saturate(1.06) contrast(1.03); }
+/* Ein Hauch Kategoriefarbe ueber dem Bild verbindet Bild und Thema. */
+.articleImage::after,
+.featuredImage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--kat) 16%, transparent) 0%,
+    transparent 52%);
+  opacity: .8;
+  transition: opacity .4s var(--weich);
+}
+.articleCard:hover .articleImage::after,
+.featuredArticle:hover .featuredImage::after { opacity: .35; }
+
+/* --- 4. Das Etikett bekommt Gewicht ----------------------------------- */
+.articleCategory {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.articleCategory::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* --- 5. Kennzahlen im Kopf ------------------------------------------- */
+/* Eine feine Linie unter jeder Zahl gibt dem Kopf Halt. */
+.heroStat {
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--flaeche);
+}
+
+/* --- 6. Abschluss und Newsletter bekommen Tiefe ----------------------- */
+.newsletterBanner, .ctaSection {
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 22px 50px -34px rgba(20, 40, 79, 0.3);
+}
+.newsletterBanner::after, .ctaSection::after {
+  content: "";
+  position: absolute;
+  right: -12%;
+  top: -60%;
+  width: 46%;
+  height: 220%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(37, 99, 235, 0.13), transparent 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog::before { animation: none; will-change: auto; }
+  .articleCard, .featuredArticle, .articleImg, .featuredImg,
+  .articleCard::before, .featuredArticle::before,
+  .articleImage::after, .featuredImage::after { transition: none; }
+  .articleCard:hover, .featuredArticle:hover { transform: none; }
+}
+@media (forced-colors: active) {
+  .blog::before,
+  .articleImage::after, .featuredImage::after,
+  .newsletterBanner::after, .ctaSection::after { display: none; }
+  .articleCard::before, .featuredArticle::before { background: CanvasText; }
+}

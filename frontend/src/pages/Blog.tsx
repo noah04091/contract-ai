@@ -193,6 +193,7 @@ const Blog: React.FC = () => {
               <Link
                 to={`/blog/${featuredArticle.slug}`}
                 className={styles.featuredArticle}
+                style={{ '--kat': getCategoryColor(featuredArticle.category).color } as React.CSSProperties}
               >
                 <div className={styles.featuredImage}>
                   <img
@@ -283,6 +284,7 @@ const Blog: React.FC = () => {
                       key={article.id}
                       to={`/blog/${article.slug}`}
                       className={`${styles.articleCard} ${styles.animateOnScroll}`}
+                      style={{ '--kat': getCategoryColor(article.category).color } as React.CSSProperties}
                     >
                       <div className={styles.articleImage}>
                         <img
@@ -362,6 +364,7 @@ const Blog: React.FC = () => {
                         key={article.id}
                         to={`/blog/${article.slug}`}
                         className={`${styles.articleCard} ${styles.animateOnScroll}`}
+                        style={{ '--kat': getCategoryColor(article.category).color } as React.CSSProperties}
                       >
                         <div className={styles.articleImage}>
                           <img
