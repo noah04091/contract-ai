@@ -50,7 +50,13 @@
   color: var(--tinte);
   min-height: 100vh;
   position: relative;
-  overflow-x: hidden;
+  /* 🔴 clip, NICHT hidden: `overflow-x: hidden` macht den Browser implizit zu
+     `overflow-y: auto`, das Element wird dadurch zum Scroll-Container und
+     JEDES `position: sticky` darin klebt an ihm statt am Fenster. Genau
+     deshalb rutschte das Inhaltsverzeichnis beim Scrollen nach oben weg und
+     die linke Spalte blieb leer. `clip` schneidet ebenso ab, erzeugt aber
+     keinen Scroll-Container. (Dieselbe Ursache wie beim Navbar-Fix 25.08.) */
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
 
   /* Lange deutsche Komposita („Verbraucherstreitbeilegung") duerfen nie ueber
@@ -300,53 +306,35 @@
 .tocItem.active .tocNum { color: var(--blau); opacity: 1; }
 
 /* ===================== INHALT ===================== */
-/* Der Text liegt auf EINEM Blatt statt auf zwoelf gestapelten Karten. Das
-   gibt der Seite Halt, ohne den Kartenstapel zurueckzuholen: die Abschnitte
-   darin trennt weiterhin nur eine Haarlinie. */
-/* Deckend weiss, nicht durchscheinend: auf dem leicht blaeulichen Seitengrund
-   hebt sich das Blatt sonst kaum ab und die Seite wirkt weiterhin kahl. */
-/* ⚠️ Das Blatt ist ein <main>, und styles/landing.css:7351 setzt global
-   `main, #root, .app-container, .landing-page { margin:0 !important;
-   padding:0 !important }`. Ohne !important bleibt der Innenabstand hier
-   wirkungslos und der Text klebt am Blattrand. */
-.content {
-  min-width: 0;
-  background: #ffffff;
-  border: 1px solid var(--linie);
-  border-radius: 20px;
-  padding: clamp(26px, 3.4vw, 48px) clamp(20px, 3vw, 44px) clamp(30px, 3vw, 44px) !important;
-  box-shadow: 0 26px 60px -36px rgba(20, 40, 79, 0.34), 0 2px 5px rgba(20, 40, 79, 0.04);
-}
+/* ⚠️ BEWUSST KEIN Dokumentblatt und KEIN zweispaltiger Abschnitt. Beides war
+   kurzzeitig da und wirkte zu schwer. Der Text steht ruhig auf dem
+   Seitengrund, getrennt nur durch Haarlinien. Gegen den Eindruck von Leere
+   arbeitet stattdessen der mitwandernde Hintergrund, siehe
+   „SCROLLENDER HINTERGRUND" weiter unten.
+   Falls hier jemals wieder ein Innenabstand auf .content soll: das Element
+   ist ein <main>, und styles/landing.css:7351 setzt global
+   `main { margin:0 !important; padding:0 !important }`. Ohne eigenes
+   !important bleibt jeder Abstand dort wirkungslos. */
+.content { min-width: 0; }
 
-/* Kopf links, Text rechts. Dasselbe Magazin-Prinzip wie im Ratgeber: fuellt
-   die Breite und macht das Dokument ueberfliegbar. */
+/* Kein Kartenstapel: die Abschnitte trennt eine Haarlinie. */
 .section {
-  display: grid;
-  /* Die Kopfspalte braucht Platz: bei 0.4fr brach „1. Geltungsbereich und
-     Vertragspartner" so um, dass „und" allein auf einer Zeile stand. */
-  grid-template-columns: minmax(0, 0.52fr) minmax(0, 1fr);
-  column-gap: clamp(20px, 2.6vw, 40px);
-  align-items: start;
   background: none;
   border: 0;
   border-top: 1px solid var(--linie);
   border-radius: 0;
   box-shadow: none;
-  padding: clamp(30px, 3.4vw, 44px) 0 clamp(12px, 2vw, 20px);
+  padding: clamp(34px, 4vw, 52px) 0 clamp(12px, 2vw, 20px);
   margin: 0;
   scroll-margin-top: calc(var(--navhoehe) + 24px);
 }
-.section:first-child { border-top: 0; padding-top: 0; }
+.section:first-child { border-top: 0; padding-top: clamp(10px, 2vw, 22px); }
 
 .sectionHeader {
-  grid-column: 1;
   display: flex;
-  flex-direction: column;
   align-items: flex-start;
-  gap: 13px;
-  margin-bottom: 0;
-  position: sticky;
-  top: calc(var(--navhoehe) + 26px);
+  gap: 15px;
+  margin-bottom: 22px;
 }
 /* Aus der Verlaufskachel wird ein ruhiges Zeichen in der Markenfarbe. */
 .sectionIcon {
@@ -363,11 +351,9 @@
 }
 .sectionIcon svg { width: 17px; height: 17px; }
 .sectionHeaderText { min-width: 0; }
-/* Traegt die Abschnittsnummer und ist in der linken Spalte das Ankerzeichen,
-   deshalb deutlich groesser als ein blosses Etikett. */
 .sectionKicker {
   font-family: var(--mono);
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .1em;
@@ -376,23 +362,22 @@
 }
 .sectionTitle {
   margin: 0;
-  font-size: clamp(20px, 2vw, 25px);
+  font-size: clamp(21px, 2.2vw, 27px);
   font-weight: 600;
   letter-spacing: -.022em;
-  line-height: 1.24;
+  line-height: 1.22;
   color: var(--tinte);
-  /* verteilt die Zeilen gleichmaessig, statt ein kurzes Wort allein zu lassen */
   text-wrap: balance;
 }
 
 /* Die Zeilenlaenge wird ueber die Schriftgroesse gesteuert, nicht ueber
    max-width: sonst deckelt sie die Spalte und rechts bleibt Weissraum. */
 .sectionBody {
-  grid-column: 2;
-  font-size: clamp(16px, 1.2vw, 17.5px);
-  line-height: 1.72;
+  font-size: clamp(16px, 1.15vw, 17.5px);
+  line-height: 1.75;
   color: var(--tinte-weich);
   min-width: 0;
+  max-width: 74ch;
 }
 .sectionBody p { margin: 0 0 17px; }
 .sectionBody p:last-child { margin-bottom: 0; }
@@ -720,24 +705,9 @@ a.infoCard:hover .infoValue { color: var(--blau-tief); }
 }
 /* Unter 900px reicht die Breite nicht mehr fuer zwei Spalten: Kopf ueber
    den Text, und der Kopf klebt nicht mehr mit. */
-@media (max-width: 900px) {
-  .section { grid-template-columns: minmax(0, 1fr); }
-  .sectionHeader,
-  .sectionBody { grid-column: 1; }
-  .sectionHeader {
-    position: static;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-}
 @media (max-width: 640px) {
   .hero { padding: 40px 20px 26px; }
   .heroTitle { font-size: clamp(28px, 8vw, 34px); }
-  /* !important, weil die Grundregel es ebenfalls braucht (globale
-     main-Regel in landing.css) und sonst gewinnen wuerde. */
-  .content { padding: 22px 18px !important; border-radius: 16px; }
   .section { padding: 28px 0 10px; }
   .sectionHeader { gap: 12px; margin-bottom: 18px; }
   .ctaInner {
@@ -767,4 +737,73 @@ a.infoCard:hover .infoValue { color: var(--blau-tief); }
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; animation: none; }
   .tocItem, .link, .ctaButton, .progress { transition: none; }
+}
+
+/* ============================================================
+   SCROLLENDER HINTERGRUND
+
+   Ein Rechtstext ist lang und ruhig gesetzt; ohne Bewegung wirkt die Seite
+   beim Herunterscrollen leer. Statt Flaechen und Kaesten in den Text zu
+   legen, arbeitet der Hintergrund: zwei sehr weiche Lichtfelder liegen fest
+   im Fenster und wandern beim Scrollen langsam mit. Der Leser merkt keinen
+   Effekt, nur dass die Seite nicht steht.
+
+   Warum ein fixiertes Pseudoelement:
+   - fixed = nur fenstergross, also billig zu zeichnen (kein Repaint ueber
+     12.000px Seitenhoehe)
+   - bewegt wird ausschliesslich transform, das laeuft auf der GPU
+   - kein zusaetzliches Markup noetig, damit bleibt der Rechtstext unberuehrt
+   - z-index -1 legt es ueber den Seitenverlauf, aber unter allen Inhalt,
+     ohne dass am Inhalt etwas geaendert werden muss
+
+   ⚠️ NICHT an Prozentwerte der Seitenhoehe koppeln (wie die frueher
+   verworfenen Farbzonen): das verrutscht bei jeder Layoutaenderung.
+   Die Scroll-Zeitachse ist davon unabhaengig.
+   ============================================================ */
+.page::before {
+  content: "";
+  position: fixed;
+  inset: -25vh -15vw;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(52vw 58vh at 14% 18%, rgba(37, 99, 235, 0.20), transparent 66%),
+    radial-gradient(48vw 52vh at 86% 74%, rgba(59, 130, 246, 0.18), transparent 64%),
+    radial-gradient(36vw 40vh at 62% 8%, rgba(96, 165, 250, 0.10), transparent 60%);
+}
+
+/* Bewegung nur, wo die Scroll-Zeitachse unterstuetzt wird. Ohne sie bleibt
+   der Lichtschein einfach stehen und sieht weiterhin richtig aus. */
+@supports (animation-timeline: scroll()) {
+  .page::before {
+    animation: legalLichtWandert linear both;
+    animation-timeline: scroll(root);
+    will-change: transform;
+  }
+}
+@keyframes legalLichtWandert {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(-5vw, 14vh, 0) scale(1.14); }
+}
+
+/* Der Hero traegt eine eigene, etwas hellere Lichtstimmung, damit der
+   Seitenkopf nicht flach beginnt. Liegt ebenfalls hinter dem Inhalt. */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(58% 76% at 12% 6%, rgba(37, 99, 235, 0.10), transparent 68%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page::before { animation: none; will-change: auto; }
+}
+
+/* Im Windows-Kontrastmodus verschwinden Flaechen ohnehin; der Lichtschein
+   wuerde dort nur stoeren. */
+@media (forced-colors: active) {
+  .page::before,
+  .hero::before { display: none; }
 }
