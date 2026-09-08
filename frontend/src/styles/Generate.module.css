@@ -8043,3 +8043,163 @@
 @media (prefers-reduced-motion: reduce) {
   .gkSperreKauf, .gkSperreAbo { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SCHRITT 3, DAS ERGEBNIS — 08.09.2026
+   ---------------------------------------------------------------------
+   Am gerenderten Bild abgelesen:
+
+   🔴 1. ZWEI FREMDFARBEN. Der Erfolgsbalken war eine grosse gruene
+      Flaeche (Verlauf #ECFDF5→#D1FAE5, gruener Rahmen, gruener
+      Schatten), und der Knopf „Im Builder" trug einen LILA Verlauf
+      (#7C3AED→#5B21B6). Lila ist beim Optimizer bewusst aus der
+      Oberflaeche geflogen, und Gruen ist in dieser App die Ampelfarbe
+      fuer „gut" — als Dekoration entwertet es die Ampel.
+      Gruen bleibt, aber nur da, wo es etwas bedeutet: im Haekchen.
+
+   🔴 2. FUENF GLEICHRANGIGE KNOEPFE nebeneinander, davon zwei in
+      Vollfarbe (blau und lila), die miteinander konkurrierten. Der
+      Nutzer sah nicht, was der naechste Schritt ist. Jetzt traegt nur
+      „Zur Signatur" volle Farbe, alles andere ist ruhig.
+
+   🔴 3. DREI KLASSEN WURDEN BENUTZT, ABER NIE DEFINIERT:
+      .template (der Knopf „Als Vorlage"), .companyProfileTip und
+      .placeholder. Sie sahen im Code richtig aus und wirkten nie —
+      derselbe Fall wie .cardArrow bei den Vertragsart-Karten.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Erfolgsbalken: ruhig statt gruene Flaeche ────────────────── */
+.step3SuccessHeader {
+  background: #fff;
+  border: 1px solid #e3e6ec;
+  box-shadow: 0 1px 3px rgba(16, 30, 60, .05);
+  padding: 16px 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Gruen bleibt genau hier: als Zustand, nicht als Dekoration. */
+.step3SuccessIcon {
+  width: 38px;
+  height: 38px;
+  background: #eaf6ee;
+  color: #146c43;
+  border-radius: 10px;
+  flex: none;
+}
+
+.step3SuccessLeft { min-width: 0; }
+.step3SuccessText { min-width: 0; }
+
+.step3SuccessText h2 {
+  color: #15171c;
+  font-size: 1.05rem;
+  font-weight: 650;
+  letter-spacing: -.015em;
+  overflow-wrap: anywhere;
+}
+
+.step3SuccessText p {
+  color: #7d8493;
+  font-size: .82rem;
+  overflow-wrap: anywhere;
+}
+
+.step3SuccessActions {
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* ── 2. Eine Hauptaktion, der Rest ruhig ─────────────────────────── */
+.step3HeaderBtn.accent {
+  background: #1568dd;
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 3px 10px -3px rgba(21, 104, 221, .4);
+}
+
+.step3HeaderBtn.accent:hover { background: #1259bd; }
+
+/* War ein lila Verlauf und stand gleichrangig neben der Hauptaktion. */
+.step3HeaderBtn.builder {
+  background: #fff;
+  border: 1px solid #dfe3ea;
+  color: #41506b;
+  box-shadow: none;
+}
+
+.step3HeaderBtn.builder:hover {
+  background: #f7f9fc;
+  border-color: #c4cbd6;
+  color: #15171c;
+}
+
+/* .template war ueberhaupt nicht definiert. Jetzt wie die uebrigen
+   Nebenaktionen, damit der Knopf nicht zufaellig aussieht. */
+.step3HeaderBtn.template {
+  background: #fff;
+  border: 1px solid #dfe3ea;
+  color: #41506b;
+}
+
+.step3HeaderBtn.template:hover {
+  background: #f7f9fc;
+  border-color: #c4cbd6;
+  color: #15171c;
+}
+
+/* „Eigenes Design" war ebenfalls lila. */
+.customDesignBtn {
+  background: #fff;
+  border: 1px solid #dfe3ea;
+  color: #1568dd;
+}
+
+.customDesignBtn:hover:not(:disabled) {
+  background: rgba(21, 104, 221, .05);
+  border-color: rgba(21, 104, 221, .35);
+}
+
+/* ── 3. Die beiden anderen nie definierten Klassen ───────────────── */
+
+/* Der Hinweis ueber dem Formular, mit der Gluehbirne. */
+.companyProfileTip {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 11px 14px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  background: rgba(21, 104, 221, .05);
+  border: 1px solid rgba(21, 104, 221, .14);
+  font-size: .8rem;
+  line-height: 1.5;
+  color: #41506b;
+  min-width: 0;
+}
+
+.companyProfileTip .tipIcon {
+  color: #1568dd;
+  flex: none;
+  margin-top: 1px;
+}
+
+/* Wird auf Auswahlfelder gesetzt, solange nichts gewaehlt ist. */
+.placeholder { color: #98a0ae; }
+
+/* ── 4. Schmale Bildschirme ──────────────────────────────────────── */
+@media (max-width: 760px) {
+  .step3SuccessHeader { flex-direction: column; align-items: stretch; }
+  .step3SuccessActions { justify-content: flex-start; }
+  .step3HeaderBtn { flex: 1 1 auto; justify-content: center; }
+}
+
+/* Die gewaehlte Design-Variante war gruen umrandet (#10B981, zweimal
+   identisch definiert). Gruen bedeutet in dieser App einen Zustand
+   ("gut", "erledigt"); eine getroffene Auswahl ist kein Zustand.
+   Deshalb dieselbe Markenfarbe wie bei jeder anderen Auswahl. */
+.step3DesignOption.active {
+  border-color: #1568dd;
+  background: rgba(21, 104, 221, .05);
+}
