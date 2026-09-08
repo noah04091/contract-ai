@@ -1,0 +1,491 @@
+/* BlogPostPage.module.css — Stylesheet der Blog-Artikelseite (/blog/:slug).
+
+   Ersetzt BlogPost.module.css. Die Inhaltsdatei wird NICHT angefasst, nur
+   die Import-Zeile zeigt hierher: Artikeltext, Ueberschriften, Links und
+   alle Meta-Angaben bleiben byteweise identisch.
+
+   Warum neu: derselbe kraeftig blaue Vollflaechen-Hero wie auf der
+   Uebersicht. Ein Fachartikel ist ein Lesetext, kein Werbebanner.
+
+   Neue Linie: gleiche Farben, Schriften und Hintergrund wie auf allen
+   uebrigen oeffentlichen Seiten; der Text bekommt eine ruhige Lesespalte.
+
+   ⚠️ Alle 46 in BlogPost.tsx benutzten Klassen sind hier definiert.
+   ============================================================ */
+
+.blogPost {
+  --tinte: #14284f;
+  --tinte-weich: #5a719b;
+  --blau: #2563eb;
+  --blau-tief: #1d4ed8;
+  --flaeche: #e9f0fb;
+  --linie: rgba(37, 99, 235, 0.16);
+
+  --display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --text: 'Inter', system-ui, -apple-system, sans-serif;
+  --mono: 'Source Code Pro', ui-monospace, monospace;
+
+  --weich: cubic-bezier(.22, .61, .36, 1);
+
+  font-family: var(--text);
+  color: var(--tinte);
+  min-height: 100vh;
+  position: relative;
+  /* 🔴 clip statt hidden, sonst wird das Element zum Scroll-Container und
+     jedes sticky darin klebt an ihm statt am Fenster. */
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+  hyphens: auto;
+
+  background:
+    radial-gradient(1300px 850px at 10% 2%, rgba(37, 99, 235, 0.13), transparent 60%),
+    radial-gradient(1050px 750px at 92% 26%, rgba(59, 130, 246, 0.09), transparent 58%),
+    radial-gradient(1200px 850px at 8% 60%, rgba(37, 99, 235, 0.10), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #f4f8fe 12%, #ffffff 34%,
+                    #f6fafe 58%, #ffffff 78%, #f2f7fd 100%);
+}
+.blogPost * { box-sizing: border-box; }
+.blogPost :focus-visible { outline: 2px solid var(--blau); outline-offset: 3px; border-radius: 8px; }
+
+.articleTitle, .relatedTitle, .relatedCardContent h3, .ctaTitle, .authorName {
+  font-family: var(--display);
+}
+.articleSubtitle, .content, .authorBio, .ctaSubtitle, .relatedSubtitle {
+  font-family: var(--text);
+}
+
+.container { width: min(1180px, 100% - clamp(40px, 10vw, 192px)); margin: 0 auto; min-width: 0; }
+
+/* ===================== LESEFORTSCHRITT ===================== */
+/* ⚠️ Am oberen Fensterrand ueber der Navbar (z-index 1000). NICHT an eine
+   angenommene Navbar-Hoehe koppeln: die Navbar schrumpft beim Scrollen,
+   dann klafft eine sichtbare Luecke. */
+.progressBar {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 3px;
+  background: transparent;
+  z-index: 1001;
+  pointer-events: none;
+}
+.progressFill {
+  height: 100%;
+  background: var(--blau);
+  transition: width .1s linear;
+}
+
+/* ===================== ARTIKELKOPF ===================== */
+.articleHero {
+  padding: clamp(44px, 6vw, 76px) 0 clamp(22px, 3vw, 34px);
+  background: none;
+  text-align: left;
+}
+.articleHeroContent { max-width: 860px; }
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--text);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--blau-tief);
+  cursor: pointer;
+  transition: gap .2s var(--weich);
+}
+.backButton:hover { gap: 12px; }
+.articleTitle {
+  margin: 18px 0 0;
+  font-size: clamp(30px, 4.4vw, 50px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.08;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.articleSubtitle {
+  margin: 18px 0 0;
+  max-width: 62ch;
+  font-size: clamp(17px, 1.5vw, 20px);
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.articleInfo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--linie);
+  font-size: 13.5px;
+  color: var(--tinte-weich);
+}
+.infoItem { display: inline-flex; align-items: center; gap: 7px; }
+.infoItem svg { color: var(--blau); flex-shrink: 0; }
+.metaSeparator { color: var(--tinte-weich); opacity: .5; }
+.category {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .11em;
+  color: var(--blau-tief);
+  /* Die Flaeche kommt je Kategorie aus dem Markup, deshalb hier nur die
+     Form. Farbe NICHT setzen: sie wuerde die Kategoriefarbe ueberschreiben. */
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 999px;
+}
+
+/* ===================== ARTIKELTEXT ===================== */
+.articleBody { padding: clamp(10px, 2vw, 20px) 0 clamp(30px, 4vw, 50px); }
+.articleContentFull { max-width: 680px; min-width: 0; }
+
+.content {
+  font-size: clamp(16.5px, 1.2vw, 17.5px);
+  line-height: 1.78;
+  color: var(--tinte-weich);
+}
+/* ⚠️ Die Groesse MUSS auf p/li stehen, nicht nur auf .content: eine globale
+   p-Regel gewinnt sonst gegen die Vererbung und drueckt den Text auf
+   15,84px, wodurch rund 100 Zeichen in eine Zeile passen. */
+.content p, .content li {
+  font-size: clamp(16.5px, 1.2vw, 17.5px);
+}
+.content p { margin: 0 0 20px; }
+.content strong { color: var(--tinte); font-weight: 600; }
+.content h2 {
+  font-family: var(--display);
+  margin: 44px 0 14px;
+  padding-top: 28px;
+  border-top: 1px solid var(--linie);
+  font-size: clamp(23px, 2.3vw, 30px);
+  font-weight: 600;
+  letter-spacing: -.026em;
+  line-height: 1.2;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.content h3 {
+  font-family: var(--display);
+  margin: 32px 0 10px;
+  font-size: clamp(18.5px, 1.6vw, 21px);
+  font-weight: 600;
+  letter-spacing: -.018em;
+  line-height: 1.28;
+  color: var(--tinte);
+}
+.content ul, .content ol { margin: 4px 0 22px; padding-left: 22px; }
+.content li { margin-bottom: 9px; line-height: 1.7; }
+.content li::marker { color: var(--blau); }
+.content a {
+  color: var(--blau-tief);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(29, 78, 216, 0.32);
+  transition: border-color .15s var(--weich), color .15s var(--weich);
+}
+.content a:hover { color: var(--blau); border-bottom-color: currentColor; }
+/* ⚠️ Die Artikeltexte in articlesData.ts bringen eigene HTML-Klassen mit,
+   die NICHT ueber styles.X laufen und deshalb bei einer reinen
+   Klassenpruefung durchrutschen. Ohne diese Regeln verliert der
+   Hinweiskasten mitten im Artikel seine Form.
+   Benutzt wird aktuell nur .highlight-box (63x); .tip-box und .warning-box
+   waren im alten Stylesheet vorgesehen und bleiben vorbereitet. */
+.content :global(.highlight-box),
+.content :global(.tip-box),
+.content :global(.warning-box) {
+  margin: 28px 0;
+  padding: 20px 24px;
+  border-radius: 14px;
+  border: 0;
+  border-left: 2px solid var(--blau);
+  background: var(--flaeche);
+  /* Auf der getoenten Flaeche reicht --tinte-weich nicht (4,29:1). */
+  color: #465c82;
+  font-size: clamp(15.5px, 1.1vw, 16.5px);
+  line-height: 1.7;
+}
+.content :global(.highlight-box) h4,
+.content :global(.tip-box) h4,
+.content :global(.warning-box) h4 {
+  font-family: var(--display);
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--tinte);
+}
+.content :global(.highlight-box) p:last-child,
+.content :global(.tip-box) p:last-child,
+.content :global(.warning-box) p:last-child { margin-bottom: 0; }
+.content :global(.tip-box) { border-left-color: #0f766e; }
+.content :global(.warning-box) { border-left-color: #b8860b; }
+
+.content blockquote {
+  margin: 24px 0;
+  padding: 2px 0 2px 20px;
+  border-left: 2px solid var(--blau);
+  color: var(--tinte-weich);
+  font-style: normal;
+}
+.content img { max-width: 100%; height: auto; border-radius: 14px; display: block; margin: 24px 0; }
+.content table { width: 100%; border-collapse: collapse; margin: 22px 0; font-size: 15.5px; }
+.content th, .content td { padding: 11px 12px; border-bottom: 1px solid var(--linie); text-align: left; }
+.content th { color: var(--tinte); font-weight: 600; }
+/* Breite Tabellen scrollen in sich, die Seite nie waagerecht. */
+.content > table { display: block; overflow-x: auto; }
+.content code {
+  font-family: var(--mono);
+  font-size: .92em;
+  background: var(--flaeche);
+  padding: 2px 6px;
+  border-radius: 5px;
+  color: var(--tinte);
+}
+.content pre { overflow-x: auto; background: var(--flaeche); padding: 16px; border-radius: 12px; margin: 20px 0; }
+.content pre code { background: none; padding: 0; }
+
+/* ===================== TEILEN ===================== */
+.shareSection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--linie);
+}
+.shareLabel {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  color: var(--blau-tief);
+}
+.shareButtons { display: flex; flex-wrap: wrap; gap: 9px; }
+.shareButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 15px;
+  border: 1px solid var(--linie);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  font-family: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tinte);
+  cursor: pointer;
+  transition: border-color .18s var(--weich), color .18s var(--weich);
+}
+.shareButton:hover { border-color: rgba(37, 99, 235, 0.34); color: var(--blau-tief); }
+.shareButton svg { color: var(--blau); flex-shrink: 0; }
+/* Die drei Dienste unterscheiden sich nur im Ueberfahren, nicht durch
+   Fremdfarben: die Seite bleibt in der Markenfarbe. */
+.twitter:hover, .linkedin:hover, .copy:hover { background: var(--flaeche); }
+
+/* ===================== AUTOR ===================== */
+.authorBox {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(14px, 2vw, 20px);
+  align-items: start;
+  margin-top: 34px;
+  padding: clamp(20px, 2.4vw, 28px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--linie);
+  border-radius: 18px;
+}
+.authorAvatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--flaeche);
+  color: var(--blau-tief);
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.authorInfo { min-width: 0; }
+/* uppercase hier bewusst behalten: reine Beschriftung, stand live schon so.
+   NICHT auf Kategorienamen oder Pflichtangaben legen, dort veraendert es
+   die Schreibweise (siehe Rechtsseiten: „USt-IdNr." → „UST-IDNR."). */
+.authorLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--blau-tief);
+}
+.authorName {
+  margin: 6px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -.018em;
+  color: var(--tinte);
+}
+.authorBio {
+  margin: 7px 0 0;
+  max-width: 60ch;
+  font-size: 15.5px;
+  line-height: 1.62;
+  color: var(--tinte-weich);
+}
+.authorSocial { display: flex; gap: 8px; margin-top: 12px; }
+.authorSocialLink {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border: 1px solid var(--linie);
+  border-radius: 10px;
+  background: none;
+  color: var(--blau);
+  cursor: pointer;
+  transition: border-color .18s var(--weich), background .18s var(--weich);
+}
+.authorSocialLink:hover { border-color: rgba(37, 99, 235, 0.34); background: var(--flaeche); }
+
+/* ===================== WEITERE ARTIKEL ===================== */
+.relatedSection { padding: clamp(26px, 3.4vw, 44px) 0 clamp(46px, 5vw, 72px); }
+.relatedHeader { margin-bottom: clamp(18px, 2.2vw, 26px); }
+.relatedTitle {
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 700;
+  letter-spacing: -.028em;
+  line-height: 1.16;
+  color: var(--tinte);
+}
+.relatedSubtitle {
+  margin: 9px 0 0;
+  max-width: 60ch;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.relatedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: clamp(16px, 2vw, 24px);
+}
+.relatedCard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--linie);
+  border-radius: 18px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .3s var(--weich), border-color .3s var(--weich);
+}
+.relatedCard:hover {
+  border-color: rgba(37, 99, 235, 0.32);
+  box-shadow: 0 22px 48px -30px rgba(20, 40, 79, 0.32);
+}
+.relatedCardImage { aspect-ratio: 16 / 9; overflow: hidden; background: var(--flaeche); }
+.relatedCardImg {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform .5s var(--weich);
+}
+.relatedCard:hover .relatedCardImg { transform: scale(1.03); }
+.relatedCardContent { padding: clamp(15px, 1.5vw, 20px); min-width: 0; }
+.relatedCardContent h3 {
+  margin: 8px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -.016em;
+  line-height: 1.3;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.relatedCardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 9px;
+  font-size: 12.5px;
+  color: var(--tinte-weich);
+}
+.relatedLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--blau-tief);
+}
+
+/* ===================== ABSCHLUSS ===================== */
+.ctaSection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 30px);
+  margin: 0 0 clamp(50px, 6vw, 78px);
+  padding: clamp(26px, 3vw, 42px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--linie);
+  border-radius: 20px;
+  text-align: left;
+}
+.ctaTitle {
+  margin: 0;
+  font-size: clamp(20px, 2.2vw, 27px);
+  font-weight: 600;
+  letter-spacing: -.022em;
+  line-height: 1.22;
+  color: var(--tinte);
+}
+.ctaSubtitle {
+  margin: 8px 0 0;
+  max-width: 60ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 24px;
+  border-radius: 11px;
+  background: var(--blau-tief);
+  color: #fff;
+  font-size: 15.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .18s var(--weich);
+}
+.ctaButton:hover { background: var(--blau); }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 900px) {
+  .ctaSection { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .articleHero { padding: 34px 0 18px; }
+  .authorBox { grid-template-columns: minmax(0, 1fr); }
+  .ctaButton { justify-content: center; }
+  .content h2 { margin-top: 34px; padding-top: 22px; }
+}
+
+@media (forced-colors: active) {
+  .authorBox, .relatedCard, .ctaSection, .shareButton, .authorSocialLink { border-color: CanvasText; }
+  .content blockquote { border-left-color: CanvasText; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .relatedCardImg, .shareButton, .ctaButton, .backButton, .authorSocialLink { transition: none; }
+  .relatedCard:hover .relatedCardImg { transform: none; }
+  .backButton:hover { gap: 8px; }
+}

@@ -1,0 +1,561 @@
+/* BlogPages.module.css — Stylesheet der Blog-Uebersicht (/blog).
+
+   Ersetzt Blog.module.css. Die Inhaltsdatei wird NICHT angefasst, nur die
+   Import-Zeile zeigt hierher: Artikeltexte, Reihenfolge, Links und alle
+   Meta-Angaben bleiben damit byteweise identisch.
+
+   Warum neu: Die Uebersicht trug als einzige oeffentliche Seite noch einen
+   kraeftig blauen Hero ueber die volle Breite mit weisser Schrift, Punkt-
+   raster und zentriertem Satz. Nach dem Redesign aller anderen Seiten war
+   das der groesste sichtbare Bruch, ausgerechnet auf der Seite mit dem
+   meisten Suchmaschinen-Verkehr.
+
+   Neue Linie: gleiche Farben, Schriften und Hintergrund wie /about,
+   /fuer-agenturen, die Feature-Seiten und die Rechtsseiten. Karten bleiben
+   Karten, denn hier sind es echte Artikelvorschauen mit Bild; sie werden
+   nur ruhiger.
+
+   ⚠️ Alle 66 in Blog.tsx benutzten Klassen sind hier definiert.
+   ============================================================ */
+
+.blog {
+  --tinte: #14284f;
+  --tinte-weich: #5a719b;
+  --blau: #2563eb;
+  --blau-tief: #1d4ed8;
+  --flaeche: #e9f0fb;
+  --linie: rgba(37, 99, 235, 0.16);
+
+  --display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --text: 'Inter', system-ui, -apple-system, sans-serif;
+  --mono: 'Source Code Pro', ui-monospace, monospace;
+
+  --weich: cubic-bezier(.22, .61, .36, 1);
+  --karte-radius: 18px;
+
+  font-family: var(--text);
+  color: var(--tinte);
+  min-height: 100vh;
+  position: relative;
+  /* 🔴 clip, NICHT hidden: hidden macht der Browser implizit zu
+     overflow-y:auto und das Element wird zum Scroll-Container, wodurch
+     jedes position:sticky darin am Element statt am Fenster klebt. */
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+  hyphens: auto;
+
+  background:
+    radial-gradient(1300px 850px at 10% 2%, rgba(37, 99, 235, 0.13), transparent 60%),
+    radial-gradient(1050px 750px at 92% 26%, rgba(59, 130, 246, 0.09), transparent 58%),
+    radial-gradient(1200px 850px at 8% 60%, rgba(37, 99, 235, 0.10), transparent 60%),
+    radial-gradient(1300px 900px at 86% 94%, rgba(37, 99, 235, 0.12), transparent 62%),
+    linear-gradient(180deg, #ffffff 0%, #f4f8fe 12%, #ffffff 30%,
+                    #f6fafe 48%, #ffffff 64%, #f2f7fd 84%, #ffffff 100%);
+}
+.blog * { box-sizing: border-box; }
+.blog :focus-visible { outline: 2px solid var(--blau); outline-offset: 3px; border-radius: 8px; }
+
+/* Globale Element-Regeln aus index.css wuerden die Schrift zurueckdrehen. */
+.heroTitle, .sectionTitle, .featuredTitle, .articleTitle, .ctaTitle, .newsletterTitle {
+  font-family: var(--display);
+}
+.heroSubtitle, .sectionSubtitle, .featuredExcerpt, .articleExcerpt, .ctaSubtitle, .newsletterText {
+  font-family: var(--text);
+}
+
+.container { width: min(1180px, 100% - clamp(40px, 10vw, 192px)); margin: 0 auto; min-width: 0; }
+.containerWide { width: min(1240px, 100% - clamp(40px, 8vw, 160px)); margin: 0 auto; min-width: 0; }
+
+/* ===================== KOPF ===================== */
+/* Linksbuendig und hell statt blauer Vollflaeche. */
+.hero {
+  padding: clamp(52px, 8vw, 92px) 0 clamp(26px, 3.5vw, 40px);
+  background: none;
+  text-align: left;
+}
+.heroContent { max-width: 1180px; }
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .13em;
+  color: var(--blau-tief);
+}
+.heroBadge svg { color: var(--blau); }
+.heroTitle {
+  margin: 14px 0 0;
+  font-size: clamp(34px, 5.4vw, 60px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.05;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.heroSubtitle {
+  margin: 18px 0 0;
+  max-width: 62ch;
+  font-size: clamp(17px, 1.6vw, 20px);
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+
+/* Kennzahlen als ruhige Reihe unter einer Haarlinie */
+.heroStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(24px, 4vw, 56px);
+  margin-top: 26px;
+  padding-top: 22px;
+  border-top: 1px solid var(--linie);
+}
+.heroStat { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.heroStatNumber {
+  font-family: var(--display);
+  font-size: clamp(24px, 2.6vw, 32px);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  color: var(--blau-tief);
+  /* ⚠️ KEIN background-clip:text mit Verlauf: was ueber die Box hinausragt,
+     bekommt keinen Verlauf mehr und wird unsichtbar. */
+}
+.heroStatLabel {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--tinte-weich);
+}
+
+/* ===================== HERVORGEHOBENER ARTIKEL ===================== */
+.featuredSection { padding: clamp(24px, 3vw, 38px) 0 clamp(12px, 2vw, 20px); }
+.featuredArticle {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 44px);
+  align-items: center;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--linie);
+  border-radius: 22px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .3s var(--weich), border-color .3s var(--weich);
+}
+.featuredArticle:hover {
+  border-color: rgba(37, 99, 235, 0.32);
+  box-shadow: 0 26px 60px -34px rgba(20, 40, 79, 0.34);
+}
+/* ⚠️ Die Beitragsbilder liegen als externe Unsplash-Adressen im Datensatz.
+   Faellt eines aus, stuende der Alt-Text sonst auf blankem Weiss; die
+   Flaeche darunter haelt die Karte in Form. */
+.featuredImage {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  min-width: 0;
+  background: var(--flaeche);
+}
+.featuredImg {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform .5s var(--weich);
+}
+.featuredArticle:hover .featuredImg { transform: scale(1.03); }
+.featuredContent { padding: clamp(20px, 2.6vw, 38px) clamp(20px, 2.6vw, 38px) clamp(20px, 2.6vw, 38px) 0; min-width: 0; }
+/* uppercase behalten: feste Beschriftung, stand live schon so. Auf den
+   Kategorienamen daneben NICHT, dort waere es eine Schreibweisenaenderung. */
+.featuredBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--blau-tief);
+  background: none;
+  padding: 0;
+  border: 0;
+}
+.featuredMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 12px;
+  font-size: 13.5px;
+  color: var(--tinte-weich);
+}
+.featuredMetaItem { display: inline-flex; align-items: center; gap: 6px; }
+.featuredMetaItem svg { color: var(--blau); flex-shrink: 0; }
+.featuredTitle {
+  margin: 12px 0 0;
+  font-size: clamp(23px, 2.6vw, 33px);
+  font-weight: 700;
+  letter-spacing: -.028em;
+  line-height: 1.18;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.featuredExcerpt {
+  margin: 12px 0 0;
+  max-width: 58ch;
+  font-size: clamp(15.5px, 1.15vw, 17px);
+  line-height: 1.66;
+  color: var(--tinte-weich);
+}
+.featuredCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--blau-tief);
+}
+.featuredCta svg { transition: transform .25s var(--weich); }
+.featuredArticle:hover .featuredCta svg { transform: translateX(4px); }
+
+/* ===================== FILTER UND SUCHE ===================== */
+.filterSection { padding: clamp(22px, 3vw, 36px) 0 clamp(8px, 1.5vw, 14px); }
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.filterButton {
+  border: 1px solid var(--linie);
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-family: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tinte-weich);
+  cursor: pointer;
+  transition: color .18s var(--weich), border-color .18s var(--weich), background .18s var(--weich);
+}
+.filterButton:hover { color: var(--tinte); border-color: rgba(37, 99, 235, 0.3); }
+.filterButton.active {
+  background: var(--blau-tief);
+  border-color: var(--blau-tief);
+  color: #fff;
+  font-weight: 600;
+}
+.searchBar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: 14px;
+  max-width: 420px;
+}
+.searchIcon {
+  position: absolute;
+  left: 14px;
+  color: var(--tinte-weich);
+  pointer-events: none;
+}
+.searchInput {
+  width: 100%;
+  padding: 11px 16px 11px 44px;
+  border: 1px solid var(--linie);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  font-family: var(--text);
+  font-size: 15px;
+  color: var(--tinte);
+  transition: border-color .18s var(--weich);
+}
+.searchInput::placeholder { color: var(--tinte-weich); }
+.searchInput:focus { outline: none; border-color: var(--blau); }
+
+/* ===================== ARTIKELLISTE ===================== */
+.articlesSection { padding: clamp(26px, 3.5vw, 44px) 0 clamp(40px, 5vw, 68px); }
+.sectionHeader { margin-bottom: clamp(20px, 2.6vw, 30px); }
+.sectionEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--blau-tief);
+}
+.sectionEyebrow::before {
+  content: "";
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--blau);
+  flex-shrink: 0;
+}
+.sectionTitle {
+  margin: 12px 0 0;
+  font-size: clamp(25px, 3vw, 38px);
+  font-weight: 700;
+  letter-spacing: -.03em;
+  line-height: 1.14;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.sectionTitleAccent { color: var(--blau-tief); }
+.sectionSubtitle {
+  margin: 12px 0 0;
+  max-width: 62ch;
+  font-size: clamp(15.5px, 1.2vw, 17.5px);
+  line-height: 1.62;
+  color: var(--tinte-weich);
+}
+
+.articlesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
+  gap: clamp(18px, 2.2vw, 28px);
+}
+.articleCard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--linie);
+  border-radius: var(--karte-radius);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow .3s var(--weich), border-color .3s var(--weich);
+}
+.articleCard:hover {
+  border-color: rgba(37, 99, 235, 0.32);
+  box-shadow: 0 22px 48px -30px rgba(20, 40, 79, 0.32);
+}
+.articleImage { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--flaeche); }
+.articleImg {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: transform .5s var(--weich);
+}
+.articleCard:hover .articleImg { transform: scale(1.03); }
+.articleContent {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  padding: clamp(16px, 1.6vw, 22px);
+}
+.articleMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  font-size: 13px;
+  color: var(--tinte-weich);
+}
+.articleCategory {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  color: var(--blau-tief);
+}
+.articleReadTime { display: inline-flex; align-items: center; gap: 5px; }
+.articleReadTime svg { color: var(--blau); flex-shrink: 0; }
+.articleDate { display: inline-flex; align-items: center; gap: 5px; }
+.metaSeparator { color: var(--tinte-weich); opacity: .5; }
+.articleTitle {
+  margin: 10px 0 0;
+  font-size: clamp(17px, 1.35vw, 19.5px);
+  font-weight: 600;
+  letter-spacing: -.018em;
+  line-height: 1.28;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.articleExcerpt {
+  margin: 9px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.articleAuthor {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 16px;
+  font-size: 13.5px;
+  color: var(--tinte-weich);
+}
+.authorAvatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--flaeche);
+  color: var(--blau-tief);
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.authorName { font-weight: 500; color: var(--tinte); }
+
+.noResults {
+  padding: clamp(28px, 4vw, 48px);
+  border: 1px dashed var(--linie);
+  border-radius: var(--karte-radius);
+  text-align: center;
+  color: var(--tinte-weich);
+  font-size: 16px;
+}
+
+/* ===================== NEWSLETTER ===================== */
+.newsletterBanner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 28px);
+  margin: clamp(24px, 3vw, 40px) 0 0;
+  padding: clamp(22px, 2.6vw, 34px);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--linie);
+  border-radius: 20px;
+}
+.newsletterIcon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: var(--flaeche);
+  color: var(--blau);
+  flex-shrink: 0;
+}
+.newsletterContent { min-width: 0; }
+.newsletterTitle {
+  margin: 0;
+  font-size: clamp(18px, 1.8vw, 22px);
+  font-weight: 600;
+  letter-spacing: -.02em;
+  color: var(--tinte);
+}
+.newsletterText {
+  margin: 6px 0 0;
+  max-width: 60ch;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.newsletterForm { display: flex; gap: 9px; flex-wrap: wrap; }
+.newsletterInput {
+  min-width: 0;
+  width: min(260px, 60vw);
+  padding: 11px 15px;
+  border: 1px solid var(--linie);
+  border-radius: 11px;
+  background: #fff;
+  font-family: var(--text);
+  font-size: 15px;
+  color: var(--tinte);
+}
+.newsletterInput::placeholder { color: var(--tinte-weich); }
+.newsletterInput:focus { outline: none; border-color: var(--blau); }
+.newsletterButton {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--blau-tief);
+  color: #fff;
+  font-family: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .18s var(--weich);
+}
+.newsletterButton:hover { background: var(--blau); }
+
+/* ===================== ABSCHLUSS ===================== */
+.ctaSection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 30px);
+  margin: clamp(26px, 3.4vw, 44px) 0 clamp(52px, 6vw, 80px);
+  padding: clamp(26px, 3vw, 42px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--linie);
+  border-radius: 20px;
+  text-align: left;
+}
+.ctaTitle {
+  margin: 0;
+  font-size: clamp(20px, 2.2vw, 27px);
+  font-weight: 600;
+  letter-spacing: -.022em;
+  line-height: 1.22;
+  color: var(--tinte);
+}
+.ctaSubtitle {
+  margin: 8px 0 0;
+  max-width: 60ch;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 24px;
+  border-radius: 11px;
+  background: var(--blau-tief);
+  color: #fff;
+  font-size: 15.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .18s var(--weich);
+}
+.ctaButton:hover { background: var(--blau); }
+
+/* ===================== EINBLENDEN BEIM SCROLLEN ===================== */
+.animateOnScroll {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .6s var(--weich), transform .6s var(--weich);
+  /* Sicherheitsnetz: bleibt der Beobachter aus, wird die Karte nach 4s
+     trotzdem sichtbar statt dauerhaft unsichtbar zu bleiben. */
+  animation: blogNotfallSichtbar .01s linear 4s forwards;
+}
+.animateOnScroll.visible { opacity: 1; transform: none; }
+@keyframes blogNotfallSichtbar { to { opacity: 1; transform: none; } }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 900px) {
+  .featuredArticle { grid-template-columns: minmax(0, 1fr); }
+  .featuredContent { padding: clamp(18px, 3vw, 26px); }
+  .newsletterBanner { grid-template-columns: minmax(0, 1fr); }
+  .newsletterIcon { display: none; }
+  .ctaSection { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .hero { padding: 40px 0 22px; }
+  .heroStats { gap: 18px 26px; }
+  .newsletterForm { width: 100%; }
+  .newsletterInput { width: 100%; }
+  .newsletterButton { width: 100%; justify-content: center; }
+  .ctaButton { justify-content: center; }
+}
+
+@media (forced-colors: active) {
+  .articleCard, .featuredArticle, .newsletterBanner, .ctaSection, .filterButton { border-color: CanvasText; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animateOnScroll { opacity: 1; transform: none; transition: none; animation: none; }
+  .articleImg, .featuredImg, .featuredCta svg, .filterButton, .ctaButton, .newsletterButton { transition: none; }
+  .articleCard:hover .articleImg, .featuredArticle:hover .featuredImg { transform: none; }
+}

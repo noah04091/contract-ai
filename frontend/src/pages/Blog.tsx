@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
 import { Search, Calendar, Clock, ArrowRight, Sparkles, Mail, TrendingUp } from 'lucide-react';
-import styles from '../styles/Blog.module.css';
+import styles from '../styles/BlogPages.module.css';
 import LandingFooter from '../components/LandingFooter';
 
 // ✅ Import der zentralen Artikel-Daten
@@ -62,14 +62,17 @@ const Blog: React.FC = () => {
   };
 
   const getCategoryColor = (categoryKey: string): { color: string; background: string } => {
+    // Toene aus der Marken-Palette. Vorher lagen vier der fuenf Farben unter
+    // der Kontrastnorm (Gruen 3,15:1 · Orange 3,07:1 · Rot 4,41:1) und
+    // "kaufvertraege" stand in Lila (#9333ea), das die Marke nicht fuehrt.
     const colors: Record<string, { color: string; background: string }> = {
-      tipps: { color: '#16a34a', background: '#f0fdf4' },
-      mietrecht: { color: '#d97706', background: '#fffbeb' },
-      arbeitsrecht: { color: '#2563eb', background: '#eff6ff' },
-      kaufvertraege: { color: '#9333ea', background: '#faf5ff' },
-      agb: { color: '#dc2626', background: '#fef2f2' },
+      tipps: { color: '#0f766e', background: '#ecfdf5' },
+      mietrecht: { color: '#8a5a06', background: '#fffbeb' },
+      arbeitsrecht: { color: '#1d4ed8', background: '#eff6ff' },
+      kaufvertraege: { color: '#0369a1', background: '#f0f9ff' },
+      agb: { color: '#b91c1c', background: '#fef2f2' },
     };
-    return colors[categoryKey] || { color: '#2563EB', background: '#e6f3ff' };
+    return colors[categoryKey] || { color: '#1d4ed8', background: '#eff6ff' };
   };
 
   // Featured Article (neuester Artikel)

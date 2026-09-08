@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User, Share2, Twitter, Linkedin, Link2, ArrowRight } from 'lucide-react';
 import { Helmet } from "react-helmet-async";
-import styles from '../styles/BlogPost.module.css';
+import styles from '../styles/BlogPostPage.module.css';
 import LandingFooter from '../components/LandingFooter';
 
 // ✅ Import der zentralen Artikel-Daten
@@ -103,14 +103,19 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
   const dateISO = toISO(currentArticle.date);
 
   const getCategoryColor = (categoryKey: string): { color: string; background: string } => {
+    // Wie in Blog.tsx: Toene aus der Marken-Palette statt Lila und
+    // untergewichtiger Farben.
+    // ⚠️ Der Rueckfall stand auf rgba(255,255,255,0.9), also weisser Schrift
+    // aus dem frueheren dunklen Kopf. Auf dem jetzt hellen Grund waere eine
+    // unbekannte Kategorie damit unsichtbar gewesen.
     const colors: Record<string, { color: string; background: string }> = {
-      tipps: { color: '#16a34a', background: 'rgba(22, 163, 74, 0.2)' },
-      mietrecht: { color: '#d97706', background: 'rgba(217, 119, 6, 0.2)' },
-      arbeitsrecht: { color: '#2563eb', background: 'rgba(37, 99, 235, 0.2)' },
-      kaufvertraege: { color: '#9333ea', background: 'rgba(147, 51, 234, 0.2)' },
-      agb: { color: '#dc2626', background: 'rgba(220, 38, 38, 0.2)' },
+      tipps: { color: '#0f766e', background: 'rgba(15, 118, 110, 0.10)' },
+      mietrecht: { color: '#8a5a06', background: 'rgba(217, 119, 6, 0.13)' },
+      arbeitsrecht: { color: '#1d4ed8', background: 'rgba(37, 99, 235, 0.11)' },
+      kaufvertraege: { color: '#0369a1', background: 'rgba(3, 105, 161, 0.11)' },
+      agb: { color: '#b91c1c', background: 'rgba(185, 28, 28, 0.10)' },
     };
-    return colors[categoryKey] || { color: 'rgba(255,255,255,0.9)', background: 'rgba(255, 255, 255, 0.2)' };
+    return colors[categoryKey] || { color: '#1d4ed8', background: 'rgba(37, 99, 235, 0.11)' };
   };
 
   const handleBackClick = () => {
