@@ -4599,17 +4599,24 @@ export default function Generate() {
     initializeAccordion(type); // 📂 Öffne erste Gruppe automatisch
   };
 
-  // 08.09.2026: Der Kopf schrumpft, sobald der Seitenanfang aus dem Bild
-  // ist. Vorher nahm er mit Titel, Unterzeile und 48px-Kreisen dauerhaft
-  // sehr viel Hoehe weg, obwohl er sticky war.
-  const [kopfKompakt, setKopfKompakt] = useState(false);
+  // 08.09.2026: Sobald der Kopf oben aus dem Bild gescrollt ist, faehrt
+  // ein schlankes Band mit der Schrittanzeige ein. Auf /generate scrollt
+  // die Navbar weg (.appNavbar ist position:static), das Band ist ab
+  // dann der einzige feste Anker der Seite.
+  //
+  // Fruehere Fassung liess den Kopf selbst schrumpfen. Das flackerte:
+  // der Titel klappte ein, die Seite wurde kuerzer, der Browser
+  // korrigierte die Scrollposition, die Marke kam zurueck ins Bild und
+  // es begann von vorn. Deshalb aendert der Kopf jetzt seine Hoehe nie
+  // und das Band faehrt per transform ein, was das Layout nicht anfasst.
+  const [bandSichtbar, setBandSichtbar] = useState(false);
   const kopfMarke = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ziel = kopfMarke.current;
     if (!ziel || typeof IntersectionObserver === 'undefined') return;
     const beobachter = new IntersectionObserver(
-      ([eintrag]) => setKopfKompakt(!eintrag.isIntersecting),
+      ([eintrag]) => setBandSichtbar(!eintrag.isIntersecting),
       { threshold: 0 }
     );
     beobachter.observe(ziel);
@@ -6166,13 +6173,9 @@ export default function Generate() {
 
       <div className={styles.contractGenerator}>
         {/* Unsichtbare Marke: meldet, wann der Kopf kompakt werden soll. */}
-        {/* Kein aria-hidden: styles/accessibility.css setzt global
-            [aria-hidden="true"] { display: none }. Ohne Box meldet der
-            Beobachter nie "sichtbar", der Kopf waere dauerhaft kompakt. */}
-        <div ref={kopfMarke} className={styles.kopfMarke} />
         {/* Header */}
         <motion.header
-          className={`${styles.generatorHeader} ${kopfKompakt ? styles.kopfKompakt : ''}`}
+          className={styles.generatorHeader}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -6182,7 +6185,7 @@ export default function Generate() {
                 AnimatePresence sorgt für sanftes Ausblenden + Height-Collapse, sodass
                 die Step-Indikatoren smooth nach oben rutschen. */}
             <AnimatePresence initial={false}>
-              {currentStep === 1 && !kopfKompakt && (
+              {currentStep === 1 && (
                 <motion.div
                   className={styles.headerText}
                   initial={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -6253,6 +6256,42 @@ export default function Generate() {
             </div>
           </div>
         </motion.header>
+
+        {/* Die Marke steht NACH dem Kopf und meldet, wann er oben aus dem
+            Bild ist. Kein aria-hidden: styles/accessibility.css setzt
+            global [aria-hidden="true"] { display: none }, und ohne Box
+            meldet der Beobachter nie "sichtbar". */}
+        <div ref={kopfMarke} className={styles.kopfMarke} />
+
+        {/* Schlankes Fortschrittsband. Faehrt per transform ein, damit
+            sich das Layout nicht aendert — sonst kehrt die Rueckkopplung
+            zurueck, die den schrumpfenden Kopf flackern liess. */}
+        <div className={`${styles.gkBand} ${bandSichtbar ? styles.gkBandAn : ''}`}>
+          <div className={styles.gkBandInhalt}>
+            {[
+              { num: 1, label: "Typ auswählen" },
+              { num: 2, label: "Details eingeben" },
+              { num: 3, label: "Vertrag erstellen" },
+              { num: 4, label: "Finalisieren" }
+            ].map(({ num, label }, index, array) => (
+              <React.Fragment key={num}>
+                <div className={`${styles.gkBandSchritt} ${
+                  currentStep === num ? styles.gkBandAktiv : ''
+                } ${isStepComplete(num) ? styles.gkBandFertig : ''}`}>
+                  <span className={styles.gkBandZahl}>
+                    {isStepComplete(num) ? <Check size={12} strokeWidth={3} /> : num}
+                  </span>
+                  <span className={styles.gkBandWort}>{label}</span>
+                </div>
+                {index < array.length - 1 && (
+                  <span className={`${styles.gkBandStrich} ${
+                    isStepComplete(num) ? styles.gkBandStrichVoll : ''
+                  }`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
 
         <div className={`${styles.generatorContent} ${currentStep === 3 ? styles.step3Wide : ''}`}>
           {/* Free-User dürfen das Formular ausfüllen; der Tease/die Sperre kommt beim „Erstellen". */}

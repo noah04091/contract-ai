@@ -26,13 +26,10 @@
   -webkit-backdrop-filter: blur(25px);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
   padding: 0.7rem 0;
-  position: sticky;
-  /* top:0 ist hier richtig. Auf /generate greift .appNavbar aus
-     Navbar.module.css mit position:static, die Navbar scrollt also weg.
-     Ein Versatz wuerde eine Luecke lassen, durch die der Inhalt laeuft.
-     (Auf oeffentlichen Seiten ist dieselbe Navbar sticky mit z-index
-     1000 — nicht von dort auf den eingeloggten Bereich schliessen.) */
-  top: 0;
+  /* NICHT sticky. Als sticky-Element mit wechselnder Hoehe erzeugte
+     dieser Kopf eine Rueckkopplung und flackerte, siehe .gkBand unten.
+     Er scrollt jetzt normal weg, das schlanke Band uebernimmt. */
+  position: relative;
   z-index: 10;
   transition: padding .22s ease, box-shadow .22s ease;
   margin-bottom: 1rem;
@@ -7566,35 +7563,139 @@
    den bestehenden Namen hier gefahrlos.
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Der kompakte Zustand wird per IntersectionObserver gesetzt, sobald der
-   Seitenanfang aus dem Bild gescrollt ist. */
-.kopfKompakt {
-  padding: 0.3rem 0 !important;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, .05), 0 4px 14px -8px rgba(16, 30, 60, .16);
-}
-
-.kopfKompakt .progressSteps { padding: 0.4rem 0; }
-
-.kopfKompakt .stepCircle {
-  width: 28px;
-  height: 28px;
-  font-size: 13px;
-}
-
-.kopfKompakt .stepLabel { font-size: 11.5px; }
-
-.kopfKompakt .stepLine { margin-bottom: 1.35rem; }
-
-.kopfKompakt .stepCircle svg { width: 13px; height: 13px; }
-
-/* Die Marke sitzt vor dem Kopf und meldet, wann er kleben soll.
-   Unsichtbar und ohne eigene Hoehe. */
+/* Die Marke sitzt am ENDE des Kopfes und meldet, wann er oben aus dem
+   Bild gescrollt ist. Ab dann faehrt das Band ein. Unsichtbar und ohne
+   eigene Hoehe, damit sie das Layout nicht verschiebt. */
 .kopfMarke {
   height: 1px;
   margin-bottom: -1px;
   pointer-events: none;
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FORTSCHRITTSBAND STATT SCHRUMPFENDEM KOPF, 08.09.2026
+   ---------------------------------------------------------------------
+   🔴 Der Vorgaenger (Kopf sticky + schrumpft) hatte eine Rueckkopplung
+   und flackerte endlos. Gemessen, nicht vermutet:
+     kompakt bei y=4 → Titel klappt ein → Seite 96px kuerzer → Browser
+     korrigiert die Scrollposition → Marke wieder im Bild → nicht
+     kompakt → Titel zurueck → Seite laenger → wieder y=100 → ...
+   Ein sticky Element, das seine eigene Hoehe aendert, veraendert die
+   Bedingung, an der die Umschaltung haengt.
+
+   Jetzt strukturell ausgeschlossen, durch zwei getrennte Elemente:
+   1. Der grosse Kopf ist NICHT mehr sticky und aendert seine Hoehe nie.
+      Er scrollt normal weg. Kein Sprung, keine Korrektur.
+   2. Dieses Band ist ein eigenes Element mit fester Hoehe, das per
+      transform ein- und ausfaehrt. transform veraendert das Layout
+      nicht, also auch nicht die Dokumenthoehe, also gibt es nichts,
+      worauf der Browser die Scrollposition korrigieren koennte.
+
+   Auf /generate scrollt die Navbar weg (.appNavbar ist position:static),
+   ab dem ersten Scrollen ist dieses Band deshalb der einzige feste
+   Anker der Seite. Es zeigt die Schritte, nicht nur einen Balken.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.gkBand {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(15, 23, 42, .07);
+  box-shadow: 0 4px 16px -10px rgba(16, 30, 60, .22);
+  /* Ausgefahren wird per transform, damit sich das Layout nicht aendert.
+     Die -1px-Verschiebung nach oben verhindert eine Haarlinie beim
+     Zurueckfahren. */
+  transform: translateY(-101%);
+  opacity: 0;
+  transition: transform .26s cubic-bezier(.22, .61, .36, 1), opacity .18s ease;
+  /* Das Band belegt keinen Platz im Fluss, es liegt ueber dem Inhalt. */
+  margin-bottom: -53px;
+  height: 53px;
+  pointer-events: none;
+}
+
+.gkBandAn {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.gkBandInhalt {
+  max-width: 980px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Ein Schritt: Zahl und Wort nebeneinander, damit das Band flach bleibt.
+   Im grossen Kopf stehen sie untereinander, das braucht 80px Hoehe. */
+.gkBandSchritt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.gkBandZahl {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: #eef1f6;
+  color: #7d8493;
+  transition: background .18s ease, color .18s ease;
+}
+
+.gkBandWort {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #7d8493;
+  white-space: nowrap;
+  transition: color .18s ease;
+}
+
+.gkBandAktiv .gkBandZahl { background: #1568dd; color: #fff; }
+.gkBandAktiv .gkBandWort { color: #15171c; font-weight: 650; }
+
+.gkBandFertig .gkBandZahl { background: #dcece0; color: #146c43; }
+
+.gkBandStrich {
+  width: 26px;
+  height: 2px;
+  flex: none;
+  border-radius: 1px;
+  background: #e5e7eb;
+}
+
+.gkBandStrichVoll { background: #1568dd; }
+
+/* Ab hier wird es eng: nur noch der laufende Schritt als Wort, die
+   uebrigen bleiben als Zahlen sichtbar. Nichts wird abgeschnitten. */
+@media (max-width: 860px) {
+  .gkBandWort { display: none; }
+  .gkBandAktiv .gkBandWort { display: inline; }
+  .gkBandStrich { width: 18px; }
+}
+
+@media (max-width: 420px) {
+  .gkBandInhalt { padding: 0 1rem; gap: 4px; }
+  .gkBandStrich { width: 12px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .kopfKompakt, .kopfKompakt .stepCircle, .kopfKompakt .stepLabel { transition: none; }
+  .gkBand { transition: opacity .18s ease; transform: translateY(0); opacity: 0; }
+  .gkBandAn { opacity: 1; }
 }
