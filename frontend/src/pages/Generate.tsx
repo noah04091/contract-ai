@@ -6,10 +6,10 @@ import { Helmet } from "react-helmet-async";
 import {
   CheckCircle, Clipboard, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  TrendingUp, Send, RefreshCw, Paperclip, Upload, Archive,
+  Send, RefreshCw, Paperclip, Upload, Archive,
   Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown, FolderPlus,
   Scale, Lock, Briefcase, Home, Shield, ShoppingCart
-} from "lucide-react";
+, Coins, Users, Code, Lightbulb, Sprout, Hammer, Handshake } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
 import { useAuth } from "../context/AuthContext";
@@ -110,6 +110,34 @@ interface Attachment {
 }
 
 // CONTRACT TYPES - Vollständige Definition
+/**
+ * 08.09.2026: Symbol je Vertragsart fuer die Auswahlkarten.
+ * Ersetzt die Emoji aus type.icon, die auf jedem Geraet anders
+ * gezeichnet werden. Das Datenfeld type.icon bleibt unangetastet, es
+ * wird an anderen Stellen gelesen.
+ */
+const ART_SYMBOL: Record<string, React.ElementType> = {
+  freelancer: Briefcase,
+  mietvertrag: Home,
+  pachtvertrag: Sprout,
+  arbeitsvertrag: Users,
+  kaufvertrag: ShoppingCart,
+  nda: Lock,
+  gesellschaftsvertrag: Building,
+  darlehensvertrag: Coins,
+  lizenzvertrag: Scale,
+  aufhebungsvertrag: FileText,
+  werkvertrag: Hammer,
+  kooperation: Handshake,
+  softwareVertrieb: Code,
+  softwareEndkunde: Shield,
+  berater: Lightbulb,
+  individuell: Wrench
+};
+
+/** Rueckfall, falls eine Art hier nicht steht. */
+const symbolFuer = (id: string): React.ElementType => ART_SYMBOL[id] || FileText;
+
 const CONTRACT_TYPES: ContractType[] = [
   {
     id: 'freelancer',
@@ -6356,52 +6384,51 @@ export default function Generate() {
                       </div>
                     </div>
 
-                    <div className={styles.contractTypesGrid}>
+                    <div className={styles.gkGitter}>
                       {/* ✨ Generate 2.0 Premium-Einstieg als erste Karte (KI-Chat-Assistent) */}
                       {premiumEntryVisible && (
                         <motion.button
                           type="button"
-                          className={styles.contractTypeCard}
+                          className={`${styles.gkKarte} ${styles.gkKartePremium}`}
                           onClick={() => { setPremiumMode(true); }}
-                          whileHover={{ scale: 1.02, y: -4 }}
-                          whileTap={{ scale: 0.98 }}
-                          transition={{ duration: 0.2 }}
-                          style={{ border: '1.5px solid #2E6CF6', background: 'linear-gradient(135deg, rgba(46,108,246,.07), rgba(30,83,216,.03))' }}
+                          whileHover={{ y: -2 }}
+                          whileTap={{ scale: 0.99 }}
+                          transition={{ duration: 0.18 }}
                         >
-                          <div className={styles.newBadge} style={{ background: 'linear-gradient(135deg,#2E6CF6,#1E53D8)' }}>✨ PREMIUM</div>
-                          <div className={styles.cardIcon}>✨</div>
-                          <h3>Im Gespräch erstellen</h3>
-                          <p>KI-Assistent: beschreiben → Rückfragen → fertiger Top-Vertrag, inkl. Rechts-Check, Fristen & Signatur.</p>
-                          <div className={styles.cardArrow}><ArrowRight size={16} /></div>
+                          <div className={`${styles.gkMarke} ${styles.gkMarkePremium}`}>Premium</div>
+                          <div className={styles.gkSymbol}><Sparkles size={19} /></div>
+                          <h3 className={styles.gkName}>Im Gespräch erstellen</h3>
+                          <p className={styles.gkText}>Beschreiben, Rückfragen beantworten, fertiger Vertrag. Mit Rechts-Check, Fristen und Signatur.</p>
+                          <div className={styles.gkPfeil}><ArrowRight size={16} /></div>
                         </motion.button>
                       )}
                       {CONTRACT_TYPES.map((type) => (
                         <motion.button
                           key={type.id}
-                          className={`${styles.contractTypeCard} ${selectedType?.id === type.id ? styles.selected : ''}`}
+                          className={`${styles.gkKarte} ${selectedType?.id === type.id ? styles.gkKarteAktiv : ''}`}
                           onClick={() => {
                             // Free wie Paid: Vertragstyp wählen → normales Formular ausfüllen.
                             // Der Tease (1 Gratis-Generierung + Sperre) kommt erst beim „Erstellen".
                             handleTypeSelect(type);
                           }}
                           disabled={false}
-                          whileHover={{ scale: 1.02, y: -4 }}
-                          whileTap={{ scale: 0.98 }}
-                          transition={{ duration: 0.2 }}
+                          whileHover={{ y: -2 }}
+                          whileTap={{ scale: 0.99 }}
+                          transition={{ duration: 0.18 }}
                         >
-                          {type.isNew && (
-                            <div className={styles.newBadge}>NEU</div>
-                          )}
-                          {type.popularity && type.popularity > 80 && (
-                            <div className={styles.popularBadge}>
-                              <TrendingUp size={12} />
-                              Beliebt
-                            </div>
-                          )}
-                          <div className={styles.cardIcon}>{type.icon}</div>
-                          <h3>{type.name}</h3>
-                          <p>{type.description}</p>
-                          <div className={styles.cardArrow}>
+                          {/* Nur EIN Kennzeichen. Vorher konnten NEU und Beliebt
+                              beide oben rechts stehen und sich ueberlagern. */}
+                          {type.isNew ? (
+                            <div className={`${styles.gkMarke} ${styles.gkMarkeNeu}`}>Neu</div>
+                          ) : (type.popularity && type.popularity > 80) ? (
+                            <div className={`${styles.gkMarke} ${styles.gkMarkeBeliebt}`}>Beliebt</div>
+                          ) : null}
+                          <div className={styles.gkSymbol}>
+                            {React.createElement(symbolFuer(type.id), { size: 19 })}
+                          </div>
+                          <h3 className={styles.gkName}>{type.name}</h3>
+                          <p className={styles.gkText}>{type.description}</p>
+                          <div className={styles.gkPfeil}>
                             <ArrowRight size={16} />
                           </div>
                         </motion.button>
