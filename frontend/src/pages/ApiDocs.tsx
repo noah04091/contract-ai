@@ -5,7 +5,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { Code, Copy, CheckCircle, Key, Lock, Zap } from "lucide-react";
-import styles from "../styles/ApiDocs.module.css";
+import styles from "../styles/ApiDocsPage.module.css";
 
 interface CodeBlockProps {
   code: string;
@@ -108,18 +108,18 @@ export default function ApiDocs() {
               <div className={styles.infoBox}>
                 <Zap size={20} />
                 <div>
-                  <strong>Base URL:</strong>
+                  <strong>Base URL:</strong>{' '}
                   <code>https://api.contract-ai.de/api/v1</code>
                 </div>
               </div>
 
               <h3>Features</h3>
               <ul className={styles.featureList}>
-                <li>🔒 Sichere API-Key Authentifizierung</li>
-                <li>📤 Automatischer Vertrag-Upload & Analyse</li>
-                <li>📊 Zugriff auf alle Analysen & Daten</li>
-                <li>⚡ Rate Limiting: 1000 Requests/Stunde (Enterprise)</li>
-                <li>🔄 RESTful Design & JSON Responses</li>
+                <li>Sichere API-Key Authentifizierung</li>
+                <li>Automatischer Vertrag-Upload & Analyse</li>
+                <li>Zugriff auf alle Analysen & Daten</li>
+                <li>Rate Limiting: 1000 Requests/Stunde (Enterprise)</li>
+                <li>RESTful Design & JSON Responses</li>
               </ul>
             </section>
 

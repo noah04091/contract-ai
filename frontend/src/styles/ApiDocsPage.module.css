@@ -1,0 +1,436 @@
+/* ApiDocsPage.module.css — Stylesheet der API-Dokumentation (/api-docs).
+
+   Ersetzt ApiDocs.module.css. Am Inhalt aendert sich nichts ausser den
+   Emoji-Aufzaehlungszeichen (siehe unten), die Import-Zeile zeigt hierher.
+
+   Warum neu: Die Seite stand als eine der letzten noch im alten Stil und
+   verstiess dabei gegen zwei feste Vorgaben: das Abzeichen
+   „Enterprise-Feature" lag in einem Rosa-Verlauf (#f093fb → #f5576c),
+   obwohl die Marke kein Lila und kein Pink fuehrt, und die Merkmalsliste
+   nutzte Emoji als Strukturmarker.
+
+   Neue Linie: gleiche Farben, Schriften und Hintergrund wie auf allen
+   uebrigen oeffentlichen Seiten. Eine Entwicklerdokumentation darf
+   sachlich sein; Codebloecke und Tabelle bekommen deshalb Gewicht, alles
+   andere tritt zurueck.
+
+   ⚠️ Alle 26 in ApiDocs.tsx benutzten Klassen sind hier definiert.
+   ============================================================ */
+
+.container {
+  --tinte: #14284f;
+  --tinte-weich: #5a719b;
+  --blau: #2563eb;
+  --blau-tief: #1d4ed8;
+  --flaeche: #e9f0fb;
+  --linie: rgba(37, 99, 235, 0.16);
+  --gruen: #0f766e;
+  --warn: #8a5a06;
+  --rot: #b91c1c;
+
+  --display: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  --text: 'Inter', system-ui, -apple-system, sans-serif;
+  --mono: 'Source Code Pro', ui-monospace, monospace;
+  --weich: cubic-bezier(.22, .61, .36, 1);
+  --navhoehe: 65px;
+
+  font-family: var(--text);
+  color: var(--tinte);
+  min-height: 100vh;
+  /* clip statt hidden: hidden macht das Element zum Scroll-Container und
+     das seitliche Inhaltsverzeichnis wuerde nicht mehr mitlaufen. */
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  overflow-wrap: break-word;
+  hyphens: auto;
+
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: start;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(30px, 4vw, 54px) clamp(20px, 5vw, 96px) clamp(48px, 6vw, 80px);
+
+  background:
+    radial-gradient(1300px 850px at 10% 2%, rgba(37, 99, 235, 0.13), transparent 60%),
+    radial-gradient(1050px 750px at 92% 26%, rgba(59, 130, 246, 0.09), transparent 58%),
+    linear-gradient(180deg, #ffffff 0%, #f4f8fe 16%, #ffffff 44%, #f6fafe 74%, #ffffff 100%);
+}
+.container * { box-sizing: border-box; }
+.container :focus-visible { outline: 2px solid var(--blau); outline-offset: 3px; border-radius: 6px; }
+
+/* ===================== INHALTSVERZEICHNIS ===================== */
+.sidebar {
+  position: sticky;
+  top: calc(var(--navhoehe) + 26px);
+  min-width: 0;
+}
+.sidebar h3 {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--blau-tief);
+  margin: 0 0 14px;
+}
+.sidebar ul { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--linie); }
+.sidebar li { margin: 0; }
+.sidebar a,
+.sidebar li > span {
+  display: block;
+  padding: 7px 12px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  color: var(--tinte-weich);
+  font-size: 13.5px;
+  line-height: 1.4;
+  text-decoration: none;
+  transition: color .18s var(--weich), border-color .18s var(--weich);
+}
+.sidebar a:hover { color: var(--tinte); border-left-color: var(--linie); }
+.sidebar ul ul a { padding-left: 26px; font-size: 13px; }
+
+/* ===================== KOPF ===================== */
+.content { min-width: 0; }
+.header {
+  padding-bottom: clamp(20px, 2.6vw, 30px);
+  margin-bottom: clamp(6px, 1vw, 12px);
+  border-bottom: 1px solid var(--linie);
+  text-align: left;
+}
+.headerIcon {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--blau);
+  background: none;
+  border-radius: 0;
+}
+.title {
+  font-family: var(--display);
+  margin: 14px 0 0;
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 700;
+  letter-spacing: -.035em;
+  line-height: 1.06;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.subtitle {
+  font-family: var(--text);
+  margin: 14px 0 0;
+  max-width: 62ch;
+  font-size: clamp(16px, 1.4vw, 18px);
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+/* ⚠️ Vorher ein Rosa-Verlauf mit weisser Schrift. Die Marke fuehrt weder
+   Lila noch Pink; jetzt ein ruhiges Etikett in der Markenfarbe. */
+.enterpriseBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 6px 13px;
+  background: var(--flaeche);
+  color: var(--blau-tief);
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+}
+.enterpriseBadge svg { color: var(--blau); flex-shrink: 0; }
+
+/* ===================== ABSCHNITTE ===================== */
+.section {
+  padding: clamp(30px, 3.6vw, 46px) 0 clamp(8px, 1.4vw, 14px);
+  border-top: 1px solid var(--linie);
+  scroll-margin-top: calc(var(--navhoehe) + 24px);
+  max-width: 820px;
+}
+.section:first-of-type { border-top: 0; }
+.section h2 {
+  font-family: var(--display);
+  margin: 0 0 14px;
+  font-size: clamp(22px, 2.2vw, 28px);
+  font-weight: 600;
+  letter-spacing: -.026em;
+  line-height: 1.2;
+  color: var(--tinte);
+}
+.section h3 {
+  font-family: var(--display);
+  margin: 28px 0 10px;
+  font-size: clamp(17px, 1.5vw, 19.5px);
+  font-weight: 600;
+  letter-spacing: -.018em;
+  color: var(--tinte);
+}
+.section p {
+  margin: 0 0 15px;
+  font-size: clamp(15.5px, 1.15vw, 17px);
+  line-height: 1.72;
+  color: var(--tinte-weich);
+}
+.section p strong, .section li strong { color: var(--tinte); font-weight: 600; }
+.section > code,
+.section p code,
+.section li code,
+.section td code {
+  font-family: var(--mono);
+  font-size: .92em;
+  background: var(--flaeche);
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: var(--tinte);
+}
+
+.link {
+  color: var(--blau-tief);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(29, 78, 216, 0.32);
+  transition: border-color .15s var(--weich), color .15s var(--weich);
+}
+.link:hover { color: var(--blau); border-bottom-color: currentColor; }
+
+/* Merkmalsliste: Punkte in der Markenfarbe statt Emoji als Marker. */
+.featureList { list-style: none; margin: 8px 0 18px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.featureList li {
+  position: relative;
+  padding-left: 21px;
+  font-size: clamp(15.5px, 1.15vw, 17px);
+  line-height: 1.66;
+  color: var(--tinte-weich);
+}
+.featureList li::before {
+  content: "";
+  position: absolute;
+  left: 2px; top: .68em;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--blau);
+}
+
+/* ===================== HINWEISE ===================== */
+.infoBox,
+.warningBox {
+  margin: 18px 0;
+  padding: 16px 20px;
+  border: 0;
+  border-left: 2px solid var(--blau);
+  border-radius: 12px;
+  background: var(--flaeche);
+  /* auf der getoenten Flaeche reicht --tinte-weich nicht (4,29:1) */
+  color: #465c82;
+  font-size: clamp(15px, 1.1vw, 16.5px);
+  line-height: 1.68;
+}
+.infoBox strong, .warningBox strong { color: var(--tinte); font-weight: 600; }
+/* Codeschnipsel in den Hinweisen brauchen ihre eigene Flaeche, sonst laufen
+   Beschriftung und Adresse optisch ineinander. */
+.infoBox code, .warningBox code {
+  font-family: var(--mono);
+  font-size: .92em;
+  background: #fff;
+  border: 1px solid var(--linie);
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: var(--tinte);
+  overflow-wrap: anywhere;
+}
+.warningBox {
+  border-left-color: #b8860b;
+  background: rgba(234, 179, 8, 0.10);
+  color: var(--warn);
+}
+.warningBox strong { color: var(--warn); }
+
+/* ===================== CODE ===================== */
+.codeBlock {
+  margin: 16px 0 22px;
+  border: 1px solid var(--linie);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+}
+.codeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 14px;
+  background: var(--flaeche);
+  border-bottom: 1px solid var(--linie);
+}
+.language {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .11em;
+  color: var(--blau-tief);
+}
+.copyButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 11px;
+  border: 1px solid var(--linie);
+  border-radius: 8px;
+  background: #fff;
+  font-family: var(--text);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tinte);
+  cursor: pointer;
+  transition: border-color .18s var(--weich), color .18s var(--weich);
+}
+.copyButton:hover { border-color: rgba(37, 99, 235, 0.34); color: var(--blau-tief); }
+.codeBlock pre {
+  margin: 0;
+  /* Lange Zeilen scrollen IM Block, nie die ganze Seite. */
+  overflow-x: auto;
+  padding: 16px 18px;
+  background: #fff;
+}
+.codeBlock code {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.66;
+  color: var(--tinte);
+  white-space: pre;
+}
+
+/* ===================== ENDPUNKTE ===================== */
+.endpoint {
+  margin: 18px 0 26px;
+  border: 1px solid var(--linie);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.7);
+}
+.endpointHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--linie);
+  background: rgba(255, 255, 255, 0.6);
+}
+.method {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: var(--flaeche);
+  color: var(--blau-tief);
+  flex-shrink: 0;
+}
+/* Die Verben bekommen Bedeutungsfarben, kein Schmuck. */
+.post { background: rgba(15, 118, 110, 0.12); color: var(--gruen); }
+.delete { background: rgba(185, 28, 28, 0.10); color: var(--rot); }
+.path {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--tinte);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.endpoint > *:not(.endpointHeader) { padding: 0 16px; }
+.endpoint > *:last-child { padding-bottom: 14px; }
+
+/* ===================== TABELLE ===================== */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 22px;
+  font-size: 15px;
+}
+.table th, .table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--linie);
+  text-align: left;
+  vertical-align: top;
+}
+.table th {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--blau-tief);
+}
+.table td { color: var(--tinte-weich); }
+.table td strong { color: var(--tinte); }
+
+/* ===================== ABSCHLUSS ===================== */
+.cta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 28px);
+  margin-top: clamp(28px, 3.4vw, 44px);
+  padding: clamp(24px, 2.8vw, 36px);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--linie);
+  border-radius: 18px;
+  text-align: left;
+}
+.cta h2 {
+  font-family: var(--display);
+  margin: 0;
+  font-size: clamp(19px, 2vw, 24px);
+  font-weight: 600;
+  letter-spacing: -.022em;
+  color: var(--tinte);
+}
+.cta p {
+  margin: 7px 0 0;
+  max-width: 58ch;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.ctaButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 22px;
+  border-radius: 11px;
+  background: var(--blau-tief);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background .18s var(--weich);
+}
+.ctaButton:hover { background: var(--blau); }
+
+/* ===================== RESPONSIVE ===================== */
+@media (max-width: 1000px) {
+  .container { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { display: none; }
+}
+@media (max-width: 640px) {
+  .container { padding: 26px 20px 44px; }
+  .cta { grid-template-columns: minmax(0, 1fr); }
+  .ctaButton { justify-content: center; }
+  .codeBlock code { font-size: 12.5px; }
+}
+
+@media (forced-colors: active) {
+  .codeBlock, .endpoint, .cta, .copyButton { border-color: CanvasText; }
+  .infoBox, .warningBox { border-left-color: CanvasText; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar a, .link, .copyButton, .ctaButton { transition: none; }
+}
