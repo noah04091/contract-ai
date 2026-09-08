@@ -8,8 +8,9 @@ import {
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   Send, RefreshCw, Paperclip, Upload, Archive,
   Image, File, X, Info, Palette, Wrench, Scissors, ChevronDown, FolderPlus,
-  Scale, Lock, Briefcase, Home, Shield, ShoppingCart
-, Coins, Users, Code, Lightbulb, Sprout, Hammer, Handshake } from "lucide-react";
+  Scale, Lock, Briefcase, Home, Shield, ShoppingCart,
+  Coins, Users, Code, Lightbulb, Sprout, Hammer, Handshake, Eye
+} from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
 import { useAuth } from "../context/AuthContext";
@@ -150,7 +151,7 @@ const CONTRACT_TYPES: ContractType[] = [
     popularity: 95,
     fields: [
       { name: 'nameClient', label: 'Auftraggeber', type: 'text', placeholder: 'Firmenname oder Privatperson', required: true },
-      { name: 'nameFreelancer', label: 'Freelancer', type: 'text', placeholder: 'Ihr Name', required: true },
+      { name: 'nameFreelancer', label: 'Freelancer', type: 'text', placeholder: 'Dein Name', required: true },
       { name: 'description', label: 'Leistungsbeschreibung', type: 'textarea', placeholder: 'Detaillierte Beschreibung der zu erbringenden Leistung...', required: true },
       { name: 'timeframe', label: 'Projektdauer', type: 'text', placeholder: 'z.B. 3 Monate oder bis 31.12.2024', required: true },
       { name: 'payment', label: 'Vergütung', type: 'text', placeholder: 'z.B. 5.000€ oder 80€/Stunde', required: true },
@@ -3074,7 +3075,7 @@ const CONTRACT_TYPES: ContractType[] = [
       // === GRUPPE: Vertragsparteien ===
       {
         name: 'providerName',
-        label: 'Anbieter / Reseller (Ihr Firmenname)',
+        label: 'Anbieter / Reseller (dein Firmenname)',
         type: 'text',
         placeholder: 'Deine Firma (die die Software weiterverkauft)',
         required: true,
@@ -5032,7 +5033,7 @@ export default function Generate() {
       }
 
       toast.update(loadingToast, {
-        render: `✅ Design "${designName}" erfolgreich angewendet! PDF wird neu generiert...`,
+        render: `Design „${designName}" angewendet. Das PDF wird neu erzeugt.`,
         type: "success",
         isLoading: false,
         autoClose: 2000
@@ -5071,7 +5072,7 @@ export default function Generate() {
     } catch (error) {
       console.error("❌ Design-Änderung fehlgeschlagen:", error);
       toast.update(loadingToast, {
-        render: `❌ Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        render: `Fehler: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
         type: "error",
         isLoading: false,
         autoClose: 4000
@@ -5289,8 +5290,8 @@ export default function Generate() {
               // Erfolg!
               toast.update(loadingToast, {
                 render: hasPdfOrImageAttachments
-                  ? `✅ PDF mit ${attachments.length} Anlage(n) generiert!`
-                  : "✅ Professionelles PDF mit Logo generiert!",
+                  ? `PDF mit ${attachments.length} Anlage(n) erstellt.`
+                  : "PDF mit Logo erstellt.",
                 type: "success",
                 isLoading: false,
                 autoClose: 3000
@@ -5392,7 +5393,7 @@ export default function Generate() {
           console.log("✅ PDF mit html2pdf.js generiert");
           
           toast.update(loadingToast, {
-            render: "✅ PDF wurde erstellt!",
+            render: "PDF wurde erstellt.",
             type: "success",
             isLoading: false,
             autoClose: 3000
@@ -5449,7 +5450,7 @@ export default function Generate() {
           document.body.removeChild(element);
           
           toast.update(loadingToast, {
-            render: "💡 PDF wurde erstellt (Text-Version)",
+            render: "PDF wurde erstellt (Textfassung).",
             type: "info",
             isLoading: false,
             autoClose: 3000
@@ -5467,7 +5468,7 @@ export default function Generate() {
       
       // Error Toast
       toast.update(loadingToast, {
-        render: `❌ PDF-Export fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        render: `PDF-Export fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
         type: "error",
         isLoading: false,
         autoClose: 5000
@@ -5543,7 +5544,7 @@ export default function Generate() {
         <div>
           <strong>{validFiles.length} Anlage(n) hinzugefügt</strong>
           <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.9 }}>
-            📎 Wird beim PDF-Download automatisch angehängt
+            <Paperclip size={12} /> Wird beim PDF-Download automatisch angehängt
           </div>
         </div>,
         { position: "top-right", autoClose: 3500 }
@@ -5992,7 +5993,7 @@ export default function Generate() {
         setSaved(false);
 
         toast.update(loadingToast, {
-          render: "✅ Vertrag erfolgreich verbessert!",
+          render: "Vertrag verbessert.",
           type: "success",
           isLoading: false,
           autoClose: 3000
@@ -6010,7 +6011,7 @@ export default function Generate() {
     } catch (error) {
       console.error("Error improving contract:", error);
       toast.update(loadingToast, {
-        render: "❌ Fehler bei der Verbesserung",
+        render: "Fehler bei der Verbesserung.",
         type: "error",
         isLoading: false,
         autoClose: 5000
@@ -6305,7 +6306,7 @@ export default function Generate() {
               transition={{ duration: 0.3 }}
             >
               <div className={styles.tipContent}>
-                <span className={styles.tipIcon}>💡</span>
+                <span className={styles.tipIcon}><Lightbulb size={15} /></span>
                 <div className={styles.tipText}>
                   <strong>Tipp:</strong> Firmenprofil anlegen für automatische Daten
                 </div>
@@ -6665,7 +6666,7 @@ export default function Generate() {
                                     <span className={styles.accordionNumber}>{index + 1}</span>
                                     <span className={styles.accordionTitle}>{groupName}</span>
                                     {progress.isComplete && (
-                                      <span className={styles.accordionCheckmark}>✓</span>
+                                      <span className={styles.accordionCheckmark}><Check size={12} strokeWidth={3} /></span>
                                     )}
                                   </div>
                                   <div className={styles.accordionHeaderRight}>
@@ -6674,7 +6675,7 @@ export default function Generate() {
                                       {progress.optional > 0 && ` · ${progress.filledOptional}/${progress.optional} optional`}
                                     </span>
                                     <span className={`${styles.accordionChevron} ${isExpanded ? styles.accordionChevronOpen : ''}`}>
-                                      ▼
+                                      <ChevronDown size={15} />
                                     </span>
                                   </div>
                                 </button>
@@ -6780,7 +6781,7 @@ export default function Generate() {
                                         )}
                                         {/* Validierungserfolg anzeigen */}
                                         {formData[field.name] && validateField(field, formData[field.name] || '') && ['email', 'phone', 'iban', 'vat'].includes(field.type) && (
-                                          <span className={styles.fieldSuccess}>✓ Gültig</span>
+                                          <span className={styles.fieldSuccess}><Check size={12} strokeWidth={3} /> Gültig</span>
                                         )}
                                       </div>
                                     ))}
@@ -6878,7 +6879,7 @@ export default function Generate() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          {showInputPreview ? '✕ Vorschau schließen' : '👁 Eingaben prüfen'}
+                          {showInputPreview ? <><X size={14} /> Vorschau schließen</> : <><Eye size={14} /> Eingaben prüfen</>}
                         </motion.button>
 
                         {/* Erstellen Button */}
@@ -6907,7 +6908,7 @@ export default function Generate() {
                       {/* 💾 Autosave Indikator */}
                       {lastSaved && (
                         <div className={styles.autosaveIndicator}>
-                          💾 Automatisch gespeichert um {lastSaved.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                          <Check size={12} strokeWidth={2.5} /> Automatisch gespeichert um {lastSaved.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                         </div>
                       )}
                       </div> {/* Ende contractForm */}
@@ -7142,7 +7143,7 @@ export default function Generate() {
                           <CheckCircle size={24} />
                         </div>
                         <div className={styles.step3SuccessText}>
-                          <h2>Ihr Vertrag ist fertig!</h2>
+                          <h2>Dein Vertrag ist fertig!</h2>
                           <p>Überprüfen, speichern oder zur Signatur versenden</p>
                         </div>
                       </div>
@@ -7221,7 +7222,7 @@ export default function Generate() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                       >
-                        <span>❌ {downloadError}</span>
+                        <span>{downloadError}</span>
                       </motion.div>
                     )}
 

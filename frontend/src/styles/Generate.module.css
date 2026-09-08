@@ -718,7 +718,6 @@
 .formGroup input,
 .formGroup select {
   width: 100%;
-  min-width: 420px;
   padding: 0.875rem 1rem;
   background: #F9FAFB;
   border: none;
@@ -734,7 +733,6 @@
 
 .formGroup textarea {
   width: 100%;
-  min-width: 420px;
   padding: 0.875rem 1rem;
   background: #F9FAFB;
   border: none;
@@ -7698,4 +7696,146 @@
 @media (prefers-reduced-motion: reduce) {
   .gkBand { transition: opacity .18s ease; transform: translateY(0); opacity: 0; }
   .gkBandAn { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FORMULAR, ETAPPE 4 — 08.09.2026
+   ---------------------------------------------------------------------
+   Am gerenderten Bild abgelesen und nachgemessen:
+
+   🔴 1. FELDER RAGTEN ZWISCHEN 769 UND ~950px AUS DER KARTE.
+      Ursache: .formGroup input hatte min-width: 420px, das Raster
+      steht auf repeat(2, 1fr) — und 1fr ist minmax(auto, 1fr), gibt
+      also nach unten nicht nach. Zwei Spalten brauchten damit
+      2×420 + 24px = 864px, der einspaltige Umbruch kam aber erst bei
+      768px. Dazwischen klaffte die Luecke.
+      Derselbe Fehlertyp wie bei den Vertragsart-Karten und der
+      Sofort-Uebersicht: minmax(0, 1fr) statt 1fr, min-width: 0 statt
+      eines festen Mindestmasses.
+
+   🔴 2. EINGABEFELDER HATTEN border: none und einen fast weissen
+      Grund. Sie sahen aus wie gesperrte Flaechen, nicht wie Felder,
+      in die man schreibt.
+
+   🔴 3. DAS TITELFELD WAR ZENTRIERT (Beschriftung, Feld und der
+      eingetippte Text). Beim Tippen wandert der Cursor dann mit.
+      Alle anderen Felder der Seite sind linksbuendig, das war ein
+      Bruch mitten im selben Formular.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Das Raster darf schrumpfen ───────────────────────────────── */
+.groupFields,
+.accordionContent .groupFields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.formGroup {
+  min-width: 0;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  min-width: 0;
+}
+
+/* Der einspaltige Umbruch kommt frueher, damit die Felder nicht erst
+   unbequem schmal werden, bevor sie umbrechen. */
+@media (max-width: 900px) {
+  .groupFields,
+  .accordionContent .groupFields {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 2. Felder als Felder erkennbar ──────────────────────────────── */
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  background: #fff;
+  border: 1px solid #dfe3ea;
+  box-shadow: 0 1px 2px rgba(16, 30, 60, .04);
+}
+
+.formGroup input:hover,
+.formGroup select:hover,
+.formGroup textarea:hover {
+  background: #fff;
+  border-color: #c4cbd6;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  background: #fff;
+  border-color: #1568dd;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(21, 104, 221, .12);
+}
+
+/* ── 3. Titelfeld linksbuendig wie alle anderen ──────────────────── */
+.formGroup.spanning label {
+  text-align: left;
+}
+
+.formGroup.spanning input {
+  margin: 0;
+  max-width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #dfe3ea;
+  box-shadow: 0 1px 2px rgba(16, 30, 60, .04);
+}
+
+.formGroup.spanning input:hover {
+  background: #fff;
+  border-color: #c4cbd6;
+}
+
+.formGroup.spanning input:focus {
+  background: #fff;
+  border-color: #1568dd;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(21, 104, 221, .12);
+}
+
+/* ── 4. Die ersetzten Symbole sitzen mittig in ihrer Zeile ───────── */
+.accordionCheckmark,
+.fieldSuccess,
+.tipIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Der Pfeil war ein Unicode-Dreieck in 12px. Jetzt ein Linien-Symbol,
+   das sich beim Aufklappen dreht statt ausgetauscht zu werden. */
+.accordionChevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .2s ease;
+}
+
+.accordionChevronOpen {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .accordionChevron { transition: none; }
+}
+
+/* Doppelte Rahmung aufgeloest: .contractForm war eine weisse Karte mit
+   Schatten und 2rem Innenabstand, .formGrid darin nochmal eine weisse
+   Karte mit Rahmen, Schatten und 3rem/2rem. Zwei fast gleiche Flaechen
+   ineinander, zusammen 5rem seitlicher Abstand. Jetzt traegt nur noch
+   .formGrid die Karte.
+   Geprueft: .contractForm wird ausschliesslich in Generate.tsx benutzt,
+   und weder OptimizerFinalize noch EnhancedTemplateLibrary fassen sie
+   an, obwohl sie dasselbe Stylesheet teilen. */
+.contractForm {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  border-radius: 0;
 }
