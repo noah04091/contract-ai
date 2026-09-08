@@ -935,11 +935,57 @@ async function matchLawToContracts(db, lawChange, options = {}) {
 }
 
 /**
- * Use GPT-4o-mini to assess actual impact of a law change on matched contracts.
+ * Teilt Verträge in Prüf-Gruppen à `size` — pure, testbar. Jeder Vertrag landet in genau EINER
+ * Gruppe, keiner fällt weg (Wachstumsfix: früher schnitt slice(0,10) alles jenseits 10 ab).
+ */
+function groupContractsForAssessment(contracts, size) {
+  const groups = [];
+  const arr = contracts || [];
+  const step = size > 0 ? size : arr.length || 1;
+  for (let s = 0; s < arr.length; s += step) groups.push(arr.slice(s, s + step));
+  return groups;
+}
+
+/**
+ * Prüft ALLE betroffenen Verträge gegen eine Gesetzesänderung, in Gruppen à maxContracts.
+ * Wachstumsfix 08.09.: früher kappte die Prüfung mit slice(0,10) alles jenseits Vertrag 10 →
+ * bei breiten Gesetzen (z.B. DSGVO) fielen die ältesten Verträge STILL aus der Überwachung. Jetzt
+ * iteriert dieser Wrapper über alle Verträge in 10er-Gruppen (Gruppengröße bewusst klein für KI-
+ * Qualität, wie Stufe 3) und führt Impacts + Kosten zusammen. Schlägt EINE Gruppe fehl → aiError,
+ * damit der Aufrufer das ganze Gesetz erneut fährt (kein Vertrag darf still übersprungen werden).
+ */
+async function assessImpact(lawChange, contracts, opts = {}) {
+  const emptyCost = { aiCalls: 0, tokensInput: 0, tokensOutput: 0, costUSD: 0 };
+  if (!contracts || contracts.length === 0) return { impacts: [], cost: emptyCost };
+  const batchSize = opts.maxContracts || resolveRadarCaps().maxContracts;
+  if (contracts.length <= batchSize) return assessImpactBatch(lawChange, contracts, opts);
+
+  const groups = groupContractsForAssessment(contracts, batchSize);
+  console.log(`[PulseV2Radar] ${contracts.length} betroffene Verträge → ${groups.length} Prüf-Gruppen à ${batchSize} (keine Kappung mehr)`);
+  const allImpacts = [];
+  const totalCost = { ...emptyCost };
+  let anyError = false;
+  for (const group of groups) {
+    const res = await assessImpactBatch(lawChange, group, opts);
+    if (res.aiError) { anyError = true; continue; }
+    allImpacts.push(...(res.impacts || []));
+    const c = res.cost || emptyCost;
+    totalCost.aiCalls += c.aiCalls || 0;
+    totalCost.tokensInput += c.tokensInput || 0;
+    totalCost.tokensOutput += c.tokensOutput || 0;
+    totalCost.costUSD += c.costUSD || 0;
+  }
+  const out = { impacts: allImpacts, cost: totalCost };
+  if (anyError) out.aiError = true; // ganzes Gesetz erneut fahren → kein stiller Vertrags-Ausfall
+  return out;
+}
+
+/**
+ * Prüft EINEN Batch (bis maxContracts Verträge) in einem gpt-4o-mini-Call.
  * Returns only confirmed impacts above confidence threshold plus token usage/cost.
  * Shape: { impacts: [...], cost: { aiCalls, tokensInput, tokensOutput, costUSD } }
  */
-async function assessImpact(lawChange, contracts, opts = {}) {
+async function assessImpactBatch(lawChange, contracts, opts = {}) {
   const emptyCost = { aiCalls: 0, tokensInput: 0, tokensOutput: 0, costUSD: 0 };
   if (contracts.length === 0) return { impacts: [], cost: emptyCost };
   // Säule 3: Ist die Tiefenstufe aktiv, dürfen auch Grenzfälle (Konfidenz 40-59) als
@@ -1843,4 +1889,4 @@ async function runBacklogSweepForContract(db, contractId, userId, sinceDays = 75
   return { swept: true, laws: candidates.length, relevant: scored.length, alerts: alerts.length };
 }
 
-module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract, selectClausesForDeepCheck, deepVerifyImpact, quoteAppearsIn, extractLegislationFingerprint, assessImpact, matchLawToContracts, resolveRadarCaps };
+module.exports = { runPulseV2Radar, isNoiseLaw, scoreLawRelevance, runBacklogSweepForContract, selectClausesForDeepCheck, deepVerifyImpact, quoteAppearsIn, extractLegislationFingerprint, assessImpact, matchLawToContracts, resolveRadarCaps, groupContractsForAssessment };
