@@ -1124,7 +1124,6 @@ const CONTRACT_TYPES: ContractType[] = [
     jurisdiction: 'DE',
     category: 'Gesellschaftsrecht',
     estimatedDuration: '12-18 Minuten',
-    isNew: true,
     popularity: 70,
     fields: [
       // Grundlagen
@@ -1339,7 +1338,6 @@ const CONTRACT_TYPES: ContractType[] = [
     category: 'Finanzierung',
     jurisdiction: 'Deutschland (BGB §§ 488-505)',
     estimatedDuration: '15-20 Minuten',
-    isNew: true,
     popularity: 65,
     fields: [
       // === GRUPPE: Darlehensart ===
@@ -2261,7 +2259,6 @@ const CONTRACT_TYPES: ContractType[] = [
     category: 'Immobilien',
     jurisdiction: 'Deutschland (BGB §§ 581-597, LPachtVG)',
     estimatedDuration: '15-20 Minuten',
-    isNew: true,
     popularity: 50,
     fields: [
       // === GRUPPE: Pachtgegenstand ===
@@ -2629,7 +2626,6 @@ const CONTRACT_TYPES: ContractType[] = [
     category: 'Dienstleistung',
     estimatedDuration: '8-12 Minuten',
     popularity: 65,
-    isNew: true,
     fields: [
       { name: 'client', label: 'Besteller (Name)', type: 'text', placeholder: 'Vollständiger Name / Firma', required: true, group: 'Vertragsparteien' },
       { name: 'clientAddress', label: 'Adresse Besteller', type: 'textarea', placeholder: 'Straße, PLZ, Ort', required: true, group: 'Vertragsparteien' },
@@ -2678,7 +2674,6 @@ const CONTRACT_TYPES: ContractType[] = [
     category: 'Geschäftsbeziehung',
     estimatedDuration: '10-15 Minuten',
     popularity: 55,
-    isNew: true,
     fields: [
       { name: 'partnerA', label: 'Kooperationspartner A (Name)', type: 'text', placeholder: 'Firma oder Einzelunternehmer', required: true, group: 'Kooperationspartner' },
       { name: 'partnerAAddress', label: 'Adresse Partner A', type: 'textarea', placeholder: 'Straße, PLZ, Ort', required: true, group: 'Kooperationspartner' },
@@ -2728,7 +2723,6 @@ const CONTRACT_TYPES: ContractType[] = [
     category: 'Geschäftsbeziehung',
     estimatedDuration: '12-18 Minuten',
     popularity: 65,
-    isNew: true,
     fields: [
       // === GRUPPE: Geschäftsmodell (Kern-Logiksteuerung) ===
       {
@@ -3070,7 +3064,6 @@ const CONTRACT_TYPES: ContractType[] = [
     category: 'Geschäftsbeziehung',
     estimatedDuration: '8-12 Minuten',
     popularity: 70,
-    isNew: true,
     fields: [
       // === GRUPPE: Vertragsparteien ===
       {
@@ -3313,7 +3306,6 @@ const CONTRACT_TYPES: ContractType[] = [
     category: 'Dienstleistung',
     estimatedDuration: '8-12 Minuten',
     popularity: 60,
-    isNew: true,
     fields: [
       { name: 'clientName', label: 'Auftraggeber (Name)', type: 'text', placeholder: 'Firma oder Privatperson', required: true, group: 'Vertragsparteien' },
       { name: 'clientAddress', label: 'Adresse Auftraggeber', type: 'textarea', placeholder: 'Straße, PLZ, Ort', required: true, group: 'Vertragsparteien' },
@@ -7080,47 +7072,45 @@ export default function Generate() {
                     animate={{ opacity: 1, y: 0 }}
                     className={styles.step3ContainerNew}
                   >
-                    <div style={{ maxWidth: 760, margin: "0 auto", width: "100%" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                        {!freeUsed && <CheckCircle size={22} color="#16a34a" />}
-                        <h2 style={{ margin: 0, fontSize: 18, color: "#0f172a" }}>{freeUsed ? "Kostenlose Generierungen aufgebraucht" : `Dein ${selectedType?.name || "Vertrag"} ist fertig!`}</h2>
+                    <div className={styles.gkSperre}>
+                      <div className={styles.gkSperreKopf}>
+                        {!freeUsed && <CheckCircle size={22} color="#146c43" />}
+                        <h2>{freeUsed ? "Kostenlose Generierungen aufgebraucht" : `Dein ${selectedType?.name || "Vertrag"} ist fertig!`}</h2>
                       </div>
-                      <div style={{ position: "relative", border: "1px solid #e6ecf6", borderRadius: 14, overflow: "hidden", background: "#fff", minHeight: 340 }}>
-                        <div style={{ filter: "blur(4px)", opacity: 0.75, padding: 22, whiteSpace: "pre-wrap", fontSize: 13.5, lineHeight: 1.6, color: "#334155", userSelect: "none", pointerEvents: "none", maxHeight: 320, overflow: "hidden" }}>
+                      <div className={styles.gkSperreRahmen}>
+                        <div className={styles.gkSperreText}>
                           {freeUsed ? "" : (contractText || "")}
                         </div>
-                        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: 24, background: "radial-gradient(120% 70% at 50% 50%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.35) 55%, rgba(255,255,255,0.08) 100%)" }}>
-                          <div style={{ width: 52, height: 52, borderRadius: 14, display: "grid", placeItems: "center", background: "linear-gradient(135deg,#eff4ff,#e0e9fb)", color: "#2563eb", marginBottom: 13, fontSize: 24 }}>🔒</div>
-                          <h3 style={{ fontSize: 17, fontWeight: 700, color: "#0f172a", margin: "0 0 6px", textShadow: "0 0 8px #fff" }}>
-                            {freeUsed ? "Kostenlose Generierungen aufgebraucht" : "Vertrag fertig — jetzt freischalten"}
+                        <div className={styles.gkSperreDavor}>
+                          <div className={styles.gkSperreSymbol}><Lock size={22} /></div>
+                          <h3 className={styles.gkSperreTitel}>
+                            {freeUsed ? "Kostenlose Generierungen aufgebraucht" : "Vertrag fertig, jetzt freischalten"}
                           </h3>
-                          <p style={{ fontSize: 13.5, color: "#334155", margin: "0 0 18px", maxWidth: 380, lineHeight: 1.55, textShadow: "0 0 8px #fff" }}>
+                          <p className={styles.gkSperreSatz}>
                             {freeUsed
                               ? "Du hast deine kostenlosen Vertrags-Generierungen aufgebraucht. Schalte frei, um unbegrenzt Verträge zu erstellen, vollständig zu sehen & herunterzuladen."
                               : "Dein Vertrag wurde erstellt. Schalte frei, um ihn vollständig zu sehen, als PDF herunterzuladen und unterschreiben zu lassen."}
                           </p>
                           {!freeUsed && savedContractId ? (
-                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, width: "100%", maxWidth: 340 }}>
-                              {/* Option 1: Einmalkauf (Vorrang) */}
-                              <button type="button" onClick={() => startGenerateUnlock(savedContractId)} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "12px 20px", border: "none", cursor: "pointer", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
+                            <div className={styles.gkSperreWahl}>
+                              {/* Einmalkauf hat Vorrang und traegt als einziger die volle Farbe. */}
+                              <button type="button" onClick={() => startGenerateUnlock(savedContractId)} className={styles.gkSperreKauf}>
                                 Diesen Vertrag freischalten · 9,90 €
                               </button>
-                              <div style={{ fontSize: 12, color: "#64748b", textShadow: "0 0 8px #fff" }}>Einmalig, kein Abo · Volltext, PDF &amp; Unterschrift</div>
-                              <div style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", margin: "2px 0", color: "#94a3b8", fontSize: 11.5 }}>
-                                <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} /> oder <span style={{ flex: 1, height: 1, background: "#e2e8f0" }} />
-                              </div>
-                              {/* Option 2: Abo (auch attraktiv) */}
-                              <a href="/pricing" onClick={(e) => { e.preventDefault(); startBusinessSubscription(); }} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", fontWeight: 700, fontSize: 14.5, borderRadius: 11, padding: "11px 20px", textDecoration: "none", color: "#2563eb", background: "#fff", border: "1.5px solid #bcd0f7", cursor: "pointer" }}>
+                              <div className={styles.gkSperreKlein}>Einmalig, kein Abo · Volltext, PDF &amp; Unterschrift</div>
+                              <div className={styles.gkSperreOder}>oder</div>
+                              {/* Der Abo-Weg steht gleichwertig daneben, aber ruhiger. */}
+                              <a href="/pricing" onClick={(e) => { e.preventDefault(); startBusinessSubscription(); }} className={styles.gkSperreAbo}>
                                 Mit Business: alle Verträge frei
                               </a>
-                              <div style={{ fontSize: 12, color: "#64748b", textShadow: "0 0 8px #fff" }}>+ unbegrenzt Analysen, Optimierung, Fristen &amp; mehr</div>
+                              <div className={styles.gkSperreKlein}>+ unbegrenzt Analysen, Optimierung, Fristen &amp; mehr</div>
                             </div>
                           ) : (
                             <>
-                              <a href="/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, fontSize: 14, borderRadius: 10, padding: "11px 24px", textDecoration: "none", color: "#fff", background: "linear-gradient(135deg,#3b82f6,#2563eb)", boxShadow: "0 4px 14px rgba(37,99,235,.25)" }}>
-                                Jetzt freischalten →
+                              <a href="/pricing" className={styles.gkSperreKauf} style={{ width: 'auto' }}>
+                                Jetzt freischalten <ArrowRight size={16} />
                               </a>
-                              <div style={{ fontSize: 12, color: "#64748b", marginTop: 10, textShadow: "0 0 8px #fff" }}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
+                              <div className={styles.gkSperreKlein} style={{ marginTop: 10 }}>Schon ab dem Business-Tarif · jederzeit kündbar</div>
                             </>
                           )}
                         </div>
