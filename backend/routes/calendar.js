@@ -7,6 +7,7 @@ const verifyToken = require("../middleware/verifyToken");
 const { generateEventsForContract, cleanAndRegenerateAIEvents, regenerateAllEvents, completeDanglingLabel } = require("../services/calendarEvents");
 const { generateICSFeed, generateCalendarLinks, foldICSLine, escapeICS } = require("../utils/icsGenerator");
 const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
+const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // 📅 QA-Punkt 2 (BUG-007, 08.09.2026): Kalendertage statt ceil(Zeitdifferenz)
 // Plan-Entscheidungen zentral: normalisiert Alt-Namen (premium/legendary) mit.
 const { isBusinessOrHigher, isEnterpriseOrHigher } = require("../constants/subscriptionPlans");
 // Effektiver Plan inkl. Org-Vererbung (siehe utils/planAccess.js).
@@ -807,7 +808,11 @@ router.get("/upcoming", verifyToken, async (req, res) => {
         date: e.date,
         severity: e.severity,
         contractName: e.contract?.name,
-        daysUntil: Math.ceil((new Date(e.date) - now) / (1000 * 60 * 60 * 24))
+        // 📅 QA-Punkt 2 (BUG-007): Events liegen auf 12:00 UTC → ceil(Zeitdifferenz) machte
+        // aus "morgen" ein "in 2 Tagen" (Dashboard/Widget durchgängig +1). Kalendertage via
+        // gemeinsamem Util — derselbe Wurzel-Fix wie am 28.06.2026 in Mails/Notifications,
+        // diese Anzeige-Route war damals übersehen worden.
+        daysUntil: calendarDaysUntil(e.date, now)
       }))
     });
     

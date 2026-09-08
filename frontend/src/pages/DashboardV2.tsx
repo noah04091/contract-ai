@@ -1030,7 +1030,8 @@ export default function DashboardV2() {
                     </span>
                   </div>
                   <span className={`${styles.daysBadge} ${event.daysUntil <= 7 ? styles.daysBadgeUrgent : ''}`}>
-                    {event.daysUntil} {event.daysUntil === 1 ? 'Tag' : 'Tage'}
+                    {/* QA-Punkt 2 (BUG-007): daysUntil sind jetzt echte Kalendertage — 0/1 wie im Kalender benennen */}
+                    {event.daysUntil === 0 ? 'Heute' : event.daysUntil === 1 ? 'Morgen' : `${event.daysUntil} Tage`}
                   </span>
                 </div>
               ))}
