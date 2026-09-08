@@ -586,9 +586,9 @@ export default function Chat() {
       <WelcomePopup
         featureId="chat"
         icon={<MessageCircle size={32} />}
-        title="Ihr KI-Rechtsassistent"
-        description="Stellen Sie Fragen zu Verträgen, Klauseln oder rechtlichen Themen. Der KI-Assistent gibt Ihnen strukturierte Einschätzungen und konkrete Handlungsempfehlungen."
-        tip="Laden Sie einen Vertrag hoch, um kontextbezogene Fragen zu stellen."
+        title="Dein KI-Rechtsassistent"
+        description="Stelle Fragen zu Verträgen, Klauseln oder rechtlichen Themen. Der KI-Assistent gibt dir strukturierte Einschätzungen und konkrete Handlungsempfehlungen."
+        tip="Lade einen Vertrag hoch, um kontextbezogene Fragen zu stellen."
       />
       <Helmet>
         <title>Legal Chat 2.0 – KI-Rechtsanwalt für Vertragsrecht | Contract AI</title>

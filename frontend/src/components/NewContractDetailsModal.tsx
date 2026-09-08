@@ -1648,7 +1648,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               </button>
               <button
                 onClick={async () => {
-                  if (!window.confirm('Möchten Sie die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?')) return;
+                  if (!window.confirm('Möchtest du die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?')) return;
                   try {
                     setSaving(true);
                     const token = localStorage.getItem("token");

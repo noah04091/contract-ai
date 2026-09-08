@@ -419,7 +419,7 @@ export default function CancellationArchive() {
 
   const handleReactivate = async () => {
     if (!detail) return;
-    if (!window.confirm("Möchten Sie die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?")) return;
+    if (!window.confirm("Möchtest du die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?")) return;
     setActionLoading("reactivate");
     try {
       const res = await fetch(`/api/cancellations/${detail._id}/reactivate`, {
@@ -592,7 +592,7 @@ export default function CancellationArchive() {
               </div>
               <div className={styles.titleText}>
                 <h1>Kündigungsarchiv</h1>
-                <p className={styles.subtitle}>Verwalten und verfolgen Sie Ihre Vertragskündigungen</p>
+                <p className={styles.subtitle}>Verwalte und verfolge deine Vertragskündigungen</p>
               </div>
             </div>
             <div className={styles.headerActions}>
@@ -748,10 +748,10 @@ export default function CancellationArchive() {
               {viewMode === "archived"
                 ? "Archivierte Kündigungen erscheinen hier."
                 : filter === "all" && !searchQuery
-                  ? "Sobald Sie einen Vertrag kündigen, erscheint er hier."
+                  ? "Sobald du einen Vertrag kündigst, erscheint er hier."
                   : searchQuery
                     ? `Keine Treffer für "${searchQuery}".`
-                    : "Versuchen Sie einen anderen Filter."
+                    : "Versuche einen anderen Filter."
               }
             </p>
             {viewMode === "active" && filter === "all" && !searchQuery && (

@@ -70,7 +70,7 @@ const SavedAlternatives: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Möchten Sie diese Alternative wirklich löschen?')) return;
+    if (!confirm('Möchtest du diese Alternative wirklich löschen?')) return;
 
     try {
       const response = await fetch(`/api/saved-alternatives/${id}`, {

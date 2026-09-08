@@ -780,7 +780,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             toast.warning("⚠️ PDF mit reduzierter Qualität exportiert");
           } catch (fallbackError) {
             console.error("❌ Auch Fallback fehlgeschlagen:", fallbackError);
-            toast.error("PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.");
+            toast.error("PDF-Export fehlgeschlagen. Bitte versuche es erneut.");
           }
         }
         

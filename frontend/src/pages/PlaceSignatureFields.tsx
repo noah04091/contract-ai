@@ -136,7 +136,7 @@ export default function PlaceSignatureFields() {
 
     if (signersWithoutFields.length > 0) {
       const missing = signersWithoutFields.map(s => `- ${s.name} (${s.email})`).join('\n');
-      alert(`⚠️ Folgende Unterzeichner haben keine Signaturfelder:\n\n${missing}\n\nBitte platzieren Sie für jeden Unterzeichner mindestens ein Signaturfeld.`);
+      alert(`⚠️ Folgende Unterzeichner haben keine Signaturfelder:\n\n${missing}\n\nBitte platziere für jeden Unterzeichner mindestens ein Signaturfeld.`);
       return;
     }
 
@@ -305,11 +305,11 @@ export default function PlaceSignatureFields() {
               </button>
             </div>
             <ul className={styles.helpList}>
-              <li>Wählen Sie einen Feldtyp (Signatur, Datum, Text) und einen Unterzeichner aus</li>
-              <li>Tippen Sie auf "Feld hinzufügen" um ein Feld zu platzieren</li>
-              <li>Ziehen Sie Felder an die gewünschte Position</li>
+              <li>Wähle einen Feldtyp (Signatur, Datum, Text) und einen Unterzeichner aus</li>
+              <li>Tippe auf "Feld hinzufügen", um ein Feld zu platzieren</li>
+              <li>Ziehe Felder an die gewünschte Position</li>
               <li>Jeder Unterzeichner braucht mindestens ein Signaturfeld</li>
-              <li>Tippen Sie auf "Speichern & Absenden" zum Versenden</li>
+              <li>Tippe auf "Speichern & Absenden" zum Versenden</li>
             </ul>
           </div>
         </div>

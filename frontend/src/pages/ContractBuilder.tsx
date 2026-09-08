@@ -30,7 +30,7 @@ function handleCreationLimitError(err: unknown, fallbackMessage: string): boolea
     return true;
   }
   if (error?.limitReached) {
-    toast.error(error.message || 'Monatliches Limit erreicht. Bitte upgraden Sie Ihren Plan.', { autoClose: 6000 });
+    toast.error(error.message || 'Monatliches Limit erreicht. Bitte upgrade deinen Plan.', { autoClose: 6000 });
     return true;
   }
   if (error?.status === 403) {
@@ -133,7 +133,7 @@ const ContractBuilder: React.FC = () => {
     setConfirmDialog({
       isOpen: true,
       title: 'Upgrade erforderlich',
-      message: `${feature} ist in Ihrem aktuellen Plan (${userPlan === 'free' ? 'Free' : userPlan}) nicht verfügbar. Upgraden Sie auf Business oder Enterprise um diese Funktion zu nutzen.`,
+      message: `${feature} ist in deinem aktuellen Plan (${userPlan === 'free' ? 'Free' : userPlan}) nicht verfügbar. Upgrade auf Business oder Enterprise um diese Funktion zu nutzen.`,
       confirmText: 'Pläne ansehen',
       confirmStyle: 'primary',
       onConfirm: () => {
@@ -273,7 +273,7 @@ const ContractBuilder: React.FC = () => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
-        e.returnValue = 'Sie haben ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?';
+        e.returnValue = 'Du hast ungespeicherte Änderungen. Möchtest du die Seite wirklich verlassen?';
         return e.returnValue;
       }
     };
@@ -498,7 +498,7 @@ const ContractBuilder: React.FC = () => {
 
   // Handler für Entwurf löschen
   const handleDeleteDraft = async (draftId: string) => {
-    if (!confirm('Möchten Sie diesen Entwurf wirklich löschen?')) return;
+    if (!confirm('Möchtest du diesen Entwurf wirklich löschen?')) return;
 
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'https://api.contract-ai.de';
@@ -623,12 +623,12 @@ const ContractBuilder: React.FC = () => {
   const handleExportPdf = async () => {
     // VALIDIERUNG: Prüfe ob Dokument existiert und nicht leer ist
     if (!currentDocument) {
-      alert('Kein Dokument geladen. Bitte erstellen Sie zuerst ein Dokument.');
+      alert('Kein Dokument geladen. Bitte erstelle zuerst ein Dokument.');
       return;
     }
 
     if (!currentDocument.content.blocks || currentDocument.content.blocks.length === 0) {
-      alert('Das Dokument ist leer. Bitte fügen Sie mindestens einen Block hinzu bevor Sie exportieren.');
+      alert('Das Dokument ist leer. Bitte füge mindestens einen Block hinzu, bevor du exportierst.');
       return;
     }
 
@@ -1016,7 +1016,7 @@ const ContractBuilder: React.FC = () => {
       console.error('[PDF Export] Failed:', error);
       setView('edit');
       console.error('PDF-Export Fehler:', error);
-      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      alert('PDF-Export fehlgeschlagen. Bitte versuche es erneut.');
     } finally {
       setIsExporting(false);
     }
@@ -1077,7 +1077,7 @@ const ContractBuilder: React.FC = () => {
       setConfirmDialog({
         isOpen: true,
         title: 'Ungespeicherte Änderungen',
-        message: 'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich schließen?',
+        message: 'Du hast ungespeicherte Änderungen. Möchtest du wirklich schließen?',
         confirmText: 'Schließen',
         confirmStyle: 'warning',
         onConfirm: () => {
@@ -1218,7 +1218,7 @@ const ContractBuilder: React.FC = () => {
     // TIMEOUT: Abbruch nach 60 Sekunden
     const timeoutId = setTimeout(() => {
       setIsGeneratingClause(false);
-      alert('Die KI-Generierung hat zu lange gedauert (>60 Sekunden). Bitte versuchen Sie es erneut mit einer kürzeren Anfrage.');
+      alert('Die KI-Generierung hat zu lange gedauert (>60 Sekunden). Bitte versuche es erneut mit einer kürzeren Anfrage.');
     }, 60000);
 
     try {
@@ -1266,9 +1266,9 @@ const ContractBuilder: React.FC = () => {
       if (isUpgradeError(error)) {
         showUpgradeHint('KI-Klausel-Generierung');
       } else if (errorMessage.includes('abgelaufen') || errorMessage.includes('anmelden')) {
-        alert('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+        alert('Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.');
       } else if (errorMessage.includes('Netzwerk') || errorMessage.includes('fetch')) {
-        alert('Netzwerkfehler. Bitte prüfen Sie Ihre Internetverbindung.');
+        alert('Netzwerkfehler. Bitte prüfe deine Internetverbindung.');
       } else {
         alert(`Fehler bei der KI-Generierung: ${errorMessage}`);
       }
@@ -1290,7 +1290,7 @@ const ContractBuilder: React.FC = () => {
       if (isUpgradeError(error)) {
         showUpgradeHint('Rechtsprüfung (Legal Score)');
       } else {
-        alert('Fehler bei der Rechtsprüfung. Bitte versuchen Sie es erneut.');
+        alert('Fehler bei der Rechtsprüfung. Bitte versuche es erneut.');
       }
     } finally {
       setIsCalculatingScore(false);
@@ -1303,7 +1303,7 @@ const ContractBuilder: React.FC = () => {
     const selectedBlock = currentDocument?.content.blocks.find(b => b.id === selectedBlockId);
 
     if (!selectedBlock || selectedBlock.type !== 'clause') {
-      alert('Bitte wählen Sie zuerst eine Klausel aus, die optimiert werden soll.');
+      alert('Bitte wähle zuerst eine Klausel aus, die optimiert werden soll.');
       return;
     }
 
@@ -1333,7 +1333,7 @@ const ContractBuilder: React.FC = () => {
       if (isUpgradeError(error)) {
         showUpgradeHint('KI-Optimierung');
       } else {
-        alert('Fehler bei der Optimierung. Bitte versuchen Sie es erneut.');
+        alert('Fehler bei der Optimierung. Bitte versuche es erneut.');
       }
     } finally {
       setIsOptimizing(false);
@@ -1762,7 +1762,7 @@ const ContractBuilder: React.FC = () => {
       }
     } catch (err) {
       console.error('Import-Fehler:', err);
-      setImportError('Netzwerkfehler. Bitte versuchen Sie es erneut.');
+      setImportError('Netzwerkfehler. Bitte versuche es erneut.');
     } finally {
       setIsImporting(false);
     }
@@ -2084,7 +2084,7 @@ const ContractBuilder: React.FC = () => {
       <>
         <Helmet>
           <title>Contract Builder | Contract AI</title>
-          <meta name="description" content="Erstellen Sie Verträge visuell per Drag & Drop. Wählen Sie eine Vorlage oder starten Sie von Grund auf." />
+          <meta name="description" content="Erstelle Verträge visuell per Drag & Drop. Wähle eine Vorlage oder starte von Grund auf." />
         </Helmet>
         <div className={styles.galleryPage}>
           <div className={styles.galleryInner}>
@@ -2103,7 +2103,7 @@ const ContractBuilder: React.FC = () => {
               </div>
               <h1 className={styles.galleryTitle}>Vertrag erstellen</h1>
               <p className={styles.gallerySubtitle}>
-                Wählen Sie eine Vorlage als Ausgangspunkt oder starten Sie mit einem leeren Dokument.
+                Wähle eine Vorlage als Ausgangspunkt oder starte mit einem leeren Dokument.
                 Alle Vorlagen können vollständig angepasst werden.
               </p>
             </div>
@@ -2378,7 +2378,7 @@ const ContractBuilder: React.FC = () => {
                     <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeSystem}`}>Blanko</span>
                   </div>
                   <h3 className={styles.galleryCardTitle}>Leeres Dokument</h3>
-                  <p className={styles.galleryCardDesc}>Starten Sie mit einem leeren Dokument und bauen Sie Ihren Vertrag Schritt für Schritt auf.</p>
+                  <p className={styles.galleryCardDesc}>Starte mit einem leeren Dokument und baue deinen Vertrag Schritt für Schritt auf.</p>
                   <div className={styles.galleryCardMeta}>
                     <span className={styles.galleryCardMetaItem}><Sparkles size={12} /> Komplett individuell</span>
                   </div>
@@ -2423,7 +2423,7 @@ const ContractBuilder: React.FC = () => {
                   <span className={`${styles.galleryCardBadge} ${styles.galleryCardBadgeUser}`}>Individuell</span>
                 </div>
                 <h3 className={styles.galleryCardTitle}>Vorlage erstellen</h3>
-                <p className={styles.galleryCardDesc}>Erstellen Sie eine eigene Vorlage mit individuellen Feldern und Variablen.</p>
+                <p className={styles.galleryCardDesc}>Erstelle eine eigene Vorlage mit individuellen Feldern und Variablen.</p>
                 <div className={styles.galleryCardMeta}>
                   <span className={styles.galleryCardMetaItem}><PenTool size={12} /> Eigene Felder definieren</span>
                 </div>
@@ -2725,9 +2725,9 @@ const ContractBuilder: React.FC = () => {
                 </div>
 
                 <div style={{ background: '#f0f9ff', borderRadius: 10, padding: '14px 16px', fontSize: 13, color: '#1e40af', lineHeight: 1.5 }}>
-                  <strong>So funktioniert's:</strong> Schreiben Sie Ihren Vertrag im Builder. Markieren Sie
+                  <strong>So funktioniert's:</strong> Schreibe deinen Vertrag im Builder. Markiere
                   Stellen wie Namen, Daten oder Beträge als Variable mit dem <span style={{ fontFamily: 'monospace', background: '#dbeafe', padding: '1px 5px', borderRadius: 4 }}>{'{{ }}'} Variable</span>-Button.
-                  Danach speichern Sie alles als Vorlage — beim nächsten Mal nur noch Variablen ausfüllen, fertig.
+                  Danach speicherst du alles als Vorlage — beim nächsten Mal nur noch Variablen ausfüllen, fertig.
                 </div>
               </div>
 
@@ -2816,7 +2816,7 @@ const ContractBuilder: React.FC = () => {
                 )}
 
                 <div style={{ background: '#f0f9ff', borderRadius: 10, padding: '12px 16px', marginTop: 14, fontSize: 13, color: '#1e40af', lineHeight: 1.5 }}>
-                  <strong>Was passiert:</strong> Text wird extrahiert, Struktur erkannt (Titel, Parteien, Klauseln, Unterschriften) und automatisch in Builder-Blöcke umgewandelt. Danach können Sie alles bearbeiten.
+                  <strong>Was passiert:</strong> Text wird extrahiert, Struktur erkannt (Titel, Parteien, Klauseln, Unterschriften) und automatisch in Builder-Blöcke umgewandelt. Danach kannst du alles bearbeiten.
                 </div>
               </div>
 
@@ -2872,7 +2872,7 @@ const ContractBuilder: React.FC = () => {
 
                 <div className={styles.quickFillInfo}>
                   <p className={styles.quickFillInfoText}>
-                    {quickFillUserTemplate.description || 'Eigene Vorlage'} — Füllen Sie die Felder aus oder überspringen Sie diesen Schritt.
+                    {quickFillUserTemplate.description || 'Eigene Vorlage'} — Fülle die Felder aus oder überspringe diesen Schritt.
                   </p>
                 </div>
 
@@ -2970,7 +2970,7 @@ const ContractBuilder: React.FC = () => {
               {/* Info */}
               <div className={styles.quickFillInfo}>
                 <p className={styles.quickFillInfoText}>
-                  {quickFillTemplate.description} — Füllen Sie die Felder aus oder überspringen Sie diesen Schritt.
+                  {quickFillTemplate.description} — Fülle die Felder aus oder überspringe diesen Schritt.
                   Alle Werte können später im Builder angepasst werden.
                 </p>
               </div>
@@ -3195,7 +3195,7 @@ const ContractBuilder: React.FC = () => {
     <>
     <Helmet>
       <title>Contract Builder – Visueller Vertragsbaukasten | Contract AI</title>
-      <meta name="description" content="Erstellen Sie Verträge visuell per Drag & Drop. Nutzen Sie Bausteine, Variablen und KI-Unterstützung für professionelle Verträge." />
+      <meta name="description" content="Erstelle Verträge visuell per Drag & Drop. Nutze Bausteine, Variablen und KI-Unterstützung für professionelle Verträge." />
       <meta name="robots" content="noindex, nofollow" />
     </Helmet>
     <div className={styles.builderPage}>
@@ -3203,8 +3203,8 @@ const ContractBuilder: React.FC = () => {
         featureId="contract-builder"
         icon={<Edit3 size={32} />}
         title="Contract Builder"
-        description="Willkommen im visuellen Vertragsbaukasten. Ziehen Sie Bausteine auf die Arbeitsfläche, bearbeiten Sie Klauseln per Doppelklick, und fügen Sie Variablen ein."
-        tip="Tipp: Markieren Sie Text in einer Klausel und klicken Sie den {{ }} Variable-Button, um Platzhalter zu erstellen. Strg+S zum Speichern."
+        description="Willkommen im visuellen Vertragsbaukasten. Ziehe Bausteine auf die Arbeitsfläche, bearbeite Klauseln per Doppelklick, und füge Variablen ein."
+        tip="Tipp: Markiere Text in einer Klausel und klicke den {{ }} Variable-Button, um Platzhalter zu erstellen. Strg+S zum Speichern."
       />
       {/* Editor-Tour deaktiviert — WelcomePopup + Variable-Guide reichen als Onboarding.
           Die Tour flackerte am Seitenende wegen Fullscreen-Layout + Scroll-Konflikten. */}
@@ -3244,7 +3244,7 @@ const ContractBuilder: React.FC = () => {
                 // Kurz warten damit das Dokument lädt
                 await new Promise(r => setTimeout(r, 500));
               }
-              alert(`${bulkIdsFromUrl.length} Verträge erstellt. Exportieren Sie jeden einzeln über den PDF-Button oder öffnen Sie sie über die Tabs.`);
+              alert(`${bulkIdsFromUrl.length} Verträge erstellt. Exportiere jeden einzeln über den PDF-Button oder öffne sie über die Tabs.`);
             }}
             title="Info zu allen Verträgen"
           >
@@ -3265,7 +3265,7 @@ const ContractBuilder: React.FC = () => {
                 setConfirmDialog({
                   isOpen: true,
                   title: 'Ungespeicherte Änderungen',
-                  message: 'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich zur Vorlagen-Übersicht zurückkehren?',
+                  message: 'Du hast ungespeicherte Änderungen. Möchtest du wirklich zur Vorlagen-Übersicht zurückkehren?',
                   confirmText: 'Zurückkehren',
                   confirmStyle: 'warning',
                   onConfirm: () => {
@@ -3291,7 +3291,7 @@ const ContractBuilder: React.FC = () => {
                   setConfirmDialog({
                     isOpen: true,
                     title: 'Ungespeicherte Änderungen',
-                    message: 'Sie haben ungespeicherte Änderungen. Möchten Sie zur Vorlagen-Übersicht zurückkehren?',
+                    message: 'Du hast ungespeicherte Änderungen. Möchtest du zur Vorlagen-Übersicht zurückkehren?',
                     confirmText: 'Zur Übersicht',
                     confirmStyle: 'warning',
                     onConfirm: () => {
@@ -3590,7 +3590,7 @@ const ContractBuilder: React.FC = () => {
                 <span className={styles.variableGuideNum}>1</span>
                 <div>
                   <strong>Vertrag schreiben</strong>
-                  <p>Fügen Sie Klauseln hinzu und schreiben Sie Ihren Vertragstext. Doppelklick auf eine Klausel zum Bearbeiten.</p>
+                  <p>Füge Klauseln hinzu und schreibe deinen Vertragstext. Doppelklick auf eine Klausel zum Bearbeiten.</p>
                 </div>
               </div>
               <div className={styles.variableGuideStep}>
@@ -3604,7 +3604,7 @@ const ContractBuilder: React.FC = () => {
                 <span className={styles.variableGuideNum}>3</span>
                 <div>
                   <strong>Als Vorlage speichern</strong>
-                  <p>Mehr-Menü (⋮ oben rechts) → &ldquo;Als Vorlage speichern&rdquo;. Beim nächsten Mal: Quick-Fill mit Ihren Variablen.</p>
+                  <p>Mehr-Menü (⋮ oben rechts) → &ldquo;Als Vorlage speichern&rdquo;. Beim nächsten Mal: Quick-Fill mit deinen Variablen.</p>
                 </div>
               </div>
             </div>
@@ -3717,7 +3717,7 @@ const ContractBuilder: React.FC = () => {
                 <button
                   onClick={handleOptimize}
                   disabled={isOptimizing || !selectedBlockId}
-                  title={!selectedBlockId ? 'Wählen Sie zuerst eine Klausel aus' : ''}
+                  title={!selectedBlockId ? 'Wähle zuerst eine Klausel aus' : ''}
                 >
                   {isOptimizing ? (
                     <Loader2 size={14} className={styles.spinner} />
@@ -3731,7 +3731,7 @@ const ContractBuilder: React.FC = () => {
               <div className={styles.aiChatSection}>
                 <h4>Fragen zum Vertrag</h4>
                 <p className={styles.aiHint}>
-                  Der KI-Assistent kann Ihnen bei rechtlichen Fragen zu Ihrem Vertrag helfen.
+                  Der KI-Assistent kann dir bei rechtlichen Fragen zu deinem Vertrag helfen.
                 </p>
                 <div className={styles.aiComingSoon}>
                   <Sparkles size={24} />
@@ -3762,7 +3762,7 @@ const ContractBuilder: React.FC = () => {
 
             <div className={styles.modalContent}>
               <label className={styles.inputLabel}>
-                Beschreiben Sie, welche Klausel Sie benötigen:
+                Beschreibe, welche Klausel du benötigst:
               </label>
               <textarea
                 className={styles.aiPromptInput}
@@ -3955,9 +3955,9 @@ const ContractBuilder: React.FC = () => {
                   </h4>
                   <p className={styles.scoreDescription}>
                     {currentDocument.legalScore.totalScore >= 80
-                      ? 'Ihr Vertrag erfüllt die wichtigsten rechtlichen Standards.'
+                      ? 'Dein Vertrag erfüllt die wichtigsten rechtlichen Standards.'
                       : currentDocument.legalScore.totalScore >= 60
-                      ? 'Es gibt einige Punkte, die Sie überprüfen sollten.'
+                      ? 'Es gibt einige Punkte, die du überprüfen solltest.'
                       : 'Wir empfehlen eine Überarbeitung wichtiger Klauseln.'}
                   </p>
                 </div>
@@ -4122,7 +4122,7 @@ const ContractBuilder: React.FC = () => {
 
             <div className={styles.saveTemplateContent}>
               <p className={styles.saveTemplateInfo}>
-                Speichern Sie dieses Dokument als wiederverwendbare Vorlage.
+                Speichere dieses Dokument als wiederverwendbare Vorlage.
               </p>
 
               <div className={styles.formGroup}>

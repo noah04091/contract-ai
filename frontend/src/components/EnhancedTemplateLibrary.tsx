@@ -52,7 +52,7 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
   const handleDeleteUserTemplate = async (templateId: string, templateName: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent template selection
 
-    if (!window.confirm(`Möchten Sie die Vorlage "${templateName}" wirklich löschen?`)) {
+    if (!window.confirm(`Möchtest du die Vorlage "${templateName}" wirklich löschen?`)) {
       return;
     }
 

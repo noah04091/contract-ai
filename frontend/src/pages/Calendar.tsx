@@ -512,7 +512,7 @@ ${customerName}`
 
   const handleSend = async () => {
     if (!recipientEmail || !subject || !reminderText) {
-      toast.error('Bitte füllen Sie alle Felder aus');
+      toast.error('Bitte fülle alle Felder aus');
       return;
     }
     setSending(true);
@@ -1357,7 +1357,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
             {/* Dismiss Button - Separate Row */}
             <motion.button
               onClick={() => {
-                if (window.confirm('Möchten Sie diese Erinnerung wirklich dauerhaft ausblenden?')) {
+                if (window.confirm('Möchtest du diese Erinnerung wirklich dauerhaft ausblenden?')) {
                   onAction("dismiss", currentEvent.id);
                 }
               }}
@@ -2055,7 +2055,7 @@ function CreateEventModal({ date, onClose, onEventCreated, initialContractId, in
 
   const handleSaveEvent = async () => {
     if (!formData.title.trim()) {
-      toast.error('Bitte geben Sie einen Titel ein');
+      toast.error('Bitte gib einen Titel ein');
       return;
     }
 
@@ -2967,7 +2967,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
 
   const handleSave = async () => {
     if (!formData.title.trim()) {
-      toast.error('Bitte geben Sie einen Titel ein');
+      toast.error('Bitte gib einen Titel ein');
       return;
     }
 
@@ -3022,7 +3022,7 @@ function EditEventModal({ event, onClose, onSave, onDelete }: EditEventModalProp
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Möchten Sie dieses Ereignis wirklich löschen?')) {
+    if (!window.confirm('Möchtest du dieses Ereignis wirklich löschen?')) {
       return;
     }
 
@@ -3567,7 +3567,7 @@ export default function CalendarPage() {
         toast.error('Kündigungsdaten nicht gefunden');
         return;
       }
-      if (!window.confirm('Möchten Sie die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?')) return;
+      if (!window.confirm('Möchtest du die Kündigung wirklich zurücknehmen und den Vertrag reaktivieren?')) return;
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(`/api/cancellations/${ev.metadata.cancellationId}/reactivate`, {

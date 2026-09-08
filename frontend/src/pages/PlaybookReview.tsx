@@ -380,7 +380,7 @@ const PlaybookReview: React.FC = () => {
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('Text') || msg.includes('text') || msg.includes('kurz')) {
-        toast.error('Dieser Vertrag hat keinen lesbaren Text. Bitte wählen Sie einen anderen Vertrag oder laden Sie eine neue PDF hoch.');
+        toast.error('Dieser Vertrag hat keinen lesbaren Text. Bitte wähle einen anderen Vertrag oder lade eine neue PDF hoch.');
       } else {
         toast.error(msg || 'Fehler bei der Extraktion');
       }
@@ -391,11 +391,11 @@ const PlaybookReview: React.FC = () => {
 
   const handleSavePlaybook = async () => {
     if (!builderData.name.trim()) {
-      toast.error('Bitte geben Sie einen Namen ein');
+      toast.error('Bitte gib einen Namen ein');
       return;
     }
     if (generatedRules.length === 0) {
-      toast.error('Bitte fügen Sie mindestens eine Regel hinzu');
+      toast.error('Bitte füge mindestens eine Regel hinzu');
       return;
     }
 
@@ -664,7 +664,7 @@ const PlaybookReview: React.FC = () => {
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       if (msg.includes('Text') || msg.includes('text') || msg.includes('kurz')) {
-        toast.error('Dieser Vertrag hat keinen lesbaren Text. Bitte wählen Sie einen Vertrag mit extrahiertem Text.');
+        toast.error('Dieser Vertrag hat keinen lesbaren Text. Bitte wähle einen Vertrag mit extrahiertem Text.');
       } else {
         toast.error(msg || 'Fehler bei der Prüfung');
       }
@@ -836,7 +836,7 @@ const PlaybookReview: React.FC = () => {
         <h3>Meine Playbooks</h3>
         <button
           className={styles.btnPrimary}
-          onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgraden Sie auf Business oder Enterprise.'); return; } setView('builder'); setBuilderStep(1); }}
+          onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgrade auf Business oder Enterprise.'); return; } setView('builder'); setBuilderStep(1); }}
         >
           <Plus size={18} strokeWidth={2.5} color="white" />
           Neues Playbook
@@ -847,10 +847,10 @@ const PlaybookReview: React.FC = () => {
         <div className={styles.emptyState}>
           <Shield size={48} />
           <h3>Noch keine Playbooks</h3>
-          <p>Erstellen Sie Ihr erstes Playbook, um Verträge systematisch zu prüfen.</p>
+          <p>Erstelle dein erstes Playbook, um Verträge systematisch zu prüfen.</p>
           <button
             className={styles.btnPrimary}
-            onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgraden Sie auf Business oder Enterprise.'); return; } setView('builder'); setBuilderStep(1); }}
+            onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgrade auf Business oder Enterprise.'); return; } setView('builder'); setBuilderStep(1); }}
           >
             <Sparkles size={16} />
             Erstes Playbook erstellen
@@ -979,7 +979,7 @@ const PlaybookReview: React.FC = () => {
             {CONTRACT_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
 
-          <label className={styles.fieldLabel}>Ihre Rolle</label>
+          <label className={styles.fieldLabel}>Deine Rolle</label>
           <div className={styles.roleGrid}>
             {(['auftraggeber', 'auftragnehmer', 'neutral'] as const).map(role => (
               <button
@@ -989,8 +989,8 @@ const PlaybookReview: React.FC = () => {
               >
                 <strong>{ROLE_LABELS[role]}</strong>
                 <span>
-                  {role === 'auftraggeber' ? 'Sie bestellen / kaufen ein'
-                    : role === 'auftragnehmer' ? 'Sie liefern / erbringen die Leistung'
+                  {role === 'auftraggeber' ? 'Du bestellst / kaufst ein'
+                    : role === 'auftragnehmer' ? 'Du lieferst / erbringst die Leistung'
                     : 'Beide Seiten gleichwertig'}
                 </span>
               </button>
@@ -1028,7 +1028,7 @@ const PlaybookReview: React.FC = () => {
       {/* Step 2: KI-Generierung */}
       {builderStep === 2 && (
         <div className={styles.wizardContent}>
-          <h3>Wie möchten Sie die Regeln erstellen?</h3>
+          <h3>Wie möchtest du die Regeln erstellen?</h3>
 
           {!showTemplates ? (
             <>
@@ -1082,7 +1082,7 @@ const PlaybookReview: React.FC = () => {
             </>
           ) : (
             <>
-              <p className={styles.hint}>Wählen Sie eine Vorlage. Die Regeln können Sie danach anpassen.</p>
+              <p className={styles.hint}>Wähle eine Vorlage. Die Regeln kannst du danach anpassen.</p>
               <div className={styles.templateGrid}>
                 {playbookTemplates.map(tpl => (
                   <div
@@ -1122,7 +1122,7 @@ const PlaybookReview: React.FC = () => {
               <div className={styles.modal} onClick={e => e.stopPropagation()}>
                 <h3>Mustervertrag auswählen</h3>
                 <p className={styles.hint} style={{ margin: '0 0 1rem 0' }}>
-                  Wählen Sie einen bestehenden Vertrag aus. Die KI extrahiert daraus automatisch Regeln für Ihr Playbook.
+                  Wähle einen bestehenden Vertrag aus. Die KI extrahiert daraus automatisch Regeln für dein Playbook.
                 </p>
                 <div className={styles.searchBox}>
                   <Search size={16} />
@@ -1155,7 +1155,7 @@ const PlaybookReview: React.FC = () => {
                           </div>
                         ))}
                       {contracts.length === 0 && (
-                        <p className={styles.emptyHint}>Keine Verträge gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
+                        <p className={styles.emptyHint}>Keine Verträge gefunden. Lade zuerst einen Vertrag hoch.</p>
                       )}
                     </>
                   )}
@@ -1183,7 +1183,7 @@ const PlaybookReview: React.FC = () => {
         <div className={styles.wizardContent}>
           <h3>Regeln prüfen & anpassen</h3>
           <p className={styles.hint}>
-            {generatedRules.length} Regeln erstellt. Klicken Sie auf eine Regel, um Titel, Schwellenwert, Kategorie, Notiz und Soll-Formulierung zu bearbeiten.
+            {generatedRules.length} Regeln erstellt. Klicke auf eine Regel, um Titel, Schwellenwert, Kategorie, Notiz und Soll-Formulierung zu bearbeiten.
           </p>
 
           <div className={styles.rulesList}>
@@ -1310,7 +1310,7 @@ const PlaybookReview: React.FC = () => {
                         Soll-Formulierung <span className={styles.fieldLabelOptional}>(optional)</span>
                       </label>
                       <p className={styles.fieldHint}>
-                        Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen — präzisere Empfehlungen. Kann leer bleiben.
+                        Deine ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen — präzisere Empfehlungen. Kann leer bleiben.
                       </p>
                       <textarea
                         className={`${styles.textarea} ${styles.standardTextArea}`}
@@ -1394,7 +1394,7 @@ const PlaybookReview: React.FC = () => {
             </p>
           </div>
           <div className={styles.detailActions}>
-            <button className={styles.btnPrimary} onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgraden Sie auf Business oder Enterprise.'); return; } handleOpenCheck(); }} disabled={isChecking}>
+            <button className={styles.btnPrimary} onClick={() => { if (!isPremium) { toast.error('Playbook Review ist ein Premium-Feature. Bitte upgrade auf Business oder Enterprise.'); return; } handleOpenCheck(); }} disabled={isChecking}>
               {isChecking ? <Loader2 size={16} className={styles.spinner} /> : <Play size={16} />}
               Vertrag prüfen
             </button>
@@ -1568,7 +1568,7 @@ const PlaybookReview: React.FC = () => {
                       Soll-Formulierung <span className={styles.fieldLabelOptional}>(optional)</span>
                     </label>
                     <p className={styles.fieldHint}>
-                      Ihre ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen — präzisere Empfehlungen. Kann leer bleiben.
+                      Deine ideale Vertragsklausel. Wird bei der Prüfung direkt mit dem Vertrag verglichen — präzisere Empfehlungen. Kann leer bleiben.
                     </p>
                     <textarea
                       className={`${styles.textarea} ${styles.standardTextArea}`}
@@ -1658,7 +1658,7 @@ const PlaybookReview: React.FC = () => {
               ))}
             </div>
         ) : (
-          <p className={styles.emptyHint}>Noch keine Prüfungen durchgeführt. Klicken Sie oben auf "Vertrag prüfen".</p>
+          <p className={styles.emptyHint}>Noch keine Prüfungen durchgeführt. Klicke oben auf "Vertrag prüfen".</p>
         )}
 
         {/* Check Modal */}
@@ -1697,7 +1697,7 @@ const PlaybookReview: React.FC = () => {
                         </div>
                       ))}
                     {contracts.length === 0 && (
-                      <p className={styles.emptyHint}>Keine Verträge gefunden. Laden Sie zuerst einen Vertrag hoch.</p>
+                      <p className={styles.emptyHint}>Keine Verträge gefunden. Lade zuerst einen Vertrag hoch.</p>
                     )}
                   </>
                 )}
@@ -1935,16 +1935,16 @@ const PlaybookReview: React.FC = () => {
 
               {expandedResults.has(result._id || String(index)) && (
                 <div className={styles.resultColumns}>
-                  {/* LINKS: Ihre Anforderung */}
+                  {/* LINKS: Deine Anforderung */}
                   <div className={styles.resultLeft}>
-                    <h4 className={styles.columnLabel}>Ihre Anforderung</h4>
+                    <h4 className={styles.columnLabel}>Deine Anforderung</h4>
                     <div className={styles.detailBlock}>
                       <label>Regel:</label>
                       <p>{result.ruleTitle}</p>
                     </div>
                     {getRuleStandardText(result.ruleId) && (
                       <div className={`${styles.detailBlock} ${styles.standardBlock}`}>
-                        <label>Ihre Soll-Formulierung:</label>
+                        <label>Deine Soll-Formulierung:</label>
                         <p>{getRuleStandardText(result.ruleId)}</p>
                         <button
                           className={styles.copyBtn}
@@ -2093,7 +2093,7 @@ const PlaybookReview: React.FC = () => {
           <h1>Playbook Review</h1>
         </div>
         <p className={styles.headerSubtitle}>
-          Definieren Sie Ihre Vertrags-Standards und prüfen Sie neue Verträge automatisch dagegen.
+          Definiere deine Vertrags-Standards und prüfe neue Verträge automatisch dagegen.
         </p>
       </div>
 
@@ -2101,8 +2101,8 @@ const PlaybookReview: React.FC = () => {
         featureId="playbook-review"
         icon={<Shield size={32} />}
         title="Willkommen beim Playbook Review"
-        description="Definieren Sie Ihre Vertrags-Standards als Playbook und prüfen Sie eingehende Verträge automatisch dagegen. Die KI zeigt Ihnen sofort, was passt, was fehlt und was nachverhandelt werden muss."
-        tip="Tipp: Starten Sie mit 'Neues Playbook' und wählen Sie eine fertige Vorlage — in 30 Sekunden ist Ihr erstes Playbook einsatzbereit."
+        description="Definiere deine Vertrags-Standards als Playbook und prüfe eingehende Verträge automatisch dagegen. Die KI zeigt dir sofort, was passt, was fehlt und was nachverhandelt werden muss."
+        tip="Tipp: Starte mit 'Neues Playbook' und wähle eine fertige Vorlage — in 30 Sekunden ist dein erstes Playbook einsatzbereit."
       />
 
       <div className={styles.content}>

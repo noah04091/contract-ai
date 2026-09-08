@@ -291,7 +291,7 @@ export default function ContractDetailsView({
   // Desktop PDF view (new tab)
   const handleViewContract = useCallback(async () => {
     if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
-      alert(`Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${fixUtf8Display(contract.name)}" erneut hoch.`);
+      alert(`Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte lade "${fixUtf8Display(contract.name)}" erneut hoch.`);
       return;
     }
 

@@ -70,7 +70,7 @@ export default function NewSignatureRequest() {
         if (response.ok) {
           const data = await response.json();
           setCurrentUser({
-            name: data.user?.name || "Sie",
+            name: data.user?.name || "Du",
             email: data.user?.email || ""
           });
         }
@@ -302,7 +302,7 @@ export default function NewSignatureRequest() {
             <div>
               <h1>Neue Signaturanfrage</h1>
               <p className={styles.headerSubtitle}>
-                Lassen Sie Dokumente digital unterschreiben
+                Lass Dokumente digital unterschreiben
               </p>
             </div>
           </div>
@@ -501,7 +501,7 @@ export default function NewSignatureRequest() {
                     </div>
                     <div className={styles.modeOptionContent}>
                       <span className={styles.modeOptionTitle}>Beide Parteien</span>
-                      <span className={styles.modeOptionDesc}>Sie und der Empfänger unterschreiben</span>
+                      <span className={styles.modeOptionDesc}>Du unterschreibst gemeinsam mit dem Empfänger</span>
                     </div>
                     {signatureMode === "BOTH_PARTIES" && (
                       <CheckCircle size={20} className={styles.modeCheckIcon} />
@@ -529,7 +529,7 @@ export default function NewSignatureRequest() {
                         />
                         <div className={styles.radioContent}>
                           <span className={styles.radioTitle}>Empfänger zuerst</span>
-                          <span className={styles.radioDesc}>Sie unterschreiben nach dem Empfänger</span>
+                          <span className={styles.radioDesc}>Du unterschreibst nach dem Empfänger</span>
                         </div>
                       </label>
                       <label className={`${styles.radioOption} ${signingOrder === "SENDER_FIRST" ? styles.radioOptionActive : ""}`}>
@@ -540,7 +540,7 @@ export default function NewSignatureRequest() {
                         />
                         <div className={styles.radioContent}>
                           <span className={styles.radioTitle}>Ich zuerst</span>
-                          <span className={styles.radioDesc}>Sie unterschreiben als Erster</span>
+                          <span className={styles.radioDesc}>Du unterschreibst als Erster</span>
                         </div>
                       </label>
                     </div>
@@ -675,7 +675,7 @@ export default function NewSignatureRequest() {
                 </label>
                 <textarea
                   id="signature-message"
-                  placeholder="Fügen Sie eine Nachricht für die Unterzeichner hinzu..."
+                  placeholder="Füge eine Nachricht für die Unterzeichner hinzu..."
                   aria-label="Persönliche Nachricht für die Unterzeichner"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
@@ -717,7 +717,7 @@ export default function NewSignatureRequest() {
         {/* Trust Badge */}
         <div className={styles.trustBadge}>
           <Shield size={16} />
-          <span>Ihre Dokumente werden sicher verschlüsselt übertragen</span>
+          <span>Deine Dokumente werden sicher verschlüsselt übertragen</span>
         </div>
       </div>
     </div>

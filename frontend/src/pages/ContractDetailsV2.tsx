@@ -687,7 +687,7 @@ export default function ContractDetailsV2() {
       printWindow.document.close();
       setTimeout(() => printWindow.print(), 300);
     } else {
-      toast.error('Pop-up blockiert. Bitte erlauben Sie Pop-ups für diese Seite.');
+      toast.error('Pop-up blockiert. Bitte erlaube Pop-ups für diese Seite.');
     }
   }, [contract, calendarEvents]);
 

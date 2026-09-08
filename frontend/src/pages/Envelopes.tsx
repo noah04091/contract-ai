@@ -488,7 +488,7 @@ export default function Envelopes() {
     setConfirmDialog({
       isOpen: true,
       title: "Signaturanfragen archivieren?",
-      message: `Möchten Sie ${selectedEnvelopeIds.length} Signaturanfrage(n) archivieren?`,
+      message: `Möchtest du ${selectedEnvelopeIds.length} Signaturanfrage(n) archivieren?`,
       confirmText: "Archivieren",
       confirmStyle: "warning",
       onConfirm: async () => {
@@ -554,7 +554,7 @@ export default function Envelopes() {
     setConfirmDialog({
       isOpen: true,
       title: "Endgültig löschen?",
-      message: `Sie sind dabei, ${selectedEnvelopeIds.length} Signaturanfrage(n) endgültig zu löschen. Diese Aktion kann nicht rückgängig gemacht werden.`,
+      message: `Du bist dabei, ${selectedEnvelopeIds.length} Signaturanfrage(n) endgültig zu löschen. Diese Aktion kann nicht rückgängig gemacht werden.`,
       confirmText: "Endgültig löschen",
       confirmStyle: "danger",
       onConfirm: async () => {
@@ -630,7 +630,7 @@ export default function Envelopes() {
     setConfirmDialog({
       isOpen: true,
       title: "Signaturanfrage stornieren?",
-      message: `Möchten Sie "${envelopeTitle}" wirklich stornieren? Die Unterzeichner können dann nicht mehr unterschreiben.`,
+      message: `Möchtest du "${envelopeTitle}" wirklich stornieren? Die Unterzeichner können dann nicht mehr unterschreiben.`,
       confirmText: "Stornieren",
       confirmStyle: "warning",
       onConfirm: async () => {
@@ -668,7 +668,7 @@ export default function Envelopes() {
     setConfirmDialog({
       isOpen: true,
       title: "Endgültig löschen?",
-      message: `Möchten Sie "${envelopeTitle}" wirklich endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
+      message: `Möchtest du "${envelopeTitle}" wirklich endgültig löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
       confirmText: "Endgültig löschen",
       confirmStyle: "danger",
       onConfirm: async () => {
@@ -707,7 +707,7 @@ export default function Envelopes() {
     setConfirmDialog({
       isOpen: true,
       title: "Wiederherstellen?",
-      message: `Möchten Sie "${envelopeTitle}" wiederherstellen? Die Signaturanfrage wird als Entwurf wiederhergestellt.`,
+      message: `Möchtest du "${envelopeTitle}" wiederherstellen? Die Signaturanfrage wird als Entwurf wiederhergestellt.`,
       confirmText: "Wiederherstellen",
       confirmStyle: "primary",
       onConfirm: async () => {
@@ -1075,7 +1075,7 @@ export default function Envelopes() {
     setConfirmDialog({
       isOpen: true,
       title: "Envelope duplizieren?",
-      message: `Möchten Sie "${envelope.title}" als Vorlage duplizieren?`,
+      message: `Möchtest du "${envelope.title}" als Vorlage duplizieren?`,
       confirmText: "Duplizieren",
       confirmStyle: "primary",
       onConfirm: () => {
@@ -1442,7 +1442,7 @@ export default function Envelopes() {
     setConfirmDialog({
       isOpen: true,
       title: "Erinnerungen versenden?",
-      message: `Möchten Sie ${pendingEnvs.length} Erinnerung(en) an ausstehende Unterzeichner versenden?`,
+      message: `Möchtest du ${pendingEnvs.length} Erinnerung(en) an ausstehende Unterzeichner versenden?`,
       confirmText: "Versenden",
       confirmStyle: "primary",
       onConfirm: async () => {
@@ -1540,7 +1540,7 @@ export default function Envelopes() {
     setConfirmDialog({
       isOpen: true,
       title: "Mehrere stornieren?",
-      message: `Möchten Sie ${selectedEnvelopeIds.length} Signaturanfrage(n) wirklich stornieren? Die Unterzeichner können dann nicht mehr unterschreiben.`,
+      message: `Möchtest du ${selectedEnvelopeIds.length} Signaturanfrage(n) wirklich stornieren? Die Unterzeichner können dann nicht mehr unterschreiben.`,
       confirmText: "Alle stornieren",
       confirmStyle: "warning",
       onConfirm: async () => {
@@ -1655,7 +1655,7 @@ export default function Envelopes() {
     <>
       <Helmet>
         <title>Digitale Signaturen – Verträge unterschreiben | Contract AI</title>
-        <meta name="description" content="Verwalten Sie digitale Signaturen: Verträge versenden, Unterschriften tracken und signierte Dokumente sicher speichern." />
+        <meta name="description" content="Verwalte digitale Signaturen: Verträge versenden, Unterschriften tracken und signierte Dokumente sicher speichern." />
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
@@ -1690,8 +1690,8 @@ export default function Envelopes() {
           featureId="envelopes"
           icon={<Send size={32} />}
           title="Digitale Signaturen"
-          description="Hier verwalten Sie alle Ihre Signaturanfragen. Senden Sie Verträge zur Unterschrift, verfolgen Sie den Status und laden Sie signierte Dokumente herunter."
-          tip="Klicken Sie auf eine Anfrage, um Details zu sehen und Erinnerungen zu versenden."
+          description="Hier verwaltest du alle deine Signaturanfragen. Sende Verträge zur Unterschrift, verfolge den Status und lade signierte Dokumente herunter."
+          tip="Klicke auf eine Anfrage, um Details zu sehen und Erinnerungen zu versenden."
         />
 
         <div className={styles.container}>
@@ -1702,7 +1702,7 @@ export default function Envelopes() {
             <div>
               <h1>Signaturanfragen</h1>
               <p className={styles.subtitle}>
-                Verwalten Sie Ihre digitalen Signaturen
+                Verwalte deine digitalen Signaturen
               </p>
             </div>
           </div>
@@ -2030,7 +2030,7 @@ export default function Envelopes() {
             <AlertCircle size={18} />
             <span>
               Stornierte Anfragen werden nach <strong>30 Tagen</strong> automatisch endgültig gelöscht.
-              Nutzen Sie "Wiederherstellen" um eine Anfrage zu retten.
+              Nutze "Wiederherstellen", um eine Anfrage zu retten.
             </span>
           </div>
         )}
@@ -2077,7 +2077,7 @@ export default function Envelopes() {
                 <>
                   <Archive size={64} className={styles.emptyIcon} />
                   <h3>Archiv ist leer</h3>
-                  <p>Sie haben noch keine Signaturanfragen archiviert.</p>
+                  <p>Du hast noch keine Signaturanfragen archiviert.</p>
                   <button
                     className={styles.emptyStateBtn}
                     onClick={() => setActiveFilter("all")}
@@ -2103,7 +2103,7 @@ export default function Envelopes() {
                 <>
                   <CheckCircle size={64} className={`${styles.emptyIcon} ${styles.emptyIconSuccess}`} />
                   <h3>Alles erledigt!</h3>
-                  <p>Sie haben keine offenen Signaturanfragen. Erstellen Sie eine neue Anfrage.</p>
+                  <p>Du hast keine offenen Signaturanfragen. Erstelle eine neue Anfrage.</p>
                   <button
                     className={styles.emptyStateBtnPrimary}
                     onClick={() => handleBlockedAction(() => navigate("/envelopes/new"))}
@@ -2117,7 +2117,7 @@ export default function Envelopes() {
                 <>
                   <FileText size={64} className={styles.emptyIcon} />
                   <h3>Noch keine abgeschlossenen Anfragen</h3>
-                  <p>Sobald Ihre Signaturanfragen vollständig unterschrieben sind, erscheinen sie hier.</p>
+                  <p>Sobald deine Signaturanfragen vollständig unterschrieben sind, erscheinen sie hier.</p>
                   <button
                     className={styles.emptyStateBtn}
                     onClick={() => setActiveFilter("all")}
@@ -2130,7 +2130,7 @@ export default function Envelopes() {
                 <>
                   <Mail size={64} className={styles.emptyIcon} />
                   <h3>Willkommen bei Digitale Signaturen</h3>
-                  <p>Erstellen Sie Ihre erste Signaturanfrage und lassen Sie Dokumente rechtssicher unterschreiben.</p>
+                  <p>Erstelle deine erste Signaturanfrage und lass Dokumente rechtssicher unterschreiben.</p>
                   <button
                     className={styles.emptyStateBtnPrimary}
                     onClick={() => handleBlockedAction(() => navigate("/envelopes/new"))}
@@ -3084,7 +3084,7 @@ export default function Envelopes() {
                   includeMargin={true}
                 />
                 <p className={styles.qrCodeText}>
-                  Scannen Sie diesen QR-Code mit Ihrem Smartphone, um das Dokument mobil zu signieren.
+                  Scanne diesen QR-Code mit deinem Smartphone, um das Dokument mobil zu signieren.
                 </p>
                 <div className={styles.qrCodeUrl}>
                   <code>{qrCodeUrl}</code>
@@ -3147,7 +3147,7 @@ export default function Envelopes() {
                     />
                   </div>
                   <p className={styles.editWarning}>
-                    ⚠️ Achtung: Wenn Sie die E-Mail-Adresse ändern, wird ein neuer Link generiert und an die neue Adresse gesendet.
+                    ⚠️ Achtung: Wenn du die E-Mail-Adresse änderst, wird ein neuer Link generiert und an die neue Adresse gesendet.
                   </p>
                   <button
                     className={styles.saveBtn}
@@ -3247,7 +3247,7 @@ export default function Envelopes() {
               </h3>
               <p style={{ color: '#64748b', marginBottom: '24px', lineHeight: '1.6' }}>
                 Digitale Signaturen sind nur mit einem Business- oder Enterprise-Plan verfügbar.
-                Upgraden Sie jetzt, um Verträge digital signieren zu lassen.
+                Upgrade jetzt, um Verträge digital signieren zu lassen.
               </p>
               <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
                 <button
