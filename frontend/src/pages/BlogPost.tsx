@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User, Share2, Twitter, Linkedin, Link2, ArrowRight } from 'lucide-react';
 import { Helmet } from "react-helmet-async";
@@ -55,6 +55,46 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
   const rawArticle = slug ? getArticleBySlug(slug) : null;
   const isNotFound = !!slug && !rawArticle;
   const currentArticle = article || rawArticle || articles[0]; // articles[0] nur wenn KEIN slug da ist
+
+  // Inhaltsverzeichnis aus den vorhandenen <h2> des Artikels.
+  // ⚠️ Es wird kein Text erfunden und keiner veraendert: die Ueberschriften
+  // bekommen ausschliesslich ein id-Attribut als Sprungmarke.
+  const { inhaltHtml, kapitel } = useMemo(() => {
+    const gefunden: { id: string; text: string }[] = [];
+    let lauf = 0;
+    const html = (currentArticle.content || '').replace(
+      /<h2([^>]*)>([\s\S]*?)<\/h2>/g,
+      (treffer: string, attr: string, innen: string) => {
+        if (/\sid=/.test(attr)) return treffer;
+        const text = innen.replace(/<[^>]+>/g, '').trim();
+        if (!text) return treffer;
+        lauf += 1;
+        const id = `abschnitt-${lauf}`;
+        gefunden.push({ id, text });
+        return `<h2${attr} id="${id}">${innen}</h2>`;
+      }
+    );
+    return { inhaltHtml: html, kapitel: gefunden };
+  }, [currentArticle.content]);
+
+  const [aktivesKapitel, setAktivesKapitel] = useState<string>('');
+  useEffect(() => {
+    if (!kapitel.length) return;
+    const beobachter = new IntersectionObserver(
+      (eintraege) => {
+        const sichtbar = eintraege
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (sichtbar) setAktivesKapitel(sichtbar.target.id);
+      },
+      { rootMargin: '-90px 0px -70% 0px', threshold: 0 }
+    );
+    const knoten = kapitel
+      .map((k) => document.getElementById(k.id))
+      .filter((n): n is HTMLElement => Boolean(n));
+    knoten.forEach((n) => beobachter.observe(n));
+    return () => beobachter.disconnect();
+  }, [kapitel, currentArticle.slug]);
 
   // 🔧 SEO-OPTIMIERUNG: Dynamische Meta-Daten
   const currentSlug = slug || currentArticle.slug;
@@ -333,10 +373,29 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
         {/* Article Body */}
         <section className={styles.articleBody}>
           <div className={styles.container}>
+            {kapitel.length > 2 && (
+              <aside className={styles.kapitelSpalte} aria-label="Inhalt dieses Artikels">
+                <div className={styles.kapitelBox}>
+                  <span className={styles.kapitelTitel}>In diesem Artikel</span>
+                  <nav className={styles.kapitelNav}>
+                    {kapitel.map((k, i) => (
+                      <a
+                        key={k.id}
+                        href={`#${k.id}`}
+                        className={`${styles.kapitelLink} ${aktivesKapitel === k.id ? styles.kapitelAktiv : ''}`}
+                      >
+                        <span className={styles.kapitelNummer}>{String(i + 1).padStart(2, '0')}</span>
+                        <span className={styles.kapitelText}>{k.text}</span>
+                      </a>
+                    ))}
+                  </nav>
+                </div>
+              </aside>
+            )}
             <div className={styles.articleContentFull}>
               <div
                 className={styles.content}
-                dangerouslySetInnerHTML={{ __html: currentArticle.content }}
+                dangerouslySetInnerHTML={{ __html: inhaltHtml }}
               />
 
               {/* Share Section */}

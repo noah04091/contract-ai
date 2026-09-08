@@ -143,7 +143,7 @@
 
 /* ===================== ARTIKELTEXT ===================== */
 .articleBody { padding: clamp(10px, 2vw, 20px) 0 clamp(30px, 4vw, 50px); }
-.articleContentFull { max-width: 680px; min-width: 0; }
+.articleContentFull { max-width: 645px; min-width: 0; }
 
 .content {
   font-size: clamp(16.5px, 1.2vw, 17.5px);
@@ -658,4 +658,215 @@
 @media (forced-colors: active) {
   .blogPost::before, .authorBox::after, .ctaSection::after { display: none; }
   .articleHero::after, .content h2::before, .relatedCard::before { background: CanvasText; }
+}
+
+/* ============================================================
+   ABSCHLUSS — richtig aufgebaut
+
+   ⚠️ `.ctaSection` ist ein Abschnitt ueber die VOLLE Fensterbreite, ihr
+   einziges Kind ist `.container`. Ein Raster auf der Sektion greift also
+   nur auf diesen einen Knoten: die zweite Spalte blieb leer, Titel, Text
+   und Knopf klebten links oben in einem 1440px breiten, flachen Kasten.
+   Das Raster gehoert deshalb auf den Container.
+   ============================================================ */
+.ctaSection {
+  display: block;
+  margin: clamp(30px, 4vw, 50px) 0 clamp(56px, 7vw, 90px);
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+.ctaSection::after { display: none; }
+
+.ctaSection .container {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  /* ⚠️ gap gilt fuer Spalten UND Zeilen. Mit einem gemeinsamen Wert lagen
+     44px zwischen Ueberschrift und Text, der Kasten wirkte auseinander-
+     gerissen. Der Zeilenabstand kommt aus dem margin des Untertitels. */
+  column-gap: clamp(18px, 3vw, 44px);
+  row-gap: 0;
+  padding: clamp(30px, 4vw, 52px) clamp(26px, 3.4vw, 48px);
+  background: #ffffff;
+  border: 1px solid var(--linie);
+  border-radius: 22px;
+  box-shadow: 0 26px 60px -38px rgba(20, 40, 79, 0.34);
+}
+/* Ein ruhiger Farbschleier in der Ecke gibt dem Abschluss Tiefe, ohne dass
+   er zur Werbeflaeche wird. */
+.ctaSection .container::after {
+  content: "";
+  position: absolute;
+  right: -8%;
+  top: -80%;
+  width: 42%;
+  height: 260%;
+  pointer-events: none;
+  background: radial-gradient(closest-side,
+    color-mix(in srgb, var(--kat, var(--blau)) 16%, transparent), transparent 70%);
+}
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .ctaSection .container::after {
+    background: radial-gradient(closest-side, rgba(37, 99, 235, 0.14), transparent 70%);
+  }
+}
+.ctaSection .container > * { position: relative; z-index: 1; }
+
+/* Titel und Untertitel sind zwei Rasterreihen. Ohne diese Ausrichtung
+   zentriert das Raster beide einzeln und sie ziehen weit auseinander. */
+.ctaTitle {
+  grid-column: 1;
+  align-self: end;
+  margin: 0;
+  font-size: clamp(21px, 2.3vw, 29px);
+  font-weight: 700;
+  letter-spacing: -.028em;
+  line-height: 1.18;
+  color: var(--tinte);
+  text-wrap: balance;
+}
+.ctaSubtitle {
+  grid-column: 1;
+  align-self: start;
+  margin: 9px 0 0;
+  max-width: 56ch;
+  font-size: clamp(15.5px, 1.15vw, 17px);
+  line-height: 1.6;
+  color: var(--tinte-weich);
+}
+.ctaButton {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 15px 28px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--blau-tief);
+  color: #fff;
+  font-family: var(--text);
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 14px 30px -16px rgba(29, 78, 216, 0.6);
+  transition: background .18s var(--weich), box-shadow .22s var(--weich), transform .18s var(--weich);
+}
+.ctaButton:hover {
+  background: var(--blau);
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px -16px rgba(29, 78, 216, 0.7);
+}
+
+@media (max-width: 780px) {
+  .ctaSection .container {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .ctaButton { grid-column: 1; grid-row: auto; justify-self: stretch; justify-content: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ctaButton { transition: none; }
+  .ctaButton:hover { transform: none; }
+}
+@media (forced-colors: active) {
+  .ctaSection .container { border-color: CanvasText; }
+  .ctaSection .container::after { display: none; }
+}
+
+/* ============================================================
+   LESESPALTE MIT RANDSPALTE
+
+   Vorher stand die Lesespalte linksbuendig und die rechte Haelfte war
+   leer. Das ist der schwaechste der moeglichen Zustaende: eine zentrierte
+   Spalte waere ruhig, eine Spalte MIT Randspalte nutzt den Raum und hilft
+   dem Leser. Bei Artikeln von acht Minuten Lesezeit ist Letzteres richtig.
+
+   Die Randspalte traegt das Inhaltsverzeichnis, das aus den vorhandenen
+   Zwischenueberschriften des Artikels erzeugt wird (kein neuer Text), beim
+   Lesen mitlaeuft und den gerade gelesenen Abschnitt hervorhebt.
+   ⚠️ Erscheint erst ab drei Kapiteln; kurze Artikel bleiben einspaltig.
+   ============================================================ */
+.articleBody .container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 232px;
+  gap: clamp(28px, 4vw, 64px);
+  align-items: start;
+}
+/* Der Text steht links, das Verzeichnis rechts: die Reihenfolge im Markup
+   ist umgekehrt, damit Vorlese-Programme das Verzeichnis vor dem Text
+   antreffen. */
+.kapitelSpalte { grid-column: 2; grid-row: 1; min-width: 0; }
+.articleContentFull { grid-column: 1; grid-row: 1; }
+
+.kapitelBox {
+  position: sticky;
+  top: calc(65px + 26px);
+}
+.kapitelTitel {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--kat, var(--blau-tief));
+  margin-bottom: 14px;
+}
+.kapitelNav {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--linie);
+}
+.kapitelLink {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 9px;
+  align-items: baseline;
+  padding: 8px 12px;
+  margin-left: -1px;
+  border-left: 2px solid transparent;
+  color: var(--tinte-weich);
+  font-size: 13.5px;
+  line-height: 1.42;
+  text-decoration: none;
+  transition: color .18s var(--weich), border-color .18s var(--weich);
+}
+.kapitelLink:hover { color: var(--tinte); border-left-color: var(--linie); }
+.kapitelNummer {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  opacity: .65;
+}
+.kapitelText { min-width: 0; }
+.kapitelAktiv {
+  color: var(--tinte);
+  font-weight: 600;
+  border-left-color: var(--kat, var(--blau));
+}
+.kapitelAktiv .kapitelNummer { color: var(--kat, var(--blau)); opacity: 1; }
+
+/* Die Sprungmarken duerfen nicht unter der Navbar landen. */
+.content h2[id] { scroll-margin-top: calc(65px + 26px); }
+
+@media (max-width: 1080px) {
+  .articleBody .container { grid-template-columns: minmax(0, 1fr); }
+  .kapitelSpalte { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kapitelLink { transition: none; }
+}
+@media (forced-colors: active) {
+  .kapitelAktiv { border-left-color: CanvasText; }
 }
