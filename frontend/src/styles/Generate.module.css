@@ -43,19 +43,20 @@
   margin-bottom: 1.5rem;
 }
 
+/* 08.09.2026: War ein Verlaufstext (background-clip:text in Blau).
+   Dasselbe Muster, das bei Better Contracts, Compare, Optimizer und
+   Legal Lens schon weg ist, hier nur unter anderem Klassennamen.
+   Eine knallblaue Ueberschrift passte zu keiner anderen Seite.
+   Geprueft: .headerText nutzen weder OptimizerFinalize noch
+   EnhancedTemplateLibrary, die sich dieses Stylesheet sonst teilen. */
 .headerText h1 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  font-size: 2.25rem;
-  font-weight: 600;
+  display: block;
+  font-size: 2rem;
+  font-weight: 700;
   margin: 0;
-  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.025em;
+  color: #15171c;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
 }
 
 .headerText p {

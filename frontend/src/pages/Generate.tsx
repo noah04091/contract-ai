@@ -141,7 +141,7 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'freelancerAddress', 
         label: 'Adresse Freelancer', 
         type: 'textarea', 
-        placeholder: 'Ihre vollständige Geschäftsadresse', 
+        placeholder: 'Deine vollständige Geschäftsadresse', 
         required: true,
         group: 'Vertragsparteien'
       },
@@ -281,7 +281,7 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'propertyType',
         label: 'Art des Mietobjekts',
         type: 'select',
-        placeholder: 'Wählen Sie die Art',
+        placeholder: 'Art auswählen',
         required: true,
         group: 'Mietobjekt',
         options: ['Wohnung', 'Einfamilienhaus', 'Doppelhaushälfte', 'Reihenhaus', 'Bürofläche', 'Gewerbefläche', 'Ladenfläche', 'Lager/Halle']
@@ -1103,7 +1103,7 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'companyType',
         label: 'Gesellschaftsform',
         type: 'select',
-        placeholder: 'Wählen Sie die Rechtsform',
+        placeholder: 'Rechtsform auswählen',
         required: true,
         group: 'Grundlagen',
         options: ['GbR (Gesellschaft bürgerlichen Rechts)', 'GmbH (Gesellschaft mit beschränkter Haftung)', 'UG (haftungsbeschränkt)', 'OHG (Offene Handelsgesellschaft)', 'KG (Kommanditgesellschaft)'],
@@ -2667,7 +2667,7 @@ const CONTRACT_TYPES: ContractType[] = [
         options: ['50/50 Gleichverteilung', 'Nach Beitragsanteil', 'Nach individueller Vereinbarung', 'Kein gemeinsamer Gewinn (eigene Vermarktung)'] },
       { name: 'liability', label: 'Haftung zwischen Partnern', type: 'select', placeholder: 'Wie haften die Partner?', required: true, group: 'Finanzielles',
         options: ['Gesamtschuldnerisch (beide haften für alles)', 'Anteilig nach Beitragsquote', 'Jeder haftet nur für eigene Fehler', 'Auf jeweiligen Beitragsanteil begrenzt'],
-        helpText: 'Bei GbR gilt gesetzlich gesamtschuldnerische Haftung — hier abweichende Regelung möglich' },
+        helpText: 'Bei GbR gilt gesetzlich gesamtschuldnerische Haftung. Eine abweichende Regelung ist möglich.' },
       { name: 'duration', label: 'Laufzeit', type: 'select', placeholder: 'Wie lange läuft die Kooperation?', required: true, group: 'Laufzeit & Kündigung',
         options: ['Projektbezogen (endet mit Projekt)', '1 Jahr mit Verlängerungsoption', '2 Jahre mit Verlängerungsoption', '3 Jahre fest', 'Unbefristet'] },
       { name: 'termination', label: 'Kündigungsfrist', type: 'select', placeholder: 'Wie kann gekündigt werden?', required: true, group: 'Laufzeit & Kündigung',
@@ -3048,10 +3048,10 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'providerName',
         label: 'Anbieter / Reseller (Ihr Firmenname)',
         type: 'text',
-        placeholder: 'Ihre Firma (die die Software weiterverkauft)',
+        placeholder: 'Deine Firma (die die Software weiterverkauft)',
         required: true,
         group: 'Vertragsparteien',
-        helpText: 'Sie als Wiederverkäufer der Software'
+        helpText: 'Du als Wiederverkäufer der Software'
       },
       {
         name: 'providerAddress',
@@ -3065,7 +3065,7 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'customerName',
         label: 'Kunde / Endkunde (Name)',
         type: 'text',
-        placeholder: 'Firma des Kunden, an den Sie verkaufen',
+        placeholder: 'Firma des Kunden, an den du verkaufst',
         required: true,
         group: 'Vertragsparteien'
       },
@@ -3117,22 +3117,22 @@ const CONTRACT_TYPES: ContractType[] = [
       // === GRUPPE: Eigene Leistungen vs. Fremdleistung (Optimierung 2) ===
       {
         name: 'ownServices',
-        label: 'Erbringen Sie eigene Leistungen zusätzlich?',
+        label: 'Erbringst du eigene Leistungen zusätzlich?',
         type: 'select',
-        placeholder: 'Bieten Sie neben der Software eigene Services an?',
+        placeholder: 'Bietest du neben der Software eigene Leistungen an?',
         required: true,
         group: 'Eigene Leistungen',
         options: ['Ja (z.B. Einrichtung, Beratung, Support, Integration)', 'Nein (reiner Weiterverkauf der Software)', 'Teilweise (nur initialer Setup/Onboarding)'],
-        helpText: 'WICHTIG: Für eigene Leistungen haften Sie anders als für die Drittsoftware'
+        helpText: 'Wichtig: Für eigene Leistungen haftest du anders als für die Drittsoftware'
       },
       {
         name: 'ownServicesDescription',
-        label: 'Welche eigenen Leistungen bieten Sie an?',
+        label: 'Welche eigenen Leistungen bietest du an?',
         type: 'textarea',
         placeholder: 'z.B. Einrichtung, Konfiguration, Schulung, laufender Support, Integration mit anderen Systemen...',
         required: false,
         group: 'Eigene Leistungen',
-        helpText: 'Nur ausfüllen wenn Sie eigene Leistungen erbringen'
+        helpText: 'Nur ausfüllen, wenn du eigene Leistungen erbringst'
       },
 
       // === GRUPPE: Herstellerbedingungen (Optimierung 3) ===
@@ -3160,7 +3160,7 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'liabilityMode',
         label: 'Haftung für Softwarefehler/Ausfälle',
         type: 'select',
-        placeholder: 'Wie weit haften Sie für Probleme der Drittsoftware?',
+        placeholder: 'Wie weit haftest du für Probleme der Drittsoftware?',
         required: false,
         group: 'Haftung & Risiko',
         options: ['Keine Haftung für Drittanbieter-Software (nur für eigene Leistungen)', 'Begrenzt auf typische, vorhersehbare Schäden', 'Nur bei Vorsatz und grober Fahrlässigkeit', 'Durchreichung der Herstellergewährleistung (sofern vorhanden)'],
@@ -3180,7 +3180,7 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'warrantyScope',
         label: 'Gewährleistung',
         type: 'select',
-        placeholder: 'Wofür leisten Sie Gewähr?',
+        placeholder: 'Wofür leistest du Gewähr?',
         required: false,
         group: 'Haftung & Risiko',
         options: ['Nur für eigene Leistungen (nicht für Drittsoftware)', 'Durchreichung der Herstellergewährleistung', 'Gesetzlich, aber auf 12 Monate verkürzt', 'Keine Gewährleistung (nur bei reinem Weiterverkauf)'],
@@ -3190,11 +3190,11 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'slaLevel',
         label: 'Verfügbarkeit / SLA',
         type: 'select',
-        placeholder: 'Garantieren Sie eine Verfügbarkeit?',
+        placeholder: 'Garantierst du eine Verfügbarkeit?',
         required: false,
         group: 'Haftung & Risiko',
         options: ['Best Effort (keine eigene Garantie)', 'Im Rahmen der Hersteller-SLA (Durchreichung)', '99,5% mit Einschränkung auf Herstellerverantwortung', 'Eigene SLA für eigene Leistungen, Hersteller-SLA für Software'],
-        helpText: 'Vorsicht: Keine Uptime garantieren die Sie nicht kontrollieren!'
+        helpText: 'Vorsicht: Sag keine Verfügbarkeit zu, die du nicht selbst steuerst.'
       },
 
       // === GRUPPE: Vergütung ===
@@ -3202,7 +3202,7 @@ const CONTRACT_TYPES: ContractType[] = [
         name: 'pricingModel',
         label: 'Preismodell',
         type: 'select',
-        placeholder: 'Wie berechnen Sie dem Kunden?',
+        placeholder: 'Wie rechnest du mit dem Kunden ab?',
         required: false,
         group: 'Vergütung',
         options: ['Monatliche Lizenzgebühr', 'Jährliche Lizenzgebühr', 'Einmalzahlung', 'Pro Nutzer/Seat', 'Nutzungsbasiert (Pay-per-Use)', 'Paketpreis (Software + eigene Leistungen)']
@@ -3331,7 +3331,7 @@ const CONTRACT_TYPES: ContractType[] = [
   {
     id: 'individuell',
     name: 'Individueller Vertrag',
-    description: 'Maßgeschneidert für Ihre Bedürfnisse',
+    description: 'Auf deinen Fall zugeschnitten',
     icon: '⚙️',
     jurisdiction: 'DE',
     category: 'Allgemein',
@@ -3344,7 +3344,7 @@ const CONTRACT_TYPES: ContractType[] = [
       { name: 'partyBName', label: 'Partei B (Name)', type: 'text', placeholder: 'Name / Firma der zweiten Vertragspartei', required: false, group: 'Vertragsparteien' },
       { name: 'partyBAddress', label: 'Adresse Partei B', type: 'textarea', placeholder: 'Straße, PLZ, Ort', required: false, group: 'Vertragsparteien' },
       { name: 'partyBRole', label: 'Rolle Partei B', type: 'text', placeholder: 'z.B. Auftragnehmer, Käufer, Mieter...', required: false, group: 'Vertragsparteien' },
-      { name: 'subject', label: 'Vertragsgegenstand', type: 'textarea', placeholder: 'Was regelt dieser Vertrag? Beschreiben Sie den Kern der Vereinbarung...', required: false, group: 'Vertragsgegenstand' },
+      { name: 'subject', label: 'Vertragsgegenstand', type: 'textarea', placeholder: 'Was regelt dieser Vertrag? Beschreibe den Kern der Vereinbarung…', required: false, group: 'Vertragsgegenstand' },
       { name: 'obligations', label: 'Leistungen und Pflichten', type: 'textarea', placeholder: 'Welche Leistungen werden erbracht? Welche Pflichten haben die Parteien?', required: false, group: 'Vertragsgegenstand' },
       { name: 'compensation', label: 'Vergütung / Gegenleistung', type: 'text', placeholder: 'z.B. 10.000€, monatlich 500€, oder tauschbasiert', required: false, group: 'Konditionen', helpText: 'Leer lassen falls keine Vergütung vorgesehen ist' },
       { name: 'duration', label: 'Laufzeit', type: 'select', placeholder: 'Wie lange gilt der Vertrag?', required: false, group: 'Konditionen',
@@ -3358,7 +3358,7 @@ const CONTRACT_TYPES: ContractType[] = [
         helpText: 'Ohne Angabe gilt die gesetzliche Haftung' },
       { name: 'disputeResolution', label: 'Streitbeilegung', type: 'select', placeholder: 'Bei Konflikten?', required: false, group: 'Schutzklauseln',
         options: ['Ordentliches Gericht (Standard)', 'Mediation vor Klage', 'Schiedsverfahren', 'Schlichtungsstelle'] },
-      { name: 'details', label: 'Weitere Details und Sonderwünsche', type: 'textarea', placeholder: 'Alle zusätzlichen Regelungen, Besonderheiten, Klauseln die der Vertrag enthalten soll...', required: false, group: 'Besonderes', helpText: 'Je detaillierter Ihre Angaben, desto besser das Ergebnis. Hier können Sie alles angeben, was in den obigen Feldern nicht abgedeckt wurde.' },
+      { name: 'details', label: 'Weitere Details und Sonderwünsche', type: 'textarea', placeholder: 'Alle zusätzlichen Regelungen, Besonderheiten, Klauseln die der Vertrag enthalten soll...', required: false, group: 'Besonderes', helpText: 'Je genauer deine Angaben, desto besser das Ergebnis. Hier kannst du alles ergänzen, was in den Feldern darüber nicht vorkommt.' },
       { name: 'governingLaw', label: 'Anwendbares Recht', type: 'select', placeholder: 'Welches Recht gilt?', required: false, group: 'Rechtliches',
         options: ['Deutsches Recht', 'Österreichisches Recht', 'Schweizer Recht'] },
       { name: 'jurisdiction', label: 'Gerichtsstand', type: 'text', placeholder: 'z.B. Berlin, München, Hamburg', required: false, group: 'Rechtliches' }
@@ -3851,7 +3851,7 @@ export default function Generate() {
           setFreeUsed(false);
           setSaved(true);
           setCurrentStep(3);
-          toast.success('Freigeschaltet — dein Vertrag ist jetzt vollständig verfügbar!');
+          toast.success('Freigeschaltet. Dein Vertrag ist jetzt vollständig verfügbar.');
         } catch {
           toast.error('Freischaltung konnte nicht bestätigt werden. Bitte Seite neu laden.');
         }
@@ -4055,7 +4055,7 @@ export default function Generate() {
 
   const toggleCompanyProfile = (enabled: boolean) => {
     if (enabled && companyProfile && !isValidCompanyProfile(companyProfile)) {
-      toast.error('Bitte füllen Sie zuerst Ihr Firmenprofil mit einem echten Firmennamen aus.');
+      toast.error('Bitte ergänze zuerst dein Firmenprofil um einen echten Firmennamen.');
       return;
     }
     setUseCompanyProfile(enabled);
@@ -4336,13 +4336,13 @@ export default function Generate() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        toast.info(data?.message || 'Automatisches Ausfüllen nicht möglich — bitte Vertrag manuell wählen.');
+        toast.info(data?.message || 'Automatisches Ausfüllen hat nicht geklappt. Bitte wähle die Vertragsart selbst.');
         setBriefMode(false);
         return;
       }
       const detected = CONTRACT_TYPES.find((t) => t.id === data.typeId);
       if (!detected) {
-        toast.info('Vertragstyp nicht erkannt — bitte manuell wählen.');
+        toast.info('Die Vertragsart wurde nicht erkannt. Bitte wähle sie selbst.');
         setBriefMode(false);
         return;
       }
@@ -4358,9 +4358,9 @@ export default function Generate() {
         });
         return merged;
       });
-      toast.success(`✨ ${detected.name} erkannt — bitte Angaben prüfen und ergänzen.`);
+      toast.success(`✨ ${detected.name} erkannt. Bitte prüfe die Angaben und ergänze, was fehlt.`);
     } catch {
-      toast.info('Automatisches Ausfüllen nicht möglich — bitte Vertrag manuell wählen.');
+      toast.info('Automatisches Ausfüllen hat nicht geklappt. Bitte wähle die Vertragsart selbst.');
       setBriefMode(false);
     } finally {
       setIsBriefProcessing(false);
@@ -4627,7 +4627,7 @@ export default function Generate() {
         setGatedResult(true);
         setCurrentStep(3);
       } catch {
-        toast.error("Erstellung gerade nicht möglich — bitte erneut versuchen.");
+        toast.error("Die Erstellung hat gerade nicht geklappt. Bitte versuche es erneut.");
       } finally {
         setLoading(false);
       }
@@ -4637,7 +4637,7 @@ export default function Generate() {
     // Check Business plan limits
     if (userPlan === 'business' && usageData) {
       if (usageData.contractsGenerated >= usageData.monthlyLimit) {
-        toast.error(`🚫 Monatslimit erreicht! Sie haben bereits ${usageData.monthlyLimit} Verträge erstellt. Limit erneuert sich am ${usageData.resetDate}.`);
+        toast.error(`🚫 Monatslimit erreicht! Du hast bereits ${usageData.monthlyLimit} Verträge erstellt. Limit erneuert sich am ${usageData.resetDate}.`);
         return;
       }
     }
@@ -4763,7 +4763,7 @@ export default function Generate() {
       return true;
     }
 
-    toast.warn("Originalstelle wurde nicht eindeutig gefunden — bitte manuell ersetzen.");
+    toast.warn("Die Originalstelle wurde nicht eindeutig gefunden. Bitte ersetze sie selbst.");
     return false;
   };
 
@@ -4926,7 +4926,7 @@ export default function Generate() {
 
     // Prüfe ob Vertrag gespeichert ist
     if (!savedContractId) {
-      toast.warning("Bitte speichern Sie den Vertrag zuerst, um das Design zu ändern.", {
+      toast.warning("Bitte speichere den Vertrag zuerst, um das Design zu ändern.", {
         position: 'top-center',
         autoClose: 3000
       });
@@ -5571,7 +5571,7 @@ export default function Generate() {
 
       } else {
         // Kombinierte PDF - TODO: Backend-Endpoint erstellen
-        toast.info("Kombinierte PDF wird noch implementiert. Nutzen Sie vorerst das ZIP-Archiv.", {
+        toast.info("Die kombinierte PDF-Datei kommt noch. Nutze so lange das ZIP-Archiv.", {
           position: "top-right",
           autoClose: 4000
         });
@@ -5591,7 +5591,7 @@ export default function Generate() {
 
       // Check if contract is saved
       if (!savedContractId) {
-        toast.error("Bitte speichern Sie den Vertrag zuerst", {
+        toast.error("Bitte speichere den Vertrag zuerst", {
           position: "top-right",
           autoClose: 3000
         });
@@ -5755,7 +5755,7 @@ export default function Generate() {
 
     } catch (error) {
       console.error("❌ Error generating/uploading PDF:", error);
-      toast.error("Fehler beim PDF-Upload. Bitte versuchen Sie es erneut.", {
+      toast.error("Fehler beim Hochladen der PDF-Datei. Bitte versuche es erneut.", {
         position: "top-right",
         autoClose: 5000
       });
@@ -5767,7 +5767,7 @@ export default function Generate() {
   const handleSendForSignature = async () => {
     // Check if saved
     if (!saved || !savedContractId) {
-      toast.error("Bitte speichern Sie den Vertrag zuerst", {
+      toast.error("Bitte speichere den Vertrag zuerst", {
         position: "top-right",
         autoClose: 3000
       });
@@ -5793,7 +5793,7 @@ export default function Generate() {
           autoClose: 2000
         });
       } else {
-        toast.error("PDF-Upload fehlgeschlagen. Bitte versuchen Sie es erneut.", {
+        toast.error("Das Hochladen der PDF-Datei ist fehlgeschlagen. Bitte versuche es erneut.", {
           position: "top-right",
           autoClose: 5000
         });
@@ -5801,7 +5801,7 @@ export default function Generate() {
     } catch (error) {
       toast.dismiss(loadingToast);
       console.error("Error in handleSendForSignature:", error);
-      toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.", {
+      toast.error("Ein Fehler ist aufgetreten. Bitte versuche es erneut.", {
         position: "top-right",
         autoClose: 5000
       });
@@ -5823,7 +5823,7 @@ export default function Generate() {
       }
       // Null-Check: Falls Speichern fehlgeschlagen ist
       if (!resolvedContractId) {
-        toast.error('Vertrag konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.', {
+        toast.error('Der Vertrag konnte nicht gespeichert werden. Bitte versuche es erneut.', {
           autoClose: 5000, position: 'top-center'
         });
         setIsImportingToBuilder(false);
@@ -5833,7 +5833,7 @@ export default function Generate() {
       // Auth-Token validieren
       const authToken = localStorage.getItem('authToken') || localStorage.getItem('token');
       if (!authToken) {
-        toast.error('Authentifizierung erforderlich. Bitte melden Sie sich erneut an.', {
+        toast.error('Bitte melde dich erneut an.', {
           autoClose: 5000, position: 'top-center'
         });
         setIsImportingToBuilder(false);
@@ -5884,7 +5884,7 @@ export default function Generate() {
       }
     } catch (error) {
       console.error('Error importing to builder:', error);
-      toast.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.', {
+      toast.error('Ein Fehler ist aufgetreten. Bitte versuche es erneut.', {
         autoClose: 5000,
         position: 'top-center'
       });
@@ -5896,7 +5896,7 @@ export default function Generate() {
   // 🔄 Handler for "Vertrag verbessern" (Contract Improvement)
   const handleImproveContract = async () => {
     if (!improvements.trim()) {
-      toast.error("Bitte geben Sie Verbesserungswünsche ein", {
+      toast.error("Bitte gib deine Verbesserungswünsche ein", {
         position: "top-right",
         autoClose: 3000
       });
@@ -6109,8 +6109,8 @@ export default function Generate() {
         featureId="generator"
         icon={<FileText size={32} />}
         title="Verträge mit KI erstellen"
-        description="Wählen Sie aus über 50 Vorlagen und erstellen Sie rechtssichere Verträge in wenigen Minuten. Die KI hilft bei Formulierungen und prüft auf Vollständigkeit."
-        tip="Ihre Firmendaten werden automatisch übernommen, wenn Sie ein Firmenprofil hinterlegt haben."
+        description="Wähle aus über 50 Vorlagen und erstelle rechtssichere Verträge in wenigen Minuten. Die KI hilft bei Formulierungen und prüft auf Vollständigkeit."
+        tip="Deine Firmendaten werden automatisch übernommen, wenn du ein Firmenprofil hinterlegt hast."
       />
       <Helmet>
         <title>Verträge erstellen & sofort nutzen – KI-Generator | Contract AI</title>
@@ -6141,11 +6141,11 @@ export default function Generate() {
                   transition={{ duration: 0.35, ease: 'easeInOut' }}
                   style={{ overflow: 'hidden' }}
                 >
-                  <h1>
-                    <FileText size={28} />
-                    Intelligente Vertragserstellung
-                  </h1>
-                  <p>Erstellen Sie rechtssichere Verträge in wenigen Minuten – powered by KI</p>
+                  {/* 08.09.2026: Hieß "Intelligente Vertragserstellung",
+                      die Seitenleiste sagt "Vertrag erstellen". Ein Name.
+                      Das Symbol fällt weg, wie bei den anderen vier Seiten. */}
+                  <h1>Vertrag erstellen</h1>
+                  <p>Rechtssichere Verträge in wenigen Minuten. Die KI schlägt Formulierungen vor, du entscheidest.</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -6336,8 +6336,8 @@ export default function Generate() {
                     <div className={styles.stepHeader}>
                       <div className={styles.stepHeaderContent}>
                         <div>
-                          <h2>Welchen Vertrag möchten Sie erstellen?</h2>
-                          <p>Wählen Sie den passenden Vertragstyp aus unserer erweiterten Bibliothek</p>
+                          <h2>Welchen Vertrag möchtest du erstellen?</h2>
+                          <p>Wähle die passende Vertragsart aus der Bibliothek</p>
                         </div>
                         <motion.button
                           className={`${styles.headerButton} ${styles.primaryButton} ${!selectedType ? styles.disabled : ''}`}
@@ -6411,20 +6411,20 @@ export default function Generate() {
 
                     {briefMode && (
                       <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-                        <h2 style={{ fontSize: '25px', fontWeight: 700, letterSpacing: '-.022em', textAlign: 'center', marginBottom: '9px' }}>Beschreiben Sie Ihren Vertrag</h2>
+                        <h2 style={{ fontSize: '25px', fontWeight: 700, letterSpacing: '-.022em', textAlign: 'center', marginBottom: '9px' }}>Beschreibe deinen Vertrag</h2>
                         <p style={{ color: '#667085', fontSize: '14.5px', textAlign: 'center', maxWidth: '520px', margin: '0 auto 26px', lineHeight: 1.55 }}>
-                          Die KI erkennt den passenden Vertragstyp und füllt das Formular für Sie vor. Sie prüfen am Ende und passen bei Bedarf an.
+                          Die KI erkennt die passende Vertragsart und füllt das Formular vor. Du prüfst am Ende und passt an, wo nötig.
                         </p>
 
                         <div style={{ background: '#fff', border: '1px solid #E7EAF0', borderRadius: '16px', padding: '8px', boxShadow: '0 1px 2px rgba(16,30,60,.05)' }}>
                           <div style={{ position: 'relative' }}>
                             <span style={{ position: 'absolute', top: '14px', left: '16px', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 600, color: '#2E6CF6' }}>
-                              <Sparkles size={13} /> Ihre Beschreibung
+                              <Sparkles size={13} /> Deine Beschreibung
                             </span>
                             <textarea
                               value={briefText}
                               onChange={(e) => setBriefText(e.target.value)}
-                              placeholder={'In ein, zwei Sätzen — Stichworte reichen.\n\nBeispiel: „Freelancer-Vertrag, ich entwickle als Webentwickler eine Website für einen Kunden, 80 €/Stunde, Projekt über 3 Monate, Nutzungsrechte erst nach voller Zahlung."'}
+                              placeholder={'In ein, zwei Sätzen. Stichworte reichen.\n\nBeispiel: „Freelancer-Vertrag, ich entwickle als Webentwickler eine Website für einen Kunden, 80 €/Stunde, Projekt über 3 Monate, Nutzungsrechte erst nach voller Zahlung."'}
                               style={{ width: '100%', minHeight: '148px', resize: 'none', font: 'inherit', fontSize: '14.5px', color: '#0B1324', border: 'none', borderRadius: '12px', padding: '38px 16px 16px', background: 'transparent', lineHeight: 1.6, outline: 'none' }}
                             />
                           </div>
@@ -6449,7 +6449,7 @@ export default function Generate() {
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '7px', justifyContent: 'center', color: '#8a94a6', fontSize: '12.5px', marginTop: '16px' }}>
-                          <Lock size={14} /> Es wird nichts automatisch erstellt — Sie behalten die volle Kontrolle.
+                          <Lock size={14} /> Es wird nichts automatisch erstellt. Du behältst die volle Kontrolle.
                         </div>
                       </div>
                     )}
@@ -6515,7 +6515,7 @@ export default function Generate() {
                       </motion.button>
                       <div className={styles.step2HeaderCenter}>
                         <h2>{selectedType.name} erstellen</h2>
-                        <p>Füllen Sie die benötigten Informationen aus</p>
+                        <p>Fülle die benötigten Angaben aus</p>
                       </div>
                       {/* Sidebar Toggle Button (Desktop + Mobile) - dezent & klein */}
                       <motion.button
@@ -6716,12 +6716,12 @@ export default function Generate() {
                             rows={6}
                             value={formData.customRequirements || ''}
                             onChange={(e) => handleInputChange('customRequirements', e.target.value)}
-                            placeholder="Geben Sie hier zusätzliche Anforderungen, besondere Vereinbarungen oder individuelle Klauseln für Ihren Vertrag ein..."
+                            placeholder="Zusätzliche Anforderungen, besondere Vereinbarungen oder eigene Klauseln für deinen Vertrag…"
                             disabled={false}
                             className={styles.customRequirementsTextarea}
                           />
                           <span className={styles.fieldHint}>
-                            💡 Diese Informationen werden von der KI berücksichtigt, um Ihren Vertrag individuell anzupassen.
+                            Diese Angaben fließen in die Formulierung deines Vertrags ein.
                           </span>
                         </div>
                       </div>
@@ -6735,7 +6735,7 @@ export default function Generate() {
                           exit={{ opacity: 0, height: 0 }}
                         >
                           <div className={styles.inputPreviewHeader}>
-                            <h4>📋 Zusammenfassung Ihrer Eingaben</h4>
+                            <h4>Zusammenfassung deiner Eingaben</h4>
                             <button
                               type="button"
                               onClick={() => setShowInputPreview(false)}
@@ -6805,7 +6805,7 @@ export default function Generate() {
                           {loading ? (
                             <>
                               <div className={`${styles.loadingSpinner} ${styles.small}`}></div>
-                              <span>KI erstellt Ihren Vertrag...</span>
+                              <span>Dein Vertrag wird erstellt…</span>
                             </>
                           ) : (
                             <>
@@ -7088,7 +7088,7 @@ export default function Generate() {
                           className={`${styles.step3HeaderBtn} ${styles.accent}`}
                           whileHover={saved ? { scale: 1.02 } : {}}
                           whileTap={saved ? { scale: 0.98 } : {}}
-                          title={!saved ? "Bitte speichern Sie den Vertrag zuerst" : "Zur Signatur versenden"}
+                          title={!saved ? "Bitte speichere den Vertrag zuerst" : "Zur Signatur versenden"}
                         >
                           <Send size={16} />
                           <span>Zur Signatur</span>
@@ -7455,7 +7455,7 @@ export default function Generate() {
                             ) : (
                               <div className={styles.step3PdfEmpty}>
                                 <FileText size={32} />
-                                <p>Klicken Sie auf "PDF aktualisieren"</p>
+                                <p>Klicke auf „PDF aktualisieren"</p>
                                 <button onClick={generatePDFPreview}>
                                   <RefreshCw size={14} />
                                   Vorschau laden
@@ -7580,8 +7580,8 @@ export default function Generate() {
             >
               <div className={styles.loadingContent}>
                 <div className={`${styles.loadingSpinner} ${styles.large}`}></div>
-                <h3>KI erstellt Ihren Vertrag</h3>
-                <p>Bitte warten Sie einen Moment...</p>
+                <h3>Dein Vertrag wird erstellt</h3>
+                <p>Einen Moment noch…</p>
                 <div className={styles.loadingProgress}>
                   <div className={styles.loadingBar}></div>
                 </div>
@@ -7610,7 +7610,7 @@ export default function Generate() {
                 </div>
                 <h3>Entwurf gefunden</h3>
                 <p>
-                  Sie haben einen unvollständigen <strong>{CONTRACT_TYPES.find(t => t.id === pendingDraft.selectedTypeId)?.name || 'Vertrag'}</strong> vom{' '}
+                  Du hast einen unvollständigen <strong>{CONTRACT_TYPES.find(t => t.id === pendingDraft.selectedTypeId)?.name || 'Vertrag'}</strong> vom{' '}
                   {new Date(pendingDraft.savedAt).toLocaleDateString('de-DE', {
                     day: '2-digit',
                     month: '2-digit',
