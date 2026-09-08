@@ -143,7 +143,11 @@
 
 /* ===================== ARTIKELTEXT ===================== */
 .articleBody { padding: clamp(10px, 2vw, 20px) 0 clamp(30px, 4vw, 50px); }
-.articleContentFull { max-width: 645px; min-width: 0; }
+/* ⚠️ Die Begrenzung gehoert an den FLIESSTEXT, nicht an den ganzen Block:
+   Teilen-Leiste und Autorenkasten sind keine Lesetexte. Standen sie mit in
+   der 645px-Spalte, klaffte rechts neben ihnen eine Luecke. */
+.articleContentFull { max-width: none; min-width: 0; }
+.content { max-width: 645px; }
 
 .content {
   font-size: clamp(16.5px, 1.2vw, 17.5px);
@@ -806,12 +810,28 @@
 /* Der Text steht links, das Verzeichnis rechts: die Reihenfolge im Markup
    ist umgekehrt, damit Vorlese-Programme das Verzeichnis vor dem Text
    antreffen. */
-.kapitelSpalte { grid-column: 2; grid-row: 1; min-width: 0; }
+/* 🔴 ZWEITE STICKY-FALLE (nach overflow): Ein `position: sticky` kann nur
+   INNERHALB seines Elternelements wandern. Der Container steht auf
+   `align-items: start`, dadurch war die Randspalte nur so hoch wie ihr
+   eigener Inhalt (338px) und die Box hatte keinen Weg: sie scrollte
+   einfach mit hinaus. `align-self: stretch` zieht die Spalte auf die
+   Hoehe der Textspalte, erst dann klebt die Box wirklich. */
+.kapitelSpalte {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  align-self: stretch;
+}
 .articleContentFull { grid-column: 1; grid-row: 1; }
 
 .kapitelBox {
   position: sticky;
   top: calc(65px + 26px);
+  /* Sehr lange Verzeichnisse duerfen nicht ueber den Bildschirm
+     hinauswachsen, sonst bleibt das Ende unerreichbar. */
+  max-height: calc(100vh - 65px - 52px);
+  overflow-y: auto;
+  scrollbar-width: thin;
 }
 .kapitelTitel {
   display: block;
