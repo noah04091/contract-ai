@@ -2406,7 +2406,7 @@ export default function Contracts() {
                 <div className={styles.fileCardBody}>
                   <div className={styles.fileCardName}>{fileItem.file.name}</div>
                   <div className={styles.fileCardMeta}>
-                    {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
+                    {formatDateigroesse(fileItem.file.size)}
                   </div>
                 </div>
               </motion.div>
@@ -2859,6 +2859,25 @@ export default function Contracts() {
   }, [contracts, selectedContract]);
 
   // ✅ KORRIGIERT: Mehrfach-Upload Handler mit Plan-Validierung + ANALYSE-FIX
+  // 🚧 QA-Punkt 5 (BUG-024, 08.09.2026): Typ-Check im QUEUE-Handler, nicht nur im
+  // accept-Attribut des Dateidialogs — Drag & Drop umgeht das Attribut komplett.
+  // Das Backend prüft zusätzlich die echten Magic Bytes (utils/uploadTypeGate.js).
+  const UPLOAD_ALLOWED_EXT = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'heic', 'heif', 'webp', 'tif', 'tiff'];
+  const istUnterstuetzterUploadTyp = (file: File): boolean => {
+    const ext = file.name.split('.').pop()?.toLowerCase() || '';
+    if (UPLOAD_ALLOWED_EXT.includes(ext)) return true;
+    const typ = (file.type || '').toLowerCase();
+    return typ === 'application/pdf' || typ.startsWith('image/') || typ.includes('officedocument.wordprocessingml') || typ === 'application/msword';
+  };
+  const meldeAbgelehnteDateien = (abgelehnt: File[]) => {
+    if (abgelehnt.length === 0) return;
+    const namen = abgelehnt.slice(0, 3).map(f => `„${f.name}“`).join(', ');
+    toast.error(`${namen}${abgelehnt.length > 3 ? ` und ${abgelehnt.length - 3} weitere` : ''} wird nicht unterstützt. Erlaubt sind PDF, Word (DOC/DOCX) oder Fotos.`);
+  };
+  // 📏 QA-Punkt 5 (BUG-024): Dateien unter 1 MB standen als "0.00 MB" da
+  const formatDateigroesse = (bytes: number): string =>
+    bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+
   const handleMultipleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) {
@@ -2884,8 +2903,15 @@ export default function Contracts() {
       return;
     }
 
-    // ✅ Dateien zu Upload-Liste hinzufügen
-    const newUploadFiles: UploadFileItem[] = Array.from(files).map((file, index) => ({
+    // ✅ Dateien zu Upload-Liste hinzufügen — nur unterstützte Typen (QA BUG-024)
+    const alleDateien = Array.from(files);
+    const zugelassen = alleDateien.filter(istUnterstuetzterUploadTyp);
+    meldeAbgelehnteDateien(alleDateien.filter(f => !istUnterstuetzterUploadTyp(f)));
+    if (zugelassen.length === 0) {
+      e.target.value = '';
+      return;
+    }
+    const newUploadFiles: UploadFileItem[] = zugelassen.map((file, index) => ({
       id: `${Date.now()}_${index}`,
       file,
       status: 'pending',
@@ -2895,8 +2921,8 @@ export default function Contracts() {
     setUploadFiles(newUploadFiles);
 
     // ✅ CRITICAL FIX: selectedFile für Single-Upload setzen
-    if (files.length === 1) {
-      setSelectedFile(files[0]); // ⭐ DAS FEHLTE!
+    if (zugelassen.length === 1) {
+      setSelectedFile(zugelassen[0]); // ⭐ DAS FEHLTE!
     }
 
     setActiveSection('upload');
@@ -3750,7 +3776,12 @@ export default function Contracts() {
         return;
       }
 
-      const newUploadFiles: UploadFileItem[] = Array.from(files).map((file, index) => ({
+      // 🚧 QA BUG-024: Drag & Drop umgeht das accept-Attribut → hier filtern
+      const alleDateien = Array.from(files);
+      const zugelassen = alleDateien.filter(istUnterstuetzterUploadTyp);
+      meldeAbgelehnteDateien(alleDateien.filter(f => !istUnterstuetzterUploadTyp(f)));
+      if (zugelassen.length === 0) return;
+      const newUploadFiles: UploadFileItem[] = zugelassen.map((file, index) => ({
         id: `${Date.now()}_${index}`,
         file,
         status: 'pending',
@@ -3760,8 +3791,8 @@ export default function Contracts() {
       setUploadFiles(newUploadFiles);
       
       // ✅ CRITICAL FIX: selectedFile für Single-Upload setzen (auch bei Drag&Drop)
-      if (files.length === 1) {
-        setSelectedFile(files[0]); // ⭐ DAS FEHLTE!
+      if (zugelassen.length === 1) {
+        setSelectedFile(zugelassen[0]); // ⭐ DAS FEHLTE!
       }
       
       setActiveSection('upload');
@@ -5522,7 +5553,7 @@ export default function Contracts() {
                                       {fileItem.file.name}
                                     </div>
                                     <div className={styles.fileItemSize}>
-                                      {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
+                                      {formatDateigroesse(fileItem.file.size)}
                                     </div>
                                   </div>
                                 </div>

@@ -2,6 +2,7 @@
 const express = require("express");
 const multer = require("multer");
 const { resolveUploadMimeType } = require("../utils/resolveUploadMimeType"); // Dateityp aus dem Inhalt
+const { detectSupportedUploadType, SUPPORTED_UPLOAD_LABEL } = require("../utils/uploadTypeGate"); // 🚧 QA-Punkt 5: Magic-Byte-Gate vor dem Anlegen
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const { ObjectId } = require("mongodb");
@@ -204,6 +205,30 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
       mimetype: req.file.mimetype,
       localPath: req.file.path
     });
+
+    // 🚧 QA-Punkt 5 (BUG-005/024, 08.09.2026): Dateityp-Gate VOR S3 und VOR insertOne.
+    // Vorher nahm die Route jeden Inhalt an (Prüfung existierte nur im accept-Attribut
+    // des Dateidialogs) — eine .txt wurde zum "Vertrag", die Analyse konnte sie nie
+    // verarbeiten ("PDF-Datei beschädigt") und der Datenmüll blieb im Portfolio.
+    // Geprüft wird der ECHTE Inhalt (Magic Bytes), nie Endung oder Client-Mimetype.
+    try {
+      const gateBuffer = await fs.readFile(req.file.path);
+      const supportedType = detectSupportedUploadType(gateBuffer);
+      if (!supportedType) {
+        console.log(`🚫 [${requestId}] Unsupported file type rejected: ${req.file.originalname} (client mimetype: ${req.file.mimetype})`);
+        try { await fs.unlink(req.file.path); } catch (_) { /* Temp-Datei-Cleanup best effort */ }
+        return res.status(400).json({
+          success: false,
+          error: "UNSUPPORTED_FILE_TYPE",
+          message: `Dieses Dateiformat wird nicht unterstützt. Erlaubt sind ${SUPPORTED_UPLOAD_LABEL}.`
+        });
+      }
+      console.log(`✅ [${requestId}] File type gate passed: ${supportedType}`);
+    } catch (gateError) {
+      // Gate-Fehler (z. B. Datei nicht lesbar) darf einen legitimen Upload nicht
+      // scheitern lassen — dann entscheidet wie bisher die Analyse.
+      console.warn(`⚠️ [${requestId}] File type gate skipped:`, gateError.message);
+    }
 
     let storageInfo;
     let cleanupLocalFile = false;
