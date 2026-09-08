@@ -180,7 +180,7 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
                 <h1 className={styles.articleTitle}>Artikel nicht gefunden</h1>
                 <p className={styles.articleSubtitle}>
                   Der gesuchte Beitrag existiert nicht (mehr). 
-                  Entdecken Sie stattdessen unsere anderen spannenden Artikel.
+                  Entdecke stattdessen unsere anderen spannenden Artikel.
                 </p>
                 <button className={styles.backButton} onClick={() => navigate('/blog')}>
                   <ArrowLeft size={20} />
@@ -388,7 +388,7 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
         <section className={styles.relatedSection}>
           <div className={styles.container}>
             <div className={styles.relatedHeader}>
-              <h2 className={styles.relatedTitle}>Das könnte Sie auch interessieren</h2>
+              <h2 className={styles.relatedTitle}>Das könnte dich auch interessieren</h2>
               <p className={styles.relatedSubtitle}>Weitere spannende Artikel aus unserem Blog</p>
             </div>
             <div className={styles.relatedGrid}>
@@ -438,9 +438,9 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
         {/* CTA Section */}
         <section className={styles.ctaSection}>
           <div className={styles.container}>
-            <h2 className={styles.ctaTitle}>Lassen Sie Ihre Verträge von KI prüfen</h2>
+            <h2 className={styles.ctaTitle}>Lass deine Verträge von KI prüfen</h2>
             <p className={styles.ctaSubtitle}>
-              Contract AI analysiert Ihre Verträge in Sekunden und warnt vor problematischen Klauseln
+              Contract AI analysiert deine Verträge in Sekunden und warnt vor problematischen Klauseln
             </p>
             <button className={styles.ctaButton} onClick={handleCTAClick}>
               Jetzt kostenlos Vertrag prüfen

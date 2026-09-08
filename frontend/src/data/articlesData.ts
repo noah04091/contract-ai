@@ -397,8 +397,8 @@ export const articles: Article[] = [
     id: 20,
     slug: 'ki-vs-anwalt-vertrag-pruefen',
     title: 'KI vs. Anwalt: Vertrag prüfen lassen im Vergleich 2026',
-    subtitle: 'Wann lohnt sich KI-Vertragsanalyse, wann brauchen Sie einen Anwalt? Ein ehrlicher Vergleich mit konkreten Empfehlungen.',
-    excerpt: 'Wann lohnt sich KI-Vertragsanalyse, wann brauchen Sie einen Anwalt? Ein ehrlicher, neutraler Vergleich mit konkreten Empfehlungen für verschiedene Vertragstypen.',
+    subtitle: 'Wann lohnt sich KI-Vertragsanalyse, wann brauchst du einen Anwalt? Ein ehrlicher Vergleich mit konkreten Empfehlungen.',
+    excerpt: 'Wann lohnt sich KI-Vertragsanalyse, wann brauchst du einen Anwalt? Ein ehrlicher, neutraler Vergleich mit konkreten Empfehlungen für verschiedene Vertragstypen.',
     category: 'tipps',
     date: '15. Februar 2026',
     readTime: '8 Min. Lesezeit',
@@ -416,7 +416,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Wann sollte ich trotz KI-Analyse einen Anwalt hinzuziehen?',
-        answer: 'Bei Verträgen mit hohem Streitwert (z.B. Immobilienkauf), bei individuellen Sonderfällen, die von Standardmustern abweichen, bei laufenden Rechtsstreitigkeiten und wenn Sie eine rechtsverbindliche Beratung benötigen. Die KI-Ergebnisse können dabei als strukturierte Grundlage für das Anwaltsgespräch dienen.'
+        answer: 'Bei Verträgen mit hohem Streitwert (z.B. Immobilienkauf), bei individuellen Sonderfällen, die von Standardmustern abweichen, bei laufenden Rechtsstreitigkeiten und wenn du eine rechtsverbindliche Beratung benötigst. Die KI-Ergebnisse können dabei als strukturierte Grundlage für das Anwaltsgespräch dienen.'
       },
       {
         question: 'Ist die Kombination aus KI und Anwalt sinnvoll?',
@@ -424,17 +424,17 @@ export const articles: Article[] = [
       }
     ],
     content: `
-      <p>Sie haben einen Vertrag vor sich und fragen sich: <strong>Soll ich ihn von einer KI prüfen lassen oder doch zum Anwalt gehen?</strong> Die Antwort ist nicht so einfach wie „entweder-oder". Beide Ansätze haben klare Stärken und Schwächen. In diesem Artikel vergleichen wir <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> und anwaltliche Prüfung ehrlich und neutral.</p>
+      <p>Du hast einen Vertrag vor dir und fragst dich: <strong>Soll ich ihn von einer KI prüfen lassen oder doch zum Anwalt gehen?</strong> Die Antwort ist nicht so einfach wie „entweder-oder". Beide Ansätze haben klare Stärken und Schwächen. In diesem Artikel vergleichen wir <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> und anwaltliche Prüfung ehrlich und neutral.</p>
 
       <h2>Was KI-Vertragsanalyse besser kann</h2>
 
       <p>Moderne <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> hat in bestimmten Bereichen klare Vorteile gegenüber der manuellen Prüfung:</p>
 
       <ul>
-        <li><strong>Geschwindigkeit:</strong> Eine vollständige Analyse dauert Sekunden statt Tage. Sie können einen Vertrag direkt vor der Unterschrift prüfen lassen.</li>
+        <li><strong>Geschwindigkeit:</strong> Eine vollständige Analyse dauert Sekunden statt Tage. Du kannst einen Vertrag direkt vor der Unterschrift prüfen lassen.</li>
         <li><strong>Verfügbarkeit:</strong> 24 Stunden am Tag, 7 Tage die Woche. Keine Terminvereinbarung, keine Wartezeit.</li>
         <li><strong>Konsistenz:</strong> Die KI analysiert jeden Vertrag nach denselben Kriterien. Kein „schlechter Tag", keine Ablenkung, keine übersehene Seite.</li>
-        <li><strong>Kosten:</strong> Als monatliche Pauschale deutlich günstiger als einzelne Anwaltsprüfungen, besonders wenn Sie regelmäßig Verträge prüfen.</li>
+        <li><strong>Kosten:</strong> Als monatliche Pauschale deutlich günstiger als einzelne Anwaltsprüfungen, besonders wenn du regelmäßig Verträge prüfst.</li>
         <li><strong>Verständlichkeit:</strong> Die Ergebnisse werden in Klartext statt Juristendeutsch präsentiert.</li>
       </ul>
 
@@ -443,7 +443,7 @@ export const articles: Article[] = [
       <p>Es gibt Situationen, in denen ein Fachanwalt klar die bessere Wahl ist:</p>
 
       <ul>
-        <li><strong>Individuelle Beratung:</strong> Ein Anwalt kann Ihre persönliche Situation, Verhandlungsposition und Ziele berücksichtigen.</li>
+        <li><strong>Individuelle Beratung:</strong> Ein Anwalt kann deine persönliche Situation, Verhandlungsposition und Ziele berücksichtigen.</li>
         <li><strong>Komplexe Sonderfälle:</strong> Bei ungewöhnlichen Vertragskonstruktionen, internationalen Verträgen oder branchenspezifischen Besonderheiten.</li>
         <li><strong>Rechtsverbindlichkeit:</strong> Nur ein Anwalt kann eine rechtsverbindliche Einschätzung abgeben, die vor Gericht Bestand hat.</li>
         <li><strong>Verhandlungsführung:</strong> Ein Anwalt kann direkt mit der Gegenseite verhandeln und Vertragsänderungen durchsetzen.</li>
@@ -462,7 +462,7 @@ export const articles: Article[] = [
         <li><strong>SaaS- und Abo-Verträge:</strong> Prüfung auf automatische Verlängerung, Preisanpassungen und Datenschutz.</li>
       </ul>
 
-      <h2>Wann brauchen Sie definitiv einen Anwalt?</h2>
+      <h2>Wann brauchst du definitiv einen Anwalt?</h2>
 
       <ul>
         <li>Immobilienkaufverträge (hoher Streitwert)</li>
@@ -474,7 +474,7 @@ export const articles: Article[] = [
 
       <h2>Die smarte Kombination: KI + Anwalt</h2>
 
-      <p>Die effektivste Strategie ist die Kombination beider Ansätze. Nutzen Sie <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> als Erstcheck für jeden Vertrag. Die KI identifiziert in Sekunden die kritischen Stellen und erstellt einen strukturierten Report. Bei Standardverträgen reicht dies oft aus. Bei komplexen oder hochwertigen Verträgen nehmen Sie die KI-Ergebnisse als Grundlage für ein gezieltes Anwaltsgespräch.</p>
+      <p>Die effektivste Strategie ist die Kombination beider Ansätze. Nutze <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> als Erstcheck für jeden Vertrag. Die KI identifiziert in Sekunden die kritischen Stellen und erstellt einen strukturierten Report. Bei Standardverträgen reicht dies oft aus. Bei komplexen oder hochwertigen Verträgen nimmst du die KI-Ergebnisse als Grundlage für ein gezieltes Anwaltsgespräch.</p>
 
       <p>Der Vorteil: Der Anwalt muss nicht den gesamten Vertrag lesen, sondern kann sich auf die wirklich kritischen Punkte konzentrieren. Das spart Zeit und senkt die Beratungskosten erheblich.</p>
 
@@ -487,17 +487,17 @@ export const articles: Article[] = [
 
       <p>KI-Vertragsanalyse und anwaltliche Beratung sind keine Konkurrenten, sondern ergänzen sich ideal. Die KI demokratisiert den Zugang zu professioneller Vertragsprüfung und macht sie für jedermann erschwinglich. Der Anwalt bleibt unverzichtbar für komplexe Einzelfälle und rechtsverbindliche Beratung.</p>
 
-      <p>Die Frage ist nicht „KI oder Anwalt?", sondern „Wann reicht KI, und wann brauche ich zusätzlich einen Anwalt?" Mit dieser Unterscheidung treffen Sie immer die richtige Entscheidung.</p>
+      <p>Die Frage ist nicht „KI oder Anwalt?", sondern „Wann reicht KI, und wann brauche ich zusätzlich einen Anwalt?" Mit dieser Unterscheidung triffst du immer die richtige Entscheidung.</p>
 
-      <p><em>Hinweis: KI-Vertragsanalyse stellt eine automatisierte Ersteinschätzung dar und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Bei rechtlichen Fragen konsultieren Sie bitte einen zugelassenen Rechtsanwalt.</em></p>
+      <p><em>Hinweis: KI-Vertragsanalyse stellt eine automatisierte Ersteinschätzung dar und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Bei rechtlichen Fragen wende dich bitte an einen zugelassenen Rechtsanwalt.</em></p>
     `
   },
   {
     id: 19,
     slug: 'dsgvo-ki-vertragsanalyse',
     title: 'DSGVO und KI-Vertragsanalyse: Sind meine Vertragsdaten sicher?',
-    subtitle: 'Datenschutz bei KI-Vertragsprüfung: Was passiert mit Ihren Daten, wo werden sie verarbeitet und worauf Sie achten sollten.',
-    excerpt: 'Was passiert mit Ihren Vertragsdaten bei der KI-Analyse? Alles über DSGVO-Konformität, Verschlüsselung, Serverstandorte und Datenschutz bei KI-Vertragsanalyse.',
+    subtitle: 'Datenschutz bei KI-Vertragsprüfung: Was passiert mit deinen Daten, wo werden sie verarbeitet und worauf du achten solltest.',
+    excerpt: 'Was passiert mit deinen Vertragsdaten bei der KI-Analyse? Alles über DSGVO-Konformität, Verschlüsselung, Serverstandorte und Datenschutz bei KI-Vertragsanalyse.',
     category: 'tipps',
     date: '10. Februar 2026',
     readTime: '7 Min. Lesezeit',
@@ -507,23 +507,23 @@ export const articles: Article[] = [
     faqs: [
       {
         question: 'Ist KI-Vertragsanalyse DSGVO-konform?',
-        answer: 'Ja, seriöse Anbieter wie Contract AI verarbeiten alle Daten DSGVO-konform auf Servern in Deutschland oder der EU. Achten Sie bei der Anbieterwahl auf Serverstandort, Verschlüsselung und transparente Datenschutzerklärung.'
+        answer: 'Ja, seriöse Anbieter wie Contract AI verarbeiten alle Daten DSGVO-konform auf Servern in Deutschland oder der EU. Achte bei der Anbieterwahl auf Serverstandort, Verschlüsselung und transparente Datenschutzerklärung.'
       },
       {
         question: 'Werden meine Vertragsdaten für KI-Training verwendet?',
-        answer: 'Bei Contract AI werden Vertragsdaten nicht zum Training von KI-Modellen verwendet. Dies ist ein wichtiger Unterschied zu manchen Anbietern. Fragen Sie bei jedem Anbieter explizit nach, ob und wie Ihre Daten für Modelltraining genutzt werden.'
+        answer: 'Bei Contract AI werden Vertragsdaten nicht zum Training von KI-Modellen verwendet. Dies ist ein wichtiger Unterschied zu manchen Anbietern. Frag bei jedem Anbieter explizit nach, ob und wie deine Daten für Modelltraining genutzt werden.'
       },
       {
         question: 'Wo werden meine Vertragsdaten gespeichert?',
-        answer: 'Contract AI speichert und verarbeitet alle Vertragsdaten ausschließlich auf Servern innerhalb der EU. Verschlüsselung mit 256-bit-Standard bei Übertragung und Speicherung, kein Training mit Ihren Daten.'
+        answer: 'Contract AI speichert und verarbeitet alle Vertragsdaten ausschließlich auf Servern innerhalb der EU. Verschlüsselung mit 256-bit-Standard bei Übertragung und Speicherung, kein Training mit deinen Daten.'
       },
       {
         question: 'Kann ich meine Vertragsdaten vollständig löschen lassen?',
-        answer: 'Ja. Gemäß DSGVO haben Sie ein Recht auf Löschung Ihrer Daten. Bei Contract AI können Sie Ihre hochgeladenen Verträge jederzeit selbst löschen. Auf Anfrage wird eine vollständige Datenlöschung durchgeführt.'
+        answer: 'Ja. Gemäß DSGVO hast du ein Recht auf Löschung deiner Daten. Bei Contract AI kannst du deine hochgeladenen Verträge jederzeit selbst löschen. Auf Anfrage wird eine vollständige Datenlöschung durchgeführt.'
       }
     ],
     content: `
-      <p>Verträge enthalten sensible Informationen: persönliche Daten, Gehälter, Geschäftsgeheimnisse, Konditionen. Wenn Sie diese Dokumente einer <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> anvertrauen, stellen sich berechtigte Fragen: <strong>Was passiert mit meinen Daten? Sind sie sicher? Und ist das überhaupt DSGVO-konform?</strong></p>
+      <p>Verträge enthalten sensible Informationen: persönliche Daten, Gehälter, Geschäftsgeheimnisse, Konditionen. Wenn du diese Dokumente einer <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> anvertraust, stellen sich berechtigte Fragen: <strong>Was passiert mit meinen Daten? Sind sie sicher? Und ist das überhaupt DSGVO-konform?</strong></p>
 
       <h2>Warum Datenschutz bei KI-Vertragsanalyse besonders wichtig ist</h2>
 
@@ -550,57 +550,57 @@ export const articles: Article[] = [
         <li><strong>Löschrecht:</strong> Nutzer müssen ihre Daten jederzeit löschen lassen können.</li>
       </ul>
 
-      <h2>Worauf Sie bei der Anbieterwahl achten sollten</h2>
+      <h2>Worauf du bei der Anbieterwahl achten solltest</h2>
 
-      <p>Nicht jeder KI-Vertragsanalyse-Anbieter bietet das gleiche Datenschutzniveau. Diese Punkte sollten Sie prüfen:</p>
+      <p>Nicht jeder KI-Vertragsanalyse-Anbieter bietet das gleiche Datenschutzniveau. Diese Punkte solltest du prüfen:</p>
 
       <h3>1. Serverstandort</h3>
       <p>Ideal: Server in Deutschland oder der EU. Vorsicht bei Anbietern, die Daten in die USA oder andere Drittländer transferieren. Auch wenn Privacy Shield-Nachfolgeabkommen existieren, bieten EU-Server die höchste Sicherheit.</p>
 
       <h3>2. Verschlüsselung</h3>
-      <p>Mindeststandard: 256-bit TLS-Verschlüsselung bei der Übertragung und AES-256 bei der Speicherung. Fragen Sie nach Ende-zu-Ende-Verschlüsselung.</p>
+      <p>Mindeststandard: 256-bit TLS-Verschlüsselung bei der Übertragung und AES-256 bei der Speicherung. Frag nach Ende-zu-Ende-Verschlüsselung.</p>
 
-      <h3>3. KI-Training mit Ihren Daten</h3>
-      <p>Ein kritischer Punkt: Manche Anbieter nutzen hochgeladene Dokumente zum Training ihrer KI-Modelle. Das bedeutet, dass Teile Ihrer Vertragsinhalte in das Modell einfließen könnten. Seriöse Anbieter verzichten darauf.</p>
+      <h3>3. KI-Training mit deinen Daten</h3>
+      <p>Ein kritischer Punkt: Manche Anbieter nutzen hochgeladene Dokumente zum Training ihrer KI-Modelle. Das bedeutet, dass Teile deiner Vertragsinhalte in das Modell einfließen könnten. Seriöse Anbieter verzichten darauf.</p>
 
       <h3>4. Auftragsverarbeitungsvertrag (AVV)</h3>
       <p>Für Unternehmen ist ein AVV gemäß Art. 28 DSGVO Pflicht. Der Anbieter muss einen solchen Vertrag anbieten können.</p>
 
       <h3>5. Löschmöglichkeiten</h3>
-      <p>Sie sollten Ihre hochgeladenen Verträge jederzeit selbst löschen können. Zusätzlich muss der Anbieter auf Anfrage eine vollständige Datenlöschung durchführen.</p>
+      <p>Du solltest deine hochgeladenen Verträge jederzeit selbst löschen können. Zusätzlich muss der Anbieter auf Anfrage eine vollständige Datenlöschung durchführen.</p>
 
-      <h2>So schützt Contract AI Ihre Daten</h2>
+      <h2>So schützt Contract AI deine Daten</h2>
 
       <p>Bei Contract AI haben wir Datenschutz von Anfang an als Kernprinzip integriert:</p>
 
       <ul>
         <li><strong>Deutsche Server:</strong> Alle Daten werden ausschließlich auf Servern in Deutschland verarbeitet und gespeichert.</li>
         <li><strong>256-bit Verschlüsselung:</strong> Verschlüsselt bei Übertragung und Speicherung.</li>
-        <li><strong>Kein KI-Training:</strong> Ihre Vertragsdaten werden nicht zum Training von KI-Modellen verwendet.</li>
+        <li><strong>Kein KI-Training:</strong> Deine Vertragsdaten werden nicht zum Training von KI-Modellen verwendet.</li>
         <li><strong>Jederzeit löschbar:</strong> Verträge können jederzeit vollständig gelöscht werden.</li>
         <li><strong>Keine Weitergabe:</strong> Keine Weitergabe von Daten an Dritte.</li>
       </ul>
 
-      <p>Mehr Details zu unserem Sicherheitskonzept finden Sie auf unserer <a href="/ki-vertragsanalyse">Seite zur KI-Vertragsanalyse</a> und in unserer <a href="/datenschutz">Datenschutzerklärung</a>.</p>
+      <p>Mehr Details zu unserem Sicherheitskonzept findest du auf unserer <a href="/ki-vertragsanalyse">Seite zur KI-Vertragsanalyse</a> und in unserer <a href="/datenschutz">Datenschutzerklärung</a>.</p>
 
       <div class="highlight-box">
         <h4>Checkliste: DSGVO-Check für KI-Vertragsanalyse</h4>
-        <p>Bevor Sie einen Anbieter wählen, prüfen Sie: Serverstandort in EU? Verschlüsselung vorhanden? Kein KI-Training mit Ihren Daten? AVV verfügbar? Löschung möglich? Transparente Datenschutzerklärung?</p>
+        <p>Bevor du einen Anbieter wählst, prüfe: Serverstandort in EU? Verschlüsselung vorhanden? Kein KI-Training mit deinen Daten? AVV verfügbar? Löschung möglich? Transparente Datenschutzerklärung?</p>
       </div>
 
       <h2>Fazit</h2>
 
-      <p>KI-Vertragsanalyse und Datenschutz schließen sich nicht aus, wenn der Anbieter die richtigen Maßnahmen trifft. Achten Sie auf DSGVO-Konformität, deutschen Serverstandort und transparente Datenverarbeitung. Dann können Sie die Vorteile der <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> nutzen, ohne Ihre sensiblen Vertragsdaten zu gefährden.</p>
+      <p>KI-Vertragsanalyse und Datenschutz schließen sich nicht aus, wenn der Anbieter die richtigen Maßnahmen trifft. Achte auf DSGVO-Konformität, deutschen Serverstandort und transparente Datenverarbeitung. Dann kannst du die Vorteile der <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> nutzen, ohne deine sensiblen Vertragsdaten zu gefährden.</p>
 
-      <p><em>Hinweis: Dieser Artikel dient der allgemeinen Information und stellt keine Rechtsberatung dar. Für spezifische Datenschutzfragen konsultieren Sie bitte einen Datenschutzbeauftragten oder Fachanwalt für IT-Recht.</em></p>
+      <p><em>Hinweis: Dieser Artikel dient der allgemeinen Information und stellt keine Rechtsberatung dar. Für spezifische Datenschutzfragen wende dich bitte an einen Datenschutzbeauftragten oder Fachanwalt für IT-Recht.</em></p>
     `
   },
   {
     id: 18,
     slug: 'ki-vertragsanalyse-genauigkeit',
     title: 'Wie genau ist KI-Vertragsanalyse wirklich?',
-    subtitle: 'Was KI bei der Vertragsprüfung erkennt, wo ihre Grenzen liegen und wie Sie die Ergebnisse richtig einordnen.',
-    excerpt: 'Kann man sich auf KI-Vertragsanalyse verlassen? Was die Technologie erkennt, wo ihre Grenzen liegen und wie Sie die Ergebnisse richtig einordnen.',
+    subtitle: 'Was KI bei der Vertragsprüfung erkennt, wo ihre Grenzen liegen und wie du die Ergebnisse richtig einordnest.',
+    excerpt: 'Kann man sich auf KI-Vertragsanalyse verlassen? Was die Technologie erkennt, wo ihre Grenzen liegen und wie du die Ergebnisse richtig einordnest.',
     category: 'tipps',
     date: '5. Februar 2026',
     readTime: '7 Min. Lesezeit',
@@ -626,7 +626,7 @@ export const articles: Article[] = [
       }
     ],
     content: `
-      <p>Wenn Sie einen Vertrag von einer KI prüfen lassen, stellen Sie sich unweigerlich die Frage: <strong>Kann ich mich darauf verlassen?</strong> Die ehrliche Antwort: Es kommt darauf an. In diesem Artikel erklären wir, was <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> zuverlässig erkennt, wo ihre Grenzen liegen und wie Sie die Ergebnisse richtig einordnen.</p>
+      <p>Wenn du einen Vertrag von einer KI prüfen lässt, stellst du dir unweigerlich die Frage: <strong>Kann ich mich darauf verlassen?</strong> Die ehrliche Antwort: Es kommt darauf an. In diesem Artikel erklären wir, was <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> zuverlässig erkennt, wo ihre Grenzen liegen und wie du die Ergebnisse richtig einordnest.</p>
 
       <h2>Was KI bei Verträgen zuverlässig erkennt</h2>
 
@@ -656,7 +656,7 @@ export const articles: Article[] = [
       <p>Ehrlichkeit gegenüber den Grenzen ist entscheidend für das richtige Einordnen der Ergebnisse:</p>
 
       <h3>1. Individuelle Kontexte</h3>
-      <p>Die KI kennt Ihren persönlichen Kontext nicht. Eine Klausel, die für einen Berufseinsteiger problematisch wäre, kann für einen erfahrenen Manager mit Verhandlungsmacht akzeptabel sein. Die KI bewertet die Klausel objektiv, aber nicht in Bezug auf Ihre individuelle Situation.</p>
+      <p>Die KI kennt deinen persönlichen Kontext nicht. Eine Klausel, die für einen Berufseinsteiger problematisch wäre, kann für einen erfahrenen Manager mit Verhandlungsmacht akzeptabel sein. Die KI bewertet die Klausel objektiv, aber nicht in Bezug auf deine individuelle Situation.</p>
 
       <h3>2. Branchenspezifische Besonderheiten</h3>
       <p>In manchen Branchen sind Klauseln üblich, die die KI als ungewöhnlich markieren könnte. Beispiel: Lange Laufzeiten bei Energielieferverträgen sind Standard, bei Dienstleistungsverträgen eher ungewöhnlich.</p>
@@ -670,20 +670,20 @@ export const articles: Article[] = [
       <h3>5. False Positives</h3>
       <p>Gelegentlich markiert die KI Klauseln als problematisch, die im konkreten Kontext unproblematisch sind. Das ist der Preis für eine vorsichtige Analyse: Lieber einmal zu viel warnen als einmal zu wenig.</p>
 
-      <h2>Wie Sie KI-Ergebnisse richtig einordnen</h2>
+      <h2>Wie du KI-Ergebnisse richtig einordnest</h2>
 
-      <p>KI-Vertragsanalyse liefert die besten Ergebnisse, wenn Sie die Resultate als das verstehen, was sie sind: eine strukturierte, professionelle Ersteinschätzung.</p>
+      <p>KI-Vertragsanalyse liefert die besten Ergebnisse, wenn du die Resultate als das verstehst, was sie sind: eine strukturierte, professionelle Ersteinschätzung.</p>
 
       <ul>
-        <li><strong>Nutzen Sie den Risiko-Score als Orientierung,</strong> nicht als absolute Wahrheit.</li>
-        <li><strong>Lesen Sie die Erklärungen:</strong> Die KI begründet ihre Bewertungen. Prüfen Sie, ob die Begründung auf Ihre Situation zutrifft.</li>
-        <li><strong>Priorisieren Sie:</strong> Konzentrieren Sie sich auf die als „hoch" oder „kritisch" markierten Punkte.</li>
-        <li><strong>Bei Unsicherheit:</strong> Nutzen Sie die KI-Ergebnisse als Grundlage für ein gezieltes Gespräch mit einem Fachanwalt.</li>
+        <li><strong>Nutze den Risiko-Score als Orientierung,</strong> nicht als absolute Wahrheit.</li>
+        <li><strong>Lies die Erklärungen:</strong> Die KI begründet ihre Bewertungen. Prüfe, ob die Begründung auf deine Situation zutrifft.</li>
+        <li><strong>Priorisiere:</strong> Konzentriere dich auf die als „hoch" oder „kritisch" markierten Punkte.</li>
+        <li><strong>Bei Unsicherheit:</strong> Nutze die KI-Ergebnisse als Grundlage für ein gezieltes Gespräch mit einem Fachanwalt.</li>
       </ul>
 
       <div class="highlight-box">
         <h4>Analogie</h4>
-        <p>Denken Sie an KI-Vertragsanalyse wie an eine Rechtschreibprüfung: Sie findet die meisten Fehler zuverlässig und spart enorm viel Zeit. Aber für einen wichtigen Brief lesen Sie trotzdem noch einmal selbst drüber. Bei Verträgen mit hohem Wert gilt dasselbe Prinzip.</p>
+        <p>Denk an KI-Vertragsanalyse wie an eine Rechtschreibprüfung: Sie findet die meisten Fehler zuverlässig und spart enorm viel Zeit. Aber für einen wichtigen Brief liest du trotzdem noch einmal selbst drüber. Bei Verträgen mit hohem Wert gilt dasselbe Prinzip.</p>
       </div>
 
       <h2>Die Technologie wird besser</h2>
@@ -694,7 +694,7 @@ export const articles: Article[] = [
 
       <p>KI-Vertragsanalyse ist bei Standardverträgen und gängigen Risiken bemerkenswert zuverlässig. Bei komplexen Einzelfällen hat sie natürliche Grenzen. Die Stärke liegt in der Kombination aus Geschwindigkeit, Konsistenz und Verständlichkeit. Wer die Ergebnisse als professionelle Ersteinschätzung versteht und bei Bedarf mit anwaltlicher Expertise kombiniert, nutzt das Beste aus beiden Welten.</p>
 
-      <p>Überzeugen Sie sich selbst: <a href="/features/vertragsanalyse">Testen Sie die KI-Vertragsanalyse kostenlos</a> und sehen Sie, welche Risiken die KI in Ihrem Vertrag findet.</p>
+      <p>Überzeuge dich selbst: <a href="/features/vertragsanalyse">Teste die KI-Vertragsanalyse kostenlos</a> und sieh, welche Risiken die KI in deinem Vertrag findet.</p>
 
       <p><em>Hinweis: KI-Vertragsanalyse stellt eine automatisierte Ersteinschätzung dar und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG).</em></p>
     `
@@ -1798,9 +1798,9 @@ export const articles: Article[] = [
   {
     id: 1,
     slug: 'warnsignale-schlechte-vertraege',
-    title: '5 Warnsignale: So erkennen Sie schlechte Verträge sofort',
-    subtitle: 'Versteckte Kosten, unfaire Klauseln, einseitige Bedingungen – lernen Sie die häufigsten Fallen kennen',
-    excerpt: 'Versteckte Kosten, unfaire Klauseln, einseitige Bedingungen – lernen Sie die häufigsten Fallen kennen und schützen Sie sich vor teuren Fehlentscheidungen.',
+    title: '5 Warnsignale: So erkennst du schlechte Verträge sofort',
+    subtitle: 'Versteckte Kosten, unfaire Klauseln, einseitige Bedingungen – lerne die häufigsten Fallen kennen',
+    excerpt: 'Versteckte Kosten, unfaire Klauseln, einseitige Bedingungen – lerne die häufigsten Fallen kennen und schütze dich vor teuren Fehlentscheidungen.',
     category: 'tipps',
     date: '23. Mai 2025',
     readTime: '5 Min. Lesezeit',
@@ -1828,11 +1828,11 @@ export const articles: Article[] = [
         <li>"unverzüglich"</li>
       </ul>
 
-      <p>Diese Formulierungen lassen dem Vertragspartner viel Interpretationsspielraum – meist zu Ihren Ungunsten.</p>
+      <p>Diese Formulierungen lassen dem Vertragspartner viel Interpretationsspielraum – meist zu deinen Ungunsten.</p>
 
       <div class="highlight-box">
         <h4>Praxis-Tipp</h4>
-        <p>Bestehen Sie auf konkreten Zahlen, Fristen und Bedingungen. Statt "angemessene Bearbeitungszeit" sollte "maximal 14 Tage" im Vertrag stehen.</p>
+        <p>Besteh auf konkreten Zahlen, Fristen und Bedingungen. Statt "angemessene Bearbeitungszeit" sollte "maximal 14 Tage" im Vertrag stehen.</p>
       </div>
 
       <h2>2. Einseitige Kündigungsrechte</h2>
@@ -1840,14 +1840,14 @@ export const articles: Article[] = [
       <p>Problematisch wird es, wenn nur eine Partei den Vertrag kündigen oder ändern kann. Typische Beispiele:</p>
 
       <ul>
-        <li>Der Anbieter kann jederzeit kündigen, Sie sind aber an lange Laufzeiten gebunden</li>
+        <li>Der Anbieter kann jederzeit kündigen, du bist aber an lange Laufzeiten gebunden</li>
         <li>Preiserhöhungen sind möglich, Preissenkungen aber ausgeschlossen</li>
         <li>Leistungskürzungen werden vorbehalten, Leistungserweiterungen nicht</li>
       </ul>
 
       <h2>3. Versteckte Kosten und automatische Verlängerungen</h2>
 
-      <p>Achten Sie besonders auf:</p>
+      <p>Achte besonders auf:</p>
 
       <ul>
         <li><strong>Bearbeitungsgebühren:</strong> Zusätzliche Kosten für Standard-Services</li>
@@ -1871,10 +1871,10 @@ export const articles: Article[] = [
 
       <h2>5. Unzulässige Datenverwendung</h2>
 
-      <p>Besonders bei Online-Services sollten Sie auf die Datenverwendung achten:</p>
+      <p>Besonders bei Online-Services solltest du auf die Datenverwendung achten:</p>
 
       <ul>
-        <li>Weitergabe an Dritte ohne Ihre Zustimmung</li>
+        <li>Weitergabe an Dritte ohne deine Zustimmung</li>
         <li>Verwendung für Werbezwecke ohne Opt-out-Möglichkeit</li>
         <li>Speicherung auch nach Vertragsende</li>
         <li>Unklare Angaben zum Speicherort (außerhalb der EU)</li>
@@ -1882,14 +1882,14 @@ export const articles: Article[] = [
 
       <div class="highlight-box">
         <h4>Was tun bei problematischen Verträgen?</h4>
-        <p>Lassen Sie verdächtige Verträge vor Unterschrift professionell prüfen – mit Contract AI analysieren Sie Verträge in wenigen Minuten und erhalten konkrete Handlungsempfehlungen.</p>
+        <p>Lass verdächtige Verträge vor Unterschrift professionell prüfen – mit Contract AI analysierst du Verträge in wenigen Minuten und erhältst konkrete Handlungsempfehlungen.</p>
       </div>
 
       <h2>Fazit: Vertrauen ist gut, Kontrolle ist besser</h2>
 
-      <p>Die meisten Unternehmen sind seriös und bemüht um faire Verträge. Doch schwarze Schafe gibt es in jeder Branche. Mit diesen fünf Warnsignalen erkennen Sie problematische Verträge schon vor der Unterschrift.</p>
+      <p>Die meisten Unternehmen sind seriös und bemüht um faire Verträge. Doch schwarze Schafe gibt es in jeder Branche. Mit diesen fünf Warnsignalen erkennst du problematische Verträge schon vor der Unterschrift.</p>
 
-      <p>Nehmen Sie sich die Zeit, Verträge gründlich zu lesen. Bei wichtigen oder komplexen Verträgen sollten Sie nicht zögern, professionelle Hilfe in Anspruch zu nehmen – etwa durch eine <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a>, die alle fünf Warnsignale automatisch erkennt.</p>
+      <p>Nimm dir die Zeit, Verträge gründlich zu lesen. Bei wichtigen oder komplexen Verträgen solltest du nicht zögern, professionelle Hilfe in Anspruch zu nehmen – etwa durch eine <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a>, die alle fünf Warnsignale automatisch erkennt.</p>
     `
   },
   {
@@ -1897,7 +1897,7 @@ export const articles: Article[] = [
     slug: 'mietvertrag-unwirksame-klauseln',
     title: 'Mietvertrag-Check: Diese Klauseln sind unwirksam',
     subtitle: 'Schönheitsreparaturen, Haustierhaltung, Kautionshöhe – welche Klauseln rechtlich problematisch sind',
-    excerpt: 'Schönheitsreparaturen, Haustierhaltung, Kautionshöhe – welche Klauseln in Ihrem Mietvertrag rechtlich problematisch sind und was Sie dagegen tun können.',
+    excerpt: 'Schönheitsreparaturen, Haustierhaltung, Kautionshöhe – welche Klauseln in deinem Mietvertrag rechtlich problematisch sind und was du dagegen tun kannst.',
     category: 'mietrecht',
     date: '20. Mai 2025',
     readTime: '8 Min. Lesezeit',
@@ -1910,7 +1910,7 @@ export const articles: Article[] = [
         <p>Lass deinen Mietvertrag von einer KI prüfen — auf Basis aktueller BGH-Rechtsprechung in unter 60 Sekunden. Unwirksame Schönheitsreparaturklauseln, überhöhte Kaution und versteckte Fallen werden sofort erkannt. <a href="/mietvertrag-pruefen"><strong>Jetzt Mietvertrag prüfen →</strong></a></p>
       </div>
 
-      <p>Mietverträge enthalten oft Klauseln, die zu Gunsten des Vermieters formuliert sind. Doch nicht alles, was im Vertrag steht, ist auch rechtlich wirksam. Wir zeigen Ihnen, welche Klauseln problematisch sind.</p>
+      <p>Mietverträge enthalten oft Klauseln, die zu Gunsten des Vermieters formuliert sind. Doch nicht alles, was im Vertrag steht, ist auch rechtlich wirksam. Wir zeigen dir, welche Klauseln problematisch sind.</p>
 
       <h2>Schönheitsreparaturen: Wann sie unwirksam sind</h2>
       
@@ -1934,7 +1934,7 @@ export const articles: Article[] = [
 
       <div class="highlight-box">
         <h4>Tipp für Mieter</h4>
-        <p>Lassen Sie sich die Erlaubnis zur Haustierhaltung schriftlich geben und dokumentieren Sie den Zustand der Wohnung bei Einzug.</p>
+        <p>Lass dir die Erlaubnis zur Haustierhaltung schriftlich geben und dokumentiere den Zustand der Wohnung bei Einzug.</p>
       </div>
 
       <h2>Kaution: Grenzen und Regelungen</h2>
@@ -1950,15 +1950,15 @@ export const articles: Article[] = [
 
       <h2>Fazit</h2>
       
-      <p>Lassen Sie sich nicht von unwirksamen Klauseln einschüchtern. Im Zweifelsfall lohnt sich eine <a href="/ki-vertragsanalyse">automatische Vertragsprüfung</a>, die unwirksame Mietvertragsklauseln in Sekunden identifiziert.</p>
+      <p>Lass dich nicht von unwirksamen Klauseln einschüchtern. Im Zweifelsfall lohnt sich eine <a href="/ki-vertragsanalyse">automatische Vertragsprüfung</a>, die unwirksame Mietvertragsklauseln in Sekunden identifiziert.</p>
     `
   },
   {
     id: 3,
     slug: 'arbeitsvertrag-rechte-verstehen',
     title: 'Arbeitsvertrag verstehen: Überstunden, Urlaub & Kündigung',
-    subtitle: 'Was steht wirklich in Ihrem Arbeitsvertrag? Die wichtigsten Klauseln erklärt',
-    excerpt: 'Was steht wirklich in Ihrem Arbeitsvertrag? Wir erklären die wichtigsten Klauseln und Ihre Rechte als Arbeitnehmer.',
+    subtitle: 'Was steht wirklich in deinem Arbeitsvertrag? Die wichtigsten Klauseln erklärt',
+    excerpt: 'Was steht wirklich in deinem Arbeitsvertrag? Wir erklären die wichtigsten Klauseln und deine Rechte als Arbeitnehmer.',
     category: 'arbeitsrecht',
     date: '18. Mai 2025',
     readTime: '6 Min. Lesezeit',
@@ -1971,7 +1971,7 @@ export const articles: Article[] = [
         <p>Lass deinen Arbeitsvertrag von einer KI prüfen — auf Basis aktueller BAG-Rechtsprechung in unter 60 Sekunden. Unwirksame Klauseln, überzogene Wettbewerbsverbote und versteckte Nachteile werden sofort erkannt. <a href="/arbeitsvertrag-pruefen"><strong>Jetzt Arbeitsvertrag prüfen →</strong></a></p>
       </div>
 
-      <p>Ihr Arbeitsvertrag regelt mehr als nur Gehalt und Arbeitszeit. Wir erklären die wichtigsten Klauseln und Ihre Rechte als Arbeitnehmer.</p>
+      <p>Dein Arbeitsvertrag regelt mehr als nur Gehalt und Arbeitszeit. Wir erklären die wichtigsten Klauseln und deine Rechte als Arbeitnehmer.</p>
 
       <h2>Arbeitszeit und Überstunden</h2>
       
@@ -2010,15 +2010,15 @@ export const articles: Article[] = [
 
       <h2>Fazit</h2>
       
-      <p>Kennen Sie Ihre Rechte! Bei Unklarheiten lassen Sie Ihren Arbeitsvertrag per <a href="/ki-vertragsanalyse">KI-Vertragscheck</a> professionell prüfen – in Sekunden statt Tagen.</p>
+      <p>Kenne deine Rechte! Bei Unklarheiten lass deinen Arbeitsvertrag per <a href="/ki-vertragsanalyse">KI-Vertragscheck</a> professionell prüfen – in Sekunden statt Tagen.</p>
     `
   },
   {
     id: 4,
     slug: 'agb-fallen-online-shopping',
-    title: 'AGB-Fallen bei Online-Shopping: Darauf müssen Sie achten',
-    subtitle: 'Automatische Vertragsverlängerung, versteckte Kosten, eingeschränkte Gewährleistung – so durchschauen Sie problematische AGB',
-    excerpt: 'Automatische Vertragsverlängerung, versteckte Kosten, eingeschränkte Gewährleistung – so durchschauen Sie problematische AGB.',
+    title: 'AGB-Fallen bei Online-Shopping: Darauf musst du achten',
+    subtitle: 'Automatische Vertragsverlängerung, versteckte Kosten, eingeschränkte Gewährleistung – so durchschaust du problematische AGB',
+    excerpt: 'Automatische Vertragsverlängerung, versteckte Kosten, eingeschränkte Gewährleistung – so durchschaust du problematische AGB.',
     category: 'agb',
     date: '15. Mai 2025',
     readTime: '8 Min. Lesezeit',
@@ -2123,8 +2123,8 @@ export const articles: Article[] = [
     id: 5,
     slug: 'autokauf-vertrag-gewaehrleistung',
     title: 'Autokauf-Vertrag: Gewährleistung, Sachmängel & Rücktritt',
-    subtitle: 'Beim Autokauf kann viel schiefgehen. So schützen Sie sich vor versteckten Mängeln und problematischen Verkäufern',
-    excerpt: 'Beim Autokauf kann viel schiefgehen. So schützen Sie sich vor versteckten Mängeln und problematischen Verkäufern.',
+    subtitle: 'Beim Autokauf kann viel schiefgehen. So schützt du dich vor versteckten Mängeln und problematischen Verkäufern',
+    excerpt: 'Beim Autokauf kann viel schiefgehen. So schützt du dich vor versteckten Mängeln und problematischen Verkäufern.',
     category: 'kaufvertraege',
     date: '12. Mai 2025',
     readTime: '7 Min. Lesezeit',
@@ -2141,7 +2141,7 @@ export const articles: Article[] = [
 
       <h2>Gewährleistung beim Autokauf</h2>
       
-      <p>Ihre Rechte als Käufer:</p>
+      <p>Deine Rechte als Käufer:</p>
       
       <ul>
         <li>Bei Händlern: 2 Jahre Gewährleistung (1 Jahr bei Gebrauchtwagen möglich)</li>
@@ -2149,9 +2149,9 @@ export const articles: Article[] = [
         <li>Versteckte Mängel: Verkäufer muss diese offenlegen</li>
       </ul>
 
-      <h2>Sachmängel und Ihre Rechte</h2>
+      <h2>Sachmängel und deine Rechte</h2>
       
-      <p>Bei Mängeln haben Sie verschiedene Optionen:</p>
+      <p>Bei Mängeln hast du verschiedene Optionen:</p>
       
       <ul>
         <li>Nachbesserung oder Ersatzlieferung verlangen</li>
@@ -2161,7 +2161,7 @@ export const articles: Article[] = [
 
       <div class="highlight-box">
         <h4>Praxis-Tipp</h4>
-        <p>Dokumentieren Sie den Fahrzeugzustand vor Übergabe ausführlich mit Fotos und lassen Sie eine Probefahrt protokollieren.</p>
+        <p>Dokumentiere den Fahrzeugzustand vor Übergabe ausführlich mit Fotos und lass eine Probefahrt protokollieren.</p>
       </div>
 
       <h2>Rücktritt vom Kaufvertrag</h2>
@@ -2176,15 +2176,15 @@ export const articles: Article[] = [
 
       <h2>Fazit</h2>
       
-      <p>Lassen Sie Kaufverträge vor Unterschrift per <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> prüfen und scheuen Sie sich nicht, bei Problemen Ihre Rechte geltend zu machen.</p>
+      <p>Lass Kaufverträge vor Unterschrift per <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> prüfen und scheu dich nicht, bei Problemen deine Rechte geltend zu machen.</p>
     `
   },
   {
     id: 6,
     slug: 'vertragsverhandlung-strategien',
-    title: 'Vertragsverhandlung: So erreichen Sie bessere Bedingungen',
-    subtitle: 'Auch als Privatperson können Sie Verträge nachverhandeln. Mit diesen Strategien erreichen Sie fairere Konditionen',
-    excerpt: 'Auch als Privatperson können Sie Verträge nachverhandeln. Mit diesen Strategien erreichen Sie fairere Konditionen.',
+    title: 'Vertragsverhandlung: So erreichst du bessere Bedingungen',
+    subtitle: 'Auch als Privatperson kannst du Verträge nachverhandeln. Mit diesen Strategien erreichst du fairere Konditionen',
+    excerpt: 'Auch als Privatperson kannst du Verträge nachverhandeln. Mit diesen Strategien erreichst du fairere Konditionen.',
     category: 'tipps',
     date: '10. Mai 2025',
     readTime: '7 Min. Lesezeit',
@@ -2283,8 +2283,8 @@ export const articles: Article[] = [
     id: 7,
     slug: 'widerrufsrecht-richtig-nutzen',
     title: 'Widerrufsrecht: 14 Tage richtig nutzen',
-    subtitle: 'Das Widerrufsrecht schützt Verbraucher – aber nur, wenn Sie es richtig anwenden. Die wichtigsten Regeln und Ausnahmen',
-    excerpt: 'Das Widerrufsrecht schützt Verbraucher – aber nur, wenn Sie es richtig anwenden. Die wichtigsten Regeln und Ausnahmen.',
+    subtitle: 'Das Widerrufsrecht schützt Verbraucher – aber nur, wenn du es richtig anwendest. Die wichtigsten Regeln und Ausnahmen',
+    excerpt: 'Das Widerrufsrecht schützt Verbraucher – aber nur, wenn du es richtig anwendest. Die wichtigsten Regeln und Ausnahmen.',
     category: 'agb',
     date: '8. Mai 2025',
     readTime: '6 Min. Lesezeit',
@@ -2297,7 +2297,7 @@ export const articles: Article[] = [
         <p>Lass deinen Kaufvertrag vor Abschluss in 60 Sekunden auf unwirksame Klauseln, vage Beschaffenheitsangaben und überzogene Stornogebühren prüfen — auf Basis BGB-Kaufrecht und BGH-Rechtsprechung. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
       </div>
 
-      <p>Das 14-tägige Widerrufsrecht ist ein wichtiger Verbraucherschutz. Doch es gibt Ausnahmen und Regeln, die Sie kennen sollten.</p>
+      <p>Das 14-tägige Widerrufsrecht ist ein wichtiger Verbraucherschutz. Doch es gibt Ausnahmen und Regeln, die du kennen solltest.</p>
 
       <h2>Wo gilt das Widerrufsrecht?</h2>
       
@@ -2322,12 +2322,12 @@ export const articles: Article[] = [
 
       <div class="highlight-box">
         <h4>Fristen beachten</h4>
-        <p>Die 14-Tage-Frist beginnt erst, wenn Sie ordnungsgemäß über das Widerrufsrecht belehrt wurden.</p>
+        <p>Die 14-Tage-Frist beginnt erst, wenn du ordnungsgemäß über das Widerrufsrecht belehrt wurdest.</p>
       </div>
 
       <h2>Widerruf richtig erklären</h2>
       
-      <p>So gehen Sie vor:</p>
+      <p>So gehst du vor:</p>
       
       <ul>
         <li>Schriftlich widerrufen (E-Mail reicht)</li>
@@ -2338,7 +2338,7 @@ export const articles: Article[] = [
 
       <h2>Fazit</h2>
       
-      <p>Das Widerrufsrecht ist ein starkes Verbraucherrecht – nutzen Sie es bewusst und informiert. Noch besser: Prüfen Sie Verträge vor Abschluss per <a href="/ki-vertragsanalyse">KI-gestützter Vertragsprüfung</a>, damit ein Widerruf gar nicht erst nötig wird.</p>
+      <p>Das Widerrufsrecht ist ein starkes Verbraucherrecht – nutze es bewusst und informiert. Noch besser: Prüfe Verträge vor Abschluss per <a href="/ki-vertragsanalyse">KI-gestützter Vertragsprüfung</a>, damit ein Widerruf gar nicht erst nötig wird.</p>
     `
   },
   {
@@ -2435,7 +2435,7 @@ export const articles: Article[] = [
 
       <h2>Fazit</h2>
 
-      <p>Bei Kündigungen sind Form und Fristen entscheidend. Im Zweifel sollten Sie Ihren Arbeitsvertrag per <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> prüfen lassen, um alle Fristen und Klauseln sicher zu überblicken.</p>
+      <p>Bei Kündigungen sind Form und Fristen entscheidend. Im Zweifel solltest du deinen Arbeitsvertrag per <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> prüfen lassen, um alle Fristen und Klauseln sicher zu überblicken.</p>
     `,
     faqs: [
       {
