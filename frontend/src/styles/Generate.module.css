@@ -8216,3 +8216,109 @@
 }
 
 .customDesignApplyBtn:hover:not(:disabled) { background: #1259bd; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   EDITOR, ANLAGEN UND VORSCHAU IN SCHRITT 3 — 08.09.2026
+   ---------------------------------------------------------------------
+   🔴 1. AUF DEM HANDY SCROLLTE DIE SEITE 228px ZUR SEITE.
+      Gemessen bei 420px Fensterbreite: die einspaltige Spur war 608px
+      breit. Die Media Query ab 1024px setzt zwar grid-template-columns
+      auf 1fr — aber 1fr ist minmax(auto, 1fr) und gibt nach unten nicht
+      nach. Die drei Editor-Knoepfe stehen in einem flex ohne Umbruch
+      und haben die Spur aufgeblasen.
+      Das ist der VIERTE Fall desselben Musters nach den Vertragsart-
+      Karten, der Sofort-Uebersicht und den Formularfeldern:
+      minmax(0, 1fr) statt 1fr, min-width: 0 auf den Kindern.
+
+   🔴 2. DREI KNOEPFE, DREI FARBEN: „KI verbessern" und „Klauseln
+      pruefen" trugen je einen eigenen Verlauf, „PDF aktualisieren" ein
+      dunkles Anthrazit. Drei gleichrangige Nebenaktionen brauchen keine
+      drei Farben; sie stehen unter einer Ueberschrift, die schon sagt,
+      worum es geht.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Nichts darf die Spur aufblasen ───────────────────────────── */
+.step3TwoColumn {
+  grid-template-columns: minmax(0, 1fr) 420px;
+}
+
+.step3LeftColumn,
+.step3RightColumn {
+  min-width: 0;
+}
+
+.step3EditorPanel,
+.step3AttachmentsPanel,
+.step3EditorContent,
+.step3EditorHeader {
+  min-width: 0;
+}
+
+.step3EditorActions,
+.step3EditorTitle,
+.step3AttachmentsHeader {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .step3TwoColumn { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Lange Dateinamen sprengen sonst die Zeile. Unterstriche sind fuer den
+   Browser keine Umbruchstelle, deshalb anywhere. */
+.step3AttachmentItem {
+  min-width: 0;
+}
+
+.step3AttachmentItem span {
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+/* ── 2. Eine Farbe fuer gleichrangige Nebenaktionen ──────────────── */
+.step3EditorBtn.brand,
+.step3EditorBtn.green {
+  background: #fff;
+  border: 1px solid #dfe3ea;
+  color: #41506b;
+  box-shadow: none;
+}
+
+.step3EditorBtn.brand:hover:not(:disabled),
+.step3EditorBtn.green:hover:not(:disabled) {
+  background: #f7f9fc;
+  border-color: #c4cbd6;
+  color: #15171c;
+}
+
+/* „PDF aktualisieren" ist die haeufigste Handlung in diesem Bereich und
+   bleibt als einzige gefuellt — in Markenblau statt Anthrazit. */
+.step3EditorBtn.primary {
+  background: #1568dd;
+  border-color: transparent;
+  color: #fff;
+}
+
+.step3EditorBtn.primary:hover:not(:disabled) { background: #1259bd; }
+
+@media (max-width: 560px) {
+  .step3EditorActions { width: 100%; }
+  .step3EditorBtn { flex: 1 1 auto; justify-content: center; }
+}
+
+/* Die Ablageflaeche fuer Anlagen faerbte beim Ueberfahren auf
+   Anthrazit (#0B1324) und beim Ziehen auf das alte #2E6CF6. Beides auf
+   die Markenfarbe, sonst hat dieselbe Handlung zwei Blautoene.
+   (Der Aufbau selbst ist in Ordnung: das label steht auf
+   flex-direction:column mit gap — was in meinem Testbild wie ein
+   Klebefehler aussah, war mein Nachbau ohne label.) */
+.step3Dropzone:hover {
+  border-color: rgba(21, 104, 221, .5);
+  background: rgba(21, 104, 221, .03);
+}
+
+.step3Dropzone.dragging {
+  border-color: #1568dd;
+  background: rgba(21, 104, 221, .06);
+}
