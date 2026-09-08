@@ -8203,3 +8203,16 @@
   border-color: #1568dd;
   background: rgba(21, 104, 221, .05);
 }
+
+/* Im Browser nachgemessen: dieser Knopf im Dialog "Eigenes Design"
+   war als einziger noch lila (#7C3AED→#5B21B6). Ein Textvergleich im
+   Stylesheet hatte ihn verfehlt, weil Kommentare am Selektor kleben —
+   die Kaskade rechnet der Browser aus, nicht ein Regex.
+   Er ist die Hauptaktion des Dialogs, also volle Markenfarbe. */
+.customDesignApplyBtn {
+  background: #1568dd;
+  color: #fff;
+  border-color: transparent;
+}
+
+.customDesignApplyBtn:hover:not(:disabled) { background: #1259bd; }
