@@ -32,6 +32,7 @@ const { generateJobId, insertAnalysisJob, updateAnalysisJob } = analyzeRoute;
 const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 const { applyAnalysisGate, effectivePlan, isContractUnlocked, applyGeneratedContentGate } = require("../utils/analysisGate"); // 🔒 Freemium-Tease-Gate (Phase 2) + Einmal-Freischaltung (Stufe 2) + Generierte-Volltext-Sperre
+const { calculateSmartStatusBackend } = require("../utils/contractStatus"); // 📊 Zentrale Status-Wahrheit (auch von der Dashboard-Summary genutzt)
 
 // 🔒 Freemium-Tease-Gate — REVERSIBEL per ENV, default AUS (→ kein Verhalten ändert sich bis bewusst aktiviert).
 // Bei Aktivierung zusätzlich FREEMIUM_GATE_LAUNCH_DATE (ISO) setzen; ohne explizites Datum gilt der
@@ -751,104 +752,10 @@ ensureDb().then(() => ensureIndexes()).catch(err => {
   console.error("❌ MongoDB-Fehler (contracts.js):", err);
 });
 
-// 📊 Backend-seitige Status-Berechnung — SINGLE SOURCE für Filter, Sidebar-Counts und das
-// an jeden Vertrag angehängte `computedStatus` (= Detail-Anzeige).
-// ⚠️⚠️ MUSS 1:1 IDENTISCH bleiben mit `calculateSmartStatus` in:
-//        - frontend/src/pages/ContractsV2.tsx   (Listen-Badge)
-//        - frontend/src/pages/Contracts.tsx     (V1-Kopie)
-//      Bei JEDER Änderung der Status-Logik ALLE DREI Funktionen gleich anpassen —
-//      sonst weichen Liste, Detail, Filter und Zähler wieder voneinander ab.
-function calculateSmartStatusBackend(contract) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // 0. 📨 Einseitiges Schreiben (Welle 1, 07.07.2026) — MUSS als allererster Branch
-  // stehen (VOR Kündigungs-/gekuendigtZum-Logik): ein erhaltenes Kündigungsschreiben
-  // ist weder „Gekündigt" noch „Aktiv", sondern schlicht „Erhalten".
-  if (contract.documentType === 'LETTER' || contract.documentCategory === 'letter') {
-    return 'Erhalten';
-  }
-
-  // 1. Kündigungsbestätigung
-  if (contract.documentCategory === 'cancellation_confirmation' || contract.gekuendigtZum) {
-    const gekuendigtDate = contract.gekuendigtZum ? new Date(contract.gekuendigtZum) : null;
-    if (gekuendigtDate) {
-      gekuendigtDate.setHours(0, 0, 0, 0);
-      if (gekuendigtDate < today) return 'Beendet';
-      return 'Gekündigt';
-    }
-    return 'Gekündigt';
-  }
-
-  // 1.5 Via Contract AI gekündigt
-  if (contract.status === 'gekündigt' || contract.cancellationId) {
-    return contract.cancellationConfirmed ? 'Gekündigt ✓' : 'Gekündigt — offen';
-  }
-
-  // 2. Rechnung
-  // 🛠️ 24.08.2026 (Noahs Fund): NUR echte Rechnungen bekommen den Zahl-Status „Offen/Bezahlt".
-  // Vorher haderte das an `documentCategory === 'invoice'` — dieser grobe Topf enthielt auch
-  // RECEIPT (Kontoauszug/Quittung) und TABLE_DOCUMENT (Bestell-Tabelle), die dann faelschlich
-  // „Offen" trugen. Gleichzeitig HATTEN 30 echte Rechnungen `documentType='INVOICE'`, aber
-  // `documentCategory=undefined` → die bekamen den Zahl-Status GAR NICHT. Das praezise Signal
-  // ist `documentType === 'INVOICE'`: schliesst Beleg/Tabelle aus UND erfasst alle echten Rechnungen.
-  if (contract.documentType === 'INVOICE') {
-    return contract.paymentStatus === 'paid' ? 'Bezahlt' : 'Offen';
-  }
-
-  // 2.5 🔒 Manueller Override (nur wenn gesetzt) — nach Kündigung/Rechnung, vor Datums-Logik
-  // typeof-Guard: schützt vor 500-Crash, falls status mal kein String ist (Daten-Korruption)
-  if (contract.statusOverride && typeof contract.status === 'string') {
-    const s = contract.status.toLowerCase();
-    if (['aktiv', 'gültig', 'laufend', 'active'].includes(s)) return 'Aktiv';
-    if (s === 'gekündigt' || s === 'gekuendigt') return 'Gekündigt';
-    if (['beendet', 'abgelaufen', 'expired'].includes(s)) return 'Beendet';
-    if (['läuft ab', 'bald fällig', 'bald_ablaufend'].includes(s)) return 'Läuft ab';
-    if (s === 'pausiert') return 'Pausiert';
-    if (['entwurf', 'draft'].includes(s)) return 'Entwurf';
-    return 'Aktiv';
-  }
-
-  // 3. Ablaufdatum
-  const expiryDate = contract.expiryDate ? new Date(contract.expiryDate) : null;
-  if (expiryDate && !isNaN(expiryDate.getTime())) {
-    expiryDate.setHours(0, 0, 0, 0);
-    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (daysUntilExpiry < 0) {
-      // Plausibility Check: Kürzlich hochgeladen mit altem Datum
-      const createdAt = contract.createdAt ? new Date(contract.createdAt) : null;
-      const daysSinceCreation = createdAt
-        ? Math.ceil((today.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
-        : 999;
-      if (daysSinceCreation <= 14 && daysUntilExpiry < -60) return 'Aktiv';
-      return 'Beendet';
-    }
-    if (daysUntilExpiry <= 30) return 'Läuft ab';
-    return 'Aktiv';
-  }
-
-  // 4. Manueller Status (typeof-Guard gegen Nicht-String-status → kein 500-Crash)
-  if (typeof contract.status === 'string') {
-    const status = contract.status.toLowerCase();
-    if (['aktiv', 'gültig', 'laufend'].includes(status)) return 'Aktiv';
-    if (status === 'gekündigt') return 'Gekündigt';
-    if (['beendet', 'abgelaufen', 'expired'].includes(status)) return 'Beendet';
-    if (['läuft ab', 'bald fällig'].includes(status)) return 'Läuft ab';
-    if (status === 'pausiert') return 'Pausiert';
-    if (['entwurf', 'draft'].includes(status)) return 'Entwurf';
-  }
-
-  // 5. Generierte/Optimierte Verträge
-  if (contract.isGenerated) return 'Entwurf';
-  if (contract.isOptimized) return 'Optimiert';
-
-  // 6. Nicht analysiert
-  if (!contract.analyzed && !contract.contractScore) return 'Neu';
-
-  // 7. Fallback
-  return 'Aktiv';
-}
+// Status-Berechnung: calculateSmartStatusBackend lebt jetzt in utils/contractStatus.js
+// (ausgelagert 08.09.2026, QA-Punkt 1), damit die Dashboard-Summary DIESELBE Regel nutzt.
+// Die Logik dort MUSS 1:1 identisch bleiben mit calculateSmartStatus in
+// frontend/src/pages/ContractsV2.tsx und frontend/src/pages/Contracts.tsx (V1-Kopie).
 
 // 🗂️ Filter-Wert → Smart-Status-Label(s). So gilt: Filter == Badge == Sidebar-Zähler
 // (alle nutzen calculateSmartStatusBackend). Ersetzt die alte, abweichende Datums-Query.
@@ -864,6 +771,11 @@ const STATUS_FILTER_BUCKETS = {
   // damit sie über Filter erreichbar sind (Frontend-Dropdown folgt in v1.x;
   // ohne Eintrag hier wären sie in KEINEM Filter außer „Alle" sichtbar).
   erhalten: ['Erhalten'],
+  // 📊 QA-Punkt 1 (BUG-009, 08.09.2026): Rechnungs- und Pausiert-Status waren über
+  // KEINEN Filter erreichbar (nur „Alle") — jetzt deckt die Eimer-Summe alle Label ab.
+  offen: ['Offen'],
+  bezahlt: ['Bezahlt'],
+  pausiert: ['Pausiert'],
 };
 
 // 🚀 Keine $lookup-Aggregation mehr — ALLE Lookups als parallele Batch-Queries
@@ -1505,7 +1417,8 @@ router.get("/", async (req, res) => {
 
     // 📊 Sidebar-Counts: Aus ALLEN User-Verträgen berechnet (unabhängig von aktiven Filtern)
     const sidebarCounts = { total: allUserContracts.length, baldAblaufend: 0, aktiv: 0, ohneOrdner: 0,
-      abgelaufen: 0, gekuendigt: 0, neu: 0, entwurf: 0, optimiert: 0 };
+      abgelaufen: 0, gekuendigt: 0, neu: 0, entwurf: 0, optimiert: 0,
+      erhalten: 0, offen: 0, bezahlt: 0, pausiert: 0 };
     for (const c of allUserContracts) {
       try {
         const smartStatus = calculateSmartStatusBackend(c);
@@ -1516,6 +1429,12 @@ router.get("/", async (req, res) => {
         else if (smartStatus === 'Neu') sidebarCounts.neu++;
         else if (smartStatus === 'Entwurf') sidebarCounts.entwurf++;
         else if (smartStatus === 'Optimiert') sidebarCounts.optimiert++;
+        // 📊 QA-Punkt 1 (BUG-009): diese vier fielen bisher in KEINEN Eimer —
+        // deshalb ergab die Filter-Summe 208 statt 234 (26 Verträge unerreichbar).
+        else if (smartStatus === 'Erhalten') sidebarCounts.erhalten++;
+        else if (smartStatus === 'Offen') sidebarCounts.offen++;
+        else if (smartStatus === 'Bezahlt') sidebarCounts.bezahlt++;
+        else if (smartStatus === 'Pausiert') sidebarCounts.pausiert++;
       } catch (e) {
         // Defekter Vertrag zählt in keinen Status-Eimer — bricht aber NICHT die ganze Liste
         console.error(`⚠️ Status-Berechnung fehlgeschlagen für Vertrag ${c?._id}:`, e?.message);

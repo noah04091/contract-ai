@@ -291,7 +291,7 @@ interface UserInfo {
 }
 
 // ✅ Erweiterte Filter-Typen
-type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt' | 'neu' | 'entwurf' | 'optimiert';
+type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt' | 'neu' | 'entwurf' | 'optimiert' | 'erhalten' | 'offen' | 'bezahlt' | 'pausiert';
 type DateFilter = 'alle' | 'heute' | 'woche' | 'monat' | 'quartal' | 'jahr';
 type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za'
   | 'status_asc' | 'status_desc'
@@ -768,7 +768,11 @@ export default function Contracts() {
     gekuendigt: 0,
     neu: 0,
     entwurf: 0,
-    optimiert: 0
+    optimiert: 0,
+    erhalten: 0,
+    offen: 0,
+    bezahlt: 0,
+    pausiert: 0
   });
   const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
   const [analyzingContract, setAnalyzingContract] = useState<{ [contractId: string]: boolean }>({}); // Loading für "Jetzt analysieren"
@@ -2594,7 +2598,7 @@ export default function Contracts() {
           skip: number;
           hasMore: boolean;
         };
-        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number; abgelaufen: number; gekuendigt: number; neu: number; entwurf: number; optimiert: number };
+        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number; abgelaufen: number; gekuendigt: number; neu: number; entwurf: number; optimiert: number; erhalten?: number; offen?: number; bezahlt?: number; pausiert?: number };
       };
 
       // 🚀 Race Condition Check: Ignoriere Response wenn neuerer Request gestartet wurde
@@ -2661,7 +2665,7 @@ export default function Contracts() {
           skip: number;
           hasMore: boolean;
         };
-        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number; abgelaufen: number; gekuendigt: number; neu: number; entwurf: number; optimiert: number };
+        sidebarCounts?: { total: number; baldAblaufend: number; aktiv: number; ohneOrdner: number; abgelaufen: number; gekuendigt: number; neu: number; entwurf: number; optimiert: number; erhalten?: number; offen?: number; bezahlt?: number; pausiert?: number };
       };
 
       setContracts(response.contracts);
@@ -4879,6 +4883,11 @@ export default function Contracts() {
                   <option value="neu">Neu ({sidebarCounts.neu})</option>
                   <option value="entwurf">Entwurf ({sidebarCounts.entwurf})</option>
                   <option value="optimiert">Optimiert ({sidebarCounts.optimiert})</option>
+                  {/* QA-Punkt 1 (BUG-009): vorher unerreichbare Status — nur zeigen, wenn vorhanden */}
+                  {sidebarCounts.erhalten > 0 && <option value="erhalten">Erhalten ({sidebarCounts.erhalten})</option>}
+                  {sidebarCounts.offen > 0 && <option value="offen">Offen ({sidebarCounts.offen})</option>}
+                  {sidebarCounts.bezahlt > 0 && <option value="bezahlt">Bezahlt ({sidebarCounts.bezahlt})</option>}
+                  {sidebarCounts.pausiert > 0 && <option value="pausiert">Pausiert ({sidebarCounts.pausiert})</option>}
                 </select>
 
                 {/* Zeitraum Filter */}
@@ -5038,6 +5047,11 @@ export default function Contracts() {
                   <option value="neu">Neu ({sidebarCounts.neu})</option>
                   <option value="entwurf">Entwurf ({sidebarCounts.entwurf})</option>
                   <option value="optimiert">Optimiert ({sidebarCounts.optimiert})</option>
+                  {/* QA-Punkt 1 (BUG-009): vorher unerreichbare Status — nur zeigen, wenn vorhanden */}
+                  {sidebarCounts.erhalten > 0 && <option value="erhalten">Erhalten ({sidebarCounts.erhalten})</option>}
+                  {sidebarCounts.offen > 0 && <option value="offen">Offen ({sidebarCounts.offen})</option>}
+                  {sidebarCounts.bezahlt > 0 && <option value="bezahlt">Bezahlt ({sidebarCounts.bezahlt})</option>}
+                  {sidebarCounts.pausiert > 0 && <option value="pausiert">Pausiert ({sidebarCounts.pausiert})</option>}
                         </select>
                       </div>
 

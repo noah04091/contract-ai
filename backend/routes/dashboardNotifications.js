@@ -12,6 +12,10 @@ const LegalPulseV2Result = require("../models/LegalPulseV2Result"); // 🆕 Puls
 const { VISIBLE_EVENT_MATCH } = require("../utils/calendarVisibility"); // 3b: Auto-Vorwarnungen aus Anzeige ausblenden
 const { calendarDaysUntil } = require("../utils/calendarDaysUntil"); // korrekte Anzeige-Tageszahl (Kalendertage)
 const { cleanContractName } = require("../utils/cleanContractName"); // #1: rohe Dateinamen in der Glocke säubern (wie in den Mails)
+// 📊 QA-Punkt 1 (BUG-006, 08.09.2026): Dashboard zählt jetzt mit DERSELBEN Status-Regel wie
+// die Vertragsliste (contracts.js) — vorher eigene expiryDate-Aggregation ("aktiv" = Datum
+// >30 Tage entfernt ODER fehlend), die z. B. 141 statt 115 "Aktiv" ergab.
+const { calculateSmartStatusBackend, SMART_STATUS_PROJECTION } = require("../utils/contractStatus");
 
 // S3 für Profilbild-Upload
 let S3Client, PutObjectCommand, s3Instance;
@@ -102,53 +106,14 @@ router.get("/summary", verifyToken, async (req, res) => {
     in30Days.setDate(in30Days.getDate() + 30);
 
     // 🚀 OPTIMIERT: Alle 6 Queries parallel statt sequentiell (Promise.all)
-    const [statsResult, recentContracts, urgentContracts, generatedContracts, reminderContracts, user, pendingEnvelopes, pulseAnalyzedContracts] = await Promise.all([
-      // 1. Schnelle Stats mit aggregation
-      contractsCollection.aggregate([
-        { $match: userIdFilter },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: 1 },
-            active: {
-              $sum: {
-                $cond: [
-                  { $or: [
-                    { $gt: ["$expiryDate", in30Days] },
-                    { $eq: ["$expiryDate", null] }
-                  ]},
-                  1, 0
-                ]
-              }
-            },
-            expiringSoon: {
-              $sum: {
-                $cond: [
-                  { $and: [
-                    { $ne: ["$expiryDate", null] },
-                    { $gt: ["$expiryDate", now] },
-                    { $lte: ["$expiryDate", in30Days] }
-                  ]},
-                  1, 0
-                ]
-              }
-            },
-            expired: {
-              $sum: {
-                $cond: [
-                  { $and: [
-                    { $ne: ["$expiryDate", null] },
-                    { $lte: ["$expiryDate", now] }
-                  ]},
-                  1, 0
-                ]
-              }
-            },
-            generated: { $sum: { $cond: ["$isGenerated", 1, 0] } },
-            analyzed: { $sum: { $cond: [{ $ne: ["$legalPulse.riskScore", null] }, 1, 0] } }
-          }
-        }
-      ]).toArray(),
+    const [statusContracts, recentContracts, urgentContracts, generatedContracts, reminderContracts, user, pendingEnvelopes, pulseAnalyzedContracts] = await Promise.all([
+      // 1. Alle Verträge SCHLANK laden und mit calculateSmartStatusBackend zählen —
+      //    exakt dieselbe Quelle wie sidebarCounts/Filter der Vertragsliste (BUG-006).
+      //    Die Liste lädt dieselbe Projektion ohnehin bei jedem Aufruf.
+      contractsCollection
+        .find(userIdFilter)
+        .project({ ...SMART_STATUS_PROJECTION, isGenerated: 1, 'legalPulse.riskScore': 1 })
+        .toArray(),
 
       // 2. Letzte 5 Verträge (nur essentielle Felder)
       contractsCollection
@@ -265,9 +230,22 @@ router.get("/summary", verifyToken, async (req, res) => {
       ]).catch(() => []) // 🛡️ Schutz: Bei Fehler leere Liste, Dashboard läuft weiter
     ]);
 
-    const stats = statsResult[0] || {
-      total: 0, active: 0, expiringSoon: 0, expired: 0, generated: 0, analyzed: 0
-    };
+    // 📊 Zählung mit der zentralen Status-Regel (Label → KPI wie die Listen-Schnellfilter:
+    // Aktiv = Filter „aktiv", Läuft ab = „bald_ablaufend", Beendet = „abgelaufen").
+    const stats = { total: statusContracts.length, active: 0, expiringSoon: 0, expired: 0, generated: 0, analyzed: 0 };
+    for (const c of statusContracts) {
+      try {
+        const smartStatus = calculateSmartStatusBackend(c);
+        if (smartStatus === 'Aktiv') stats.active++;
+        else if (smartStatus === 'Läuft ab') stats.expiringSoon++;
+        else if (smartStatus === 'Beendet') stats.expired++;
+      } catch (e) {
+        // Defekter Vertrag zählt in keine Status-KPI — bricht aber nicht das Dashboard
+        console.error(`⚠️ [DASHBOARD-SUMMARY] Status-Berechnung fehlgeschlagen für Vertrag ${c?._id}:`, e?.message);
+      }
+      if (c.isGenerated) stats.generated++;
+      if (c.legalPulse && c.legalPulse.riskScore !== null && c.legalPulse.riskScore !== undefined) stats.analyzed++;
+    }
 
     // 📊 ANALYSE LIMITS - Aus zentraler Konfiguration (subscriptionPlans.js)
     // WICHTIG: Infinity wird in JSON zu null, daher -1 als "unbegrenzt" verwenden
