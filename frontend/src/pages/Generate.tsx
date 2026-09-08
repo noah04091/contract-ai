@@ -4065,7 +4065,7 @@ export default function Generate() {
   const handleCreateTemplate = async (templateData: TemplateFormData) => {
     try {
       await createUserTemplate(templateData);
-      toast.success(`✅ Vorlage "${templateData.name}" erstellt`);
+      toast.success(`Vorlage „${templateData.name}" erstellt.`);
       // Refresh template library to show new template
       setTemplateRefreshKey(prev => prev + 1);
     } catch (error: any) {
@@ -4121,7 +4121,7 @@ export default function Generate() {
       }
       
       setFormData(updatedFormData);
-      toast.success('✅ Firmendaten wurden automatisch eingefügt!');
+      toast.success('Firmendaten wurden übernommen.');
     }
   };
 
@@ -4379,7 +4379,7 @@ export default function Generate() {
         });
         return merged;
       });
-      toast.success(`✨ ${detected.name} erkannt. Bitte prüfe die Angaben und ergänze, was fehlt.`);
+      toast.success(`${detected.name} erkannt. Prüfe die Angaben und ergänze, was fehlt.`);
     } catch {
       toast.info('Automatisches Ausfüllen hat nicht geklappt. Bitte wähle die Vertragsart selbst.');
       setBriefMode(false);
@@ -4682,7 +4682,7 @@ export default function Generate() {
     // Check Business plan limits
     if (userPlan === 'business' && usageData) {
       if (usageData.contractsGenerated >= usageData.monthlyLimit) {
-        toast.error(`🚫 Monatslimit erreicht! Du hast bereits ${usageData.monthlyLimit} Verträge erstellt. Limit erneuert sich am ${usageData.resetDate}.`);
+        toast.error(`Monatslimit erreicht. Du hast bereits ${usageData.monthlyLimit} Verträge erstellt. Limit erneuert sich am ${usageData.resetDate}.`);
         return;
       }
     }
@@ -4753,9 +4753,9 @@ export default function Generate() {
       });
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') {
-        toast.error("⏱️ Generierung hat zu lange gedauert (>120s). Bitte erneut versuchen.");
+        toast.error("Die Erstellung hat zu lange gedauert. Bitte versuche es erneut.");
       } else {
-        toast.error("❌ Fehler: " + getErrorMessage(err));
+        toast.error("Fehler: " + getErrorMessage(err));
       }
     } finally {
       clearTimeout(timeoutId);
@@ -4767,10 +4767,10 @@ export default function Generate() {
     try {
       await navigator.clipboard.writeText(contractText);
       setCopied(true);
-      toast.success("📋 Vertrag erfolgreich kopiert!");
+      toast.success("Vertrag kopiert.");
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error("❌ Kopieren fehlgeschlagen.");
+      toast.error("Kopieren fehlgeschlagen.");
     }
   };
 
@@ -4889,7 +4889,7 @@ export default function Generate() {
 
         // Im silent-Modus (Auto-Save): keine Toasts, keine Navigation-Hinweise
         if (!silent) {
-          toast.success(isUpdate ? "✅ Änderungen gespeichert!" : "✅ Vertrag erfolgreich gespeichert!", {
+          toast.success(isUpdate ? "Änderungen gespeichert." : "Vertrag gespeichert.", {
             autoClose: 3000,
             position: 'top-center',
           });
@@ -4931,7 +4931,7 @@ export default function Generate() {
       console.error("❌ Fehler beim Speichern:", error);
       // Im silent-Modus: Fehler nur loggen, kein Toast (User merkt's an Status-Pille)
       if (!silent) {
-        toast.error(`❌ Fehler beim Speichern: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+        toast.error(`Fehler beim Speichern: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
       }
       return null;
     }
@@ -6121,7 +6121,7 @@ export default function Generate() {
       }
     } catch (error) {
       console.error("❌ Fehler bei PDF-Vorschau:", error);
-      toast.error("❌ PDF-Vorschau konnte nicht erstellt werden");
+      toast.error("Die PDF-Vorschau konnte nicht erstellt werden.");
     } finally {
       setIsGeneratingPreview(false);
     }
@@ -6822,7 +6822,7 @@ export default function Generate() {
                               onClick={() => setShowInputPreview(false)}
                               className={styles.inputPreviewClose}
                             >
-                              ✕
+                              <X size={16} />
                             </button>
                           </div>
                           <div className={styles.inputPreviewContent}>
@@ -6916,7 +6916,7 @@ export default function Generate() {
                             onClick={() => setSidebarOpen(false)}
                             aria-label="Sidebar schließen"
                           >
-                            ✕
+                            <X size={16} />
                           </button>
                         </div>
 
