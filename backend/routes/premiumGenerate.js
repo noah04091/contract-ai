@@ -522,6 +522,48 @@ router.post("/chat", aiLimiter, async (req, res) => {
 });
 
 // POST /generate — Vertrag erzeugen + speichern (zählt aufs Limit)
+/**
+ * Vorschau fuer kostenlose Nutzer.
+ *
+ * Vorher: die ersten 14 Zeilen. Die bestehen bei jedem Vertrag aus dem
+ * Titel, Leerzeilen und den Angaben, die der Nutzer selbst eingetippt
+ * hat — keine einzige Klausel. Wer zahlen soll, sah also nur seine
+ * eigene Adresse.
+ *
+ * Jetzt: der Kopf bis zur ersten Ueberschrift, dann JEDE
+ * Paragraphen-Ueberschrift (das zeigt Umfang und Themen) und der erste
+ * Absatz als Kostprobe. Der Rest bleibt hinter der Freischaltung.
+ */
+function buildGatedPreview(text) {
+  const zeilen = String(text || "").split("\n");
+  const istUeberschrift = (z) => /^\s*(§|PRÄAMBEL|Präambel)/.test(z);
+
+  const ersteUeberschrift = zeilen.findIndex(istUeberschrift);
+  // Kein Paragraph gefunden (z. B. unerwartetes Format): beim alten
+  // Verhalten bleiben, damit die Vorschau nie leer ist.
+  if (ersteUeberschrift === -1) return zeilen.slice(0, 14).join("\n");
+
+  const kopf = zeilen.slice(0, ersteUeberschrift);
+  const ueberschriften = zeilen.filter(istUeberschrift);
+
+  // Erster Absatz nach der ersten Ueberschrift, als Kostprobe.
+  let kostprobe = "";
+  for (let i = ersteUeberschrift + 1; i < zeilen.length; i++) {
+    const z = zeilen[i].trim();
+    if (!z) continue;
+    if (istUeberschrift(zeilen[i])) break;
+    kostprobe = zeilen[i];
+    break;
+  }
+
+  const teile = [...kopf, ueberschriften[0]];
+  if (kostprobe) teile.push(kostprobe, "");
+  // Ab dem zweiten Paragraphen nur die Ueberschriften.
+  for (const u of ueberschriften.slice(1)) teile.push(u);
+
+  return teile.join("\n").trim();
+}
+
 router.post("/generate", aiLimiter, async (req, res) => {
   try {
     const { messages, contractType } = req.body || {};
@@ -578,7 +620,7 @@ router.post("/generate", aiLimiter, async (req, res) => {
     if (isFree) {
       // 🔒 Free: Vertrag ist gespeichert, aber Volltext + Download erst nach Freischaltung.
       // Nur eine kurze Vorschau zurückgeben — der VOLLTEXT verlässt den Server NICHT (kein Bypass).
-      const previewText = text.split("\n").slice(0, 14).join("\n");
+      const previewText = buildGatedPreview(text);
       return res.json({ success: true, contractId: ins.insertedId, contractType: typeLabel, title, gated: true, previewText });
     }
     return res.json({ success: true, contractId: ins.insertedId, contractType: typeLabel, title, contractText: text });
@@ -659,7 +701,7 @@ router.post("/generate-stream", aiLimiter, async (req, res) => {
     const saved = await persistContract(req.user.userId, text, contractType, existingContractId);
     if (isFree) {
       // 🔒 Free: NUR Vorschau (14 Zeilen) + contractId zurück — Volltext bleibt auf dem Server (kein Bypass).
-      send({ type: "done", gated: true, previewText: text.split("\n").slice(0, 14).join("\n"), contractId: saved.contractId, title: saved.title, contractType: saved.contractType });
+      send({ type: "done", gated: true, previewText: buildGatedPreview(text), contractId: saved.contractId, title: saved.title, contractType: saved.contractType });
     } else {
       send({ type: "done", contractText: text, ...saved });
     }

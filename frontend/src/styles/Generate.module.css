@@ -8486,3 +8486,93 @@
     min-width: 128px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FREISCHALT-FLAECHE, ZWEITE STUFE — 08.09.2026
+   ---------------------------------------------------------------------
+   Die Vorschau zeigt jetzt (Backend, buildGatedPreview) alle
+   Paragraphen-Ueberschriften statt der ersten 14 Zeilen. Vorher steckten
+   in diesen 14 Zeilen: der Titel, fuenf Leerzeilen und sechs Zeilen mit
+   Angaben, die der Nutzer selbst eingetippt hatte — keine einzige
+   Klausel. Wer 9,90 € zahlen sollte, sah also nur seine eigene Adresse.
+
+   Damit das etwas bringt, muss die Vorschau LESBAR sein. Sie war mit
+   blur(4px) unscharf und zusaetzlich von einer fast undurchsichtigen
+   Flaeche verdeckt.
+
+   Ueberschriften verraten den Vertragstext nicht — sie zeigen nur, WAS
+   geregelt ist und wie viel Arbeit drinsteckt. Genau das ist das
+   Verkaufsargument. Der Klauseltext bleibt hinter der Freischaltung,
+   weil das Backend ihn gar nicht mitsendet.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Kein blur mehr: was der Nutzer sehen DARF, soll er auch lesen koennen. */
+.gkSperreText {
+  filter: none;
+  opacity: 1;
+  color: #41506b;
+  font-size: .86rem;
+  line-height: 1.7;
+  padding: 24px 26px 130px;
+  max-height: none;
+  /* Auswaehlen und Kopieren bleiben gesperrt — es ist eine Vorschau,
+     kein Volltext. */
+  user-select: none;
+}
+
+/* Paragraphen-Zeilen heben sich ab, damit der Umfang auf einen Blick
+   erkennbar ist. */
+.gkSperreRahmen {
+  min-height: 0;
+}
+
+/* Die Aufforderung sitzt nicht mehr ueber dem Text, sondern als Band
+   darunter. So bleibt beides lesbar: was man bekommt, und was es
+   kostet. */
+.gkSperreDavor {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 22px 24px 24px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, .82) 22%,
+    rgba(255, 255, 255, .98) 46%,
+    #fff 100%);
+}
+
+.gkSperreSymbol {
+  margin-bottom: 10px;
+}
+
+@media (max-width: 520px) {
+  .gkSperreText { padding: 18px 18px 150px; font-size: .82rem; }
+  .gkSperreDavor { padding: 18px 16px 20px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NACHTRAG: die Aufforderung lag ueber der Paragraphen-Liste.
+   Im ersten Versuch stand sie als Overlay im unteren Teil des Rahmens
+   — und verdeckte damit genau die § 1 bis § 7, die sie verkaufen soll.
+   Jetzt steht sie IM FLUSS darunter: erst die Vorschau, dann der
+   Schnitt, dann die Aufforderung. Keine Ueberlagerung mehr moeglich.
+   ═══════════════════════════════════════════════════════════════════ */
+.gkSperreRahmen {
+  display: flex;
+  flex-direction: column;
+}
+
+.gkSperreText {
+  padding: 24px 26px 20px;
+  /* Am unteren Rand ausblenden: es geht sichtbar weiter, aber nicht
+     hier. Das ist der Schnitt, den die Freischaltung aufhebt. */
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 82%, transparent 100%);
+}
+
+.gkSperreDavor {
+  position: static;
+  inset: auto;
+  background: #fff;
+  border-top: 1px solid #eef1f6;
+  padding: 20px 24px 24px;
+}
