@@ -8322,3 +8322,11 @@
   border-color: #1568dd;
   background: rgba(21, 104, 221, .06);
 }
+
+/* Rest aus dem Schritt-3-Umbau, in Noahs Screenshot vom 08.09. sichtbar:
+   der Rahmen der gewaehlten Design-Variante ist jetzt blau, das
+   Haekchen in der Ecke war noch gruen (#10B981). Eine Auswahl ist kein
+   Zustand, also dieselbe Markenfarbe wie der Rahmen. */
+.step3DesignCheck {
+  background: #1568dd;
+}
