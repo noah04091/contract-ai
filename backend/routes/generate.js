@@ -2452,11 +2452,13 @@ ABSOLUT KRITISCHE REGELN:
 5. Verwende professionelle juristische Sprache
 6. Jeder Paragraph muss detailliert ausformuliert sein
 
+WICHTIG ZUR DARSTELLUNG:
+- KEINE dekorativen Linien, Rahmen, ASCII-Kunst oder Trennzeichen-Ketten (z. B. =====, -----, *****, ####). Nur sauberer Fließtext.
+- Der Vertragstitel steht als einzelne Zeile in Großbuchstaben, ohne Linien darüber oder darunter.
+
 EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
-=================================
 [VERTRAGSTYP IN GROSSBUCHSTABEN]
-=================================
 
 zwischen
 

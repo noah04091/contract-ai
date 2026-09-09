@@ -495,11 +495,13 @@ ABSOLUT KRITISCHE REGELN:
    - Füge KEINE Unterschriftsblöcke wie "(Unterschrift Verkäufer)" hinzu
    - Es gibt ein separates Unterschriftenblatt!
 
+WICHTIG ZUR DARSTELLUNG:
+- KEINE dekorativen Linien, Rahmen, ASCII-Kunst oder Trennzeichen-Ketten (z. B. =====, -----, *****, ####). Nur sauberer Fließtext.
+- Der Vertragstitel steht als einzelne Zeile in Großbuchstaben, ohne Linien darüber oder darunter.
+
 EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
-=================================
 [VERTRAGSTYP IN GROSSBUCHSTABEN]
-=================================
 
 zwischen
 
