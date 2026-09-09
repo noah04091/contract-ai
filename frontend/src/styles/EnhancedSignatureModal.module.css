@@ -1069,3 +1069,20 @@
     height: 40px;
   }
 }
+
+/* 08.09.2026: Diese zwei Behaelter trugen Textzeichen (⚠️ und ✓) und
+   waren mit font-size: 20px darauf ausgelegt. Jetzt stehen dort
+   Linien-Symbole — die brauchen Ausrichtung und eine eigene Farbe,
+   font-size wirkt auf ein SVG mit fester Groesse nicht. */
+.warningIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #b45309;
+}
+
+.successIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

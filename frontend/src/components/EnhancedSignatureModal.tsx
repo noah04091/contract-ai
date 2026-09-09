@@ -1,7 +1,7 @@
 // 📝 EnhancedSignatureModal.tsx - Multi-Step Signature Modal with Field Placement
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, ArrowRight, ArrowLeft, CheckCircle, Plus, Mail, User, Trash2, Users, Loader2 } from "lucide-react";
+import { X, Send, ArrowRight, ArrowLeft, CheckCircle, Plus, Mail, User, Trash2, Users, Loader2, AlertTriangle, Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import PDFFieldPlacementEditor, { SignatureField, Signer } from "./PDFFieldPlacementEditor";
@@ -371,7 +371,7 @@ export default function EnhancedSignatureModal({
 
       console.log("✅ Invitations sent");
 
-      toast.success(`✅ Signaturanfrage erfolgreich versendet an ${finalSigners.length} ${finalSigners.length === 1 ? 'Empfänger' : 'Empfänger'}!`, {
+      toast.success(`Signaturanfrage an ${finalSigners.length} ${finalSigners.length === 1 ? 'Empfänger' : 'Empfänger'} versendet.`, {
         position: "top-center",
         autoClose: 4000
       });
@@ -706,16 +706,16 @@ export default function EnhancedSignatureModal({
                       {signatureMode === "BOTH_PARTIES" && currentUser &&
                        signatureFields.filter(f => f.assigneeEmail === currentUser.email).length === 0 && (
                         <div className={styles.warningBox}>
-                          <span className={styles.warningIcon}>⚠️</span>
+                          <span className={styles.warningIcon}><AlertTriangle size={15} /></span>
                           <div className={styles.warningText}>
-                            <strong>Hinweis:</strong> Sie haben "Beide Seiten signieren" gewählt, aber keine Signatur-Felder für sich selbst platziert.
+                            <strong>Hinweis:</strong> Du hast "Beide Seiten signieren" gewählt, aber keine Signatur-Felder für sich selbst platziert.
                           </div>
                         </div>
                       )}
 
                       {/* Success hint */}
                       <div className={styles.successBox}>
-                        <span className={styles.successIcon}>✓</span>
+                        <span className={styles.successIcon}><Check size={14} strokeWidth={3} /></span>
                         <div className={styles.successText}>
                           Bereit zum Versenden! Die Empfänger erhalten E-Mail-Einladungen zum Signieren.
                         </div>
@@ -792,7 +792,7 @@ export default function EnhancedSignatureModal({
                     </div>
                     <h3 className={styles.loadingTitle}>Vertrag wird erstellt...</h3>
                     <p className={styles.loadingText}>
-                      Bitte warten Sie, während wir Ihre Signaturanfrage vorbereiten und versenden.
+                      Wir bereiten deine Signaturanfrage vor und versenden sie.
                     </p>
                     <div className={styles.loadingProgress}>
                       <div className={styles.progressBar}></div>

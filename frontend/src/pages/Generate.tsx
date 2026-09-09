@@ -6199,10 +6199,14 @@ export default function Generate() {
             {/* Progress Steps */}
             <div className={styles.progressSteps}>
               {[
+                // 08.09.2026: „Finalisieren" war ein vierter Schritt, der nie
+                // erreicht werden kann: setCurrentStep(4) existiert nicht, und
+                // die Finalisierung ist der Signatur-Dialog, der nach dem
+                // Versand nach /envelopes navigiert. Ein Kreis, der nie
+                // aufleuchtet, verspricht mehr als die Seite halten kann.
                 { num: 1, label: "Typ auswählen" },
                 { num: 2, label: "Details eingeben" },
-                { num: 3, label: "Vertrag erstellen" },
-                { num: 4, label: "Finalisieren" }
+                { num: 3, label: "Vertrag erstellen" }
               ].map(({ num, label }, index, array) => (
                 <React.Fragment key={num}>
                   <motion.div
@@ -6264,8 +6268,7 @@ export default function Generate() {
             {[
               { num: 1, label: "Typ auswählen" },
               { num: 2, label: "Details eingeben" },
-              { num: 3, label: "Vertrag erstellen" },
-              { num: 4, label: "Finalisieren" }
+              { num: 3, label: "Vertrag erstellen" }
             ].map(({ num, label }, index, array) => (
               <React.Fragment key={num}>
                 <div className={`${styles.gkBandSchritt} ${
