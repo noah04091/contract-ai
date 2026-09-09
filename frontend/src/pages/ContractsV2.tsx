@@ -1,5 +1,6 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION REPARIERT
 import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from "react";
+import { checkUploadFile } from "../constants/uploadTypes"; // EINE Quelle für erlaubte Upload-Typen (24.08.)
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -2861,18 +2862,14 @@ export default function Contracts() {
   // ✅ KORRIGIERT: Mehrfach-Upload Handler mit Plan-Validierung + ANALYSE-FIX
   // 🚧 QA-Punkt 5 (BUG-024, 08.09.2026): Typ-Check im QUEUE-Handler, nicht nur im
   // accept-Attribut des Dateidialogs — Drag & Drop umgeht das Attribut komplett.
-  // Das Backend prüft zusätzlich die echten Magic Bytes (utils/uploadTypeGate.js).
-  const UPLOAD_ALLOWED_EXT = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'heic', 'heif', 'webp', 'tif', 'tiff'];
-  const istUnterstuetzterUploadTyp = (file: File): boolean => {
-    const ext = file.name.split('.').pop()?.toLowerCase() || '';
-    if (UPLOAD_ALLOWED_EXT.includes(ext)) return true;
-    const typ = (file.type || '').toLowerCase();
-    return typ === 'application/pdf' || typ.startsWith('image/') || typ.includes('officedocument.wordprocessingml') || typ === 'application/msword';
-  };
+  // 🔑 TÜV 08.09.: KEINE eigene Liste — checkUploadFile aus constants/uploadTypes.ts
+  // ist die EINE Quelle (24.08.); das Backend prüft zusätzlich die echten Magic Bytes.
+  const istUnterstuetzterUploadTyp = (file: File): boolean => checkUploadFile(file) === null;
   const meldeAbgelehnteDateien = (abgelehnt: File[]) => {
     if (abgelehnt.length === 0) return;
     const namen = abgelehnt.slice(0, 3).map(f => `„${f.name}“`).join(', ');
-    toast.error(`${namen}${abgelehnt.length > 3 ? ` und ${abgelehnt.length - 3} weitere` : ''} wird nicht unterstützt. Erlaubt sind PDF, Word (DOC/DOCX) oder Fotos.`);
+    const grund = checkUploadFile(abgelehnt[0]) || 'Datei wird nicht unterstützt.';
+    toast.error(`${namen}${abgelehnt.length > 3 ? ` und ${abgelehnt.length - 3} weitere` : ''}: ${grund}`);
   };
   // 📏 QA-Punkt 5 (BUG-024): Dateien unter 1 MB standen als "0.00 MB" da
   const formatDateigroesse = (bytes: number): string =>
@@ -3970,7 +3967,12 @@ export default function Contracts() {
     }
 
     // 2. Rechnung = "Bezahlt" oder "Offen"
-    if (contract.documentCategory === 'invoice') {
+    // 🛠️ 08.09.2026 (QA-TÜV): an das PRÄZISE Signal documentType === 'INVOICE' angeglichen —
+    // identisch zum Backend (calculateSmartStatusBackend, Fix vom 24.08.: der grobe
+    // documentCategory-Topf enthielt auch RECEIPT/TABLE_DOCUMENT und verpasste 30 echte
+    // Rechnungen ohne category). Diese Kopie war nie nachgezogen worden → Filter „Offen"
+    // zeigte Zeilen mit Badge „Aktiv".
+    if (contract.documentType === 'INVOICE') {
       return contract.paymentStatus === 'paid' ? 'Bezahlt' : 'Offen';
     }
 
@@ -3990,7 +3992,7 @@ export default function Contracts() {
 
     // 3. Prüfe Ablaufdatum
     const expiryDate = contract.expiryDate ? new Date(contract.expiryDate) : null;
-    if (expiryDate) {
+    if (expiryDate && !isNaN(expiryDate.getTime())) { // isNaN-Guard wie im Backend (kaputter Datums-String ⇒ Branch 4 statt 'Aktiv')
       expiryDate.setHours(0, 0, 0, 0);
       const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -4915,10 +4917,10 @@ export default function Contracts() {
                   <option value="entwurf">Entwurf ({sidebarCounts.entwurf})</option>
                   <option value="optimiert">Optimiert ({sidebarCounts.optimiert})</option>
                   {/* QA-Punkt 1 (BUG-009): vorher unerreichbare Status — nur zeigen, wenn vorhanden */}
-                  {sidebarCounts.erhalten > 0 && <option value="erhalten">Erhalten ({sidebarCounts.erhalten})</option>}
-                  {sidebarCounts.offen > 0 && <option value="offen">Offen ({sidebarCounts.offen})</option>}
-                  {sidebarCounts.bezahlt > 0 && <option value="bezahlt">Bezahlt ({sidebarCounts.bezahlt})</option>}
-                  {sidebarCounts.pausiert > 0 && <option value="pausiert">Pausiert ({sidebarCounts.pausiert})</option>}
+                  {(sidebarCounts.erhalten > 0 || statusFilter === 'erhalten') && <option value="erhalten">Erhalten ({sidebarCounts.erhalten})</option>}
+                  {(sidebarCounts.offen > 0 || statusFilter === 'offen') && <option value="offen">Offen ({sidebarCounts.offen})</option>}
+                  {(sidebarCounts.bezahlt > 0 || statusFilter === 'bezahlt') && <option value="bezahlt">Bezahlt ({sidebarCounts.bezahlt})</option>}
+                  {(sidebarCounts.pausiert > 0 || statusFilter === 'pausiert') && <option value="pausiert">Pausiert ({sidebarCounts.pausiert})</option>}
                 </select>
 
                 {/* Zeitraum Filter */}
@@ -5079,10 +5081,10 @@ export default function Contracts() {
                   <option value="entwurf">Entwurf ({sidebarCounts.entwurf})</option>
                   <option value="optimiert">Optimiert ({sidebarCounts.optimiert})</option>
                   {/* QA-Punkt 1 (BUG-009): vorher unerreichbare Status — nur zeigen, wenn vorhanden */}
-                  {sidebarCounts.erhalten > 0 && <option value="erhalten">Erhalten ({sidebarCounts.erhalten})</option>}
-                  {sidebarCounts.offen > 0 && <option value="offen">Offen ({sidebarCounts.offen})</option>}
-                  {sidebarCounts.bezahlt > 0 && <option value="bezahlt">Bezahlt ({sidebarCounts.bezahlt})</option>}
-                  {sidebarCounts.pausiert > 0 && <option value="pausiert">Pausiert ({sidebarCounts.pausiert})</option>}
+                  {(sidebarCounts.erhalten > 0 || statusFilter === 'erhalten') && <option value="erhalten">Erhalten ({sidebarCounts.erhalten})</option>}
+                  {(sidebarCounts.offen > 0 || statusFilter === 'offen') && <option value="offen">Offen ({sidebarCounts.offen})</option>}
+                  {(sidebarCounts.bezahlt > 0 || statusFilter === 'bezahlt') && <option value="bezahlt">Bezahlt ({sidebarCounts.bezahlt})</option>}
+                  {(sidebarCounts.pausiert > 0 || statusFilter === 'pausiert') && <option value="pausiert">Pausiert ({sidebarCounts.pausiert})</option>}
                         </select>
                       </div>
 

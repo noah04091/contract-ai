@@ -2235,7 +2235,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.emptyState}>
             <AlertCircle size={64} />
             <p>Dieser Vertrag wurde vor der Cloud-Integration hochgeladen</p>
-            <span className={styles.hint}>Bitte laden Sie den Vertrag erneut hoch, um ihn anzuzeigen.</span>
+            <span className={styles.hint}>Bitte lade den Vertrag erneut hoch, um ihn anzuzeigen.</span>
           </div>
         </div>
       );
@@ -2271,7 +2271,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <AlertCircle size={64} />
             <p>{isDocx ? 'Fehler beim Laden des Dokuments' : 'Fehler beim Laden des PDFs'}</p>
             <span className={styles.hint}>
-              Das Dokument konnte nicht geladen werden. Bitte versuchen Sie es später erneut.
+              Das Dokument konnte nicht geladen werden. Bitte versuche es später erneut.
             </span>
           </div>
         </div>
@@ -2909,7 +2909,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.emptyState}>
             <AlertCircle size={64} />
             <p>PDF konnte nicht geladen werden</p>
-            <span className={styles.hint}>Bitte versuchen Sie es später erneut.</span>
+            <span className={styles.hint}>Bitte versuche es später erneut.</span>
           </div>
         </div>
       );

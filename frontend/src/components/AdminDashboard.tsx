@@ -459,9 +459,14 @@ const toEuro = (usd: number): number => usd * USD_TO_EUR;
 // Format Euro currency
 const formatEuro = (amount: number, decimals = 2): string => {
   // 🛡️ NaN/Infinity/ungültige Strings → 0 (statt "NaN €"). null/undefined → 0 (wie bisher).
+  // TÜV 08.09. (QA BUG-035): de-DE mit Tausendergruppierung wie utils/formatters.ts
+  // (eigene Fassung bleibt wegen des 0-statt-Platzhalter-Verhaltens im Admin-Kontext).
   const n = Number(amount);
   const safe = Number.isFinite(n) ? n : 0;
-  return `${safe.toFixed(decimals).replace('.', ',')} €`;
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency', currency: 'EUR',
+    minimumFractionDigits: decimals, maximumFractionDigits: decimals
+  }).format(safe);
 };
 
 // Helper to get device icon

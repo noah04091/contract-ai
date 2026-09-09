@@ -58,6 +58,17 @@ describe('A) calculateSmartStatusBackend — Verhaltens-Fixierung nach Auslageru
     for (const label of ALLE_LABELS) expect(gesehen).toContain(label);
   });
 
+  test('TÜV 08.09.: ALLE_LABELS ist vollständig gegen die QUELLE (jedes return-Label bekannt)', () => {
+    // Neues Label in calculateSmartStatusBackend ⇒ dieser Test wird rot, bis
+    // ALLE_LABELS + Filter-Eimer + Zählschleife nachgezogen sind (BUG-009-Schutz).
+    const src = fs.readFileSync(path.join(__dirname, '../../utils/contractStatus.js'), 'utf8');
+    const returnLabels = [...src.matchAll(/return '([^']+)';/g)].map(m => m[1]);
+    expect(returnLabels.length).toBeGreaterThan(0);
+    for (const label of returnLabels) {
+      expect(ALLE_LABELS).toContain(label);
+    }
+  });
+
   test('SMART_STATUS_PROJECTION enthält jedes Feld, das die Funktion liest', () => {
     const src = fs.readFileSync(path.join(__dirname, '../../utils/contractStatus.js'), 'utf8');
     const gelesen = [...new Set([...src.matchAll(/contract\.([A-Za-z]+)/g)].map(m => m[1]))];

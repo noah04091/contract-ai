@@ -1,11 +1,10 @@
 // 🛡️ Sichere Formatierer — verhindern, dass "NaN €" / "Invalid Date" beim User landen.
-// WICHTIG: Bei GÜLTIGEN Werten ist die Ausgabe identisch zur bisherigen Logik
-// (toFixed(decimals) + "€" bzw. toLocaleDateString('de-DE')). Nur der KAPUTTE Fall
-// (undefined/null/NaN/ungültiges Datum) liefert einen sauberen Platzhalter statt Müll.
+// Seit 08.09.2026 (QA BUG-035) liefern die Geldbeträge durchgängig de-DE-Format
+// ("489,00 €" / "5.868,00", geschütztes Leerzeichen vor €). Der KAPUTTE Fall
+// (undefined/null/NaN/ungültiges Datum) liefert weiterhin einen sauberen Platzhalter.
 
 const PLACEHOLDER = "–"; // Gedankenstrich
 
-/** Euro-Betrag im bestehenden Format "12.34€" (Punkt, kein Leerzeichen). Kaputt → "–". */
 // QA-Punkt 4 (BUG-035, 08.09.2026): vorher englisches Format "489.00€" — im selben
 // Detaildialog stand daneben deutsches "5.868,00 EUR". Jetzt durchgängig de-DE
 // ("489,00 €" / "5.868,00"). EINE Funktion, 38 Verwendungen, ein Format.

@@ -3084,7 +3084,7 @@ export default function Envelopes() {
                   includeMargin={true}
                 />
                 <p className={styles.qrCodeText}>
-                  Scanne diesen QR-Code mit deinem Smartphone, um das Dokument mobil zu signieren.
+                  Diesen QR-Code mit dem Smartphone scannen, um das Dokument mobil zu signieren.
                 </p>
                 <div className={styles.qrCodeUrl}>
                   <code>{qrCodeUrl}</code>

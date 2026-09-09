@@ -3006,7 +3006,12 @@ export default function Contracts() {
     }
 
     // 2. Rechnung = "Bezahlt" oder "Offen"
-    if (contract.documentCategory === 'invoice') {
+    // 🛠️ 08.09.2026 (QA-TÜV): an das PRÄZISE Signal documentType === 'INVOICE' angeglichen —
+    // identisch zum Backend (calculateSmartStatusBackend, Fix vom 24.08.: der grobe
+    // documentCategory-Topf enthielt auch RECEIPT/TABLE_DOCUMENT und verpasste 30 echte
+    // Rechnungen ohne category). Diese Kopie war nie nachgezogen worden → Filter „Offen"
+    // zeigte Zeilen mit Badge „Aktiv".
+    if (contract.documentType === 'INVOICE') {
       return contract.paymentStatus === 'paid' ? 'Bezahlt' : 'Offen';
     }
 
@@ -3026,7 +3031,7 @@ export default function Contracts() {
 
     // 3. Prüfe Ablaufdatum
     const expiryDate = contract.expiryDate ? new Date(contract.expiryDate) : null;
-    if (expiryDate) {
+    if (expiryDate && !isNaN(expiryDate.getTime())) { // isNaN-Guard wie im Backend (kaputter Datums-String ⇒ Branch 4 statt 'Aktiv')
       expiryDate.setHours(0, 0, 0, 0);
       const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 

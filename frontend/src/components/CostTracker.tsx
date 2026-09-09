@@ -179,6 +179,9 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
       // Rollback state on error
       setFrequency(normalizeFrequency(contract.paymentFrequency));
       setStartDate(contract.subscriptionStartDate || '');
+      // TÜV 08.09.: auch baseAmount zurückrollen — sonst zeigen Tipp/Vergleichs-Knopf
+      // (hängen seit BUG-037 an baseAmount) einen nie gespeicherten Wert.
+      setBaseAmount(contract.paymentAmount || contract.amount || 0);
     } finally {
       setIsSaving(false);
     }
@@ -187,7 +190,7 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
   const handleCompare = () => {
     // TODO: Navigation zu Compare-Feature
     console.log('🔍 Navigate to Compare feature for contract:', contract._id);
-    alert('Compare-Feature coming soon! 🚀');
+    alert('Der direkte Preisvergleich wird hier bald verknüpft. Bis dahin findest du Alternativen über den Anbieterwechsel im Seitenmenü.');
   };
 
   return (

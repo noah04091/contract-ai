@@ -108,9 +108,14 @@ const getAuthToken = (): string | null => {
 
 const getDaysUntilExpiry = (expiryDate?: string): number | null => {
   if (!expiryDate) return null;
+  // TÜV 08.09. (QA BUG-007): Kalendertage (Mitternacht gegen Mitternacht) wie die
+  // Event-Zeilen derselben Karte — vorher machte ceil(Zeitstempel) hier weiter +1.
   const expiry = new Date(expiryDate);
-  const now = new Date();
-  return Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  if (isNaN(expiry.getTime())) return null;
+  expiry.setHours(0, 0, 0, 0);
+  const heute = new Date();
+  heute.setHours(0, 0, 0, 0);
+  return Math.round((expiry.getTime() - heute.getTime()) / (1000 * 60 * 60 * 24));
 };
 
 const formatDate = (dateString?: string): string => {
@@ -959,8 +964,8 @@ export default function DashboardV2() {
                         Vertrag läuft ab • {formatFullDate(contract.expiryDate)}
                       </span>
                     </div>
-                    <span className={`${styles.daysBadge} ${days && days <= 7 ? styles.daysBadgeUrgent : ''}`}>
-                      {days} {days === 1 ? 'Tag' : 'Tage'}
+                    <span className={`${styles.daysBadge} ${days !== null && days <= 7 ? styles.daysBadgeUrgent : ''}`}>
+                      {days === 0 ? 'Heute' : days === 1 ? 'Morgen' : `${days} Tage`}
                     </span>
                   </div>
                 );

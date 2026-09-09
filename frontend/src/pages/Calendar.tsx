@@ -1228,7 +1228,7 @@ function QuickActionsModal({ event, allEvents, onAction, onClose, onEventChange,
                   </motion.button>
                 </div>
                 <p className="confirmation-check-hint">
-                  Bei "Nein" können Sie eine Erinnerung an den Anbieter bearbeiten und senden.
+                  Bei "Nein" kannst du eine Erinnerung an den Anbieter bearbeiten und senden.
                 </p>
               </div>
             )}

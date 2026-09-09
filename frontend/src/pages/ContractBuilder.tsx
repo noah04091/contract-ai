@@ -133,7 +133,7 @@ const ContractBuilder: React.FC = () => {
     setConfirmDialog({
       isOpen: true,
       title: 'Upgrade erforderlich',
-      message: `${feature} ist in deinem aktuellen Plan (${userPlan === 'free' ? 'Free' : userPlan}) nicht verfügbar. Upgrade auf Business oder Enterprise um diese Funktion zu nutzen.`,
+      message: `${feature} ist in deinem aktuellen Plan (${userPlan === 'free' ? 'Free' : userPlan}) nicht verfügbar. Upgrade auf Business oder Enterprise, um diese Funktion zu nutzen.`,
       confirmText: 'Pläne ansehen',
       confirmStyle: 'primary',
       onConfirm: () => {

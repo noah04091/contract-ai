@@ -98,7 +98,7 @@ router.get("/", verifyToken, async (req, res) => {
         type: 'pipedrive',
         name: 'Pipedrive',
         category: 'CRM',
-        description: 'Bald verfügbar',
+        description: 'CRM-Integration',
         features: [],
         icon: 'pipedrive',
         comingSoon: true
@@ -107,7 +107,7 @@ router.get("/", verifyToken, async (req, res) => {
         type: 'zoho',
         name: 'Zoho CRM',
         category: 'CRM',
-        description: 'Bald verfügbar',
+        description: 'CRM-Integration',
         features: [],
         icon: 'zoho',
         comingSoon: true

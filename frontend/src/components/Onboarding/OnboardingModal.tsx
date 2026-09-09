@@ -470,7 +470,9 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.5 + index * 0.1 }}
                 >
-                  <p className={styles.statNumber}>{stat.value}</p>
+                  {/* TÜV 08.09.: Plannamen ("Enterprise"/"Legendary") sind länger als die
+                      Zahlen, für die das 28px-Band gebaut wurde — lange Werte kleiner setzen */}
+                  <p className={styles.statNumber} style={String(stat.value).length > 5 ? { fontSize: 20 } : undefined}>{stat.value}</p>
                   <p className={styles.statLabel}>{stat.label}</p>
                 </motion.div>
               ))}

@@ -70,7 +70,7 @@ export default function NewSignatureRequest() {
         if (response.ok) {
           const data = await response.json();
           setCurrentUser({
-            name: data.user?.name || "Du",
+            name: data.user?.name || "Absender",
             email: data.user?.email || ""
           });
         }

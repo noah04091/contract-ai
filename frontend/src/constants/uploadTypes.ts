@@ -10,9 +10,11 @@
 // wurde ausgerechnet beim allerersten Schritt abgewiesen, obwohl das übrige
 // Produkt Fotos annimmt.
 //
-// Maßgeblich ist das Backend: POST /api/upload hat KEINEN Typfilter, nur ein
-// Größenlimit von 50 MB (routes/upload.js). Die Analyse verarbeitet PDF, Word
-// und Bilder (Bilder über OCR).
+// Maßgeblich ist das Backend: POST /api/upload prüft seit 08.09.2026 die ECHTEN
+// Magic Bytes (backend/utils/uploadTypeGate.js) plus 50-MB-Limit. Die Analyse
+// verarbeitet PDF, DOCX und Bilder (Bilder über OCR). Altes .doc kann NIRGENDS
+// analysiert werden (analyze.js lehnt es als LEGACY_DOC_FORMAT ab) und wird
+// deshalb seit 08.09. auch beim Upload ehrlich abgewiesen — hier wie dort.
 //
 // ⚠️ NICHT verwechseln mit SUPPORTED_MIMETYPES in backend/services/textExtractor.js.
 // Die Liste ist zwischen Compare, LegalLens, Optimizer und Builder geteilt und darf
@@ -24,7 +26,6 @@ export const MAX_UPLOAD_SIZE = 50 * 1024 * 1024; // 50 MB, wie im Backend
 /** MIME-Typen, die der Browser für erlaubte Dateien meldet. */
 export const ACCEPTED_UPLOAD_MIMETYPES = [
   'application/pdf',
-  'application/msword',                                                      // altes .doc
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
   'image/jpeg',
   'image/png',
@@ -35,7 +36,7 @@ export const ACCEPTED_UPLOAD_MIMETYPES = [
 
 /** Dateiendungen als Rückfallebene und für das accept-Attribut. */
 export const ACCEPTED_UPLOAD_EXTENSIONS = [
-  '.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.heic', '.heif', '.webp',
+  '.pdf', '.docx', '.jpg', '.jpeg', '.png', '.heic', '.heif', '.webp',
 ] as const;
 
 /** Fertiger Wert für <input type="file" accept="…"> */
@@ -53,6 +54,12 @@ export const UPLOAD_ACCEPT_ATTR = ACCEPTED_UPLOAD_EXTENSIONS.join(',');
 export function checkUploadFile(file: File): string | null {
   const type = (file.type || '').toLowerCase();
   const name = (file.name || '').toLowerCase();
+
+  // 📄 Altes .doc: ehrliche, spezifische Meldung (identisch zur Backend-/Analyse-Ablehnung),
+  // statt es anzunehmen und einen nie analysierbaren Datensatz zu erzeugen.
+  if (type === 'application/msword' || (name.endsWith('.doc') && !name.endsWith('.docx'))) {
+    return 'Altes Word-Format (.doc) kann nicht analysiert werden. Bitte als .docx oder PDF speichern.';
+  }
 
   const typeOk = (ACCEPTED_UPLOAD_MIMETYPES as readonly string[]).includes(type);
   const extOk = (ACCEPTED_UPLOAD_EXTENSIONS as readonly string[]).some((ext) => name.endsWith(ext));

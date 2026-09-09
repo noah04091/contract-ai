@@ -211,16 +211,23 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
     // des Dateidialogs) — eine .txt wurde zum "Vertrag", die Analyse konnte sie nie
     // verarbeiten ("PDF-Datei beschädigt") und der Datenmüll blieb im Portfolio.
     // Geprüft wird der ECHTE Inhalt (Magic Bytes), nie Endung oder Client-Mimetype.
+    let gateBuffer = null; // wird unten für den Hash wiederverwendet (kein 2. Voll-Read)
     try {
-      const gateBuffer = await fs.readFile(req.file.path);
+      gateBuffer = await fs.readFile(req.file.path);
       const supportedType = detectSupportedUploadType(gateBuffer);
-      if (!supportedType) {
-        console.log(`🚫 [${requestId}] Unsupported file type rejected: ${req.file.originalname} (client mimetype: ${req.file.mimetype})`);
+      if (!supportedType || supportedType === 'application/msword') {
+        console.log(`🚫 [${requestId}] File type rejected (${supportedType || 'unbekannt'}): ${req.file.originalname} (client mimetype: ${req.file.mimetype})`);
         try { await fs.unlink(req.file.path); } catch (_) { /* Temp-Datei-Cleanup best effort */ }
+        // 📄 .doc bekommt eine EHRLICHE, spezifische Meldung (konsistent mit analyze.js
+        // LEGACY_DOC_FORMAT): das alte Word-Format kann die Analyse nirgends verarbeiten —
+        // es anzunehmen hieße, einen nie analysierbaren Datensatz anzulegen (= BUG-005).
+        const istAltesWord = supportedType === 'application/msword';
         return res.status(400).json({
           success: false,
-          error: "UNSUPPORTED_FILE_TYPE",
-          message: `Dieses Dateiformat wird nicht unterstützt. Erlaubt sind ${SUPPORTED_UPLOAD_LABEL}.`
+          error: istAltesWord ? "LEGACY_DOC_FORMAT" : "UNSUPPORTED_FILE_TYPE",
+          message: istAltesWord
+            ? "Altes Word-Format (.doc) kann nicht analysiert werden. Bitte speichere die Datei als .docx oder PDF und lade sie erneut hoch."
+            : `Dieses Dateiformat wird nicht unterstützt. Erlaubt sind ${SUPPORTED_UPLOAD_LABEL}.`
         });
       }
       console.log(`✅ [${requestId}] File type gate passed: ${supportedType}`);
@@ -284,7 +291,10 @@ router.post("/", uploadMiddleware.single("file"), async (req, res) => {
 
     if (crypto) {
       try {
-        const fileBuffer = await fs.readFile(req.file.path);
+        // ♻️ TÜV 08.09.: gateBuffer wiederverwenden statt die (bis 50 MB große) Datei
+        // ein zweites Mal komplett zu lesen (Heap-OOM-Historie des Backends).
+        const fileBuffer = gateBuffer || await fs.readFile(req.file.path);
+        gateBuffer = null; // Referenz freigeben, GC kann den Puffer nach dem Hash räumen
         fileHash = calculateFileHash(fileBuffer);
         console.log(`🔍 [${requestId}] File hash calculated: ${fileHash.substring(0, 12)}...`);
 

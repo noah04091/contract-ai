@@ -215,6 +215,18 @@
   color: white;
 }
 
+/* TÜV 08.09.: der generische :hover (weißlicher Grund) schlug die aktiven Zustände
+   → weiße Schrift auf fast-weiß. Aktive Knöpfe behalten beim Hover ihre Farbe. */
+.toggleBtn.active:hover:not(:disabled) {
+  background: #475569;
+  border-color: #475569;
+}
+
+.toggleBtn.activePaid:hover:not(:disabled) {
+  background: #10b981;
+  border-color: #10b981;
+}
+
 .toggleBtn:disabled {
   opacity: 0.4;
   cursor: not-allowed;

@@ -32,7 +32,7 @@ const { generateJobId, insertAnalysisJob, updateAnalysisJob } = analyzeRoute;
 const { isEnterpriseOrHigher, hasFeatureAccess } = require("../constants/subscriptionPlans"); // 📊 Zentrale Plan-Definitionen // 🚀 Import V2 functions
 const { embedContractAsync } = require("../services/contractEmbedder"); // 🔍 Auto-Embedding for Legal Pulse Monitoring
 const { applyAnalysisGate, effectivePlan, isContractUnlocked, applyGeneratedContentGate } = require("../utils/analysisGate"); // 🔒 Freemium-Tease-Gate (Phase 2) + Einmal-Freischaltung (Stufe 2) + Generierte-Volltext-Sperre
-const { calculateSmartStatusBackend } = require("../utils/contractStatus"); // 📊 Zentrale Status-Wahrheit (auch von der Dashboard-Summary genutzt)
+const { calculateSmartStatusBackend, SMART_STATUS_PROJECTION } = require("../utils/contractStatus"); // 📊 Zentrale Status-Wahrheit (auch von der Dashboard-Summary genutzt)
 
 // 🔒 Freemium-Tease-Gate — REVERSIBEL per ENV, default AUS (→ kein Verhalten ändert sich bis bewusst aktiviert).
 // Bei Aktivierung zusätzlich FREEMIUM_GATE_LAUNCH_DATE (ISO) setzen; ohne explizites Datum gilt der
@@ -1382,15 +1382,10 @@ router.get("/", async (req, res) => {
 
     // 🚀 OPTIMIERT: Batch-Queries statt Aggregation + Sidebar-Counts PARALLEL
     const _t4 = Date.now();
-    const SIDEBAR_PROJECTION = {
-      expiryDate: 1, status: 1, statusOverride: 1, folderId: 1, documentCategory: 1,
-      gekuendigtZum: 1, cancellationId: 1, cancellationConfirmed: 1,
-      isGenerated: 1, isOptimized: 1, analyzed: 1, contractScore: 1,
-      paymentStatus: 1, createdAt: 1,
-      // 📨 Welle 1 (TÜV M1): documentType/letterType für Branch 0 „Erhalten" —
-      // sonst zählt der Filter-/Sidebar-Pfad Briefe als „Aktiv" (Filter ≠ Badge).
-      documentType: 1, letterType: 1
-    };
+    // 📊 TÜV 08.09.: aus SMART_STATUS_PROJECTION abgeleitet statt eigener Feldliste —
+    // sonst driftet die Projektion von den Feldern weg, die calculateSmartStatusBackend
+    // liest (der Jest-Source-Scan prüft nur die eine Quelle in utils/contractStatus.js).
+    const SIDEBAR_PROJECTION = { ...SMART_STATUS_PROJECTION, folderId: 1 };
 
     // 📊 Status-Filter (vereinheitlicht): Treffer-IDs aus calculateSmartStatusBackend bestimmen,
     // damit Filter == Badge == Zähler. allUserContracts wird ohnehin für die Zähler gebraucht.
@@ -1400,7 +1395,10 @@ router.get("/", async (req, res) => {
       allUserContracts = await contractsCollection.find(userBaseFilter, { projection: SIDEBAR_PROJECTION }).toArray();
       const targetLabels = STATUS_FILTER_BUCKETS[statusFilter] || [];
       const ids = allUserContracts
-        .filter(c => targetLabels.includes(calculateSmartStatusBackend(c)))
+        .filter(c => {
+          try { return targetLabels.includes(calculateSmartStatusBackend(c)); }
+          catch { return false; } // defekter Vertrag fällt aus dem Filter, 500 vermeiden (wie die Zählschleife)
+        })
         .map(c => c._id)
         .sort((a, b) => a.toString().localeCompare(b.toString())); // stabile Cache-Keys
       mongoFilter._id = { $in: ids };
