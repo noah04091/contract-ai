@@ -89,6 +89,37 @@ interface CalendarEvent {
   status?: string;
 }
 
+// 🔧 Stufe A (09.09.2026, Audit-Auflage): Dual-Format-Normalizer — Analyse-
+// Felder existieren als String-Array (Legacy, vor 12/2025) UND als Objekt-Array
+// ({title, description, riskLevel|priority|impact}, analyze.js-Schema). Muster
+// übernommen aus ContractsV2.tsx (Preview) + analysisGutachtenPdf.js (Kette).
+interface AnalysisInsightItem { title?: string; description?: string; riskLevel?: string; priority?: string; impact?: string }
+interface NormalizedInsight { title: string; text: string; level: string }
+function normalizeInsights(value: unknown): NormalizedInsight[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry): NormalizedInsight | null => {
+      if (typeof entry === 'string') {
+        const t = entry.trim();
+        return t ? { title: '', text: t, level: '' } : null;
+      }
+      if (entry && typeof entry === 'object') {
+        const o = entry as AnalysisInsightItem;
+        const title = (o.title || '').trim();
+        const text = (o.description || '').trim();
+        if (!title && !text) return null;
+        return { title, text: text || title, level: (o.riskLevel || o.priority || o.impact || '').trim() };
+      }
+      return null;
+    })
+    .filter((x): x is NormalizedInsight => x !== null);
+}
+// Erste nicht-leere Quelle gewinnt (Prioritätskette wie im Gutachten-PDF).
+function firstInsights(...sources: unknown[]): NormalizedInsight[] {
+  for (const src of sources) { const n = normalizeInsights(src); if (n.length) return n; }
+  return [];
+}
+
 interface Contract {
   _id: string;
   userId?: string;
@@ -129,10 +160,11 @@ interface Contract {
     category?: string;
     confidence?: number;
   };
-  // ✅ Strukturierte Analyse-Felder (für Print-Übersicht)
-  positiveAspects?: Array<{ title: string; description: string }>;
-  criticalIssues?: Array<{ title: string; description: string; riskLevel?: string }>;
-  recommendations?: Array<string | { title: string; description?: string; priority?: string }>;
+  // ✅ Strukturierte Analyse-Felder — Stufe A (09.09.2026): dual-format,
+  // Alt-Verträge tragen teils String-Arrays (Rendering via normalizeInsights).
+  positiveAspects?: (string | AnalysisInsightItem)[];
+  criticalIssues?: (string | AnalysisInsightItem)[];
+  recommendations?: (string | AnalysisInsightItem)[];
   // ✅ Dynamische QuickFacts (Rechnungsdatum, Fälligkeit, Betrag, etc.)
   quickFacts?: Array<{
     label: string;
@@ -158,7 +190,10 @@ interface Contract {
   summary?: string;
   legalAssessment?: string | string[];
   suggestions?: string[];
-  risiken?: string[];
+  // Stufe A (09.09.2026): risiken ist seit 12/2025 ein Objekt-Array (Alias von
+  // criticalIssues, analyze.js:6588); Alt-Verträge tragen noch String-Arrays.
+  // Beide Formate werden über normalizeInsights gerendert.
+  risiken?: (string | AnalysisInsightItem)[];
   comparison?: string | string[];
   laymanSummary?: string[];
   detailedLegalOpinion?: string;
@@ -250,6 +285,7 @@ export default function ContractDetailsV2() {
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [showAllRisks, setShowAllRisks] = useState(false); // Stufe A: Risiken-Karte capped auf 8
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -551,21 +587,23 @@ export default function ContractDetailsV2() {
       : '';
 
     // ✅ Strukturierte Analyse
-    const positivesHtml = contract.positiveAspects?.length
-      ? `<ul>${contract.positiveAspects.map(a =>
-          `<li><strong>${a.title}</strong>${a.description ? ` — ${a.description}` : ''}</li>`
+    const printStrengths = firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects);
+    const positivesHtml = printStrengths.length
+      ? `<ul>${printStrengths.map(a =>
+          `<li>${a.title ? `<strong>${a.title}</strong>` : ''}${a.title && a.text ? ' — ' : ''}${a.text}</li>`
         ).join('')}</ul>` : '';
 
-    const criticalsHtml = contract.criticalIssues?.length
-      ? `<ul>${contract.criticalIssues.map(i =>
-          `<li><strong>${i.title}</strong>${i.riskLevel ? ` (${i.riskLevel})` : ''}${i.description ? ` — ${i.description}` : ''}</li>`
+    const printRisks = firstInsights(contract.criticalIssues, contract.risiken);
+    const criticalsHtml = printRisks.length
+      ? `<ul>${printRisks.map(i =>
+          `<li>${i.title ? `<strong>${i.title}</strong>` : ''}${i.level ? ` (${i.level})` : ''}${i.title && i.text ? ' — ' : ''}${i.text}</li>`
         ).join('')}</ul>` : '';
 
-    const recsHtml = contract.recommendations?.length
-      ? `<ul>${contract.recommendations.map(r => {
-          const isObj = typeof r === 'object' && r !== null;
-          return `<li><strong>${isObj ? r.title : r}</strong>${isObj && r.description ? ` — ${r.description}` : ''}</li>`;
-        }).join('')}</ul>` : '';
+    const printRecs = normalizeInsights(contract.recommendations);
+    const recsHtml = printRecs.length
+      ? `<ul>${printRecs.map(r =>
+          `<li>${r.title ? `<strong>${r.title}</strong>` : ''}${r.title && r.text ? ' — ' : ''}${r.text}</li>`
+        ).join('')}</ul>` : '';
 
     // ✅ Calendar Events
     const eventsHtml = calendarEvents.length > 0
@@ -966,12 +1004,15 @@ export default function ContractDetailsV2() {
         contextParts.push(`**Legal Pulse Score:** ${contract.legalPulse.riskScore}/100`);
       }
 
-      // Positive Aspects
-      if (contract.analysis?.positiveAspects?.length) {
-        contextParts.push(`\n**Positive Aspekte:**`);
-        contract.analysis.positiveAspects.forEach(a => {
-          contextParts.push(`- ${a.title}`);
-        });
+      // Positive Aspects — Stufe A (09.09.2026): Kette Top-Level -> analysis, dual-format
+      {
+        const chatStrengths = firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects);
+        if (chatStrengths.length) {
+          contextParts.push(`\n**Positive Aspekte:**`);
+          chatStrengths.forEach(a => {
+            contextParts.push(`- ${a.title || a.text}`);
+          });
+        }
       }
 
       // Concerning Aspects
@@ -983,11 +1024,15 @@ export default function ContractDetailsV2() {
       }
 
       // Root-level Risiken
-      if (contract.risiken?.length) {
-        contextParts.push(`\n**Kritische Risiken:**`);
-        contract.risiken.forEach(r => {
-          contextParts.push(`- ${r}`);
-        });
+      {
+        // Stufe A (Ü4): dual-format — vorher landete bei Objekt-Risiken '[object Object]' im Kontext
+        const chatRisks = firstInsights(contract.criticalIssues, contract.risiken);
+        if (chatRisks.length) {
+          contextParts.push(`\n**Kritische Risiken:**`);
+          chatRisks.forEach(r => {
+            contextParts.push(`- ${[r.title, r.text].filter(Boolean).join(': ')}`);
+          });
+        }
       }
 
       // Legal Pulse Risk Factors
@@ -1627,7 +1672,7 @@ export default function ContractDetailsV2() {
     contract.analysis.summary ||
     contract.analysis.positiveAspects?.length ||
     contract.analysis.concerningAspects?.length
-  ) || contract.legalAssessment || contract.comparison || contract.risiken?.length || contract.laymanSummary?.length || contract.summary || contract.suggestions?.length || contract.detailedLegalOpinion || contract.contractScore;
+  ) || contract.legalAssessment || contract.comparison || contract.risiken?.length || contract.criticalIssues?.length || contract.positiveAspects?.length || contract.recommendations?.length || contract.laymanSummary?.length || contract.summary || contract.suggestions?.length || contract.detailedLegalOpinion || contract.contractScore;
 
   // Legal Pulse: generische Fallback-Daten erkennen und ausblenden
   const isLegalPulseGeneric = contract.legalPulse && (
@@ -2014,10 +2059,10 @@ export default function ContractDetailsV2() {
                                 <Shield size={14} />
                                 <span>Risiko: {riskInfo.label}</span>
                               </div>
-                              {contract.analysis?.positiveAspects && (
+                              {firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects).length > 0 && (
                                 <div className={styles.scoreMetric}>
                                   <CheckCircle size={14} style={{ color: 'var(--cd-success)' }} />
-                                  <span>{contract.analysis.positiveAspects.length} Stärken</span>
+                                  <span>{firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects).length} Stärken</span>
                                 </div>
                               )}
                               {contract.analysis?.concerningAspects && (
@@ -2735,16 +2780,16 @@ export default function ContractDetailsV2() {
                             <span>Score: {contract.contractScore}</span>
                           </div>
                         )}
-                        {((contract.risiken?.filter(r => typeof r === 'string' && r.trim()).length || 0) + (!isLegalPulseGeneric ? (contract.legalPulse?.riskFactors?.length || 0) : 0)) > 0 ? (
+                        {(firstInsights(contract.criticalIssues, contract.risiken).length + (!isLegalPulseGeneric ? (contract.legalPulse?.riskFactors?.length || 0) : 0)) > 0 ? (
                           <div className={styles.statBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
                             <AlertTriangle size={16} />
-                            <span>Risiken: {(contract.risiken?.filter(r => typeof r === 'string' && r.trim()).length || 0) + (!isLegalPulseGeneric ? (contract.legalPulse?.riskFactors?.length || 0) : 0)}</span>
+                            <span>Risiken: {firstInsights(contract.criticalIssues, contract.risiken).length + (!isLegalPulseGeneric ? (contract.legalPulse?.riskFactors?.length || 0) : 0)}</span>
                           </div>
                         ) : null}
-                        {contract.analysis?.positiveAspects?.length ? (
+                        {firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects).length ? (
                           <div className={styles.statBadge} style={{ background: 'var(--cd-success-light)', color: 'var(--cd-success)' }}>
                             <CheckCircle size={16} />
-                            <span>Stärken: {contract.analysis.positiveAspects.length}</span>
+                            <span>Stärken: {firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects).length}</span>
                           </div>
                         ) : null}
                         {(contract.analysis?.analyzedAt || contract.legalPulse?.analysisDate) && (
@@ -2790,10 +2835,10 @@ export default function ContractDetailsV2() {
                                 <Shield size={14} />
                                 <span>Risiko: {riskInfo.label}</span>
                               </div>
-                              {contract.analysis?.positiveAspects && (
+                              {firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects).length > 0 && (
                                 <div className={styles.scoreMetric}>
                                   <CheckCircle size={14} style={{ color: 'var(--cd-success)' }} />
-                                  <span>{contract.analysis.positiveAspects.length} Stärken</span>
+                                  <span>{firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects).length} Stärken</span>
                                 </div>
                               )}
                               {contract.analysis?.concerningAspects && (
@@ -2952,36 +2997,43 @@ export default function ContractDetailsV2() {
                        V2-Analyse über Legal Pulse Seite ist die aktuelle Lösung. */}
 
                     {/* Positive Aspects */}
-                    {contract.analysis?.positiveAspects && Array.isArray(contract.analysis.positiveAspects) && contract.analysis.positiveAspects.length > 0 && (
-                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger1}`}>
-                        <div className={styles.cardHeader}>
-                          <h3 className={styles.cardTitle}>
-                            <span className={styles.cardIcon} style={{ background: 'var(--cd-success-light)', color: 'var(--cd-success)' }}>
-                              <CheckCircle size={18} />
+                    {/* Stufe A (09.09.2026): Kette positiveAspects→analysis.positiveAspects,
+                        dual-format — Top-Level wird seit 12/2025 persistiert, die alte
+                        analysis-Quelle wird vom Backend nie befüllt (Karte war tot). */}
+                    {(() => {
+                      const strengths = firstInsights(contract.positiveAspects, contract.analysis?.positiveAspects);
+                      if (!strengths.length) return null;
+                      return (
+                        <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger1}`}>
+                          <div className={styles.cardHeader}>
+                            <h3 className={styles.cardTitle}>
+                              <span className={styles.cardIcon} style={{ background: 'var(--cd-success-light)', color: 'var(--cd-success)' }}>
+                                <CheckCircle size={18} />
+                              </span>
+                              Positive Aspekte
+                            </h3>
+                            <span className={styles.tabBadge} style={{ background: 'var(--cd-success-light)', color: 'var(--cd-success)' }}>
+                              {strengths.length}
                             </span>
-                            Positive Aspekte
-                          </h3>
-                          <span className={styles.tabBadge} style={{ background: 'var(--cd-success-light)', color: 'var(--cd-success)' }}>
-                            {contract.analysis.positiveAspects.length}
-                          </span>
-                        </div>
-                        <div className={styles.cardBody}>
-                          <div className={styles.analysisList}>
-                            {contract.analysis.positiveAspects.map((aspect, idx) => (
-                              <div key={idx} className={`${styles.analysisItem} ${styles.positive}`}>
-                                <div className={styles.analysisItemIcon}>
-                                  <CheckCircle size={16} />
+                          </div>
+                          <div className={styles.cardBody}>
+                            <div className={styles.analysisList}>
+                              {strengths.map((aspect, idx) => (
+                                <div key={idx} className={`${styles.analysisItem} ${styles.positive}`}>
+                                  <div className={styles.analysisItemIcon}>
+                                    <CheckCircle size={16} />
+                                  </div>
+                                  <div className={styles.analysisItemContent}>
+                                    {aspect.title && <div className={styles.analysisItemTitle}>{aspect.title}</div>}
+                                    <div className={styles.analysisItemText}>{aspect.text}</div>
+                                  </div>
                                 </div>
-                                <div className={styles.analysisItemContent}>
-                                  <div className={styles.analysisItemTitle}>{aspect.title}</div>
-                                  <div className={styles.analysisItemText}>{aspect.description}</div>
-                                </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* Concerning Aspects */}
                     {contract.analysis?.concerningAspects && Array.isArray(contract.analysis.concerningAspects) && contract.analysis.concerningAspects.length > 0 && (
@@ -3247,40 +3299,54 @@ export default function ContractDetailsV2() {
                       </div>
                     )}
 
-                    {/* Root-Level Risiken - nur anzeigen wenn echte nicht-leere Risiken vorhanden */}
-                    {contract.risiken && Array.isArray(contract.risiken) && contract.risiken.filter(r => typeof r === 'string' && r.trim()).length > 0 && (
-                      <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
-                        <div className={styles.cardHeader}>
-                          <h3 className={styles.cardTitle}>
-                            <span className={styles.cardIcon} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
-                              <AlertTriangle size={18} />
+                    {/* Kritische Risiken — Stufe A (09.09.2026): Kette criticalIssues→risiken,
+                        dual-format (Objekt seit 12/2025, String-Legacy davor); vorher wurde die
+                        Karte bei Objekt-Risiken NIE gerendert (typeof==='string'-Filter). */}
+                    {(() => {
+                      const risks = firstInsights(contract.criticalIssues, contract.risiken);
+                      if (!risks.length) return null;
+                      const visible = showAllRisks ? risks : risks.slice(0, 8);
+                      return (
+                        <div className={`${styles.card} ${styles.fadeIn} ${styles.stagger3}`}>
+                          <div className={styles.cardHeader}>
+                            <h3 className={styles.cardTitle}>
+                              <span className={styles.cardIcon} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
+                                <AlertTriangle size={18} />
+                              </span>
+                              Kritische Risiken
+                            </h3>
+                            <span className={styles.tabBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
+                              {risks.length}
                             </span>
-                            Kritische Risiken
-                          </h3>
-                          <span className={styles.tabBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)' }}>
-                            {contract.risiken.filter(r => typeof r === 'string' && r.trim()).length}
-                          </span>
-                        </div>
-                        <div className={styles.cardBody}>
-                          <div className={styles.analysisList}>
-                            {contract.risiken.map((risk, idx) => {
-                              const riskText = typeof risk === 'string' ? risk : '';
-                              if (!riskText) return null;
-                              return (
+                          </div>
+                          <div className={styles.cardBody}>
+                            <div className={styles.analysisList}>
+                              {visible.map((risk, idx) => (
                                 <div key={idx} className={`${styles.analysisItem} ${styles.negative}`}>
                                   <div className={styles.analysisItemIcon}>
                                     <AlertTriangle size={16} />
                                   </div>
                                   <div className={styles.analysisItemContent}>
-                                    <div className={styles.analysisItemText}>{riskText}</div>
+                                    {risk.title && <div className={styles.analysisItemTitle}>{risk.title}</div>}
+                                    <div className={styles.analysisItemText}>{risk.text}</div>
                                   </div>
+                                  {(risk.level === 'critical' || risk.level === 'high') && (
+                                    <span className={styles.tabBadge} style={{ background: 'var(--cd-danger-light)', color: 'var(--cd-danger)', flexShrink: 0 }}>
+                                      {risk.level === 'critical' ? 'Kritisch' : 'Hoch'}
+                                    </span>
+                                  )}
                                 </div>
-                              );
-                            })}
+                              ))}
+                            </div>
+                            {risks.length > 8 && (
+                              <button type="button" className={styles.tabBadge} style={{ marginTop: '12px', cursor: 'pointer', border: 'none' }} onClick={() => setShowAllRisks(v => !v)}>
+                                {showAllRisks ? 'Weniger anzeigen' : `${risks.length - 8} weitere anzeigen`}
+                              </button>
+                            )}
                           </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* Analyse-Zusammenfassung */}
                     {contract.analysis?.summary && (
