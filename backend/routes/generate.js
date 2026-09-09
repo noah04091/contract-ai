@@ -2111,10 +2111,27 @@ router.post("/", verifyToken, async (req, res) => {
     'kooperation', 'berater', 'softwareVertrieb', 'softwareEndkunde'
   ];
 
-  const shouldUseV2 = V2_SUPPORTED_TYPES.includes(type);
+  // 08.09.2026: Das Frontend sendet selectedType.id, also
+  // "darlehensvertrag" und "pachtvertrag". V2_SUPPORTED_TYPES, die
+  // typeMap in generateV2 und PARTY_FIELD_MAP kennen dagegen die
+  // Kurznamen. Dadurch liefen beide Arten auf dem alten Weg, obwohl in
+  // contractTypes/ ausgearbeitete Vorlagen fuer sie liegen.
+  // Statt drei Listen anzufassen wird hier einmal normalisiert; `type`
+  // selbst bleibt unveraendert, weil er weiterverwendet wird.
+  //
+  // gesellschaftsvertrag bleibt bewusst aussen vor: eine Gesellschaft
+  // hat mehrere Gesellschafter, nicht zwei Parteien — das
+  // Zwei-Parteien-Schema von V2 passt dort strukturell nicht.
+  const V2_TYPE_ALIAS = {
+    darlehensvertrag: 'darlehen',
+    pachtvertrag: 'pacht'
+  };
+  const v2Type = V2_TYPE_ALIAS[type] || type;
+
+  const shouldUseV2 = V2_SUPPORTED_TYPES.includes(v2Type);
 
   if (shouldUseV2) {
-    console.log(`🆕 V2 Meta-Prompt System aktiviert für Type: ${type}`);
+    console.log(`🆕 V2 Meta-Prompt System aktiviert für Type: ${v2Type}`);
 
     try {
       const generateV2 = require('./generateV2');
@@ -2130,7 +2147,9 @@ router.post("/", verifyToken, async (req, res) => {
         darlehen:         { a: 'lender', aAddr: 'lenderAddress', b: 'borrower', bAddr: 'borrowerAddress' },
         lizenzvertrag:    { a: 'licensor', aAddr: 'licensorAddress', b: 'licensee', bAddr: 'licenseeAddress' },
         werkvertrag:      { a: 'client', aAddr: 'clientAddress', b: 'contractor', bAddr: 'contractorAddress' },
-        pacht:            { a: 'landlord', aAddr: 'landlordAddress', b: 'tenant', bAddr: 'tenantAddress' },
+        // War vom Mietvertrag kopiert (landlord/tenant). Das Pacht-Formular
+        // sendet lessor/lessee — mit den alten Namen waeren die Parteien leer geblieben.
+        pacht:            { a: 'lessor', aAddr: 'lessorAddress', b: 'lessee', bAddr: 'lesseeAddress' },
         kooperation:      { a: 'partnerA', aAddr: 'partnerAAddress', b: 'partnerB', bAddr: 'partnerBAddress' },
         berater:          { a: 'clientName', aAddr: 'clientAddress', b: 'consultantName', bAddr: 'consultantAddress' },
         softwareVertrieb: { a: 'vendorName', aAddr: 'vendorAddress', b: 'resellerName', bAddr: 'resellerAddress' },
@@ -2139,7 +2158,7 @@ router.post("/", verifyToken, async (req, res) => {
       };
 
       const v2Input = { ...formData };
-      const mapping = PARTY_FIELD_MAP[type];
+      const mapping = PARTY_FIELD_MAP[v2Type];
       if (mapping) {
         if (formData[mapping.a] && !formData.parteiA) {
           v2Input.parteiA = {
@@ -2158,7 +2177,7 @@ router.post("/", verifyToken, async (req, res) => {
       // V2 Flow ausführen
       const result = await generateV2.generateContractV2(
         v2Input,
-        type,
+        v2Type,
         req.user.userId,
         db
       );
