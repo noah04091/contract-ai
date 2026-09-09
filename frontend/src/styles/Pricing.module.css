@@ -1,3 +1,10 @@
+/* ⚠️ SCHRIFTEN: Diese Seite fuehrte als einzige neben der Startseite eine
+   dritte Schriftwelt (Plus Jakarta Sans + JetBrains Mono). Beim Klicken von
+   Seite zu Seite war das ein sichtbarer Bruch. Jetzt dieselben Schriften wie
+   ueberall: Inter fuer Text, Bricolage Grotesque fuer Ueberschriften,
+   Source Code Pro fuer Etiketten und Zahlen.
+   Die beiden @font-face-Bloecke sind entfallen, damit die alten Dateien
+   nicht mehr geladen werden. */
 /* ============================================================
    Pricing.module.css — Redesign (Claude Design Handoff, 25.06.2026)
    CSS MODULE → alle Klassennamen werden gehasht/lokal gescopet.
@@ -6,21 +13,6 @@
    ============================================================ */
 
 /* --- Self-hosted Fonts (variable, public/fonts — DSGVO, kein Google-CDN) --- */
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal;
-  font-weight: 400 800;
-  font-display: swap;
-  src: url('/fonts/plus-jakarta-sans.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url('/fonts/jetbrains-mono.woff2') format('woff2');
-}
-
 /* --- Keyframes (CSS-Modules hasht Namen automatisch) --- */
 @keyframes caPulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
 @keyframes caAurora { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(7%,-6%) scale(1.18); } 66% { transform: translate(-6%,5%) scale(.92); } 100% { transform: translate(0,0) scale(1); } }
@@ -54,16 +46,19 @@
 .page {
   --accent: #2563EB;
   --accent-2: #3B82F6;
-  --ink: #0B0B12;
-  --body: #5A5E68;
-  --muted: #71757F;
-  --muted-2: #9498A2;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Marken-Palette statt eigener Grautoene (Ueberschriften standen in
+     fast Schwarz). --muted-2 lag mit 2,8:1 weit unter der Norm. */
+  --ink: #14284f;
+  --body: #5a719b;
+  --muted: #5a719b;
+  --muted-2: #5a719b;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   background: #fff;
   color: var(--ink);
-  overflow-x: hidden;
+  /* clip statt hidden, siehe Features.css */
+  overflow-x: clip;
 }
 .page * { box-sizing: border-box; }
 .page ::selection { background: var(--accent); color: #fff; }
@@ -75,10 +70,16 @@
 .page h1, .page h2, .page h3, .page h4,
 .page p, .page button, .page a, .page li,
 .page strong, .page td, .page th, .page ul {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-.mono { font-family: 'JetBrains Mono', monospace; }
+/* Ueberschriften in der Anzeige-Schrift der Marke, wie ueberall sonst. */
+.page h1, .page h2, .page h3 {
+  font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  letter-spacing: -.03em;
+}
+
+.mono { font-family: 'Source Code Pro', ui-monospace, monospace; }
 .gradText {
   background: linear-gradient(100deg, #1D4ED8 0%, #3B82F6 50%, #5FB0FF 100%);
   -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
@@ -94,7 +95,7 @@
 }
 .heroInner { position: relative; z-index: 1; }
 .eyebrow {
-  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500;
+  font-family: 'Source Code Pro', ui-monospace, monospace; font-size: 12px; font-weight: 500;
   letter-spacing: .22em; color: var(--accent); text-transform: uppercase;
 }
 .heroTitle {
@@ -130,8 +131,8 @@
 }
 .pulseWrap { position: relative; width: 7px; height: 7px; }
 .pulseDot { position: absolute; inset: 0; border-radius: 50%; background: var(--accent); animation: caPulse 1.5s ease-in-out infinite; }
-.campaignLabel { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); }
-.liveNow { font-size: 12.5px; color: #16A34A; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+.campaignLabel { font-family: 'Source Code Pro', ui-monospace, monospace; font-size: 10.5px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); }
+.liveNow { font-size: 12.5px; color: #0f766e; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
 .liveDot { width: 6px; height: 6px; border-radius: 50%; background: #16A34A; }
 .campaignHeadline { font-size: 27px; font-weight: 800; color: var(--ink); letter-spacing: -.03em; line-height: 1.15; }
 .scarcity { display: flex; flex-direction: column; gap: 10px; }
@@ -160,7 +161,7 @@
 .offerDivider { position: relative; display: flex; flex-direction: column; gap: 7px; padding: 13px 0 0; border-top: 1px solid rgba(37,99,235,.12); }
 .offerCdLabel { font-size: 11.5px; color: var(--muted); font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
 .offerCdLabel svg { stroke: var(--muted-2); flex: none; }
-.countdown { display: flex; align-items: baseline; gap: 5px; font-family: 'JetBrains Mono', monospace; color: var(--ink); }
+.countdown { display: flex; align-items: baseline; gap: 5px; font-family: 'Source Code Pro', ui-monospace, monospace; color: var(--ink); }
 .cdNum { font-size: 23px; font-weight: 700; }
 .cdUnit { font-size: 11px; color: var(--muted-2); margin-right: 3px; }
 .cdSep { font-size: 17px; color: #C2C7D2; }
@@ -180,10 +181,10 @@
 .billingBtn {
   padding: 9px 22px; border-radius: 999px; border: none; cursor: pointer; font-family: inherit;
   font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;
-  transition: all .2s ease; background: transparent; color: var(--muted);
+  transition: all .2s ease; background: transparent; color: #4d6288;
 }
 .billingBtnActive { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(11,11,18,.12); }
-.saveBadge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; }
+.saveBadge { background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; font-family: 'Source Code Pro', ui-monospace, monospace; }
 .yearlyHint { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--accent); font-weight: 600; }
 
 /* ============================== PLANS ============================== */
@@ -212,7 +213,7 @@
 .priceFree { display: flex; align-items: baseline; gap: 4px; margin: 26px 0 4px; }
 .priceOrigRow { display: flex; align-items: center; gap: 9px; margin: 24px 0 6px; }
 .priceOrig { font-size: 15px; color: var(--muted-2); text-decoration: line-through; font-weight: 600; }
-.discPill { background: rgba(37,99,235,.1); color: var(--accent); font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; }
+.discPill { background: rgba(37,99,235,.1); color: var(--accent); font-size: 11.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; font-family: 'Source Code Pro', ui-monospace, monospace; }
 .priceMain { display: flex; align-items: baseline; gap: 4px; margin-bottom: 4px; }
 .priceAmount { font-size: 52px; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
 .priceCurrency { font-size: 26px; font-weight: 700; }
@@ -294,7 +295,7 @@
   transition: transform .3s ease, box-shadow .3s ease, border-color .25s ease;
 }
 .seoCard:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(11,11,18,.08); }
-.seoKicker { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: .14em; color: var(--accent); text-transform: uppercase; font-weight: 500; }
+.seoKicker { font-family: 'Source Code Pro', ui-monospace, monospace; font-size: 10.5px; letter-spacing: .14em; color: var(--accent); text-transform: uppercase; font-weight: 500; }
 .seoTitle { font-size: 17px; font-weight: 700; margin: 12px 0 8px; letter-spacing: -.01em; }
 .seoDesc { font-size: 13.5px; color: #6B6F79; line-height: 1.5; margin: 0 0 16px; }
 .seoMore { margin-top: auto; font-size: 13px; font-weight: 600; color: var(--accent); display: inline-flex; align-items: center; gap: 6px; }
@@ -311,7 +312,7 @@
 .tst { max-width: 1180px; margin: 0 auto; padding: 110px 28px 0; }
 .tstGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
 .tstCard { display: flex; flex-direction: column; padding: 28px; border-radius: 20px; border: 1px solid #EAEAEF; background: #fff; box-shadow: 0 1px 2px rgba(11,11,18,.04); }
-.tstStars { color: #F5A623; font-size: 14px; letter-spacing: 2px; margin-bottom: 16px; }
+.tstStars { color: #8a5a06; font-size: 14px; letter-spacing: 2px; margin-bottom: 16px; }
 .tstQuote { font-size: 15px; line-height: 1.62; color: #2A2D35; margin: 0 0 24px; flex: 1; }
 .tstFoot { display: flex; align-items: center; gap: 12px; padding-top: 18px; border-top: 1px solid #F0F3F8; }
 .tstAvatar { width: 42px; height: 42px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 15px; flex: none; }
@@ -352,7 +353,7 @@
 .ctaAvatars { display: flex; }
 .ctaAvatar { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 11.5px; font-weight: 700; color: #fff; }
 .ctaAvatar + .ctaAvatar { margin-left: -9px; }
-.ctaProofStars { color: #F5A623; font-size: 13px; letter-spacing: 1px; }
+.ctaProofStars { color: #8a5a06; font-size: 13px; letter-spacing: 1px; }
 .ctaProofText { font-size: 12.5px; color: #41454F; font-weight: 600; }
 .ctaTitle { font-size: clamp(34px, 4.8vw, 56px); letter-spacing: -.04em; font-weight: 800; margin: 28px 0 0; line-height: 1.04; color: var(--ink); }
 .ctaSub { font-size: 18px; color: var(--body); max-width: 520px; margin: 20px auto 0; line-height: 1.55; }

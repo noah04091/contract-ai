@@ -1,3 +1,10 @@
+/* ⚠️ SCHRIFTEN: Diese Seite fuehrte als einzige neben der Startseite eine
+   dritte Schriftwelt (Plus Jakarta Sans + JetBrains Mono). Beim Klicken von
+   Seite zu Seite war das ein sichtbarer Bruch. Jetzt dieselben Schriften wie
+   ueberall: Inter fuer Text, Bricolage Grotesque fuer Ueberschriften,
+   Source Code Pro fuer Etiketten und Zahlen.
+   Die beiden @font-face-Bloecke sind entfallen, damit die alten Dateien
+   nicht mehr geladen werden. */
 /* ============================================================
    Features.css — Redesign (Claude Design Handoff, 27.06.2026)
    ALLES unter .fp-page gescopet → kein globales Leck.
@@ -6,31 +13,25 @@
    ============================================================ */
 
 /* --- Self-hosted Fonts (public/fonts — DSGVO, kein Google-CDN) --- */
-@font-face {
-  font-family: 'Plus Jakarta Sans';
-  font-style: normal; font-weight: 400 800; font-display: swap;
-  src: url('/fonts/plus-jakarta-sans.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'JetBrains Mono';
-  font-style: normal; font-weight: 400 600; font-display: swap;
-  src: url('/fonts/jetbrains-mono.woff2') format('woff2');
-}
-
 @keyframes fp-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
 @keyframes fp-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
 
 /* ============================ PAGE ============================ */
 .fp-page {
-  --ink: #0f1115;
-  --body: #525a6e;
-  --muted: #7a8194;
-  --line: rgba(15,17,21,0.07);
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Marken-Palette statt eigener Grautoene: die Ueberschriften standen
+     hier in fast Schwarz (#0f1115), auf allen uebrigen Seiten in der
+     Tinte #14284f. --muted lag mit 4,2:1 zudem unter der Kontrastnorm. */
+  --ink: #14284f;
+  --body: #5a719b;
+  --muted: #5a719b;
+  --line: rgba(37,99,235,0.16);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  /* clip statt hidden: hidden macht das Element zum Scroll-Container und
+     jedes position:sticky darin klebt dann an ihm statt am Fenster. */
+  overflow-x: clip;
   position: relative;
   background:
     radial-gradient(1100px 620px at 86% -6%, rgba(37,99,235,0.08), transparent 60%),
@@ -44,11 +45,18 @@
 /* Geerbte Schrift erzwingen (globale Element-Regeln würden sonst überschreiben) */
 .fp-page h1, .fp-page h2, .fp-page h3, .fp-page h4,
 .fp-page p, .fp-page a, .fp-page span, .fp-page summary, .fp-page div {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
+/* Ueberschriften in der Anzeige-Schrift der Marke, wie ueberall sonst.
+   Steht bewusst NACH der Inter-Regel: gleiche Spezifitaet, spaeter gewinnt. */
+.fp-page h1, .fp-page h2, .fp-page h3 {
+  font-family: 'Bricolage Grotesque', 'Inter', system-ui, sans-serif;
+  letter-spacing: -.03em;
+}
+
 .fp-page .fp-eyebrow, .fp-page .fp-marker-label, .fp-page .fp-pill-num,
 .fp-page .fp-dash-title, .fp-page .fp-workflow-num {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Source Code Pro', ui-monospace, monospace;
 }
 
 .fp-grad {
@@ -111,7 +119,7 @@
 .fp-trust-avatar { width: 38px; height: 38px; border-radius: 999px; border: 2.5px solid #fff; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px; box-shadow: 0 2px 6px rgba(15,17,21,0.12); }
 .fp-trust-avatar:not(:first-child) { margin-left: -12px; }
 .fp-trust-text { display: flex; flex-direction: column; gap: 2px; }
-.fp-trust-stars { color: #f5a623; font-size: 14px; letter-spacing: 2px; }
+.fp-trust-stars { color: #b8860b; font-size: 14px; letter-spacing: 2px; }
 .fp-trust-label { font-size: 13.5px; color: var(--body); font-weight: 500; }
 
 /* Hero Dashboard-Mockup */
@@ -165,20 +173,20 @@
 .fp-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; border: 1px solid rgba(15,17,21,0.1); background: #fff; color: var(--ink); font-size: 13.5px; font-weight: 600; text-decoration: none; box-shadow: 0 1px 2px rgba(15,17,21,0.04); transition: border-color .2s, background .2s, color .2s, transform .2s; }
 .fp-pill-num { font-size: 12px; }
 .fp-pill-analyze .fp-pill-num { color: #2563eb; }
-.fp-pill-create .fp-pill-num { color: #0ea5e9; }
+.fp-pill-create .fp-pill-num { color: #0369a1; }
 .fp-pill-manage .fp-pill-num { color: #1e3a8a; }
 .fp-pill-analyze:hover { border-color: rgba(37,99,235,0.5); background: rgba(37,99,235,0.07); color: #2563eb; transform: translateY(-1px); }
-.fp-pill-create:hover { border-color: rgba(14,165,233,0.5); background: rgba(14,165,233,0.07); color: #0ea5e9; transform: translateY(-1px); }
+.fp-pill-create:hover { border-color: rgba(14,165,233,0.5); background: rgba(14,165,233,0.07); color: #0369a1; transform: translateY(-1px); }
 .fp-pill-manage:hover { border-color: rgba(30,58,138,0.5); background: rgba(30,58,138,0.07); color: #1e3a8a; transform: translateY(-1px); }
 /* Scroll-Spy: aktive Sektion (mitlaufend hervorgehoben) */
 .fp-pill-analyze.active { border-color: rgba(37,99,235,0.5); background: rgba(37,99,235,0.1); color: #2563eb; }
-.fp-pill-create.active { border-color: rgba(14,165,233,0.5); background: rgba(14,165,233,0.1); color: #0ea5e9; }
+.fp-pill-create.active { border-color: rgba(14,165,233,0.5); background: rgba(14,165,233,0.1); color: #0369a1; }
 .fp-pill-manage.active { border-color: rgba(30,58,138,0.5); background: rgba(30,58,138,0.1); color: #1e3a8a; }
 
 /* ============================ TESTIMONIAL ============================ */
 .fp-testimonial { position: relative; z-index: 1; padding: 88px 24px 0; }
 .fp-testimonial-inner { max-width: 880px; margin: 0 auto; text-align: center; }
-.fp-testimonial-stars { color: #f5a623; font-size: 18px; letter-spacing: 3px; margin-bottom: 18px; }
+.fp-testimonial-stars { color: #b8860b; font-size: 18px; letter-spacing: 3px; margin-bottom: 18px; }
 .fp-testimonial-quote { margin: 0; font-size: clamp(22px, 2.7vw, 30px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.42; color: var(--ink); text-wrap: balance; }
 .fp-testimonial-author { display: flex; align-items: center; justify-content: center; gap: 13px; margin-top: 26px; }
 .fp-testimonial-avatar { width: 46px; height: 46px; border-radius: 999px; display: grid; place-items: center; background: linear-gradient(140deg, #2563eb, #4f8bff); color: #fff; font-weight: 700; font-size: 17px; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(15,17,21,0.12); }
@@ -211,7 +219,7 @@
 /* ===================== FEATURE-GRUPPEN ===================== */
 .fp-fsection { position: relative; z-index: 1; padding: 96px 24px; }
 .fp-acc-analyze { --acc: #2563eb; --acc2: #4f8bff; --acc-rgb: 37,99,235; background: radial-gradient(75% 55% at 50% 32%, rgba(37,99,235,0.07), transparent 70%); }
-.fp-acc-create  { --acc: #0ea5e9; --acc2: #67d3fb; --acc-rgb: 14,165,233; background: radial-gradient(75% 55% at 50% 32%, rgba(14,165,233,0.06), transparent 70%); }
+.fp-acc-create  { --acc: #0369a1; --acc2: #67d3fb; --acc-rgb: 14,165,233; background: radial-gradient(75% 55% at 50% 32%, rgba(14,165,233,0.06), transparent 70%); }
 .fp-acc-manage  { --acc: #1e3a8a; --acc2: #3b63c9; --acc-rgb: 30,58,138; background: radial-gradient(75% 55% at 50% 32%, rgba(30,58,138,0.05), transparent 70%); }
 .fp-fsection-inner { max-width: 1200px; margin: 0 auto; }
 .fp-marker { display: flex; align-items: center; gap: 16px; margin-bottom: 40px; scroll-margin-top: 120px; }
@@ -242,7 +250,7 @@
 .fp-quick-ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: rgba(37,99,235,0.1); color: #2563eb; flex: none; }
 .fp-quick-text { flex: 1; min-width: 0; }
 .fp-quick-name { display: block; font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; }
-.fp-quick-kw { display: block; font-size: 13px; color: #9aa0b0; margin-top: 1px; }
+.fp-quick-kw { display: block; font-size: 13px; color: #5a719b; margin-top: 1px; }
 .fp-quick-chev { color: #c2c7d2; flex: none; }
 .fp-quick-more { text-align: center; margin-top: 32px; }
 .fp-quick-more-link { display: inline-flex; align-items: center; gap: 7px; color: #2563eb; font-weight: 600; font-size: 14.5px; text-decoration: none; }
