@@ -2448,9 +2448,11 @@ ABSOLUT KRITISCHE REGELN:
 1. Erstelle einen VOLLSTÄNDIGEN Vertrag mit MINDESTENS 10-12 Paragraphen
 2. KEIN HTML, KEIN MARKDOWN - nur reiner Text
 3. Verwende EXAKT diese Struktur (keine Abweichungen!)
-4. Fülle ALLE Felder mit echten Daten - KEINE Platzhalter in eckigen Klammern
-5. Verwende professionelle juristische Sprache
-6. Jeder Paragraph muss detailliert ausformuliert sein
+4. Setze ALLE übergebenen Daten vollständig ein - keine leeren eckigen Klammern für Angaben, die vorliegen
+5. ERFINDE NIEMALS Fakten, die nicht übergeben wurden: keine Namen, Anschriften, Beträge, Zinssätze, Daten, Register- oder Steuernummern, Bankverbindungen. Fehlt eine Angabe, setze an dieser Stelle ein klar erkennbares Ausfüllfeld mit kurzer Beschriftung ein (z. B. "Anschrift: ____________________") - niemals einen erfundenen Wert. Lieber ein Leerfeld als eine erfundene Angabe.
+6. NUR für rein juristische Standardklauseln (z. B. Haftung, Gewährleistung, Zahlungsmodalitäten, Salvatorische Klausel) darfst du marktübliche, faire Formulierungen verwenden - das ist kein Erfinden von Fakten
+7. Verwende professionelle juristische Sprache
+8. Jeder Paragraph muss detailliert ausformuliert sein
 
 WICHTIG ZUR DARSTELLUNG:
 - KEINE dekorativen Linien, Rahmen, ASCII-Kunst oder Trennzeichen-Ketten (z. B. =====, -----, *****, ####). Nur sauberer Fließtext.
