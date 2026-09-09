@@ -8330,3 +8330,159 @@
 .step3DesignCheck {
   background: #1568dd;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BILDSCHIRMBREITE UND BEDIENBARKEIT — 08.09.2026
+   ---------------------------------------------------------------------
+   Gemessen ueber zehn Geraetebreiten von 360 bis 1920px.
+
+   1. UNGENUTZTE BREITE. Auf einem 1920px-Schirm nutzte Schritt 3 nur
+      70 % (1352 von 1920px), Schritt 1 sogar nur 55 %. Schritt 3 ist
+      eine Werkbank: links der Text, rechts die PDF-Seite. Genau dort
+      hilft Breite am meisten, weil beide Haelften gleichzeitig
+      gebraucht werden.
+      Schritt 2 bleibt bewusst schmaler: ein Formular ueber die volle
+      Breite zu ziehen macht es schwerer lesbar, nicht besser. Die
+      Zeilenlaenge ist dort das Mass, nicht der Monitor.
+
+   2. ZU KLEINE TIPPZIELE, und zwar erst ab Tabletbreite:
+        carouselArrow      32 × 32 px
+        step3EditorBtn     28 px hoch
+        customDesignBtn    28 px hoch
+        step3HeaderBtn     38 px hoch
+      Mit der Maus reicht das, mit dem Daumen nicht. Statt sie ueberall
+      zu vergroessern und die Optik zu vergroebern, greift die
+      Vergroesserung nur auf Geraeten mit grobem Zeiger — also Finger
+      statt Maus. Der Desktop behaelt seine kompakte Leiste.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Breite ───────────────────────────────────────────────────── */
+
+/* Die Werkbank darf mitwachsen, bleibt aber begrenzt: jenseits von
+   1800px zerfaellt der Zusammenhang zwischen Text und Vorschau. */
+.generatorContent.step3Wide {
+  max-width: 1800px;
+}
+
+.step3ContainerNew {
+  max-width: 1800px;
+}
+
+/* Die PDF-Spalte war fest 420px breit — auf einem grossen Schirm blieb
+   die Vorschau winzig, obwohl Platz da war. Jetzt waechst sie mit und
+   bleibt zwischen 420 und 640px. */
+.step3TwoColumn {
+  grid-template-columns: minmax(0, 1fr) clamp(420px, 30vw, 640px);
+}
+
+@media (max-width: 1024px) {
+  .step3TwoColumn { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Die Vertragsart-Karten: mehr Platz heisst hier mehr Karten je Reihe,
+   ohne dass eine einzelne unangenehm breit wird. */
+.gkGitter {
+  max-width: 1500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 1280px) {
+  .generatorContent { max-width: 1320px; }
+  /* Das Formular bleibt schmal — Zeilenlaenge vor Monitorbreite. */
+  .formGrid { max-width: 1100px; }
+}
+
+/* ── 2. Bedienbarkeit mit dem Finger ─────────────────────────────── */
+@media (pointer: coarse) {
+  .step3HeaderBtn,
+  .step3EditorBtn,
+  .customDesignBtn {
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .carouselArrow {
+    width: 44px;
+    height: 44px;
+    flex: none;
+  }
+
+  /* Der "Weiter"-Knopf in Schritt 1 kam auf 42px, zwei zu wenig. */
+  .headerButton { min-height: 44px; }
+
+  .accordionHeader { min-height: 56px; }
+
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea { min-height: 48px; }
+
+  .gkKarte { min-height: 168px; }
+
+  /* Der Pfeil auf den Karten erscheint sonst nur beim Ueberfahren —
+     mit dem Finger gibt es kein Ueberfahren, also dauerhaft zeigen. */
+  .gkPfeil { opacity: .55; transform: none; }
+}
+
+/* Sehr schmale Geraete: die Knopfleisten fuellen die Zeile, statt
+   ausgefranst umzubrechen. */
+@media (max-width: 480px) {
+  .step3SuccessActions,
+  .step3EditorActions { width: 100%; }
+
+  .step3HeaderBtn,
+  .step3EditorBtn { flex: 1 1 140px; justify-content: center; }
+
+  .step3DesignHeader { flex-wrap: wrap; gap: 8px; }
+
+  .designHeaderRight { width: 100%; justify-content: space-between; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DESIGN-AUSWAHL AUF TABLET UND HANDY — 08.09.2026
+   ---------------------------------------------------------------------
+   🔴 Auf dem iPad (820px) brachen die Design-Karten in zwei Spalten um,
+      waehrend die Karussell-Pfeile links und rechts daneben stehen
+      blieben. Ein Karussell, das stapelt, ist ein Widerspruch: die
+      Pfeile blaettern durch einen Ausschnitt, den es dann nicht mehr
+      gibt. Ursache war flex-wrap: wrap in der 1024px-Abfrage.
+
+   Jetzt bleiben die Karten in EINER Zeile und duerfen schmaler werden.
+   Wird es zu eng, laesst sich die Zeile seitlich wischen und rastet an
+   den Karten ein — das erwartet man auf einem Touchgeraet ohnehin, und
+   die Pfeile funktionieren unveraendert weiter.
+
+   ⚠️ Die Logik bleibt unberuehrt: es werden weiterhin VISIBLE_DESIGNS
+   Karten gerendert, die Pfeile verschieben weiterhin
+   designCarouselIndex.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .step3DesignOptions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 2px;
+  }
+
+  .step3DesignOption {
+    flex: 1 0 138px;
+    min-width: 138px;
+    scroll-snap-align: start;
+  }
+}
+
+/* Auf dem Handy wird die Zeile ohnehin gewischt — dort sind die Pfeile
+   nur noch Platzfresser neben einer Flaeche, die man direkt anfassen
+   kann. */
+@media (max-width: 560px) {
+  .carouselArrow { display: none; }
+
+  .step3DesignOption {
+    flex: 1 0 128px;
+    min-width: 128px;
+  }
+}
