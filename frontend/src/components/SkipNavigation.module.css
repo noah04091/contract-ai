@@ -6,7 +6,11 @@
   left: 20px;
   z-index: 100000;
   padding: 12px 24px;
-  background: #3b82f6;
+  /* Gleiche Farbe wie der Knopf in der Navigationsleiste. Weiss darauf
+     6,70:1; der Vorgaenger #3b82f6 lag mit 3,68:1 unter der Norm 4,5:1.
+     Ausgerechnet der Sprunglink ist das Bauteil fuer Menschen, die die
+     Seite per Tastatur bedienen; er muss die Norm erfuellen. */
+  background: #1D4ED8;
   color: white;
   text-decoration: none;
   font-weight: 600;
@@ -25,7 +29,9 @@
 }
 
 .skipLink:hover {
-  background: #2563eb;
+  /* Muss dunkler sein als die Grundfarbe, nicht heller: #2563eb war
+     heller als #1D4ED8, der Link wurde beim Ueberfahren blasser. */
+  background: #1E40AF;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }

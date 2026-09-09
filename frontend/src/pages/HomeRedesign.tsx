@@ -260,7 +260,10 @@ const HomeRedesign = () => {
     const base = "padding:16px 14px;display:flex;justify-content:center;align-items:center" + (highlight ? ";background:rgba(37,99,235,0.04);border-left:1px solid rgba(37,99,235,0.18);border-right:1px solid rgba(37,99,235,0.18)" : "");
     if (v === "check") return <div style={s(base)}><Check stroke="#10b981" w={20} sw="2.6" /></div>;
     if (v === "x") return <div style={s(base)}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4d4d8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>;
-    const color = v === "teils" ? "#f59e0b" : (highlight ? "#1d4ed8" : "#9a9aa3");
+    // „teils" stand auf #f59e0b und damit bei 2,15:1 auf Weiss. In einer
+    // Vergleichstabelle traegt genau dieses Wort die Aussage, es muss lesbar
+    // sein. #b45309 (5,02:1) wird in dieser Datei bereits benutzt.
+    const color = v === "teils" ? "#b45309" : (highlight ? "#1d4ed8" : "#9a9aa3");
     const weight = (v === "teils" || highlight) ? "font-weight:600;" : "";
     const fs = highlight ? "13px" : (v === "teils" ? "13px" : "12.5px");
     return <div style={s(`${base};${weight}font-size:${fs};color:${color};text-align:center`)}>{v}</div>;
@@ -849,7 +852,7 @@ const HomeRedesign = () => {
             <div style={s("position:absolute;inset:0;pointer-events:none;background:radial-gradient(420px 280px at 85% 0%,rgba(37,99,235,0.10),transparent 60%),radial-gradient(420px 300px at 8% 100%,rgba(6,182,212,0.10),transparent 60%)")}></div>
             <div style={s("position:relative;text-align:center")}>
               <h2 style={s("font-size:clamp(24px,3vw,36px);font-weight:600;letter-spacing:-0.02em;line-height:1.2;color:#0c0c10;margin:0")}>„Kann ich nicht einfach <span style={s(GRAD)}>ChatGPT</span> benutzen?“</h2>
-              <p style={s("font-size:17px;color:#71717a;margin:20px 0 0")}>Klar – für eine einmalige Frage.</p>
+              <p style={s("font-size:17px;color:#52525b;margin:20px 0 0")}>Klar, für eine einmalige Frage.</p>
               <div style={s("display:flex;flex-direction:column;gap:10px;max-width:460px;margin:24px auto 0")}>
                 {["Aber wer erinnert dich an Fristen?", "Wer prüft, ob sich Gesetze geändert haben?", "Wer behält 50 Verträge gleichzeitig im Blick?"].map((q, i) => (
                   <div key={i} style={s("display:flex;align-items:center;gap:11px;justify-content:center;background:#fff;border:1px solid rgba(17,17,20,0.08);border-radius:11px;padding:13px 16px")}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg><span style={s("font-size:15px;color:#27272a")}>{q}</span></div>

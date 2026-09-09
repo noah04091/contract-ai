@@ -1,7 +1,19 @@
 /* Apple-Inspired Minimalist Navbar Design */
+
+/* ⚠️ :root in einem CSS-Modul ist NICHT modul-lokal, sondern global.
+   Die Farbe hiess frueher --apple-blue und wurde unter demselben Namen in
+   sechs weiteren Dateien mit zwei verschiedenen Werten definiert
+   (#3B82F6 und #0071e3). Welche gewann, entschied allein die Reihenfolge
+   der CSS-Baubloecke, die Navbar-Farbe war damit nicht festgelegt.
+   Der Praefix nav- macht sie kollisionsfrei. NICHT zurueckbenennen. */
 :root {
-  --apple-blue: #3B82F6;
-  --apple-blue-hover: #0056CC;
+  /* #1D4ED8 = das Blau der oeffentlichen Seiten. Weiss darauf 6,70:1
+     (Norm 4,5:1). Der Vorgaenger #3B82F6 lag bei 3,68:1. */
+  --nav-primary: #1D4ED8;
+  /* Der Hover MUSS dunkler sein als die Grundfarbe. Frueher #0056CC:
+     ein Apple-Blau unter einer Tailwind-Grundfarbe, dadurch wechselte
+     der Knopf beim Ueberfahren den Farbton statt nur die Helligkeit. */
+  --nav-primary-hover: #1E40AF;
   --apple-gray-1: #1d1d1f;
   --apple-gray-2: #424245;
   --apple-gray-3: #636366;
@@ -333,7 +345,7 @@
 }
 
 .navLink:hover {
-  color: var(--apple-blue);
+  color: var(--nav-primary);
   border-bottom-color: rgba(59, 130, 246, 0.3);
 }
 
@@ -342,9 +354,9 @@
 }
 
 .activeNavLink {
-  color: var(--apple-blue);
+  color: var(--nav-primary);
   font-weight: 600;
-  border-bottom-color: var(--apple-blue);
+  border-bottom-color: var(--nav-primary);
 }
 
 .activeNavLink .navLinkIcon {
@@ -494,7 +506,7 @@
 }
 
 .megaMenuFeature:hover .megaMenuFeatureName {
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .megaMenuFooter {
@@ -511,7 +523,7 @@
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--apple-blue);
+  color: var(--nav-primary);
   text-decoration: none;
   transition: all 0.2s ease;
   padding: 8px 16px;
@@ -559,7 +571,7 @@
   border-radius: 16px;
   font-weight: 500;
   font-size: 12px;
-  color: var(--apple-blue);
+  color: var(--nav-primary);
   cursor: default;
   transition: all 0.2s ease;
 }
@@ -611,7 +623,7 @@
 .loginButtonMobile:hover {
   background: rgba(248, 248, 248, 0.8);
   border-color: rgba(0, 0, 0, 0.12);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .registerButtonMobile {
@@ -619,7 +631,7 @@
   align-items: center;
   justify-content: center;
   padding: 6px 12px;
-  background: var(--apple-blue);
+  background: var(--nav-primary);
   border: none;
   border-radius: 16px;
   color: var(--apple-white);
@@ -634,7 +646,7 @@
 }
 
 .registerButtonMobile:hover {
-  background: var(--apple-blue-hover);
+  background: var(--nav-primary-hover);
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
   transform: translateY(-0.5px);
 }
@@ -661,11 +673,11 @@
 .profileButtonMobile:hover {
   background: rgba(248, 248, 248, 0.8);
   border-color: rgba(0, 0, 0, 0.12);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .badgeMobile {
-  background: var(--apple-blue);
+  background: var(--nav-primary);
   color: var(--apple-white);
   font-size: 8px;
   padding: 1px 4px;
@@ -699,12 +711,12 @@
 .loginButton:hover {
   background: rgba(248, 248, 248, 0.8);
   border-color: rgba(0, 0, 0, 0.12);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .registerButton {
   color: var(--apple-white);
-  background: var(--apple-blue);
+  background: var(--nav-primary);
   border: none;
   padding: 8px 16px;
   font-size: 15px;
@@ -722,7 +734,7 @@
 }
 
 .registerButton:hover {
-  background: var(--apple-blue-hover);
+  background: var(--nav-primary-hover);
   box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
   transform: translateY(-0.5px);
 }
@@ -751,7 +763,7 @@
 .profileButton:hover {
   background: rgba(248, 248, 248, 0.7);
   border-color: rgba(0, 0, 0, 0.06);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .profileIcon {
@@ -776,7 +788,7 @@
 }
 
 .badge {
-  background: var(--apple-blue);
+  background: var(--nav-primary);
   color: var(--apple-white);
   font-size: 10px;
   padding: 2px 6px;
@@ -835,7 +847,7 @@
 
 .dropdownItem:hover {
   background: rgba(59, 130, 246, 0.08);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
   transform: translateY(-0.5px);
 }
 
@@ -1086,7 +1098,7 @@
 .hamburger:hover {
   background: rgba(248, 248, 248, 0.7);
   border-color: var(--apple-border-light);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .mobileMenu {
@@ -1150,7 +1162,7 @@
 
 .mobileNavLink:hover {
   background: rgba(248, 248, 248, 0.8);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .mobileNavLink:hover .mobileNavIcon {
@@ -1159,7 +1171,7 @@
 
 .activeMobileNavLink {
   background: rgba(59, 130, 246, 0.08);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
   font-weight: 500;
 }
 
@@ -1183,7 +1195,7 @@
 }
 
 .premiumBadge {
-  background: var(--apple-blue);
+  background: var(--nav-primary);
   color: var(--apple-white);
   font-size: 11px;
   padding: 3px 8px;
@@ -1298,7 +1310,7 @@
 
 .sidebarClose:hover {
   background: rgba(248, 248, 248, 0.8);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .sidebarContent {
@@ -1365,7 +1377,7 @@
 
 .sidebarLink:hover {
   background: rgba(248, 248, 248, 0.8);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .sidebarIcon {
@@ -1407,13 +1419,13 @@
 }
 
 .sidebarAuthBtn.primary {
-  background: var(--apple-blue);
+  background: var(--nav-primary);
   color: var(--apple-white);
   border: none;
 }
 
 .sidebarAuthBtn.primary:hover {
-  background: var(--apple-blue-hover);
+  background: var(--nav-primary-hover);
 }
 
 .sidebarUser {
@@ -1439,7 +1451,7 @@
   align-items: center;
   justify-content: center;
   margin-right: 12px;
-  color: var(--apple-blue);
+  color: var(--nav-primary);
   border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
@@ -1458,7 +1470,7 @@
 }
 
 .premiumBadgeSidebar {
-  background: var(--apple-blue);
+  background: var(--nav-primary);
   color: var(--apple-white);
   font-size: 10px;
   padding: 2px 6px;
@@ -1527,7 +1539,7 @@
 
 .sidebarLogoutBtn:hover {
   background: rgba(248, 248, 248, 0.8);
-  color: var(--apple-blue);
+  color: var(--nav-primary);
 }
 
 .sidebarLogoutIcon {
