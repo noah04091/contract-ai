@@ -8,7 +8,7 @@ import {
   Phone, CreditCard, MapPin,
   AlertCircle, ArrowLeft, Lock, Sparkles,
   ChevronRight, Check, Info, Shield, Zap,
-  Globe, CheckCircle2, User
+  Globe, CheckCircle2, User, Briefcase
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
@@ -118,7 +118,7 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       icon: <Camera size={22} strokeWidth={1.5} />,
       fields: ['logoUrl'],
       premiumOnly: true,
-      gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+      gradient: '#1568dd'
     },
     {
       id: 'company',
@@ -129,9 +129,7 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
         : <User size={22} strokeWidth={1.5} />,
       fields: ['companyName', 'legalForm', 'street', 'postalCode', 'city', 'country'],
       premiumOnly: false,
-      gradient: profileType === 'business'
-        ? 'linear-gradient(135deg, #3B82F6 0%, #00d4ff 100%)'
-        : 'linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%)'
+      gradient: '#1568dd'
     },
     {
       id: 'legal',
@@ -140,7 +138,7 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       icon: <Shield size={22} strokeWidth={1.5} />,
       fields: profileType === 'business' ? ['vatId', 'tradeRegister'] : ['vatId'],
       premiumOnly: true,
-      gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+      gradient: '#1568dd',
       hideForPersonal: false
     },
     {
@@ -150,7 +148,7 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       icon: <Phone size={22} strokeWidth={1.5} />,
       fields: ['contactEmail', 'contactPhone'],
       premiumOnly: true,
-      gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+      gradient: '#1568dd'
     },
     {
       id: 'banking',
@@ -159,7 +157,7 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       icon: <CreditCard size={22} strokeWidth={1.5} />,
       fields: ['bankName', 'iban', 'bic'],
       premiumOnly: true,
-      gradient: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+      gradient: '#1568dd'
     }
   ];
 
@@ -810,21 +808,21 @@ export default function CompanyProfile() {
                 Du kannst die Auswahl jederzeit oben auf der Seite ändern.
               </p>
               <button className={styles.typeChooserCard} onClick={() => handleTypeChoice('business')}>
-                <span className={styles.typeChooserIcon} style={{ background: '#eff6ff' }}>🏢</span>
+                <span className={styles.typeChooserIcon} style={{ background: 'rgba(21, 104, 221, .09)', color: '#1568dd' }}><Building2 size={24} strokeWidth={1.6} /></span>
                 <span>
                   <b>Unternehmen</b>
                   <small>Firma, GmbH, UG, Verein …</small>
                 </span>
               </button>
               <button className={styles.typeChooserCard} onClick={() => handleTypeChoice('freelancer')}>
-                <span className={styles.typeChooserIcon} style={{ background: '#f5f3ff' }}>💼</span>
+                <span className={styles.typeChooserIcon} style={{ background: 'rgba(21, 104, 221, .09)', color: '#1568dd' }}><Briefcase size={24} strokeWidth={1.6} /></span>
                 <span>
                   <b>Freelancer / Selbstständig</b>
                   <small>Freiberufler, Einzelunternehmer</small>
                 </span>
               </button>
               <button className={styles.typeChooserCard} onClick={() => handleTypeChoice('privat')}>
-                <span className={styles.typeChooserIcon} style={{ background: '#f0fdf4' }}>👤</span>
+                <span className={styles.typeChooserIcon} style={{ background: 'rgba(21, 104, 221, .09)', color: '#1568dd' }}><User size={24} strokeWidth={1.6} /></span>
                 <span>
                   <b>Privatperson</b>
                   <small>Für private Verträge und Dokumente</small>
@@ -957,7 +955,7 @@ export default function CompanyProfile() {
                     >
                       <div
                         className={styles.navItemIcon}
-                        style={{ background: isLocked ? '#94a3b8' : section.gradient }}
+                        style={{ background: isLocked ? '#98a0ae' : section.gradient }}
                       >
                         {section.icon}
                       </div>
