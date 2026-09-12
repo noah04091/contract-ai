@@ -35,7 +35,7 @@ async function aggregatePortfolio(userId) {
         name: 1, title: 1, filename: 1,
         contractType: 1, type: 1,
         endDate: 1, expiryDate: 1, startDate: 1,
-        autoRenewal: 1,
+        isAutoRenewal: 1, // 12.09.2026: Analyse schreibt isAutoRenewal — 'autoRenewal' existiert nicht (Insights waren toter Code)
         provider: 1, partner: 1, company: 1,
         "legalPulse.healthScore": 1,
         "legalPulse.riskScore": 1,
@@ -73,7 +73,7 @@ async function aggregatePortfolio(userId) {
       provider: toStringOrNull(c.provider) || toStringOrNull(c.partner) || toStringOrNull(c.company) || null,
       endDate: endDate || null,
       startDate: c.startDate || null,
-      autoRenewal: c.autoRenewal || false,
+      autoRenewal: c.isAutoRenewal || false, // Ausgabename bleibt stabil (Konsumenten lesen .autoRenewal)
       daysUntilExpiry,
       score: v2?.scores?.overall || null,
       riskScore: v2?.scores?.risk || null,

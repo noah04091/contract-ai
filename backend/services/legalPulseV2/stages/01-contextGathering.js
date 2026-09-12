@@ -48,7 +48,7 @@ async function runContextGathering(userId, contractId) {
     {
       projection: {
         name: 1, title: 1, contractType: 1, type: 1,
-        endDate: 1, expiryDate: 1, autoRenewal: 1,
+        endDate: 1, expiryDate: 1, isAutoRenewal: 1, // 12.09.2026: echtes Persistenzfeld (autoRenewal existiert nicht)
         provider: 1, partner: 1, company: 1,
         "legalPulse.riskScore": 1, "legalPulse.healthScore": 1,
       },
@@ -109,7 +109,7 @@ async function runContextGathering(userId, contractId) {
     startDate: contract.startDate || contract.createdAt,
     endDate: endDate || null,
     daysUntilExpiry,
-    autoRenewal: contract.autoRenewal || false,
+    autoRenewal: contract.isAutoRenewal || false, // Ausgabename bleibt stabil
     provider: contractProvider || null,  // already normalized via toStr()
     portfolioSize: portfolioContracts.length + 1,
     relatedContracts,
