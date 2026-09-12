@@ -1218,6 +1218,7 @@ const connectDB = async () => {
     // 📊 DASHBOARD NOTIFICATIONS - Aggregierte Benachrichtigungen fürs Dashboard
     try {
       const dashboardNotificationsRoutes = require("./routes/dashboardNotifications");
+      app.use("/api/portfolio", require("./routes/portfolio")); // 🧭 Cockpit v1 (12.09.2026): lesende Portfolio-Aggregation
       app.use("/api/dashboard/notifications", dashboardNotificationsRoutes);
       console.log("✅ Dashboard Notifications API geladen unter /api/dashboard/notifications");
     } catch (err) {
