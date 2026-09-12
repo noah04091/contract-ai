@@ -1611,3 +1611,114 @@
   .settingsCard,
   .accountActionCard { min-height: 56px; }
 }
+
+/* Noah gemeldet 08.09.: „Technische Rohdaten (JSON)" stand linksbuendig,
+   obwohl in der Karte alles mittig sitzt.
+   Ursache: der Link ist ein <button> mit display:block ohne Breite. Ein
+   Block schrumpft auf Inhaltsbreite und klebt links — das text-align:
+   center der Karte zentriert nur den Text INNERHALB des Knopfes, nicht
+   den Knopf selbst. */
+.accountActionLink {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PROFILSEITE, ZWEITE STUFE — 08.09.2026
+   ---------------------------------------------------------------------
+   Noah: „ich sehe jetzt keine großartigen Veränderungen". Zu Recht —
+   die erste Stufe tauschte Symbole, das ist Feinarbeit. Was die Seite
+   wirklich alt wirken laesst, habe ich danach gemessen:
+
+     13 Verlaeufe als Flaeche (linear-gradient auf Symbolkaesten,
+        Abzeichen, Knoepfen)
+     37 verschiedene Farben ausserhalb der Palette
+
+   Kleine Flaechen mit Farbverlauf sind der Stil von vor fuenf Jahren.
+   Die ueberarbeiteten Seiten (Optimizer, Legal Lens, Generate) nutzen
+   ruhige Flaechenfarben und eine schmale Palette — genau das macht den
+   Unterschied zwischen „gewachsen" und „gebaut".
+
+   Geaendert wird nur die Oberflaeche: keine Klasse entfaellt, keine
+   Struktur, kein Markup.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Symbolkaesten: Flaeche statt Verlauf ────────────────────────── */
+.featureIcon.blue { background: rgba(21, 104, 221, .09); }
+.featureIcon.purple { background: rgba(21, 104, 221, .09); }
+.featureIcon.green { background: #eaf6ee; }
+.featureIcon.orange { background: #fdf3e6; }
+
+.accountActionIcon.export { background: rgba(21, 104, 221, .09); }
+.accountActionIcon.password { background: #fdf7e6; }
+.accountActionIcon.tour { background: #eaf6ee; }
+
+/* ── Abo-Abzeichen: ruhig statt Verlauf ─────────────────────────── */
+.subscriptionBadge.business {
+  background: rgba(21, 104, 221, .09);
+  color: #1568dd;
+  border: 1px solid rgba(21, 104, 221, .18);
+}
+
+.subscriptionBadge.enterprise {
+  background: #fdf7e6;
+  color: #a16207;
+  border: 1px solid rgba(161, 98, 7, .2);
+}
+
+/* ── Der Platzhalter fuer das Profilbild ────────────────────────── */
+.profilePicturePlaceholder {
+  background: #eef1f6;
+  color: #7d8493;
+}
+
+/* ── Knoepfe: eine Farbe, kein Verlauf ─────────────────────────── */
+.featureButton.primary {
+  background: #1568dd;
+  border-color: transparent;
+}
+
+.featureButton.primary:hover:not(:disabled) { background: #1259bd; }
+
+.upgradeButton {
+  background: #1568dd;
+}
+
+.upgradeButton:hover:not(:disabled) { background: #1259bd; }
+
+/* Der Schalter fuer Benachrichtigungen. */
+.toggleInput:checked + .toggleSlider {
+  background: #1568dd;
+}
+
+/* ── Zustands-Abzeichen ─────────────────────────────────────────── */
+.sectionBadge.included {
+  background: #eaf6ee;
+  color: #146c43;
+}
+
+.sectionBadge.locked {
+  background: #f7f9fc;
+  color: #5d6472;
+  border: 1px solid #e3e6ec;
+}
+
+.sectionIcon.danger { background: #fdeceb; }
+
+/* ── Karten: ein Schatten statt zweier Stufen ───────────────────── */
+.featureCard,
+.accountActionCard,
+.settingsCard {
+  border: 1px solid #e3e6ec;
+  box-shadow: 0 1px 2px rgba(16, 30, 60, .04);
+}
+
+.featureCard:hover {
+  border-color: rgba(21, 104, 221, .3);
+  box-shadow: 0 6px 20px -8px rgba(21, 104, 221, .2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featureCard { transition: none; }
+  .featureCard:hover { transform: none; }
+}
