@@ -34,6 +34,14 @@ describe('B1) collectContractFileRefs — Schlüssel-Sammlung', () => {
     expect(refs.localPaths).toEqual(['/tmp/uploads/a.pdf']);
   });
 
+  test('Wrapper-Falle: { contract: {…} } sammelt NICHTS — Aufrufer MUSS das Dokument selbst übergeben', () => {
+    // Dokumentiert den stillen Fehlschlag vom 12.09.: ein Zugriffs-Wrapper trägt
+    // die Keys eine Ebene tiefer; die Sammlung greift bewusst nur flache Felder.
+    const refs = collectContractFileRefs({ contract: { s3Key: 'contracts/x.pdf' }, role: 'owner' });
+    expect(refs.s3Keys).toEqual([]);
+    expect(refs.localPaths).toEqual([]);
+  });
+
   test('mehrere Dokumente, null/undefined/Nicht-Strings sicher', () => {
     const refs = collectContractFileRefs([
       { s3Key: 'k1' },
@@ -87,7 +95,12 @@ describe('C) Source-Scans — Kaskade ist an ALLEN vier Löschpfaden verdrahtet'
 
   test('contracts.js: Einzel-Löschung + Bulk-Löschung rufen deleteContractFiles', () => {
     const src = lese('routes/contracts.js');
-    expect(src).toMatch(/deleteContractFiles\(access, 'contract-delete'\)/);
+    // ⚠️ Live-Beweis 12.09.: findContractWithOrgAccess gibt einen WRAPPER
+    // { contract, role, … } zurück. `deleteContractFiles(access, …)` fand darum
+    // KEINE Keys und schlug still fehl (S3-Objekt überlebte die Löschung).
+    // Es MUSS access.contract übergeben werden.
+    expect(src).toMatch(/deleteContractFiles\(access\.contract, 'contract-delete'\)/);
+    expect(src).not.toMatch(/deleteContractFiles\(access, 'contract-delete'\)/);
     expect(src).toMatch(/deleteContractFiles\(ownedDocs, 'bulk-delete'\)/);
     // Bulk lädt die Schlüsselfelder VOR dem deleteMany
     expect(src.indexOf('FILE_CLEANUP_PROJECTION')).toBeGreaterThan(-1);

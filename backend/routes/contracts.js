@@ -2121,8 +2121,11 @@ router.delete("/:id", verifyToken, async (req, res) => {
 
     // 🗑️ Security-Triage 12.09.2026 (DSGVO Art. 17): zugehörige DATEIEN mitlöschen —
     // vorher blieben Original-/optimierte/gesiegelte PDFs dauerhaft in S3 liegen.
-    // `access` ist das VOR dem Delete geladene, besitz-/org-geprüfte Dokument.
-    await require('../utils/contractFileCleanup').deleteContractFiles(access, 'contract-delete');
+    // ⚠️ WICHTIG: findContractWithOrgAccess gibt einen WRAPPER { contract, role, … }
+    // zurück — die Key-Felder liegen auf access.CONTRACT. Der Live-Beweis am 12.09.
+    // hat gezeigt: mit `access` statt `access.contract` findet die Kaskade keine
+    // Keys und schlägt STILL fehl (leere Key-Liste ist bewusst kein Fehler).
+    await require('../utils/contractFileCleanup').deleteContractFiles(access.contract, 'contract-delete');
 
     // 🧹 DSGVO: Legal-Lens-Daten (Klausel-Analysen + Fortschritt/Notizen) des Vertrags mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: id });
