@@ -78,7 +78,7 @@ const FuerAgenturen: React.FC = () => {
         "name": "Kann ich Verträge meiner Kunden hochladen — ist das DSGVO-konform?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, absolut. Contract AI ist DSGVO-konform und alle Server stehen in Frankfurt am Main. Als Agentur, Verwaltung oder Berater bist du Auftragsverarbeiter im Sinne der DSGVO — wir stellen dir auf Anfrage einen kostenlosen Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO zur Verfügung. Eine DSGVO-konforme Verarbeitung von Mandanten- und Kundendokumenten ist damit vollständig abgesichert."
+          "text": "Ja, absolut. Contract AI ist DSGVO-konform und alle Server stehen in Frankfurt am Main. Als Agentur, Verwaltung oder Berater bist du Auftragsverarbeiter im Sinne der DSGVO. Wir stellen dir auf Anfrage einen kostenlosen Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO zur Verfügung. Eine DSGVO-konforme Verarbeitung von Mandanten- und Kundendokumenten ist damit vollständig abgesichert."
         }
       },
       {
@@ -86,7 +86,7 @@ const FuerAgenturen: React.FC = () => {
         "name": "Wie funktioniert das Rollen-System im Team?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Es gibt drei Rollen: Admin (kann das Team verwalten, einladen, Rechte vergeben), Mitarbeiter (kann Verträge hochladen, analysieren und bearbeiten) und Viewer (Lesezugriff). So entscheidest du selbst, wer in deiner Agentur welche Verträge sehen darf — etwa, wenn du sensible Mandantenakten von normalen Lieferantenverträgen trennen willst."
+          "text": "Es gibt drei Rollen: Admin (kann das Team verwalten, einladen, Rechte vergeben), Mitarbeiter (kann Verträge hochladen, analysieren und bearbeiten) und Viewer (Lesezugriff). So entscheidest du selbst, wer in deiner Agentur welche Verträge sehen darf, etwa, wenn du sensible Mandantenakten von normalen Lieferantenverträgen trennen willst."
         }
       },
       {
@@ -94,7 +94,7 @@ const FuerAgenturen: React.FC = () => {
         "name": "Was passiert, wenn mein Team größer als 10 Personen wird?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Enterprise-Tarif sind bis zu 10 aktive Nutzer enthalten — ohne Aufpreis pro Sitz. Bei größeren Teams (z.B. Verwaltungen mit 25 Mitarbeitern oder Kanzleien mit mehreren Standorten) bieten wir individuelle Konditionen an. Schreib uns einfach kurz an info@contract-ai.de und wir machen dir ein faires Team-Angebot."
+          "text": "Im Enterprise-Tarif sind bis zu 10 aktive Nutzer enthalten, ohne Aufpreis pro Sitz. Bei größeren Teams (z.B. Verwaltungen mit 25 Mitarbeitern oder Kanzleien mit mehreren Standorten) bieten wir individuelle Konditionen an. Schreib uns einfach kurz an info@contract-ai.de und wir machen dir ein faires Team-Angebot."
         }
       },
       {
@@ -102,7 +102,7 @@ const FuerAgenturen: React.FC = () => {
         "name": "Bekomme ich eine zentrale Rechnung für mein Team?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. Du als Account-Inhaber erhältst eine einzige monatliche oder jährliche Rechnung — DSGVO-konform mit Pflichtangaben nach § 14 UStG, automatisch per E-Mail und im Dashboard zum Download. Reverse-Charge nach § 13b UStG für EU-B2B-Kunden ist möglich. Deine Mitarbeiter selbst zahlen nichts — die Lizenzen werden zentral abgerechnet."
+          "text": "Ja. Du als Account-Inhaber erhältst eine einzige monatliche oder jährliche Rechnung — DSGVO-konform mit Pflichtangaben nach § 14 UStG, automatisch per E-Mail und im Dashboard zum Download. Reverse-Charge nach § 13b UStG für EU-B2B-Kunden ist möglich. Deine Mitarbeiter selbst zahlen nichts. Die Lizenzen werden zentral abgerechnet."
         }
       },
       {
@@ -126,7 +126,7 @@ const FuerAgenturen: React.FC = () => {
         "name": "Wo werden die Verträge gespeichert und wie sicher sind sie?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Alle Verträge werden ausschließlich auf europäischen Servern (Frankfurt am Main) verarbeitet und gespeichert. Die Übertragung erfolgt SSL-verschlüsselt mit 256-bit-Verschlüsselung, die Speicherung ist verschlüsselt im Ruhezustand. Es gibt kein Modell-Training mit deinen Daten und keine Weitergabe an Dritte — du bleibst jederzeit Eigentümer."
+          "text": "Alle Verträge werden ausschließlich auf europäischen Servern (Frankfurt am Main) verarbeitet und gespeichert. Die Übertragung erfolgt SSL-verschlüsselt mit 256-bit-Verschlüsselung, die Speicherung ist verschlüsselt im Ruhezustand. Es gibt kein Modell-Training mit deinen Daten und keine Weitergabe an Dritte. Du bleibst jederzeit Eigentümer."
         }
       },
       {
@@ -134,7 +134,7 @@ const FuerAgenturen: React.FC = () => {
         "name": "Kann ich jederzeit kündigen, wenn mein Team Contract AI doch nicht braucht?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. Es gibt keine Mindestlaufzeit und keine Kündigungsfristen — du kannst jederzeit zum Ende der bezahlten Periode mit einem Klick im Dashboard kündigen. Zusätzlich gilt die 14-Tage-Geld-zurück-Garantie ohne Wenn und Aber: Wenn du innerhalb der ersten 14 Tage merkst, dass es nicht passt, erstatten wir den vollen Betrag."
+          "text": "Ja. Es gibt keine Mindestlaufzeit und keine Kündigungsfristen. Du kannst jederzeit zum Ende der bezahlten Periode mit einem Klick im Dashboard kündigen. Zusätzlich gilt die 14-Tage-Geld-zurück-Garantie ohne Wenn und Aber: Wenn du innerhalb der ersten 14 Tage merkst, dass es nicht passt, erstatten wir den vollen Betrag."
         }
       }
     ]

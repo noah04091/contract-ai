@@ -37,7 +37,7 @@ export const articles: Article[] = [
     faqs: [
       {
         question: 'Wie lange darf sich ein Vertrag automatisch verlängern?',
-        answer: 'Bei Verbraucherverträgen mit AGB, die seit dem 1. März 2022 geschlossen wurden, darf sich der Vertrag nach der Erstlaufzeit nur noch auf unbestimmte Zeit verlängern – und ist dann jederzeit mit einer Frist von höchstens einem Monat kündbar (§ 309 Nr. 9 BGB). Starre Verlängerungen um ein weiteres Jahr sind in solchen AGB unwirksam.'
+        answer: 'Bei Verbraucherverträgen mit AGB, die seit dem 1. März 2022 geschlossen wurden, darf sich der Vertrag nach der Erstlaufzeit nur noch auf unbestimmte Zeit verlängern und ist dann jederzeit mit einer Frist von höchstens einem Monat kündbar (§ 309 Nr. 9 BGB). Starre Verlängerungen um ein weiteres Jahr sind in solchen AGB unwirksam.'
       },
       {
         question: 'Was gilt für ältere Verträge, die vor März 2022 geschlossen wurden?',
@@ -49,7 +49,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Wie verhindere ich, dass ich die Kündigungsfrist wieder verpasse?',
-        answer: 'Der zuverlässigste Weg ist, die Frist gar nicht selbst im Kopf behalten zu müssen: Lade den Vertrag bei Contract AI hoch – die KI liest Laufzeit, Verlängerungsklausel und Kündigungsfrist aus dem Text, trägt die Stichtage in deinen Kalender ein und erinnert dich rechtzeitig per E-Mail.'
+        answer: 'Der zuverlässigste Weg ist, die Frist gar nicht selbst im Kopf behalten zu müssen: Lade den Vertrag bei Contract AI hoch. Die KI liest Laufzeit, Verlängerungsklausel und Kündigungsfrist aus dem Text, trägt die Stichtage in deinen Kalender ein und erinnert dich rechtzeitig per E-Mail.'
       },
       {
         question: 'Gilt § 309 Nr. 9 BGB auch für Verträge zwischen Unternehmen?',
@@ -59,34 +59,34 @@ export const articles: Article[] = [
     content: `
       <div class="highlight-box">
         <h4>📅 Nie wieder eine Kündigungsfrist verpassen</h4>
-        <p>Lade deinen Vertrag hoch – die KI erkennt Laufzeit, Verlängerungsklausel und Kündigungsfrist automatisch und erinnert dich rechtzeitig per E-Mail und Kalender. <a href="/features/fristen"><strong>Vertragsfristen automatisch überwachen →</strong></a></p>
+        <p>Lade deinen Vertrag hoch. Die KI erkennt Laufzeit, Verlängerungsklausel und Kündigungsfrist automatisch und erinnert dich rechtzeitig per E-Mail und Kalender. <a href="/features/fristen"><strong>Vertragsfristen automatisch überwachen →</strong></a></p>
       </div>
 
       <h2>Warum sich Verträge „von selbst" verlängern</h2>
       <p>Handyvertrag, Fitnessstudio, Streaming, Software-Abo, Wartungsvertrag: Viele Dauerverträge enthalten eine <strong>Verlängerungsklausel</strong>. Kündigst du nicht rechtzeitig, läuft der Vertrag weiter – früher oft gleich um ein ganzes weiteres Jahr. Das ist kein Versehen der Anbieter, sondern Kalkül: Ein erheblicher Teil der Kundschaft verpasst den Stichtag.</p>
-      <p>Die gute Nachricht: Der Gesetzgeber hat die Spielregeln deutlich verschärft. Die schlechte: Die neuen Regeln gelten nicht für jeden Vertrag – und wer seine Fristen nicht kennt, zahlt trotzdem weiter.</p>
+      <p>Die gute Nachricht: Der Gesetzgeber hat die Spielregeln deutlich verschärft. Die schlechte: Die neuen Regeln gelten nicht für jeden Vertrag und wer seine Fristen nicht kennt, zahlt trotzdem weiter.</p>
 
       <h2>Die Rechtslage seit März 2022: enge Grenzen für AGB</h2>
       <p>Für Verbraucherverträge mit AGB, die seit dem <strong>1. März 2022</strong> geschlossen wurden, gilt (§ 309 Nr. 9 BGB):</p>
       <ul>
         <li>Die <strong>Erstlaufzeit</strong> darf höchstens <strong>24 Monate</strong> betragen.</li>
-        <li>Nach Ablauf darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern – und ist dann jederzeit mit einer Frist von <strong>maximal einem Monat</strong> kündbar.</li>
+        <li>Nach Ablauf darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern und ist dann jederzeit mit einer Frist von <strong>maximal einem Monat</strong> kündbar.</li>
       </ul>
-      <p>Eine Klausel, die dich nach der Erstlaufzeit erneut für zwölf Monate bindet, ist in solchen AGB <strong>unwirksam</strong> – du bist daran nicht gebunden.</p>
+      <p>Eine Klausel, die dich nach der Erstlaufzeit erneut für zwölf Monate bindet, ist in solchen AGB <strong>unwirksam</strong>. Du bist daran nicht gebunden.</p>
       <p><strong>Achtung bei Altverträgen:</strong> Wurde dein Vertrag vor dem 1. März 2022 geschlossen, kann noch die alte Rechtslage gelten. Dort waren Verlängerungen um bis zu ein Jahr und bis zu drei Monate Kündigungsfrist in AGB zulässig. Gerade bei alten Verträgen lohnt sich also der Blick in die konkrete Klausel.</p>
 
       <h2>Der Kündigungsbutton: dein Notausgang</h2>
-      <p>Seit dem <strong>1. Juli 2022</strong> müssen Anbieter, bei denen Verbraucher Dauerverträge online abschließen können, eine gut sichtbare Schaltfläche zum Kündigen bereitstellen (§ 312k BGB). Fehlt dieser <strong>Kündigungsbutton</strong>, kannst du als Verbraucher den Vertrag <strong>jederzeit und fristlos</strong> beenden. Es lohnt sich also, auf der Website des Anbieters gezielt danach zu suchen – auch als Druckmittel, wenn eine Kündigung „nicht ankommt".</p>
+      <p>Seit dem <strong>1. Juli 2022</strong> müssen Anbieter, bei denen Verbraucher Dauerverträge online abschließen können, eine gut sichtbare Schaltfläche zum Kündigen bereitstellen (§ 312k BGB). Fehlt dieser <strong>Kündigungsbutton</strong>, kannst du als Verbraucher den Vertrag <strong>jederzeit und fristlos</strong> beenden. Es lohnt sich also, auf der Website des Anbieters gezielt danach zu suchen, auch als Druckmittel, wenn eine Kündigung „nicht ankommt".</p>
 
       <h2>So stoppst du eine ungewollte Verlängerung – Schritt für Schritt</h2>
       <h3>1. Vertrag und Klausel prüfen</h3>
-      <p>Welche Laufzeit, welche Verlängerung, welche Frist steht wirklich im Vertrag? Und ist die Klausel nach heutigem Recht überhaupt wirksam? Genau das liest die <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> in unter einer Minute aus dem Dokument – inklusive Risiko-Einstufung der Klauseln.</p>
+      <p>Welche Laufzeit, welche Verlängerung, welche Frist steht wirklich im Vertrag? Und ist die Klausel nach heutigem Recht überhaupt wirksam? Genau das liest die <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> in unter einer Minute aus dem Dokument, inklusive Risiko-Einstufung der Klauseln.</p>
       <h3>2. Kündigung rechtzeitig und nachweisbar erklären</h3>
       <p>Kündige schriftlich oder über den Kündigungsbutton und sichere dir einen <strong>Nachweis</strong> (Eingangsbestätigung, Screenshot mit Datum). Ohne Bestätigung im Zweifel nachhaken.</p>
       <h3>3. Zum nächstmöglichen Termin kündigen – sofort</h3>
-      <p>Selbst wenn die aktuelle Frist schon verstrichen ist: Kündige <strong>jetzt</strong> zum nächstmöglichen Termin. So kann dich die nächste Verlängerung nicht mehr erwischen. Was du sonst noch tun kannst, zeigt unser Ratgeber <a href="/blog/kuendigungsfrist-verpasst-was-nun">Kündigungsfrist verpasst – was jetzt?</a>.</p>
+      <p>Selbst wenn die aktuelle Frist schon verstrichen ist: Kündige <strong>jetzt</strong> zum nächstmöglichen Termin. So kann dich die nächste Verlängerung nicht mehr erwischen. Was du sonst noch tun kannst, zeigt unser Ratgeber <a href="/blog/kuendigungsfrist-verpasst-was-nun">Kündigungsfrist verpasst: was jetzt?</a>.</p>
       <h3>4. Fristen aus dem Kopf in ein System verlagern</h3>
-      <p>Der eigentliche Fehler ist selten die einzelne Kündigung – es ist das Verwalten von Stichtagen im Kopf oder in einer Excel-Liste. Mit dem <a href="/features/fristen">Fristenkalender von Contract AI</a> liest die KI die Fristen direkt aus deinen Verträgen, trägt sie in deinen Kalender ein (Google, Outlook, Apple) und erinnert dich rechtzeitig per E-Mail.</p>
+      <p>Der eigentliche Fehler ist selten die einzelne Kündigung. Es ist das Verwalten von Stichtagen im Kopf oder in einer Excel-Liste. Mit dem <a href="/features/fristen">Fristenkalender von Contract AI</a> liest die KI die Fristen direkt aus deinen Verträgen, trägt sie in deinen Kalender ein (Google, Outlook, Apple) und erinnert dich rechtzeitig per E-Mail.</p>
 
       <h2>Häufige Fragen</h2>
       <h3>Wie lange darf sich ein Vertrag automatisch verlängern?</h3>
@@ -99,15 +99,15 @@ export const articles: Article[] = [
       <p>Nein – § 309 BGB schützt unmittelbar nur Verbraucher. Im B2B-Bereich sind längere Bindungen möglich; dort ist systematische <a href="/features/legalpulse">Vertragsüberwachung</a> umso wichtiger.</p>
 
       <h2>Fazit</h2>
-      <p>Automatische Verlängerungen sind kein Schicksal: Seit 2022 sitzt du bei neuen Verbraucherverträgen am längeren Hebel – höchstens ein Monat Kündigungsfrist nach der Erstlaufzeit, plus Kündigungsbutton als Notausgang. Der Rest ist Organisation. Wer seine Fristen automatisch <a href="/features/fristen">überwachen</a> lässt, verpasst keinen Stichtag mehr – und wer zusätzlich wissen will, ob neue Gesetze oder Urteile die eigenen Verträge betreffen, aktiviert <a href="/features/legalpulse">Legal Pulse</a>.</p>
+      <p>Automatische Verlängerungen sind kein Schicksal: Seit 2022 sitzt du bei neuen Verbraucherverträgen am längeren Hebel – höchstens ein Monat Kündigungsfrist nach der Erstlaufzeit, plus Kündigungsbutton als Notausgang. Der Rest ist Organisation. Wer seine Fristen automatisch <a href="/features/fristen">überwachen</a> lässt, verpasst keinen Stichtag mehr und wer zusätzlich wissen will, ob neue Gesetze oder Urteile die eigenen Verträge betreffen, aktiviert <a href="/features/legalpulse">Legal Pulse</a>.</p>
     `
   },
   {
     id: 23,
     slug: 'kuendigungsfrist-verpasst-was-nun',
-    title: 'Kündigungsfrist verpasst – was jetzt? Deine Optionen',
-    subtitle: 'Der Stichtag ist vorbei, der Vertrag läuft weiter. Bevor du zähneknirschend weiterzahlst: Diese Auswege gibt es – und so passiert es dir nie wieder.',
-    excerpt: 'Kündigungsfrist verpasst? Nicht jede Verlängerungsklausel ist wirksam, ein fehlender Kündigungsbutton eröffnet die fristlose Kündigung, und aus wichtigem Grund kommst du auch aus laufenden Verträgen. Wir zeigen die Optionen – und wie du Fristen künftig automatisch im Blick behältst.',
+    title: 'Kündigungsfrist verpasst: was jetzt? Deine Optionen',
+    subtitle: 'Der Stichtag ist vorbei, der Vertrag läuft weiter. Bevor du zähneknirschend weiterzahlst: Diese Auswege gibt es und so passiert es dir nie wieder.',
+    excerpt: 'Kündigungsfrist verpasst? Nicht jede Verlängerungsklausel ist wirksam, ein fehlender Kündigungsbutton eröffnet die fristlose Kündigung, und aus wichtigem Grund kommst du auch aus laufenden Verträgen. Wir zeigen die Optionen und wie du Fristen künftig automatisch im Blick behältst.',
     category: 'tipps',
     date: '4. September 2026',
     readTime: '7 Min. Lesezeit',
@@ -125,7 +125,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Kann ich trotz Laufzeit außerordentlich kündigen?',
-        answer: 'Dauerschuldverhältnisse können aus wichtigem Grund ohne Einhaltung einer Frist gekündigt werden (§ 314 BGB) – etwa bei schweren Vertragsverletzungen des Anbieters. Auch bei Preiserhöhungen oder Vertragsänderungen besteht je nach Vertragstyp ein Sonderkündigungsrecht. Der wichtige Grund muss aber wirklich vorliegen; reine Unzufriedenheit genügt nicht.'
+        answer: 'Dauerschuldverhältnisse können aus wichtigem Grund ohne Einhaltung einer Frist gekündigt werden (§ 314 BGB), etwa bei schweren Vertragsverletzungen des Anbieters. Auch bei Preiserhöhungen oder Vertragsänderungen besteht je nach Vertragstyp ein Sonderkündigungsrecht. Der wichtige Grund muss aber wirklich vorliegen; reine Unzufriedenheit genügt nicht.'
       },
       {
         question: 'Gilt bei einer verspäteten Kündigung gar nichts?',
@@ -133,33 +133,33 @@ export const articles: Article[] = [
       },
       {
         question: 'Wie sorge ich dafür, dass mir das nicht wieder passiert?',
-        answer: 'Verlagere die Fristen aus dem Kopf in ein System: Contract AI liest Kündigungsfristen, Laufzeiten und Verlängerungen automatisch aus deinen Verträgen, trägt sie in deinen Kalender ein und erinnert dich rechtzeitig – bevor die Frist abläuft.'
+        answer: 'Verlagere die Fristen aus dem Kopf in ein System: Contract AI liest Kündigungsfristen, Laufzeiten und Verlängerungen automatisch aus deinen Verträgen, trägt sie in deinen Kalender ein und erinnert dich rechtzeitig, bevor die Frist abläuft.'
       }
     ],
     content: `
       <div class="highlight-box">
         <h4>⏰ Fristen künftig automatisch im Blick</h4>
-        <p>Lade deine Verträge hoch – die KI erkennt jede Kündigungsfrist und erinnert dich rechtzeitig per E-Mail und Kalender. <a href="/features/fristen"><strong>Vertragsfristen automatisch überwachen →</strong></a></p>
+        <p>Lade deine Verträge hoch. Die KI erkennt jede Kündigungsfrist und erinnert dich rechtzeitig per E-Mail und Kalender. <a href="/features/fristen"><strong>Vertragsfristen automatisch überwachen →</strong></a></p>
       </div>
 
       <h2>Erst mal durchatmen: verpasst heißt nicht machtlos</h2>
       <p>Die Frist ist vorbei, die Verlängerungs-Bestätigung liegt im Postfach – ein Ärgernis, aber selten das Ende. In vielen Fällen gibt es noch Hebel: unwirksame Klauseln, fehlende Kündigungsbuttons, Sonderkündigungsrechte. Gehen wir sie der Reihe nach durch.</p>
 
       <h2>Option 1: Prüfen, ob die Verlängerungsklausel überhaupt wirksam ist</h2>
-      <p>Bei Verbraucherverträgen mit AGB, die seit dem <strong>1. März 2022</strong> geschlossen wurden, gilt § 309 Nr. 9 BGB: Nach der Erstlaufzeit darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern und ist jederzeit mit einer Frist von <strong>höchstens einem Monat</strong> kündbar. Steht in deinen AGB eine automatische Verlängerung um ein weiteres Jahr, ist diese Klausel <strong>unwirksam</strong> – die lange Bindung gilt dann nicht.</p>
+      <p>Bei Verbraucherverträgen mit AGB, die seit dem <strong>1. März 2022</strong> geschlossen wurden, gilt § 309 Nr. 9 BGB: Nach der Erstlaufzeit darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern und ist jederzeit mit einer Frist von <strong>höchstens einem Monat</strong> kündbar. Steht in deinen AGB eine automatische Verlängerung um ein weiteres Jahr, ist diese Klausel <strong>unwirksam</strong>. Die lange Bindung gilt dann nicht.</p>
       <p>Ob deine Klausel dazugehört, hängt vom Vertragsdatum und vom Wortlaut ab. Die <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a> liest genau das in unter einer Minute aus deinem Vertrag und stuft die Klauseln ein. Hintergründe findest du auch im Ratgeber <a href="/blog/automatische-vertragsverlaengerung-stoppen">Automatische Vertragsverlängerung stoppen</a>.</p>
 
       <h2>Option 2: Der fehlende Kündigungsbutton</h2>
       <p>Können Verbraucher den Vertrag online abschließen, muss der Anbieter seit dem <strong>1. Juli 2022</strong> eine gut sichtbare Kündigungs-Schaltfläche vorhalten (§ 312k BGB). Fehlt sie, kannst du als Verbraucher <strong>jederzeit und fristlos</strong> kündigen. Sieh also auf der Website des Anbieters nach – dieser Hebel wird oft übersehen.</p>
 
       <h2>Option 3: Außerordentliche Kündigung und Sonderkündigungsrechte</h2>
-      <p>Dauerschuldverhältnisse lassen sich <strong>aus wichtigem Grund</strong> ohne Einhaltung einer Kündigungsfrist beenden (§ 314 BGB) – etwa wenn der Anbieter seine Pflichten schwer verletzt. Daneben lösen <strong>Preiserhöhungen oder Vertragsänderungen</strong> je nach Vertragstyp ein Sonderkündigungsrecht aus. Wichtig: Der Grund muss belastbar sein und die Kündigung sollte zeitnah nach Bekanntwerden erfolgen.</p>
+      <p>Dauerschuldverhältnisse lassen sich <strong>aus wichtigem Grund</strong> ohne Einhaltung einer Kündigungsfrist beenden (§ 314 BGB), etwa wenn der Anbieter seine Pflichten schwer verletzt. Daneben lösen <strong>Preiserhöhungen oder Vertragsänderungen</strong> je nach Vertragstyp ein Sonderkündigungsrecht aus. Wichtig: Der Grund muss belastbar sein und die Kündigung sollte zeitnah nach Bekanntwerden erfolgen.</p>
 
       <h2>Option 4: Sofort zum nächstmöglichen Termin kündigen</h2>
       <p>Greift keiner der Hebel, gilt: <strong>Jetzt kündigen</strong>, nicht erst kurz vor der nächsten Frist. Eine verspätete Kündigung wird im Zweifel regelmäßig als Kündigung zum nächstzulässigen Termin verstanden – sicherer ist, das ausdrücklich so zu erklären („hilfsweise zum nächstmöglichen Zeitpunkt") und sich den Zugang bestätigen zu lassen. Damit ist die übernächste Verlängerung sicher abgewendet.</p>
 
       <h2>Sonderfall Arbeitsvertrag</h2>
-      <p>Beim Arbeitsverhältnis gelten die gesetzlichen Fristen des § 622 BGB (Grundfrist: vier Wochen zum 15. oder zum Monatsende, für Arbeitgeber nach Betriebszugehörigkeit gestaffelt). Eine zu knapp datierte Eigenkündigung beendet das Arbeitsverhältnis im Zweifel zum nächstzulässigen Termin. Mehr dazu im Ratgeber <a href="/blog/kuendigung-arbeitsvertrag-fristen">Kündigung Arbeitsvertrag: Fristen und Formvorschriften</a> – und wenn du selbst eine Kündigung <em>erhalten</em> hast, zählt die 3-Wochen-Klagefrist: <a href="/kuendigung-pruefen">Kündigung prüfen lassen</a>.</p>
+      <p>Beim Arbeitsverhältnis gelten die gesetzlichen Fristen des § 622 BGB (Grundfrist: vier Wochen zum 15. oder zum Monatsende, für Arbeitgeber nach Betriebszugehörigkeit gestaffelt). Eine zu knapp datierte Eigenkündigung beendet das Arbeitsverhältnis im Zweifel zum nächstzulässigen Termin. Mehr dazu im Ratgeber <a href="/blog/kuendigung-arbeitsvertrag-fristen">Kündigung Arbeitsvertrag: Fristen und Formvorschriften</a> und wenn du selbst eine Kündigung <em>erhalten</em> hast, zählt die 3-Wochen-Klagefrist: <a href="/kuendigung-pruefen">Kündigung prüfen lassen</a>.</p>
 
       <h2>Häufige Fragen</h2>
       <h3>Muss ich nach der verpassten Frist ein weiteres Jahr zahlen?</h3>
@@ -167,20 +167,20 @@ export const articles: Article[] = [
       <h3>Was bringt der fehlende Kündigungsbutton?</h3>
       <p>Fehlt er bei online abschließbaren Dauerverträgen mit Verbrauchern, kannst du als Verbraucher jederzeit fristlos kündigen (§ 312k BGB).</p>
       <h3>Wann greift § 314 BGB?</h3>
-      <p>Bei einem wichtigen Grund, der die Fortsetzung bis zum regulären Ende unzumutbar macht – zum Beispiel schwere Pflichtverletzungen. Reine Unzufriedenheit genügt nicht.</p>
+      <p>Bei einem wichtigen Grund, der die Fortsetzung bis zum regulären Ende unzumutbar macht, zum Beispiel schwere Pflichtverletzungen. Reine Unzufriedenheit genügt nicht.</p>
       <h3>Wie verhindere ich das nächste Mal?</h3>
       <p>Mit automatischer Fristenüberwachung: Die KI liest die Stichtage aus deinen Verträgen und erinnert dich rechtzeitig – <a href="/features/fristen">so funktioniert es</a>.</p>
 
       <h2>Fazit</h2>
-      <p>Eine verpasste Kündigungsfrist ist ärgerlich, aber oft reparabel: Klausel prüfen, Kündigungsbutton suchen, Sonderkündigungsrechte checken – und in jedem Fall sofort zum nächstmöglichen Termin kündigen. Damit es beim einen Mal bleibt, gehört jede Frist in ein System statt in den Kopf: <a href="/features/fristen">Vertragsfristen automatisch überwachen</a>. Und wer auch inhaltlich auf dem Laufenden bleiben will, lässt seine Verträge mit <a href="/features/legalpulse">Legal Pulse</a> laufend gegen neue Gesetze und Urteile prüfen.</p>
+      <p>Eine verpasste Kündigungsfrist ist ärgerlich, aber oft reparabel: Klausel prüfen, Kündigungsbutton suchen, Sonderkündigungsrechte checken und in jedem Fall sofort zum nächstmöglichen Termin kündigen. Damit es beim einen Mal bleibt, gehört jede Frist in ein System statt in den Kopf: <a href="/features/fristen">Vertragsfristen automatisch überwachen</a>. Und wer auch inhaltlich auf dem Laufenden bleiben will, lässt seine Verträge mit <a href="/features/legalpulse">Legal Pulse</a> laufend gegen neue Gesetze und Urteile prüfen.</p>
     `
   },
   {
     id: 22,
     slug: 'freelancer-vertrag-pruefen',
     title: 'Freelancer-Vertrag prüfen: 7 Klauseln, die dich Geld kosten',
-    subtitle: 'Jeder neue Kunde bringt einen neuen Vertrag — und fast jeder enthält Klauseln, die zu deinen Lasten gehen. Diese 7 Fallen solltest du als Selbstständiger kennen, bevor du unterschreibst.',
-    excerpt: 'Nutzungsrechte verschenkt, unbegrenzte Haftung, 90-Tage-Zahlungsziele und das Scheinselbständigkeits-Risiko: Wir zeigen die 7 gefährlichsten Klauseln in Freelancer- und Dienstleistungsverträgen — und wie du jeden Vertrag in unter einer Minute prüfst, bevor du unterschreibst.',
+    subtitle: 'Jeder neue Kunde bringt einen neuen Vertrag und fast jeder enthält Klauseln, die zu deinen Lasten gehen. Diese 7 Fallen solltest du als Selbstständiger kennen, bevor du unterschreibst.',
+    excerpt: 'Nutzungsrechte verschenkt, unbegrenzte Haftung, 90-Tage-Zahlungsziele und das Scheinselbständigkeits-Risiko: Wir zeigen die 7 gefährlichsten Klauseln in Freelancer- und Dienstleistungsverträgen und wie du jeden Vertrag in unter einer Minute prüfst, bevor du unterschreibst.',
     category: 'tipps',
     date: '8. Juni 2026',
     readTime: '8 Min. Lesezeit',
@@ -194,7 +194,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Was ist die gefährlichste Klausel in Freelancer-Verträgen?',
-        answer: 'Es gibt zwei Spitzenreiter. Erstens die unbegrenzte Haftung ohne Haftungsbegrenzung — hier haftest du theoretisch mit deinem gesamten Privatvermögen für Folgeschäden. Zweitens die vollständige Übertragung aller Nutzungs- und Verwertungsrechte ohne gesonderte Vergütung: Du gibst dauerhaft und exklusiv alle Rechte an deiner Arbeit ab, oft ohne es zu merken. Beide Klauseln lassen sich fast immer verhandeln — wenn man sie erkennt.'
+        answer: 'Es gibt zwei Spitzenreiter. Erstens die unbegrenzte Haftung ohne Haftungsbegrenzung — hier haftest du theoretisch mit deinem gesamten Privatvermögen für Folgeschäden. Zweitens die vollständige Übertragung aller Nutzungs- und Verwertungsrechte ohne gesonderte Vergütung: Du gibst dauerhaft und exklusiv alle Rechte an deiner Arbeit ab, oft ohne es zu merken. Beide Klauseln lassen sich fast immer verhandeln, wenn man sie erkennt.'
       },
       {
         question: 'Was hat Scheinselbständigkeit mit meinem Vertrag zu tun?',
@@ -206,7 +206,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Wie prüfe ich einen Freelancer-Vertrag mit Contract AI?',
-        answer: 'Du lädst den Vertrag als PDF hoch, die KI analysiert ihn in unter einer Minute und markiert jede problematische Klausel — mit Begründung, Risiko-Einstufung und Paragraphen-Verweis. Du siehst sofort, wo du nachverhandeln solltest, bevor du unterschreibst. Du kannst das Ergebnis als Report exportieren und direkt als Argumentationsgrundlage gegenüber dem Kunden nutzen.'
+        answer: 'Du lädst den Vertrag als PDF hoch, die KI analysiert ihn in unter einer Minute und markiert jede problematische Klausel, mit Begründung, Risiko-Einstufung und Paragraphen-Verweis. Du siehst sofort, wo du nachverhandeln solltest, bevor du unterschreibst. Du kannst das Ergebnis als Report exportieren und direkt als Argumentationsgrundlage gegenüber dem Kunden nutzen.'
       },
       {
         question: 'Ist meine Vertragsdaten bei der KI-Prüfung sicher?',
@@ -214,9 +214,9 @@ export const articles: Article[] = [
       }
     ],
     content: `
-      <p>Als Freelancer unterschreibst du ständig Verträge: ein neuer Kunde, ein neues Projekt, eine neue Rahmenvereinbarung, dazwischen NDAs und Auftragsbestätigungen. Und im Gegensatz zu einem Angestellten hast du keine Rechtsabteilung im Rücken, die kurz drüberschaut. Die Realität sieht meist so aus: Vertrag kommt per Mail, du überfliegst ihn, willst den Auftrag nicht gefährden — und unterschreibst.</p>
+      <p>Als Freelancer unterschreibst du ständig Verträge: ein neuer Kunde, ein neues Projekt, eine neue Rahmenvereinbarung, dazwischen NDAs und Auftragsbestätigungen. Und im Gegensatz zu einem Angestellten hast du keine Rechtsabteilung im Rücken, die kurz drüberschaut. Die Realität sieht meist so aus: Vertrag kommt per Mail, du überfliegst ihn, willst den Auftrag nicht gefährden und unterschreibst.</p>
 
-      <p>Das Problem: Fast jeder Kundenvertrag ist vom Auftraggeber formuliert und damit zu dessen Gunsten. Einzelne Klauseln können dich im Schadensfall mehr kosten, als das gesamte Projekt einbringt. Die gute Nachricht: Die gefährlichen Klauseln wiederholen sich. Wer sie kennt, erkennt sie in jedem neuen Vertrag — und kann fast immer nachverhandeln. Hier sind die sieben wichtigsten.</p>
+      <p>Das Problem: Fast jeder Kundenvertrag ist vom Auftraggeber formuliert und damit zu dessen Gunsten. Einzelne Klauseln können dich im Schadensfall mehr kosten, als das gesamte Projekt einbringt. Die gute Nachricht: Die gefährlichen Klauseln wiederholen sich. Wer sie kennt, erkennt sie in jedem neuen Vertrag und kann fast immer nachverhandeln. Hier sind die sieben wichtigsten.</p>
 
       <h2>Warum Freelancer jeden Vertrag prüfen sollten</h2>
 
@@ -230,11 +230,11 @@ export const articles: Article[] = [
 
       <h2>Die 7 gefährlichsten Klauseln in Freelancer-Verträgen</h2>
 
-      <p>Diese sieben Klauseltypen tauchen in Dienstleistungs-, Werk- und Beraterverträgen immer wieder auf. Jede einzelne ist verhandelbar — wenn du sie erkennst, bevor du unterschreibst.</p>
+      <p>Diese sieben Klauseltypen tauchen in Dienstleistungs-, Werk- und Beraterverträgen immer wieder auf. Jede einzelne ist verhandelbar, wenn du sie erkennst, bevor du unterschreibst.</p>
 
       <ul>
-        <li><strong>1. Vollständige Rechteübertragung ohne Extra-Vergütung.</strong> „Der Auftragnehmer überträgt sämtliche ausschließlichen Nutzungs- und Verwertungsrechte zeitlich, räumlich und inhaltlich unbeschränkt." Das klingt harmlos, bedeutet aber: Du gibst deine Arbeit dauerhaft und exklusiv ab — der Kunde darf sie beliebig weiterverwenden, abändern und weiterverkaufen, ohne dich je wieder zu beteiligen. Für Designer, Texter, Entwickler und Fotografen ein echter Wertverlust. Verhandle einfache statt ausschließliche Rechte oder eine gesonderte Vergütung für den Buy-out.</li>
-        <li><strong>2. Unbegrenzte Haftung.</strong> Fehlt eine Haftungsbegrenzung, haftest du theoretisch unbegrenzt — auch für Folgeschäden, die ein Vielfaches deines Honorars betragen können. Üblich und fair ist eine Begrenzung auf die Höhe des Auftragswerts (oder des Jahreshonorars) und der Ausschluss von mittelbaren Schäden/entgangenem Gewinn.</li>
+        <li><strong>1. Vollständige Rechteübertragung ohne Extra-Vergütung.</strong> „Der Auftragnehmer überträgt sämtliche ausschließlichen Nutzungs- und Verwertungsrechte zeitlich, räumlich und inhaltlich unbeschränkt." Das klingt harmlos, bedeutet aber: Du gibst deine Arbeit dauerhaft und exklusiv ab. Der Kunde darf sie beliebig weiterverwenden, abändern und weiterverkaufen, ohne dich je wieder zu beteiligen. Für Designer, Texter, Entwickler und Fotografen ein echter Wertverlust. Verhandle einfache statt ausschließliche Rechte oder eine gesonderte Vergütung für den Buy-out.</li>
+        <li><strong>2. Unbegrenzte Haftung.</strong> Fehlt eine Haftungsbegrenzung, haftest du theoretisch unbegrenzt, auch für Folgeschäden, die ein Vielfaches deines Honorars betragen können. Üblich und fair ist eine Begrenzung auf die Höhe des Auftragswerts (oder des Jahreshonorars) und der Ausschluss von mittelbaren Schäden/entgangenem Gewinn.</li>
         <li><strong>3. Lange Zahlungsziele & ausgeschlossener Verzug.</strong> 60 oder 90 Tage Zahlungsziel bedeuten, dass du den Auftraggeber finanzierst. Kritisch wird es, wenn zusätzlich Verzugszinsen und die Verzugspauschale (40 € nach § 288 Abs. 5 BGB) ausgeschlossen werden. Faire Spanne: 14–30 Tage.</li>
         <li><strong>4. Scheinselbständigkeits-Merkmale.</strong> Feste Arbeitszeiten, Weisungsgebundenheit, Anwesenheitspflicht, Eingliederung in Betriebsabläufe oder Exklusivität für nur einen Auftraggeber — solche Formulierungen können zur Einstufung als scheinselbständig führen. Folge: Nachzahlung von Sozialversicherungsbeiträgen für bis zu vier Jahre. Das ist eines der teuersten Risiken überhaupt und versteckt sich oft in Nebensätzen.</li>
         <li><strong>5. Vertragsstrafen.</strong> Pauschale Vertragsstrafen bei Terminverzug oder Pflichtverletzung — oft in unverhältnismäßiger Höhe und ohne Verschuldenserfordernis. Achte auf eine Deckelung und darauf, dass die Strafe nur bei tatsächlichem Verschulden greift.</li>
@@ -244,7 +244,7 @@ export const articles: Article[] = [
 
       <h2>So prüfst du einen Freelancer-Vertrag in unter einer Minute</h2>
 
-      <p>Alle sieben Klauseln manuell in jedem Vertrag zu suchen, kostet Zeit und juristisches Wissen — beides hast du als Freelancer selten übrig. Genau dafür ist <a href="/features/vertragsanalyse">die KI-Vertragsanalyse von Contract AI</a> gebaut: Du lädst den Vertrag als PDF hoch, die KI liest ihn in unter einer Minute und markiert jede problematische Stelle — mit Risiko-Einstufung, verständlicher Begründung und Paragraphen-Verweis.</p>
+      <p>Alle sieben Klauseln manuell in jedem Vertrag zu suchen, kostet Zeit und juristisches Wissen — beides hast du als Freelancer selten übrig. Genau dafür ist <a href="/features/vertragsanalyse">die KI-Vertragsanalyse von Contract AI</a> gebaut: Du lädst den Vertrag als PDF hoch, die KI liest ihn in unter einer Minute und markiert jede problematische Stelle, mit Risiko-Einstufung, verständlicher Begründung und Paragraphen-Verweis.</p>
 
       <p>Konkret bekommst du:</p>
 
@@ -255,13 +255,13 @@ export const articles: Article[] = [
         <li>einen exportierbaren Report, den du direkt als Argumentationsgrundlage gegenüber dem Kunden nutzen kannst.</li>
       </ul>
 
-      <p>Damit drehst du das Kräfteverhältnis um: Statt einen vom Kunden formulierten Vertrag blind zu unterschreiben, gehst du mit konkreten, belegten Punkten ins Gespräch — und wirkst dabei professioneller, nicht weniger.</p>
+      <p>Damit drehst du das Kräfteverhältnis um: Statt einen vom Kunden formulierten Vertrag blind zu unterschreiben, gehst du mit konkreten, belegten Punkten ins Gespräch und wirkst dabei professioneller, nicht weniger.</p>
 
       <h2>Fazit: Vertragsprüfung gehört zum Freelancer-Alltag</h2>
 
-      <p>Als Selbstständiger ist jeder neue Auftrag auch ein neuer Vertrag — und damit ein neues Risiko. Die sieben hier gezeigten Klauseln sind die Muster, die immer wieder auftauchen: verschenkte Rechte, unbegrenzte Haftung, lange Zahlungsziele, Scheinselbständigkeit, Vertragsstrafen, Exklusivität und endlose Korrekturschleifen. Wer sie kennt und vor der Unterschrift prüft, schützt sein Honorar, sein Privatvermögen und seine Unabhängigkeit.</p>
+      <p>Als Selbstständiger ist jeder neue Auftrag auch ein neuer Vertrag und damit ein neues Risiko. Die sieben hier gezeigten Klauseln sind die Muster, die immer wieder auftauchen: verschenkte Rechte, unbegrenzte Haftung, lange Zahlungsziele, Scheinselbständigkeit, Vertragsstrafen, Exklusivität und endlose Korrekturschleifen. Wer sie kennt und vor der Unterschrift prüft, schützt sein Honorar, sein Privatvermögen und seine Unabhängigkeit.</p>
 
-      <p>Du musst dafür weder Jura studieren noch für jeden Vertrag zum Anwalt: Lade deinen nächsten Kundenvertrag bei <a href="/pricing">Contract AI</a> hoch und sieh in unter einer Minute, wo du nachverhandeln solltest — bevor du unterschreibst.</p>
+      <p>Du musst dafür weder Jura studieren noch für jeden Vertrag zum Anwalt: Lade deinen nächsten Kundenvertrag bei <a href="/pricing">Contract AI</a> hoch und sieh in unter einer Minute, wo du nachverhandeln solltest, bevor du unterschreibst.</p>
     `
   },
   {
@@ -269,7 +269,7 @@ export const articles: Article[] = [
     slug: 'ki-vertragsmanagement-agenturen-anwendungsfaelle',
     title: 'KI-Vertragsmanagement für Agenturen: 5 Anwendungsfälle aus der Praxis',
     subtitle: 'Wie Marketing-Agenturen, Hausverwaltungen, HR-Berater und kleine Kanzleien mit KI-gestützter Vertragsanalyse Zeit sparen, Risiken erkennen und ihre Mandanten besser bedienen.',
-    excerpt: 'Konkrete Use Cases aus der Praxis: Wie Agenturen, Immobilienverwalter, HR-Freelancer und kleine Kanzleien mit KI-Vertragsmanagement Zeit sparen, Risiken erkennen und ihre Kunden besser betreuen — mit echten Beispielen und Zahlen.',
+    excerpt: 'Konkrete Use Cases aus der Praxis: Wie Agenturen, Immobilienverwalter, HR-Freelancer und kleine Kanzleien mit KI-Vertragsmanagement Zeit sparen, Risiken erkennen und ihre Kunden besser betreuen, mit echten Beispielen und Zahlen.',
     category: 'tipps',
     date: '13. Mai 2026',
     readTime: '9 Min. Lesezeit',
@@ -279,11 +279,11 @@ export const articles: Article[] = [
     faqs: [
       {
         question: 'Was kostet KI-Vertragsmanagement für eine Agentur oder ein kleines Team?',
-        answer: 'Der Enterprise-Tarif von Contract AI kostet 29 € pro Monat und enthält bereits bis zu 10 Nutzer ohne Pro-Sitz-Aufpreis. Das sind rechnerisch unter 3 € pro Mitarbeiter und Monat. Für größere Teams ab 25 Personen gibt es individuelle Konditionen auf Anfrage. Im Vergleich: Eine einzelne Vertragsprüfung beim Anwalt kostet typischerweise 150–400 € — der Enterprise-Tarif amortisiert sich bereits beim ersten geprüften Vertrag.'
+        answer: 'Der Enterprise-Tarif von Contract AI kostet 29 € pro Monat und enthält bereits bis zu 10 Nutzer ohne Pro-Sitz-Aufpreis. Das sind rechnerisch unter 3 € pro Mitarbeiter und Monat. Für größere Teams ab 25 Personen gibt es individuelle Konditionen auf Anfrage. Im Vergleich: Eine einzelne Vertragsprüfung beim Anwalt kostet typischerweise 150–400 €. Der Enterprise-Tarif amortisiert sich bereits beim ersten geprüften Vertrag.'
       },
       {
         question: 'Ist KI-Vertragsanalyse DSGVO-konform, wenn ich Verträge meiner Mandanten oder Kunden hochlade?',
-        answer: 'Ja. Contract AI ist vollständig DSGVO-konform und betreibt alle Server in Frankfurt am Main. Als Agentur, Verwaltung oder Berater bist du Auftragsverarbeiter im Sinne der DSGVO — wir stellen dir dafür auf Anfrage einen kostenlosen Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO zur Verfügung. Damit ist die Verarbeitung von Mandanten- und Kundendokumenten rechtlich abgesichert.'
+        answer: 'Ja. Contract AI ist vollständig DSGVO-konform und betreibt alle Server in Frankfurt am Main. Als Agentur, Verwaltung oder Berater bist du Auftragsverarbeiter im Sinne der DSGVO. Wir stellen dir dafür auf Anfrage einen kostenlosen Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO zur Verfügung. Damit ist die Verarbeitung von Mandanten- und Kundendokumenten rechtlich abgesichert.'
       },
       {
         question: 'Wie viele Nutzer können in einem Team-Tarif arbeiten und welche Rollen gibt es?',
@@ -314,10 +314,10 @@ export const articles: Article[] = [
       <ul>
         <li><strong>Niemand weiß den aktuellen Stand.</strong> Verträge liegen verteilt auf E-Mail, lokalem Rechner, geteilter Dropbox, manchmal sogar im physischen Aktenschrank. Wenn der Geschäftsführer in Elternzeit ist und jemand anderes eine Frist prüfen muss, dauert es Stunden.</li>
         <li><strong>Fristen werden verpasst.</strong> Eine automatische Vertragsverlängerung um zwölf Monate, weil niemand drei Monate vorher gekündigt hat. Eine Mieterhöhung, die nicht rechtzeitig im Mietvertrag geprüft wurde. Solche Vorfälle kosten schnell vier- bis fünfstellige Beträge.</li>
-        <li><strong>Anwaltskosten für jeden Kleinkram.</strong> Eine Vertragsklausel-Prüfung beim Anwalt kostet typischerweise 150 bis 400 Euro. Bei zehn Verträgen im Monat sind das schnell mehrere tausend Euro — die für viele Agenturen schlicht nicht wirtschaftlich sind, also wird die Prüfung weggelassen und das Risiko in Kauf genommen.</li>
+        <li><strong>Anwaltskosten für jeden Kleinkram.</strong> Eine Vertragsklausel-Prüfung beim Anwalt kostet typischerweise 150 bis 400 Euro. Bei zehn Verträgen im Monat sind das schnell mehrere tausend Euro. Die für viele Agenturen schlicht nicht wirtschaftlich sind, also wird die Prüfung weggelassen und das Risiko in Kauf genommen.</li>
       </ul>
 
-      <p>Die gute Nachricht: Genau diese drei Probleme lassen sich mit einer KI-gestützten Vertragsmanagement-Plattform für unter 30 € im Monat lösen — und zwar nicht für einzelne Personen, sondern für das ganze Team. Wie das in der Praxis aussieht, zeigen die folgenden fünf Anwendungsfälle.</p>
+      <p>Die gute Nachricht: Genau diese drei Probleme lassen sich mit einer KI-gestützten Vertragsmanagement-Plattform für unter 30 € im Monat lösen und zwar nicht für einzelne Personen, sondern für das ganze Team. Wie das in der Praxis aussieht, zeigen die folgenden fünf Anwendungsfälle.</p>
 
       <h2>Use Case 1: Marketing-Agentur — NDAs in 30 Sekunden statt 30 Minuten</h2>
 
@@ -333,21 +333,21 @@ export const articles: Article[] = [
 
       <p>Sandra ist Inhaberin einer Hausverwaltung mit sechs Mitarbeitern in München. Sie betreut etwa 120 Mietverträge für rund 35 Immobilien. Das Problem: Die Mietverträge liegen in drei verschiedenen Excel-Listen — eine pro Mitarbeiter-Bereich — und niemand weiß so richtig, wer den aktuellen Stand pflegt. Wenn ein Mieter anruft und nach seiner Kündigungsfrist fragt, dauert die Antwort manchmal eine halbe Stunde.</p>
 
-      <p>Noch schlimmer: In drei der letzten zwölf Monate ist eine Mieterhöhungsmöglichkeit verstrichen, weil sie niemand rechtzeitig auf dem Schirm hatte. Bei einer durchschnittlichen Erhöhung von 80 € pro Monat über 12 Monate hinweg sind das schnell 1.000 € Mietausfall — pro vergessener Erhöhung.</p>
+      <p>Noch schlimmer: In drei der letzten zwölf Monate ist eine Mieterhöhungsmöglichkeit verstrichen, weil sie niemand rechtzeitig auf dem Schirm hatte. Bei einer durchschnittlichen Erhöhung von 80 € pro Monat über 12 Monate hinweg sind das schnell 1.000 € Mietausfall, pro vergessener Erhöhung.</p>
 
-      <p>Mit Contract AI: Alle 120 Verträge werden einmalig hochgeladen und in zentralen Ordnern abgelegt. Die KI scannt jeden Vertrag automatisch auf unwirksame Klauseln — überzogene Schönheitsreparaturen, Indexmieten ohne klare Berechnungsgrundlage, ungültige Kündigungsfristen — und schiebt alle Fristen (Indexierung, Befristungsende, Kündigungsfristen) automatisch in einen gemeinsamen Kalender. Alle sechs Mitarbeiter arbeiten am selben Bestand und sehen den jeweils aktuellen Stand.</p>
+      <p>Mit Contract AI: Alle 120 Verträge werden einmalig hochgeladen und in zentralen Ordnern abgelegt. Die KI scannt jeden Vertrag automatisch auf unwirksame Klauseln — überzogene Schönheitsreparaturen, Indexmieten ohne klare Berechnungsgrundlage, ungültige Kündigungsfristen und schiebt alle Fristen (Indexierung, Befristungsende, Kündigungsfristen) automatisch in einen gemeinsamen Kalender. Alle sechs Mitarbeiter arbeiten am selben Bestand und sehen den jeweils aktuellen Stand.</p>
 
-      <p>Ergebnis: Etwa 25 bis 30 Stunden Zeitersparnis pro Monat (laut Sandras Schätzung) und seitdem keine vergessenen Fristen mehr. Wer einen einzelnen <a href="/mietvertrag-pruefen">Mietvertrag prüfen</a> möchte, kann das auch ohne Team-Abo machen — für eine ganze Hausverwaltung ist der Team-Tarif aber deutlich effizienter.</p>
+      <p>Ergebnis: Etwa 25 bis 30 Stunden Zeitersparnis pro Monat (laut Sandras Schätzung) und seitdem keine vergessenen Fristen mehr. Wer einen einzelnen <a href="/mietvertrag-pruefen">Mietvertrag prüfen</a> möchte, kann das auch ohne Team-Abo machen, für eine ganze Hausverwaltung ist der Team-Tarif aber deutlich effizienter.</p>
 
       <h2>Use Case 3: HR-Beratung — Arbeitsverträge für 12 Kunden parallel</h2>
 
-      <p>Marco ist freiberuflicher HR-Berater und People-Ops-Consultant. Er betreut parallel 12 mittelständische Unternehmen — die meisten zwischen 20 und 80 Mitarbeitern. Sein Hauptproblem: Jeder Kunde hat eigene Arbeitsvertrags-Vorlagen, eigene Compliance-Anforderungen und eigene Standards. Wenn er beispielsweise einen neuen Arbeitsvertrag für Kunde A prüft, muss er die KI-relevanten Klauseln gegen BGB, BAG-Rechtsprechung und AGG abgleichen — und das pro Kunde mit jeweils anderen Branchenkontext.</p>
+      <p>Marco ist freiberuflicher HR-Berater und People-Ops-Consultant. Er betreut parallel 12 mittelständische Unternehmen. Die meisten zwischen 20 und 80 Mitarbeitern. Sein Hauptproblem: Jeder Kunde hat eigene Arbeitsvertrags-Vorlagen, eigene Compliance-Anforderungen und eigene Standards. Wenn er beispielsweise einen neuen Arbeitsvertrag für Kunde A prüft, muss er die KI-relevanten Klauseln gegen BGB, BAG-Rechtsprechung und AGG abgleichen und das pro Kunde mit jeweils anderen Branchenkontext.</p>
 
-      <p>Bisheriger Ablauf: Vertrag öffnen, durchscrollen, eigene Notizen machen, Klauseln gegen mentale Checkliste prüfen. Dauer pro Vertrag: 30 bis 45 Minuten. Bei einem Beratungssatz von 120 €/Stunde sind das 60 bis 90 € pro Vertragsprüfung — die er aus dem Pauschalhonorar mit jedem Kunden tragen muss.</p>
+      <p>Bisheriger Ablauf: Vertrag öffnen, durchscrollen, eigene Notizen machen, Klauseln gegen mentale Checkliste prüfen. Dauer pro Vertrag: 30 bis 45 Minuten. Bei einem Beratungssatz von 120 €/Stunde sind das 60 bis 90 € pro Vertragsprüfung. Die er aus dem Pauschalhonorar mit jedem Kunden tragen muss.</p>
 
       <p>Mit Contract AI: Marco prüft jeden Arbeitsvertrag in unter 60 Sekunden gegen § 622 BGB (Kündigungsfristen), § 74 HGB (Wettbewerbsverbote), AGG (Diskriminierung) und aktuelle BAG-Rechtsprechung. Die Ergebnisse bekommt er als strukturierten Report mit Paragraphen-Verweisen — perfekt, um sie direkt mit dem Kunden zu besprechen oder als PDF-Anhang per Mail zu schicken. Mehr zur konkreten Prüfung von Arbeitsverträgen findest du auf <a href="/arbeitsvertrag-pruefen">/arbeitsvertrag-pruefen</a>.</p>
 
-      <p>Ergebnis: Marco kann pro Stunde mindestens vier Verträge prüfen statt einem. Das macht seine Beratung schneller, günstiger und glaubwürdiger — weil er Aussagen mit konkreten BAG-Urteilen belegen kann, statt aus dem Bauch heraus zu argumentieren.</p>
+      <p>Ergebnis: Marco kann pro Stunde mindestens vier Verträge prüfen statt einem. Das macht seine Beratung schneller, günstiger und glaubwürdiger, weil er Aussagen mit konkreten BAG-Urteilen belegen kann, statt aus dem Bauch heraus zu argumentieren.</p>
 
       <h2>Use Case 4: Kleine Kanzlei — Mandantenakten + API-Anbindung</h2>
 
@@ -363,9 +363,9 @@ export const articles: Article[] = [
 
       <p>In allen vier Fällen handelt es sich um <strong>Auftragsverarbeitung im Sinne der DSGVO</strong>. Das bedeutet konkret: Wer ein externes Tool nutzt, um diese Dokumente zu speichern oder zu analysieren, braucht einen Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO. Wer das vergisst, riskiert Bußgelder von bis zu 4 % des Jahresumsatzes.</p>
 
-      <p>Genau hier scheitern viele KI-Tools. ChatGPT-Standardversionen sind US-basiert und verarbeiten Daten auf Servern außerhalb der EU. Viele europäische Tools bieten zwar einen AVV an — aber nicht standardmäßig, sondern nur auf gesonderte Anfrage und manchmal gegen Aufpreis.</p>
+      <p>Genau hier scheitern viele KI-Tools. ChatGPT-Standardversionen sind US-basiert und verarbeiten Daten auf Servern außerhalb der EU. Viele europäische Tools bieten zwar einen AVV an, aber nicht standardmäßig, sondern nur auf gesonderte Anfrage und manchmal gegen Aufpreis.</p>
 
-      <p>Contract AI ist von Anfang an für die Verarbeitung sensibler Vertragsdaten gebaut: Alle Server stehen in Frankfurt am Main, die Verarbeitung erfolgt ausschließlich innerhalb der EU, der AVV ist kostenlos und auf einfache Anfrage verfügbar. Es gibt kein Modell-Training mit Kundendaten und keine Weitergabe an Dritte. Das macht den Einsatz für Agenturen, Verwaltungen und Berater rechtssicher — ohne dass du dich um die DSGVO-Architektur sorgen musst.</p>
+      <p>Contract AI ist von Anfang an für die Verarbeitung sensibler Vertragsdaten gebaut: Alle Server stehen in Frankfurt am Main, die Verarbeitung erfolgt ausschließlich innerhalb der EU, der AVV ist kostenlos und auf einfache Anfrage verfügbar. Es gibt kein Modell-Training mit Kundendaten und keine Weitergabe an Dritte. Das macht den Einsatz für Agenturen, Verwaltungen und Berater rechtssicher, ohne dass du dich um die DSGVO-Architektur sorgen musst.</p>
 
       <h2>So fängst du an: Der Enterprise-Tarif für Teams</h2>
 
@@ -388,9 +388,9 @@ export const articles: Article[] = [
 
       <h2>Fazit: Vertragsmanagement ist für Agenturen eine unterschätzte Wachstumsquelle</h2>
 
-      <p>Die meisten Agenturen, Verwaltungen und Beratungen unterschätzen, wie viel Zeit und Geld sie durch besseres Vertragsmanagement freischaufeln können. Die fünf hier gezeigten Use Cases sind keine Theorie — sie sind die wiederkehrenden Muster, die wir in Gesprächen mit unseren Nutzern sehen. Lisa spart Anwaltskosten, Sandra spart 25 Stunden im Monat, Marco kann mehr Mandate parallel betreuen, die Münchner Kanzlei beantwortet Anfragen sofort statt nach Stunden.</p>
+      <p>Die meisten Agenturen, Verwaltungen und Beratungen unterschätzen, wie viel Zeit und Geld sie durch besseres Vertragsmanagement freischaufeln können. Die fünf hier gezeigten Use Cases sind keine Theorie. Sie sind die wiederkehrenden Muster, die wir in Gesprächen mit unseren Nutzern sehen. Lisa spart Anwaltskosten, Sandra spart 25 Stunden im Monat, Marco kann mehr Mandate parallel betreuen, die Münchner Kanzlei beantwortet Anfragen sofort statt nach Stunden.</p>
 
-      <p>Wer es ausprobieren will: Der Enterprise-Tarif hat 14 Tage Geld-zurück-Garantie — falls das Team nach zwei Wochen merkt, dass es nicht passt, kommt der Betrag ohne Rückfrage zurück. Mehr Details, die vollständige Persona-Übersicht und konkrete Schritte zur Einrichtung gibt es auf <a href="/fuer-agenturen">/fuer-agenturen</a>.</p>
+      <p>Wer es ausprobieren will: Der Enterprise-Tarif hat 14 Tage Geld-zurück-Garantie, falls das Team nach zwei Wochen merkt, dass es nicht passt, kommt der Betrag ohne Rückfrage zurück. Mehr Details, die vollständige Persona-Übersicht und konkrete Schritte zur Einrichtung gibt es auf <a href="/fuer-agenturen">/fuer-agenturen</a>.</p>
     `
   },
   {
@@ -702,9 +702,9 @@ export const articles: Article[] = [
   {
     id: 17,
     slug: 'legal-lens-vertragsklauseln-verstehen',
-    title: 'Legal Lens: So verstehst du jede Vertragsklausel – ohne Jurastudium',
+    title: 'Legal Lens: So verstehst du jede Vertragsklausel, ohne Jurastudium',
     subtitle: 'Juristische Fachsprache war gestern. Mit Legal Lens klickst du auf jede Klausel und bekommst sofort eine verständliche Erklärung.',
-    excerpt: 'Juristische Fachsprache war gestern. Mit Legal Lens klickst du auf jede Klausel und bekommst sofort eine verständliche Erklärung – direkt im Vertrag.',
+    excerpt: 'Juristische Fachsprache war gestern. Mit Legal Lens klickst du auf jede Klausel und bekommst sofort eine verständliche Erklärung, direkt im Vertrag.',
     category: 'tipps',
     date: '30. Dezember 2025',
     readTime: '6 Min. Lesezeit',
@@ -768,7 +768,7 @@ export const articles: Article[] = [
 
       <h3>1. Haftungsausschlüsse</h3>
       <p>"Der Anbieter haftet nicht für mittelbare Schäden oder entgangenen Gewinn."</p>
-      <p><strong>Legal Lens sagt:</strong> Der Anbieter übernimmt keine Verantwortung, wenn dir durch seine Fehler Folgeschäden entstehen. Das ist kritisch – bei wichtigen Verträgen nachverhandeln!</p>
+      <p><strong>Legal Lens sagt:</strong> Der Anbieter übernimmt keine Verantwortung, wenn dir durch seine Fehler Folgeschäden entstehen. Das ist kritisch, bei wichtigen Verträgen nachverhandeln!</p>
 
       <h3>2. Gerichtsstandsvereinbarungen</h3>
       <p>"Als Gerichtsstand wird München vereinbart."</p>
@@ -813,7 +813,7 @@ export const articles: Article[] = [
 
       <h2>Fazit: Nie wieder blind unterschreiben</h2>
 
-      <p>Legal Lens demokratisiert juristisches Wissen. Du musst kein Jura studiert haben, um zu verstehen, was du unterschreibst. Mit einem Klick auf jede Klausel bekommst du sofort eine verständliche Erklärung – mit Risikobewertung und Handlungsempfehlung. Zusammen mit der <a href="/ki-vertragsanalyse">KI-gestützten Vertragsprüfung</a> bildet Legal Lens ein starkes Duo für vollständige Vertragstransparenz.</p>
+      <p>Legal Lens demokratisiert juristisches Wissen. Du musst kein Jura studiert haben, um zu verstehen, was du unterschreibst. Mit einem Klick auf jede Klausel bekommst du sofort eine verständliche Erklärung, mit Risikobewertung und Handlungsempfehlung. Zusammen mit der <a href="/ki-vertragsanalyse">KI-gestützten Vertragsprüfung</a> bildet Legal Lens ein starkes Duo für vollständige Vertragstransparenz.</p>
 
       <p>Das Ergebnis: Du unterschreibst nur noch Verträge, die du wirklich verstehst. Und das gibt dir die Sicherheit, die du verdienst.</p>
 
@@ -827,8 +827,8 @@ export const articles: Article[] = [
     id: 16,
     slug: 'contract-builder-vertraege-selbst-erstellen',
     title: 'Contract Builder: So erstellst du professionelle Verträge per Drag & Drop',
-    subtitle: 'Verträge selbst erstellen wie ein Profi – ohne Vorlagen kopieren oder teure Anwälte. Der Contract Builder macht es möglich.',
-    excerpt: 'Verträge selbst erstellen wie ein Profi – ohne Vorlagen kopieren oder teure Anwälte. Der Contract Builder macht es möglich.',
+    subtitle: 'Verträge selbst erstellen wie ein Profi, ohne Vorlagen kopieren oder teure Anwälte. Der Contract Builder macht es möglich.',
+    excerpt: 'Verträge selbst erstellen wie ein Profi, ohne Vorlagen kopieren oder teure Anwälte. Der Contract Builder macht es möglich.',
     category: 'tipps',
     date: '30. Dezember 2025',
     readTime: '7 Min. Lesezeit',
@@ -874,13 +874,13 @@ export const articles: Article[] = [
       <h2>Die wichtigsten Bausteine</h2>
 
       <h3>📋 Kopf & Parteien</h3>
-      <p>Vertragsparteien, Datum, Überschrift – automatisch formatiert mit allen erforderlichen Angaben.</p>
+      <p>Vertragsparteien, Datum, Überschrift, automatisch formatiert mit allen erforderlichen Angaben.</p>
 
       <h3>📝 Klauseln</h3>
       <p>Hunderte vorgefertigte Klauseln für alle Vertragstypen: Leistung, Vergütung, Haftung, Kündigung, Datenschutz, und mehr.</p>
 
       <h3>🖼️ Logo & Branding</h3>
-      <p>Dein Firmenlogo und Corporate Design – für professionelle Außenwirkung.</p>
+      <p>Dein Firmenlogo und Corporate Design, für professionelle Außenwirkung.</p>
 
       <h3>✍️ Unterschriften</h3>
       <p>Signaturfelder für alle Parteien, optional mit digitaler Signatur-Integration.</p>
@@ -953,7 +953,7 @@ export const articles: Article[] = [
       <p>Durchsuche die Klauselbibliothek nach Thema oder nutze die Empfehlungen. Klicke auf eine Klausel, um die Erklärung zu sehen.</p>
 
       <h3>4. Variablen ausfüllen</h3>
-      <p>Alle gelb markierten Felder sind Variablen. Klicke darauf und gib deine Daten ein – sie werden automatisch überall eingesetzt.</p>
+      <p>Alle gelb markierten Felder sind Variablen. Klicke darauf und gib deine Daten ein. Sie werden automatisch überall eingesetzt.</p>
 
       <h3>5. Vorschau und Export</h3>
       <p>Prüfe die Live-Vorschau, starte den KI-Check und exportiere als PDF. Fertig!</p>
@@ -973,7 +973,7 @@ export const articles: Article[] = [
 
       <h2>Fazit: Verträge erstellen wie ein Profi</h2>
 
-      <p>Der Contract Builder macht Vertragserststellung zugänglich – für jeden, der keinen Anwalt für jeden Vertrag bezahlen kann oder will. Du behältst die volle Kontrolle, nutzt aber rechtlich geprüfte Bausteine und KI-Unterstützung. Und nach der Erstellung? Lass den fertigen Vertrag direkt per <a href="/ki-vertragsanalyse">automatischer Vertragsprüfung</a> auf Risiken checken.</p>
+      <p>Der Contract Builder macht Vertragserststellung zugänglich, für jeden, der keinen Anwalt für jeden Vertrag bezahlen kann oder will. Du behältst die volle Kontrolle, nutzt aber rechtlich geprüfte Bausteine und KI-Unterstützung. Und nach der Erstellung? Lass den fertigen Vertrag direkt per <a href="/ki-vertragsanalyse">automatischer Vertragsprüfung</a> auf Risiken checken.</p>
 
       <p>Das Ergebnis: Professionelle Verträge in Minuten statt Tagen, für einen Bruchteil der Anwaltskosten.</p>
 
@@ -1112,19 +1112,19 @@ export const articles: Article[] = [
       <h2>Häufige Fragen zu DSGVO-Fallen in Verträgen</h2>
 
       <h3>Wie hoch können DSGVO-Bußgelder werden?</h3>
-      <p>Der Bußgeldrahmen reicht bis zu 20 Millionen Euro oder 4 % des weltweiten Jahresumsatzes – je nachdem, welcher Betrag höher ist (Art. 83 DSGVO). In der Praxis treffen auch kleine und mittlere Unternehmen Bußgelder im vier- bis sechsstelligen Bereich.</p>
+      <p>Der Bußgeldrahmen reicht bis zu 20 Millionen Euro oder 4 % des weltweiten Jahresumsatzes, je nachdem, welcher Betrag höher ist (Art. 83 DSGVO). In der Praxis treffen auch kleine und mittlere Unternehmen Bußgelder im vier- bis sechsstelligen Bereich.</p>
 
       <h3>Brauche ich einen Auftragsverarbeitungsvertrag (AVV)?</h3>
-      <p>Ja, sobald ein Dienstleister in deinem Auftrag personenbezogene Daten verarbeitet – etwa Cloud-Anbieter, IT-Support, Marketing-Agenturen oder Buchhaltung. Der AVV nach Art. 28 DSGVO ist Pflicht; ohne ihn haftest du für Datenpannen des Dienstleisters mit.</p>
+      <p>Ja, sobald ein Dienstleister in deinem Auftrag personenbezogene Daten verarbeitet, etwa Cloud-Anbieter, IT-Support, Marketing-Agenturen oder Buchhaltung. Der AVV nach Art. 28 DSGVO ist Pflicht; ohne ihn haftest du für Datenpannen des Dienstleisters mit.</p>
 
       <h3>Darf ich US-Tools wie Zoom, Mailchimp oder Slack nutzen?</h3>
-      <p>Nur mit gültiger Rechtsgrundlage für den Datentransfer in die USA – etwa über das EU-US Data Privacy Framework oder Standardvertragsklauseln. Ohne eine solche Grundlage ist die Übermittlung in Drittländer unzulässig.</p>
+      <p>Nur mit gültiger Rechtsgrundlage für den Datentransfer in die USA, etwa über das EU-US Data Privacy Framework oder Standardvertragsklauseln. Ohne eine solche Grundlage ist die Übermittlung in Drittländer unzulässig.</p>
 
       <h3>Was muss eine wirksame Löschklausel enthalten?</h3>
       <p>Konkrete Fristen statt vager Formulierungen wie "in angemessener Zeit". DSGVO-konform ist zum Beispiel: Löschung spätestens 30 Tage nach Vertragsende, vorbehaltlich gesetzlicher Aufbewahrungspflichten.</p>
 
       <h3>Haftet mein Unternehmen für Datenpannen eines Dienstleisters?</h3>
-      <p>Ohne Auftragsverarbeitungsvertrag ja – die Verantwortung bleibt bei dir. Mit einem AVV werden Pflichten und Haftung klar zwischen dir und dem Dienstleister geregelt.</p>
+      <p>Ohne Auftragsverarbeitungsvertrag ja. Die Verantwortung bleibt bei dir. Mit einem AVV werden Pflichten und Haftung klar zwischen dir und dem Dienstleister geregelt.</p>
 
       <h2>Fazit: Prävention ist billiger als Bußgelder</h2>
       
@@ -1140,15 +1140,15 @@ export const articles: Article[] = [
     faqs: [
       {
         question: 'Wie hoch können DSGVO-Bußgelder werden?',
-        answer: 'Der Bußgeldrahmen reicht bis zu 20 Millionen Euro oder 4 % des weltweiten Jahresumsatzes – je nachdem, welcher Betrag höher ist (Art. 83 DSGVO). In der Praxis treffen auch kleine und mittlere Unternehmen Bußgelder im vier- bis sechsstelligen Bereich.'
+        answer: 'Der Bußgeldrahmen reicht bis zu 20 Millionen Euro oder 4 % des weltweiten Jahresumsatzes, je nachdem, welcher Betrag höher ist (Art. 83 DSGVO). In der Praxis treffen auch kleine und mittlere Unternehmen Bußgelder im vier- bis sechsstelligen Bereich.'
       },
       {
         question: 'Brauche ich einen Auftragsverarbeitungsvertrag (AVV)?',
-        answer: 'Ja, sobald ein Dienstleister in deinem Auftrag personenbezogene Daten verarbeitet – etwa Cloud-Anbieter, IT-Support, Marketing-Agenturen oder Buchhaltung. Der AVV nach Art. 28 DSGVO ist Pflicht; ohne ihn haftest du für Datenpannen des Dienstleisters mit.'
+        answer: 'Ja, sobald ein Dienstleister in deinem Auftrag personenbezogene Daten verarbeitet, etwa Cloud-Anbieter, IT-Support, Marketing-Agenturen oder Buchhaltung. Der AVV nach Art. 28 DSGVO ist Pflicht; ohne ihn haftest du für Datenpannen des Dienstleisters mit.'
       },
       {
         question: 'Darf ich US-Tools wie Zoom, Mailchimp oder Slack nutzen?',
-        answer: 'Nur mit gültiger Rechtsgrundlage für den Datentransfer in die USA – etwa über das EU-US Data Privacy Framework oder Standardvertragsklauseln. Ohne eine solche Grundlage ist die Übermittlung in Drittländer unzulässig.'
+        answer: 'Nur mit gültiger Rechtsgrundlage für den Datentransfer in die USA, etwa über das EU-US Data Privacy Framework oder Standardvertragsklauseln. Ohne eine solche Grundlage ist die Übermittlung in Drittländer unzulässig.'
       },
       {
         question: 'Was muss eine wirksame Löschklausel enthalten?',
@@ -1156,7 +1156,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Haftet mein Unternehmen für Datenpannen eines Dienstleisters?',
-        answer: 'Ohne Auftragsverarbeitungsvertrag ja – die Verantwortung bleibt bei dir. Mit einem AVV werden Pflichten und Haftung klar zwischen dir und dem Dienstleister geregelt.'
+        answer: 'Ohne Auftragsverarbeitungsvertrag ja. Die Verantwortung bleibt bei dir. Mit einem AVV werden Pflichten und Haftung klar zwischen dir und dem Dienstleister geregelt.'
       }
     ]
   },
@@ -1173,7 +1173,7 @@ export const articles: Article[] = [
     icon: '⚡',
     image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&q=80',
     content: `
-      <p>Du musst einen Vertrag erstellen, hast aber keine Lust auf stundenlange Recherche oder teure Anwaltskosten? Dann ist ein smarter Vertragsgenerator die perfekte Lösung. Mit Contract AI kannst du in nur fünf Minuten einen rechtssicheren, individuell angepassten Vertrag erstellen — ganz ohne Vorwissen.</p>
+      <p>Du musst einen Vertrag erstellen, hast aber keine Lust auf stundenlange Recherche oder teure Anwaltskosten? Dann ist ein smarter Vertragsgenerator die perfekte Lösung. Mit Contract AI kannst du in nur fünf Minuten einen rechtssicheren, individuell angepassten Vertrag erstellen, ganz ohne Vorwissen.</p>
 
       <h2>Warum ein Vertragsgenerator?</h2>
       
@@ -1294,7 +1294,7 @@ export const articles: Article[] = [
 
       <h2>Fazit: Nie wieder Vertragschaos</h2>
       
-      <p>Mit dem Vertragsgenerator von Contract AI erstellst du rechtssichere und individuelle Verträge in wenigen Minuten — ohne Stress, ohne juristisches Fachwissen und ohne hohe Kosten.</p>
+      <p>Mit dem Vertragsgenerator von Contract AI erstellst du rechtssichere und individuelle Verträge in wenigen Minuten, ohne Stress, ohne juristisches Fachwissen und ohne hohe Kosten.</p>
 
       <p>Der Generator kombiniert die Geschwindigkeit digitaler Tools mit der Sicherheit anwaltlicher Expertise. So bekommst du das Beste aus beiden Welten. Erfahre in unserem <a href="/ki-vertragsanalyse">umfassenden Guide zur KI-Vertragsanalyse</a>, wie die Technologie dahinter funktioniert.</p>
 
@@ -1308,8 +1308,8 @@ export const articles: Article[] = [
     id: 13,
     slug: 'rechtsanwalt-vs-ki-wann-welche-loesung',
     title: 'Rechtsanwalt vs. KI: Wann du welche Lösung wirklich brauchst',
-    subtitle: 'Ein ehrlicher Vergleich: Wo KI brilliert, wo Anwälte unersetzbar sind – und wie du für jeden Fall die richtige Entscheidung triffst.',
-    excerpt: 'Ein ehrlicher Vergleich: Wo KI brilliert, wo Anwälte unersetzbar sind – und wie du für jeden Fall die richtige Entscheidung triffst.',
+    subtitle: 'Ein ehrlicher Vergleich: Wo KI brilliert, wo Anwälte unersetzbar sind und wie du für jeden Fall die richtige Entscheidung triffst.',
+    excerpt: 'Ein ehrlicher Vergleich: Wo KI brilliert, wo Anwälte unersetzbar sind und wie du für jeden Fall die richtige Entscheidung triffst.',
     category: 'tipps',
     date: '4. Juli 2025',
     readTime: '9 Min. Lesezeit',
@@ -1433,8 +1433,8 @@ export const articles: Article[] = [
     id: 12,
     slug: 'vertraege-vergleichen-ki-beste-option',
     title: 'Verträge vergleichen: So findest du mit KI die beste Option für dich',
-    subtitle: 'Mit KI kannst du Verträge schnell und objektiv vergleichen. Erfahre, wie du die faireste und günstigste Lösung findest — ganz ohne juristisches Kauderwelsch.',
-    excerpt: 'Mit KI kannst du Verträge schnell und objektiv vergleichen. Erfahre, wie du die faireste und günstigste Lösung findest — ganz ohne juristisches Kauderwelsch.',
+    subtitle: 'Mit KI kannst du Verträge schnell und objektiv vergleichen. Erfahre, wie du die faireste und günstigste Lösung findest, ganz ohne juristisches Kauderwelsch.',
+    excerpt: 'Mit KI kannst du Verträge schnell und objektiv vergleichen. Erfahre, wie du die faireste und günstigste Lösung findest, ganz ohne juristisches Kauderwelsch.',
     category: 'tipps',
     date: '3. Juli 2025',
     readTime: '7 Min. Lesezeit',
@@ -1442,7 +1442,7 @@ export const articles: Article[] = [
     icon: '🔍',
     image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80',
     content: `
-      <p>Wenn du vor der Wahl zwischen mehreren Vertragsangeboten stehst, ist die Entscheidung oft schwer. Unterschiedliche Preise, versteckte Klauseln, juristische Formulierungen — schnell verliert man den Überblick. Mit KI-basierten Tools wie Contract AI kannst du Verträge objektiv vergleichen und die beste Option finden.</p>
+      <p>Wenn du vor der Wahl zwischen mehreren Vertragsangeboten stehst, ist die Entscheidung oft schwer. Unterschiedliche Preise, versteckte Klauseln, juristische Formulierungen, schnell verliert man den Überblick. Mit KI-basierten Tools wie Contract AI kannst du Verträge objektiv vergleichen und die beste Option finden.</p>
 
       <p>In diesem Artikel erklären wir dir Schritt für Schritt, wie das funktioniert.</p>
 
@@ -1469,7 +1469,7 @@ export const articles: Article[] = [
         <li><strong>Sonstige versteckte Risiken:</strong> Einseitige Änderungsrechte, Vertragsstrafen, Zusatzleistungen</li>
       </ul>
 
-      <p>Alle Unterschiede werden übersichtlich dargestellt — ohne Fachchinesisch, sondern in verständlicher Sprache.</p>
+      <p>Alle Unterschiede werden übersichtlich dargestellt, ohne Fachchinesisch, sondern in verständlicher Sprache.</p>
 
       <h2>Schritt 1: Verträge hochladen</h2>
       
@@ -1484,7 +1484,7 @@ export const articles: Article[] = [
 
       <h2>Schritt 2: Unterschiede identifizieren</h2>
       
-      <p>Nach dem Upload zeigt dir Contract AI eine synoptische Übersicht — du siehst direkt, in welchen Punkten sich die Verträge unterscheiden. Risiko-Bereiche werden farblich markiert:</p>
+      <p>Nach dem Upload zeigt dir Contract AI eine synoptische Übersicht. Du siehst direkt, in welchen Punkten sich die Verträge unterscheiden. Risiko-Bereiche werden farblich markiert:</p>
 
       <ul>
         <li><strong>🔴 Rot:</strong> Kritische Unterschiede mit hohem Risiko</li>
@@ -1505,7 +1505,7 @@ export const articles: Article[] = [
         <li><strong>Rechtliche Risiken (10%):</strong> Haftung und Compliance-Probleme</li>
       </ul>
 
-      <p>So kannst du objektiv entscheiden, welcher Vertrag für dich am besten geeignet ist — auch wenn er auf den ersten Blick teurer erscheint.</p>
+      <p>So kannst du objektiv entscheiden, welcher Vertrag für dich am besten geeignet ist, auch wenn er auf den ersten Blick teurer erscheint.</p>
 
       <div class="highlight-box">
         <h4>Beispiel aus der Praxis</h4>
@@ -1550,7 +1550,7 @@ export const articles: Article[] = [
   {
     id: 11,
     slug: 'teuerste-vertragsklauseln-deutschland',
-    title: 'Die 7 teuersten Vertragsklauseln Deutschlands – und wie du sie vermeidest',
+    title: 'Die 7 teuersten Vertragsklauseln Deutschlands und wie du sie vermeidest',
     subtitle: 'Diese Klauseln haben deutsche Verbraucher bereits Millionen gekostet. Mit unseren Tipps erkennst du sie sofort und schützt dein Geld.',
     excerpt: 'Diese Klauseln haben deutsche Verbraucher bereits Millionen gekostet. Mit unseren Tipps erkennst du sie sofort und schützt dein Geld.',
     category: 'tipps',
@@ -1562,7 +1562,7 @@ export const articles: Article[] = [
     content: `
       <div class="highlight-box">
         <h4>📄 Eigenen Vertrag jetzt rechtssicher prüfen lassen</h4>
-        <p>Lass deinen Vertrag in 60 Sekunden auf teure Klauseln analysieren — auf Basis aktueller BGH/BAG-Rechtsprechung. Spezialisierte KI-Prüfung für: <a href="/arbeitsvertrag-pruefen"><strong>Arbeitsvertrag</strong></a> · <a href="/mietvertrag-pruefen"><strong>Mietvertrag</strong></a> · <a href="/nda-pruefen"><strong>NDA</strong></a> · <a href="/kaufvertrag-pruefen"><strong>Kaufvertrag</strong></a></p>
+        <p>Lass deinen Vertrag in 60 Sekunden auf teure Klauseln analysieren, auf Basis aktueller BGH/BAG-Rechtsprechung. Spezialisierte KI-Prüfung für: <a href="/arbeitsvertrag-pruefen"><strong>Arbeitsvertrag</strong></a> · <a href="/mietvertrag-pruefen"><strong>Mietvertrag</strong></a> · <a href="/nda-pruefen"><strong>NDA</strong></a> · <a href="/kaufvertrag-pruefen"><strong>Kaufvertrag</strong></a></p>
       </div>
 
       <p>Jeden Tag fallen Millionen Deutsche auf teure Vertragsklauseln herein. Oft sind es nur wenige Wörter, die den Unterschied zwischen einem fairen Deal und einer kostspieligen Falle ausmachen. Wir haben die teuersten Vertragsklauseln Deutschlands analysiert und zeigen dir, wie du sie erkennst.</p>
@@ -1683,7 +1683,7 @@ export const articles: Article[] = [
 
       <h2>Schritt 3: Optimierungsvorschläge durchgehen</h2>
       
-      <p>Contract AI liefert dir konkrete Vorschläge — von besseren Kündigungsfristen über angepasste Haftungsklauseln bis hin zu optimierten Preisregelungen. Du kannst jeden Vorschlag prüfen und entscheiden, ob du ihn übernehmen möchtest.</p>
+      <p>Contract AI liefert dir konkrete Vorschläge, von besseren Kündigungsfristen über angepasste Haftungsklauseln bis hin zu optimierten Preisregelungen. Du kannst jeden Vorschlag prüfen und entscheiden, ob du ihn übernehmen möchtest.</p>
 
       <p>Jeder Vorschlag wird mit einer klaren Begründung und dem potentiellen finanziellen Vorteil versehen. So siehst du sofort, welche Änderungen sich am meisten lohnen.</p>
 
@@ -1726,7 +1726,7 @@ export const articles: Article[] = [
   {
     id: 9,
     slug: 'groesste-risiken-vertraege-ki-erkennt',
-    title: 'Die 5 größten Risiken in Verträgen – und wie KI sie für dich erkennt',
+    title: 'Die 5 größten Risiken in Verträgen und wie KI sie für dich erkennt',
     subtitle: 'Verträge enthalten oft versteckte Risiken, die viel Geld kosten können. Erfahre, wie KI-basierte Vertragsanalyse dir hilft, diese Gefahren frühzeitig zu erkennen und zu vermeiden.',
     excerpt: 'Verträge enthalten oft versteckte Risiken, die viel Geld kosten können. Erfahre, wie KI-basierte Vertragsanalyse dir hilft, diese Gefahren frühzeitig zu erkennen und zu vermeiden.',
     category: 'tipps',
@@ -1810,7 +1810,7 @@ export const articles: Article[] = [
     content: `
       <div class="highlight-box">
         <h4>📄 Verdacht auf einen problematischen Vertrag? Jetzt prüfen lassen</h4>
-        <p>Lass deinen Vertrag in 60 Sekunden auf Warnsignale und unwirksame Klauseln analysieren — auf Basis aktueller BGH/BAG-Rechtsprechung. Spezialisierte KI-Prüfung für: <a href="/arbeitsvertrag-pruefen"><strong>Arbeitsvertrag</strong></a> · <a href="/mietvertrag-pruefen"><strong>Mietvertrag</strong></a> · <a href="/nda-pruefen"><strong>NDA</strong></a> · <a href="/kaufvertrag-pruefen"><strong>Kaufvertrag</strong></a></p>
+        <p>Lass deinen Vertrag in 60 Sekunden auf Warnsignale und unwirksame Klauseln analysieren, auf Basis aktueller BGH/BAG-Rechtsprechung. Spezialisierte KI-Prüfung für: <a href="/arbeitsvertrag-pruefen"><strong>Arbeitsvertrag</strong></a> · <a href="/mietvertrag-pruefen"><strong>Mietvertrag</strong></a> · <a href="/nda-pruefen"><strong>NDA</strong></a> · <a href="/kaufvertrag-pruefen"><strong>Kaufvertrag</strong></a></p>
       </div>
 
       <p>Täglich schließen wir Verträge ab – beim Online-Shopping, der Wohnungssuche oder beim neuen Mobilfunkvertrag. Doch nicht alle Verträge sind fair gestaltet. Einige enthalten Fallen, die später teuer werden können.</p>
@@ -1882,14 +1882,14 @@ export const articles: Article[] = [
 
       <div class="highlight-box">
         <h4>Was tun bei problematischen Verträgen?</h4>
-        <p>Lass verdächtige Verträge vor Unterschrift professionell prüfen – mit Contract AI analysierst du Verträge in wenigen Minuten und erhältst konkrete Handlungsempfehlungen.</p>
+        <p>Lass verdächtige Verträge vor Unterschrift professionell prüfen, mit Contract AI analysierst du Verträge in wenigen Minuten und erhältst konkrete Handlungsempfehlungen.</p>
       </div>
 
       <h2>Fazit: Vertrauen ist gut, Kontrolle ist besser</h2>
 
       <p>Die meisten Unternehmen sind seriös und bemüht um faire Verträge. Doch schwarze Schafe gibt es in jeder Branche. Mit diesen fünf Warnsignalen erkennst du problematische Verträge schon vor der Unterschrift.</p>
 
-      <p>Nimm dir die Zeit, Verträge gründlich zu lesen. Bei wichtigen oder komplexen Verträgen solltest du nicht zögern, professionelle Hilfe in Anspruch zu nehmen – etwa durch eine <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a>, die alle fünf Warnsignale automatisch erkennt.</p>
+      <p>Nimm dir die Zeit, Verträge gründlich zu lesen. Bei wichtigen oder komplexen Verträgen solltest du nicht zögern, professionelle Hilfe in Anspruch zu nehmen, etwa durch eine <a href="/ki-vertragsanalyse">KI-Vertragsanalyse</a>, die alle fünf Warnsignale automatisch erkennt.</p>
     `
   },
   {
@@ -1907,7 +1907,7 @@ export const articles: Article[] = [
     content: `
       <div class="highlight-box">
         <h4>📄 Mietvertrag jetzt rechtssicher prüfen lassen</h4>
-        <p>Lass deinen Mietvertrag von einer KI prüfen — auf Basis aktueller BGH-Rechtsprechung in unter 60 Sekunden. Unwirksame Schönheitsreparaturklauseln, überhöhte Kaution und versteckte Fallen werden sofort erkannt. <a href="/mietvertrag-pruefen"><strong>Jetzt Mietvertrag prüfen →</strong></a></p>
+        <p>Lass deinen Mietvertrag von einer KI prüfen, auf Basis aktueller BGH-Rechtsprechung in unter 60 Sekunden. Unwirksame Schönheitsreparaturklauseln, überhöhte Kaution und versteckte Fallen werden sofort erkannt. <a href="/mietvertrag-pruefen"><strong>Jetzt Mietvertrag prüfen →</strong></a></p>
       </div>
 
       <p>Mietverträge enthalten oft Klauseln, die zu Gunsten des Vermieters formuliert sind. Doch nicht alles, was im Vertrag steht, ist auch rechtlich wirksam. Wir zeigen dir, welche Klauseln problematisch sind.</p>
@@ -1968,7 +1968,7 @@ export const articles: Article[] = [
     content: `
       <div class="highlight-box">
         <h4>📄 Arbeitsvertrag jetzt rechtssicher prüfen lassen</h4>
-        <p>Lass deinen Arbeitsvertrag von einer KI prüfen — auf Basis aktueller BAG-Rechtsprechung in unter 60 Sekunden. Unwirksame Klauseln, überzogene Wettbewerbsverbote und versteckte Nachteile werden sofort erkannt. <a href="/arbeitsvertrag-pruefen"><strong>Jetzt Arbeitsvertrag prüfen →</strong></a></p>
+        <p>Lass deinen Arbeitsvertrag von einer KI prüfen, auf Basis aktueller BAG-Rechtsprechung in unter 60 Sekunden. Unwirksame Klauseln, überzogene Wettbewerbsverbote und versteckte Nachteile werden sofort erkannt. <a href="/arbeitsvertrag-pruefen"><strong>Jetzt Arbeitsvertrag prüfen →</strong></a></p>
       </div>
 
       <p>Dein Arbeitsvertrag regelt mehr als nur Gehalt und Arbeitszeit. Wir erklären die wichtigsten Klauseln und deine Rechte als Arbeitnehmer.</p>
@@ -2010,7 +2010,7 @@ export const articles: Article[] = [
 
       <h2>Fazit</h2>
       
-      <p>Kenne deine Rechte! Bei Unklarheiten lass deinen Arbeitsvertrag per <a href="/ki-vertragsanalyse">KI-Vertragscheck</a> professionell prüfen – in Sekunden statt Tagen.</p>
+      <p>Kenne deine Rechte! Bei Unklarheiten lass deinen Arbeitsvertrag per <a href="/ki-vertragsanalyse">KI-Vertragscheck</a> professionell prüfen, in Sekunden statt Tagen.</p>
     `
   },
   {
@@ -2028,10 +2028,10 @@ export const articles: Article[] = [
     content: `
       <div class="highlight-box">
         <h4>📄 Kaufvertrag oder AGB jetzt rechtssicher prüfen lassen</h4>
-        <p>Lass deinen Kaufvertrag inkl. AGB in 60 Sekunden auf versteckte Kosten, unwirksame Gewährleistungsausschlüsse und Stornofallen prüfen — auf Basis BGB-Kaufrecht und aktueller BGH-Rechtsprechung. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
+        <p>Lass deinen Kaufvertrag inkl. AGB in 60 Sekunden auf versteckte Kosten, unwirksame Gewährleistungsausschlüsse und Stornofallen prüfen, auf Basis BGB-Kaufrecht und aktueller BGH-Rechtsprechung. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
       </div>
 
-      <p>Beim Online-Shopping klicken wir den Haken bei "AGB akzeptieren" meist in Sekunden – gelesen hat sie kaum jemand. Das Problem: In den Allgemeinen Geschäftsbedingungen von Online-Shops verstecken sich regelmäßig Klauseln, die dich Geld kosten oder dir Rechte nehmen sollen. Die gute Nachricht: Viele dieser Klauseln sind nach deutschem Verbraucherrecht schlicht <strong>unwirksam</strong> – selbst wenn du zugestimmt hast. Wir zeigen dir die fünf häufigsten Fallen und welche Paragraphen dich schützen.</p>
+      <p>Beim Online-Shopping klicken wir den Haken bei "AGB akzeptieren" meist in Sekunden – gelesen hat sie kaum jemand. Das Problem: In den Allgemeinen Geschäftsbedingungen von Online-Shops verstecken sich regelmäßig Klauseln, die dich Geld kosten oder dir Rechte nehmen sollen. Die gute Nachricht: Viele dieser Klauseln sind nach deutschem Verbraucherrecht schlicht <strong>unwirksam</strong>, selbst wenn du zugestimmt hast. Wir zeigen dir die fünf häufigsten Fallen und welche Paragraphen dich schützen.</p>
 
       <h2>Was AGB beim Online-Shopping eigentlich sind</h2>
 
@@ -2043,14 +2043,14 @@ export const articles: Article[] = [
 
       <ul>
         <li>Die <strong>Erstlaufzeit</strong> darf höchstens 24 Monate betragen.</li>
-        <li>Nach Ablauf darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern – und ist dann jederzeit mit einer Frist von maximal einem Monat <strong>kündbar</strong> (§ 309 Nr. 9 BGB).</li>
+        <li>Nach Ablauf darf sich der Vertrag nur noch <strong>auf unbestimmte Zeit</strong> verlängern und ist dann jederzeit mit einer Frist von maximal einem Monat <strong>kündbar</strong> (§ 309 Nr. 9 BGB).</li>
       </ul>
 
       <p>Dazu kommt die <strong>Kündigungsbutton-Pflicht</strong> (§ 312k BGB, seit 1. Juli 2022): Online geschlossene Dauerverträge müssen eine gut sichtbare Schaltfläche zum Kündigen bieten. Fehlt dieser Button, kannst du den Vertrag <strong>jederzeit und fristlos</strong> beenden. Und damit dich die nächste Verlängerung nicht wieder überrascht: Mit dem <a href="/features/fristen">Fristenkalender von Contract AI</a> werden Laufzeiten und Kündigungsfristen automatisch überwacht.</p>
 
       <h2>Falle 2: Versteckte Kosten und die "Button-Lösung"</h2>
 
-      <p>Klassiker: Der Preis wirkt günstig, doch im letzten Schritt kommen Versandkosten, "Servicegebühren" oder Aufschläge für bestimmte Zahlungsarten dazu. Dein Schutz heißt <strong>Button-Lösung</strong> (§ 312j Abs. 3 BGB): Die Bestell-Schaltfläche muss eindeutig mit "<strong>zahlungspflichtig bestellen</strong>" (oder einer ebenso klaren Formulierung) beschriftet sein, und alle Kosten müssen unmittelbar davor klar ausgewiesen werden. Passiert das nicht, kommt <strong>gar kein Vertrag zustande</strong> – du musst nichts zahlen.</p>
+      <p>Klassiker: Der Preis wirkt günstig, doch im letzten Schritt kommen Versandkosten, "Servicegebühren" oder Aufschläge für bestimmte Zahlungsarten dazu. Dein Schutz heißt <strong>Button-Lösung</strong> (§ 312j Abs. 3 BGB): Die Bestell-Schaltfläche muss eindeutig mit "<strong>zahlungspflichtig bestellen</strong>" (oder einer ebenso klaren Formulierung) beschriftet sein, und alle Kosten müssen unmittelbar davor klar ausgewiesen werden. Passiert das nicht, kommt <strong>gar kein Vertrag zustande</strong>. Du musst nichts zahlen.</p>
 
       <h2>Falle 3: Eingeschränkte oder ausgeschlossene Gewährleistung</h2>
 
@@ -2058,7 +2058,7 @@ export const articles: Article[] = [
 
       <h2>Falle 4: Ausgehebeltes Widerrufsrecht</h2>
 
-      <p>Bei Online-Käufen hast du grundsätzlich ein <strong>14-tägiges Widerrufsrecht</strong> (§ 312g, §§ 355 ff. BGB) – ohne Angabe von Gründen. AGB-Klauseln, die das pauschal ausschließen ("vom Umtausch ausgeschlossen"), sind unwirksam. Wichtig: Belehrt dich der Shop nicht <strong>korrekt</strong> über dein Widerrufsrecht, verlängert sich die Frist auf bis zu <strong>zwölf Monate und 14 Tage</strong> (§ 356 Abs. 3 BGB). Es gibt allerdings echte gesetzliche Ausnahmen, etwa bei schnell verderblicher Ware oder versiegelten Hygieneartikeln nach dem Öffnen.</p>
+      <p>Bei Online-Käufen hast du grundsätzlich ein <strong>14-tägiges Widerrufsrecht</strong> (§ 312g, §§ 355 ff. BGB), ohne Angabe von Gründen. AGB-Klauseln, die das pauschal ausschließen ("vom Umtausch ausgeschlossen"), sind unwirksam. Wichtig: Belehrt dich der Shop nicht <strong>korrekt</strong> über dein Widerrufsrecht, verlängert sich die Frist auf bis zu <strong>zwölf Monate und 14 Tage</strong> (§ 356 Abs. 3 BGB). Es gibt allerdings echte gesetzliche Ausnahmen, etwa bei schnell verderblicher Ware oder versiegelten Hygieneartikeln nach dem Öffnen.</p>
 
       <h2>Falle 5: Gerichtsstand und Rechtswahl bei Auslands-Shops</h2>
 
@@ -2078,10 +2078,10 @@ export const articles: Article[] = [
       <h2>Häufige Fragen zu AGB beim Online-Shopping</h2>
 
       <h3>Sind AGB gültig, auch wenn ich sie nicht gelesen habe?</h3>
-      <p>Grundsätzlich ja – mit dem Akzeptieren werden sie Vertragsbestandteil. Einzelne unfaire oder überraschende Klauseln sind aber unabhängig davon unwirksam (§§ 305–309 BGB). Du musst eine unzulässige Klausel also nicht gegen dich gelten lassen, nur weil du zugestimmt hast.</p>
+      <p>Grundsätzlich ja, mit dem Akzeptieren werden sie Vertragsbestandteil. Einzelne unfaire oder überraschende Klauseln sind aber unabhängig davon unwirksam (§§ 305–309 BGB). Du musst eine unzulässige Klausel also nicht gegen dich gelten lassen, nur weil du zugestimmt hast.</p>
 
       <h3>Darf ein Online-Shop die Gewährleistung ausschließen?</h3>
-      <p>Beim Verkauf an Verbraucher nein. Die gesetzlichen Gewährleistungsrechte können nicht durch AGB zu deinem Nachteil ausgeschlossen oder eingeschränkt werden (§ 476 Abs. 1 BGB). Die zweijährige Verjährungsfrist darf nur bei gebrauchter Ware auf mindestens ein Jahr verkürzt werden – und das nur mit ausdrücklichem, gesondertem Hinweis vor dem Kauf (§ 476 Abs. 2 BGB).</p>
+      <p>Beim Verkauf an Verbraucher nein. Die gesetzlichen Gewährleistungsrechte können nicht durch AGB zu deinem Nachteil ausgeschlossen oder eingeschränkt werden (§ 476 Abs. 1 BGB). Die zweijährige Verjährungsfrist darf nur bei gebrauchter Ware auf mindestens ein Jahr verkürzt werden und das nur mit ausdrücklichem, gesondertem Hinweis vor dem Kauf (§ 476 Abs. 2 BGB).</p>
 
       <h3>Wie komme ich aus einem online abgeschlossenen Abo wieder heraus?</h3>
       <p>Nach Ablauf der Mindestlaufzeit ist ein ab März 2022 geschlossenes Abo monatlich kündbar. Fehlt der gesetzlich vorgeschriebene Kündigungsbutton (§ 312k BGB), kannst du sogar jederzeit fristlos kündigen.</p>
@@ -2090,20 +2090,20 @@ export const articles: Article[] = [
       <p>In der Regel 14 Tage ab Erhalt der Ware. Wurde nicht ordnungsgemäß über das Widerrufsrecht belehrt, verlängert sich die Frist auf bis zu zwölf Monate und 14 Tage (§ 356 Abs. 3 BGB).</p>
 
       <h3>Was bedeutet die "Button-Lösung"?</h3>
-      <p>Der Bestell-Button muss eindeutig zeigen, dass die Bestellung kostenpflichtig ist – etwa durch die Beschriftung "zahlungspflichtig bestellen" (§ 312j Abs. 3 BGB). Fehlt dieser Hinweis, ist der Vertrag nicht wirksam zustande gekommen.</p>
+      <p>Der Bestell-Button muss eindeutig zeigen, dass die Bestellung kostenpflichtig ist, etwa durch die Beschriftung "zahlungspflichtig bestellen" (§ 312j Abs. 3 BGB). Fehlt dieser Hinweis, ist der Vertrag nicht wirksam zustande gekommen.</p>
 
       <h2>Fazit</h2>
 
-      <p>Unwirksame AGB-Klauseln sind im Online-Handel eher die Regel als die Ausnahme – aber das Verbraucherrecht steht klar auf deiner Seite. Wer die fünf typischen Fallen kennt, zahlt nicht für versteckte Kosten und kommt aus ungewollten Abos wieder heraus. Bei größeren Käufen oder unübersichtlichen Bedingungen lohnt sich ein zweiter Blick: Lass problematische Klauseln von einer <a href="/ki-vertragsanalyse">KI-gestützten Vertragsanalyse</a> automatisch aufspüren oder prüfe deinen <a href="/kaufvertrag-pruefen">Kaufvertrag direkt online</a>.</p>
+      <p>Unwirksame AGB-Klauseln sind im Online-Handel eher die Regel als die Ausnahme, aber das Verbraucherrecht steht klar auf deiner Seite. Wer die fünf typischen Fallen kennt, zahlt nicht für versteckte Kosten und kommt aus ungewollten Abos wieder heraus. Bei größeren Käufen oder unübersichtlichen Bedingungen lohnt sich ein zweiter Blick: Lass problematische Klauseln von einer <a href="/ki-vertragsanalyse">KI-gestützten Vertragsanalyse</a> automatisch aufspüren oder prüfe deinen <a href="/kaufvertrag-pruefen">Kaufvertrag direkt online</a>.</p>
     `,
     faqs: [
       {
         question: 'Sind AGB gültig, auch wenn ich sie nicht gelesen habe?',
-        answer: 'Grundsätzlich ja – mit dem Akzeptieren werden sie Vertragsbestandteil. Einzelne unfaire oder überraschende Klauseln sind aber unabhängig davon unwirksam (§§ 305–309 BGB). Du musst eine unzulässige Klausel also nicht gegen dich gelten lassen, nur weil du zugestimmt hast.'
+        answer: 'Grundsätzlich ja, mit dem Akzeptieren werden sie Vertragsbestandteil. Einzelne unfaire oder überraschende Klauseln sind aber unabhängig davon unwirksam (§§ 305–309 BGB). Du musst eine unzulässige Klausel also nicht gegen dich gelten lassen, nur weil du zugestimmt hast.'
       },
       {
         question: 'Darf ein Online-Shop die Gewährleistung ausschließen?',
-        answer: 'Beim Verkauf an Verbraucher nein. Die gesetzlichen Gewährleistungsrechte können nicht durch AGB zu deinem Nachteil ausgeschlossen oder eingeschränkt werden (§ 476 Abs. 1 BGB). Die zweijährige Verjährungsfrist darf nur bei gebrauchter Ware auf mindestens ein Jahr verkürzt werden – und das nur mit ausdrücklichem, gesondertem Hinweis vor dem Kauf (§ 476 Abs. 2 BGB).'
+        answer: 'Beim Verkauf an Verbraucher nein. Die gesetzlichen Gewährleistungsrechte können nicht durch AGB zu deinem Nachteil ausgeschlossen oder eingeschränkt werden (§ 476 Abs. 1 BGB). Die zweijährige Verjährungsfrist darf nur bei gebrauchter Ware auf mindestens ein Jahr verkürzt werden und das nur mit ausdrücklichem, gesondertem Hinweis vor dem Kauf (§ 476 Abs. 2 BGB).'
       },
       {
         question: 'Wie komme ich aus einem online abgeschlossenen Abo wieder heraus?',
@@ -2115,7 +2115,7 @@ export const articles: Article[] = [
       },
       {
         question: 'Was bedeutet die "Button-Lösung"?',
-        answer: 'Der Bestell-Button muss eindeutig zeigen, dass die Bestellung kostenpflichtig ist – etwa durch die Beschriftung "zahlungspflichtig bestellen" (§ 312j Abs. 3 BGB). Fehlt dieser Hinweis, ist der Vertrag nicht wirksam zustande gekommen.'
+        answer: 'Der Bestell-Button muss eindeutig zeigen, dass die Bestellung kostenpflichtig ist, etwa durch die Beschriftung "zahlungspflichtig bestellen" (§ 312j Abs. 3 BGB). Fehlt dieser Hinweis, ist der Vertrag nicht wirksam zustande gekommen.'
       }
     ]
   },
@@ -2134,7 +2134,7 @@ export const articles: Article[] = [
     content: `
       <div class="highlight-box">
         <h4>📄 Kaufvertrag jetzt rechtssicher prüfen lassen</h4>
-        <p>Lass deinen Kaufvertrag von einer KI prüfen — auf Basis BGB-Kaufrecht und aktueller BGH-Rechtsprechung in unter 60 Sekunden. Pauschale Gewährleistungsausschlüsse, vage Beschaffenheitsangaben und versteckte Stornofallen werden sofort erkannt. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
+        <p>Lass deinen Kaufvertrag von einer KI prüfen, auf Basis BGB-Kaufrecht und aktueller BGH-Rechtsprechung in unter 60 Sekunden. Pauschale Gewährleistungsausschlüsse, vage Beschaffenheitsangaben und versteckte Stornofallen werden sofort erkannt. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
       </div>
 
       <p>Der Autokauf ist für viele eine große Investition. Umso wichtiger ist es, den Kaufvertrag genau zu prüfen und seine Rechte zu kennen.</p>
@@ -2197,7 +2197,7 @@ export const articles: Article[] = [
         <p>Bevor du verhandelst — kenne die Schwachstellen. Lass deinen Vertrag in 60 Sekunden analysieren und gehe mit klaren Verhandlungspunkten ins Gespräch. Speziell für B2B-Verhandlungen: <a href="/nda-pruefen"><strong>NDA prüfen →</strong></a></p>
       </div>
 
-      <p>Viele glauben, Verträge seien in Stein gemeißelt. Tatsächlich lässt sich erstaunlich viel nachverhandeln – nicht nur im Geschäftsleben, sondern auch als Privatperson bei Handy-, Versicherungs-, Miet- oder Fitnessverträgen. Entscheidend ist nicht Verhandlungsgeschick allein, sondern eine gute Vorbereitung und das Wissen, an welchen Stellen Spielraum besteht.</p>
+      <p>Viele glauben, Verträge seien in Stein gemeißelt. Tatsächlich lässt sich erstaunlich viel nachverhandeln, nicht nur im Geschäftsleben, sondern auch als Privatperson bei Handy-, Versicherungs-, Miet- oder Fitnessverträgen. Entscheidend ist nicht Verhandlungsgeschick allein, sondern eine gute Vorbereitung und das Wissen, an welchen Stellen Spielraum besteht.</p>
 
       <h2>Warum sich Nachverhandeln fast immer lohnt</h2>
 
@@ -2218,9 +2218,9 @@ export const articles: Article[] = [
       <ul>
         <li><strong>Sachlich und freundlich bleiben:</strong> Druck erzeugt Gegendruck. Ein kooperativer Ton öffnet mehr Türen als ein Ultimatum.</li>
         <li><strong>Mit Fakten argumentieren:</strong> "Anbieter X bietet das Gleiche für 10 € weniger" wirkt stärker als "Das ist mir zu teuer".</li>
-        <li><strong>Anker setzen:</strong> Nenne zuerst eine ambitionierte, aber begründbare Zielmarke – sie verschiebt den Verhandlungsrahmen zu deinen Gunsten.</li>
+        <li><strong>Anker setzen:</strong> Nenne zuerst eine ambitionierte, aber begründbare Zielmarke. Sie verschiebt den Verhandlungsrahmen zu deinen Gunsten.</li>
         <li><strong>Win-win anbieten:</strong> Eine längere Bindung gegen einen besseren Preis ist für beide Seiten attraktiv.</li>
-        <li><strong>Schweigen aushalten:</strong> Nach deinem Angebot nicht sofort nachlegen – die Pause arbeitet für dich.</li>
+        <li><strong>Schweigen aushalten:</strong> Nach deinem Angebot nicht sofort nachlegen. Die Pause arbeitet für dich.</li>
       </ul>
 
       <div class="highlight-box">
@@ -2258,7 +2258,7 @@ export const articles: Article[] = [
 
       <h2>Fazit</h2>
 
-      <p>Verhandeln kostet nichts außer ein wenig Zeit – und kann sich richtig lohnen. Wer vorbereitet, sachlich und mit einer klaren Alternative ins Gespräch geht, erreicht messbar bessere Konditionen. Tipp: Nutze vorher eine <a href="/ki-vertragsanalyse">automatische Vertragsprüfung</a>, um genau zu wissen, welche Klauseln verhandlungswürdig sind.</p>
+      <p>Verhandeln kostet nichts außer ein wenig Zeit und kann sich richtig lohnen. Wer vorbereitet, sachlich und mit einer klaren Alternative ins Gespräch geht, erreicht messbar bessere Konditionen. Tipp: Nutze vorher eine <a href="/ki-vertragsanalyse">automatische Vertragsprüfung</a>, um genau zu wissen, welche Klauseln verhandlungswürdig sind.</p>
     `,
     faqs: [
       {
@@ -2283,8 +2283,8 @@ export const articles: Article[] = [
     id: 7,
     slug: 'widerrufsrecht-richtig-nutzen',
     title: 'Widerrufsrecht: 14 Tage richtig nutzen',
-    subtitle: 'Das Widerrufsrecht schützt Verbraucher – aber nur, wenn du es richtig anwendest. Die wichtigsten Regeln und Ausnahmen',
-    excerpt: 'Das Widerrufsrecht schützt Verbraucher – aber nur, wenn du es richtig anwendest. Die wichtigsten Regeln und Ausnahmen.',
+    subtitle: 'Das Widerrufsrecht schützt Verbraucher, aber nur, wenn du es richtig anwendest. Die wichtigsten Regeln und Ausnahmen',
+    excerpt: 'Das Widerrufsrecht schützt Verbraucher, aber nur, wenn du es richtig anwendest. Die wichtigsten Regeln und Ausnahmen.',
     category: 'agb',
     date: '8. Mai 2025',
     readTime: '6 Min. Lesezeit',
@@ -2294,7 +2294,7 @@ export const articles: Article[] = [
     content: `
       <div class="highlight-box">
         <h4>📄 Damit Widerruf gar nicht erst nötig wird: Kaufvertrag jetzt prüfen</h4>
-        <p>Lass deinen Kaufvertrag vor Abschluss in 60 Sekunden auf unwirksame Klauseln, vage Beschaffenheitsangaben und überzogene Stornogebühren prüfen — auf Basis BGB-Kaufrecht und BGH-Rechtsprechung. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
+        <p>Lass deinen Kaufvertrag vor Abschluss in 60 Sekunden auf unwirksame Klauseln, vage Beschaffenheitsangaben und überzogene Stornogebühren prüfen, auf Basis BGB-Kaufrecht und BGH-Rechtsprechung. <a href="/kaufvertrag-pruefen"><strong>Jetzt Kaufvertrag prüfen →</strong></a></p>
       </div>
 
       <p>Das 14-tägige Widerrufsrecht ist ein wichtiger Verbraucherschutz. Doch es gibt Ausnahmen und Regeln, die du kennen solltest.</p>
@@ -2377,7 +2377,7 @@ export const articles: Article[] = [
         <li><strong>Ab 12 Jahren:</strong> 5 Monate, ab 15 Jahren 6 Monate, ab 20 Jahren 7 Monate zum Monatsende</li>
       </ul>
 
-      <p>Wichtig: Diese verlängerten Fristen gelten für die Kündigung durch den <strong>Arbeitgeber</strong>. Als Arbeitnehmer kannst du in der Regel mit der Grundfrist von 4 Wochen kündigen – sofern der Arbeits- oder Tarifvertrag nichts anderes (Zulässiges) vorsieht.</p>
+      <p>Wichtig: Diese verlängerten Fristen gelten für die Kündigung durch den <strong>Arbeitgeber</strong>. Als Arbeitnehmer kannst du in der Regel mit der Grundfrist von 4 Wochen kündigen, sofern der Arbeits- oder Tarifvertrag nichts anderes (Zulässiges) vorsieht.</p>
 
       <h2>Formvorschriften beachten</h2>
       
@@ -2419,10 +2419,10 @@ export const articles: Article[] = [
       <h2>Häufige Fragen zur Kündigung des Arbeitsvertrags</h2>
 
       <h3>Welche Kündigungsfrist gilt für mich als Arbeitnehmer?</h3>
-      <p>In der Regel die Grundfrist von 4 Wochen zum 15. oder zum Monatsende (§ 622 BGB). Die mit der Betriebszugehörigkeit gestaffelten längeren Fristen gelten grundsätzlich nur für Kündigungen durch den Arbeitgeber – es sei denn, der Vertrag oder ein Tarifvertrag regelt etwas anderes.</p>
+      <p>In der Regel die Grundfrist von 4 Wochen zum 15. oder zum Monatsende (§ 622 BGB). Die mit der Betriebszugehörigkeit gestaffelten längeren Fristen gelten grundsätzlich nur für Kündigungen durch den Arbeitgeber. Es sei denn, der Vertrag oder ein Tarifvertrag regelt etwas anderes.</p>
 
       <h3>Ist eine Kündigung per E-Mail oder WhatsApp wirksam?</h3>
-      <p>Nein. Eine Kündigung des Arbeitsverhältnisses bedarf der Schriftform mit eigenhändiger Unterschrift (§ 623 BGB). E-Mail, Fax, WhatsApp oder eine mündliche Kündigung sind unwirksam – das Arbeitsverhältnis besteht dann fort.</p>
+      <p>Nein. Eine Kündigung des Arbeitsverhältnisses bedarf der Schriftform mit eigenhändiger Unterschrift (§ 623 BGB). E-Mail, Fax, WhatsApp oder eine mündliche Kündigung sind unwirksam. Das Arbeitsverhältnis besteht dann fort.</p>
 
       <h3>Wie lange habe ich Zeit, gegen eine Kündigung vorzugehen?</h3>
       <p>Drei Wochen. Eine Kündigungsschutzklage muss innerhalb von drei Wochen nach Zugang der Kündigung beim Arbeitsgericht eingehen (§ 4 KSchG). Wird die Frist versäumt, gilt die Kündigung in der Regel als wirksam.</p>
@@ -2440,11 +2440,11 @@ export const articles: Article[] = [
     faqs: [
       {
         question: 'Welche Kündigungsfrist gilt für mich als Arbeitnehmer?',
-        answer: 'In der Regel die Grundfrist von 4 Wochen zum 15. oder zum Monatsende (§ 622 BGB). Die mit der Betriebszugehörigkeit gestaffelten längeren Fristen gelten grundsätzlich nur für Kündigungen durch den Arbeitgeber – es sei denn, der Vertrag oder ein Tarifvertrag regelt etwas anderes.'
+        answer: 'In der Regel die Grundfrist von 4 Wochen zum 15. oder zum Monatsende (§ 622 BGB). Die mit der Betriebszugehörigkeit gestaffelten längeren Fristen gelten grundsätzlich nur für Kündigungen durch den Arbeitgeber. Es sei denn, der Vertrag oder ein Tarifvertrag regelt etwas anderes.'
       },
       {
         question: 'Ist eine Kündigung per E-Mail oder WhatsApp wirksam?',
-        answer: 'Nein. Eine Kündigung des Arbeitsverhältnisses bedarf der Schriftform mit eigenhändiger Unterschrift (§ 623 BGB). E-Mail, Fax, WhatsApp oder eine mündliche Kündigung sind unwirksam – das Arbeitsverhältnis besteht dann fort.'
+        answer: 'Nein. Eine Kündigung des Arbeitsverhältnisses bedarf der Schriftform mit eigenhändiger Unterschrift (§ 623 BGB). E-Mail, Fax, WhatsApp oder eine mündliche Kündigung sind unwirksam. Das Arbeitsverhältnis besteht dann fort.'
       },
       {
         question: 'Wie lange habe ich Zeit, gegen eine Kündigung vorzugehen?',

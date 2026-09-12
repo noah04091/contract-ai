@@ -90,7 +90,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
         "name": "Ist mein Arbeitsvertrag noch gültig, wenn die KI unwirksame Klauseln findet?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. Nach § 306 Abs. 1 BGB bleibt der Vertrag in der Regel auch bei unwirksamen Einzelklauseln wirksam — die problematische Klausel wird einfach durch die gesetzliche Regelung ersetzt. Du musst also keinen kompletten Vertrag neu verhandeln. Im Gegenteil: Eine unwirksame Wettbewerbsklausel ist für dich oft ein Vorteil, weil du dann frei entscheiden kannst."
+          "text": "Ja. Nach § 306 Abs. 1 BGB bleibt der Vertrag in der Regel auch bei unwirksamen Einzelklauseln wirksam. Die problematische Klausel wird einfach durch die gesetzliche Regelung ersetzt. Du musst also keinen kompletten Vertrag neu verhandeln. Im Gegenteil: Eine unwirksame Wettbewerbsklausel ist für dich oft ein Vorteil, weil du dann frei entscheiden kannst."
         }
       },
       {
@@ -98,7 +98,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
         "name": "Wie lange darf eine Probezeit im Arbeitsvertrag dauern?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Die Probezeit darf nach § 622 Abs. 3 BGB maximal sechs Monate betragen. Während dieser Zeit gilt eine verkürzte Kündigungsfrist von zwei Wochen — ohne Angabe von Gründen. Manche Arbeitsverträge enthalten Klauseln mit Probezeit über 6 Monate; diese sind hinsichtlich der verkürzten Kündigungsfrist über die 6 Monate hinaus unwirksam."
+          "text": "Die Probezeit darf nach § 622 Abs. 3 BGB maximal sechs Monate betragen. Während dieser Zeit gilt eine verkürzte Kündigungsfrist von zwei Wochen, ohne Angabe von Gründen. Manche Arbeitsverträge enthalten Klauseln mit Probezeit über 6 Monate; diese sind hinsichtlich der verkürzten Kündigungsfrist über die 6 Monate hinaus unwirksam."
         }
       },
       {
@@ -114,7 +114,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
         "name": "Brauche ich ein Wettbewerbsverbot in meinem Arbeitsvertrag?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Während des Arbeitsverhältnisses ergibt sich ein Wettbewerbsverbot bereits aus § 60 HGB analog — es muss nicht extra vereinbart werden. Ein nachvertragliches Wettbewerbsverbot ist nur wirksam, wenn der Arbeitgeber eine Karenzentschädigung von mindestens 50 % der zuletzt bezogenen vertragsmäßigen Leistungen zusagt (§ 74 Abs. 2 HGB) und die Bindung räumlich, zeitlich und gegenständlich angemessen ist. Maximaldauer: zwei Jahre."
+          "text": "Während des Arbeitsverhältnisses ergibt sich ein Wettbewerbsverbot bereits aus § 60 HGB analog. Es muss nicht extra vereinbart werden. Ein nachvertragliches Wettbewerbsverbot ist nur wirksam, wenn der Arbeitgeber eine Karenzentschädigung von mindestens 50 % der zuletzt bezogenen vertragsmäßigen Leistungen zusagt (§ 74 Abs. 2 HGB) und die Bindung räumlich, zeitlich und gegenständlich angemessen ist. Maximaldauer: zwei Jahre."
         }
       },
       {
@@ -130,7 +130,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
         "name": "Was kostet die KI-Prüfung eines Arbeitsvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 150–400 € pro Vertrag — die KI-Analyse spart dir also gerade bei mehreren Verträgen erhebliche Kosten."
+          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 150–400 € pro Vertrag. Die KI-Analyse spart dir also gerade bei mehreren Verträgen erhebliche Kosten."
         }
       },
       {
@@ -138,7 +138,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
         "name": "Ersetzt die KI-Prüfung einen Anwalt für Arbeitsrecht?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für individuelle Beratung, laufende Streitigkeiten oder komplexe Sonderfälle (z.B. Aufhebungsverträge bei Kündigungsschutzklage) bleibt ein Fachanwalt für Arbeitsrecht unverzichtbar. Die KI-Ergebnisse können als fundierte Grundlage für ein gezieltes Anwaltsgespräch dienen — und senken dort oft die Beratungskosten erheblich."
+          "text": "Nein. Die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für individuelle Beratung, laufende Streitigkeiten oder komplexe Sonderfälle (z.B. Aufhebungsverträge bei Kündigungsschutzklage) bleibt ein Fachanwalt für Arbeitsrecht unverzichtbar. Die KI-Ergebnisse können als fundierte Grundlage für ein gezieltes Anwaltsgespräch dienen und senken dort oft die Beratungskosten erheblich."
         }
       }
     ]
@@ -167,7 +167,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
         "@type": "HowToStep",
         "position": 3,
         "name": "Detaillierten Report erhalten",
-        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen — als interaktive Ansicht und als PDF-Export."
+        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen, als interaktive Ansicht und als PDF-Export."
       }
     ]
   };
@@ -554,11 +554,11 @@ const ArbeitsvertragPruefen: React.FC = () => {
 
               <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
-                <h2 className={styles.sectionTitleLeft}>Vertragsprüfung im Sekundentakt — auf juristischer Basis</h2>
+                <h2 className={styles.sectionTitleLeft}>Vertragsprüfung im Sekundentakt, auf juristischer Basis</h2>
                 <p className={styles.solutionText}>
                   Die KI von Contract AI prüft jede Klausel gegen die einschlägigen Paragraphen und die aktuelle BAG-Rechtsprechung.
                   Sie kennt die §§ 611a ff. BGB, § 622 BGB, § 74 HGB, das AGG und aktuelle
-                  BAG-Rechtsprechung — und wendet diese sofort auf jede Klausel deines Vertrags an.
+                  BAG-Rechtsprechung und wendet diese sofort auf jede Klausel deines Vertrags an.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -606,7 +606,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>Die häufigsten Fallen</span>
               <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen im deutschen Arbeitsvertrag</h2>
               <p className={styles.sectionSubtitle}>
-                Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam — und genau hier
+                Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam und genau hier
                 schaut unsere KI besonders genau hin. Jede Falle mit Original-Wortlaut, juristischer
                 Einordnung und Verweis auf das einschlägige Urteil.
               </p>
@@ -640,7 +640,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Diese Klausel ist nach <strong>BAG, 22.02.2012 – 5 AZR 765/10</strong> intransparent und damit nach <strong>§ 307 Abs. 1 S. 2 BGB</strong> unwirksam — der Arbeitnehmer kann nicht erkennen, welche Leistung er erbringen muss. Folge: Geleistete Überstunden sind <strong>zusätzlich</strong> zu vergüten.</span>
+                  <span>Diese Klausel ist nach <strong>BAG, 22.02.2012 – 5 AZR 765/10</strong> intransparent und damit nach <strong>§ 307 Abs. 1 S. 2 BGB</strong> unwirksam. Der Arbeitnehmer kann nicht erkennen, welche Leistung er erbringen muss. Folge: Geleistete Überstunden sind <strong>zusätzlich</strong> zu vergüten.</span>
                 </div>
               </div>
 
@@ -655,7 +655,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Ein nachvertragliches Wettbewerbsverbot ist nach <strong>§ 74 Abs. 2 HGB</strong> nur wirksam, wenn der Arbeitgeber eine <strong>Karenzentschädigung von mindestens 50 %</strong> der zuletzt bezogenen vertragsmäßigen Leistungen zusagt. Fehlt diese Zusage, ist die Klausel <strong>unverbindlich</strong> (BAG, 22.03.2017 – 10 AZR 448/15) — der Arbeitnehmer ist frei.</span>
+                  <span>Ein nachvertragliches Wettbewerbsverbot ist nach <strong>§ 74 Abs. 2 HGB</strong> nur wirksam, wenn der Arbeitgeber eine <strong>Karenzentschädigung von mindestens 50 %</strong> der zuletzt bezogenen vertragsmäßigen Leistungen zusagt. Fehlt diese Zusage, ist die Klausel <strong>unverbindlich</strong> (BAG, 22.03.2017 – 10 AZR 448/15). Der Arbeitnehmer ist frei.</span>
                 </div>
               </div>
 
@@ -700,7 +700,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Das Direktionsrecht aus <strong>§ 106 GewO</strong> ist durch das billige Ermessen begrenzt. Eine Klausel ohne räumliche Begrenzung und ohne Berücksichtigung der Zumutbarkeit (Familie, Pendelzeit, Wohnort) ist nach <strong>BAG-Rechtsprechung</strong> unwirksam — der Arbeitgeber kann den Arbeitnehmer nicht beliebig durchs Land schieben.</span>
+                  <span>Das Direktionsrecht aus <strong>§ 106 GewO</strong> ist durch das billige Ermessen begrenzt. Eine Klausel ohne räumliche Begrenzung und ohne Berücksichtigung der Zumutbarkeit (Familie, Pendelzeit, Wohnort) ist nach <strong>BAG-Rechtsprechung</strong> unwirksam. Der Arbeitgeber kann den Arbeitnehmer nicht beliebig durchs Land schieben.</span>
                 </div>
               </div>
 
@@ -715,7 +715,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BAG, 18.09.2018 – 9 AZR 162/18</strong> beträgt die Mindestlaufzeit für arbeitsvertragliche Ausschlussfristen <strong>drei Monate</strong>. Klauseln mit kürzeren Fristen sind insgesamt unwirksam — die Ansprüche verfallen dann erst nach den regulären Verjährungsfristen (drei Jahre).</span>
+                  <span>Nach <strong>BAG, 18.09.2018 – 9 AZR 162/18</strong> beträgt die Mindestlaufzeit für arbeitsvertragliche Ausschlussfristen <strong>drei Monate</strong>. Klauseln mit kürzeren Fristen sind insgesamt unwirksam. Die Ansprüche verfallen dann erst nach den regulären Verjährungsfristen (drei Jahre).</span>
                 </div>
               </div>
 
@@ -747,7 +747,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
               <h2 className={styles.sectionTitle}>In drei Schritten zur fertigen Vertragsanalyse</h2>
               <p className={styles.sectionSubtitle}>
-                Vom hochgeladenen PDF zum strukturierten Risiko-Report — ohne Termin, ohne Wartezeit.
+                Vom hochgeladenen PDF zum strukturierten Risiko-Report, ohne Termin, ohne Wartezeit.
               </p>
             </div>
 
@@ -783,8 +783,8 @@ const ArbeitsvertragPruefen: React.FC = () => {
                     <h3 className={styles.processTitle}>Detaillierten Report erhalten</h3>
                     <p className={styles.processDesc}>
                       Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter
-                      Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen
-                      — als interaktive Ansicht und als PDF-Export.
+                      Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen,
+                     als interaktive Ansicht und als PDF-Export.
                     </p>
                   </div>
                 </div>
@@ -814,7 +814,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Aktuelle BAG-Rechtsprechung</h3>
                 <p className={styles.whyDesc}>
                   Urteile zu Wettbewerbsverbot, Überstunden, Vertragsstrafe und Verfallklauseln
-                  sind in der Analyse berücksichtigt — nicht erst seit gestern.
+                  sind in der Analyse berücksichtigt, nicht erst seit gestern.
                 </p>
               </div>
 
@@ -836,7 +836,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Klartext statt Juristendeutsch</h3>
                 <p className={styles.whyDesc}>
                   Jede Erkenntnis kommt mit verständlicher Erklärung und konkreter
-                  Handlungsempfehlung — auch ohne Jura-Studium sofort umsetzbar.
+                  Handlungsempfehlung, auch ohne Jura-Studium sofort umsetzbar.
                 </p>
               </div>
 
@@ -847,7 +847,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Sofort verfügbar, 24/7</h3>
                 <p className={styles.whyDesc}>
                   Keine Termine, keine Wartezeiten. Den Arbeitsvertrag prüfen, wenn er bei dir
-                  auf dem Tisch liegt — auch sonntagabends vor der Unterschrift am Montag.
+                  auf dem Tisch liegt, auch sonntagabends vor der Unterschrift am Montag.
                 </p>
               </div>
             </div>
@@ -1047,7 +1047,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Die Probezeit darf nach § 622 Abs. 3 BGB maximal sechs Monate betragen.
-                  Während dieser Zeit gilt eine verkürzte Kündigungsfrist von zwei Wochen — ohne
+                  Während dieser Zeit gilt eine verkürzte Kündigungsfrist von zwei Wochen, ohne
                   Angabe von Gründen. Manche Arbeitsverträge enthalten Klauseln mit Probezeit
                   über sechs Monate; diese sind hinsichtlich der verkürzten Kündigungsfrist über
                   die sechs Monate hinaus unwirksam.
@@ -1124,7 +1124,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                   individuelle Beratung, laufende Streitigkeiten oder komplexe Sonderfälle
                   (z.B. Aufhebungsverträge bei Kündigungsschutzklage) bleibt ein Fachanwalt für
                   Arbeitsrecht unverzichtbar. Die KI-Ergebnisse können als fundierte Grundlage
-                  für ein gezieltes Anwaltsgespräch dienen — und senken dort oft die
+                  für ein gezieltes Anwaltsgespräch dienen und senken dort oft die
                   Beratungskosten erheblich.
                 </p>
               </details>
@@ -1147,7 +1147,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Mietvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Schönheitsreparaturen, Kaution, Indexmiete — KI-Check auf Basis BGH-Rechtsprechung
+                    Schönheitsreparaturen, Kaution, Indexmiete. KI-Check auf Basis BGH-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1158,7 +1158,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>NDA prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs — KI-Check auf Basis GeschGehG
+                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs. KI-Check auf Basis GeschGehG
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1169,7 +1169,7 @@ const ArbeitsvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Kaufvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Gewährleistung, Beschaffenheit, „wie gesehen" — KI-Check auf Basis BGB-Kaufrecht
+                    Gewährleistung, Beschaffenheit, „wie gesehen". KI-Check auf Basis BGB-Kaufrecht
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />

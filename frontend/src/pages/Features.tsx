@@ -120,7 +120,7 @@ const Features: React.FC = () => {
       marker: '02 · Erstellen',
       label: 'Erstellen',
       title: 'Professionelle Verträge in Minuten',
-      description: 'Erstelle rechtssichere Verträge – einfach im Chat beschreiben, aus intelligenten Vorlagen oder visuell zusammengebaut.',
+      description: 'Erstelle rechtssichere Verträge, einfach im Chat beschreiben, aus intelligenten Vorlagen oder visuell zusammengebaut.',
       features: [
         { icon: <FileText size={22} />, name: 'Vertragsgenerator', desc: 'Im Chat beschreiben oder aus 50+ Vorlagen – KI schreibt & prüft', link: '/features/generator' },
         { icon: <LayoutGrid size={22} />, name: 'Contract Builder', desc: 'Drag & Drop Editor für individuelle Verträge', link: '/features/contract-builder', badge: 'Neu' },
@@ -162,7 +162,7 @@ const Features: React.FC = () => {
     { q: 'Wie funktioniert die KI-Vertragsanalyse?', a: 'Du lädst deinen Vertrag als PDF oder DOCX hoch. Die KI extrahiert den Text, erkennt den Vertragstyp, prüft jede Klausel gegen geltendes Recht und aktuelle BGH/BAG-Rechtsprechung und liefert in unter 60 Sekunden einen detaillierten Report mit Risiko-Score, markierten Problemstellen und Handlungsempfehlungen.' },
     { q: 'Ist Contract AI DSGVO-konform?', a: 'Ja. Alle Daten werden ausschließlich auf Servern in Deutschland verarbeitet, mit 256-bit-Verschlüsselung übertragen und nicht für KI-Training verwendet. Du kannst deine Daten jederzeit löschen lassen.' },
     { q: 'Was kostet Contract AI?', a: 'Im Free-Tier sind 3 Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 100-400 € pro Vertrag.' },
-    { q: 'Brauche ich technische Vorkenntnisse?', a: 'Nein. Contract AI ist für Nicht-Juristen und Nicht-Techniker entwickelt. Du lädst den Vertrag hoch, die KI macht den Rest. Die Ergebnisse werden in Klartext erklärt, mit konkreten Handlungsempfehlungen — kein Juristendeutsch.' },
+    { q: 'Brauche ich technische Vorkenntnisse?', a: 'Nein. Contract AI ist für Nicht-Juristen und Nicht-Techniker entwickelt. Du lädst den Vertrag hoch, die KI macht den Rest. Die Ergebnisse werden in Klartext erklärt, mit konkreten Handlungsempfehlungen, kein Juristendeutsch.' },
   ];
 
   return (

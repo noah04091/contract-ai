@@ -298,7 +298,7 @@ const Generator: React.FC = () => {
                 <h2 className={styles.sectionTitleLeft}>Neue Verträge brauchst du öfter als gedacht</h2>
                 <p className={styles.problemText}>
                   Freelancer-Auftrag, NDA, Mietvertrag, Kooperationen: Oft stehst du vor einem
-                  leeren Blatt – oder kopieren alte Verträge, die nicht ganz passen. Dann doch
+                  leeren Blatt oder kopieren alte Verträge, die nicht ganz passen. Dann doch
                   zum Anwalt? Das dauert Wochen und kostet Hunderte von Euro für Standard-Klauseln.
                 </p>
 
@@ -474,7 +474,7 @@ const Generator: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>Modularer Aufbau</h3>
                 <p className={styles.whyDesc}>
-                  Nur die Klauseln, die du wirklich brauchst – kein unnötiger
+                  Nur die Klauseln, die du wirklich brauchst, kein unnötiger
                   Ballast, perfekt angepasst.
                 </p>
               </div>
@@ -523,7 +523,7 @@ const Generator: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Vertragstyp wählen</h3>
                     <p className={styles.processDesc}>
-                      Freelancer, NDA, Mietvertrag, Koop – oder „individuell" für maßgeschneiderte Zusammenstellung.
+                      Freelancer, NDA, Mietvertrag, Koop oder „individuell" für maßgeschneiderte Zusammenstellung.
                     </p>
                   </div>
                 </div>
@@ -553,7 +553,7 @@ const Generator: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Export & Signatur</h3>
                     <p className={styles.processDesc}>
-                      PDF für sofortige Signatur oder DOCX zum Weiterbearbeiten – inklusive digitaler Signatur-Option.
+                      PDF für sofortige Signatur oder DOCX zum Weiterbearbeiten, inklusive digitaler Signatur-Option.
                     </p>
                   </div>
                 </div>
@@ -728,7 +728,7 @@ const Generator: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Vom Bedarf zum fertigen Vertrag – in Minuten
+                  Vom Bedarf zum fertigen Vertrag, in Minuten
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Keine Wartezeiten, keine Anwaltskosten für Standard-Verträge. Der Generator

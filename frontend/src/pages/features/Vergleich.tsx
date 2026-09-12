@@ -301,7 +301,7 @@ const Vergleich: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Das Problem</span>
                 <h2 className={styles.sectionTitleLeft}>Kleine Unterschiede, große Wirkung</h2>
                 <p className={styles.problemText}>
-                  Zwei Dokumente wirken ähnlich – aber Abweichungen bei Kündigungsfristen, Haftung,
+                  Zwei Dokumente wirken ähnlich, aber Abweichungen bei Kündigungsfristen, Haftung,
                   Kosten oder Leistungsumfang haben spürbare Folgen. Als Mieter zahlst du womöglich
                   200€ mehr pro Jahr, als Freelancer wartest du 30 Tage länger auf dein Geld.
                 </p>
@@ -456,7 +456,7 @@ const Vergleich: React.FC = () => {
               <span className={styles.sectionEyebrow}>Deine Vorteile</span>
               <h2 className={styles.sectionTitle}>Warum <span className={styles.sectionTitleAccent}>Contract AI</span>?</h2>
               <p className={styles.sectionSubtitle}>
-                Objektive Analyse statt Bauchgefühl – mit klarer Entscheidungsgrundlage.
+                Objektive Analyse statt Bauchgefühl, mit klarer Entscheidungsgrundlage.
               </p>
             </div>
 
@@ -527,7 +527,7 @@ const Vergleich: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Beide Verträge hochladen</h3>
                     <p className={styles.processDesc}>
-                      PDF oder DOCX der beiden Alternativen hochladen – sicher verschlüsselt auf EU-Servern.
+                      PDF oder DOCX der beiden Alternativen hochladen, sicher verschlüsselt auf EU-Servern.
                     </p>
                   </div>
                 </div>
@@ -644,7 +644,7 @@ const Vergleich: React.FC = () => {
                   <ChevronDown size={20} className={styles.faqIcon} />
                 </summary>
                 <p className={styles.faqAnswer}>
-                  Ja, der komplette Vergleichsreport kann als PDF exportiert werden – inklusive
+                  Ja, der komplette Vergleichsreport kann als PDF exportiert werden, inklusive
                   Diff-View, Scores, Empfehlung und Begründung. Ideal für Team-Entscheidungen.
                 </p>
               </details>

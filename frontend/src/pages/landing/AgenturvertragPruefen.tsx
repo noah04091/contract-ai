@@ -114,7 +114,7 @@ const AgenturvertragPruefen: React.FC = () => {
         "name": "Was muss in der Leistungsbeschreibung stehen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Eine wirksame Leistungsbeschreibung muss konkret und messbar sein. Pauschale Formulierungen wie 'Marketing-Beratung' oder 'Performance-Optimierung' sind im Streitfall wertlos. Verlange immer: konkrete Deliverables (z.B. 1 Blog-Artikel pro Woche, 4 Social-Posts, monatlicher Performance-Report), Stunden-Volumen oder Mengen-Caps, Reporting-Intervalle, klare Definition was bei Nicht-Erreichen passiert (Minderung, Nachbesserung, Rücktritt). Werkverträge (§ 631 BGB) verlangen einen erfolgsorientierten Leistungsschuldner, Dienstverträge (§ 611 BGB) nur Tätigkeit — der Unterschied ist im Streitfall entscheidend."
+          "text": "Eine wirksame Leistungsbeschreibung muss konkret und messbar sein. Pauschale Formulierungen wie 'Marketing-Beratung' oder 'Performance-Optimierung' sind im Streitfall wertlos. Verlange immer: konkrete Deliverables (z.B. 1 Blog-Artikel pro Woche, 4 Social-Posts, monatlicher Performance-Report), Stunden-Volumen oder Mengen-Caps, Reporting-Intervalle, klare Definition was bei Nicht-Erreichen passiert (Minderung, Nachbesserung, Rücktritt). Werkverträge (§ 631 BGB) verlangen einen erfolgsorientierten Leistungsschuldner, Dienstverträge (§ 611 BGB) nur Tätigkeit. Der Unterschied ist im Streitfall entscheidend."
         }
       },
       {
@@ -122,7 +122,7 @@ const AgenturvertragPruefen: React.FC = () => {
         "name": "Welche Haftungsbeschränkungen der Agentur sind zulässig?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nach § 309 Nr. 7 BGB ist ein vollständiger Haftungsausschluss in AGB unzulässig — die Agentur muss immer für Schäden aus Verletzung des Lebens, des Körpers oder der Gesundheit sowie für grobes Verschulden voll haften. Bei einfacher Fahrlässigkeit darf die Haftung auf den vertragstypischen, vorhersehbaren Schaden begrenzt werden — aber nur, wenn keine wesentliche Vertragspflicht (sog. Kardinalpflicht) betroffen ist. Klauseln wie 'Wir haften nur bei Vorsatz' sind in AGB regelmäßig unwirksam. Bei Schäden durch DSGVO-Verstöße oder fehlerhafte Kampagnen ist die volle Haftung oft erhalten."
+          "text": "Nach § 309 Nr. 7 BGB ist ein vollständiger Haftungsausschluss in AGB unzulässig. Die Agentur muss immer für Schäden aus Verletzung des Lebens, des Körpers oder der Gesundheit sowie für grobes Verschulden voll haften. Bei einfacher Fahrlässigkeit darf die Haftung auf den vertragstypischen, vorhersehbaren Schaden begrenzt werden, aber nur, wenn keine wesentliche Vertragspflicht (sog. Kardinalpflicht) betroffen ist. Klauseln wie 'Wir haften nur bei Vorsatz' sind in AGB regelmäßig unwirksam. Bei Schäden durch DSGVO-Verstöße oder fehlerhafte Kampagnen ist die volle Haftung oft erhalten."
         }
       },
       {
@@ -130,7 +130,7 @@ const AgenturvertragPruefen: React.FC = () => {
         "name": "Was kostet die KI-Prüfung eines Agenturvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für Wirtschaftsrecht kostet typischerweise 200-500 € pro Vertrag — die KI-Analyse spart dir gerade beim Vergleich mehrerer Agentur-Angebote erhebliche Kosten."
+          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für Wirtschaftsrecht kostet typischerweise 200-500 € pro Vertrag. Die KI-Analyse spart dir gerade beim Vergleich mehrerer Agentur-Angebote erhebliche Kosten."
         }
       },
       {
@@ -138,7 +138,7 @@ const AgenturvertragPruefen: React.FC = () => {
         "name": "Ersetzt die KI-Prüfung einen Fachanwalt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe Konstellationen (Joint Ventures, strategische Markenkooperationen, internationale Agentur-Verträge), bei laufenden Streitigkeiten oder bei hochwertigen Aufträgen mit fünf- bis sechsstelligem Volumen bleibt ein Fachanwalt für Wirtschaftsrecht unverzichtbar. Die KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich."
+          "text": "Nein. Die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe Konstellationen (Joint Ventures, strategische Markenkooperationen, internationale Agentur-Verträge), bei laufenden Streitigkeiten oder bei hochwertigen Aufträgen mit fünf- bis sechsstelligem Volumen bleibt ein Fachanwalt für Wirtschaftsrecht unverzichtbar. Die KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich."
         }
       }
     ]
@@ -167,7 +167,7 @@ const AgenturvertragPruefen: React.FC = () => {
         "@type": "HowToStep",
         "position": 3,
         "name": "Detaillierten Report erhalten",
-        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen — als interaktive Ansicht und als PDF-Export."
+        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen, als interaktive Ansicht und als PDF-Export."
       }
     ]
   };
@@ -449,7 +449,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 <p className={styles.problemText}>
                   Marketing-, Digital- und PR-Agenturen arbeiten mit eigenen Vertragsvorlagen,
                   die in der Regel zu ihren Gunsten formuliert sind. Auftraggeber unterschreiben
-                  diese Verträge oft im Vertrauen auf die Kompetenz der Agentur — und merken
+                  diese Verträge oft im Vertrauen auf die Kompetenz der Agentur und merken
                   erst Monate später, dass sie an überlange Laufzeiten gebunden sind, Nutzungsrechte
                   am eigenen Logo nicht uneingeschränkt erhalten haben oder bei schlechter
                   Performance keine Möglichkeit zur Trennung haben. Das Tückische: Einmal
@@ -557,7 +557,7 @@ const AgenturvertragPruefen: React.FC = () => {
 
               <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
-                <h2 className={styles.sectionTitleLeft}>Agenturvertrag prüfen, bevor du unterschreibst — auf juristischer Basis</h2>
+                <h2 className={styles.sectionTitleLeft}>Agenturvertrag prüfen, bevor du unterschreibst, auf juristischer Basis</h2>
                 <p className={styles.solutionText}>
                   Die KI von Contract AI kennt das Werkvertragsrecht (§§ 631 ff. BGB), das
                   Dienstvertragsrecht (§§ 611 ff. BGB), das Urheberrechtsgesetz (UrhG) zur
@@ -582,7 +582,7 @@ const AgenturvertragPruefen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Verhandlungs-Hebel erkennen</h4>
-                      <p>Wo du nachverhandeln solltest — mit klarer Begründung</p>
+                      <p>Wo du nachverhandeln solltest, mit klarer Begründung</p>
                     </div>
                   </div>
 
@@ -611,7 +611,7 @@ const AgenturvertragPruefen: React.FC = () => {
               <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen in Agenturverträgen</h2>
               <p className={styles.sectionSubtitle}>
                 Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam oder
-                einseitig zugunsten der Agentur formuliert — genau hier schaut unsere KI besonders genau hin.
+                einseitig zugunsten der Agentur formuliert, genau hier schaut unsere KI besonders genau hin.
               </p>
             </div>
 
@@ -628,7 +628,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Eine zweijährige Bindung ohne Sonderkündigungsrecht ist in AGB häufig unwirksam (<strong>§ 307 BGB</strong>). Das außerordentliche Kündigungsrecht aus wichtigem Grund nach <strong>§ 314 BGB</strong> bleibt immer bestehen — auch wenn der Vertrag das ausschließen will. Marktüblich sind 6-12 Monate Bindung mit klar definierten Sonderkündigungsrechten (z.B. bei verfehlten KPIs).</span>
+                  <span>Eine zweijährige Bindung ohne Sonderkündigungsrecht ist in AGB häufig unwirksam (<strong>§ 307 BGB</strong>). Das außerordentliche Kündigungsrecht aus wichtigem Grund nach <strong>§ 314 BGB</strong> bleibt immer bestehen, auch wenn der Vertrag das ausschließen will. Marktüblich sind 6-12 Monate Bindung mit klar definierten Sonderkündigungsrechten (z.B. bei verfehlten KPIs).</span>
                 </div>
               </div>
 
@@ -643,7 +643,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>§ 309 Nr. 9 BGB</strong> ist eine automatische Verlängerung um ein weiteres Jahr nur dann zulässig, wenn die Kündigungsfrist <strong>maximal drei Monate</strong> vor Ende der Laufzeit beträgt. Eine sechs-Monats-Kündigungsfrist ist regelmäßig unwirksam — du kannst dich also mit der gesetzlichen Frist von drei Monaten lösen.</span>
+                  <span>Nach <strong>§ 309 Nr. 9 BGB</strong> ist eine automatische Verlängerung um ein weiteres Jahr nur dann zulässig, wenn die Kündigungsfrist <strong>maximal drei Monate</strong> vor Ende der Laufzeit beträgt. Eine sechs-Monats-Kündigungsfrist ist regelmäßig unwirksam. Du kannst dich also mit der gesetzlichen Frist von drei Monaten lösen.</span>
                 </div>
               </div>
 
@@ -703,7 +703,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Häufig wird nur der Auftraggeber zur Geheimhaltung verpflichtet — die Agentur darf weiterhin mit Branchen-Insights anderer Kunden arbeiten. Verlange eine <strong>wechselseitige Geheimhaltungspflicht (Mutual NDA)</strong>, die auch deine Kundendaten, Geschäftsstrategien und KPIs schützt. Achte zusätzlich darauf, dass die Agentur nicht parallel für direkte Wettbewerber arbeitet, ohne dich zu informieren.</span>
+                  <span>Häufig wird nur der Auftraggeber zur Geheimhaltung verpflichtet. Die Agentur darf weiterhin mit Branchen-Insights anderer Kunden arbeiten. Verlange eine <strong>wechselseitige Geheimhaltungspflicht (Mutual NDA)</strong>, die auch deine Kundendaten, Geschäftsstrategien und KPIs schützt. Achte zusätzlich darauf, dass die Agentur nicht parallel für direkte Wettbewerber arbeitet, ohne dich zu informieren.</span>
                 </div>
               </div>
 
@@ -750,7 +750,7 @@ const AgenturvertragPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
               <h2 className={styles.sectionTitle}>In drei Schritten zur fertigen Analyse</h2>
               <p className={styles.sectionSubtitle}>
-                Vom hochgeladenen PDF zum strukturierten Risiko-Report — bevor du unterschreibst.
+                Vom hochgeladenen PDF zum strukturierten Risiko-Report, bevor du unterschreibst.
               </p>
             </div>
 
@@ -787,7 +787,7 @@ const AgenturvertragPruefen: React.FC = () => {
                     <h3 className={styles.processTitle}>Detaillierten Report erhalten</h3>
                     <p className={styles.processDesc}>
                       Du erhältst einen Report mit Chancen-Risiken-Score, markierten Problemstellen
-                      mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen — als
+                      mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen, als
                       interaktive Ansicht und als PDF-Export.
                     </p>
                   </div>
@@ -818,7 +818,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>BGB + UrhG + AGB-Kontrolle</h3>
                 <p className={styles.whyDesc}>
                   Werkvertragsrecht, Urheberrecht und AGB-Kontrolle werden auf jede Klausel
-                  angewendet — automatisch.
+                  angewendet, automatisch.
                 </p>
               </div>
 
@@ -840,7 +840,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Verhandlungs-Hebel statt Juristendeutsch</h3>
                 <p className={styles.whyDesc}>
                   Du bekommst nicht nur „Klausel X ist problematisch", sondern „Verhandle Punkt
-                  Y zu Punkt Z" — direkt umsetzbar.
+                  Y zu Punkt Z", direkt umsetzbar.
                 </p>
               </div>
 
@@ -851,7 +851,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Schnell genug für die Verhandlung</h3>
                 <p className={styles.whyDesc}>
                   Wenn die Agentur auf sofortige Unterschrift drängt, hast du in 60 Sekunden
-                  die fundierte Antwort — direkt am Verhandlungstisch.
+                  die fundierte Antwort, direkt am Verhandlungstisch.
                 </p>
               </div>
             </div>
@@ -1044,7 +1044,7 @@ const AgenturvertragPruefen: React.FC = () => {
                   Monate werden oft als Obergrenze toleriert. Längere Bindungen ohne triftigen
                   Grund werden von Gerichten regelmäßig kritisch beurteilt. Wichtig: Ein
                   außerordentliches Kündigungsrecht aus wichtigem Grund (§ 314 BGB) bleibt immer
-                  bestehen — auch wenn der Vertrag das ausschließen will.
+                  bestehen, auch wenn der Vertrag das ausschließen will.
                 </p>
               </details>
 
@@ -1108,7 +1108,7 @@ const AgenturvertragPruefen: React.FC = () => {
                   unzulässig — die Agentur muss immer für Schäden aus Verletzung des Lebens,
                   des Körpers oder der Gesundheit sowie für grobes Verschulden voll haften. Bei
                   einfacher Fahrlässigkeit darf die Haftung auf den vertragstypischen,
-                  vorhersehbaren Schaden begrenzt werden — aber nur, wenn keine wesentliche
+                  vorhersehbaren Schaden begrenzt werden, aber nur, wenn keine wesentliche
                   Vertragspflicht („Kardinalpflicht") betroffen ist. Klauseln wie „Wir haften
                   nur bei Vorsatz" sind in AGB regelmäßig unwirksam. Bei Schäden durch
                   DSGVO-Verstöße ist die volle Haftung oft erhalten.
@@ -1164,7 +1164,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Arbeitsvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Wettbewerbsverbot, Probezeit, Kündigungsfrist — KI-Check auf Basis BAG-Rechtsprechung
+                    Wettbewerbsverbot, Probezeit, Kündigungsfrist. KI-Check auf Basis BAG-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1175,7 +1175,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Mietvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Schönheitsreparaturen, Kaution, Indexmiete — KI-Check auf Basis BGH-Rechtsprechung
+                    Schönheitsreparaturen, Kaution, Indexmiete. KI-Check auf Basis BGH-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1186,7 +1186,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>NDA prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs — KI-Check auf Basis GeschGehG
+                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs. KI-Check auf Basis GeschGehG
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1197,7 +1197,7 @@ const AgenturvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Kaufvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Gewährleistung, Beschaffenheit, „wie gesehen" — KI-Check auf Basis BGB-Kaufrecht
+                    Gewährleistung, Beschaffenheit, „wie gesehen". KI-Check auf Basis BGB-Kaufrecht
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />

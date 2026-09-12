@@ -90,7 +90,7 @@ const MietvertragPruefen: React.FC = () => {
         "name": "Wie viel Kaution darf der Vermieter maximal verlangen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nach § 551 Abs. 1 BGB darf die Mietkaution höchstens das Dreifache der monatlichen Nettokaltmiete (also ohne Betriebskosten) betragen. Der Mieter kann die Kaution in drei gleichen Monatsraten zahlen (§ 551 Abs. 2 BGB), wobei die erste Rate zu Beginn des Mietverhältnisses fällig ist. Vereinbarungen über eine höhere Kaution sind insoweit unwirksam — der Mieter kann den Mehrbetrag zurückfordern."
+          "text": "Nach § 551 Abs. 1 BGB darf die Mietkaution höchstens das Dreifache der monatlichen Nettokaltmiete (also ohne Betriebskosten) betragen. Der Mieter kann die Kaution in drei gleichen Monatsraten zahlen (§ 551 Abs. 2 BGB), wobei die erste Rate zu Beginn des Mietverhältnisses fällig ist. Vereinbarungen über eine höhere Kaution sind insoweit unwirksam. Der Mieter kann den Mehrbetrag zurückfordern."
         }
       },
       {
@@ -98,7 +98,7 @@ const MietvertragPruefen: React.FC = () => {
         "name": "Sind Schönheitsreparaturen wirklich unwirksam vereinbart?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Häufig ja. Nach der BGH-Rechtsprechung (insbesondere VIII ZR 185/14 vom 18.03.2015) ist eine Klausel zur Vornahme von Schönheitsreparaturen unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgt. Auch starre Fristenpläne ohne Bezug zum tatsächlichen Zustand sind unwirksam. Folge: Die Pflicht zur Renovierung trägt nach § 535 Abs. 1 S. 2 BGB der Vermieter."
+          "text": "Häufig ja. Nach der BGH-Rechtsprechung (insbesondere VIII ZR 185/14 vom 18.03.2015) ist eine Klausel zur Vornahme von Schönheitsreparaturen unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig übergeben wurde und kein angemessener finanzieller Ausgleich erfolgt. Auch starre Fristenpläne ohne Bezug zum tatsächlichen Zustand sind unwirksam. Folge: Die Pflicht zur Renovierung trägt nach § 535 Abs. 1 S. 2 BGB der Vermieter."
         }
       },
       {
@@ -122,7 +122,7 @@ const MietvertragPruefen: React.FC = () => {
         "name": "Wie lange darf ein Kündigungsausschluss im Mietvertrag dauern?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ein beidseitiger Kündigungsausschluss in einem Formularmietvertrag darf nach BGH-Rechtsprechung (06.04.2005 – VIII ZR 27/04) maximal vier Jahre ab Vertragsschluss gelten. Längere Bindungen sind insgesamt unwirksam — der Mieter kann dann mit der gesetzlichen Frist von drei Monaten kündigen. Bei individuell ausgehandelten Verträgen sind längere Bindungen möglich, müssen aber nachweisbar verhandelt sein."
+          "text": "Ein beidseitiger Kündigungsausschluss in einem Formularmietvertrag darf nach BGH-Rechtsprechung (06.04.2005 – VIII ZR 27/04) maximal vier Jahre ab Vertragsschluss gelten. Längere Bindungen sind insgesamt unwirksam. Der Mieter kann dann mit der gesetzlichen Frist von drei Monaten kündigen. Bei individuell ausgehandelten Verträgen sind längere Bindungen möglich, müssen aber nachweisbar verhandelt sein."
         }
       },
       {
@@ -130,7 +130,7 @@ const MietvertragPruefen: React.FC = () => {
         "name": "Was kostet die KI-Prüfung eines Mietvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für Mietrecht kostet typischerweise 100–250 € — die KI-Analyse spart dir gerade bei mehreren Verträgen oder Wohnungssuche erhebliche Kosten."
+          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für Mietrecht kostet typischerweise 100–250 €. Die KI-Analyse spart dir gerade bei mehreren Verträgen oder Wohnungssuche erhebliche Kosten."
         }
       },
       {
@@ -138,7 +138,7 @@ const MietvertragPruefen: React.FC = () => {
         "name": "Ersetzt die KI-Prüfung einen Anwalt für Mietrecht?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für individuelle Beratung, laufende Streitigkeiten (etwa drohende Räumungsklage, Mieterhöhungsstreit, Kautionsrückforderung) oder komplexe Fälle (Gewerbemiete, Untermiete, Eigenbedarfskündigung) bleibt ein Fachanwalt für Mietrecht oder ein Mieterverein unverzichtbar. Die KI-Analyse liefert dafür eine fundierte Faktengrundlage."
+          "text": "Nein. Die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für individuelle Beratung, laufende Streitigkeiten (etwa drohende Räumungsklage, Mieterhöhungsstreit, Kautionsrückforderung) oder komplexe Fälle (Gewerbemiete, Untermiete, Eigenbedarfskündigung) bleibt ein Fachanwalt für Mietrecht oder ein Mieterverein unverzichtbar. Die KI-Analyse liefert dafür eine fundierte Faktengrundlage."
         }
       }
     ]
@@ -167,7 +167,7 @@ const MietvertragPruefen: React.FC = () => {
         "@type": "HowToStep",
         "position": 3,
         "name": "Detaillierten Report erhalten",
-        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen — als interaktive Ansicht und als PDF-Export."
+        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen, als interaktive Ansicht und als PDF-Export."
       }
     ]
   };
@@ -378,7 +378,7 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Quotenabgeltung</h3>
                 <p className={styles.functionDesc}>
-                  Anteilige Renovierungskosten je nach Wohndauer — nach BGH 2015 generell unwirksam.
+                  Anteilige Renovierungskosten je nach Wohndauer, nach BGH 2015 generell unwirksam.
                 </p>
               </div>
 
@@ -445,11 +445,11 @@ const MietvertragPruefen: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Das Problem</span>
                 <h2 className={styles.sectionTitleLeft}>Über 70 % der Mietverträge enthalten unwirksame Klauseln</h2>
                 <p className={styles.problemText}>
-                  Die meisten Mietverträge in Deutschland sind Formularverträge — und genau die unterliegen
+                  Die meisten Mietverträge in Deutschland sind Formularverträge und genau die unterliegen
                   einer strengen AGB-Kontrolle nach §§ 305 ff. BGB. Der Bundesgerichtshof hat in den
                   letzten Jahren in einer Serie von Grundsatzurteilen ganze Klauselgruppen für unwirksam
                   erklärt. Das Tückische: Mieter zahlen oft jahrelang für Renovierungen, akzeptieren
-                  überhöhte Kautionen oder verzichten auf Ansprüche — ohne zu wissen, dass die zugrunde
+                  überhöhte Kautionen oder verzichten auf Ansprüche, ohne zu wissen, dass die zugrunde
                   liegende Klausel unwirksam ist. Bei Auszug summieren sich die ungerechtfertigten Kosten
                   schnell auf vier- oder fünfstellige Beträge.
                 </p>
@@ -555,11 +555,11 @@ const MietvertragPruefen: React.FC = () => {
 
               <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
-                <h2 className={styles.sectionTitleLeft}>Mietvertragsprüfung im Sekundentakt — auf juristischer Basis</h2>
+                <h2 className={styles.sectionTitleLeft}>Mietvertragsprüfung im Sekundentakt, auf juristischer Basis</h2>
                 <p className={styles.solutionText}>
                   Die KI von Contract AI kennt die §§ 535 ff. BGB, das Mietrechtsanpassungsgesetz
                   (MietAnpG), die Betriebskostenverordnung (BetrKV) und die zentralen
-                  BGH-Grundsatzurteile zum Mietrecht — und wendet sie sofort auf jede Klausel
+                  BGH-Grundsatzurteile zum Mietrecht und wendet sie sofort auf jede Klausel
                   deines Vertrags an.
                 </p>
 
@@ -608,7 +608,7 @@ const MietvertragPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>Die häufigsten Fallen</span>
               <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen im deutschen Mietvertrag</h2>
               <p className={styles.sectionSubtitle}>
-                Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam — und genau hier
+                Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam und genau hier
                 schaut unsere KI besonders genau hin. Jede Falle mit Original-Wortlaut, juristischer
                 Einordnung und Verweis auf das einschlägige BGH-Urteil.
               </p>
@@ -627,7 +627,7 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 23.06.2004 – VIII ZR 361/03</strong> sind starre Fristen für Schönheitsreparaturen ohne Berücksichtigung des tatsächlichen Zustands der Wohnung unwirksam. Folge: Die gesamte Schönheitsreparaturklausel fällt weg — die Renovierungspflicht trägt der Vermieter (§ 535 Abs. 1 S. 2 BGB).</span>
+                  <span>Nach <strong>BGH, 23.06.2004 – VIII ZR 361/03</strong> sind starre Fristen für Schönheitsreparaturen ohne Berücksichtigung des tatsächlichen Zustands der Wohnung unwirksam. Folge: Die gesamte Schönheitsreparaturklausel fällt weg. Die Renovierungspflicht trägt der Vermieter (§ 535 Abs. 1 S. 2 BGB).</span>
                 </div>
               </div>
 
@@ -642,7 +642,7 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Das Grundsatzurteil <strong>BGH, 18.03.2015 – VIII ZR 185/14</strong>: Eine Klausel zur Vornahme von Schönheitsreparaturen ist unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgte. Der Mieter muss dann nicht renovieren — auch nicht beim Auszug.</span>
+                  <span>Das Grundsatzurteil <strong>BGH, 18.03.2015 – VIII ZR 185/14</strong>: Eine Klausel zur Vornahme von Schönheitsreparaturen ist unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig übergeben wurde und kein angemessener finanzieller Ausgleich erfolgte. Der Mieter muss dann nicht renovieren, auch nicht beim Auszug.</span>
                 </div>
               </div>
 
@@ -657,7 +657,7 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Mit <strong>BGH, 18.03.2015 – VIII ZR 242/13</strong> hat der BGH Quotenabgeltungsklauseln <strong>generell für unwirksam</strong> erklärt — sie verlangen vom Mieter eine prognostische Bewertung des künftigen Renovierungsbedarfs, was unzumutbar intransparent ist. Geforderte Quotenzahlungen können vollständig zurückgefordert werden.</span>
+                  <span>Mit <strong>BGH, 18.03.2015 – VIII ZR 242/13</strong> hat der BGH Quotenabgeltungsklauseln <strong>generell für unwirksam</strong> erklärt. Sie verlangen vom Mieter eine prognostische Bewertung des künftigen Renovierungsbedarfs, was unzumutbar intransparent ist. Geforderte Quotenzahlungen können vollständig zurückgefordert werden.</span>
                 </div>
               </div>
 
@@ -672,7 +672,7 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>§ 551 Abs. 1 BGB</strong> darf die Kaution höchstens das <strong>Dreifache der monatlichen Nettokaltmiete</strong> (ohne Betriebskosten) betragen. Mehrforderungen sind insoweit nichtig — der Mieter kann den überschüssigen Betrag jederzeit zurückfordern, auch noch Jahre nach Vertragsschluss. Außerdem darf die Kaution in drei Monatsraten gezahlt werden (§ 551 Abs. 2 BGB).</span>
+                  <span>Nach <strong>§ 551 Abs. 1 BGB</strong> darf die Kaution höchstens das <strong>Dreifache der monatlichen Nettokaltmiete</strong> (ohne Betriebskosten) betragen. Mehrforderungen sind insoweit nichtig. Der Mieter kann den überschüssigen Betrag jederzeit zurückfordern, auch noch Jahre nach Vertragsschluss. Außerdem darf die Kaution in drei Monatsraten gezahlt werden (§ 551 Abs. 2 BGB).</span>
                 </div>
               </div>
 
@@ -687,7 +687,7 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 06.04.2005 – VIII ZR 27/04</strong> darf ein beidseitiger Kündigungsausschluss in Formularmietverträgen maximal <strong>vier Jahre</strong> ab Vertragsschluss dauern. Längere Bindungen sind insgesamt unwirksam — der Mieter kann jederzeit mit der gesetzlichen Frist von drei Monaten kündigen.</span>
+                  <span>Nach <strong>BGH, 06.04.2005 – VIII ZR 27/04</strong> darf ein beidseitiger Kündigungsausschluss in Formularmietverträgen maximal <strong>vier Jahre</strong> ab Vertragsschluss dauern. Längere Bindungen sind insgesamt unwirksam. Der Mieter kann jederzeit mit der gesetzlichen Frist von drei Monaten kündigen.</span>
                 </div>
               </div>
 
@@ -717,7 +717,7 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 20.03.2013 – VIII ZR 168/12</strong> ist ein generelles Tierhaltungsverbot in einem Formularmietvertrag unwirksam, weil es eine unangemessene Benachteiligung des Mieters darstellt (§ 307 Abs. 1 BGB). Kleintiere wie Hamster oder Ziervögel sind ohnehin erlaubt; bei Hund und Katze ist eine Einzelfallabwägung nötig — kein pauschales Verbot.</span>
+                  <span>Nach <strong>BGH, 20.03.2013 – VIII ZR 168/12</strong> ist ein generelles Tierhaltungsverbot in einem Formularmietvertrag unwirksam, weil es eine unangemessene Benachteiligung des Mieters darstellt (§ 307 Abs. 1 BGB). Kleintiere wie Hamster oder Ziervögel sind ohnehin erlaubt; bei Hund und Katze ist eine Einzelfallabwägung nötig, kein pauschales Verbot.</span>
                 </div>
               </div>
 
@@ -732,7 +732,7 @@ const MietvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>BGH, 06.05.1992 – VIII ZR 129/91</strong> und nachfolgender Rechtsprechung gilt: Pro Einzelreparatur sind höchstens etwa <strong>100 €</strong> zumutbar, das Jahresvolumen darf <strong>8 % der Jahresnettokaltmiete</strong> nicht überschreiten. Höhere Klauseln sind insgesamt unwirksam — der Vermieter trägt dann alle Reparaturkosten nach § 535 Abs. 1 S. 2 BGB.</span>
+                  <span>Nach <strong>BGH, 06.05.1992 – VIII ZR 129/91</strong> und nachfolgender Rechtsprechung gilt: Pro Einzelreparatur sind höchstens etwa <strong>100 €</strong> zumutbar, das Jahresvolumen darf <strong>8 % der Jahresnettokaltmiete</strong> nicht überschreiten. Höhere Klauseln sind insgesamt unwirksam. Der Vermieter trägt dann alle Reparaturkosten nach § 535 Abs. 1 S. 2 BGB.</span>
                 </div>
               </div>
 
@@ -749,7 +749,7 @@ const MietvertragPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
               <h2 className={styles.sectionTitle}>In drei Schritten zur fertigen Vertragsanalyse</h2>
               <p className={styles.sectionSubtitle}>
-                Vom hochgeladenen PDF zum strukturierten Risiko-Report — ohne Termin, ohne Wartezeit.
+                Vom hochgeladenen PDF zum strukturierten Risiko-Report, ohne Termin, ohne Wartezeit.
               </p>
             </div>
 
@@ -786,8 +786,8 @@ const MietvertragPruefen: React.FC = () => {
                     <h3 className={styles.processTitle}>Detaillierten Report erhalten</h3>
                     <p className={styles.processDesc}>
                       Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter
-                      Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen
-                      — als interaktive Ansicht und als PDF-Export.
+                      Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen,
+                     als interaktive Ansicht und als PDF-Export.
                     </p>
                   </div>
                 </div>
@@ -817,7 +817,7 @@ const MietvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Aktuelle BGH-Rechtsprechung</h3>
                 <p className={styles.whyDesc}>
                   Die zentralen Urteile zu Schönheitsreparaturen, Quotenabgeltung, Kaution und
-                  Tierhaltung sind in der Analyse berücksichtigt — nicht erst seit gestern.
+                  Tierhaltung sind in der Analyse berücksichtigt, nicht erst seit gestern.
                 </p>
               </div>
 
@@ -839,7 +839,7 @@ const MietvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Klartext statt Juristendeutsch</h3>
                 <p className={styles.whyDesc}>
                   Jede Erkenntnis kommt mit verständlicher Erklärung und konkreter
-                  Handlungsempfehlung — auch ohne Jura-Studium sofort umsetzbar.
+                  Handlungsempfehlung, auch ohne Jura-Studium sofort umsetzbar.
                 </p>
               </div>
 
@@ -850,7 +850,7 @@ const MietvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Sofort verfügbar, 24/7</h3>
                 <p className={styles.whyDesc}>
                   Keine Termine, keine Wartezeiten. Den Mietvertrag prüfen, wenn er bei dir
-                  auf dem Tisch liegt — auch sonntagabends vor der Wohnungsbesichtigung.
+                  auf dem Tisch liegt, auch sonntagabends vor der Wohnungsbesichtigung.
                 </p>
               </div>
             </div>
@@ -1058,7 +1058,7 @@ const MietvertragPruefen: React.FC = () => {
                   Häufig ja. Nach der BGH-Rechtsprechung (insbesondere VIII ZR 185/14 vom
                   18.03.2015) ist eine Klausel zur Vornahme von Schönheitsreparaturen
                   unwirksam, wenn die Wohnung dem Mieter unrenoviert oder renovierungsbedürftig
-                  übergeben wurde — und kein angemessener finanzieller Ausgleich erfolgt. Auch
+                  übergeben wurde und kein angemessener finanzieller Ausgleich erfolgt. Auch
                   starre Fristenpläne ohne Bezug zum tatsächlichen Zustand sind unwirksam. Folge:
                   Die Pflicht zur Renovierung trägt nach § 535 Abs. 1 S. 2 BGB der Vermieter.
                 </p>
@@ -1159,7 +1159,7 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Arbeitsvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Wettbewerbsverbot, Probezeit, Kündigungsfrist — KI-Check auf Basis BAG-Rechtsprechung
+                    Wettbewerbsverbot, Probezeit, Kündigungsfrist. KI-Check auf Basis BAG-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1170,7 +1170,7 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>NDA prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs — KI-Check auf Basis GeschGehG
+                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs. KI-Check auf Basis GeschGehG
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1181,7 +1181,7 @@ const MietvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Kaufvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Gewährleistung, Beschaffenheit, „wie gesehen" — KI-Check auf Basis BGB-Kaufrecht
+                    Gewährleistung, Beschaffenheit, „wie gesehen". KI-Check auf Basis BGB-Kaufrecht
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />

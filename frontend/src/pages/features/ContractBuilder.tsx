@@ -144,7 +144,7 @@ const ContractBuilder: React.FC = () => {
 
               <p className={styles.heroSubtitle}>
                 Visueller Baukasten für rechtssichere Verträge. Drag & Drop, Smart Variables
-                und KI-Unterstützung – keine Vorkenntnisse nötig. Professionelle Dokumente
+                und KI-Unterstützung, keine Vorkenntnisse nötig. Professionelle Dokumente
                 in Minuten statt Stunden.
               </p>
 

@@ -145,7 +145,7 @@ const Vertragsverwaltung: React.FC = () => {
 
               <p className={styles.heroSubtitle}>
                 Schluss mit Ordner-Chaos. Contract AI organisiert deine Verträge zentral,
-                durchsuchbar und sicher – mit Smart-Search, Tagging und automatischen
+                durchsuchbar und sicher, mit Smart-Search, Tagging und automatischen
                 Erinnerungen.
               </p>
 

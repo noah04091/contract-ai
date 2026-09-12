@@ -156,7 +156,7 @@ const DigitaleSignatur: React.FC = () => {
 
               <p className={styles.heroSubtitle}>
                 Schluss mit Ausdrucken, Scannen und Versenden. Lass Verträge einfach
-                digital signieren – mit E-Mail-Benachrichtigung, Echtzeit-Tracking und
+                digital signieren, mit E-Mail-Benachrichtigung, Echtzeit-Tracking und
                 vollständigem Audit Trail.
               </p>
 
@@ -485,7 +485,7 @@ const DigitaleSignatur: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Automatischer E-Mail-Versand</h4>
-                      <p>Unterzeichner erhalten einen Link – ohne Login oder Software</p>
+                      <p>Unterzeichner erhalten einen Link, ohne Login oder Software</p>
                     </div>
                   </div>
 
@@ -625,7 +625,7 @@ const DigitaleSignatur: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Ja. Verträge, die du mit dem Vertragsgenerator erstellst, kannst du mit einem
-                  Klick zur Unterschrift an die andere Partei senden – ganz ohne Medienbruch.
+                  Klick zur Unterschrift an die andere Partei senden, ganz ohne Medienbruch.
                   Die Gegenseite signiert per Link (ohne eigenes Konto), du erhältst das fertig
                   signierte PDF mit Audit Trail zurück.
                 </p>
@@ -639,7 +639,7 @@ const DigitaleSignatur: React.FC = () => {
                 <p className={styles.faqAnswer}>
                   Du lädst deinen Vertrag hoch, definierst Signaturfelder und sendest eine
                   E-Mail an die Unterzeichner. Diese erhalten einen Link, öffnen das Dokument
-                  im Browser und signieren per Mausklick – ohne Login oder Software.
+                  im Browser und signieren per Mausklick, ohne Login oder Software.
                 </p>
               </details>
 
@@ -662,7 +662,7 @@ const DigitaleSignatur: React.FC = () => {
                 </summary>
                 <p className={styles.faqAnswer}>
                   Nein, Unterzeichner erhalten einen Link per E-Mail und können direkt im
-                  Browser signieren – ohne Registrierung oder Software-Installation.
+                  Browser signieren, ohne Registrierung oder Software-Installation.
                 </p>
               </details>
 

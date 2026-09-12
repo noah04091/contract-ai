@@ -134,7 +134,7 @@ export default function Impressum() {
             </span>
             <h1 className={styles.heroTitle}>Impressum</h1>
             <p className={styles.heroLead}>
-              Hinter Contract AI steckt kein anonymer Konzern — sondern echte Menschen, die an faire, verständliche Verträge glauben.
+              Hinter Contract AI steckt kein anonymer Konzern, sondern echte Menschen, die an faire, verständliche Verträge glauben.
             </p>
             <p className={styles.heroSubtitle}>
               Angaben gemäß § 5 TMG und § 18 Abs. 2 MStV. Transparent und vollständig — so wie es sein soll.

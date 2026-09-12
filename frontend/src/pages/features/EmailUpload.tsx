@@ -320,7 +320,7 @@ const EmailUpload: React.FC = () => {
                 </div>
                 <h3 className={styles.whyTitle}>Von überall</h3>
                 <p className={styles.whyDesc}>
-                  Funktioniert mit Gmail, Outlook, Apple Mail, Yahoo – auf
+                  Funktioniert mit Gmail, Outlook, Apple Mail, Yahoo, auf
                   PC, Tablet oder Smartphone.
                 </p>
               </div>

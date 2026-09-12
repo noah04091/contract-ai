@@ -129,7 +129,7 @@ export default function Rechtslexikon() {
         <title>Rechtslexikon: Juristische Begriffe verständlich erklärt | Contract AI</title>
         <meta
           name="description"
-          content="Kostenloses Rechtslexikon: über 90 juristische Begriffe aus dem deutschen Recht – in einfacher Sprache erklärt, mit Gesetzesbezug und Beispielen."
+          content="Kostenloses Rechtslexikon: über 90 juristische Begriffe aus dem deutschen Recht, in einfacher Sprache erklärt, mit Gesetzesbezug und Beispielen."
         />
         <meta
           name="keywords"
@@ -141,7 +141,7 @@ export default function Rechtslexikon() {
         <meta property="og:title" content="Rechtslexikon: Juristische Begriffe verständlich erklärt | Contract AI" />
         <meta
           property="og:description"
-          content="Über 90 juristische Begriffe verständlich erklärt – mit Gesetzesbezug und Praxisbeispielen."
+          content="Über 90 juristische Begriffe verständlich erklärt, mit Gesetzesbezug und Praxisbeispielen."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${SITE_URL}${LEXIKON_BASE_PATH}`} />
@@ -152,7 +152,7 @@ export default function Rechtslexikon() {
         <meta name="twitter:title" content="Rechtslexikon: Juristische Begriffe verständlich erklärt" />
         <meta
           name="twitter:description"
-          content="Über 90 juristische Begriffe verständlich erklärt – mit Gesetzesbezug und Praxisbeispielen."
+          content="Über 90 juristische Begriffe verständlich erklärt, mit Gesetzesbezug und Praxisbeispielen."
         />
 
         <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
@@ -171,7 +171,7 @@ export default function Rechtslexikon() {
               Recht, <span className={styles.accent}>verständlich</span> erklärt.
             </h1>
             <p className={styles.heroSubtitle}>
-              {legalTerms.length} juristische Begriffe aus dem deutschen Recht – in klarer Sprache,
+              {legalTerms.length} juristische Begriffe aus dem deutschen Recht, in klarer Sprache,
               mit Gesetzesbezug und Beispielen aus der Praxis.
             </p>
 

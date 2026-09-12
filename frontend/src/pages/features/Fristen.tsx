@@ -82,7 +82,7 @@ const Fristen: React.FC = () => {
         "name": "Wie genau ist die automatische Erkennung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Die KI liest Fristen, Laufzeiten und Verlängerungsklauseln direkt aus dem Vertragstext. Bei unklaren Formulierungen markiert sie potenzielle Fristen zur manuellen Überprüfung — du behältst immer die Kontrolle."
+          "text": "Die KI liest Fristen, Laufzeiten und Verlängerungsklauseln direkt aus dem Vertragstext. Bei unklaren Formulierungen markiert sie potenzielle Fristen zur manuellen Überprüfung. Du behältst immer die Kontrolle."
         }
       },
       {
@@ -120,9 +120,9 @@ const Fristen: React.FC = () => {
     "name": "Vertragsfristen automatisch überwachen",
     "description": "So behältst du Kündigungsfristen und Vertragslaufzeiten automatisch im Blick.",
     "step": [
-      { "@type": "HowToStep", "position": 1, "name": "Vertrag hochladen", "text": "Vertrag als PDF hochladen oder per E-Mail einreichen — die KI liest den Text automatisch." },
+      { "@type": "HowToStep", "position": 1, "name": "Vertrag hochladen", "text": "Vertrag als PDF hochladen oder per E-Mail einreichen. Die KI liest den Text automatisch." },
       { "@type": "HowToStep", "position": 2, "name": "Fristen-Extraktion", "text": "Die KI erkennt Kündigungsfristen, Laufzeiten und automatische Verlängerungen direkt aus dem Vertragstext." },
-      { "@type": "HowToStep", "position": 3, "name": "Automatische Erinnerungen", "text": "Rechtzeitige Erinnerungen per E-Mail und Kalender-Sync (Google, Outlook, Apple) — bevor die Frist abläuft." }
+      { "@type": "HowToStep", "position": 3, "name": "Automatische Erinnerungen", "text": "Rechtzeitige Erinnerungen per E-Mail und Kalender-Sync (Google, Outlook, Apple), bevor die Frist abläuft." }
     ]
   };
 
@@ -364,7 +364,7 @@ const Fristen: React.FC = () => {
             <div className={styles.problemGrid}>
               <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Das Problem</span>
-                <h2 className={styles.sectionTitleLeft}>Automatische Verlängerungen – die teure Falle</h2>
+                <h2 className={styles.sectionTitleLeft}>Automatische Verlängerungen: die teure Falle</h2>
                 {/* 04.09.2026 (TÜV-Mitnahme): Versicherungen/Mietverträge aus der Beispielreihe
                     direkt über den § 309-Nr.-9-Kacheln gelöst — beide fallen NICHT unter die Norm
                     (Versicherung: § 11 VVG; Miete: Gebrauchsüberlassung), haben aber eigene Fristen. */}
@@ -501,7 +501,7 @@ const Fristen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Flexible Erinnerungen</h4>
-                      <p>90, 60, 30, 14 Tage – oder individuell</p>
+                      <p>90, 60, 30, 14 Tage oder individuell</p>
                     </div>
                   </div>
 
@@ -511,7 +511,7 @@ const Fristen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Kalender-Integration</h4>
-                      <p>Google, Outlook, iCal – automatisch synchronisiert</p>
+                      <p>Google, Outlook, iCal, automatisch synchronisiert</p>
                     </div>
                   </div>
                 </div>
@@ -529,7 +529,7 @@ const Fristen: React.FC = () => {
               <span className={styles.sectionEyebrow}>Deine Vorteile</span>
               <h2 className={styles.sectionTitle}>Was der <span className={styles.sectionTitleAccent}>Fristenkalender</span> bietet</h2>
               <p className={styles.sectionSubtitle}>
-                Nie wieder wichtige Termine verpassen – automatisch und zuverlässig.
+                Nie wieder wichtige Termine verpassen, automatisch und zuverlässig.
               </p>
             </div>
 
@@ -541,7 +541,7 @@ const Fristen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Automatische Erkennung</h3>
                 <p className={styles.whyDesc}>
                   KI findet alle Kündigungsfristen, Mindestlaufzeiten und
-                  Verlängerungsregeln – auch versteckte.
+                  Verlängerungsregeln, auch versteckte.
                 </p>
               </div>
 
@@ -771,7 +771,7 @@ const Fristen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>E-Mail Upload</div>
                   <div className={styles.relatedDescription}>
-                    Verträge per E-Mail hochladen – automatisch erkannt und importiert
+                    Verträge per E-Mail hochladen, automatisch erkannt und importiert
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -803,7 +803,7 @@ const Fristen: React.FC = () => {
             <div className={`${styles.ctaCard} ${styles.animateOnScroll}`} ref={addToRefs}>
               <div className={styles.ctaContent}>
                 <h2 className={styles.ctaTitle}>
-                  Fristen im Griff – automatisch
+                  Fristen im Griff, automatisch
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Nie wieder wichtige Termine verpassen. Lass die KI deine Verträge

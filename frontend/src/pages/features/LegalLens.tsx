@@ -360,7 +360,7 @@ const LegalLens: React.FC = () => {
                   </div>
                   <div className={`${styles.problemStat} ${styles.warningBg}`}>
                     <div className={styles.problemStatValue}>§ 305c BGB</div>
-                    <div className={styles.problemStatLabel}>Überraschende Klauseln sind unwirksam — man muss sie nur finden</div>
+                    <div className={styles.problemStatLabel}>Überraschende Klauseln sind unwirksam: man muss sie nur finden</div>
                   </div>
                 </div>
               </div>

@@ -362,7 +362,7 @@ const Vertragsanalyse: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Wörtlich belegt</h3>
                 <p className={styles.functionDesc}>
-                  Risiken kommen mit Original-Zitat aus deinem Vertrag — automatisch gegen den
+                  Risiken kommen mit Original-Zitat aus deinem Vertrag, automatisch gegen den
                   Vertragstext verifiziert, statt bloßer KI-Behauptung.
                 </p>
               </div>
@@ -857,7 +857,7 @@ const Vertragsanalyse: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Mietvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Schönheitsreparaturen, Kaution, Indexmiete — KI-Check auf Basis BGH
+                    Schönheitsreparaturen, Kaution, Indexmiete. KI-Check auf Basis BGH
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -868,7 +868,7 @@ const Vertragsanalyse: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>NDA prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Vertragsstrafe, Carve-Outs, Wettbewerbsverbot — KI-Check auf Basis GeschGehG
+                    Vertragsstrafe, Carve-Outs, Wettbewerbsverbot. KI-Check auf Basis GeschGehG
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -879,7 +879,7 @@ const Vertragsanalyse: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Kaufvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Gewährleistung, Beschaffenheit, „wie gesehen" — KI-Check auf Basis BGB
+                    Gewährleistung, Beschaffenheit, „wie gesehen". KI-Check auf Basis BGB
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -944,7 +944,7 @@ const Vertragsanalyse: React.FC = () => {
                 </h2>
                 <p className={styles.ctaSubtitle}>
                   Über 87% unserer Nutzer finden kritische Klauseln, die sie übersehen hätten.
-                  Analysiere deinen Vertrag – in 60 Sekunden.
+                  Analysiere deinen Vertrag, in 60 Sekunden.
                 </p>
                 <div className={styles.ctaButtons}>
                   <Link to={target} className={styles.btnWhite}>

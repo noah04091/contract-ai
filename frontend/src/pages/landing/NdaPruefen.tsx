@@ -130,7 +130,7 @@ const NdaPruefen: React.FC = () => {
         "name": "Was kostet die KI-Prüfung eines NDA?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für IT- und Wirtschaftsrecht kostet typischerweise 200–500 € pro NDA — die KI-Analyse spart dir gerade bei häufigen Verhandlungen erhebliche Kosten."
+          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt für IT- und Wirtschaftsrecht kostet typischerweise 200–500 € pro NDA. Die KI-Analyse spart dir gerade bei häufigen Verhandlungen erhebliche Kosten."
         }
       },
       {
@@ -138,7 +138,7 @@ const NdaPruefen: React.FC = () => {
         "name": "Ersetzt die KI-Prüfung einen Fachanwalt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe internationale NDAs (Cross-Border, US-Common-Law), bei laufenden Streitigkeiten über Geheimnisverletzung oder bei strategisch hochwertigen Geschäften (M&A, Investorenrunden) bleibt ein Fachanwalt für Wirtschaftsrecht unverzichtbar. Die KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich."
+          "text": "Nein. Die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe internationale NDAs (Cross-Border, US-Common-Law), bei laufenden Streitigkeiten über Geheimnisverletzung oder bei strategisch hochwertigen Geschäften (M&A, Investorenrunden) bleibt ein Fachanwalt für Wirtschaftsrecht unverzichtbar. Die KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich."
         }
       }
     ]
@@ -167,7 +167,7 @@ const NdaPruefen: React.FC = () => {
         "@type": "HowToStep",
         "position": 3,
         "name": "Detaillierten Report erhalten",
-        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen — als interaktive Ansicht und als PDF-Export."
+        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen, als interaktive Ansicht und als PDF-Export."
       }
     ]
   };
@@ -452,7 +452,7 @@ const NdaPruefen: React.FC = () => {
                   Fällen Klauseln, die einer rechtlichen Überprüfung nicht standhalten oder dich
                   unverhältnismäßig binden. Vertragsstrafen in fünfstelliger Höhe ohne klaren Bezug
                   zum Schaden, unbefristete Geheimhaltungsdauern, fehlende Carve-Outs für unabhängig
-                  entwickeltes Wissen — und manchmal sogar versteckte Wettbewerbsverbote, die dich
+                  entwickeltes Wissen und manchmal sogar versteckte Wettbewerbsverbote, die dich
                   jahrelang aus deinem Markt drängen können. Das Tückische: Einmal unterschrieben,
                   ist die Verhandlungsmacht weg.
                 </p>
@@ -558,7 +558,7 @@ const NdaPruefen: React.FC = () => {
 
               <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
-                <h2 className={styles.sectionTitleLeft}>NDA-Prüfung im Sekundentakt — direkt vor der Verhandlung</h2>
+                <h2 className={styles.sectionTitleLeft}>NDA-Prüfung im Sekundentakt, direkt vor der Verhandlung</h2>
                 <p className={styles.solutionText}>
                   Die KI von Contract AI kennt das Geschäftsgeheimnisgesetz (GeschGehG), die §§ 305 ff.
                   BGB zur AGB-Kontrolle, § 343 BGB zur Vertragsstrafenherabsetzung und die marktüblichen
@@ -583,7 +583,7 @@ const NdaPruefen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h3>Verhandlungs-Hebel erkennen</h3>
-                      <p>Wo du nachverhandeln kannst — und wo du standfest bleiben solltest</p>
+                      <p>Wo du nachverhandeln kannst und wo du standfest bleiben solltest</p>
                     </div>
                   </div>
 
@@ -593,7 +593,7 @@ const NdaPruefen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h3>Klartext für Geschäftsleute</h3>
-                      <p>Keine juristische Vorbildung nötig — die Empfehlungen sind direkt umsetzbar</p>
+                      <p>Keine juristische Vorbildung nötig: die Empfehlungen sind direkt umsetzbar</p>
                     </div>
                   </div>
                 </div>
@@ -612,7 +612,7 @@ const NdaPruefen: React.FC = () => {
               <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen in einem NDA</h2>
               <p className={styles.sectionSubtitle}>
                 Diese acht Klauseltypen sind in der Praxis am häufigsten unverhältnismäßig oder
-                rechtlich angreifbar — und genau hier schaut unsere KI besonders genau hin.
+                rechtlich angreifbar und genau hier schaut unsere KI besonders genau hin.
               </p>
             </div>
 
@@ -644,7 +644,7 @@ const NdaPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Pauschale Mondbeträge ohne Bezug zum konkreten Schaden sind nach <strong>§ 343 BGB</strong> regelmäßig unwirksam — das Gericht kann unverhältnismäßig hohe Vertragsstrafen herabsetzen. Marktüblich liegen NDA-Vertragsstrafen bei 5.000–50.000 € pro Einzelfall, gestaffelt nach Schwere und Wert der Information. Bei Formularklauseln greift zusätzlich die AGB-Kontrolle nach §§ 305 ff. BGB.</span>
+                  <span>Pauschale Mondbeträge ohne Bezug zum konkreten Schaden sind nach <strong>§ 343 BGB</strong> regelmäßig unwirksam. Das Gericht kann unverhältnismäßig hohe Vertragsstrafen herabsetzen. Marktüblich liegen NDA-Vertragsstrafen bei 5.000–50.000 € pro Einzelfall, gestaffelt nach Schwere und Wert der Information. Bei Formularklauseln greift zusätzlich die AGB-Kontrolle nach §§ 305 ff. BGB.</span>
                 </div>
               </div>
 
@@ -674,7 +674,7 @@ const NdaPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Ein professionelles NDA enthält <strong>fünf Standard-Ausnahmen</strong>: (1) öffentlich bekannt, (2) bereits vor Erhalt bekannt, (3) unabhängig entwickelt, (4) rechtmäßig von Dritten erhalten, (5) gesetzlich oder behördlich zur Offenlegung verpflichtet. Fehlen diese Carve-Outs, ist die Klausel typischerweise nach <strong>§ 307 BGB</strong> unangemessen benachteiligend — und das gesamte NDA verlierte ggf. seine Wirksamkeit.</span>
+                  <span>Ein professionelles NDA enthält <strong>fünf Standard-Ausnahmen</strong>: (1) öffentlich bekannt, (2) bereits vor Erhalt bekannt, (3) unabhängig entwickelt, (4) rechtmäßig von Dritten erhalten, (5) gesetzlich oder behördlich zur Offenlegung verpflichtet. Fehlen diese Carve-Outs, ist die Klausel typischerweise nach <strong>§ 307 BGB</strong> unangemessen benachteiligend und das gesamte NDA verlierte ggf. seine Wirksamkeit.</span>
                 </div>
               </div>
 
@@ -719,7 +719,7 @@ const NdaPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Wenn beide Vertragsparteien deutsche Unternehmen oder Privatpersonen sind, sollten <strong>deutsches Recht und ein deutscher Gerichtsstand</strong> vereinbart werden. Bei Verbrauchergeschäften ist die Wahl eines ausländischen Gerichtsstands nach <strong>§ 38 ZPO</strong> meist sogar unzulässig. Ein Verfahren in den USA kann je nach Streitwert sechsstellige Anwaltskosten verursachen — auch bei Recht-Bekommen.</span>
+                  <span>Wenn beide Vertragsparteien deutsche Unternehmen oder Privatpersonen sind, sollten <strong>deutsches Recht und ein deutscher Gerichtsstand</strong> vereinbart werden. Bei Verbrauchergeschäften ist die Wahl eines ausländischen Gerichtsstands nach <strong>§ 38 ZPO</strong> meist sogar unzulässig. Ein Verfahren in den USA kann je nach Streitwert sechsstellige Anwaltskosten verursachen, auch bei Recht-Bekommen.</span>
                 </div>
               </div>
 
@@ -751,7 +751,7 @@ const NdaPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
               <h2 className={styles.sectionTitle}>In drei Schritten zur fertigen NDA-Analyse</h2>
               <p className={styles.sectionSubtitle}>
-                Vom hochgeladenen PDF zum strukturierten Risiko-Report — bevor du unterschreibst.
+                Vom hochgeladenen PDF zum strukturierten Risiko-Report, bevor du unterschreibst.
               </p>
             </div>
 
@@ -789,8 +789,8 @@ const NdaPruefen: React.FC = () => {
                     <h3 className={styles.processTitle}>Detaillierten Report erhalten</h3>
                     <p className={styles.processDesc}>
                       Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter
-                      Problemstellen mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen
-                      — als interaktive Ansicht und als PDF-Export.
+                      Problemstellen mit Paragraphen-Verweis und konkreten Verhandlungsempfehlungen,
+                     als interaktive Ansicht und als PDF-Export.
                     </p>
                   </div>
                 </div>
@@ -820,7 +820,7 @@ const NdaPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>GeschGehG & BGB-AGB-Kontrolle</h3>
                 <p className={styles.whyDesc}>
                   Geschäftsgeheimnisgesetz, §§ 305 ff. BGB und § 343 BGB werden auf jede
-                  Klausel angewendet — automatisch.
+                  Klausel angewendet, automatisch.
                 </p>
               </div>
 
@@ -842,7 +842,7 @@ const NdaPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Verhandlungs-Hebel statt Juristendeutsch</h3>
                 <p className={styles.whyDesc}>
                   Du bekommst nicht nur „Klausel X ist problematisch", sondern „Verhandle Punkt Y
-                  zu Punkt Z" — direkt umsetzbar.
+                  zu Punkt Z", direkt umsetzbar.
                 </p>
               </div>
 
@@ -1164,7 +1164,7 @@ const NdaPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Arbeitsvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Wettbewerbsverbot, Probezeit, Kündigungsfrist — KI-Check auf Basis BAG-Rechtsprechung
+                    Wettbewerbsverbot, Probezeit, Kündigungsfrist. KI-Check auf Basis BAG-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1175,7 +1175,7 @@ const NdaPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Mietvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Schönheitsreparaturen, Kaution, Indexmiete — KI-Check auf Basis BGH-Rechtsprechung
+                    Schönheitsreparaturen, Kaution, Indexmiete. KI-Check auf Basis BGH-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1186,7 +1186,7 @@ const NdaPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Kaufvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Gewährleistung, Beschaffenheit, „wie gesehen" — KI-Check auf Basis BGB-Kaufrecht
+                    Gewährleistung, Beschaffenheit, „wie gesehen". KI-Check auf Basis BGB-Kaufrecht
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />

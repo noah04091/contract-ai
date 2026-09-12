@@ -414,7 +414,7 @@ const Optimierung: React.FC = () => {
                 <h2 className={styles.sectionTitleLeft}>KI-gestützte Optimierung mit konkreten Vorschlägen</h2>
                 <p className={styles.solutionText}>
                   Contract AI analysiert deinen Vertrag systematisch auf Schwachstellen und generiert
-                  sofort bessere Formulierungen – mit Begründung und verhandlungsfertig.
+                  sofort bessere Formulierungen, mit Begründung und verhandlungsfertig.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -444,7 +444,7 @@ const Optimierung: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h4>Verständliche Begründungen</h4>
-                      <p>Jede Änderung wird erklärt – für deine Verhandlungen</p>
+                      <p>Jede Änderung wird erklärt, für deine Verhandlungen</p>
                     </div>
                   </div>
                 </div>
@@ -496,7 +496,7 @@ const Optimierung: React.FC = () => {
                 <h3 className={styles.whyTitle}>Transparente Änderungen</h3>
                 <p className={styles.whyDesc}>
                   Jede Optimierung wird begründet und ist nachvollziehbar
-                  dokumentiert – für deine Verhandlungen.
+                  dokumentiert, für deine Verhandlungen.
                 </p>
               </div>
 
@@ -718,7 +718,7 @@ const Optimierung: React.FC = () => {
                   Stärkere Position, weniger Risiko
                 </h2>
                 <p className={styles.ctaSubtitle}>
-                  Verwandle schwache Klauseln in starke Formulierungen – mit konkreten
+                  Verwandle schwache Klauseln in starke Formulierungen, mit konkreten
                   Vorschlägen und Begründungen für deine Verhandlungen.
                 </p>
                 <div className={styles.ctaButtons}>

@@ -130,7 +130,7 @@ const KaufvertragPruefen: React.FC = () => {
         "name": "Was kostet die KI-Prüfung eines Kaufvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 100–300 € pro Vertrag — die KI-Analyse spart dir gerade beim Autokauf, Möbelkauf oder anderen größeren Anschaffungen erhebliche Kosten."
+          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine vergleichbare Erstprüfung beim Anwalt kostet typischerweise 100–300 € pro Vertrag. Die KI-Analyse spart dir gerade beim Autokauf, Möbelkauf oder anderen größeren Anschaffungen erhebliche Kosten."
         }
       },
       {
@@ -138,7 +138,7 @@ const KaufvertragPruefen: React.FC = () => {
         "name": "Ersetzt die KI-Prüfung einen Anwalt?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe Geschäfte (Immobilienkauf, Unternehmensbeteiligungen, gewerblicher Großhandel), bei laufenden Streitigkeiten über Sachmängel oder bei sehr hohen Kaufpreisen bleibt ein Fachanwalt unverzichtbar. Die KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich."
+          "text": "Nein. Die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Für komplexe Geschäfte (Immobilienkauf, Unternehmensbeteiligungen, gewerblicher Großhandel), bei laufenden Streitigkeiten über Sachmängel oder bei sehr hohen Kaufpreisen bleibt ein Fachanwalt unverzichtbar. Die KI-Analyse ist eine fundierte Vorprüfung und senkt im Anwaltsgespräch oft die Beratungskosten erheblich."
         }
       }
     ]
@@ -167,7 +167,7 @@ const KaufvertragPruefen: React.FC = () => {
         "@type": "HowToStep",
         "position": 3,
         "name": "Detaillierten Report erhalten",
-        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen — als interaktive Ansicht und als PDF-Export."
+        "text": "Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen, als interaktive Ansicht und als PDF-Export."
       }
     ]
   };
@@ -453,7 +453,7 @@ const KaufvertragPruefen: React.FC = () => {
                   juristisch gar nicht. Verkäufer drücken Käufern oft Verträge in die Hand, die
                   einseitig formuliert sind: pauschaler Gewährleistungsausschluss, vage
                   Beschaffenheitsangaben, überzogene Stornogebühren. Wer das nicht erkennt, zahlt
-                  später für versteckte Mängel oder verliert Anspruch auf Rückgabe — bei
+                  später für versteckte Mängel oder verliert Anspruch auf Rückgabe, bei
                   hochpreisigen Käufen schnell vier- oder fünfstellige Beträge.
                 </p>
 
@@ -525,7 +525,7 @@ const KaufvertragPruefen: React.FC = () => {
                     </div>
                     <div className={styles.comparisonTitle}>Anwaltsberatung</div>
                     <div className={styles.comparisonDesc}>
-                      100–300 € pro Vertrag, Termin, Wartezeit — und der Verkäufer
+                      100–300 € pro Vertrag, Termin, Wartezeit und der Verkäufer
                       drängt auf sofortige Unterschrift.
                     </div>
                     <div className={styles.comparisonTime}>
@@ -558,12 +558,12 @@ const KaufvertragPruefen: React.FC = () => {
 
               <div className={`${styles.solutionContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Die Lösung</span>
-                <h2 className={styles.sectionTitleLeft}>Kaufvertragsprüfung im Sekundentakt — bevor du unterschreibst</h2>
+                <h2 className={styles.sectionTitleLeft}>Kaufvertragsprüfung im Sekundentakt, bevor du unterschreibst</h2>
                 <p className={styles.solutionText}>
                   Die KI von Contract AI kennt die §§ 433–453 BGB zum Kaufrecht, die §§ 474–479 BGB
                   zum Verbrauchsgüterkauf, § 434 BGB zur Sachmangeldefinition, § 437 BGB zu
                   Mängelrechten, § 438 BGB zur Verjährung und die einschlägige BGH-Rechtsprechung
-                  — und wendet sie sofort auf jede Klausel deines Vertrags an.
+                  und wendet sie sofort auf jede Klausel deines Vertrags an.
                 </p>
 
                 <div className={styles.solutionFeatures}>
@@ -612,7 +612,7 @@ const KaufvertragPruefen: React.FC = () => {
               <h2 className={styles.sectionTitle}>Die 8 typischsten Fallen im Kaufvertrag</h2>
               <p className={styles.sectionSubtitle}>
                 Diese acht Klauseltypen sind in der Praxis am häufigsten unwirksam oder rechtlich
-                angreifbar — und genau hier schaut unsere KI besonders genau hin.
+                angreifbar und genau hier schaut unsere KI besonders genau hin.
               </p>
             </div>
 
@@ -644,7 +644,7 @@ const KaufvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Diese Klausel ist häufig missverstanden. Sie schließt nur Mängel aus, die bei einer üblichen Besichtigung erkennbar waren. <strong>Versteckte Mängel und arglistig verschwiegene Mängel</strong> sind davon nach <strong>§ 444 BGB nicht erfasst</strong> — der Verkäufer haftet trotzdem. Auch eine ausdrücklich vereinbarte Beschaffenheit (z.B. „unfallfrei") wird vom Ausschluss nicht erfasst.</span>
+                  <span>Diese Klausel ist häufig missverstanden. Sie schließt nur Mängel aus, die bei einer üblichen Besichtigung erkennbar waren. <strong>Versteckte Mängel und arglistig verschwiegene Mängel</strong> sind davon nach <strong>§ 444 BGB nicht erfasst</strong>. Der Verkäufer haftet trotzdem. Auch eine ausdrücklich vereinbarte Beschaffenheit (z.B. „unfallfrei") wird vom Ausschluss nicht erfasst.</span>
                 </div>
               </div>
 
@@ -674,7 +674,7 @@ const KaufvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Die gesetzliche Verjährung beträgt nach <strong>§ 438 Abs. 1 Nr. 3 BGB zwei Jahre</strong> ab Übergabe. Beim Verbrauchsgüterkauf darf die Frist nach <strong>§ 476 Abs. 2 BGB</strong> nur unter engen Voraussetzungen verkürzt werden — bei gebrauchten Sachen auf maximal 1 Jahr, bei neuen Sachen gar nicht. Sechs Monate sind unwirksam — es gilt die volle gesetzliche Frist.</span>
+                  <span>Die gesetzliche Verjährung beträgt nach <strong>§ 438 Abs. 1 Nr. 3 BGB zwei Jahre</strong> ab Übergabe. Beim Verbrauchsgüterkauf darf die Frist nach <strong>§ 476 Abs. 2 BGB</strong> nur unter engen Voraussetzungen verkürzt werden, bei gebrauchten Sachen auf maximal 1 Jahr, bei neuen Sachen gar nicht. Sechs Monate sind unwirksam. Es gilt die volle gesetzliche Frist.</span>
                 </div>
               </div>
 
@@ -704,7 +704,7 @@ const KaufvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Pauschale Stornogebühren in AGB unterliegen der Kontrolle nach <strong>§§ 307, 309 Nr. 5 BGB</strong>. Sie sind nur wirksam, wenn sie den nach gewöhnlichem Lauf der Dinge zu erwartenden Schaden nicht überschreiten und dem Käufer der Nachweis eines geringeren Schadens ausdrücklich offen bleibt. 25 % pauschal sind regelmäßig zu hoch und damit insgesamt unwirksam — der Verkäufer muss konkreten Schaden beweisen.</span>
+                  <span>Pauschale Stornogebühren in AGB unterliegen der Kontrolle nach <strong>§§ 307, 309 Nr. 5 BGB</strong>. Sie sind nur wirksam, wenn sie den nach gewöhnlichem Lauf der Dinge zu erwartenden Schaden nicht überschreiten und dem Käufer der Nachweis eines geringeren Schadens ausdrücklich offen bleibt. 25 % pauschal sind regelmäßig zu hoch und damit insgesamt unwirksam. Der Verkäufer muss konkreten Schaden beweisen.</span>
                 </div>
               </div>
 
@@ -734,7 +734,7 @@ const KaufvertragPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Beim <strong>Verbrauchsgüterkauf</strong> geht die Gefahr nach <strong>§ 475 Abs. 2 BGB</strong> erst mit Übergabe an den Käufer (oder vom ihm benannte Person) über — nicht bereits bei Übergabe an den Spediteur. Wird die Sache auf dem Transportweg beschädigt oder zerstört, trägt der Verkäufer das Risiko. Klauseln, die diese Regel zulasten des Verbrauchers verschieben, sind unwirksam.</span>
+                  <span>Beim <strong>Verbrauchsgüterkauf</strong> geht die Gefahr nach <strong>§ 475 Abs. 2 BGB</strong> erst mit Übergabe an den Käufer (oder vom ihm benannte Person) über, nicht bereits bei Übergabe an den Spediteur. Wird die Sache auf dem Transportweg beschädigt oder zerstört, trägt der Verkäufer das Risiko. Klauseln, die diese Regel zulasten des Verbrauchers verschieben, sind unwirksam.</span>
                 </div>
               </div>
 
@@ -751,7 +751,7 @@ const KaufvertragPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
               <h2 className={styles.sectionTitle}>In drei Schritten zur fertigen Vertragsanalyse</h2>
               <p className={styles.sectionSubtitle}>
-                Vom hochgeladenen PDF zum strukturierten Risiko-Report — bevor du unterschreibst.
+                Vom hochgeladenen PDF zum strukturierten Risiko-Report, bevor du unterschreibst.
               </p>
             </div>
 
@@ -788,8 +788,8 @@ const KaufvertragPruefen: React.FC = () => {
                     <h3 className={styles.processTitle}>Detaillierten Report erhalten</h3>
                     <p className={styles.processDesc}>
                       Du erhältst einen Report mit Chancen-Risiken-Score, einer Liste markierter
-                      Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen
-                      — als interaktive Ansicht und als PDF-Export.
+                      Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen,
+                     als interaktive Ansicht und als PDF-Export.
                     </p>
                   </div>
                 </div>
@@ -819,7 +819,7 @@ const KaufvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>BGB-Kaufrecht & BGH-Urteile</h3>
                 <p className={styles.whyDesc}>
                   Die §§ 433–453 BGB, das Verbrauchsgüterkaufrecht und einschlägige BGH-Urteile
-                  werden auf jede Klausel angewendet — automatisch.
+                  werden auf jede Klausel angewendet, automatisch.
                 </p>
               </div>
 
@@ -841,7 +841,7 @@ const KaufvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Klartext statt Juristendeutsch</h3>
                 <p className={styles.whyDesc}>
                   Jede Erkenntnis kommt mit verständlicher Erklärung und konkreter
-                  Handlungsempfehlung — auch ohne Jura-Studium sofort umsetzbar.
+                  Handlungsempfehlung, auch ohne Jura-Studium sofort umsetzbar.
                 </p>
               </div>
 
@@ -852,7 +852,7 @@ const KaufvertragPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Schnell genug für die Verhandlung</h3>
                 <p className={styles.whyDesc}>
                   Wenn der Verkäufer auf sofortige Unterschrift drängt, hast du in 60 Sekunden
-                  die fundierte Antwort — direkt am Verhandlungstisch.
+                  die fundierte Antwort, direkt am Verhandlungstisch.
                 </p>
               </div>
             </div>
@@ -1161,7 +1161,7 @@ const KaufvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Arbeitsvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Wettbewerbsverbot, Probezeit, Kündigungsfrist — KI-Check auf Basis BAG-Rechtsprechung
+                    Wettbewerbsverbot, Probezeit, Kündigungsfrist. KI-Check auf Basis BAG-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1172,7 +1172,7 @@ const KaufvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Mietvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Schönheitsreparaturen, Kaution, Indexmiete — KI-Check auf Basis BGH-Rechtsprechung
+                    Schönheitsreparaturen, Kaution, Indexmiete. KI-Check auf Basis BGH-Rechtsprechung
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1183,7 +1183,7 @@ const KaufvertragPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>NDA prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs — KI-Check auf Basis GeschGehG
+                    Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs. KI-Check auf Basis GeschGehG
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />

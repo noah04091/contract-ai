@@ -27,7 +27,7 @@ const values = [
   {
     icon: <Sparkles size={20} />,
     title: "Einfachheit",
-    description: "Komplexe Verträge verständlich machen – für jeden."
+    description: "Komplexe Verträge verständlich machen, für jeden."
   },
   {
     icon: <Zap size={20} />,
@@ -261,7 +261,7 @@ const About: React.FC = () => {
                 Klarheit in jedem Vertrag.
               </h1>
               <p className={`${styles.anriss} fadeInUp`} style={{ animationDelay: '0.16s' }}>
-                Wir entwickeln smarte KI-Lösungen für transparente, sichere und einfache Vertragsanalysen — damit jeder Mensch versteht, was er unterschreibt.
+                Wir entwickeln smarte KI-Lösungen für transparente, sichere und einfache Vertragsanalysen, damit jeder Mensch versteht, was er unterschreibt.
               </p>
               <div className={`${styles.knoepfe} fadeInUp`} style={{ animationDelay: '0.24s' }}>
                 <Link to="/register" className={styles.knopfVoll}>
@@ -301,7 +301,7 @@ const About: React.FC = () => {
                 Einfachheit ist nicht nur ein ästhetisches Ideal – sie ist eine funktionale Notwendigkeit.
               </blockquote>
               <p>
-                Mit Contract AI transformieren wir die Art und Weise, wie Unternehmen ihre vertraglichen Verpflichtungen verstehen und verwalten – mit Präzision, Eleganz und unübertroffener Klarheit.
+                Mit Contract AI transformieren wir die Art und Weise, wie Unternehmen ihre vertraglichen Verpflichtungen verstehen und verwalten, mit Präzision, Eleganz und unübertroffener Klarheit.
               </p>
             </div>
           </div>

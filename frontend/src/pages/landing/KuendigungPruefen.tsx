@@ -73,7 +73,7 @@ const KuendigungPruefen: React.FC = () => {
         "name": "Wie schnell muss ich gegen eine Kündigung vorgehen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Sehr schnell: Für die Kündigungsschutzklage gilt grundsätzlich eine Frist von drei Wochen ab Zugang der schriftlichen Kündigung (§ 4 KSchG). Wird sie versäumt, gilt die Kündigung nach § 7 KSchG als von Anfang an wirksam — selbst wenn sie eigentlich angreifbar gewesen wäre. Genau deshalb erkennt Contract AI die Klagefrist automatisch und trägt sie mit Erinnerung in deinen Kalender ein."
+          "text": "Sehr schnell: Für die Kündigungsschutzklage gilt grundsätzlich eine Frist von drei Wochen ab Zugang der schriftlichen Kündigung (§ 4 KSchG). Wird sie versäumt, gilt die Kündigung nach § 7 KSchG als von Anfang an wirksam, selbst wenn sie eigentlich angreifbar gewesen wäre. Genau deshalb erkennt Contract AI die Klagefrist automatisch und trägt sie mit Erinnerung in deinen Kalender ein."
         }
       },
       {
@@ -97,7 +97,7 @@ const KuendigungPruefen: React.FC = () => {
         "name": "Habe ich bei einer Kündigung Anspruch auf eine Abfindung?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Einen allgemeinen gesetzlichen Abfindungsanspruch gibt es nicht. Ausnahme: Bei einer betriebsbedingten Kündigung kann der Arbeitgeber nach § 1a KSchG eine Abfindung von 0,5 Monatsverdiensten pro Beschäftigungsjahr anbieten, wenn du im Gegenzug auf die Klage verzichtest. In der Praxis entstehen Abfindungen meist als Vergleich im Kündigungsschutzprozess — auch deshalb ist die 3-Wochen-Frist so wichtig: Ohne fristgerechte Klage entfällt dieses Verhandlungsdruckmittel."
+          "text": "Einen allgemeinen gesetzlichen Abfindungsanspruch gibt es nicht. Ausnahme: Bei einer betriebsbedingten Kündigung kann der Arbeitgeber nach § 1a KSchG eine Abfindung von 0,5 Monatsverdiensten pro Beschäftigungsjahr anbieten, wenn du im Gegenzug auf die Klage verzichtest. In der Praxis entstehen Abfindungen meist als Vergleich im Kündigungsschutzprozess, auch deshalb ist die 3-Wochen-Frist so wichtig: Ohne fristgerechte Klage entfällt dieses Verhandlungsdruckmittel."
         }
       },
       {
@@ -121,7 +121,7 @@ const KuendigungPruefen: React.FC = () => {
         "name": "Kann ich einfach ein Foto meiner Kündigung hochladen?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja. Du kannst das Kündigungsschreiben einfach mit dem Handy abfotografieren und das Foto hochladen — die Texterkennung liest das Dokument automatisch aus, und die Analyse startet wie bei einer PDF. Die Analyse weist transparent darauf hin, wenn sie auf Texterkennung basiert, damit du wichtige Zahlen kurz am Original gegenprüfen kannst."
+          "text": "Ja. Du kannst das Kündigungsschreiben einfach mit dem Handy abfotografieren und das Foto hochladen. Die Texterkennung liest das Dokument automatisch aus, und die Analyse startet wie bei einer PDF. Die Analyse weist transparent darauf hin, wenn sie auf Texterkennung basiert, damit du wichtige Zahlen kurz am Original gegenprüfen kannst."
         }
       },
       {
@@ -129,7 +129,7 @@ const KuendigungPruefen: React.FC = () => {
         "name": "Ersetzt die KI-Prüfung einen Anwalt für Arbeitsrecht?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Ersteinschätzung und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Gerade wenn du eine Kündigungsschutzklage erwägst, solltest du wegen der 3-Wochen-Frist zügig einen Fachanwalt für Arbeitsrecht einschalten. Die KI-Analyse verschafft dir vorher in Minuten den Überblick über Fristen und Angriffspunkte — eine fundierte Grundlage für das Anwaltsgespräch."
+          "text": "Nein. Die KI liefert eine strukturierte Ersteinschätzung und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Gerade wenn du eine Kündigungsschutzklage erwägst, solltest du wegen der 3-Wochen-Frist zügig einen Fachanwalt für Arbeitsrecht einschalten. Die KI-Analyse verschafft dir vorher in Minuten den Überblick über Fristen und Angriffspunkte — eine fundierte Grundlage für das Anwaltsgespräch."
         }
       }
     ]
@@ -146,7 +146,7 @@ const KuendigungPruefen: React.FC = () => {
         "@type": "HowToStep",
         "position": 1,
         "name": "Kündigung hochladen oder abfotografieren",
-        "text": "Lade das Kündigungsschreiben als PDF hoch — oder fotografiere es einfach mit dem Handy ab. Die Übertragung erfolgt verschlüsselt, die Verarbeitung DSGVO-konform."
+        "text": "Lade das Kündigungsschreiben als PDF hoch oder fotografiere es einfach mit dem Handy ab. Die Übertragung erfolgt verschlüsselt, die Verarbeitung DSGVO-konform."
       },
       {
         "@type": "HowToStep",
@@ -218,13 +218,13 @@ const KuendigungPruefen: React.FC = () => {
 
               <h1 className={styles.heroTitle}>
                 Kündigung erhalten?<br/>
-                <span className={styles.heroTitleHighlight}>Jetzt prüfen — die Klagefrist läuft</span>
+                <span className={styles.heroTitleHighlight}>Jetzt prüfen: die Klagefrist läuft</span>
               </h1>
 
               <p className={styles.heroSubtitle}>
                 Für die Kündigungsschutzklage bleiben dir grundsätzlich nur drei Wochen ab Zugang
                 (§ 4 KSchG). Die KI prüft dein Kündigungsschreiben aus deiner Sicht als Empfänger:
-                Fristen, Formfragen, nächste Schritte — und trägt die Klagefrist automatisch mit
+                Fristen, Formfragen, nächste Schritte und trägt die Klagefrist automatisch mit
                 Erinnerung in deinen Kalender ein. Ein Handy-Foto genügt.
               </p>
 
@@ -339,7 +339,7 @@ const KuendigungPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>Prüfumfang</span>
               <h2 className={styles.sectionTitle}>Was die KI an deiner Kündigung prüft</h2>
               <p className={styles.sectionSubtitle}>
-                Acht Punkte, auf die es nach Erhalt einer Kündigung wirklich ankommt — aus deiner
+                Acht Punkte, auf die es nach Erhalt einer Kündigung wirklich ankommt, aus deiner
                 Perspektive als Empfänger, nicht aus der des Absenders.
               </p>
             </div>
@@ -417,7 +417,7 @@ const KuendigungPruefen: React.FC = () => {
                 </div>
                 <h3 className={styles.functionTitle}>Meldepflicht Agentur für Arbeit</h3>
                 <p className={styles.functionDesc}>
-                  § 38 SGB III — bei kurzer Frist musst du dich binnen drei Tagen arbeitsuchend
+                  § 38 SGB III, bei kurzer Frist musst du dich binnen drei Tagen arbeitsuchend
                   melden, sonst droht eine Sperrzeit.
                 </p>
               </div>
@@ -446,10 +446,10 @@ const KuendigungPruefen: React.FC = () => {
                 <span className={styles.sectionEyebrow}>Das Problem</span>
                 <h2 className={styles.sectionTitleLeft}>Nach drei Wochen ist fast alles entschieden</h2>
                 <p className={styles.problemText}>
-                  Eine Kündigung trifft die meisten Menschen unvorbereitet — und genau dann beginnt
+                  Eine Kündigung trifft die meisten Menschen unvorbereitet und genau dann beginnt
                   die kürzeste und wichtigste Frist des Arbeitsrechts: Wer nicht innerhalb von
                   <strong> drei Wochen</strong> Kündigungsschutzklage erhebt, gegen den gilt die
-                  Kündigung nach § 7 KSchG als von Anfang an wirksam — selbst wenn sie fehlerhaft
+                  Kündigung nach § 7 KSchG als von Anfang an wirksam, selbst wenn sie fehlerhaft
                   war. Formfehler, falsche Fristen oder fehlende Vollmachten nützen dir dann nichts
                   mehr. Dazu kommen Meldepflichten bei der Agentur für Arbeit, deren Versäumnis
                   bares Geld kostet. Das Tückische: All das steht nicht im Kündigungsschreiben.
@@ -544,7 +544,7 @@ const KuendigungPruefen: React.FC = () => {
                     <div className={styles.comparisonTitle}>Klarheit in Minuten</div>
                     <div className={styles.comparisonDesc}>
                       Alle Fristen erkannt und im Kalender, Formfragen benannt, nächste Schritte
-                      verständlich erklärt — mit wörtlichen Belegen aus deinem Schreiben.
+                      verständlich erklärt, mit wörtlichen Belegen aus deinem Schreiben.
                     </div>
                     <div className={styles.comparisonTime}>
                       <Zap size={16} />
@@ -560,7 +560,7 @@ const KuendigungPruefen: React.FC = () => {
                 <p className={styles.solutionText}>
                   Die meisten Vertrags-Tools prüfen Verträge vor der Unterschrift. Contract AI
                   erkennt automatisch, dass du ein <strong>einseitiges Schreiben erhalten</strong> hast
-                  — und wechselt die Perspektive: Was bedeutet das für dich, welche Fristen laufen,
+                  und wechselt die Perspektive: Was bedeutet das für dich, welche Fristen laufen,
                   wo sind Angriffspunkte, was solltest du jetzt tun.
                 </p>
 
@@ -581,7 +581,7 @@ const KuendigungPruefen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h3>Fristen direkt im Kalender</h3>
-                      <p>Klagefrist & Co. werden automatisch eingetragen — mit rechtzeitiger E-Mail-Erinnerung</p>
+                      <p>Klagefrist & Co. werden automatisch eingetragen, mit rechtzeitiger E-Mail-Erinnerung</p>
                     </div>
                   </div>
 
@@ -591,7 +591,7 @@ const KuendigungPruefen: React.FC = () => {
                     </div>
                     <div className={styles.solutionFeatureText}>
                       <h3>Foto genügt</h3>
-                      <p>Kündigung mit dem Handy abfotografieren — die Texterkennung übernimmt den Rest</p>
+                      <p>Kündigung mit dem Handy abfotografieren: die Texterkennung übernimmt den Rest</p>
                     </div>
                   </div>
                 </div>
@@ -606,7 +606,7 @@ const KuendigungPruefen: React.FC = () => {
         <section className={styles.risksSection} id="wichtig">
           <div className={styles.container}>
             <div className={`${styles.sectionHeader} ${styles.animateOnScroll}`} ref={addToRefs}>
-              <span className={styles.sectionEyebrow}>Kündigung erhalten — was jetzt?</span>
+              <span className={styles.sectionEyebrow}>Kündigung erhalten: was jetzt?</span>
               <h2 className={styles.sectionTitle}>Die 8 wichtigsten Punkte nach einer Kündigung</h2>
               <p className={styles.sectionSubtitle}>
                 Diese acht Dinge entscheiden in den ersten Tagen nach Zugang der Kündigung über
@@ -623,11 +623,11 @@ const KuendigungPruefen: React.FC = () => {
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Kritisch</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  Die Frist läuft ab Zugang der schriftlichen Kündigung — nicht ab dem Beendigungstermin.
+                  Die Frist läuft ab Zugang der schriftlichen Kündigung, nicht ab dem Beendigungstermin.
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Nach <strong>§ 4 KSchG</strong> muss die Kündigungsschutzklage binnen <strong>drei Wochen ab Zugang</strong> beim Arbeitsgericht eingehen. Versäumst du die Frist, gilt die Kündigung nach <strong>§ 7 KSchG als von Anfang an wirksam</strong> — auch eine eigentlich angreifbare Kündigung wird dann unangreifbar. Contract AI trägt diese Frist automatisch in deinen Kalender ein.</span>
+                  <span>Nach <strong>§ 4 KSchG</strong> muss die Kündigungsschutzklage binnen <strong>drei Wochen ab Zugang</strong> beim Arbeitsgericht eingehen. Versäumst du die Frist, gilt die Kündigung nach <strong>§ 7 KSchG als von Anfang an wirksam</strong>, auch eine eigentlich angreifbare Kündigung wird dann unangreifbar. Contract AI trägt diese Frist automatisch in deinen Kalender ein.</span>
                 </div>
               </div>
 
@@ -649,15 +649,15 @@ const KuendigungPruefen: React.FC = () => {
               {/* PUNKT 3: Vollmacht */}
               <div className={`${styles.riskCard} ${styles.warning} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <div className={styles.riskHeader}>
-                  <h3 className={styles.riskTitle}>3. Wer hat unterschrieben — und darf der das?</h3>
+                  <h3 className={styles.riskTitle}>3. Wer hat unterschrieben und darf der das?</h3>
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Oft übersehen</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  Unterschrift „i.A. Müller, Teamleitung" — ohne beigefügte Vollmachtsurkunde.
+                  Unterschrift „i.A. Müller, Teamleitung", ohne beigefügte Vollmachtsurkunde.
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Kündigt ein Bevollmächtigter (z.B. Personalabteilung, externe Kanzlei) ohne beigefügte <strong>Original-Vollmacht</strong>, kannst du die Kündigung nach <strong>§ 174 BGB unverzüglich zurückweisen</strong> — die Rechtsprechung gewährt dafür nur etwa eine Woche. Die Zurückweisung macht die Kündigung unwirksam; sie müsste neu ausgesprochen werden. Schnelligkeit ist hier alles.</span>
+                  <span>Kündigt ein Bevollmächtigter (z.B. Personalabteilung, externe Kanzlei) ohne beigefügte <strong>Original-Vollmacht</strong>, kannst du die Kündigung nach <strong>§ 174 BGB unverzüglich zurückweisen</strong>. Die Rechtsprechung gewährt dafür nur etwa eine Woche. Die Zurückweisung macht die Kündigung unwirksam; sie müsste neu ausgesprochen werden. Schnelligkeit ist hier alles.</span>
                 </div>
               </div>
 
@@ -668,11 +668,11 @@ const KuendigungPruefen: React.FC = () => {
                   <span className={`${styles.riskBadge} ${styles.warning}`}>Geld wert</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.warning}`}>
-                  "...zum nächstmöglichen Zeitpunkt" — oder ein konkretes Datum, das zu früh liegt.
+                  "...zum nächstmöglichen Zeitpunkt" oder ein konkretes Datum, das zu früh liegt.
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Die gesetzlichen Kündigungsfristen (<strong>§ 622 BGB</strong>) verlängern sich mit der Betriebszugehörigkeit — von vier Wochen bis zu <strong>sieben Monaten</strong> (ab 20 Jahren). Eine zu kurz berechnete Frist beendet das Arbeitsverhältnis in der Regel erst zum <strong>richtigen</strong> Termin — das können mehrere Monate Gehalt Unterschied sein.</span>
+                  <span>Die gesetzlichen Kündigungsfristen (<strong>§ 622 BGB</strong>) verlängern sich mit der Betriebszugehörigkeit, von vier Wochen bis zu <strong>sieben Monaten</strong> (ab 20 Jahren). Eine zu kurz berechnete Frist beendet das Arbeitsverhältnis in der Regel erst zum <strong>richtigen</strong> Termin. Das können mehrere Monate Gehalt Unterschied sein.</span>
                 </div>
               </div>
 
@@ -683,7 +683,7 @@ const KuendigungPruefen: React.FC = () => {
                   <span className={`${styles.riskBadge} ${styles.critical}`}>Sperrzeit-Risiko</span>
                 </div>
                 <div className={`${styles.riskIssue} ${styles.critical}`}>
-                  Viele melden sich erst zum Vertragsende — und riskieren damit eine Sperrzeit beim Arbeitslosengeld.
+                  Viele melden sich erst zum Vertragsende und riskieren damit eine Sperrzeit beim Arbeitslosengeld.
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
@@ -702,7 +702,7 @@ const KuendigungPruefen: React.FC = () => {
                 </div>
                 <div className={styles.riskSolution}>
                   <CheckCircle size={18} />
-                  <span>Ein <strong>Aufhebungsvertrag</strong> beendet das Arbeitsverhältnis einvernehmlich — und kann beim Arbeitslosengeld eine <strong>Sperrzeit von bis zu zwölf Wochen</strong> auslösen (§ 159 Abs. 1 Nr. 1 SGB III), weil du an der Beendigung mitgewirkt hast. Unterschreibe nichts unter Zeitdruck; lass das Angebot erst prüfen — auch mit unserem <Link to="/aufhebungsvertrag-pruefen">Aufhebungsvertrag-Check</Link>.</span>
+                  <span>Ein <strong>Aufhebungsvertrag</strong> beendet das Arbeitsverhältnis einvernehmlich und kann beim Arbeitslosengeld eine <strong>Sperrzeit von bis zu zwölf Wochen</strong> auslösen (§ 159 Abs. 1 Nr. 1 SGB III), weil du an der Beendigung mitgewirkt hast. Unterschreibe nichts unter Zeitdruck; lass das Angebot erst prüfen, auch mit unserem <Link to="/aufhebungsvertrag-pruefen">Aufhebungsvertrag-Check</Link>.</span>
                 </div>
               </div>
 
@@ -749,7 +749,7 @@ const KuendigungPruefen: React.FC = () => {
               <span className={styles.sectionEyebrow}>So funktioniert's</span>
               <h2 className={styles.sectionTitle}>In drei Schritten zur Ersteinschätzung</h2>
               <p className={styles.sectionSubtitle}>
-                Vom Kündigungsschreiben zur klaren Übersicht — ohne Termin, ohne Wartezeit.
+                Vom Kündigungsschreiben zur klaren Übersicht, ohne Termin, ohne Wartezeit.
               </p>
             </div>
 
@@ -762,7 +762,7 @@ const KuendigungPruefen: React.FC = () => {
                   <div className={styles.processContent}>
                     <h3 className={styles.processTitle}>Hochladen oder abfotografieren</h3>
                     <p className={styles.processDesc}>
-                      Lade das Kündigungsschreiben als PDF hoch — oder fotografiere es einfach
+                      Lade das Kündigungsschreiben als PDF hoch oder fotografiere es einfach
                       mit dem Handy. Die Übertragung erfolgt verschlüsselt, die Verarbeitung
                       DSGVO-konform.
                     </p>
@@ -830,7 +830,7 @@ const KuendigungPruefen: React.FC = () => {
                 <h3 className={styles.whyTitle}>Wörtlich belegt</h3>
                 <p className={styles.whyDesc}>
                   Wichtige Aussagen werden mit Zitaten aus deinem Schreiben belegt und automatisch
-                  gegen den Originaltext geprüft — keine bloßen Behauptungen.
+                  gegen den Originaltext geprüft, keine bloßen Behauptungen.
                 </p>
               </div>
 
@@ -994,7 +994,7 @@ const KuendigungPruefen: React.FC = () => {
                 <p className={styles.faqAnswer}>
                   Sehr schnell: Für die Kündigungsschutzklage gilt grundsätzlich eine Frist von
                   drei Wochen ab Zugang der schriftlichen Kündigung (§ 4 KSchG). Wird sie
-                  versäumt, gilt die Kündigung nach § 7 KSchG als von Anfang an wirksam — selbst
+                  versäumt, gilt die Kündigung nach § 7 KSchG als von Anfang an wirksam, selbst
                   wenn sie eigentlich angreifbar gewesen wäre. Genau deshalb erkennt Contract AI
                   die Klagefrist automatisch und trägt sie mit Erinnerung in deinen Kalender ein.
                 </p>
@@ -1040,7 +1040,7 @@ const KuendigungPruefen: React.FC = () => {
                   einer betriebsbedingten Kündigung kann der Arbeitgeber nach § 1a KSchG eine
                   Abfindung von 0,5 Monatsverdiensten pro Beschäftigungsjahr anbieten, wenn du im
                   Gegenzug auf die Klage verzichtest. In der Praxis entstehen Abfindungen meist
-                  als Vergleich im Kündigungsschutzprozess — auch deshalb ist die 3-Wochen-Frist
+                  als Vergleich im Kündigungsschutzprozess, auch deshalb ist die 3-Wochen-Frist
                   so wichtig.
                 </p>
               </details>
@@ -1121,7 +1121,7 @@ const KuendigungPruefen: React.FC = () => {
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Aufhebungsvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
-                    Abfindung, Sperrzeit, Klageverzicht — bevor du unterschreibst
+                    Abfindung, Sperrzeit, Klageverzicht, bevor du unterschreibst
                   </div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
@@ -1174,7 +1174,7 @@ const KuendigungPruefen: React.FC = () => {
                   Die Klagefrist läuft ab Zugang. Verschaff dir jetzt Klarheit.
                 </h2>
                 <p className={styles.ctaSubtitle}>
-                  Lade dein Kündigungsschreiben hoch oder fotografiere es einfach ab — in
+                  Lade dein Kündigungsschreiben hoch oder fotografiere es einfach ab, in
                   wenigen Minuten kennst du deine Fristen, deine Rechte und deine nächsten
                   Schritte. Alle Fristen automatisch im Kalender.
                 </p>

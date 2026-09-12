@@ -62,7 +62,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
         "name": "Wie hoch sollte die Abfindung im Aufhebungsvertrag sein?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Eine gesetzliche Pflicht zur Abfindung gibt es bei Aufhebungsverträgen nicht — sie ist Verhandlungssache. Als Faustformel gilt (analog § 1a KSchG): 0,5 Bruttomonatsgehälter pro Beschäftigungsjahr. Je nach Verhandlungsposition, Kündigungsschutz und Interesse des Arbeitgebers an einer schnellen Trennung sind auch 0,75 bis 1,5 Monatsgehälter pro Jahr üblich. Die KI vergleicht deine angebotene Abfindung mit diesen Richtwerten."
+          "text": "Eine gesetzliche Pflicht zur Abfindung gibt es bei Aufhebungsverträgen nicht. Sie ist Verhandlungssache. Als Faustformel gilt (analog § 1a KSchG): 0,5 Bruttomonatsgehälter pro Beschäftigungsjahr. Je nach Verhandlungsposition, Kündigungsschutz und Interesse des Arbeitgebers an einer schnellen Trennung sind auch 0,75 bis 1,5 Monatsgehälter pro Jahr üblich. Die KI vergleicht deine angebotene Abfindung mit diesen Richtwerten."
         }
       },
       {
@@ -70,7 +70,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
         "name": "Sollte ich einen Aufhebungsvertrag sofort unterschreiben?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein. Niemand muss einen Aufhebungsvertrag sofort oder unter Druck unterschreiben — es gibt keine gesetzliche Frist. Lass dir Bedenkzeit geben und prüfe den Vertrag vorher genau: Sperrzeit-Risiko, Abfindungshöhe, Klageverzicht, Resturlaub, Freistellung und Zeugnis. Eine übereilte Unterschrift kann dich mehrere Monatsgehälter kosten — sowohl durch eine Sperrzeit als auch durch eine zu niedrige Abfindung."
+          "text": "Nein. Niemand muss einen Aufhebungsvertrag sofort oder unter Druck unterschreiben. Es gibt keine gesetzliche Frist. Lass dir Bedenkzeit geben und prüfe den Vertrag vorher genau: Sperrzeit-Risiko, Abfindungshöhe, Klageverzicht, Resturlaub, Freistellung und Zeugnis. Eine übereilte Unterschrift kann dich mehrere Monatsgehälter kosten — sowohl durch eine Sperrzeit als auch durch eine zu niedrige Abfindung."
         }
       },
       {
@@ -86,7 +86,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
         "name": "Wird die Abfindung aus dem Aufhebungsvertrag versteuert?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Ja, die Abfindung ist als Entschädigung voll steuerpflichtig, aber sozialversicherungsfrei. Steuerlich kann die sogenannte Fünftelregelung (§ 34 EStG) die Progression abmildern, wenn die Abfindung zusammengeballt in einem Kalenderjahr ausgezahlt wird. Die genaue steuerliche Optimierung (z.B. Auszahlungszeitpunkt) solltest du mit einem Steuerberater klären — die KI weist dich auf den relevanten Punkt im Vertrag hin."
+          "text": "Ja, die Abfindung ist als Entschädigung voll steuerpflichtig, aber sozialversicherungsfrei. Steuerlich kann die sogenannte Fünftelregelung (§ 34 EStG) die Progression abmildern, wenn die Abfindung zusammengeballt in einem Kalenderjahr ausgezahlt wird. Die genaue steuerliche Optimierung (z.B. Auszahlungszeitpunkt) solltest du mit einem Steuerberater klären. Die KI weist dich auf den relevanten Punkt im Vertrag hin."
         }
       },
       {
@@ -94,7 +94,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
         "name": "Worauf muss ich beim Beendigungstermin im Aufhebungsvertrag achten?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Der Beendigungstermin sollte die ordentliche Kündigungsfrist einhalten. Wird das Arbeitsverhältnis durch den Aufhebungsvertrag vor Ablauf der regulären Kündigungsfrist beendet, ruht der Anspruch auf Arbeitslosengeld unter Umständen zusätzlich nach § 158 SGB III — und zwar zusätzlich zu einer möglichen Sperrzeit. Die KI prüft, ob der vereinbarte Beendigungstermin zu deiner Kündigungsfrist passt."
+          "text": "Der Beendigungstermin sollte die ordentliche Kündigungsfrist einhalten. Wird das Arbeitsverhältnis durch den Aufhebungsvertrag vor Ablauf der regulären Kündigungsfrist beendet, ruht der Anspruch auf Arbeitslosengeld unter Umständen zusätzlich nach § 158 SGB III und zwar zusätzlich zu einer möglichen Sperrzeit. Die KI prüft, ob der vereinbarte Beendigungstermin zu deiner Kündigungsfrist passt."
         }
       },
       {
@@ -102,7 +102,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
         "name": "Was kostet die KI-Prüfung eines Aufhebungsvertrags?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine arbeitsrechtliche Erstberatung zum Aufhebungsvertrag kostet beim Anwalt typischerweise 150–300 € — die KI-Analyse liefert dir die kritischen Punkte vorab und macht ein anschließendes Anwaltsgespräch deutlich gezielter und günstiger."
+          "text": "Im Free-Tier sind drei Vertragsanalysen kostenlos. Im Business-Tarif (19 €/Monat) erhältst du 25 Analysen monatlich, im Enterprise-Tarif (29 €/Monat) sind die Analysen unbegrenzt. Eine arbeitsrechtliche Erstberatung zum Aufhebungsvertrag kostet beim Anwalt typischerweise 150–300 €. Die KI-Analyse liefert dir die kritischen Punkte vorab und macht ein anschließendes Anwaltsgespräch deutlich gezielter und günstiger."
         }
       },
       {
@@ -110,7 +110,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
         "name": "Ersetzt die KI-Prüfung einen Anwalt für Arbeitsrecht?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein — die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Gerade beim Aufhebungsvertrag mit Sperrzeit-Risiko, hoher Abfindung oder laufendem Kündigungsschutz empfehlen wir ergänzend einen Fachanwalt für Arbeitsrecht. Die KI-Ergebnisse dienen als fundierte Grundlage für ein gezieltes, günstigeres Anwaltsgespräch."
+          "text": "Nein. Die KI liefert eine strukturierte Erst-Risikoanalyse und keine Rechtsberatung im Sinne des Rechtsdienstleistungsgesetzes (RDG). Gerade beim Aufhebungsvertrag mit Sperrzeit-Risiko, hoher Abfindung oder laufendem Kündigungsschutz empfehlen wir ergänzend einen Fachanwalt für Arbeitsrecht. Die KI-Ergebnisse dienen als fundierte Grundlage für ein gezieltes, günstigeres Anwaltsgespräch."
         }
       }
     ]
@@ -125,7 +125,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
     "step": [
       { "@type": "HowToStep", "position": 1, "name": "Aufhebungsvertrag hochladen", "text": "Lade deinen Aufhebungsvertrag als PDF oder DOCX hoch. Die Übertragung erfolgt 256-bit-verschlüsselt, die Verarbeitung ausschließlich auf Servern in Deutschland." },
       { "@type": "HowToStep", "position": 2, "name": "Automatische KI-Analyse", "text": "Die KI prüft Sperrzeit-Risiko (§ 159 SGB III), Abfindungshöhe, Klageverzicht, Freistellung, Resturlaub, Zeugnis und Beendigungstermin auf Basis aktueller Rechtslage." },
-      { "@type": "HowToStep", "position": 3, "name": "Detaillierten Report erhalten", "text": "Du erhältst einen Report mit Chancen-Risiken-Score, markierten Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen — als interaktive Ansicht und PDF-Export." }
+      { "@type": "HowToStep", "position": 3, "name": "Detaillierten Report erhalten", "text": "Du erhältst einen Report mit Chancen-Risiken-Score, markierten Problemstellen mit Paragraphen-Verweis und konkreten Handlungsempfehlungen, als interaktive Ansicht und PDF-Export." }
     ]
   };
 
@@ -342,12 +342,12 @@ const AufhebungsvertragPruefen: React.FC = () => {
             <div className={styles.problemGrid}>
               <div className={`${styles.problemContent} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.sectionEyebrow}>Das Problem</span>
-                <h2 className={styles.sectionTitleLeft}>Eine Unterschrift unter Druck — und das ALG ist 12 Wochen weg</h2>
+                <h2 className={styles.sectionTitleLeft}>Eine Unterschrift unter Druck und das ALG ist 12 Wochen weg</h2>
                 <p className={styles.problemText}>
                   Aufhebungsverträge werden oft im Personalgespräch vorgelegt, mit der Bitte,
                   „gleich zu unterschreiben". Genau das ist die Falle: Wer ohne wichtigen Grund
                   unterschreibt, riskiert eine Sperrzeit von bis zu 12 Wochen beim Arbeitslosengeld
-                  — und akzeptiert oft eine Abfindung, die deutlich unter dem Verhandelbaren liegt.
+                  und akzeptiert oft eine Abfindung, die deutlich unter dem Verhandelbaren liegt.
                   Beides zusammen kostet schnell mehrere Monatsgehälter.
                 </p>
                 <div className={styles.problemStats}>
@@ -565,7 +565,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
                 <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Arbeitsvertrag prüfen</div>
-                  <div className={styles.relatedDescription}>Probezeit, Wettbewerbsverbot, Überstunden — KI-Check auf Basis BAG-Rechtsprechung</div>
+                  <div className={styles.relatedDescription}>Probezeit, Wettbewerbsverbot, Überstunden. KI-Check auf Basis BAG-Rechtsprechung</div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
@@ -580,7 +580,7 @@ const AufhebungsvertragPruefen: React.FC = () => {
               <Link to="/rechtslexikon/abfindung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
                 <span className={styles.relatedIcon} style={{ color: '#10b981' }}><Euro size={20} /></span>
                 <div className={styles.relatedContent}>
-                  <div className={styles.relatedTitle}>Abfindung — einfach erklärt</div>
+                  <div className={styles.relatedTitle}>Abfindung, einfach erklärt</div>
                   <div className={styles.relatedDescription}>Höhe, Faustformel, Besteuerung und Fünftelregelung im Überblick</div>
                 </div>
                 <ArrowRight size={20} className={styles.relatedArrow} />
