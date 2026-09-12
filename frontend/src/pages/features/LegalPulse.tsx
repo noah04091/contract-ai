@@ -234,9 +234,9 @@ const LegalPulse: React.FC = () => {
                   <div style={{ position: 'relative', paddingLeft: '16px' }}>
                     <div style={{ position: 'absolute', left: '5px', top: '8px', bottom: '8px', width: '2px', background: '#e2e8f0' }} />
                     {[
-                      { time: 'Heute', title: 'DSGVO-Update betrifft 3 Verträge', severity: 'high', color: '#ef4444' },
-                      { time: 'Gestern', title: 'Neue Informationspflicht erkannt', severity: 'medium', color: '#f59e0b' },
-                      { time: '3 Tage', title: 'Alle Arbeitsverträge aktuell', severity: 'ok', color: '#22c55e' },
+                      { time: 'Heute', title: 'DSGVO-Update betrifft 3 Verträge', severity: 'high', color: '#dc2626' },
+                      { time: 'Gestern', title: 'Neue Informationspflicht erkannt', severity: 'medium', color: '#b45309' },
+                      { time: '3 Tage', title: 'Alle Arbeitsverträge aktuell', severity: 'ok', color: '#15803d' },
                     ].map((alert, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px', position: 'relative' }}>
                         <div style={{
@@ -246,11 +246,11 @@ const LegalPulse: React.FC = () => {
                           position: 'absolute', left: '-16px', top: '4px'
                         }} />
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '9px', color: '#94a3b8', marginBottom: '2px' }}>{alert.time}</div>
+                          <div style={{ fontSize: '9px', color: '#64748b', marginBottom: '2px' }}>{alert.time}</div>
                           <div style={{ fontSize: '10px', color: '#334155', lineHeight: 1.3 }}>{alert.title}</div>
                         </div>
                         {alert.severity === 'high' && (
-                          <span style={{ fontSize: '9px', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Aktion</span>
+                          <span style={{ fontSize: '9px', background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>Aktion</span>
                         )}
                       </div>
                     ))}
@@ -320,7 +320,7 @@ const LegalPulse: React.FC = () => {
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <Activity size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Täglicher Prüflauf</h3>
@@ -340,7 +340,7 @@ const LegalPulse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#dc2626' }}>
                   <AlertTriangle size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Risiko-Priorisierung</h3>
@@ -350,7 +350,7 @@ const LegalPulse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#b45309' }}>
                   <Bell size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Proaktive Alerts</h3>
@@ -709,7 +709,7 @@ const LegalPulse: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -720,7 +720,7 @@ const LegalPulse: React.FC = () => {
               </Link>
 
               <Link to="/features/fristen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><Calendar size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#b45309' }}><Calendar size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Fristenkalender</div>
                   <div className={styles.relatedDescription}>

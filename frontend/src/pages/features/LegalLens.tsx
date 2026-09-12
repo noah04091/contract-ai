@@ -229,7 +229,7 @@ const LegalLens: React.FC = () => {
                       border: '1px solid rgba(59, 130, 246, 0.2)'
                     }}>
                       <Lightbulb size={12} color="#3b82f6" />
-                      <span style={{ fontSize: '9px', color: '#3b82f6' }}>Tipp: Definition fordern</span>
+                      <span style={{ fontSize: '9px', color: '#1d4ed8' }}>Tipp: Definition fordern</span>
                     </div>
                   </div>
                 </div>
@@ -297,7 +297,7 @@ const LegalLens: React.FC = () => {
 
             <div className={`${styles.functionsGrid} ${styles.functionsGrid4col}`}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <FileText size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Verständliche Erklärung</h3>
@@ -307,7 +307,7 @@ const LegalLens: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#dc2626' }}>
                   <AlertTriangle size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Risiko-Einschätzung</h3>
@@ -327,7 +327,7 @@ const LegalLens: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#b45309' }}>
                   <Lightbulb size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Verhandlungstipp</h3>
@@ -642,7 +642,7 @@ const LegalLens: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>

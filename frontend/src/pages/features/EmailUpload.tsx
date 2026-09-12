@@ -181,20 +181,20 @@ const EmailUpload: React.FC = () => {
                 </div>
                 <div className={styles.demoContent}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', background: 'rgba(59, 130, 246, 0.08)', borderRadius: '8px', marginBottom: '10px' }}>
-                    <Mail size={20} style={{ color: '#3b82f6' }} />
+                    <Mail size={20} style={{ color: '#1d4ed8' }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>E-Mail weiterleiten an:</div>
-                      <div style={{ fontSize: '12px', color: '#3b82f6', fontFamily: 'monospace' }}>ihr-name@inbox.contract-ai.de</div>
+                      <div style={{ fontSize: '12px', color: '#1d4ed8', fontFamily: 'monospace' }}>ihr-name@inbox.contract-ai.de</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
                     <div style={{ width: '2px', height: '24px', background: 'linear-gradient(to bottom, #3b82f6, #22c55e)' }} />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px', background: 'rgba(34, 197, 94, 0.08)', borderRadius: '8px' }}>
-                    <CheckCircle size={20} style={{ color: '#22c55e' }} />
+                    <CheckCircle size={20} style={{ color: '#15803d' }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>Mietvertrag_2024.pdf</div>
-                      <div style={{ fontSize: '12px', color: '#22c55e' }}>Im Dashboard verfügbar</div>
+                      <div style={{ fontSize: '12px', color: '#15803d' }}>Im Dashboard verfügbar</div>
                     </div>
                   </div>
                 </div>
@@ -253,7 +253,11 @@ const EmailUpload: React.FC = () => {
                     <h3 className={styles.processTitle}>Deine persönliche E-Mail-Adresse</h3>
                     <p className={styles.processDesc}>
                       Nach der Registrierung findest du deine E-Mail-Adresse im Dashboard
-                      (z.B. <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontSize: '13px' }}>max123@inbox.contract-ai.de</code>).
+                      (z.B. {/* Eigene Farbe noetig: geerbt waere #5a719b, und auf dem grauen Feld
+                          ergibt das nur 4,49:1. #475569 kommt auf 7,0:1.
+                          Gleiche Stufe wie der Platzhalter im Suchfeld der
+                          Vertragsverwaltung, aus demselben Grund. */}
+                      <code style={{ background: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontSize: '13px' }}>max123@inbox.contract-ai.de</code>).
                     </p>
                   </div>
                 </div>
@@ -311,7 +315,7 @@ const EmailUpload: React.FC = () => {
                 </p>
               </div>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <CheckCircle size={24} />
                 </div>
                 <h3 className={styles.whyTitle}>Von überall</h3>
@@ -404,7 +408,7 @@ const EmailUpload: React.FC = () => {
             </div>
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsverwaltung" className={styles.relatedCard}>
-                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><FolderOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#b45309' }}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Zentrale Verwaltung</div>
                   <div className={styles.relatedDescription}>
@@ -414,7 +418,7 @@ const EmailUpload: React.FC = () => {
                 <ArrowRight size={20} className={styles.relatedArrow} />
               </Link>
               <Link to="/features/fristen" className={styles.relatedCard}>
-                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><Calendar size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#dc2626' }}><Calendar size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Automatische Erinnerungen</div>
                   <div className={styles.relatedDescription}>

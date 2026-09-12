@@ -306,7 +306,7 @@ const Vertragsanalyse: React.FC = () => {
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#dc2626' }}>
                   <AlertTriangle size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Risiko-Erkennung</h3>
@@ -346,7 +346,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <ThumbsUp size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Chancen-Analyse</h3>
@@ -585,7 +585,7 @@ const Vertragsanalyse: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <FileText size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Klare Ergebnisse</h3>
@@ -842,7 +842,7 @@ const Vertragsanalyse: React.FC = () => {
 
             <div className={`${styles.relatedGrid} ${styles.relatedGrid2col}`}>
               <Link to="/arbeitsvertrag-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><FileText size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Arbeitsvertrag prüfen</div>
                   <div className={styles.relatedDescription}>
@@ -864,7 +864,7 @@ const Vertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/nda-pruefen" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#ef4444' }}><FileText size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#dc2626' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>NDA prüfen</div>
                   <div className={styles.relatedDescription}>
@@ -897,7 +897,7 @@ const Vertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>
@@ -919,7 +919,7 @@ const Vertragsanalyse: React.FC = () => {
               </Link>
 
               <Link to="/ki-vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><BookOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#b45309' }}><BookOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>KI-Vertragsanalyse Guide</div>
                   <div className={styles.relatedDescription}>

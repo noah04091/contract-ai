@@ -28,15 +28,32 @@ import { fileURLToPath } from 'node:url';
 const WURZEL = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'src');
 const STRENG = process.argv.includes('--strict');
 
-/** Werte, die in diesem Projekt als Text-/Knopffarbe unter der Norm lagen.
- *  Bei jedem Eintrag steht, wodurch er ersetzt wurde. */
+/** Aufnahmekriterium: Werte, die als Schrift SELBST AUF WEISS unter 4,5:1
+ *  liegen. Auf einem dunkleren Grund kann es nur schlechter werden, deshalb
+ *  ist so ein Wert als Schriftfarbe immer falsch — das laesst sich statisch
+ *  beurteilen.
+ *
+ *  ⚠️ NICHT aufgenommen werden Werte, die auf Weiss bestehen und nur auf
+ *  hellgrauem Grund kippen. Beispiel #71717a: 4,83:1 auf Weiss, aber nur
+ *  4,40:1 auf dem Fussbereich-Grau #f4f4f7. Solche Faelle kann nur eine
+ *  Messung am gerenderten Bild finden, nicht diese Liste. Sie hier zu fuehren
+ *  wuerde Dutzende richtige Verwendungen anmeckern und die Wache entwerten.
+ *
+ *  Alle acht Werte unten stammen aus der Korrektur der Produktnachbauten
+ *  (12.09.2026) und sind die mittlere Stufe ihrer Farbfamilie: gebaut als
+ *  Flaechenfarbe, als Schrift auf Weiss grundsaetzlich zu hell. */
 const GESPERRT = {
   // rolle 'text'   → nur melden, wo der Wert als Schriftfarbe steht
   // rolle 'beides' → auch als Flaeche melden, weil weisse Schrift darauf
   //                  denselben zu geringen Abstand hat
   '#3b82f6': { wert: '3,68:1', statt: '#1D4ED8 (6,70:1)', rolle: 'beides' },
-  '#71717a': { wert: '4,40:1 auf #f4f4f7', statt: '#52525B (7,04:1)', rolle: 'text' },
+  '#94a3b8': { wert: '2,56:1 auf Weiss', statt: '#64748B (4,76:1)', rolle: 'text' },
+  '#9a9aa3': { wert: '2,79:1 auf Weiss', statt: '#71717A (4,83:1)', rolle: 'text' },
+  '#22c55e': { wert: '2,28:1 auf Weiss', statt: '#15803D (5,02:1)', rolle: 'text' },
+  '#ef4444': { wert: '3,76:1 auf Weiss', statt: '#DC2626 (4,83:1)', rolle: 'text' },
+  '#ea580c': { wert: '3,56:1 auf Weiss', statt: '#C2410C (5,18:1)', rolle: 'text' },
   '#f59e0b': { wert: '2,15:1 auf Weiss', statt: '#B45309 (5,02:1)', rolle: 'text' },
+  '#5a719b': { wert: '4,49:1 auf Weiss', statt: '#475569 (7,58:1)', rolle: 'text' },
   '#9aa0b0': { wert: '2,80:1 auf Weiss', statt: 'einen Ton der Palette', rolle: 'text' },
 };
 

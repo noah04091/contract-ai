@@ -193,13 +193,16 @@ const Vertragsverwaltung: React.FC = () => {
                   {/* Search Bar */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: '#f1f5f9', borderRadius: '6px', marginBottom: '14px' }}>
                     <Search size={16} style={{ color: '#64748b' }} />
-                    <span style={{ fontSize: '12px', color: '#94a3b8' }}>Verträge durchsuchen...</span>
+                    {/* Eine Stufe tiefer als sonst: dieser Text sitzt nicht auf
+                        Weiss, sondern auf dem grauen Suchfeld. Dort ergibt
+                        #64748b nur 4,34:1, #475569 dagegen 6,20:1. */}
+                    <span style={{ fontSize: '12px', color: '#475569' }}>Verträge durchsuchen...</span>
                   </div>
 
                   {/* Contract List */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(59, 130, 246, 0.05)', borderRadius: '6px', borderLeft: '3px solid #3b82f6' }}>
-                      <FileText size={16} style={{ color: '#3b82f6' }} />
+                      <FileText size={16} style={{ color: '#1d4ed8' }} />
                       <div style={{ flex: 1 }}>
                         <div style={{ fontSize: '12px', fontWeight: 600, color: '#1e293b' }}>Mietvertrag_2024.pdf</div>
                         <div style={{ fontSize: '10px', color: '#64748b' }}>Wohnung • Gültig bis 31.12.2025</div>
@@ -277,7 +280,7 @@ const Vertragsverwaltung: React.FC = () => {
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <Search size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Smart-Search</h3>
@@ -297,7 +300,7 @@ const Vertragsverwaltung: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#ef4444' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fef2f2 0%, #fecaca 100%)', color: '#dc2626' }}>
                   <Clock size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Erinnerungen</h3>
@@ -317,7 +320,7 @@ const Vertragsverwaltung: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#b45309' }}>
                   <FileText size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Notizen & Anhänge</h3>
@@ -473,7 +476,7 @@ const Vertragsverwaltung: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={styles.relatedCard}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>
@@ -484,7 +487,7 @@ const Vertragsverwaltung: React.FC = () => {
               </Link>
 
               <Link to="/features/fristen" className={styles.relatedCard}>
-                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><Calendar size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#b45309' }}><Calendar size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Fristenkalender</div>
                   <div className={styles.relatedDescription}>
