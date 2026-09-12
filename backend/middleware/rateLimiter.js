@@ -202,6 +202,20 @@ const mailActionLimiter = rateLimit({
   }
 });
 
+// 🔓 Öffentliche QR-Vertragsverifikation (server.js /api/contracts/verify/:id) —
+// Security-Triage 12.09.2026: Route ist bewusst ohne Login erreichbar (Dritter scannt
+// QR vom generierten PDF), war aber komplett ungedrosselt = Enumerations-Fläche.
+// Kein Konto, kein Cookie — Schlüssel ist wie beim mailActionLimiter die echte
+// Client-Adresse. 30/15min reicht für jede legitime Prüfung und bremst Scans.
+const publicVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: clientAddressKey,
+  message: { verified: false, message: 'Zu viele Anfragen. Bitte in ein paar Minuten erneut versuchen.', error: 'RATE_LIMITED' }
+});
+
 module.exports = {
   standardLimiter,
   authLimiter,
@@ -212,6 +226,7 @@ module.exports = {
   sseLimiter,
   accountDeletionLimiter,
   mailActionLimiter,
+  publicVerifyLimiter,
   createDynamicLimiter,
   skipForPremium
 };

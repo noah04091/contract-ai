@@ -531,7 +531,12 @@ router.delete("/users/:userId", verifyToken, verifyAdmin, async (req, res) => {
     try { uidVariants.push(new ObjectId(userId)); } catch (_) { /* ungültige id ignorieren */ }
 
     // Delete user's contracts
+    // 🗑️ Security-Triage 12.09.2026 (DSGVO Art. 17): Datei-Schlüssel vor dem Löschen
+    // sichern, danach S3-/lokale Dateien entfernen (gleiches Muster wie Selbst-Löschung).
+    const { deleteContractFiles: _delFiles1, FILE_CLEANUP_PROJECTION: _fcp1 } = require('../utils/contractFileCleanup');
+    const _cleanupDocs1 = await contractsCollection.find({ userId: { $in: uidVariants } }).project(_fcp1).toArray();
     const contractsResult = await contractsCollection.deleteMany({ userId: { $in: uidVariants } });
+    await _delFiles1(_cleanupDocs1, 'admin-user-delete');
     console.log(`   📄 Deleted ${contractsResult.deletedCount} contracts`);
 
     // 🧹 DSGVO: Legal-Lens-Daten (Analysen + Fortschritt/Notizen) des Users mitlöschen
@@ -661,9 +666,13 @@ router.post("/users/bulk-delete", verifyToken, verifyAdmin, async (req, res) => 
     }
 
     // Delete contracts
+    // 🗑️ Security-Triage 12.09.2026 (DSGVO Art. 17): Dateien der Verträge mitlöschen
+    const { deleteContractFiles: _delFiles2, FILE_CLEANUP_PROJECTION: _fcp2 } = require('../utils/contractFileCleanup');
+    const _cleanupDocs2 = await contractsCollection.find({ userId: { $in: uidVariants } }).project(_fcp2).toArray();
     const contractsResult = await contractsCollection.deleteMany({
       userId: { $in: uidVariants }
     });
+    await _delFiles2(_cleanupDocs2, 'admin-bulk-user-delete');
 
     // 🧹 DSGVO: Legal-Lens-Daten aller gelöschten User mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ userId: userIdsToDelete });

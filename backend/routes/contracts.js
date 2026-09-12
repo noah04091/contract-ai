@@ -2119,6 +2119,11 @@ router.delete("/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
+    // 🗑️ Security-Triage 12.09.2026 (DSGVO Art. 17): zugehörige DATEIEN mitlöschen —
+    // vorher blieben Original-/optimierte/gesiegelte PDFs dauerhaft in S3 liegen.
+    // `access` ist das VOR dem Delete geladene, besitz-/org-geprüfte Dokument.
+    await require('../utils/contractFileCleanup').deleteContractFiles(access, 'contract-delete');
+
     // 🧹 DSGVO: Legal-Lens-Daten (Klausel-Analysen + Fortschritt/Notizen) des Vertrags mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: id });
     // 🧹 Legal-Pulse-Daten (Analysen + Radar-Alerts) mitlöschen — sonst Geister-Überwachung
@@ -4316,7 +4321,10 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
       _id: { $in: objectIds },
       ...orgFilter
     };
-    const ownedDocs = await contractsCollection.find(deleteFilter).project({ _id: 1 }).toArray();
+    // 🗑️ 12.09.2026: Datei-Schlüssel mitladen, damit nach dem deleteMany auch die
+    // S3-/lokalen Dateien der besitz-geprüften Verträge entfernt werden können.
+    const { FILE_CLEANUP_PROJECTION } = require('../utils/contractFileCleanup');
+    const ownedDocs = await contractsCollection.find(deleteFilter).project({ _id: 1, ...FILE_CLEANUP_PROJECTION }).toArray();
     const ownedIds = ownedDocs.map((d) => d._id);
 
     // 1️⃣ Calendar Events löschen (nur für besitz-geprüfte Verträge)
@@ -4330,6 +4338,9 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
 
     // 2️⃣ Verträge löschen (nur eigene + Org-Verträge)
     const result = await contractsCollection.deleteMany({ _id: { $in: ownedIds }, ...orgFilter });
+
+    // 🗑️ Security-Triage 12.09.2026 (DSGVO Art. 17): Dateien der gelöschten Verträge entfernen
+    await require('../utils/contractFileCleanup').deleteContractFiles(ownedDocs, 'bulk-delete');
 
     // 🧹 DSGVO: Legal-Lens-Daten aller gelöschten Verträge mitlöschen
     await require('../utils/legalLensCleanup').cleanupLegalLensData({ contractId: ownedIds });

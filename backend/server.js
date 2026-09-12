@@ -816,7 +816,15 @@ const connectDB = async () => {
     // ✅ 🔓 ÖFFENTLICHE VERIFY-ROUTE (OHNE AUTH!) - MUSS GANZ ZUERST KOMMEN!
     // Diese Route MUSS VOR allen anderen /api/contracts Routen registriert werden,
     // da Express Routen in der Reihenfolge matched wie sie registriert werden.
-    app.get("/api/contracts/verify/:id", async (req, res) => {
+    // 🔒 Security-Triage 12.09.2026: (1) Rate-Limit (war ungedrosselt = Enumerations-
+    // Fläche), (2) NUR GENERIERTE Verträge beantworten — vorher gab die Route zu JEDER
+    // gültigen ObjectId Name/Typ/Status preis, auch zu hochgeladenen Kundenverträgen
+    // (Dateinamen enthalten Personen-/Firmennamen) und bestätigte z. B. ein Logo-PNG
+    // als "erfolgreich verifizierten Vertrag". Der legitime Zweck (QR auf GENERIERTEN
+    // PDFs) betrifft ausschließlich isGenerated-Dokumente. Hochgeladene antworten
+    // jetzt wie nicht existent (404, keine Existenz-Auskunft).
+    const { publicVerifyLimiter } = require("./middleware/rateLimiter");
+    app.get("/api/contracts/verify/:id", publicVerifyLimiter, async (req, res) => {
       try {
         const contractId = req.params.id;
         console.log('🔍 [PUBLIC] Vertragsverifizierung angefragt für ID:', contractId);
@@ -834,7 +842,7 @@ const connectDB = async () => {
 
         // Vertrag suchen (nur nicht-sensible Felder)
         const contract = await db.collection("contracts").findOne(
-          { _id: new ObjectId(contractId) },
+          { _id: new ObjectId(contractId), isGenerated: true },
           {
             projection: {
               name: 1,

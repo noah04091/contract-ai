@@ -1057,7 +1057,16 @@ router.delete("/delete", verifyToken, accountDeletionLimiter, async (req, res) =
     // Events blieben als Waisen zurück (feuerten nie, sammelten sich an). Beide Formen löschen.
     const uidVariants = [req.user.userId];
     try { uidVariants.push(new ObjectId(req.user.userId)); } catch (_) { /* ungültige id ignorieren */ }
+    // 🗑️ Security-Triage 12.09.2026 (DSGVO Art. 17): VOR dem Löschen die Datei-Schlüssel
+    // sichern, danach die S3-/lokalen Dateien entfernen — vorher überlebten alle
+    // Vertrags-PDFs die Account-Löschung dauerhaft im Bucket.
+    const { deleteContractFiles, FILE_CLEANUP_PROJECTION } = require('../utils/contractFileCleanup');
+    const vertragsDocsFuerCleanup = await contractsCollection
+      .find({ userId: { $in: uidVariants } })
+      .project(FILE_CLEANUP_PROJECTION)
+      .toArray();
     await contractsCollection.deleteMany({ userId: { $in: uidVariants } });
+    await deleteContractFiles(vertragsDocsFuerCleanup, 'account-delete');
     await dbInstance.collection("contract_events").deleteMany({ userId: { $in: uidVariants } });
     // 🆕 19.06.2026 (DSGVO-Lückenschluss): interne Kosten-Tracking-Einträge mitlöschen — der
     // Admin-Lösch-Pfad tat das schon, die Selbst-Löschung hatte es vergessen → Waisen blieben.
