@@ -1,0 +1,260 @@
+/* 🧭 Portfolio-Radar (Cockpit v1, Phase 1.1c)
+   Eigenes Modul — nutzt die globalen :root-Tokens aus DashboardV2.module.css,
+   fasst dessen geteilte Klassen aber NICHT an. */
+
+.radarCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.radarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.radarHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+  min-width: 0;
+}
+
+.radarIcon { color: var(--primary); flex-shrink: 0; }
+
+.radarLink {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.radarLink:hover { color: var(--primary-dark); }
+
+.radarLoading,
+.radarError {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px;
+  font-size: 13px;
+  color: var(--gray-500);
+}
+
+.radarSpin { animation: radarDrehung 1s linear infinite; }
+@keyframes radarDrehung { to { transform: rotate(360deg); } }
+
+.radarRetry {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--gray-700);
+  cursor: pointer;
+}
+.radarRetry:hover { background: var(--gray-50); }
+
+.radarEmpty {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 20px;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+.radarEmptyIcon { color: var(--success); flex-shrink: 0; margin-top: 1px; }
+.radarEmptyHinweis { margin: 4px 0 0; color: var(--gray-500); }
+
+/* Drei Zeitfenster */
+.radarFenster {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+
+.fensterSpalte {
+  padding: 14px 20px 16px;
+  border-right: 1px solid var(--gray-100);
+  min-width: 0; /* langer Fristtitel darf das Grid nicht sprengen */
+}
+.fensterSpalte:last-child { border-right: none; }
+
+.fensterKopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.fensterLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--gray-500);
+}
+
+.fensterZahl {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gray-700);
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+  padding: 1px 10px;
+}
+.fensterZahlDringend { background: #FEF3C7; color: #B45309; }
+
+.fensterLeer { font-size: 13px; color: var(--gray-400); }
+
+.fensterListe {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fristEintrag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 5px 6px;
+  margin: 0 -6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  min-width: 0;
+}
+.fristEintrag:hover { background: var(--gray-50); }
+
+/* Geschätzte Frist: bewusst anders (gestrichelt + kursiver Zusatz) */
+.fristGeschaetzt { border: 1px dashed var(--gray-300); margin: 0; }
+
+.fristPunkt {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fristPunktRot { background: var(--danger); }
+.fristPunktOrange { background: var(--warning); }
+.fristPunktBlau { background: var(--primary); }
+
+.fristTitel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--gray-800);
+}
+
+.fristTage {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+.fristSchaetzMarke { font-style: italic; color: var(--gray-400); }
+
+.fensterMehr { padding-top: 4px; }
+.fensterMehr a { font-size: 12px; color: var(--primary); text-decoration: none; }
+.fensterMehr a:hover { text-decoration: underline; }
+
+/* Auto-Renewals */
+.renewalBlock {
+  border-top: 1px solid var(--gray-100);
+  padding: 12px 20px;
+}
+
+.renewalKopf {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 8px;
+}
+
+.renewalListe {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+
+.renewalEintrag {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--gray-50);
+  border-radius: var(--radius-full);
+  padding: 4px 12px;
+  cursor: pointer;
+  font: inherit;
+  max-width: 100%;
+  min-width: 0;
+}
+.renewalEintrag:hover { border-color: var(--primary-light); }
+
+.renewalName {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-800);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 220px;
+}
+.renewalTage { font-size: 12px; color: var(--gray-500); flex-shrink: 0; }
+
+/* Deckung */
+.deckungZeile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--gray-100);
+  padding: 10px 20px;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.deckungKritisch {
+  color: #B45309;
+  font-weight: 600;
+  text-decoration: none;
+}
+.deckungKritisch:hover { text-decoration: underline; }
+
+/* Mobil: Fenster untereinander */
+@media (max-width: 768px) {
+  .radarFenster { grid-template-columns: 1fr; }
+  .fensterSpalte {
+    border-right: none;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .fensterSpalte:last-child { border-bottom: none; }
+}
