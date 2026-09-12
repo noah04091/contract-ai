@@ -5,7 +5,9 @@ import {
   Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut,
   FileText, Download, Users, Link2, RefreshCw,
   Edit3, Camera, CheckCircle2, Star, Settings, ChevronDown,
-  Eye, EyeOff
+  Eye, EyeOff,
+  Crown, Building2, Unlock, MessageSquare, Bell, Award, Lock, Package,
+  KeyRound, GraduationCap, X
 } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";
@@ -41,7 +43,7 @@ const Notification: React.FC<NotificationProps> = ({ message, type, onClose }) =
       )}
       <span className={styles.notificationMessage}>{message}</span>
       <button onClick={onClose} className={styles.notificationClose}>
-        ✕
+        <X size={18} />
       </button>
     </motion.div>
   );
@@ -755,8 +757,8 @@ export default function Profile() {
                     styles.free
                   }`}>
                     <span>
-                      {user.subscriptionPlan === 'enterprise' ? '🚀' :
-                       user.subscriptionPlan === 'business' ? '🏢' : '🔓'}
+                      {user.subscriptionPlan === 'enterprise' ? <Crown size={15} /> :
+                       user.subscriptionPlan === 'business' ? <Building2 size={15} /> : <Unlock size={15} />}
                     </span>
                     <span>
                       {user.subscriptionPlan === 'enterprise' ? 'Enterprise' :
@@ -806,7 +808,7 @@ export default function Profile() {
                       </>
                     ) : (
                       <>
-                        <span className={styles.upgradeButtonIcon}>💳</span>
+                        <span className={styles.upgradeButtonIcon}><CreditCard size={16} /></span>
                         <span>Jetzt upgraden</span>
                       </>
                     )}
@@ -822,7 +824,7 @@ export default function Profile() {
                 transition={{ duration: 0.5, delay: 0.5 }}
               >
                 <div className={styles.sectionHeader}>
-                  <div className={`${styles.sectionIcon} ${styles.settings}`}>⚙️</div>
+                  <div className={`${styles.sectionIcon} ${styles.settings}`}><Settings size={18} /></div>
                   <h2 className={styles.sectionTitle}>Einstellungen</h2>
                   <span className={`${styles.sectionBadge} ${styles.included}`}>Für alle verfügbar</span>
                 </div>
@@ -831,7 +833,7 @@ export default function Profile() {
                   {/* AI Assistant Card */}
                   <div className={styles.settingsCard}>
                     <div className={styles.settingsCardHeader}>
-                      <span className={styles.settingsCardIcon}>💬</span>
+                      <span className={styles.settingsCardIcon}><MessageSquare size={19} /></span>
                       <span className={styles.settingsCardTitle}>KI-Assistent</span>
                     </div>
                     <div className={styles.settingRow}>
@@ -854,7 +856,7 @@ export default function Profile() {
                   {/* Notifications Settings Card */}
                   <div className={styles.settingsCard}>
                     <div className={styles.settingsCardHeader}>
-                      <span className={styles.settingsCardIcon}>🔔</span>
+                      <span className={styles.settingsCardIcon}><Bell size={19} /></span>
                       <span className={styles.settingsCardTitle}>Benachrichtigungen</span>
                     </div>
                     <div className={styles.settingRow}>
@@ -884,10 +886,10 @@ export default function Profile() {
                 transition={{ duration: 0.5, delay: 0.7 }}
               >
                 <div className={styles.sectionHeader}>
-                  <div className={`${styles.sectionIcon} ${styles.enterprise}`}>🏆</div>
+                  <div className={`${styles.sectionIcon} ${styles.enterprise}`}><Award size={18} /></div>
                   <h2 className={styles.sectionTitle}>Enterprise Features</h2>
                   <span className={`${styles.sectionBadge} ${isEnterprise ? styles.included : styles.locked}`}>
-                    {isEnterprise ? '✓ In deinem Abo' : '🔒 Upgrade erforderlich'}
+                    {isEnterprise ? <><CheckCircle size={13} /> In deinem Abo</> : <><Lock size={13} /> Upgrade erforderlich</>}
                   </span>
                 </div>
 
@@ -900,7 +902,7 @@ export default function Profile() {
                       Extra (Logo, Steuer, Kontakt, Bank) steht als Badge dran. */}
                   <div className={styles.featureCard}>
                     <div className={styles.featureHeader}>
-                      <div className={`${styles.featureIcon} ${styles.blue}`}>🏢</div>
+                      <div className={`${styles.featureIcon} ${styles.blue}`}><Building2 size={22} /></div>
                       <div className={styles.featureContent}>
                         <h3 className={styles.featureTitle}>
                           Profil für Verträge
@@ -925,7 +927,7 @@ export default function Profile() {
                   {/* Team Management */}
                   <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
                     <div className={styles.featureHeader}>
-                      <div className={`${styles.featureIcon} ${styles.orange}`}>👥</div>
+                      <div className={`${styles.featureIcon} ${styles.orange}`}><Users size={22} /></div>
                       <div className={styles.featureContent}>
                         <h3 className={styles.featureTitle}>
                           Team-Management
@@ -962,7 +964,7 @@ export default function Profile() {
                   {/* REST API Access */}
                   <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
                     <div className={styles.featureHeader}>
-                      <div className={`${styles.featureIcon} ${styles.purple}`}>🔑</div>
+                      <div className={`${styles.featureIcon} ${styles.purple}`}><Key size={22} /></div>
                       <div className={styles.featureContent}>
                         <h3 className={styles.featureTitle}>
                           REST API-Zugang
@@ -999,7 +1001,7 @@ export default function Profile() {
                   {/* CRM/ERP Integrations */}
                   <div className={`${styles.featureCard} ${!isEnterprise ? styles.locked : ''}`}>
                     <div className={styles.featureHeader}>
-                      <div className={`${styles.featureIcon} ${styles.blue}`}>🔗</div>
+                      <div className={`${styles.featureIcon} ${styles.blue}`}><Link2 size={22} /></div>
                       <div className={styles.featureContent}>
                         <h3 className={styles.featureTitle}>
                           CRM/ERP Integrationen
@@ -1044,7 +1046,7 @@ export default function Profile() {
               >
                 {/* Data Export */}
                 <div className={styles.accountActionCard}>
-                  <div className={`${styles.accountActionIcon} ${styles.export}`}>📦</div>
+                  <div className={`${styles.accountActionIcon} ${styles.export}`}><Package size={22} /></div>
                   <h3 className={styles.accountActionTitle}>Daten exportieren</h3>
                   <p className={styles.accountActionDesc}>Konto, Verträge und Termine als lesbare Übersicht</p>
                   <motion.button
@@ -1073,7 +1075,7 @@ export default function Profile() {
 
                 {/* Password Change */}
                 <div className={styles.accountActionCard}>
-                  <div className={`${styles.accountActionIcon} ${styles.password}`}>🔐</div>
+                  <div className={`${styles.accountActionIcon} ${styles.password}`}><KeyRound size={22} /></div>
                   <h3 className={styles.accountActionTitle}>Passwort ändern</h3>
                   <p className={styles.accountActionDesc}>Aktualisiere dein Passwort</p>
                   <motion.button
@@ -1089,7 +1091,7 @@ export default function Profile() {
 
                 {/* Tour Reset */}
                 <div className={styles.accountActionCard}>
-                  <div className={`${styles.accountActionIcon} ${styles.tour}`}>🎓</div>
+                  <div className={`${styles.accountActionIcon} ${styles.tour}`}><GraduationCap size={22} /></div>
                   <h3 className={styles.accountActionTitle}>Tour zurücksetzen</h3>
                   <p className={styles.accountActionDesc}>Einführungstour erneut starten</p>
                   <motion.button
@@ -1223,7 +1225,7 @@ export default function Profile() {
                 transition={{ duration: 0.5, delay: 0.9 }}
               >
                 <div className={styles.sectionHeader}>
-                  <div className={`${styles.sectionIcon} ${styles.invoices}`}>📄</div>
+                  <div className={`${styles.sectionIcon} ${styles.invoices}`}><FileText size={18} /></div>
                   <h2 className={styles.sectionTitle}>Rechnungen</h2>
                 </div>
 
@@ -1253,27 +1255,27 @@ export default function Profile() {
                           <div className={styles.invoicePlan}>
                             {invoice.plan === 'enterprise' ? (
                               <span className={styles.premiumPlan}>
-                                <span className={styles.premiumIcon}>🚀</span>
+                                <span className={styles.premiumIcon}><Crown size={13} /></span>
                                 Enterprise
                               </span>
                             ) : invoice.plan === 'business' ? (
                               <span className={styles.businessPlan}>
-                                <span className={styles.businessIcon}>🏢</span>
+                                <span className={styles.businessIcon}><Building2 size={13} /></span>
                                 Business
                               </span>
                             ) : invoice.plan === 'generate_unlock' ? (
                               <span className={styles.standardPlan}>
-                                <span className={styles.standardIcon}>🔓</span>
+                                <span className={styles.standardIcon}><Unlock size={13} /></span>
                                 Vertrag (einmalig)
                               </span>
                             ) : invoice.plan === 'analysis_unlock' ? (
                               <span className={styles.standardPlan}>
-                                <span className={styles.standardIcon}>🔓</span>
+                                <span className={styles.standardIcon}><Unlock size={13} /></span>
                                 Analyse (einmalig)
                               </span>
                             ) : (
                               <span className={styles.standardPlan}>
-                                <span className={styles.standardIcon}>🔓</span>
+                                <span className={styles.standardIcon}><Unlock size={13} /></span>
                                 Free
                               </span>
                             )}
@@ -1307,27 +1309,27 @@ export default function Profile() {
                             <div className={styles.invoicePlan}>
                               {invoice.plan === 'enterprise' ? (
                                 <span className={styles.premiumPlan}>
-                                  <span className={styles.premiumIcon}>🚀</span>
+                                  <span className={styles.premiumIcon}><Crown size={13} /></span>
                                   Enterprise
                                 </span>
                               ) : invoice.plan === 'business' ? (
                                 <span className={styles.businessPlan}>
-                                  <span className={styles.businessIcon}>🏢</span>
+                                  <span className={styles.businessIcon}><Building2 size={13} /></span>
                                   Business
                                 </span>
                               ) : invoice.plan === 'generate_unlock' ? (
                                 <span className={styles.standardPlan}>
-                                  <span className={styles.standardIcon}>🔓</span>
+                                  <span className={styles.standardIcon}><Unlock size={13} /></span>
                                   Vertrag (einmalig)
                                 </span>
                               ) : invoice.plan === 'analysis_unlock' ? (
                                 <span className={styles.standardPlan}>
-                                  <span className={styles.standardIcon}>🔓</span>
+                                  <span className={styles.standardIcon}><Unlock size={13} /></span>
                                   Analyse (einmalig)
                                 </span>
                               ) : (
                                 <span className={styles.standardPlan}>
-                                  <span className={styles.standardIcon}>🔓</span>
+                                  <span className={styles.standardIcon}><Unlock size={13} /></span>
                                   Free
                                 </span>
                               )}

@@ -1513,3 +1513,101 @@
     flex-direction: column;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PROFILSEITE (/me) — 08.09.2026
+   ---------------------------------------------------------------------
+   26 Emoji standen als Symbole in der Seite. Nach dem Tausch auf
+   Linien-Symbole im Browser gemessen, und zwei Dinge fielen auf:
+
+   1. ALLE SYMBOLE WAREN SCHWARZ. Ein Emoji bringt seine Farbe mit, ein
+      SVG erbt sie — und keiner der Behaelter setzte eine eigene. Auf
+      pastellfarbenen Flaechen wirkt ein schwarzes Symbol unfertig.
+      Jetzt traegt jedes Symbol die kraeftige Variante seiner Flaeche.
+
+   2. 🔴 LILA an zwei Stellen: .featureIcon.purple (API-Schluessel) und
+      .sectionIcon.invoices (Rechnungen). Lila ist beim Optimizer
+      bewusst aus der Oberflaeche geflogen. Beide auf die Markenfarbe.
+      Die Variable --purple-500 wird nur von dieser einen Stelle
+      benutzt und ist damit ebenfalls erledigt.
+
+   Die drei Behaelter mit blossem font-size (settingsCardIcon,
+   premiumIcon/businessIcon/standardIcon, upgradeButtonIcon) waren auf
+   Textzeichen ausgelegt — font-size wirkt auf ein SVG mit fester Groesse
+   nicht. Sie bekommen Ausrichtung.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Symbolfarben passend zur Flaeche ─────────────────────────── */
+.sectionIcon.settings { color: #41506b; }
+.sectionIcon.enterprise { color: #a16207; }
+.sectionIcon.business { color: #1568dd; }
+.sectionIcon.danger { color: #b42318; }
+
+.featureIcon.blue { color: #1568dd; }
+.featureIcon.green { color: #146c43; }
+.featureIcon.orange { color: #b45309; }
+
+.accountActionIcon.export { color: #1568dd; }
+.accountActionIcon.password { color: #a16207; }
+.accountActionIcon.tour { color: #146c43; }
+
+/* ── 2. Lila raus ────────────────────────────────────────────────── */
+.sectionIcon.invoices {
+  background: rgba(21, 104, 221, .09);
+  color: #1568dd;
+}
+
+.featureIcon.purple {
+  background: linear-gradient(135deg, #e8f0fd 0%, #d6e4fb 100%);
+  color: #1568dd;
+}
+
+/* ── 3. Behaelter, die auf Textzeichen ausgelegt waren ───────────── */
+.settingsCardIcon,
+.premiumIcon,
+.businessIcon,
+.standardIcon,
+.upgradeButtonIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.settingsCardIcon { color: #1568dd; }
+.premiumIcon { color: #a16207; }
+.businessIcon { color: #1568dd; }
+.standardIcon { color: #7d8493; }
+
+/* Der Abo-Hinweis („In deinem Abo" / „Upgrade erforderlich") traegt jetzt
+   ein Symbol vor dem Text und braucht Abstand. Die Klasse ist
+   .sectionBadge — .featureLockBadge enthaelt nur Text. */
+.sectionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BEDIENUNG MIT DEM FINGER — 08.09.2026
+   Gemessen mit Geraete-Emulation: .accountActionBtn kam auf 74x31px,
+   .featureButton auf dem iPad auf 40px Hoehe. Mit der Maus reicht das,
+   mit dem Daumen nicht.
+   Wie auf der Generate-Seite greift die Vergroesserung nur bei grobem
+   Zeiger — der Desktop behaelt seine kompakte Optik.
+   ═══════════════════════════════════════════════════════════════════ */
+@media (pointer: coarse) {
+  .accountActionBtn,
+  .featureButton,
+  .upgradeButton,
+  .invoiceAction {
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .accountActionBtn { min-width: 88px; }
+
+  .settingsCard,
+  .accountActionCard { min-height: 56px; }
+}
