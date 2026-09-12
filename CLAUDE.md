@@ -126,3 +126,20 @@ Frontend URL: https://contract-ai.de
 # Aus dem Root-Verzeichnis:
 git add . && git commit -m "message" && git push origin main && cd frontend && npx vercel --prod && cd ..
 ```
+
+### Vor einem Deploy, der Farben oder Stylesheets berührt
+```bash
+cd frontend && npm run farbwache
+```
+Findet zwei Fehlerklassen, die im Browser nicht auffallen:
+
+1. **Global kollidierende CSS-Variablen.** `:root { }` in einer `*.module.css` ist
+   **nicht** modul-lokal. CSS-Module hashen Klassennamen, `:root` bleibt `:root`.
+   Definieren zwei Dateien dieselbe Variable mit verschiedenen Werten, entscheidet
+   allein die Reihenfolge der Baublöcke, welche gewinnt. So war `--apple-blue` in
+   sieben Dateien mit zwei Werten definiert und die Farbe der Navigationsleiste
+   nicht festgelegt (behoben 09/2026, siehe `--nav-primary`).
+2. **Farbwerte, die hier schon einmal unter der Kontrastnorm lagen.**
+
+Die Wache ist ein Schnelltest, **kein Ersatz für eine Messung am gerenderten Bild**:
+ob eine Farbe die Norm reißt, hängt vom Grund ab, auf dem sie sitzt.
