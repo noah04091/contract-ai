@@ -26,7 +26,19 @@ const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encodi
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
+// 12.09.2026 Security-Patch: multer lief hier ohne jedes Limit. Grenzen bewusst
+// grosszuegig gewaehlt, damit kein heute funktionierender Upload scheitert:
+// 50 MB wie analyze.js; die Route liest real 4 Textfelder (perspective,
+// analysisContext, legalPulseContext, existingContractId).
+const upload = multer({
+  dest: "uploads/",
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50 MB, wie analyze.js
+    files: 1,                   // upload.single("file")
+    fields: 10,                 // real: 4 Textfelder
+    parts: 15,
+  },
+});
 
 // 🔥 MongoDB Setup für Contract-Speicherung (Shared Singleton Pool)
 let contractsCollection, db;

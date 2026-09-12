@@ -11,7 +11,19 @@ const verifyToken = require("../middleware/verifyToken");
 const saveContract = require("../services/saveContract");
 const { fixUtf8Filename } = require("../utils/fixUtf8"); // ✅ Fix UTF-8 Encoding
 
-const upload = multer({ dest: "uploads/" });
+// 12.09.2026 Security-Patch: multer lief hier ohne jedes Limit — beliebig grosse
+// Dateien und beliebig viele Multipart-Felder gingen ungebremst auf die Disk.
+// Grenzen bewusst grosszuegig: 50 MB entspricht analyze.js (400-Seiten-Vertraege),
+// gesendet wird real nur EIN Feld ("file") von BetterContracts.tsx.
+const upload = multer({
+  dest: "uploads/",
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50 MB, wie analyze.js
+    files: 1,                   // beide Routen nutzen upload.single("file")
+    fields: 10,                 // real: 0 Textfelder
+    parts: 15,                  // Dateien + Felder zusammen
+  },
+});
 
 // 🔒 DEINE BESTEHENDE AUTHENTIFIZIERTE ROUTE (100% unverändert!)
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
