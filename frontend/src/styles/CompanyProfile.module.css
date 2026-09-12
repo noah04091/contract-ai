@@ -1359,3 +1359,30 @@
   outline: 2px solid #1568dd;
   outline-offset: 2px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORTSCHRITT JE ABSCHNITT — 08.09.2026
+   completionData berechnet fuer jeden Abschnitt einen Prozentwert,
+   das Markup nutzte ihn aber nur binaer (=== 100). Ein Abschnitt mit
+   80 % sah damit genauso aus wie einer mit 0 %. Der Balken zeigt, wo
+   nur noch wenig fehlt — dieselbe Sorte Fund wie beim Optimizer
+   (marketComparison) und bei Legal Lens (overallVerdict.headline):
+   berechnete Information, die niemand sah.
+   ═══════════════════════════════════════════════════════════════════ */
+.navItemProgress {
+  height: 3px;
+  margin-top: 7px;
+  border-radius: 2px;
+  background: #e3e6ec;
+  overflow: hidden;
+}
+
+.navItemProgressFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width .3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navItemProgressFill { transition: none; }
+}

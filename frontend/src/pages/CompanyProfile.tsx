@@ -118,7 +118,9 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       icon: <Camera size={22} strokeWidth={1.5} />,
       fields: ['logoUrl'],
       premiumOnly: true,
-      gradient: '#1568dd'
+      // Logo: bernstein — Teil der abgestimmten Familie,
+      // gleiche Saettigung und Helligkeit wie die vier anderen
+      gradient: 'linear-gradient(140deg, #b0620e 0%, #8d4d09 100%)'
     },
     {
       id: 'company',
@@ -129,7 +131,9 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
         : <User size={22} strokeWidth={1.5} />,
       fields: ['companyName', 'legalForm', 'street', 'postalCode', 'city', 'country'],
       premiumOnly: false,
-      gradient: '#1568dd'
+      // Stammdaten: markenblau — Teil der abgestimmten Familie,
+      // gleiche Saettigung und Helligkeit wie die vier anderen
+      gradient: 'linear-gradient(140deg, #1c74ea 0%, #1257bb 100%)'
     },
     {
       id: 'legal',
@@ -138,7 +142,9 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       icon: <Shield size={22} strokeWidth={1.5} />,
       fields: profileType === 'business' ? ['vatId', 'tradeRegister'] : ['vatId'],
       premiumOnly: true,
-      gradient: '#1568dd',
+      // Rechtliches: violett — Teil der abgestimmten Familie,
+      // gleiche Saettigung und Helligkeit wie die vier anderen
+      gradient: 'linear-gradient(140deg, #6555d0 0%, #4a3da8 100%)',
       hideForPersonal: false
     },
     {
@@ -148,7 +154,9 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       icon: <Phone size={22} strokeWidth={1.5} />,
       fields: ['contactEmail', 'contactPhone'],
       premiumOnly: true,
-      gradient: '#1568dd'
+      // Kontaktdaten: petrol — Teil der abgestimmten Familie,
+      // gleiche Saettigung und Helligkeit wie die vier anderen
+      gradient: 'linear-gradient(140deg, #158a9a 0%, #0d6774 100%)'
     },
     {
       id: 'banking',
@@ -157,7 +165,9 @@ const getSections = (profileType: ProfileType): SectionConfig[] => {
       icon: <CreditCard size={22} strokeWidth={1.5} />,
       fields: ['bankName', 'iban', 'bic'],
       premiumOnly: true,
-      gradient: '#1568dd'
+      // Bankverbindung: gruen — Teil der abgestimmten Familie,
+      // gleiche Saettigung und Helligkeit wie die vier anderen
+      gradient: 'linear-gradient(140deg, #18794c 0%, #105a38 100%)'
     }
   ];
 
@@ -964,6 +974,24 @@ export default function CompanyProfile() {
                         <span className={styles.navItemSubtitle}>
                           {isLocked ? 'Enterprise' : isComplete ? 'Vollständig' : section.subtitle}
                         </span>
+                        {/* 08.09.2026: completionData berechnet je Abschnitt einen
+                            Prozentwert, das Markup nutzte ihn aber nur binaer
+                            (=== 100). Ein Abschnitt mit 80 % sah damit aus wie
+                            einer mit 0 %. Der Balken zeigt, wo wenig fehlt —
+                            ohne neue Berechnung. Bei gesperrten und fertigen
+                            Abschnitten entfaellt er: dort sagen Schloss und
+                            Haekchen schon alles. */}
+                        {!isLocked && !isComplete && (sectionData?.completion ?? 0) > 0 && (
+                          <div className={styles.navItemProgress}>
+                            <div
+                              className={styles.navItemProgressFill}
+                              style={{
+                                width: (sectionData?.completion ?? 0) + '%',
+                                background: section.gradient
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                       <div className={styles.navItemStatus}>
                         {isLocked ? (
