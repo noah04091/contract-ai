@@ -4541,6 +4541,12 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, s
       contractDuration: analysisData.contractDuration || null, // 🆕 CONTRACT DURATION object
       cancellationPeriod: analysisData.cancellationPeriod || null,
       isAutoRenewal: analysisData.isAutoRenewal || false, // 🆕 AUTO-RENEWAL
+      // 🧭 Cockpit 1.1a (12.09.2026, ADDITIV): der von der KI erkannte englische Typ
+      // (purchase/rental/…) wurde bisher NUR fürs deutsche Label benutzt und dann
+      // verworfen — Pulse-Portfolio gruppierte deshalb alles als "unbekannt" und die
+      // Export-Spalte "Vertragsart" blieb leer. Status-/Kalender-Logik liest dieses
+      // Feld nicht (geprüft) ⇒ reine Anreicherung, keine Verhaltensänderung dort.
+      contractType: analysisData.contractType || null,
       // 🆕 A1 (28.05.2026): Deutsche KI-Bezeichnung des Vertragstyps für V2-Liste.
       // Mapping englisch→deutsch via pilotTypeToLabel (rental→Mietvertrag etc.).
       // 📨 Welle 1: bei LETTER stattdessen letterType-Label („Abmahnung" etc.).
@@ -6482,6 +6488,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           startDate: extractedStartDate || null, // 🆕 START DATE
           expiryDate: extractedEndDate || null,
           isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
+          // 🧭 Cockpit 1.1a (12.09.2026, ADDITIV): erkannter Typ auch bei Re-Analyse
+          // persistieren (gleiche Begründung wie in saveContractWithUpload).
+          contractType: extractedContractType || null,
           // 🆕 A1 (28.05.2026): Deutsche KI-Bezeichnung für V2-Liste.
           // 📨 Welle 1: bei LETTER aus letterType („Kündigungsschreiben (erhalten)" etc.).
           // 🎯 Phase 1 (03.08.2026): ehrliches Typ-Label — nie einen Vertragstyp raten

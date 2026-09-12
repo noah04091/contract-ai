@@ -239,7 +239,7 @@ const Fristen: React.FC = () => {
                     {/* Weekday Headers */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', marginBottom: '6px' }}>
                       {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(day => (
-                        <div key={day} style={{ fontSize: '10px', color: '#94a3b8', textAlign: 'center', fontWeight: 600 }}>{day}</div>
+                        <div key={day} style={{ fontSize: '10px', color: '#64748b', textAlign: 'center', fontWeight: 600 }}>{day}</div>
                       ))}
                     </div>
                     {/* Calendar Days */}
@@ -299,7 +299,7 @@ const Fristen: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px', background: 'rgba(239, 68, 68, 0.08)', borderRadius: '6px', marginBottom: '6px' }}>
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
                       <span style={{ fontSize: '11px', color: '#334155', flex: 1 }}>14. März – Kündigungsfrist</span>
-                      <span style={{ fontSize: '10px', color: '#ef4444', fontWeight: 600 }}>Dringend</span>
+                      <span style={{ fontSize: '10px', color: '#dc2626', fontWeight: 600 }}>Dringend</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 8px' }}>
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }} />
@@ -535,7 +535,7 @@ const Fristen: React.FC = () => {
 
             <div className={`${styles.whyGrid} ${styles.whyGrid4col}`}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <Calendar size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Automatische Erkennung</h3>
@@ -546,7 +546,7 @@ const Fristen: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#b45309' }}>
                   <Bell size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Flexible Erinnerungen</h3>
@@ -745,7 +745,7 @@ const Fristen: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><FolderOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#b45309' }}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsverwaltung</div>
                   <div className={styles.relatedDescription}>
@@ -756,7 +756,7 @@ const Fristen: React.FC = () => {
               </Link>
 
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>

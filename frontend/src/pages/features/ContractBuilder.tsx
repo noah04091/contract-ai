@@ -194,9 +194,9 @@ const ContractBuilder: React.FC = () => {
                   <div style={{ width: '45%', background: '#f8fafc', borderRadius: '8px', padding: '8px' }}>
                     <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bausteine</div>
                     {[
-                      { label: 'Präambel', color: '#3b82f6' },
+                      { label: 'Präambel', color: '#1d4ed8' },
                       { label: 'Vergütung', color: '#8b5cf6' },
-                      { label: 'Haftung', color: '#f59e0b' },
+                      { label: 'Haftung', color: '#b45309' },
                     ].map((block, i) => (
                       <div key={i} style={{
                         display: 'flex', alignItems: 'center', gap: '6px',
@@ -206,7 +206,7 @@ const ContractBuilder: React.FC = () => {
                       }}>
                         <div style={{ width: '6px', height: '6px', borderRadius: '2px', background: block.color }} />
                         {block.label}
-                        <span style={{ marginLeft: 'auto', color: '#94a3b8', fontSize: '10px' }}>+</span>
+                        <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: '10px' }}>+</span>
                       </div>
                     ))}
                   </div>
@@ -214,9 +214,9 @@ const ContractBuilder: React.FC = () => {
                   <div style={{ flex: 1, background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', padding: '8px' }}>
                     <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Dein Vertrag</div>
                     {[
-                      { label: '§ 1 Vertragsparteien', color: '#22c55e', done: true },
-                      { label: '§ 2 Leistungen', color: '#22c55e', done: true },
-                      { label: '§ 3 Vergütung', color: '#3b82f6', done: false, active: true },
+                      { label: '§ 1 Vertragsparteien', color: '#15803d', done: true },
+                      { label: '§ 2 Leistungen', color: '#15803d', done: true },
+                      { label: '§ 3 Vergütung', color: '#1d4ed8', done: false, active: true },
                     ].map((section, i) => (
                       <div key={i} style={{
                         display: 'flex', alignItems: 'center', gap: '6px',
@@ -233,13 +233,13 @@ const ContractBuilder: React.FC = () => {
                           {section.done && <CheckCircle size={10} color="#fff" />}
                         </div>
                         <span style={{ flex: 1 }}>{section.label}</span>
-                        {section.active && <span style={{ fontSize: '9px', color: '#3b82f6' }}>Bearbeiten</span>}
+                        {section.active && <span style={{ fontSize: '9px', color: '#1d4ed8' }}>Bearbeiten</span>}
                       </div>
                     ))}
                     <div style={{
                       marginTop: '8px', padding: '8px', borderRadius: '6px',
                       border: '2px dashed #e2e8f0', textAlign: 'center',
-                      fontSize: '10px', color: '#94a3b8'
+                      fontSize: '10px', color: '#64748b'
                     }}>
                       Baustein hierher ziehen
                     </div>
@@ -309,7 +309,7 @@ const ContractBuilder: React.FC = () => {
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <Layers size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Baustein-Editor</h3>
@@ -359,7 +359,7 @@ const ContractBuilder: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#b45309' }}>
                   <FileText size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>Vorlagen speichern</h3>
@@ -711,7 +711,7 @@ const ContractBuilder: React.FC = () => {
               </Link>
 
               <Link to="/features/legal-lens" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Legal Lens</div>
                   <div className={styles.relatedDescription}>

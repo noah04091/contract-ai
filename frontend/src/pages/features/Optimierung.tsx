@@ -203,7 +203,7 @@ const Optimierung: React.FC = () => {
                       borderRadius: '6px', padding: '8px', marginBottom: '6px',
                       borderLeft: '3px solid #ef4444'
                     }}>
-                      <div style={{ fontSize: '9px', color: '#ef4444', fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ fontSize: '9px', color: '#dc2626', fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <AlertTriangle size={10} /> ORIGINAL
                       </div>
                       <div style={{ fontSize: '10px', color: '#64748b', textDecoration: 'line-through', lineHeight: 1.4 }}>
@@ -222,7 +222,7 @@ const Optimierung: React.FC = () => {
                       borderRadius: '6px', padding: '8px',
                       borderLeft: '3px solid #22c55e'
                     }}>
-                      <div style={{ fontSize: '9px', color: '#22c55e', fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ fontSize: '9px', color: '#15803d', fontWeight: 600, marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Sparkles size={10} /> OPTIMIERT
                       </div>
                       <div style={{ fontSize: '10px', color: '#1e293b', lineHeight: 1.4 }}>
@@ -490,7 +490,7 @@ const Optimierung: React.FC = () => {
               </div>
 
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <FileText size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Transparente Änderungen</h3>
@@ -670,7 +670,7 @@ const Optimierung: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>

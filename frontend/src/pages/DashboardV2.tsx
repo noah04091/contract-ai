@@ -30,6 +30,7 @@ import { DashboardLayout } from "../components/DashboardV2";
 import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
 import { OnboardingChecklist } from "../components/Onboarding"; // 🎓 Onboarding Checklist
 import SetupGuide, { SETUP_GUIDE_ENABLED } from "../components/DashboardV2/SetupGuide"; // 🎯 Erststart für neue Konten
+import PortfolioRadar from "../components/DashboardV2/PortfolioRadar"; // 🧭 Cockpit v1: Fristen-Radar 90 Tage (12.09.2026)
 import { SimpleTour } from "../components/Tour"; // 🎯 Simple Tour (zuverlässiger)
 
 // ============================================
@@ -1013,6 +1014,12 @@ export default function DashboardV2() {
             </div>
           </div>
         </div>
+
+        {/* ============================================
+            ROW 2b: PORTFOLIO-RADAR (Cockpit v1) — 90-Tage-Fristen,
+            Auto-Renewals, Deckung; lädt sich selbst (eigener Endpunkt)
+            ============================================ */}
+        <PortfolioRadar />
 
         {/* ============================================
             ROW 3: QUICK ACTIONS - Horizontale Aktionsleiste

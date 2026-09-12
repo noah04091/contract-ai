@@ -296,7 +296,7 @@ const DigitaleSignatur: React.FC = () => {
 
             <div className={styles.functionsGrid}>
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <Mail size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>E-Mail-Versand</h3>
@@ -346,7 +346,7 @@ const DigitaleSignatur: React.FC = () => {
               </div>
 
               <div className={`${styles.functionCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#f59e0b' }}>
+                <div className={styles.functionIcon} style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fde68a 100%)', color: '#b45309' }}>
                   <Zap size={24} />
                 </div>
                 <h3 className={styles.functionTitle}>EU-weit gültig</h3>
@@ -693,7 +693,7 @@ const DigitaleSignatur: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/generator" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><FileText size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><FileText size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsgenerator</div>
                   <div className={styles.relatedDescription}>
@@ -715,7 +715,7 @@ const DigitaleSignatur: React.FC = () => {
               </Link>
 
               <Link to="/features/vertragsverwaltung" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#f59e0b' }}><FolderOpen size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#b45309' }}><FolderOpen size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsverwaltung</div>
                   <div className={styles.relatedDescription}>

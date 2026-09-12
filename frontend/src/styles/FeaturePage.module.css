@@ -129,7 +129,7 @@
 
 .trustBadgeIcon {
   font-size: 16px;
-  color: #3b82f6;
+  color: #1d4ed8;
 }
 
 /* ============================================
@@ -476,7 +476,7 @@
   justify-content: center;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-radius: 14px;
-  color: #3b82f6;
+  color: #1d4ed8;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -555,7 +555,7 @@
   justify-content: center;
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-radius: 16px;
-  color: #3b82f6;
+  color: #1d4ed8;
   margin-bottom: 20px;
   font-size: 24px;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -669,7 +669,7 @@
 }
 
 .faqQuestion:hover {
-  color: #3b82f6;
+  color: #1d4ed8;
 }
 
 .faqIcon {
@@ -680,7 +680,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
+  color: #1d4ed8;
   font-size: 14px;
   transition: all 0.3s ease;
   flex-shrink: 0;
@@ -714,7 +714,7 @@
 .floatingIcon {
   position: absolute;
   opacity: 0.15;
-  color: #3b82f6;
+  color: #1d4ed8;
   animation: floatIcon 15s ease-in-out infinite;
 }
 
@@ -1039,7 +1039,7 @@
 .ctaButton {
   display: inline-block;
   background: white;
-  color: #3b82f6;
+  color: #1d4ed8;
   padding: 18px 52px;
   border-radius: 100px;
   font-size: 18px;
@@ -1090,7 +1090,7 @@
   justify-content: center;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
-  color: #3b82f6;
+  color: #1d4ed8;
   border: 1px solid rgba(59, 130, 246, 0.3);
   padding: 12px 20px;
   border-radius: 12px;
@@ -2088,7 +2088,7 @@
     -webkit-background-clip: unset !important;
     background-clip: unset !important;
     -webkit-text-fill-color: #3b82f6 !important;
-    color: #3b82f6 !important;
+    color: #1d4ed8 !important;
   }
 }
 
@@ -2231,7 +2231,7 @@
 }
 
 .relatedArrow {
-  color: #3b82f6;
+  color: #1d4ed8;
   flex-shrink: 0;
   margin-top: 4px;
 }
@@ -2284,7 +2284,7 @@
   border-radius: 100px;
   font-size: 13px;
   font-weight: 600;
-  color: #3b82f6;
+  color: #1d4ed8;
   margin-bottom: 20px;
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
 }
@@ -2536,12 +2536,12 @@
 
 .floatingIconBlue {
   background: #eff6ff;
-  color: #3b82f6;
+  color: #1d4ed8;
 }
 
 .floatingIconGreen {
   background: #f0fdf4;
-  color: #22c55e;
+  color: #15803d;
 }
 
 .floatingText {
@@ -2641,7 +2641,7 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #94a3b8;
+  color: #64748b;
   margin-bottom: 4px;
 }
 
@@ -2695,17 +2695,17 @@
 
 .demoFindingIcon.warning {
   background: #fef3c7;
-  color: #f59e0b;
+  color: #b45309;
 }
 
 .demoFindingIcon.risk {
   background: #fee2e2;
-  color: #ef4444;
+  color: #dc2626;
 }
 
 .demoFindingIcon.info {
   background: #eff6ff;
-  color: #3b82f6;
+  color: #1d4ed8;
 }
 
 .demoFindingText {
@@ -2908,7 +2908,7 @@
 
 .problemDocSubtitle {
   font-size: 13px;
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .problemDocLines {
@@ -2990,7 +2990,7 @@
 
 .warningIcon.red {
   background: #fee2e2;
-  color: #ef4444;
+  color: #dc2626;
 }
 
 .warningIcon.orange {
@@ -3074,7 +3074,7 @@
 }
 
 .comparisonCard.after .comparisonIcon {
-  color: #3b82f6;
+  color: #1d4ed8;
 }
 
 .comparisonTitle {
@@ -3101,7 +3101,7 @@
 }
 
 .comparisonCard.before .comparisonTime {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 .comparisonCard.after .comparisonTime {
@@ -3109,7 +3109,7 @@
 }
 
 .comparisonArrow {
-  color: #94a3b8;
+  color: #64748b;
   transform: rotate(90deg);
 }
 
@@ -3164,7 +3164,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
+  color: #1d4ed8;
   flex-shrink: 0;
 }
 
@@ -3218,7 +3218,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
+  color: #1d4ed8;
   margin: 0 auto 20px;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -3401,7 +3401,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
+  color: #1d4ed8;
   margin-bottom: 16px;
   transition: all 0.3s ease;
 }
@@ -3836,7 +3836,7 @@
   content: '\2713';
   position: absolute;
   left: 0;
-  color: #22c55e;
+  color: #15803d;
   font-weight: 700;
 }
 
@@ -3923,7 +3923,7 @@
 }
 
 .pillarTocLink {
-  color: #3b82f6;
+  color: #1d4ed8;
   font-size: 15px;
   font-weight: 500;
   text-decoration: none;
@@ -4038,7 +4038,7 @@
 
 .pillarHighlightIcon {
   flex-shrink: 0;
-  color: #3b82f6;
+  color: #1d4ed8;
   margin-top: 2px;
 }
 
@@ -4119,11 +4119,11 @@
 }
 
 .textGreen {
-  color: #22c55e;
+  color: #15803d;
 }
 
 .textGray {
-  color: #94a3b8;
+  color: #64748b;
 }
 
 /* Responsive Pillar Styles */

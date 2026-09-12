@@ -203,9 +203,9 @@ const Vergleich: React.FC = () => {
                         <FileText size={12} /> Vertrag A
                       </div>
                       <div style={{ fontSize: '10px', color: '#334155', marginBottom: '4px' }}>Kündigungsfrist:</div>
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#ef4444', marginBottom: '8px' }}>6 Monate</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#dc2626', marginBottom: '8px' }}>6 Monate</div>
                       <div style={{ fontSize: '10px', color: '#334155', marginBottom: '4px' }}>Monatspreis:</div>
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e' }}>€49/Monat</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#15803d' }}>€49/Monat</div>
                     </div>
                     {/* VS Divider */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -218,13 +218,13 @@ const Vergleich: React.FC = () => {
                     </div>
                     {/* Vertrag B */}
                     <div style={{ flex: 1, background: 'rgba(34, 197, 94, 0.08)', borderRadius: '8px', padding: '8px', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
-                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#22c55e', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#15803d', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <FileText size={12} /> Vertrag B <CheckCircle size={10} />
                       </div>
                       <div style={{ fontSize: '10px', color: '#334155', marginBottom: '4px' }}>Kündigungsfrist:</div>
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#22c55e', marginBottom: '8px' }}>3 Monate</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#15803d', marginBottom: '8px' }}>3 Monate</div>
                       <div style={{ fontSize: '10px', color: '#334155', marginBottom: '4px' }}>Monatspreis:</div>
-                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#f59e0b' }}>€59/Monat</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#b45309' }}>€59/Monat</div>
                     </div>
                   </div>
                   {/* Empfehlung */}
@@ -462,7 +462,7 @@ const Vergleich: React.FC = () => {
 
             <div className={`${styles.whyGrid} ${styles.whyGrid4col}`}>
               <div className={`${styles.whyCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#3b82f6' }}>
+                <div className={styles.whyIcon} style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', color: '#1d4ed8' }}>
                   <BarChart3 size={28} />
                 </div>
                 <h3 className={styles.whyTitle}>Detailgenaue Diff-Ansicht</h3>
@@ -664,7 +664,7 @@ const Vergleich: React.FC = () => {
 
             <div className={styles.relatedGrid}>
               <Link to="/features/vertragsanalyse" className={`${styles.relatedCard} ${styles.animateOnScroll}`} ref={addToRefs}>
-                <span className={styles.relatedIcon} style={{ color: '#3b82f6' }}><Search size={20} /></span>
+                <span className={styles.relatedIcon} style={{ color: '#1d4ed8' }}><Search size={20} /></span>
                 <div className={styles.relatedContent}>
                   <div className={styles.relatedTitle}>Vertragsanalyse</div>
                   <div className={styles.relatedDescription}>

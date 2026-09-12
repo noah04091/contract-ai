@@ -245,7 +245,7 @@ const HomeRedesign = () => {
     { to: "/arbeitsvertrag-pruefen", color: "#1d4ed8", bg: "rgba(37,99,235,0.08)", title: "Arbeitsvertrag prüfen", desc: "Wettbewerbsverbot, Probezeit, Überstunden und Kündigungsfristen — KI-Check auf Basis aktueller BAG-Rechtsprechung.", icon: <><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></> },
     { to: "/mietvertrag-pruefen", color: "#047857", bg: "rgba(16,185,129,0.09)", title: "Mietvertrag prüfen", desc: "Schönheitsreparaturen, Kaution, Indexmiete und Kündigungsausschluss — KI-Check auf Basis aktueller BGH-Rechtsprechung.", icon: <><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></> },
     { to: "/nda-pruefen", color: "#b91c1c", bg: "rgba(239,68,68,0.09)", title: "NDA prüfen", desc: "Vertragsstrafe, Geheimhaltungsdauer, Carve-Outs und verstecktes Wettbewerbsverbot — KI-Check auf Basis GeschGehG.", icon: <><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></> },
-    { to: "/kaufvertrag-pruefen", color: "#ea580c", bg: "rgba(249,115,22,0.09)", title: "Kaufvertrag prüfen", desc: "Gewährleistung, Beschaffenheit, „gekauft wie gesehen“ und Stornogebühren — KI-Check auf Basis BGB-Kaufrecht.", icon: <><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></> },
+    { to: "/kaufvertrag-pruefen", color: "#c2410c", bg: "rgba(249,115,22,0.09)", title: "Kaufvertrag prüfen", desc: "Gewährleistung, Beschaffenheit, „gekauft wie gesehen“ und Stornogebühren — KI-Check auf Basis BGB-Kaufrecht.", icon: <><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></> },
   ];
 
   const compRows = [
@@ -263,7 +263,9 @@ const HomeRedesign = () => {
     // „teils" stand auf #f59e0b und damit bei 2,15:1 auf Weiss. In einer
     // Vergleichstabelle traegt genau dieses Wort die Aussage, es muss lesbar
     // sein. #b45309 (5,02:1) wird in dieser Datei bereits benutzt.
-    const color = v === "teils" ? "#b45309" : (highlight ? "#1d4ed8" : "#9a9aa3");
+    // #9a9aa3 lag bei 2,79:1. Farbwerte in Ternaeren stehen ohne `color:`
+    // davor und entgehen deshalb jeder Suche nach Schriftfarben.
+    const color = v === "teils" ? "#b45309" : (highlight ? "#1d4ed8" : "#71717a");
     const weight = (v === "teils" || highlight) ? "font-weight:600;" : "";
     const fs = highlight ? "13px" : (v === "teils" ? "13px" : "12.5px");
     return <div style={s(`${base};${weight}font-size:${fs};color:${color};text-align:center`)}>{v}</div>;
@@ -692,7 +694,7 @@ const HomeRedesign = () => {
                     ].map((row, i) => (
                       <div key={i} style={s("display:flex;align-items:center;gap:11px;background:#fff;border:1px solid rgba(17,17,20,0.07);border-radius:11px;padding:12px 13px")}>
                         <span style={s(`width:32px;height:32px;border-radius:7px;background:${row.icbg};display:flex;align-items:center;justify-content:center;color:${row.ic};flex:none`)}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg></span>
-                        <div style={s("flex:1;min-width:0")}><div style={s("font-size:13.5px;font-weight:600;color:#0c0c10")}>{row.name}</div><div style={s(`font-size:11.5px;color:${row.ok ? "#9a9aa3" : "#b45309"}`)}>{row.meta}</div></div>
+                        <div style={s("flex:1;min-width:0")}><div style={s("font-size:13.5px;font-weight:600;color:#0c0c10")}>{row.name}</div><div style={s(`font-size:11.5px;color:${row.ok ? "#71717a" : "#b45309"}`)}>{row.meta}</div></div>
                         <span style={s(`width:24px;height:24px;border-radius:50%;background:${row.ok ? "#ecfdf3" : "#fffaeb"};display:flex;align-items:center;justify-content:center;flex:none`)}>{row.ok ? <Check stroke="#10b981" w={13} sw="2.6" /> : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>}</span>
                       </div>
                     ))}
