@@ -157,14 +157,30 @@
 .fristPunktOrange { background: var(--warning); }
 .fristPunktBlau { background: var(--primary); }
 
-.fristTitel {
+.fristText {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fristTitel {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 13px;
   color: var(--gray-800);
+}
+
+/* Unterzeile: welcher Vertrag gemeint ist (nur bei generischen Titeln) */
+.fristVertrag {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--gray-500);
 }
 
 .fristTage {

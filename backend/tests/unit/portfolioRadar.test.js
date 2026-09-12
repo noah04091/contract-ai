@@ -62,7 +62,14 @@ describe('bucketFristen — Fenster 0-30 / 31-60 / 61-90', () => {
 
   test('Altbestand: Event ohne severity/confidence/contractId crasht nicht', () => {
     const f = bucketFristen([{ title: 'alt', date: inTagen(10) }], JETZT);
-    expect(f.tage0bis30.eintraege[0]).toMatchObject({ severity: 'info', confidence: null, istGeschaetzt: false });
+    expect(f.tage0bis30.eintraege[0]).toMatchObject({ severity: 'info', confidence: null, istGeschaetzt: false, vertrag: null });
+  });
+
+  test('Vertragsname aus metadata.contractName wird durchgereicht (UX-Befund Smoke-Test 12.09.)', () => {
+    const f = bucketFristen([
+      { title: 'Kündigungsfrist während der Probezeit', date: inTagen(4), metadata: { contractName: 'Arbeitsvertrag Meier.pdf' } },
+    ], JETZT);
+    expect(f.tage0bis30.eintraege[0].vertrag).toBe('Arbeitsvertrag Meier.pdf');
   });
 });
 

@@ -16,6 +16,7 @@ interface RadarEintrag {
   eventId?: string;
   contractId?: string;
   titel: string;
+  vertrag: string | null;
   typ: string;
   datum: string;
   inTagen: number;
@@ -166,7 +167,14 @@ export default function PortfolioRadar() {
                               title={e.istGeschaetzt ? "Geschätzte Frist — Datum bitte im Vertrag prüfen" : undefined}
                             >
                               <span className={`${styles.fristPunkt} ${e.severity === "critical" ? styles.fristPunktRot : e.severity === "warning" ? styles.fristPunktOrange : styles.fristPunktBlau}`} />
-                              <span className={styles.fristTitel}>{fixUtf8Display(e.titel)}</span>
+                              <span className={styles.fristText}>
+                                <span className={styles.fristTitel}>{fixUtf8Display(e.titel)}</span>
+                                {/* Unterzeile nur, wenn der Titel den Vertragsnamen nicht schon trägt
+                                    (generische Titel wie „Kündigungsfrist während der Probezeit") */}
+                                {e.vertrag && !e.titel.includes(e.vertrag) && (
+                                  <span className={styles.fristVertrag}>{fixUtf8Display(e.vertrag)}</span>
+                                )}
+                              </span>
                               <span className={styles.fristTage}>
                                 {tageText(e.inTagen)}
                                 {e.istGeschaetzt && <em className={styles.fristSchaetzMarke}> · geschätzt</em>}

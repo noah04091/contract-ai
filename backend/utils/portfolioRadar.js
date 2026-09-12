@@ -52,6 +52,7 @@ function bucketFristen(events, jetzt, maxJeFenster = 5) {
         eventId: e._id ? String(e._id) : undefined,
         contractId: e.contractId ? String(e.contractId) : undefined,
         titel: e.title || '',
+        vertrag: e.metadata?.contractName || null,
         typ: e.type || '',
         datum: e.date,
         inTagen: tage,
@@ -138,8 +139,11 @@ function deckung(contracts, statusZaehlung) {
 }
 
 // Schlanke Projektionen für die Route (eine Quelle, keine Vollobjekte zum Client)
+// metadata.contractName: Smoke-Test 12.09. — generische Titel („Kündigungsfrist
+// während der Probezeit") verrieten nicht, WELCHER Vertrag gemeint ist.
 const RADAR_EVENT_PROJECTION = {
   title: 1, type: 1, date: 1, severity: 1, confidence: 1, isEstimated: 1, contractId: 1,
+  'metadata.contractName': 1,
 };
 
 module.exports = {
