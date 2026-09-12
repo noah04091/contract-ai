@@ -283,6 +283,23 @@ const generateTableOfContents = (contractText) => {
 // 🆕 ENTERPRISE QR-CODE GENERATION MIT BLOCKCHAIN-KOMPATIBILITÄT - WELTKLASSE-KANZLEI-NIVEAU
 const generateEnterpriseQRCode = async (contractData, companyProfile) => {
   try {
+    // 🔧 QR-Verifikations-Fix (12.09.2026): Wenn die echte Mongo-_id bekannt ist,
+    // trägt der QR die pure Verify-URL (Handy-Scan öffnet die Seite direkt).
+    // Vorher: JSON-Payload mit zufälliger, NIRGENDS gespeicherter documentId —
+    // der Scan zeigte Rohtext und /verify/:id (erwartet ObjectId) fand nie etwas.
+    if (contractData.mongoContractId) {
+      return await QRCode.toDataURL(
+        `https://contract-ai.de/verify/${contractData.mongoContractId}`,
+        {
+          errorCorrectionLevel: 'H',
+          type: 'image/png',
+          margin: 2,
+          width: 200,
+          color: { dark: '#000000', light: '#FFFFFF' },
+          scale: 8
+        }
+      );
+    }
     console.log("🔐 Generiere Enterprise QR-Code für Dokument:", contractData.documentId);
     
     const qrPayload = {
@@ -397,7 +414,7 @@ function escapeHtml(str) {
 }
 
 // 🎨 ENTERPRISE HTML-FORMATIERUNG FÜR ABSOLUT PROFESSIONELLE VERTRÄGE - VOLLSTÄNDIGE VERSION
-const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive', isDraft = false, parties = null) => {
+const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive', isDraft = false, parties = null, mongoContractId = null) => {
   // XSS-Schutz: Alle User-kontrollierten Strings in companyProfile und parties escapen
   // Logo-URLs (base64/S3) dürfen nicht escaped werden da sie als src="" genutzt werden
   if (companyProfile) {
@@ -479,7 +496,8 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       documentId: documentId,
       documentHash: documentHash,
       contractType: contractType,
-      isDraft: isDraft
+      isDraft: isDraft,
+      mongoContractId: mongoContractId // 🔧 QR-Fix: echte _id → QR = Verify-URL
     };
     enterpriseQRCode = await generateEnterpriseQRCode(qrData, companyProfile);
     console.log("✅ Enterprise QR-Code generiert für Dokument:", documentId.substring(0, 16) + "...");
@@ -2244,18 +2262,24 @@ router.post("/", verifyToken, async (req, res) => {
         }
       }
 
+      // 🔧 QR-Fix: _id VOR dem HTML festlegen, damit der Verifikations-QR
+      // die echte Vertrags-ID trägt (bei Update die bestehende, sonst neue).
+      const zielVertragsIdV2 = existingContractId ? new ObjectId(existingContractId) : new ObjectId();
+
       const formattedHTML = await formatContractToHTML(
         result.contractText,
         companyProfile,
         type,
         designVariant,
         formData.isDraft || false,
-        formData // 🔧 FIX: Pass formData as parties for proper data display
+        formData, // 🔧 FIX: Pass formData as parties for proper data display
+        zielVertragsIdV2.toString()
       );
 
       // Speichern in contracts Collection (wie bei V1)
       const contractsCollection = db.collection("contracts");
       const contract = {
+        _id: zielVertragsIdV2, // 🔧 QR-Fix: dieselbe _id, die im QR steckt
         userId: new ObjectId(req.user.userId),
         name: formData.title,
         content: result.contractText,
@@ -3247,13 +3271,18 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
     let formattedHTML = "";
     const isDraft = formData.isDraft || false;
 
+    // 🔧 QR-Fix: _id VOR dem HTML festlegen, damit der Verifikations-QR
+    // die echte Vertrags-ID trägt (bei Update die bestehende, sonst neue).
+    const zielVertragsIdV1 = existingContractId ? new ObjectId(existingContractId) : new ObjectId();
+
     formattedHTML = await formatContractToHTML(
       contractText,
       companyProfile,  // Jetzt korrekt geladen mit Logo
       type,
       designVariant,   // Wird korrekt durchgereicht
       isDraft,         // Entwurf-Modus
-      formData         // 🔧 FIX: Pass formData as parties for proper data display
+      formData,        // 🔧 FIX: Pass formData as parties for proper data display
+      zielVertragsIdV1.toString()
     );
     
     console.log("✅ Enterprise HTML-Formatierung erstellt:", {
@@ -3273,6 +3302,7 @@ DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
     // Vertrag in DB speichern
     // 🔧 FIX: userId als ObjectId speichern (für Konsistenz mit contracts.js GET /:id)
     const contract = {
+      _id: zielVertragsIdV1, // 🔧 QR-Fix: dieselbe _id, die im QR steckt
       userId: new ObjectId(req.user.userId),
       name: formData.title,
       content: contractText,
@@ -3594,18 +3624,27 @@ router.post("/pdf", verifyToken, async (req, res) => {
     const FORCE_REGENERATE_HTML = false;
 
     let htmlContent = FORCE_REGENERATE_HTML ? null : (contract.contractHTML || contract.htmlContent || contract.contentHTML);
-    
+
+    // 🔧 QR-Fix: gecachtes HTML aus der Zeit VOR dem Fix trägt noch den toten
+    // JSON-QR (ohne Verify-URL mit echter _id) → einmal neu rendern, danach
+    // greift wieder der Cache (wird unten gespeichert). Repariert den Bestand.
+    if (htmlContent && !htmlContent.includes(`/verify/${contract._id}`)) {
+      console.log("🔄 Cache-HTML ohne gültigen Verifikations-QR, generiere neu...");
+      htmlContent = null;
+    }
+
     if (!htmlContent) {
       console.log("🔄 Kein HTML vorhanden, generiere neu...");
       const isDraft = contract.status === 'Entwurf' || contract.formData?.isDraft;
-      
+
       htmlContent = await formatContractToHTML(
         contract.content,
         companyProfile,
         contract.contractType || contract.metadata?.contractType || 'vertrag',
         contract.designVariant || contract.metadata?.designVariant || 'executive',
         isDraft,
-        contract.metadata?.parties || contract.parties || null
+        contract.metadata?.parties || contract.parties || null,
+        contract._id.toString()
       );
       
       // HTML für nächstes Mal speichern
@@ -3971,11 +4010,13 @@ router.post("/preview", verifyToken, async (req, res) => {
     if (!htmlContent) {
       const isDraft = contract.status === 'Entwurf';
       htmlContent = await formatContractToHTML(
-        contract.content, 
-        companyProfile, 
+        contract.content,
+        companyProfile,
         contract.contractType,
         contract.designVariant || 'executive',
-        isDraft
+        isDraft,
+        null,
+        contract._id.toString() // 🔧 QR-Fix
       );
       
       // Speichern für nächstes Mal
@@ -4090,7 +4131,8 @@ router.post("/change-design", verifyToken, async (req, res) => {
       contract.contractType || 'vertrag',
       newDesignVariant,
       isDraft,
-      contract.formData || null
+      contract.formData || null,
+      contract._id.toString() // 🔧 QR-Fix
     );
 
     // HTML in Update-Daten hinzufügen
@@ -4151,11 +4193,13 @@ router.post("/toggle-draft", verifyToken, async (req, res) => {
     
     // HTML neu generieren mit/ohne Wasserzeichen
     const newHTML = await formatContractToHTML(
-      contract.content, 
-      companyProfile, 
+      contract.content,
+      companyProfile,
       contract.contractType,
       contract.designVariant || 'executive',
-      isDraft
+      isDraft,
+      null,
+      contract._id.toString() // 🔧 QR-Fix
     );
     
     // Vertrag aktualisieren
@@ -4234,11 +4278,13 @@ router.post("/batch-export", verifyToken, async (req, res) => {
           }
           
           htmlContent = await formatContractToHTML(
-            contract.content, 
-            companyProfile, 
+            contract.content,
+            companyProfile,
             contract.contractType,
             contract.designVariant || 'executive',
-            contract.status === 'Entwurf'
+            contract.status === 'Entwurf',
+            null,
+            contract._id.toString() // 🔧 QR-Fix
           );
         }
         
